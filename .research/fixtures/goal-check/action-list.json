@@ -1,0 +1,7 @@
+{
+  "items": [
+    {"id":"gap-7a-1-upload-route","action":"Add upload route","status":"open","priority":"high","depends_on":[]},
+    {"id":"gap-6-1-announcement-extra","action":"open gap on a done story","status":"open","priority":"low","depends_on":[]},
+    {"id":"gap-nope-orphan-slug","action":"orphan — no coverage story","status":"open","priority":"low","depends_on":[]}
+  ]
+}

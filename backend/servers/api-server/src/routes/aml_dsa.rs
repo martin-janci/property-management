@@ -208,9 +208,7 @@ async fn create_aml_assessment(
         recommendations.push("Conduct PEP screening".to_string());
     }
 
-    let country_risk_str = assessment
-        .country_risk
-        .map(|r| format!("{:?}", r).to_lowercase());
+    let country_risk_str = assessment.country_risk.map(|r| r.to_string());
 
     Ok(Json(AmlAssessmentResponse {
         id: assessment.id,
@@ -323,9 +321,7 @@ async fn get_aml_assessment(
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
 
-    let country_risk_str = assessment
-        .country_risk
-        .map(|r| format!("{:?}", r).to_lowercase());
+    let country_risk_str = assessment.country_risk.map(|r| r.to_string());
 
     let mut recommendations = Vec::new();
     if assessment.flagged_for_review {
@@ -404,9 +400,7 @@ async fn review_aml_assessment(
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
 
-    let country_risk_str = assessment
-        .country_risk
-        .map(|r| format!("{:?}", r).to_lowercase());
+    let country_risk_str = assessment.country_risk.map(|r| r.to_string());
 
     Ok(Json(AmlAssessmentResponse {
         id: assessment.id,
@@ -465,7 +459,7 @@ async fn get_country_risks(
         .map(|r| CountryRiskEntry {
             country_code: r.country_code,
             country_name: r.country_name,
-            risk_rating: format!("{:?}", r.risk_rating).to_lowercase(),
+            risk_rating: r.risk_rating.to_string(),
             is_sanctioned: r.is_sanctioned,
             fatf_status: r.fatf_status,
         })
@@ -641,7 +635,7 @@ async fn get_edd_record(
             id: d.id,
             document_type: d.document_type,
             original_filename: d.original_filename,
-            verification_status: format!("{:?}", d.verification_status).to_lowercase(),
+            verification_status: d.verification_status.to_string(),
             verified_at: d.verified_at,
             expiry_date: d.expiry_date,
             uploaded_at: d.uploaded_at,
@@ -754,7 +748,7 @@ async fn upload_edd_document(
         id: doc.id,
         document_type: doc.document_type,
         original_filename: doc.original_filename,
-        verification_status: format!("{:?}", doc.verification_status).to_lowercase(),
+        verification_status: doc.verification_status.to_string(),
         verified_at: doc.verified_at,
         expiry_date: doc.expiry_date,
         uploaded_at: doc.uploaded_at,
@@ -826,7 +820,7 @@ async fn verify_edd_document(
         id: doc.id,
         document_type: doc.document_type,
         original_filename: doc.original_filename,
-        verification_status: format!("{:?}", doc.verification_status).to_lowercase(),
+        verification_status: doc.verification_status.to_string(),
         verified_at: doc.verified_at,
         expiry_date: doc.expiry_date,
         uploaded_at: doc.uploaded_at,
@@ -1414,7 +1408,7 @@ async fn get_moderation_queue(
                     name: "User".to_string(), // Would fetch from user repo
                     previous_violations: 0,   // Would calculate from repo
                 },
-                report_source: format!("{:?}", c.report_source).to_lowercase(),
+                report_source: c.report_source.to_string(),
                 violation_type: c.violation_type,
                 report_reason: c.report_reason,
                 status: c.status,
@@ -1540,7 +1534,7 @@ async fn get_moderation_case(
             name: "User".to_string(),
             previous_violations: violation_count,
         },
-        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        report_source: case.report_source.to_string(),
         violation_type: case.violation_type,
         report_reason: case.report_reason,
         status: case.status,
@@ -1597,7 +1591,7 @@ async fn assign_moderation_case(
             name: "User".to_string(),
             previous_violations: 0,
         },
-        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        report_source: case.report_source.to_string(),
         violation_type: case.violation_type,
         report_reason: case.report_reason,
         status: case.status,
@@ -1660,7 +1654,7 @@ async fn take_moderation_action(
             name: "User".to_string(),
             previous_violations: 0,
         },
-        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        report_source: case.report_source.to_string(),
         violation_type: case.violation_type,
         report_reason: case.report_reason,
         status: case.status,
@@ -1721,7 +1715,7 @@ async fn file_appeal(
             name: "User".to_string(),
             previous_violations: 0,
         },
-        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        report_source: case.report_source.to_string(),
         violation_type: case.violation_type,
         report_reason: case.report_reason,
         status: case.status,
@@ -1777,7 +1771,7 @@ async fn decide_appeal(
             name: "User".to_string(),
             previous_violations: 0,
         },
-        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        report_source: case.report_source.to_string(),
         violation_type: case.violation_type,
         report_reason: case.report_reason,
         status: case.status,
@@ -1844,7 +1838,7 @@ async fn report_content(
             name: "Unknown".to_string(),
             previous_violations: 0,
         },
-        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        report_source: case.report_source.to_string(),
         violation_type: case.violation_type,
         report_reason: case.report_reason,
         status: case.status,

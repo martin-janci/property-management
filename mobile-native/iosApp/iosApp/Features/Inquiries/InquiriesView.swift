@@ -32,7 +32,7 @@ struct InquiriesView: View {
                 inquiriesListView
             }
         }
-        .navigationTitle("Inquiries")
+        .navigationTitle(String(localized: "tab_inquiries"))
         .refreshable {
             await loadInquiries()
         }
@@ -53,10 +53,10 @@ struct InquiriesView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(.secondary)
 
-            Text("Sign in to see your inquiries")
+            Text(String(localized: "prompt_sign_in_inquiries"))
                 .font(.headline)
 
-            Text("Track your property inquiries and conversations with agents.")
+            Text(String(localized: "inquiries_sign_in_description"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -65,7 +65,7 @@ struct InquiriesView: View {
             Button {
                 coordinator.navigate(to: .login)
             } label: {
-                Text("Sign In")
+                Text(String(localized: "sign_in"))
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.accentColor)
@@ -82,7 +82,7 @@ struct InquiriesView: View {
         VStack(spacing: 16) {
             Spacer()
             ProgressView()
-            Text("Loading inquiries...")
+            Text(String(localized: "status_loading_inquiries"))
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -96,10 +96,10 @@ struct InquiriesView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(.secondary)
 
-            Text("No inquiries yet")
+            Text(String(localized: "empty_inquiries"))
                 .font(.headline)
 
-            Text("When you send an inquiry about a property, it will appear here.")
+            Text(String(localized: "empty_inquiries_description"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -108,7 +108,7 @@ struct InquiriesView: View {
             Button {
                 coordinator.selectedTab = .search
             } label: {
-                Text("Browse Listings")
+                Text(String(localized: "action_browse_listings"))
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.accentColor)
@@ -146,7 +146,7 @@ struct InquiriesView: View {
         if let response = result.getOrNull() {
             inquiries = response.inquiries.map { KMPBridge.toInquiryPreview($0) }
         } else if let error = result.exceptionOrNull() {
-            errorMessage = error.message ?? "Failed to load inquiries"
+            errorMessage = error.message ?? String(localized: "failed_to_load_inquiries")
             #if DEBUG
             print("Inquiries error: \(errorMessage ?? "Unknown")")
             #endif
@@ -282,9 +282,9 @@ enum InquiryStatus: String {
 
     var displayName: String {
         switch self {
-        case .pending: return "Pending"
-        case .replied: return "Replied"
-        case .closed: return "Closed"
+        case .pending: return String(localized: "inquiry_status_pending")
+        case .replied: return String(localized: "inquiry_status_replied")
+        case .closed:  return String(localized: "inquiry_status_closed")
         }
     }
 

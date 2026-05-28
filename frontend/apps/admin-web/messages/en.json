@@ -163,6 +163,22 @@
         "secretRegeneratedTitle": "Secret regenerated"
       }
     },
+    "onboarding": {
+      "title": "Onboarding Tours",
+      "subtitle": "Preview and manage step-by-step onboarding tours for platform users.",
+      "pendingOnboarding": "Onboarding pending",
+      "allComplete": "All tours complete",
+      "noTours": "No active onboarding tours configured.",
+      "loadError": "Failed to load onboarding tours: {{message}}",
+      "stepsLabel": "steps",
+      "completedLabel": "completed",
+      "targetRoles": "Roles",
+      "startTour": "Start tour",
+      "resumeTour": "Resume tour",
+      "viewTour": "View tour",
+      "helpTooltip": "Onboarding tours guide new admin users through key workflows step by step.",
+      "navLabel": "Onboarding"
+    },
     "health": {
       "activeOnly": "Active only",
       "helpTooltip": "Real-time API server metrics and alerts. Auto-refreshes every 60 seconds. Acknowledge alerts to record your review in the audit log.",
@@ -275,6 +291,40 @@
     "unknown": "Unknown",
     "view": "View",
     "yes": "Yes"
+  },
+  "onboarding": {
+    "stepOf": "Step {{current}} of {{total}}",
+    "stepsCompleted": "{{completed}} of {{total}} steps",
+    "targetHint": "Look for",
+    "completeStep": "Complete step",
+    "skipStep": "Skip step",
+    "finishTour": "Finish tour",
+    "skipTour": "Skip tour",
+    "restartTour": "Restart tour",
+    "continueOnboarding": "Continue later",
+    "tourCompleted": "Tour complete!",
+    "tourCompletedDescription": "You have completed all steps in this tour.",
+    "tourSkipped": "Tour skipped",
+    "tourSkippedDescription": "You can restart this tour at any time.",
+    "status": {
+      "not_started": "Not started",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "skipped": "Skipped"
+    },
+    "toast": {
+      "startFailedTitle": "Failed to start tour",
+      "stepFailedTitle": "Failed to complete step",
+      "completeFailedTitle": "Failed to complete tour",
+      "completedTitle": "Tour complete",
+      "completedMessage": "\"{{name}}\" has been completed.",
+      "skipFailedTitle": "Failed to skip tour",
+      "skippedTitle": "Tour skipped",
+      "skippedMessage": "\"{{name}}\" has been skipped.",
+      "resetFailedTitle": "Failed to reset tour",
+      "resetTitle": "Tour reset",
+      "resetMessage": "\"{{name}}\" has been reset to the beginning."
+    }
   },
   "nav": {
     "admin": "Admin"

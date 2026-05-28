@@ -3,7 +3,6 @@ package three.two.bit.ppt.reality.api
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import three.two.bit.ppt.reality.favorites.AddFavoriteRequest
 import three.two.bit.ppt.reality.favorites.AddFavoriteResponse
 import three.two.bit.ppt.reality.favorites.FavoritesResponse
 import three.two.bit.ppt.reality.inquiry.CreateInquiryRequest
@@ -117,9 +116,10 @@ class ApiClient(
     suspend fun addFavorite(listingId: String): Result<AddFavoriteResponse> {
         return try {
             val response =
-                client.post("$baseUrl/api/v1/favorites") {
+                client.post("$baseUrl/api/v1/favorites/$listingId") {
                     configureRequest()
-                    setBody(AddFavoriteRequest(listingId))
+                    contentType(ContentType.Application.Json)
+                    setBody("{}")
                 }
             if (response.status.isSuccess()) {
                 Result.success(response.body())

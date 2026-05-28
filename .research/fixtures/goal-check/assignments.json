@@ -1,0 +1,7 @@
+{
+  "generated": "2026-05-28T00:00:00Z",
+  "assignments": [
+    {"task_id":"gap-7a-1-upload-route","branch":"auto-impl/gap-7a-1-upload-route","status":"in-progress","claimed_at":"2026-05-28T00:00:00Z","last_updated":"2026-05-28T00:00:00Z","status_changed_at":"2026-05-28T00:00:00Z"},
+    {"task_id":"gap-7a-1-upload-route-impl","branch":"auto-impl/gap-7a-1-upload-route-impl","status":"review","claimed_at":"2026-05-28T00:00:00Z","last_updated":"2026-05-28T00:00:00Z","status_changed_at":"2026-05-28T00:00:00Z"}
+  ]
+}

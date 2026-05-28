@@ -237,8 +237,8 @@ impl AuditLogRepository {
             if log.previous_hash != previous_hash {
                 tracing::warn!(
                     log_id = %log.id,
-                    expected = ?previous_hash,
-                    actual = ?log.previous_hash,
+                    expected = previous_hash.as_deref().unwrap_or("<none>"),
+                    actual = log.previous_hash.as_deref().unwrap_or("<none>"),
                     "Audit log chain integrity violation: previous hash mismatch"
                 );
                 return Ok(false);

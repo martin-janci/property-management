@@ -945,6 +945,69 @@
       "created_at": "2026-05-27",
       "updated_at": "2026-05-27",
       "plan": null
+    },
+    {
+      "id": "bug-reality-web-realtor-invite-silent-error",
+      "title": "Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review reality-web 2026-05-28",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "RealtorManagement.tsx:529-540 — InviteRealtorModal.handleSubmit awaits inviteRealtor.mutateAsync; on failure only console.error('Failed to invite realtor', error), never reads inviteRealtor.isError/.error nor setState an error message, so the modal stays open with the form intact and zero feedback (the useMutation at reality-api-client/src/agency/hooks.ts:231 exposes both); isPending drives the button but isError is never surfaced"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-05-28",
+      "updated_at": "2026-05-28",
+      "plan": null
+    },
+    {
+      "id": "refactor-reality-web-comparison-i18n",
+      "title": "Reality-web ComparisonUrlHandler hardcodes English loading/error strings",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review reality-web 2026-05-28",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "ComparisonUrlHandler.tsx:52,64 — 'Loading shared comparison...' and 'Failed to load shared comparison. Some properties may no longer be available.' hardcoded in English instead of next-intl t(); reality-web ships sk/cs/de/en and 40 other files use useTranslations/getTranslations, so these render untranslated for non-EN locales"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-05-28",
+      "updated_at": "2026-05-28",
+      "plan": null
+    },
+    {
+      "id": "bug-reality-web-listing-metadata-ssr-throw",
+      "title": "Reality-web listing generateMetadata can throw during SSR on malformed 200 body",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review reality-web 2026-05-28",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "app/[locale]/listings/[slug]/page.tsx:75 getListing returns response.json() typed as ListingDetail with no runtime validation; generateMetadata:93 calls listing.description.slice(0,160) and listing.address.city guarded only by the !listing null-check at :86, so a 200 body with null description / missing address from reality-server throws during SSR instead of degrading to the existing 'Listing Not Found' fallback"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-05-28",
+      "updated_at": "2026-05-28",
+      "plan": null
     }
   ]
 }

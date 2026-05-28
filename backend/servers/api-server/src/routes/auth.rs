@@ -2449,4 +2449,101 @@ mod cookie_security_tests {
         let token = parse_refresh_cookie(&headers);
         assert!(token.is_none());
     }
+
+    // ==================== Path-reconciliation tests (#617) ====================
+    //
+    // Issue #617: PR #565 changed the cookie Path from `/` to `/api/v1/auth`.
+    // These tests verify:
+    //   1. The Set-Cookie Path is exactly `/api/v1/auth` with no trailing slash.
+    //      A trailing slash would make the Path `/api/v1/auth/` — the browser
+    //      would NOT send the cookie to `/api/v1/auth/login` on some user agents,
+    //      silently breaking login/refresh for cookie-first clients.
+    //   2. The clear-cookie (Max-Age=0) uses the SAME Path as the set-cookie.
+    //      If they differ, the browser stores two cookies (one live, one expired)
+    //      and the logout handler cannot clear the live one — silent no-op logout.
+    //   3. Old sessions that hold the token in the JSON body (localStorage flow)
+    //      are still accepted because `refresh_token` fallback to the body is
+    //      preserved in the handler.  That path is exercised via
+    //      `parse_refresh_cookie` returning `None` when no cookie is present.
+
+    /// Path must be exactly `/api/v1/auth` — no trailing slash.
+    ///
+    /// Trailing slash would produce `Path=/api/v1/auth/` which some browsers
+    /// treat as NOT matching `/api/v1/auth/login` (without the slash), causing
+    /// a silent cookie miss on every auth call.
+    #[test]
+    fn refresh_cookie_path_has_no_trailing_slash() {
+        let cookie = build_refresh_cookie("tok", 3600, None).expect("valid");
+        // The Path attribute as written must be exactly `/api/v1/auth`.
+        // We check that the literal string `Path=/api/v1/auth;` (with semicolon
+        // or end-of-string) appears — no `Path=/api/v1/auth/` variant.
+        let path_attr = cookie
+            .split(';')
+            .find(|seg| seg.trim().starts_with("Path="))
+            .expect("Path attribute must be present");
+        assert_eq!(
+            path_attr.trim(),
+            "Path=/api/v1/auth",
+            "Cookie Path must be exactly /api/v1/auth (no trailing slash): {cookie}"
+        );
+    }
+
+    /// Set-cookie and clear-cookie must use the SAME Path value.
+    ///
+    /// If the paths differ the browser keeps both cookies and the logout
+    /// `Max-Age=0` clear-cookie only expires the one it matches — the live
+    /// session cookie survives, causing a silent no-op logout (issue #617).
+    #[test]
+    fn set_and_clear_cookie_use_identical_path() {
+        let set_cookie = build_refresh_cookie("tok.value", 604800, None).expect("valid set");
+        let clear_cookie = build_refresh_cookie("", 0, None).expect("valid clear");
+
+        let extract_path = |c: &str| -> String {
+            c.split(';')
+                .find(|seg| seg.trim().starts_with("Path="))
+                .map(|seg| seg.trim().to_string())
+                .unwrap_or_default()
+        };
+
+        let set_path = extract_path(&set_cookie);
+        let clear_path = extract_path(&clear_cookie);
+        assert_eq!(
+            set_path, clear_path,
+            "Set-cookie and clear-cookie must use the same Path; set={set_cookie}, clear={clear_cookie}"
+        );
+    }
+
+    /// A request with no `refresh_token` cookie falls back gracefully (`None`).
+    ///
+    /// This verifies that the body-based fallback is still reachable for
+    /// existing sessions that pre-date the P0-12 cookie migration and have
+    /// their refresh token stored in localStorage / sent in the JSON body.
+    #[test]
+    fn parse_refresh_cookie_returns_none_when_cookie_header_absent() {
+        // No Cookie header at all — simulates a pre-migration client.
+        let headers = axum::http::HeaderMap::new();
+        let result = parse_refresh_cookie(&headers);
+        assert!(
+            result.is_none(),
+            "Expected None for request without Cookie header (body-fallback path): {result:?}"
+        );
+    }
+
+    /// `parse_refresh_cookie` must not confuse a similarly-named cookie
+    /// (e.g. `other_refresh_token=x`) for the canonical `refresh_token`.
+    #[test]
+    fn parse_refresh_cookie_requires_exact_name_match() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            "other_refresh_token=fake; not_refresh_token=also_fake"
+                .parse()
+                .unwrap(),
+        );
+        let result = parse_refresh_cookie(&headers);
+        assert!(
+            result.is_none(),
+            "Should not match cookie names that merely contain 'refresh_token': {result:?}"
+        );
+    }
 }

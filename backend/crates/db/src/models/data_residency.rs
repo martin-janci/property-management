@@ -149,6 +149,27 @@ impl DataTypeCategory {
             DataTypeCategory::PersonalData | DataTypeCategory::FinancialData
         )
     }
+
+    /// Stable snake_case name matching the `serde(rename_all = "snake_case")`
+    /// convention. Use this instead of `{:?}` in audit/log records so the
+    /// output does not expose Rust-internal PascalCase Debug output.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DataTypeCategory::PersonalData => "personal_data",
+            DataTypeCategory::FinancialData => "financial_data",
+            DataTypeCategory::Documents => "documents",
+            DataTypeCategory::AuditLogs => "audit_logs",
+            DataTypeCategory::Communications => "communications",
+            DataTypeCategory::Analytics => "analytics",
+            DataTypeCategory::All => "all",
+        }
+    }
+}
+
+impl std::fmt::Display for DataTypeCategory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 /// Data residency configuration status.
@@ -391,6 +412,24 @@ pub enum AccessType {
     Migration,
 }
 
+impl AccessType {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/log records.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            AccessType::Read => "read",
+            AccessType::Write => "write",
+            AccessType::Delete => "delete",
+            AccessType::Migration => "migration",
+        }
+    }
+}
+
+impl std::fmt::Display for AccessType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// Data routing status response.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct DataRoutingStatus {
@@ -631,6 +670,30 @@ pub enum ResidencyAuditEvent {
     OverrideAdded,
     /// Data type override removed
     OverrideRemoved,
+}
+
+impl ResidencyAuditEvent {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/hash records so
+    /// the output does not expose internal Rust PascalCase Debug format.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ResidencyAuditEvent::ConfigurationCreated => "configuration_created",
+            ResidencyAuditEvent::ConfigurationUpdated => "configuration_updated",
+            ResidencyAuditEvent::RegionChanged => "region_changed",
+            ResidencyAuditEvent::MigrationStarted => "migration_started",
+            ResidencyAuditEvent::MigrationCompleted => "migration_completed",
+            ResidencyAuditEvent::ComplianceCheckPerformed => "compliance_check_performed",
+            ResidencyAuditEvent::CrossRegionAccess => "cross_region_access",
+            ResidencyAuditEvent::OverrideAdded => "override_added",
+            ResidencyAuditEvent::OverrideRemoved => "override_removed",
+        }
+    }
+}
+
+impl std::fmt::Display for ResidencyAuditEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 /// Query parameters for audit log.

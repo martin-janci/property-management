@@ -115,6 +115,7 @@ run "ppt-db-migrations"   10 'test -d backend/crates/db/migrations && test -d ba
 # wired up and — when pmctl is on PATH — that it at least responds to --help.
 # Live onyx / deploy ops are out of scope for a generic harness.
 run "ppt-deploy"          10 'test -f .claude/skills/ppt-deploy/SKILL.md && test -d .claude/skills/ppt-deploy/commands && test -d .claude/skills/ppt-deploy/references && { ! command -v pmctl >/dev/null 2>&1 || pmctl --help >/dev/null 2>&1; }'
+run "ppt-goal-gate"       10 'test -x .research/goal-check.sh && COVERAGE=.research/fixtures/goal-check/coverage.json ACTION_LIST=.research/fixtures/goal-check/action-list.json ASSIGN=.research/fixtures/goal-check/assignments.json ./.research/goal-check.sh --json | jq -e "length >= 3" >/dev/null'
 
 echo
 echo "== summary =="

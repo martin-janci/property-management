@@ -141,6 +141,22 @@
         "secretRegeneratedTitle": "Tajemství obnoveno"
       }
     },
+    "onboarding": {
+      "title": "Onboarding prohlídky",
+      "subtitle": "Prohlížejte a spravujte krok-za-krokem onboarding prohlídky pro uživatele platformy.",
+      "pendingOnboarding": "Onboarding čeká",
+      "allComplete": "Všechny prohlídky dokončeny",
+      "noTours": "Nenašly se žádné aktivní onboarding prohlídky.",
+      "loadError": "Nepodařilo se načíst onboarding prohlídky: {{message}}",
+      "stepsLabel": "kroků",
+      "completedLabel": "dokončeno",
+      "targetRoles": "Role",
+      "startTour": "Spustit prohlídku",
+      "resumeTour": "Pokračovat v prohlídce",
+      "viewTour": "Zobrazit prohlídku",
+      "helpTooltip": "Onboarding prohlídky provedou nové administrátory krok za krokem klíčovými pracovními postupy.",
+      "navLabel": "Onboarding"
+    },
     "health": {
       "activeOnly": "Pouze aktivní",
       "allAlerts": "Všechna upozornění",
@@ -238,6 +254,40 @@
     "success": "Úspěch",
     "tryAgain": "Zkusit znovu",
     "yes": "Ano"
+  },
+  "onboarding": {
+    "stepOf": "Krok {{current}} z {{total}}",
+    "stepsCompleted": "{{completed}} z {{total}} kroků",
+    "targetHint": "Hledejte",
+    "completeStep": "Dokončit krok",
+    "skipStep": "Přeskočit krok",
+    "finishTour": "Ukončit prohlídku",
+    "skipTour": "Přeskočit prohlídku",
+    "restartTour": "Restartovat prohlídku",
+    "continueOnboarding": "Pokračovat později",
+    "tourCompleted": "Prohlídka dokončena!",
+    "tourCompletedDescription": "Dokončili jste všechny kroky této prohlídky.",
+    "tourSkipped": "Prohlídka přeskočena",
+    "tourSkippedDescription": "Prohlídku můžete kdykoli restartovat.",
+    "status": {
+      "not_started": "Nezahájeno",
+      "in_progress": "Probíhá",
+      "completed": "Dokončeno",
+      "skipped": "Přeskočeno"
+    },
+    "toast": {
+      "startFailedTitle": "Nepodařilo se spustit prohlídku",
+      "stepFailedTitle": "Nepodařilo se dokončit krok",
+      "completeFailedTitle": "Nepodařilo se dokončit prohlídku",
+      "completedTitle": "Prohlídka dokončena",
+      "completedMessage": "\"{{name}}\" byla dokončena.",
+      "skipFailedTitle": "Nepodařilo se přeskočit prohlídku",
+      "skippedTitle": "Prohlídka přeskočena",
+      "skippedMessage": "\"{{name}}\" byla přeskočena.",
+      "resetFailedTitle": "Nepodařilo se resetovat prohlídku",
+      "resetTitle": "Prohlídka resetována",
+      "resetMessage": "\"{{name}}\" byla resetována na začátek."
+    }
   },
   "nav": {
     "admin": "Administrace"

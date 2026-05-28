@@ -237,15 +237,19 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
 
     updates: {
-      url: (() => {
-        const id = process.env.EXPO_PROJECT_ID;
-        if (!id && environment !== 'development') {
-          console.warn(
-            '[app.config.ts] EXPO_PROJECT_ID is unset — OTA updates will not work in this build'
-          );
-        }
-        return `https://u.expo.dev/${id ?? ''}`;
-      })(),
+      // Guard: only set url when EXPO_PROJECT_ID is present.
+      // An empty or missing ID would produce a broken URL ("https://u.expo.dev/")
+      // that prevents the build from resolving the OTA update channel.
+      ...(process.env.EXPO_PROJECT_ID
+        ? { url: `https://u.expo.dev/${process.env.EXPO_PROJECT_ID}` }
+        : (() => {
+            if (environment !== 'development') {
+              console.warn(
+                '[app.config.ts] EXPO_PROJECT_ID is unset — updates.url omitted; OTA updates will not work in this build'
+              );
+            }
+            return {};
+          })()),
       fallbackToCacheTimeout: 0,
       enabled: environment !== 'development',
     },

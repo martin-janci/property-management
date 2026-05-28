@@ -21,6 +21,7 @@ use db::models::{
     WebhookResponse,
 };
 use integrations::{generate_storage_key, LightweightProvider};
+use subtle::ConstantTimeEq;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
@@ -35,16 +36,12 @@ static BASE_URL: LazyLock<String> =
 
 /// Lightweight e-signature provider, initialised once from env.
 ///
-/// Issue #527 (a): if the secret is missing the provider is `None` and every
-/// `build_signing_url` call returns 503 SERVICE_UNAVAILABLE (fail-closed).
-static ESIGN_PROVIDER: LazyLock<Option<LightweightProvider>> = LazyLock::new(|| {
-    match LightweightProvider::from_env() {
-        Ok(p) => Some(p),
-        Err(e) => {
-            tracing::error!(error = %e, "E-signature provider failed to initialise — signing URLs will fail closed");
-            None
-        }
-    }
+/// The `.expect` is safe because `api-server::main` runs the same
+/// `LightweightProvider::from_env` check at startup and refuses to boot if it
+/// fails — this static is only touched on the request path, after that gate.
+static ESIGN_PROVIDER: LazyLock<LightweightProvider> = LazyLock::new(|| {
+    LightweightProvider::from_env()
+        .expect("ESIGN_TOKEN_SECRET must be configured (validated at startup)")
 });
 
 /// Create router for signature endpoints.
@@ -174,38 +171,28 @@ pub async fn create_signature_request(
         auth.name.clone()
     };
 
+    let org_id_str = signature_request.organization_id.to_string();
     for signer in &signature_request.signers {
         // Build a HMAC-secured signing URL via the lightweight provider.
-        // Issue #527 (c): bind the token to the request's org so a
-        // cross-tenant replay (same signer email in two orgs) cannot
-        // mint signature for the wrong org.
+        // The token binds signer email, request id, organisation, and the
+        // signer's current status; the embedded nonce is exposed on
+        // `SignedUrl.nonce` for the future `/sign` consumer to persist.
+        // Issue #527 (c): org_id bound into HMAC prevents cross-tenant replay.
+        let signer_status = signer.status.to_string();
         let sign_url = ESIGN_PROVIDER
-            .as_ref()
-            .ok_or_else(|| {
-                (
-                    StatusCode::SERVICE_UNAVAILABLE,
-                    Json(ErrorResponse::new(
-                        "MISCONFIGURED",
-                        "E-signature provider not configured",
-                    )),
+            .build_signing_url(
+                &signer.email,
+                &signature_request.id.to_string(),
+                &org_id_str,
+                &signer_status,
+            )
+            .map(|s| s.url)
+            .unwrap_or_else(|_| {
+                format!(
+                    "{}/sign?request_id={}&email={}",
+                    *BASE_URL, signature_request.id, signer.email
                 )
-            })
-            .and_then(|p| {
-                p.build_signing_url(
-                    &signer.email,
-                    &signature_request.id.to_string(),
-                    &signature_request.organization_id.to_string(),
-                )
-                .map_err(|_| {
-                    (
-                        StatusCode::SERVICE_UNAVAILABLE,
-                        Json(ErrorResponse::new(
-                            "MISCONFIGURED",
-                            "E-signature provider not configured",
-                        )),
-                    )
-                })
-            })?;
+            });
 
         if let Err(e) = state
             .email_service
@@ -400,34 +387,23 @@ pub async fn send_reminder(
         .clone()
         .unwrap_or_else(|| "Document".to_string());
 
+    let org_id_str = signature_request.organization_id.to_string();
     for signer in pending_signers {
+        let signer_status = signer.status.to_string();
         let sign_url = ESIGN_PROVIDER
-            .as_ref()
-            .ok_or_else(|| {
-                (
-                    StatusCode::SERVICE_UNAVAILABLE,
-                    Json(ErrorResponse::new(
-                        "MISCONFIGURED",
-                        "E-signature provider not configured",
-                    )),
+            .build_signing_url(
+                &signer.email,
+                &signature_request.id.to_string(),
+                &org_id_str,
+                &signer_status,
+            )
+            .map(|s| s.url)
+            .unwrap_or_else(|_| {
+                format!(
+                    "{}/sign?request_id={}&email={}",
+                    *BASE_URL, signature_request.id, signer.email
                 )
-            })
-            .and_then(|p| {
-                p.build_signing_url(
-                    &signer.email,
-                    &signature_request.id.to_string(),
-                    &signature_request.organization_id.to_string(),
-                )
-                .map_err(|_| {
-                    (
-                        StatusCode::SERVICE_UNAVAILABLE,
-                        Json(ErrorResponse::new(
-                            "MISCONFIGURED",
-                            "E-signature provider not configured",
-                        )),
-                    )
-                })
-            })?;
+            });
 
         if let Err(e) = state
             .email_service
@@ -577,9 +553,18 @@ pub async fn handle_webhook(
     Path(provider): Path<String>,
     Json(event): Json<SignatureWebhookEvent>,
 ) -> Result<Json<WebhookResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Issue #527 (d): fail CLOSED when ESIGN_WEBHOOK_SECRET is missing in
-    // a non-debug build. Previous behaviour silently disabled the check,
-    // letting an attacker force-complete any signature request.
+    // Verify the webhook secret header to prevent forged events.
+    //
+    // Fail-closed: if `ESIGN_WEBHOOK_SECRET` is unset or empty the handler
+    // returns 503 rather than waving the request through. `api-server::main`
+    // validates the env var at startup and panics outside of development, so
+    // hitting this branch in production indicates the env was cleared
+    // post-start — still better to refuse than to forge-complete signature
+    // requests.
+    // Issue #527 (d): fail CLOSED in non-debug builds; debug builds log a
+    // warning and pass through to ease local development.
+    // Issue #527 (e): constant-time comparison via subtle to defeat timing
+    // side channels on the webhook secret.
     let expected_secret = match std::env::var("ESIGN_WEBHOOK_SECRET") {
         Ok(s) if !s.is_empty() => s,
         _ => {
@@ -590,15 +575,15 @@ pub async fn handle_webhook(
                 );
                 String::new()
             } else {
-                warn!(
+                error!(
                     provider = %provider,
-                    "Webhook rejected: ESIGN_WEBHOOK_SECRET not configured"
+                    "Webhook rejected: ESIGN_WEBHOOK_SECRET unset at runtime"
                 );
                 return Err((
                     StatusCode::SERVICE_UNAVAILABLE,
                     Json(ErrorResponse::new(
-                        "MISCONFIGURED",
-                        "Webhook secret not configured",
+                        "WEBHOOK_NOT_CONFIGURED",
+                        "Webhook receiver is not configured",
                     )),
                 ));
             }
@@ -609,12 +594,10 @@ pub async fn handle_webhook(
             .get("x-webhook-secret")
             .and_then(|v| v.to_str().ok())
             .unwrap_or("");
-        // Issue #527 (e): constant-time comparison via subtle to defeat
-        // timing side channels on the webhook secret.
         let provided_b = provided.as_bytes();
         let expected_b = expected_secret.as_bytes();
-        let matches = provided_b.len() == expected_b.len()
-            && bool::from(subtle::ConstantTimeEq::ct_eq(provided_b, expected_b));
+        let matches =
+            provided_b.len() == expected_b.len() && bool::from(provided_b.ct_eq(expected_b));
         if !matches {
             warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
             return Err((

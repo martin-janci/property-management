@@ -274,6 +274,7 @@ async fn handle_ws_session(
 /// Delegates to `api_core::extractors::validate_access_token` so the shared
 /// `JWT_VERIFIER` (with its `leeway`, algorithm, and future `iss`/`aud`
 /// hardening) applies uniformly to WebSocket auth and HTTP extractors alike.
+#[cfg(test)]
 fn validate_ws_token(token: &str) -> Result<Uuid, &'static str> {
     validate_access_token_with_exp(token).map(|(uid, _)| uid)
 }

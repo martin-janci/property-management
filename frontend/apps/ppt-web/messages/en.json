@@ -376,7 +376,24 @@
       "resolutionWithdrawnDesc": "The filer has withdrawn the dispute",
       "resolutionDismissed": "Dismissed",
       "resolutionDismissedDesc": "Dispute dismissed — insufficient grounds or procedural issue",
-      "selectedType": "Selected: {{label}}"
+      "selectedType": "Selected: {{label}}",
+      "timeline": {
+        "icon": {
+          "disputeFiled": "Dispute filed",
+          "statusChanged": "Status changed",
+          "mediatorAssigned": "Mediator assigned",
+          "evidenceAdded": "Evidence added",
+          "noteAdded": "Note added",
+          "meetingScheduled": "Meeting scheduled",
+          "resolutionProposed": "Resolution proposed",
+          "resolutionAccepted": "Resolution accepted",
+          "escalated": "Escalated",
+          "closed": "Closed"
+        }
+      },
+      "errors": {
+        "detailsMinLength": "Details must be at least 10 characters."
+      }
     }
   },
   "packages": {

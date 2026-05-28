@@ -115,6 +115,23 @@ pub enum SlovakAccountingFormat {
     GenericCsv,
 }
 
+impl SlovakAccountingFormat {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/log records.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SlovakAccountingFormat::Pohoda => "pohoda",
+            SlovakAccountingFormat::MoneyS3 => "money_s3",
+            SlovakAccountingFormat::GenericCsv => "generic_csv",
+        }
+    }
+}
+
+impl std::fmt::Display for SlovakAccountingFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "gdpr_consent_category", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -127,6 +144,26 @@ pub enum GdprConsentCategory {
     Profiling,
 }
 
+impl GdprConsentCategory {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/log records.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            GdprConsentCategory::Essential => "essential",
+            GdprConsentCategory::Communication => "communication",
+            GdprConsentCategory::Marketing => "marketing",
+            GdprConsentCategory::Analytics => "analytics",
+            GdprConsentCategory::ThirdParty => "third_party",
+            GdprConsentCategory::Profiling => "profiling",
+        }
+    }
+}
+
+impl std::fmt::Display for GdprConsentCategory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "cz_org_type", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -134,6 +171,23 @@ pub enum CzechOrgType {
     Svj,
     Druzstvo,
     ObecniByt,
+}
+
+impl CzechOrgType {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/log records.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            CzechOrgType::Svj => "svj",
+            CzechOrgType::Druzstvo => "druzstvo",
+            CzechOrgType::ObecniByt => "obecni_byt",
+        }
+    }
+}
+
+impl std::fmt::Display for CzechOrgType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 /// Standard Slovak account codes for property management.

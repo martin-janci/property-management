@@ -1333,6 +1333,14 @@ pub async fn get_export_job_status(
 // ============================================================================
 
 /// Pause a report schedule (Story 81.1).
+///
+/// # Security (closes #646)
+///
+/// Uses `RlsConnection` so the caller's org membership is re-verified against
+/// the database on every request (not JWT claims). The `caller_org_id` is
+/// threaded into the repository UPDATE WHERE clause, preventing cross-tenant
+/// IDOR: a principal in org B cannot pause a schedule belonging to org A.
+/// Manager role or above is required to mutate schedules.
 #[utoipa::path(
     put,
     path = "/api/v1/reports/schedules/{id}/pause",
@@ -1340,29 +1348,59 @@ pub async fn get_export_job_status(
     params(("id" = Uuid, Path, description = "Schedule ID")),
     responses(
         (status = 200, description = "Schedule paused", body = ReportSchedule),
-        (status = 401, description = "Unauthorized"),
-        (status = 404, description = "Schedule not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Forbidden - manager role required", body = ErrorResponse),
+        (status = 404, description = "Schedule not found", body = ErrorResponse),
     )
 )]
 pub async fn pause_schedule(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: only manager-tier roles may mutate report schedules.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to modify report schedules",
+            )),
+        ));
+    }
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
     state
         .report_schedule_repo
-        .pause(id)
+        .pause(id, caller_org_id)
         .await
         .map(Json)
-        .map_err(|_| {
-            (
+        .map_err(|e| match e {
+            common::errors::AppError::NotFound(_) => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "SCHEDULE_NOT_FOUND",
+                    "Report schedule not found",
+                )),
+            ),
+            _ => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to pause schedule")),
-            )
+            ),
         })
 }
 
 /// Resume a paused report schedule (Story 81.1).
+///
+/// # Security (closes #646)
+///
+/// Uses `RlsConnection` so the caller's org membership is re-verified against
+/// the database on every request (not JWT claims). The `caller_org_id` is
+/// threaded into the repository UPDATE WHERE clause, preventing cross-tenant
+/// IDOR: a principal in org B cannot resume a schedule belonging to org A.
+/// Manager role or above is required to mutate schedules.
 #[utoipa::path(
     put,
     path = "/api/v1/reports/schedules/{id}/resume",
@@ -1370,25 +1408,47 @@ pub async fn pause_schedule(
     params(("id" = Uuid, Path, description = "Schedule ID")),
     responses(
         (status = 200, description = "Schedule resumed", body = ReportSchedule),
-        (status = 401, description = "Unauthorized"),
-        (status = 404, description = "Schedule not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Forbidden - manager role required", body = ErrorResponse),
+        (status = 404, description = "Schedule not found", body = ErrorResponse),
     )
 )]
 pub async fn resume_schedule(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: only manager-tier roles may mutate report schedules.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to modify report schedules",
+            )),
+        ));
+    }
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
     state
         .report_schedule_repo
-        .resume(id)
+        .resume(id, caller_org_id)
         .await
         .map(Json)
-        .map_err(|_| {
-            (
+        .map_err(|e| match e {
+            common::errors::AppError::NotFound(_) => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "SCHEDULE_NOT_FOUND",
+                    "Report schedule not found",
+                )),
+            ),
+            _ => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to resume schedule")),
-            )
+            ),
         })
 }
 
@@ -1442,6 +1502,13 @@ fn execution_download_url(exec: &db::models::report_schedule::ReportExecution) -
 /// schedule, ordered by `started_at` descending (most recent first). Each
 /// completed execution that produced a file includes a `download_url` pointing
 /// to the presigned file-download endpoint.
+///
+/// # Security (closes #647)
+///
+/// Uses `RlsConnection` so the caller's org membership is re-verified against
+/// the database. The schedule existence check uses the org-scoped
+/// `get_by_id_scoped` query, preventing a principal in org B from listing
+/// executions belonging to org A's schedule.
 #[utoipa::path(
     get,
     path = "/api/v1/reports/schedules/{id}/executions",
@@ -1459,7 +1526,7 @@ fn execution_download_url(exec: &db::models::report_schedule::ReportExecution) -
 )]
 pub async fn list_schedule_executions(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(params): Query<ListExecutionsParams>,
 ) -> Result<Json<ExecutionHistoryResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1511,11 +1578,18 @@ pub async fn list_schedule_executions(
         }
     }
 
-    // Verify the schedule exists before querying executions.
-    // This prevents misleading "empty list" responses for non-existent schedules.
+    // Capture the caller's org and release the RLS connection before the
+    // schedule lookup (which uses the pool directly, not the RLS connection).
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
+    // Verify the schedule exists AND belongs to the caller's org before
+    // querying executions.  This prevents cross-tenant IDOR (#647): a principal
+    // in org B cannot enumerate executions for org A's schedule even if they
+    // know the UUID.  Returns the same 404 for "not found" and "wrong org".
     let schedule = state
         .report_schedule_repo
-        .get_by_id(id)
+        .get_by_id_scoped(id, caller_org_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, schedule_id = %id, "Failed to look up report schedule");
@@ -1566,6 +1640,12 @@ pub async fn list_schedule_executions(
 }
 
 /// Get a single report execution by ID (Story 81.2).
+///
+/// # Security (closes #647)
+///
+/// Uses `RlsConnection` and `get_execution_scoped` which joins through
+/// `report_schedules.organization_id` — a principal in org B cannot read
+/// executions belonging to org A's schedules.
 #[utoipa::path(
     get,
     path = "/api/v1/reports/executions/{id}",
@@ -1573,20 +1653,24 @@ pub async fn list_schedule_executions(
     params(("id" = Uuid, Path, description = "Execution ID")),
     responses(
         (status = 200, description = "Report execution", body = ReportExecution),
-        (status = 401, description = "Unauthorized"),
-        (status = 404, description = "Execution not found"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Execution not found", body = ErrorResponse),
     )
 )]
 pub async fn get_execution(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ReportExecution>, (StatusCode, Json<ErrorResponse>)> {
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
     state
         .report_schedule_repo
-        .get_execution(id)
+        .get_execution_scoped(id, caller_org_id)
         .await
-        .map_err(|_| {
+        .map_err(|e| {
+            tracing::error!(error = %e, execution_id = %id, "Failed to get execution");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to get execution")),
@@ -1605,6 +1689,13 @@ pub async fn get_execution(
 }
 
 /// Get presigned download URL for a completed report execution (Story 81.2).
+///
+/// # Security (closes #647)
+///
+/// Uses `RlsConnection` and validates the execution belongs to the caller's org
+/// (via `get_execution_scoped`) before generating a download URL.  This prevents
+/// cross-tenant IDOR where a principal in org B could obtain a file URL for
+/// org A's execution by supplying a known execution UUID.
 #[utoipa::path(
     get,
     path = "/api/v1/reports/executions/{id}/download",
@@ -1612,28 +1703,88 @@ pub async fn get_execution(
     params(("id" = Uuid, Path, description = "Execution ID")),
     responses(
         (status = 200, description = "Download URL", body = ExecutionDownloadUrl),
-        (status = 401, description = "Unauthorized"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Execution not found", body = ErrorResponse),
     )
 )]
 pub async fn get_execution_download_url(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ExecutionDownloadUrl>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
+    // Verify the execution belongs to the caller's org before generating a URL.
+    let execution = state
         .report_schedule_repo
-        .get_download_url(id)
+        .get_execution_scoped(id, caller_org_id)
         .await
-        .map(Json)
-        .map_err(|_| {
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                execution_id = %id,
+                org_id = %caller_org_id,
+                "Failed to look up execution for download URL"
+            );
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to get download URL")),
+                Json(ErrorResponse::new("DB_ERROR", "Failed to get execution")),
             )
-        })
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "EXECUTION_NOT_FOUND",
+                    "Report execution not found",
+                )),
+            )
+        })?;
+
+    // Derive MIME type from file extension.
+    let file_name = execution
+        .file_name
+        .as_deref()
+        .unwrap_or("report.pdf")
+        .to_string();
+    let content_type = if file_name.ends_with(".pdf") {
+        "application/pdf"
+    } else if file_name.ends_with(".xlsx") {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    } else {
+        "text/csv"
+    };
+
+    let file_key = execution.file_key.ok_or_else(|| {
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse::new(
+                "NO_FILE_YET",
+                "Execution does not have a completed file yet",
+            )),
+        )
+    })?;
+
+    let url = format!("/api/v1/reports/files/{}", file_key);
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
+
+    Ok(Json(ExecutionDownloadUrl {
+        url,
+        expires_at,
+        file_name,
+        content_type: content_type.to_string(),
+    }))
 }
 
 /// Retry a failed report execution (Story 81.2).
+///
+/// # Security (closes #647)
+///
+/// Uses `RlsConnection` and `retry_execution_scoped` which verifies the
+/// execution's parent schedule belongs to the caller's org before performing
+/// the status reset.  Manager role or above is required — retrying an execution
+/// is a mutating action equivalent to resuming a schedule.
 #[utoipa::path(
     post,
     path = "/api/v1/reports/executions/{id}/retry",
@@ -1641,24 +1792,52 @@ pub async fn get_execution_download_url(
     params(("id" = Uuid, Path, description = "Execution ID")),
     responses(
         (status = 200, description = "Execution queued for retry", body = ReportExecution),
-        (status = 401, description = "Unauthorized"),
+        (status = 400, description = "Execution is not in failed state", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Forbidden - manager role required", body = ErrorResponse),
+        (status = 404, description = "Execution not found", body = ErrorResponse),
     )
 )]
 pub async fn retry_execution(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ReportExecution>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: only manager-tier roles may trigger re-execution.
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to retry report executions",
+            )),
+        ));
+    }
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
     state
         .report_schedule_repo
-        .retry_execution(id)
+        .retry_execution_scoped(id, caller_org_id)
         .await
         .map(Json)
-        .map_err(|_| {
-            (
+        .map_err(|e| match e {
+            common::errors::AppError::NotFound(_) => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "EXECUTION_NOT_FOUND",
+                    "Report execution not found",
+                )),
+            ),
+            common::errors::AppError::BadRequest(msg) => (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new("INVALID_STATE", msg.as_str())),
+            ),
+            _ => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to retry execution")),
-            )
+            ),
         })
 }
 

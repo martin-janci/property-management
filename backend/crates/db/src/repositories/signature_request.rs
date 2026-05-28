@@ -358,6 +358,77 @@ impl SignatureRequestRepository {
         .await
     }
 
+    /// Fetch pending/in-progress signature requests whose `expires_at` falls
+    /// within the upcoming reminder window (not-yet-expired but expiring
+    /// before `cutoff`).
+    ///
+    /// This is the system-level query the scheduler calls every tick.
+    /// Living in the repo keeps the raw-pool access out of
+    /// `services/scheduler.rs` (where the inline SELECT made the
+    /// scheduler's reminder loop harder to audit and effectively
+    /// invisible to the per-tenant RLS lint).
+    pub async fn find_expiring_in_window(
+        &self,
+        cutoff: chrono::DateTime<Utc>,
+    ) -> Result<Vec<SignatureRequest>, SqlxError> {
+        sqlx::query_as::<_, SignatureRequest>(
+            r#"
+            SELECT * FROM signature_requests
+            WHERE status IN ('pending', 'in_progress')
+              AND expires_at IS NOT NULL
+              AND expires_at > NOW()
+              AND expires_at <= $1
+            "#,
+        )
+        .bind(cutoff)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Stamp the `last_reminder_at` timestamp on a specific signer inside a
+    /// request's JSONB `signers` array.
+    ///
+    /// Implemented with `jsonb_set` indexed into the array so it doesn't
+    /// race against `update_signer_status` (which rewrites the whole
+    /// `signers` blob). Idempotent — calling it twice with the same
+    /// timestamp is a no-op for downstream consumers.
+    pub async fn touch_signer_reminder(
+        &self,
+        id: Uuid,
+        signer_email: &str,
+        reminded_at: chrono::DateTime<Utc>,
+    ) -> Result<(), SqlxError> {
+        // First find the array index of the target signer. We can't do this
+        // purely in SQL without an LATERAL/function call because emails are
+        // compared case-insensitively here (matching `update_signer_status`).
+        let request = self.find_by_id(id).await?.ok_or(SqlxError::RowNotFound)?;
+        let index = request
+            .signers
+            .iter()
+            .position(|s| s.email.eq_ignore_ascii_case(signer_email))
+            .ok_or(SqlxError::RowNotFound)?;
+
+        // Format timestamp as RFC3339 — JSONB stringifies it the same way
+        // serde would for `Option<DateTime<Utc>>`.
+        let ts_rfc3339 = reminded_at.to_rfc3339();
+        let path = format!("{{{},last_reminder_at}}", index);
+
+        sqlx::query(
+            r#"
+            UPDATE signature_requests
+            SET signers = jsonb_set(signers, $2::text[], to_jsonb($3::text), true),
+                updated_at = now()
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .bind(&path)
+        .bind(&ts_rfc3339)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     /// Expire old pending requests.
     pub async fn expire_old_requests(&self) -> Result<i64, SqlxError> {
         let result = sqlx::query(

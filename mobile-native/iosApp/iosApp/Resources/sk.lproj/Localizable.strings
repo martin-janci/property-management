@@ -283,6 +283,24 @@
 "either" = "Akýkoľvek";
 "send" = "Odoslať";
 
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Dopyt";
+"inquiry_reply_placeholder" = "Napíšte odpoveď…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Kontaktné údaje";
+"inquiry_message_placeholder" = "Opíšte váš záujem o túto nehnuteľnosť…";
+"inquiry_sent_confirmation" = "Váš dopyt bol odoslaný. Odpoveď dostanete na zadanú e-mailovú adresu.";
+
+/* Inquiries Screen */
+"inquiries_sign_in_description" = "Sledujte svoje dopyty na nehnuteľnosti a konverzácie s agentmi.";
+"failed_to_load_inquiries" = "Nepodarilo sa načítať dopyty";
+
+/* Inquiry Status Badge */
+"inquiry_status_pending" = "Čakajúci";
+"inquiry_status_replied" = "Zodpovedaný";
+"inquiry_status_closed" = "Uzavretý";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Vitajte v Reality Portál";
 "sign_in_description" = "Prihláste sa pre uloženie obľúbených, sledovanie dopytov a personalizované odporúčania.";
