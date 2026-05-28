@@ -612,7 +612,9 @@ impl PlatformAdminRepository {
 /// These three variants map 1-to-1 onto the `event_kind` CHECK constraint
 /// defined in migration 00163.  They are stored as snake_case strings so the
 /// DB column is human-readable without a lookup table.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, utoipa::ToSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum SupportToolingEventKind {
     /// Admin opened / refreshed the Support Data overview page.
@@ -747,8 +749,14 @@ mod tests {
 
     #[test]
     fn event_kind_strings_are_stable_and_match_db_constraint() {
-        assert_eq!(SupportToolingEventKind::SupportDataViewed.as_str(), "support_data_viewed");
-        assert_eq!(SupportToolingEventKind::SupportUserSearched.as_str(), "support_user_searched");
+        assert_eq!(
+            SupportToolingEventKind::SupportDataViewed.as_str(),
+            "support_data_viewed"
+        );
+        assert_eq!(
+            SupportToolingEventKind::SupportUserSearched.as_str(),
+            "support_user_searched"
+        );
         assert_eq!(
             SupportToolingEventKind::SupportSessionsRevoked.as_str(),
             "support_sessions_revoked"

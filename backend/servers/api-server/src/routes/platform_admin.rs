@@ -2751,7 +2751,11 @@ pub async fn revoke_user_sessions(
     .unwrap_or_default();
     if let Err(e) = state
         .platform_admin_repo
-        .log_support_tooling_event(admin_id, SupportToolingEventKind::SupportSessionsRevoked, props)
+        .log_support_tooling_event(
+            admin_id,
+            SupportToolingEventKind::SupportSessionsRevoked,
+            props,
+        )
         .await
     {
         tracing::warn!(
@@ -2874,7 +2878,11 @@ pub async fn get_support_data(
     .unwrap_or_default();
     if let Err(e) = state
         .platform_admin_repo
-        .log_support_tooling_event(admin_user_id, SupportToolingEventKind::SupportDataViewed, props)
+        .log_support_tooling_event(
+            admin_user_id,
+            SupportToolingEventKind::SupportDataViewed,
+            props,
+        )
         .await
     {
         tracing::warn!(

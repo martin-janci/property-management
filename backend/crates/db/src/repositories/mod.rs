@@ -109,9 +109,10 @@ pub use organization_member::OrganizationMemberRepository;
 pub use password_reset::PasswordResetRepository;
 pub use person_month::PersonMonthRepository;
 pub use platform_admin::{
-    PlatformAdminRepository, PlatformStats, SupportActivityLog, SupportData, SupportDataViewedProps,
-    SupportSessionsRevokedProps, SupportToolingEventKind, SupportToolingEventRow, SupportUserInfo,
-    SupportUserMembership, SupportUserSearchedProps, SupportUserSession,
+    PlatformAdminRepository, PlatformStats, SupportActivityLog, SupportData,
+    SupportDataViewedProps, SupportSessionsRevokedProps, SupportToolingEventKind,
+    SupportToolingEventRow, SupportUserInfo, SupportUserMembership, SupportUserSearchedProps,
+    SupportUserSession,
 };
 pub use portal_password_reset::PortalPasswordResetRepository;
 pub use role::RoleRepository;
