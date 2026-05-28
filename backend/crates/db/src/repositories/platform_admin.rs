@@ -508,6 +508,8 @@ pub struct SupportActivityLog {
 /// across the entire platform (cross-tenant, bypasses RLS).
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 pub struct SupportData {
+    /// Total number of organisations (tenants) in the system, all statuses.
+    pub total_orgs: i64,
     /// Total number of users in the system.
     pub total_users: i64,
     /// Number of users with status `'active'`.
@@ -535,7 +537,12 @@ impl PlatformAdminRepository {
     ///
     /// All queries bypass RLS — caller must hold `AuditRead` capability.
     pub async fn get_support_data(&self) -> Result<SupportData, SqlxError> {
-        // 1. User counts per status
+        // 1. Total organisation count (all statuses)
+        let total_orgs: i64 = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM organizations")
+            .fetch_one(&self.pool)
+            .await?;
+
+        // 2. User counts per status
         let user_rows = sqlx::query_as::<_, (String, i64)>(
             r#"
             SELECT status, COUNT(*) AS cnt
@@ -560,7 +567,7 @@ impl PlatformAdminRepository {
             }
         }
 
-        // 2. Active sessions — non-revoked, non-expired refresh tokens
+        // 3. Active sessions — non-revoked, non-expired refresh tokens
         let active_sessions: i64 = sqlx::query_scalar::<_, i64>(
             r#"
             SELECT COUNT(*)
@@ -571,12 +578,12 @@ impl PlatformAdminRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        // 3. Total fault count
+        // 4. Total fault count
         let total_faults: i64 = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM faults")
             .fetch_one(&self.pool)
             .await?;
 
-        // 4. Fault counts per status
+        // 5. Fault counts per status
         let fault_rows = sqlx::query_as::<_, (String, i64)>(
             r#"
             SELECT status::text, COUNT(*) AS cnt
@@ -594,6 +601,7 @@ impl PlatformAdminRepository {
             .collect();
 
         Ok(SupportData {
+            total_orgs,
             total_users,
             active_users,
             pending_users,
@@ -658,12 +666,14 @@ pub struct SupportDataViewedProps {
 
 /// Props for `support_user_searched`.
 ///
-/// Records what search terms were used so repeated lookups for the same user
-/// can be spotted in an audit query.
+/// Records search metadata so repeated lookups can be spotted in an audit
+/// query.  The raw query string is NOT stored — it commonly contains email
+/// addresses (PII); only the character count is persisted.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 pub struct SupportUserSearchedProps {
-    /// Free-text query string, if any (may be `None` for unfiltered listings).
-    pub query: Option<String>,
+    /// Character count of the free-text query, or `None` for unfiltered listings.
+    /// The literal string is deliberately omitted to avoid storing PII (emails).
+    pub query_length: Option<i64>,
     /// Status filter applied, if any.
     pub status_filter: Option<String>,
     /// Number of results returned.
@@ -791,12 +801,12 @@ mod tests {
     #[test]
     fn support_user_searched_props_round_trips_json() {
         let props = SupportUserSearchedProps {
-            query: Some("alice@example.com".into()),
+            query_length: Some(17), // len("alice@example.com") — no PII stored
             status_filter: Some("active".into()),
             result_count: 3,
         };
         let json = serde_json::to_value(&props).expect("serialize");
-        assert_eq!(json["query"], "alice@example.com");
+        assert_eq!(json["query_length"], 17);
         assert_eq!(json["status_filter"], "active");
         assert_eq!(json["result_count"], 3);
     }

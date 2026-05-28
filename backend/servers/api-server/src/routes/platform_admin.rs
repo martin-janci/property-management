@@ -2520,7 +2520,7 @@ pub async fn search_users_for_support(
     // Emit support_user_searched analytics event (#635).
     // Fire-and-forget: a tracking failure must not fail the API response.
     let props = serde_json::to_value(SupportUserSearchedProps {
-        query: query.query.clone(),
+        query_length: query.query.as_deref().map(|q| q.len() as i64),
         status_filter: query.status.clone(),
         result_count: total,
     })
@@ -2872,7 +2872,7 @@ pub async fn get_support_data(
     // Emit support_data_viewed analytics event (#635).
     // Fire-and-forget: a tracking failure must not fail the API response.
     let props = serde_json::to_value(SupportDataViewedProps {
-        tenant_count: data.total_users, // tenant_count proxied via total_users (cross-tenant)
+        tenant_count: data.total_orgs,
         fault_total: data.total_faults,
     })
     .unwrap_or_default();
