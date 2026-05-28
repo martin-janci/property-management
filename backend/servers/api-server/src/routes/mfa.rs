@@ -593,7 +593,10 @@ pub async fn disable_mfa(
         tracing::error!(error = %e, "Failed to begin disable transaction");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DATABASE_ERROR", "Failed to disable MFA")),
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to disable MFA",
+            )),
         )
     })?;
 
@@ -619,7 +622,10 @@ pub async fn disable_mfa(
         tracing::error!(error = %e, "Failed to commit disable transaction");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DATABASE_ERROR", "Failed to disable MFA")),
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to disable MFA",
+            )),
         )
     })?;
 
@@ -994,7 +1000,10 @@ pub async fn verify_recovery_code(
                 tracing::error!(error = %e, "recovery/verify: fetch enrollment failed");
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DATABASE_ERROR", "Failed to check MFA status")),
+                    Json(ErrorResponse::new(
+                        "DATABASE_ERROR",
+                        "Failed to check MFA status",
+                    )),
                 )
             })?;
 
@@ -1019,7 +1028,10 @@ pub async fn verify_recovery_code(
         tracing::error!(error = %e, "recovery/verify: fetch codes failed");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DATABASE_ERROR", "Failed to fetch recovery codes")),
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to fetch recovery codes",
+            )),
         )
     })?;
 
@@ -1032,7 +1044,9 @@ pub async fn verify_recovery_code(
                 resource_type: Some("mfa_recovery_no_codes".to_string()),
                 resource_id: Some(user_id),
                 org_id: None,
-                details: Some(serde_json::json!({ "outcome": "denied", "reason": "no_codes_remaining" })),
+                details: Some(
+                    serde_json::json!({ "outcome": "denied", "reason": "no_codes_remaining" }),
+                ),
                 old_values: None,
                 new_values: None,
                 ip_address: None,
@@ -1061,7 +1075,10 @@ pub async fn verify_recovery_code(
             tracing::error!(error = %e, "recovery/verify: hash comparison failed");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("VERIFICATION_ERROR", "Failed to verify recovery code")),
+                Json(ErrorResponse::new(
+                    "VERIFICATION_ERROR",
+                    "Failed to verify recovery code",
+                )),
             )
         })?;
 
@@ -1097,18 +1114,22 @@ pub async fn verify_recovery_code(
 
     // Mark as used atomically. The `AND used_at IS NULL` guard + rows_affected
     // check prevents replay under concurrent requests.
-    let upd =
-        sqlx::query("UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL")
-            .bind(matched_id)
-            .execute(&state.db)
-            .await
-            .map_err(|e| {
-                tracing::error!(error = %e, "recovery/verify: mark used failed");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DATABASE_ERROR", "Failed to consume recovery code")),
-                )
-            })?;
+    let upd = sqlx::query(
+        "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL",
+    )
+    .bind(matched_id)
+    .execute(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, "recovery/verify: mark used failed");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to consume recovery code",
+            )),
+        )
+    })?;
 
     if upd.rows_affected() == 0 {
         // Lost race to a concurrent caller — fail closed.
@@ -1139,7 +1160,9 @@ pub async fn verify_recovery_code(
             resource_type: Some("mfa_recovery_used".to_string()),
             resource_id: Some(user_id),
             org_id: None,
-            details: Some(serde_json::json!({ "outcome": "allowed", "codes_remaining": remaining })),
+            details: Some(
+                serde_json::json!({ "outcome": "allowed", "codes_remaining": remaining }),
+            ),
             old_values: None,
             new_values: None,
             ip_address: None,
