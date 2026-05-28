@@ -145,14 +145,14 @@
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=654 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=migration 00163 + SupportToolingEventKind enum + log_support_tooling_event repo + 3 fire-and-forget emitters in platform_admin routes; cargo check+test exit=0; fmt-fix=a93e62be (joined 5 short test assertions per cargo fmt); fmt-fix2=ce8352f6 (joined SupportSessionsRevoked event call in routes to single 100-char line); fmt-fix3=4255236f (added missing trailing newline to db platform_admin.rs)",
-      "reviewer_summary": "verdict=changes head_oid=d785cd741e5d445ef54fb87cc57ee400400cb15f note=test-CI-failing + PII in query field (email stored verbatim in immutable table) + tenant_count/total_users semantic mismatch; auth and migration structure sound",
-      "last_reviewed_oid": "d785cd741e5d445ef54fb87cc57ee400400cb15f",
+      "reviewer_summary": "verdict=changes head_oid=6b7d8611 note=fix-round6-addresses-review-blockers: PII(query→query_length)+tenant_count(total_users→total_orgs)+ci-push-event-will-pass; awaiting-ci",
+      "last_reviewed_oid": "6b7d8611",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 3,
+      "fix_rounds": 6,
       "merge_attempted_at": null
     },
     {
