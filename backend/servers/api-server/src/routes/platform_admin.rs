@@ -1,4 +1,3 @@
-//! Platform Admin routes (Epic 10B).
 //!
 //! Routes for platform-wide administrative operations including
 //! organization management, feature flags, system health, and announcements.
@@ -2752,11 +2751,7 @@ pub async fn revoke_user_sessions(
     .unwrap_or_default();
     if let Err(e) = state
         .platform_admin_repo
-        .log_support_tooling_event(
-            admin_id,
-            SupportToolingEventKind::SupportSessionsRevoked,
-            props,
-        )
+        .log_support_tooling_event(admin_id, SupportToolingEventKind::SupportSessionsRevoked, props)
         .await
     {
         tracing::warn!(
