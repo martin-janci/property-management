@@ -235,7 +235,7 @@
       "merged_at": null,
       "specialist": "generic",
       "implementer_summary": "pr=652 status=done specialist=generic scope_drift=false code_reuse_warn=none note=fix-round-1: corrected --theirs to --ours in on-demand rebase job mechanical-conflict resolution; git diff --check clean; YAML parses OK",
-      "reviewer_summary": null,
+      "reviewer_summary": "verdict=changes note=BLOCKING --theirs/--ours inverted in rebase context (fix pushed 90ca94a9); non-blocking: heredoc $PLURAL substitution order, /tmp/rebase_result fixed path; fix applied — awaiting CI",
       "last_reviewed_oid": "b1aa07ed",
       "scope_drift": false,
       "code_reuse_warn": null,
