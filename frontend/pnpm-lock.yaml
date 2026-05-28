@@ -123,8 +123,8 @@ importers:
         specifier: ^56.0.3
         version: 56.0.3(expo@55.0.25)(react-native@0.85.3)(react@19.2.0)
       expo-constants:
-        specifier: ~55.0.16
-        version: 55.0.16(expo@55.0.25)(react-native@0.85.3)
+        specifier: ~56.0.16
+        version: 56.0.16(expo@55.0.25)(react-native@0.85.3)
       expo-device:
         specifier: ~55.0.16
         version: 55.0.16(expo@55.0.25)
@@ -2474,11 +2474,21 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@expo/env@2.3.0:
+    resolution: {integrity: sha512-9HnnIbzwTTdbwSjNLXTk0fPm9ZwMJ7c1/31tsni8HZ8Q62KzYCyspahH+V365vg5J6lr001DzNwBxVWSaYCQLg==}
+    engines: {node: '>=20.12.0'}
+    dependencies:
+      chalk: 4.1.2
+      debug: 4.4.3(supports-color@8.1.1)
+      getenv: 2.0.0
+    transitivePeerDependencies:
+      - supports-color
+
   /@expo/fingerprint@0.16.7:
     resolution: {integrity: sha512-BH8sicYOqZ1iBMwCVEGIz6uTTfylosjc49FoMmCYIzKOiYdiVehsfoYBwyfxwWIiya1VMhm1gv0cgOP8fxHpDw==}
     hasBin: true
     dependencies:
-      '@expo/env': 2.1.2
+      '@expo/env': 2.3.0
       '@expo/spawn-async': 1.8.0
       arg: 5.0.2
       chalk: 4.1.2
@@ -7115,6 +7125,19 @@ packages:
       react-native: 0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3)(@types/react@19.2.14)(react@19.2.0)
     transitivePeerDependencies:
       - supports-color
+
+  /expo-constants@56.0.16(expo@55.0.25)(react-native@0.85.3):
+    resolution: {integrity: sha512-6tsiN+gmTUPp/atyA+uY9Tg8VOdXdmb4s/3TVGolfn6A/oCAraw1pcPZX5XllyD+xUguxB6eBSFAT8494hZVMA==}
+    peerDependencies:
+      expo: '*'
+      react-native: '*'
+    dependencies:
+      '@expo/env': 2.3.0
+      expo: 55.0.25(@babel/core@7.29.0)(@expo/dom-webview@55.0.6)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
+      react-native: 0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3)(@types/react@19.2.14)(react@19.2.0)
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /expo-device@55.0.16(expo@55.0.25):
     resolution: {integrity: sha512-o6eQjO2reoniXpos0FnPcrAVMYUfFPcIUdMRUUpKwQys7cmTJBjJLbOo+SuctVXUrsHUm6zyoKI7nX3C3lpqJw==}
