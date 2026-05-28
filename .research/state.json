@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-05-27T23:41:49Z",
-  "last_run_ms": 420000,
-  "last_pr_seen": 634,
+  "last_run_iso": "2026-05-28T03:19:04Z",
+  "last_run_ms": 540000,
+  "last_pr_seen": 642,
   "last_issue_seen": 629,
-  "last_commit_sha": "4f2f9b43a46e32722a89d8e1649fdf2e87cea782",
+  "last_commit_sha": "c20339727bb17791ea6073a95d28f6d6a245d015",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -96,6 +96,21 @@
       "runs_seen": 1,
       "last_seen": "2026-05-27",
       "recent_churn": 546
+    },
+    "backend/servers/api-server/tests/integration/document_folder_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-28",
+      "recent_churn": 429
+    },
+    "frontend/apps/admin-web/src/pages/SupportDataPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-28",
+      "recent_churn": 304
+    },
+    "frontend/apps/admin-web/src/features/help/HelpSidebar.test.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-28",
+      "recent_churn": 193
     }
   },
   "seen_signals": [
@@ -108,6 +123,9 @@
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/integration/document_folder_tests.rs",
+    "churn-hotspot-frontend/apps/admin-web/src/features/help/HelpSidebar.test.tsx",
+    "churn-hotspot-frontend/apps/admin-web/src/pages/SupportDataPage.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
@@ -139,6 +157,9 @@
     "code-review-ppt-web-ui-untranslated-strings",
     "code-review-reality-server-inquiry-read-idor",
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
+    "code-review-reality-web-comparison-url-i18n",
+    "code-review-reality-web-listing-metadata-shape",
+    "code-review-reality-web-realtor-mgmt-silent-error",
     "dep-update-noise-2026-05-20",
     "dep-update-noise-2026-05-23",
     "fixme-in-merged-code-documentsbrowse-folder-preselect",
@@ -172,13 +193,13 @@
     "reality-server": "2026-05-26",
     "ppt-web-ui": "2026-05-27",
     "ppt-web-core": "2026-05-25",
-    "reality-web": null,
+    "reality-web": "2026-05-28",
     "mobile-rn": "2026-05-27",
     "mobile-native-kmp": "2026-05-26"
   },
   "stats": {
-    "runs": 11,
-    "vectors_created": 35,
+    "runs": 12,
+    "vectors_created": 38,
     "plans_created": 6,
     "quiet_days": 0,
     "auto_fix_count": 0
@@ -194,7 +215,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 6,
+    "next_index": 7,
     "role_last_run": {
       "pm-tech-lead": "2026-05-23",
       "pm-backend": "2026-05-24",
@@ -202,11 +223,11 @@
       "pm-qa": "2026-05-25",
       "pm-devops": "2026-05-27",
       "pm-security": "2026-05-27",
-      "pm-data": null,
+      "pm-data": "2026-05-28",
       "pm-integration": null
     }
   },
   "coverage_cursor": {
-    "next_index": 5
+    "next_index": 6
   }
 }

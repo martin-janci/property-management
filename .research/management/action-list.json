@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T23:40:00Z",
+  "generated": "2026-05-28T04:35:00Z",
   "items": [
     {
       "id": "pm-backend-fix-ai-equipment-idor",
@@ -1332,8 +1332,9 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "source": "pm-analysis 2026-05-27",
+      "resolved": "PR #638 merged 2026-05-28 — mobile EAS config: removed submit.staging, guarded updates.url against missing EXPO_PROJECT_ID",
       "depends_on": []
     },
     {
@@ -1454,8 +1455,9 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-10b-5-support-data-api-retry",
-      "status": "open",
+      "status": "done",
       "source": "gap-scan 2026-05-27",
+      "resolved": "PR #635 merged 2026-05-28 — SupportDataPage.tsx (useSupportData hook + FaultByStatusTable, audit_read gated) +395/-0; 10b-5 frontend surface now exists",
       "depends_on": [
         "gap-10b-5-support-data-api-retry"
       ]
@@ -1648,9 +1650,10 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "post-merge-review 2026-05-27",
+      "resolved": "PR #637 merged 2026-05-28 — HelpSidebar a11y (focus-trap, dialog role, tooltips on 11 admin-web pages) + HelpSidebar.test.tsx (+490/-51)",
       "depends_on": []
     },
     {
@@ -1659,9 +1662,10 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "post-merge-review 2026-05-27",
+      "resolved": "PR #636 merged 2026-05-28 \u2014 7 backend integration test cases in document_folder_tests.rs (+331/-98); CLOSES issue #580",
       "depends_on": []
     },
     {
@@ -1735,9 +1739,10 @@
       "owner_role": "pm-security",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "pm-analysis 2026-05-27"
+      "source": "pm-analysis 2026-05-27",
+      "resolved": "PR #642 merged 2026-05-28 — auth.rs + sso.rs cookie Path reconciliation + runbook, WITH inline tests (+370/-0); closes the #617 cookie-Path regression class"
     },
     {
       "id": "pm-security-p1-04-audit-debug-format",
@@ -1768,6 +1773,56 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-05-27"
+    },
+    {
+      "id": "pm-data-support-data-tracking-events",
+      "action": "Define analytics tracking events for the new Support Data admin page (#635): support_data_viewed (props: admin_user_id, tenant_count, fault_total), and per-user-lookup support_user_searched / support_sessions_revoked events, so support-tooling usage is auditable separately from the audit_read capability gate.",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-28"
+    },
+    {
+      "id": "pm-data-fault-status-kpi-consistency",
+      "action": "Reconcile the FaultStatusCount/FaultByStatusTable metric definition surfaced by SupportDataPage (#635) against the owner_analytics / portfolio_performance fault KPIs — confirm the status buckets and counting window are defined once and reused, not re-derived per route, to avoid divergent fault-count numbers across admin-web vs ppt-web dashboards.",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-28"
+    },
+    {
+      "id": "pm-data-support-data-retention-privacy",
+      "action": "Document the data-retention + privacy posture for support-data session/activity reads (get_user_sessions / get_user_activity behind #635 page): confirm PII (session IP, activity log) access is itself audit-logged and retention-bounded, since support staff now read cross-tenant user diagnostics through the new UI.",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-28"
+    },
+    {
+      "id": "pm-scrum-master-triage-followup-backlog-growth",
+      "action": "Triage the from-merged-review follow-up backlog: 5 items closed this window (#636 closed #580; #635/#637/#638/#642 resolved their queue items) — confirm the close rate now matches the ingest rate, and slot the remaining open from-merged-review items (fix-569/573/574/581/583) into the dispatcher buffer with explicit owners.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-28"
+    },
+    {
+      "id": "pm-scrum-master-promote-79-2-after-cookie-path",
+      "action": "Now that PR #642 reconciled the cookie Path regression (#617) with tests, schedule the gap-79-2-auth-callback-e2e verification so story 79-2 (Authentication Flow) can finally promote partial->done; cookie-Path was the last security blocker, e2e is the only remaining gap.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-28"
     }
   ]
 }

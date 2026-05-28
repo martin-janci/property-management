@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-05-27 23:39 UTC by routine</sub>
+<sub>Last regenerated: 2026-05-28 03:16 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -18,6 +18,7 @@ picks from here.
 | 3 | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | security | code-review api-core 2026-05-25, ai.rs:1133, equipment.rs:144 | 2026-05-25 | done |
 | 3 | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | security | issue #439, signatures.rs:628, integrations.rs:2743, PR #450 | 2026-05-25 | done |
 | 3 | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | security | code-review api-core 2026-05-23, ai.rs:3002, PR #461 | 2026-05-25 | done |
+| 2 | Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI | bug | code-review reality-web 2026-05-28, rotating-expert-review | 2026-05-28 | open |
 | 2 | Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape | bug | code-review mobile-rn 2026-05-27, rotating-expert-review | 2026-05-27 | open |
 | 2 | DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id) | dx | PR #623 | 2026-05-27 | open |
 | 2 | ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column) | bug | PR #611, issue #616 | 2026-05-27 | open |
@@ -44,6 +45,8 @@ picks from here.
 | 2 | Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation | dx | PR #282, PR #328, commit c97781a, commit 254f01d | 2026-05-23 | open |
 | 2 | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | security | issue #160, PR #420, PR #421 | 2026-05-23 | done |
 | 2 | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs | dx | PR #328, commit 254f01d | 2026-05-20 | open |
+| 1 | Reality-web listing generateMetadata can throw during SSR on malformed 200 body | bug | code-review reality-web 2026-05-28, rotating-expert-review | 2026-05-28 | open |
+| 1 | Reality-web ComparisonUrlHandler hardcodes English loading/error strings | refactor | code-review reality-web 2026-05-28, rotating-expert-review | 2026-05-28 | open |
 | 1 | Mobile VotingScreen pure transforms toUiStatus/toUiVote have no tests | test-gap | code-review mobile-rn 2026-05-27, rotating-expert-review | 2026-05-27 | open |
 | 1 | Mobile VotingScreen hardcodes en-US in toLocaleDateString — vote dates never localize | bug | code-review mobile-rn 2026-05-27, rotating-expert-review | 2026-05-27 | open |
 | 1 | Duplicated animate-spin spinner markup across mediation page + chat thread (no shared Spinner) | refactor | PR #555, code-review 2026-05-27 | 2026-05-27 | open |
