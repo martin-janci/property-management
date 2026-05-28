@@ -60,6 +60,22 @@ GC1_PASS=$([ "$GC1_ORPHANS" = "0" ] && [ "$GC1_DONE_OPEN" = "0" ] && echo true |
 record "GC1-referential-integrity" "$GC1_PASS" \
   "orphans=$GC1_ORPHANS done_with_open_gap=$GC1_DONE_OPEN" "orphans=0 done_with_open_gap=0" false
 
+# --- GC2: coverage progress — done-story count is monotonic non-decreasing
+# vs the previously-committed coverage.json (HEAD). This is the HARD-FAIL
+# check once enforcement is turned on (PR 2). Exempt deep-scan commits
+# (a deliberate human refresh may legitimately re-classify done -> partial).
+GC2_NOW=$(jq '[.stories[] | select(.status=="done")] | length' "$COVERAGE")
+GC2_KIND=$(jq -r '.scan_kind // "upkeep"' "$COVERAGE")
+GC2_HEAD=$(git show "HEAD:$COVERAGE" 2>/dev/null \
+           | jq '[.stories[] | select(.status=="done")] | length' 2>/dev/null || echo "$GC2_NOW")
+if [ "$GC2_KIND" = "deep" ]; then
+  record "GC2-coverage-progress" true "done=$GC2_NOW (deep-scan exempt)" "done>=$GC2_HEAD" true
+elif [ "$GC2_NOW" -ge "$GC2_HEAD" ]; then
+  record "GC2-coverage-progress" true "done=$GC2_NOW head=$GC2_HEAD" "done>=$GC2_HEAD" true
+else
+  record "GC2-coverage-progress" false "done=$GC2_NOW head=$GC2_HEAD" "done>=$GC2_HEAD" true
+fi
+
 # --- emit + exit ---
 if [ "$EMIT_JSON" = "1" ]; then echo "$RESULTS"; fi
 if [ "$ENFORCE" = "1" ] && [ "$HARD_FAIL" = "1" ]; then
