@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T17:17:30Z",
+  "generated": "2026-05-28T17:22:00Z",
   "assignments": [
     {
       "task_id": "gap-82-5-ios-keychain-push-v2",
@@ -114,18 +114,18 @@
     {
       "task_id": "gap-84-2-esignature-ui-blocking-fixes",
       "branch": "auto-impl/gap-84-2-esignature-ui-blocking-fixes",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-05-28T17:11:55Z",
-      "last_updated": "2026-05-28T17:17:30Z",
-      "status_changed_at": "2026-05-28T17:11:55Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-28T17:22:00Z",
+      "status_changed_at": "2026-05-28T17:22:00Z",
+      "pr_number": 719,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/719",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=719 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=issue3 implemented (manager in signerParties+type+i18n); issues 1,2,4,5,6 already on dev; typecheck+biome exit 0",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
