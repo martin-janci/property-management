@@ -8,7 +8,7 @@
 //! - RLS tenant isolation: cross-tenant upload returns 4xx, no record created
 //! - Auth guard: unauthenticated → 401
 //! - Validation failures: missing file, bad MIME type, bad category
-//! - MIME type allow-list: all 12 supported MIME types return 201 (T11)
+//! - MIME type allow-list: all 11 supported MIME types return 201 (T11)
 //! - File size limit: exactly 50 MiB succeeds (T12); 50 MiB + 1 byte rejected (T13)
 //!
 //! # Design notes
@@ -802,9 +802,9 @@ async fn test_upload_non_member_rejected(pool: PgPool) {
 // T11: MIME type allow-list — every supported MIME type returns 201
 // ============================================================================
 
-/// Exercises all 12 entries from `ALLOWED_MIME_TYPES` to confirm each
+/// Exercises all 11 entries from `ALLOWED_MIME_TYPES` to confirm each
 /// returns 201 from the upload endpoint.  This is a data-driven loop rather
-/// than 12 separate test functions to keep the suite fast.
+/// than 11 separate test functions to keep the suite fast.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_upload_all_allowed_mime_types(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -824,7 +824,11 @@ async fn test_upload_all_allowed_mime_types(pool: PgPool) {
             "doc.docx",
             b"PK fake docx",
         ),
-        ("application/vnd.ms-excel", "sheet.xls", b"\xD0\xCF\x11\xE0 fake"),
+        (
+            "application/vnd.ms-excel",
+            "sheet.xls",
+            b"\xD0\xCF\x11\xE0 fake",
+        ),
         (
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "sheet.xlsx",
@@ -1010,15 +1014,13 @@ async fn test_upload_file_at_size_limit_succeeds(pool: PgPool) {
         .as_str()
         .and_then(|s| s.parse().ok())
         .expect("id must be UUID");
-    let size_stored: i64 =
-        sqlx::query_scalar("SELECT size_bytes FROM documents WHERE id = $1")
-            .bind(doc_id)
-            .fetch_one(&pool)
-            .await
-            .expect("document must exist");
+    let size_stored: i64 = sqlx::query_scalar("SELECT size_bytes FROM documents WHERE id = $1")
+        .bind(doc_id)
+        .fetch_one(&pool)
+        .await
+        .expect("document must exist");
     assert_eq!(
-        size_stored,
-        ONE_MIB as i64,
+        size_stored, ONE_MIB as i64,
         "stored size_bytes must match the uploaded file size"
     );
 
@@ -1068,22 +1070,25 @@ async fn test_upload_file_over_size_limit_rejected(pool: PgPool) {
     // The body-limit layer returns 413; the handler's in-stream check also
     // returns 413.  Either fires first — what matters is 4xx rejection.
     assert!(
-        response.status == StatusCode::PAYLOAD_TOO_LARGE
-            || response.status.is_client_error(),
+        response.status == StatusCode::PAYLOAD_TOO_LARGE || response.status.is_client_error(),
         "file over MAX_FILE_SIZE must be rejected (4xx), got {}. Body: {}",
         response.status,
         response.text()
     );
 
     // No document record must have been created in this org for this oversized attempt
-    let count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM documents WHERE organization_id = $1 AND title = $2")
-            .bind(org_id)
-            .bind("Oversized Document")
-            .fetch_one(&pool)
-            .await
-            .expect("count query");
-    assert_eq!(count, 0, "no document record must be created for oversized upload");
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM documents WHERE organization_id = $1 AND title = $2",
+    )
+    .bind(org_id)
+    .bind("Oversized Document")
+    .fetch_one(&pool)
+    .await
+    .expect("count query");
+    assert_eq!(
+        count, 0,
+        "no document record must be created for oversized upload"
+    );
 
     cleanup_test_user(&pool, &user.email).await;
 }
@@ -1133,7 +1138,10 @@ async fn test_upload_s3_stub_succeeds_and_creates_record(pool: PgPool) {
     let storage = StorageService::with_s3_client(config)
         .await
         .expect("StorageService construction must succeed");
-    assert!(storage.has_s3_client(), "storage service must have S3 client");
+    assert!(
+        storage.has_s3_client(),
+        "storage service must have S3 client"
+    );
 
     let email_service = EmailService::new("http://localhost:8080".to_string(), false);
     let jwt_service = JwtService::new(JWT).expect("jwt service");
@@ -1195,8 +1203,8 @@ async fn test_upload_s3_stub_succeeds_and_creates_record(pool: PgPool) {
         .await
         .expect("read body");
     let body_str = String::from_utf8_lossy(&body_data);
-    let json: serde_json::Value = serde_json::from_slice(&body_data)
-        .expect("response must be valid JSON");
+    let json: serde_json::Value =
+        serde_json::from_slice(&body_data).expect("response must be valid JSON");
 
     assert_eq!(
         status,
