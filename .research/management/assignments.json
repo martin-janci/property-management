@@ -2726,7 +2726,7 @@
       "branch": "auto-impl/fix-574-auth-refresh-derive-role",
       "status": "review",
       "claimed_at": "2026-05-27T18:12:36Z",
-      "last_updated": "2026-05-28T08:08:33Z",
+      "last_updated": "2026-05-28T08:14:10Z",
       "status_changed_at": "2026-05-27T19:10:00Z",
       "pr_number": 632,
       "pr_url": "https://github.com/martin-janci/property-management/pull/632",
@@ -2741,7 +2741,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-05-28T08:08:33Z"
+      "merge_attempted_at": "2026-05-28T08:14:10Z"
     },
     {
       "task_id": "fix-579-helpsidebar-a11y",
