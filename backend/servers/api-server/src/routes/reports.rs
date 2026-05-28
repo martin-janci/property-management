@@ -1908,7 +1908,7 @@ fn validate_cron_expression(expr: &str) -> bool {
 ///
 /// Uses `RlsConnection` (not the deprecated `AuthUser`) so that:
 /// - The caller's tenant membership is **re-verified against the database** on
-///   every request (defends against stale JWT role claims).
+///   every request (defends against stale JWT role claims / leak #10).
 /// - The RBAC check (`is_manager()`) is performed against the DB-derived role
 ///   stored in `RlsConnection`, not the JWT `role` claim.
 /// - The caller's `tenant_id` is threaded into the repository UPDATE as
