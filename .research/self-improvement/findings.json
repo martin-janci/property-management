@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
-  "updated_at": "2026-05-28T17:35:06Z",
-  "generated_by": "b8bf30ad92843ad998b924caea3d322fcd07f95f",
+  "updated_at": "2026-05-28T18:32:00Z",
+  "generated_by": "228ddc61a45ae162cf23e992d0f50d0111f1706d",
   "findings": [
     {
       "finding_id": "subagent-workspace-contamination",
@@ -331,6 +331,44 @@
       "proposed_fix": "Make Phase 2.6 refill bound-aware: stop refilling once claimable reaches the GC3 upper bound (60), and refill only up to that cap. Optionally drain excess by deferring lowest-score claimable items back to backlog rather than holding them claimable. Wire GC3 bounds as the single source of truth shared by refill and goal-check.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill) + .research/goal-check.sh (shared bounds)",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "terminal-ids-excluded-failed-rows",
+      "title": "ALL_ARCHIVE_IDS built from merged+done only, allowing failed archive rows to re-enter the claimable pool",
+      "severity": "high",
+      "category": "claim-dedup",
+      "status": "fixed-this-run",
+      "first_seen": "2026-05-28T18:21:53Z",
+      "last_seen": "2026-05-28T18:21:53Z",
+      "recurrence": 1,
+      "symptom": "Phase 3 candidate selection constructed ALL_ARCHIVE_IDS with select(.status==\"merged\" or .status==\"done\"), missing failed rows; those rows re-appeared as claimable.",
+      "evidence": [
+        "gap-10b-5-support-data-backend-v2 (failed), gap-81-1-schedule-rbac-fix (failed), pm-qa-create-backend-servers-reality-server (failed) surfaced as claimable candidates before fix",
+        "Run 228ddc61 Phase 3: caught mid-run; fix applied before claims were stamped"
+      ],
+      "root_cause": "TERMINAL_IDS (for dep-satisfaction) and ALL_ARCHIVE_IDS (for cross-file uniqueness) were conflated as a single set filtered on merged+done, excluding failed rows from the uniqueness check.",
+      "proposed_fix": "Split into two sets: ALL_ARCHIVE_IDS = full archive (any status) for cross-file dedup; TERMINAL_IDS = merged+done only for dep-satisfaction. Documented in Phase 3 spec.",
+      "effort": "trivial",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 3 candidate selection)",
+      "operator_notes": "Fixed inline this run. Add T21 self-test: verify ALL_ARCHIVE_IDS includes failed rows."
+    },
+    {
+      "finding_id": "git-push-blocked-by-proxy",
+      "title": "Local proxy at 127.0.0.1:36415 returns HTTP 403 for git push — retry loop exhausted, must use MCP fallback",
+      "severity": "medium",
+      "category": "push-path",
+      "status": "workaround-in-place",
+      "first_seen": "2026-05-28T18:21:53Z",
+      "last_seen": "2026-05-28T18:21:53Z",
+      "recurrence": 1,
+      "evidence": [
+        "All 4 retry attempts (2s/4s/8s/16s backoff) for git push returned HTTP 403 curl 22",
+        "mcp__github__push_files used successfully for Phase 3.5 and Phase 6 commits"
+      ],
+      "proposed_fix": "Treat mcp__github__push_files as the primary push path in this environment; fall back to git push only if MCP tool unavailable. Add PUSH_METHOD=mcp env flag to dispatcher-prompt.",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 3.5 + Phase 6 push step)",
       "operator_notes": ""
     }
   ]
