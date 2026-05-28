@@ -537,6 +537,32 @@ Idempotency: items already `status=="dropped"` are skipped.
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
+### Finish-first preamble (PR 3/5 — behind `DISPATCHER_FINISH_FIRST=1`)
+
+When the flag is set, the dispatcher biases all 3 slots toward **one
+target epic per run** instead of spraying claims across epics. The goal
+is depth-first convergence: close out one epic before starting the next.
+
+The target epic lives in `.research/management/objective.json` (schema:
+`{schema_version, epic_prefix, selected_at, last_action, reason,
+stats_at_selection}`). The picker keeps it idempotent — re-running on a
+target with claimable work is a no-op KEEP.
+
+```bash
+if [ "${DISPATCHER_FINISH_FIRST:-0}" = "1" ]; then
+  PICK_OUT=$(.research/pick-target-epic.sh --update --json)
+  TARGET_EP=$(echo "$PICK_OUT" | jq -r .epic_prefix)
+  PICK_ACTION=$(echo "$PICK_OUT" | jq -r .action)
+  # Surface in Phase 7 → "Target epic:" line (see Phase 7 spec).
+  echo "Phase 3 finish-first: $PICK_OUT"
+fi
+```
+
+The picker rule is **closest-to-done**: prefer the epic with the fewest
+remaining claimable open tasks, tie-break by max priority. The dispatcher
+abandons the current target only when it is exhausted (0 claimable opens
+left). See `pick-target-epic.sh` for the full rule.
+
 ```python
 free_slots = 3   # constant per run
 
@@ -593,6 +619,27 @@ Define `epic_prefix(task_id)` as the first matching pattern:
 - else: full `task_id`
 
 After candidate sort, walk the list and **claim at most 2 tasks per `epic_prefix` per run**, unless the epic has at least one task in `merged` status in `assignments.json` already (cold-epic protection: avoid spending all 3 slots on the same blocked epic). If the 3rd candidate has the same prefix as the first 2 picked, skip it and continue scanning for a different-prefix candidate. If no different-prefix candidate exists, claim only the 2 — `free_slots=1` is fine, do not pad with same-prefix.
+
+**Finish-first override (PR 3/5).** When `DISPATCHER_FINISH_FIRST=1` AND the
+finish-first preamble selected a target epic (`TARGET_EP != "NONE"`):
+
+1. Before sort, **filter candidates** to those whose `epic_prefix == TARGET_EP`.
+2. The same-epic 2/run cap is **lifted** — claim up to all 3 slots from the
+   target epic. The whole point of finish-first is depth-first concentration.
+3. **Fallback to the unfiltered pool** if the target epic yields 0 claimable
+   candidates after the filter (e.g. all dep-blocked at this exact moment).
+   This prevents the run from going idle when the target is temporarily
+   stuck; the picker will repick on the next exhaustion.
+4. Cold-epic protection (the existing carve-out) doesn't apply when
+   finish-first is active — the operator chose to concentrate on the target
+   even if it has no merges yet; that's the bootstrap case.
+
+The fallback is intentionally narrow: it only triggers when the *filtered*
+candidate list is empty, NOT when finish-first claims fewer than 3 from the
+target. If the target has only 1 claimable task, claim 1 — don't pad with
+other-epic candidates. Filling the run with off-target work defeats the
+finish-first contract and dilutes the signal in Phase 7's `Target epic:`
+line.
 
 **Cross-PR dedup guards.**
 
@@ -1361,6 +1408,7 @@ always appear so it is visible in dispatcher commits when the check actually ran
 Claimed (this run):       [<id> -> <specialist>, …]                (≤3, may be [])
 Same-epic skipped:        [<id> (would exceed 2/epic), …]          (item #2; [] if none)
 Dup-skipped:              [<id> reason=<open-pr|open-assignment|file-overlap> conflicts_with=<#n|task_id>, …]   (cross-PR dedup guards; [] if none)
+Target epic:              <epic_prefix open=N claimable=M action=<keep|select|repick|empty> | off>   (PR 3/5 finish-first; "off" when DISPATCHER_FINISH_FIRST≠1)
 Transitions (this run):   [<id> in-progress→review, …]             ([] if none)
 In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>
