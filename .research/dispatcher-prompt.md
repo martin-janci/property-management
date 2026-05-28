@@ -225,11 +225,38 @@ against `git rev-list/fetch`; no checkout needed.
    fi
    ```
 
-4. Read `action-list.json`, `assignments.json`, `coverage.json`.
+4. Read **active** state files only. Archive files are loaded on demand
+   later (issue #9 — token spending):
+
+   - `.research/management/assignments.json` — **active rows only**
+     (`status` ∈ `{in-progress, review}`). Terminal rows (merged/failed/done)
+     live in `assignments-archive.json` and are NOT read here. The archive is
+     loaded **only** by Phase 7 for `Merged total` / `Failed total` counts,
+     via a streaming `jq | length` (file not parsed into the run's narrative
+     context).
+   - `.research/management/action-list.json` — **non-terminal items only**
+     (`status` ∈ `{open, in-progress}`). Done/dropped items live in
+     `action-list-archive.json` and are NOT read by the dispatcher in steady
+     state — they exist for human audit / post-merge analytics only.
+   - **Do NOT read `coverage.json` here.** It is only consumed by Phase 2.6
+     Tier 1 when `open_claimable_count < 18`. Most runs have a healthy buffer
+     and skip the file entirely (saves ~10k tokens / run when buffer is OK).
+     Phase 2.6 reads it lazily.
+
+   Token budget impact (measured 2026-05-28 dev snapshot): active
+   `assignments.json` shrinks from ~39k → ~4k tokens, `action-list.json`
+   from ~20k → ~14k. Combined with lazy `coverage.json` this is ~40k
+   tokens off the per-run baseline.
+
 5. Backfill any row missing `status_changed_at` = `claimed_at`. Backfill any
    row missing the new fields (`last_reviewed_oid`, `scope_drift`,
    `code_reuse_warn`, `empty_branch`, `rebase_attempts`, `fix_rounds`,
    `reclaim_attempts`, `merge_attempted_at`) to `null` / `0`.
+
+   **Backfill applies to active rows only.** The archive is frozen — rows
+   moved there in past runs are never rewritten, even if their schema is
+   pre-hardening. The self-test exempts archive rows from hardening-field
+   checks for the same reason.
 
    **Gap-1 backfill (re-review forcing):** for any row with
    `reviewer_summary != null AND last_reviewed_oid == null`, LEAVE
@@ -340,26 +367,46 @@ Return EXACTLY: `scanned=<N> clean=<K> issues=<M> note=<short>`.
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
-```python
-open_count = count(action-list.json items where status=="open" AND id NOT in assignments)
+**Archive lookup pattern (issue #9 — token spending).** With terminal rows
+split into `assignments-archive.json`, the dep_blocked check below MUST
+consult BOTH files when resolving a `depends_on` entry. Compute a set of
+terminal task_ids once via jq and reuse — this keeps the archive at the
+filesystem level (small set output, archive never enters the LLM context):
 
-# gap 2: an item is "dep-blocked" if any depends_on entry points at a
-# task that is NOT in assignments with status in {merged, done}.
-def is_dep_blocked(item, assignments):
+```bash
+# Cheap one-shot: build the set of terminal task_ids from active + archive.
+TERMINAL_IDS_JSON=$(jq -r '.assignments[]
+                          | select(.status=="merged" or .status=="done")
+                          | .task_id' \
+  .research/management/assignments.json \
+  .research/management/assignments-archive.json \
+  | sort -u | jq -R . | jq -s .)
+```
+
+Use `$TERMINAL_IDS_JSON` as the lookup for "dep is satisfied". The pre-split
+predicate (which loaded all of `assignments.json` to scan for status) is
+replaced by an `index($dep) != null` test against this small set.
+
+```python
+open_count = count(action-list.json items where status=="open" AND id NOT in active_assignments)
+
+# gap 2 + issue #9: a dep is "satisfied" iff its task_id is in TERMINAL_IDS
+# (merged or done, sourced from active + archive). An item is dep-blocked
+# if ANY depends_on entry is NOT satisfied.
+def is_dep_blocked(item, terminal_ids):
     deps = item.get("depends_on") or []
     if not deps:
         return False
     for dep_id in deps:
-        row = assignments.find(task_id=dep_id)
-        if row is None or row.status not in ("merged", "done"):
+        if dep_id not in terminal_ids:
             return True
     return False
 
-dep_blocked_count    = count(open items where is_dep_blocked(item, assignments))
+dep_blocked_count    = count(open items where is_dep_blocked(item, terminal_ids))
 open_claimable_count = open_count - dep_blocked_count
 ```
 
-- **Tier 1 (self-refill):** if `open_claimable_count < 18` (half of the 36 target) AND `coverage.json` has stories → refill from coverage using rubric, append top `(36 - open_claimable_count)`. Log `Tier 1: <old_claimable> → <new_claimable> (+N)`.
+- **Tier 1 (self-refill):** if `open_claimable_count < 18` (half of the 36 target) → **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, append top `(36 - open_claimable_count)`. Log `Tier 1: <old_claimable> → <new_claimable> (+N)`. When `open_claimable_count >= 18` the file is never opened, saving ~10k tokens / run.
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
 
   ```bash
@@ -436,24 +483,31 @@ SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 ```python
 free_slots = 3   # constant per run
 
-def claimable(c, assignments):
-    # gap 3: structured depends_on is canonical. An item is claimable iff
-    # every depends_on entry references a row in {merged, done}.
+# gap 3 + issue #9: claimable iff every depends_on entry is in TERMINAL_IDS
+# (the set built in Phase 2.6 from active + archive — reuse it here, do not
+# rebuild). active_ids is the set of task_ids in the active assignments file.
+def claimable(c, terminal_ids):
     for dep_id in (c.get("depends_on") or []):
-        row = assignments.find(task_id=dep_id)
-        if row is None or row.status not in ("merged", "done"):
+        if dep_id not in terminal_ids:
             return False
     return True
 
 candidates = [c for c in action-list
               if c.status == "open"
-              and c.id not in assignments
-              and claimable(c, assignments)]
+              and c.id not in active_ids
+              and c.id not in terminal_ids       # don't re-claim something already shipped
+              and claimable(c, terminal_ids)]
 candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
 ```
 
 The legacy `dependency` free-text field is NOT consulted by the claim
 predicate. Only `depends_on` is.
+
+**Cross-file uniqueness (issue #9 — archive split):** Phase 3 MUST refuse to
+claim any task_id that appears in either `assignments.json` (active) OR
+`assignments-archive.json` (terminal). Reusing a task_id from the archive
+would resurrect a merged/failed task with a fresh `claimed_at` — a bug.
+The `c.id not in terminal_ids` check above enforces this.
 
 **Same-epic burst-claim guard (NEW — item #2):**
 
@@ -617,8 +671,57 @@ For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.h
 >    `CHANGES_REQUESTED→changes`) and return:
 >    `verdict=<v> head_oid=$HEAD_OID note=dedup-existing-review-at-$EX_AT`.
 >
-> 1. `gh pr diff <n>`
-> 2. `gh pr view <n> --json title,body,files,checks,headRefOid`
+> 1. **Smart-triage metadata pull (issue #9 — token spending).** Do NOT
+>    `gh pr diff <n>` blind — for big PRs that's 50-100k tokens of unfiltered
+>    text into your context, most of it lockfile / generated-client noise.
+>    Pull metadata first:
+>
+>    ```bash
+>    gh pr view <n> --repo martin-janci/property-management \
+>      --json title,body,checks,headRefOid,files \
+>      --jq '{title, body, headRefOid,
+>             checks: [.checks[] | {name, conclusion}],
+>             files: [.files[] | {path, additions, deletions}]
+>                    | sort_by(-(.additions + .deletions))}'
+>    ```
+>
+>    You now have: title/body, CI status, and every changed file ranked by
+>    LOC. **Total cost: a few hundred tokens** regardless of PR size.
+>
+> 1.5. **Triage which files actually need a full diff.** Apply these rules
+>      in order and build the path-include / path-exclude lists:
+>
+>    | Path pattern | Decision |
+>    |---|---|
+>    | `**/*auth*`, `**/*security*`, `**/middleware/*`, `**/jwt*`, `**/rbac*`, `**/rls*` | **MUST full-diff** (hot path) |
+>    | `backend/crates/db/migrations/**` | **MUST full-diff** + check for `DROP`, `NOT NULL`, `DEFAULT` clauses |
+>    | `**/Cargo.lock`, `**/pnpm-lock.yaml`, `frontend/packages/api-client/src/**` (generated) | **SKIP** — note in body, do not diff |
+>    | Files with `additions + deletions > 800` LOC | **Header + tail only**: `gh pr diff <n> -- <path> \| head -200; echo '...'; gh pr diff <n> -- <path> \| tail -100` |
+>    | Test files (`**/tests/**`, `**/*_test.rs`, `**/*.test.ts`) | **Skim**: read assertions but don't deeply audit fixtures |
+>    | Everything else | Full diff per file via `gh pr diff <n> -- <path>` |
+>
+>    Heuristic limit: target ≤ 25k tokens of diff content into your context
+>    across all `gh pr diff` calls combined. If the budget is blown by hot-path
+>    files alone, that's fine — security review needs the bytes. But never
+>    spend the budget on lockfile diffs or generated clients.
+>
+> 2. After triage, run the targeted diff calls. Example for a typical PR:
+>    ```bash
+>    # Hot-path mandatory:
+>    gh pr diff <n> -- 'backend/**/auth*' 'backend/**/security*' 'backend/**/middleware/*'
+>    # Migration check:
+>    gh pr diff <n> -- 'backend/crates/db/migrations/*'
+>    # Normal-LOC files (under 800 each):
+>    gh pr diff <n> -- 'backend/servers/api-server/src/routes/documents/*' \
+>                    -- ':!**/generated/**'
+>    # Big file headers only:
+>    gh pr diff <n> -- 'backend/servers/api-server/src/routes/admin/big.rs' | head -200
+>    ```
+>
+>    For tiny PRs (`additions + deletions < 500` total), skip the triage
+>    overhead — the full `gh pr diff <n>` is cheap and clearer. Triage pays
+>    off above ~1k LOC of changes.
+>
 > 3. Review against `.claude/skills/ppt-implement/agents/<sp>.md` conventions,
 >    security (RLS for db-migration, auth for pm-security), regressions, tests,
 >    verify bands (Tested/Built/CI parity).
@@ -627,16 +730,19 @@ For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.h
 > 5. **If `code_reuse_warn != none`**: explicitly judge whether the new code
 >    duplicates an existing helper named in the warning, and if so, demand
 >    delegation in the changes verdict.
-> 6. **JSON-key-case sanity check (NEW — item #5)**: if the PR diff touches
->    Rust tests or `tests/common/`, run:
+> 6. **JSON-key-case sanity check (NEW — item #5)**: if the triage in step 1.5
+>    found any Rust test paths in the changeset, run the check on **just those
+>    paths** (issue #9 — don't reload the full diff):
 >
 >    ```bash
 >    # Find DTOs the tests touch that carry rename_all = camelCase
 >    rg -n '#\[serde\(rename_all\s*=\s*"camelCase"\)\]' backend/ --type rust | head -20
->    # Find snake_case JSON accessors in the test file diff
->    gh pr diff <n> | rg -n '^\+.*json\[\s*"[a-z]+_[a-z_]+"\s*\]' | head -20
+>    # Path-filtered diff for snake_case JSON accessors in test files only
+>    gh pr diff <n> -- 'backend/**/tests/**' 'backend/**/*_test.rs' \
+>      | rg -n '^\+.*json\[\s*"[a-z]+_[a-z_]+"\s*\]' | head -20
 >    ```
 >
+>    Skip the check entirely if no Rust test paths are in the changeset.
 >    If both produce hits AND they refer to the same DTO type, demand a fix
 >    in the changes verdict (this is the bug class that bit PR #473 on 2026-05-24).
 > 7. `gh pr review <n> --approve --body '<summary>'` OR
@@ -842,24 +948,53 @@ fix rounds per row; subsequent calls return `failed`.
 
 Update `assignments.generated = now`. Include `action-list.json` if Phase 2.6 Tier 1 refilled.
 
+**Archive move (NEW — issue #9 — token spending).** For any row whose status
+transitioned in this run to a terminal value (`merged` / `failed` / `done`):
+append it to `assignments-archive.json` and DELETE it from `assignments.json`.
+The active file must NEVER carry a terminal row after Phase 6 — that is
+the whole point of the split. Pseudocode:
+
 ```bash
-# Row-count regression guard (NEW — issue #8). On 2026-05-27 commit 4def18ce
-# truncated assignments.json from 118 rows to 2 via stale-read → Edit-write
-# race ("1 insertion(+), 2570 deletions(-)" while the commit message claimed
-# a single reviewer-verdict update). Several similar recoveries since
-# (8d696633, 23fee3c7, 35c680a2). Abort the commit if the row count drops
-# by more than 2 vs the version we pulled in Phase 1.
-NEW_COUNT=$(jq '.assignments | length' .research/management/assignments.json)
-OLD_COUNT=$(git show HEAD:.research/management/assignments.json 2>/dev/null \
-            | jq '.assignments | length' 2>/dev/null || echo 0)
-if [ "$NEW_COUNT" -lt "$((OLD_COUNT - 2))" ]; then
-  echo "PHASE 6 ABORT: assignments.json row count ${OLD_COUNT} -> ${NEW_COUNT} (loss > 2)" >&2
+NEW_TERMINAL_IDS_JSON=$(printf '%s' "$transitions" | jq -R 'split("\n") | map(select(length>0)) | map(split(" ") | {id:.[0], new:.[2]}) | map(select(.new=="merged" or .new=="failed" or .new=="done") | .id)')
+# Move them: append to archive, drop from active.
+jq --argjson ids "$NEW_TERMINAL_IDS_JSON" '
+  .assignments += ([..]_built_from_active_using_ids) | .archived_at = now
+' .research/management/assignments-archive.json > /tmp/archive.new
+jq --argjson ids "$NEW_TERMINAL_IDS_JSON" '
+  .assignments |= map(select(.task_id as $t | $ids | index($t) | not))
+' .research/management/assignments.json > /tmp/active.new
+mv /tmp/archive.new .research/management/assignments-archive.json
+mv /tmp/active.new  .research/management/assignments.json
+```
+
+(The exact jq is more verbose than shown — the point is `archive ∪= moved`,
+`active −= moved`, atomically via mv. Implement with whatever clarity you
+prefer; the invariant is what matters: post-Phase-6, no terminal rows in
+active, every terminal row exactly once across the two files.)
+
+```bash
+# Row-count regression guard (issue #8, adapted for split — issue #9).
+# Before split: assignments.json carried all rows; a sudden drop was always a bug.
+# After split: rows legitimately leave assignments.json on terminal transition.
+# Apply the regression guard to the COMBINED count (active + archive) so
+# accidental wipes still trip it, but legitimate archive-moves do not.
+NEW_ACTIVE=$(jq '.assignments | length' .research/management/assignments.json)
+NEW_ARCH=$(jq '.assignments | length' .research/management/assignments-archive.json)
+NEW_COMBINED=$((NEW_ACTIVE + NEW_ARCH))
+OLD_ACTIVE=$(git show HEAD:.research/management/assignments.json 2>/dev/null | jq '.assignments | length' 2>/dev/null || echo 0)
+OLD_ARCH=$(git show HEAD:.research/management/assignments-archive.json 2>/dev/null | jq '.assignments | length' 2>/dev/null || echo 0)
+OLD_COMBINED=$((OLD_ACTIVE + OLD_ARCH))
+if [ "$NEW_COMBINED" -lt "$((OLD_COMBINED - 2))" ]; then
+  echo "PHASE 6 ABORT: combined assignments row count ${OLD_COMBINED} -> ${NEW_COMBINED} (loss > 2)" >&2
+  echo "  Active: ${OLD_ACTIVE} -> ${NEW_ACTIVE}; Archive: ${OLD_ARCH} -> ${NEW_ARCH}" >&2
   echo "  Refusing to commit destructive write. Manual restore required:" >&2
-  echo "  git checkout HEAD -- .research/management/assignments.json" >&2
+  echo "  git checkout HEAD -- .research/management/assignments.json .research/management/assignments-archive.json" >&2
   exit 0
 fi
 
-git add .research/management/assignments.json [.research/management/action-list.json if refilled]
+git add .research/management/assignments.json \
+        .research/management/assignments-archive.json \
+        [.research/management/action-list.json if refilled]
 # Commit-scope guard (#526): before the dispatcher's self-commit, refuse
 # if `git diff --cached` strays outside `.research/management/`. Catches
 # the PR #496 class of failure (stop hook bundling parallel-agent work
@@ -877,6 +1012,19 @@ git push origin dev   # if another run committed since our pull: rebase + retry 
 ---
 
 ## Phase 7 — Print summary (ALWAYS, hang lines too — item #9)
+
+**Totals come from the archive (NEW — issue #9).** `Merged total` and
+`Failed total` are counted from `assignments-archive.json`, NOT from
+`assignments.json` (which now only has active rows). Use `jq | length`
+so the file stays out of the LLM context:
+
+```bash
+MT_TOTAL=$(jq '[.assignments[] | select(.status=="merged" or .status=="done")] | length' \
+  .research/management/assignments-archive.json)
+F_TOTAL=$(jq '[.assignments[] | select(.status=="failed")] | length' \
+  .research/management/assignments-archive.json)
+# This-cycle counts come from in-memory transitions set, not from any file.
+```
 
 Even when the corresponding list is empty, print the line with `[]` so the
 summary is regular and grep-friendly. Specifically the hang-alert lines must
@@ -946,6 +1094,11 @@ Hang alerts:
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
 - **subagent workspace isolation** (issue #7) — every Phase 4 (implementer), Phase 5.6 (rebaser), and Phase 5.7 (followup-respawn implementer) subagent MUST run its `git checkout` / `gh pr checkout` / build / commit work inside `/tmp/ppt-worktrees/<task_id>/` via the standard `git worktree add` preamble. NEVER touch the dispatcher's own working tree. Phase 5.5 (merger, API-only) and Phase 2 (read-only reconciliation) are exempt.
+- **active/archive split** (issue #9 — token spending) — `assignments.json` carries ONLY non-terminal rows (`in-progress`, `review`). Terminal rows (`merged`, `failed`, `done`) live in `assignments-archive.json`. Phase 6 moves rows on terminal transition (`active −= moved; archive ∪= moved`) atomically. Phase 7 totals are counted from the archive via `jq | length` (file never enters LLM context). The archive is frozen — never rewrite a row already there.
+- **action-list active/archive split** (issue #9) — `action-list.json` carries ONLY `open` and `in-progress` items. `done` / `dropped` items live in `action-list-archive.json`, which the dispatcher does NOT read in steady state. Phase 2.7 cascades and Phase 3 claims write back to the active file; the archive is human-audit-only.
+- **lazy `coverage.json` read** (issue #9) — `coverage.json` is read ONLY inside Phase 2.6 Tier 1 (when `open_claimable_count < 18`). Never load it in Phase 1.
+- **smart-triage reviewer** (issue #9) — Phase 5 reviewer subagents MUST pull file-list metadata first (`gh pr view --json files`) and only `gh pr diff` selectively per path. Target ≤ 25k tokens of diff content per review. Hot-path files (auth, security, migrations) always get full diff regardless of size; lockfiles + generated clients are always skipped.
+- **cross-file task_id uniqueness** (issue #9) — Phase 3 MUST refuse to claim any `task_id` already present in EITHER `assignments.json` (active) OR `assignments-archive.json` (terminal). Reclaiming a terminal task_id would resurrect a shipped/failed task with a fresh `claimed_at`.
 
 ---
 
