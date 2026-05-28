@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T15:17:09Z",
+  "generated": "2026-05-28T16:28:07.761805+00:00",
   "assignments": [
     {
       "task_id": "gap-10b-4-backend-impl-v2",
@@ -56,7 +56,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/639",
       "merged_at": null,
       "specialist": "ios-swiftui",
-      "implementer_summary": "pr=639 status=done specialist=ios-swiftui scope_drift=false code_reuse_warn=none note=bug1(alert binding) already fixed in dev; bug2 fixed: translated filter_min_value/filter_max_value in SK/CS/PL/DE/HU plus filter_radius→Umkreis in DE; all 16 Story 82.3 keys verified",
+      "implementer_summary": "pr=639 status=done specialist=ios-swiftui scope_drift=false code_reuse_warn=none note=bug1(alert binding) already fixed in dev; bug2 fixed: translated filter_min_value/filter_max_value in SK/CS/PL/DE/HU plus filter_radius\u2192Umkreis in DE; all 16 Story 82.3 keys verified",
       "reviewer_summary": "verdict=approve head_oid=83a198deaf5d1dfde19352b76f6ea348d3380f4a note=i18n-translations-correct-all-11-changes-verified;macos-reviewer-required;needs-human-review-label-added",
       "last_reviewed_oid": "83a198deaf5d1dfde19352b76f6ea348d3380f4a",
       "scope_drift": false,
@@ -100,7 +100,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/708",
       "merged_at": null,
       "specialist": "react-web",
-      "implementer_summary": "pr=708 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=impl already on dev; fixed 2 test assertion bugs (getByText→getAllByText); biome+typecheck+build clean",
+      "implementer_summary": "pr=708 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=impl already on dev; fixed 2 test assertion bugs (getByText\u2192getAllByText); biome+typecheck+build clean",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -110,6 +110,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-10b-6-onboarding-api-retry",
+      "branch": "auto-impl/gap-10b-6-onboarding-api-retry",
+      "status": "review",
+      "specialist": "db-migration",
+      "claimed_at": "2026-05-28T15:45:00Z",
+      "last_updated": "2026-05-28T16:28:07.761805+00:00",
+      "status_changed_at": "2026-05-28T15:45:00Z",
+      "pr_number": 695,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/695",
+      "merged_at": null,
+      "implementer_summary": "pr=695 status=done specialist=db-migration scope_drift=false code_reuse_warn=none note=RLS migration for user_onboarding_progress; cargo check+clippy pass",
+      "reviewer_summary": "verdict=approve head_oid=a230d298d66f79b424e8db01a79747e71c88bd64",
+      "last_reviewed_oid": "a230d298d66f79b424e8db01a79747e71c88bd64",
+      "scope_drift": false,
+      "code_reuse_warn": "none",
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 1,
+      "merge_attempted_at": "2026-05-28T16:21:40Z"
     }
   ]
 }
