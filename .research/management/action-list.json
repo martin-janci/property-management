@@ -1111,7 +1111,7 @@
       "owner_role": "pm-devops",
       "priority": "medium",
       "dependency": "pm-qa",
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
       "depends_on": []
@@ -1221,7 +1221,7 @@
       "owner_role": "pm-security",
       "priority": "medium",
       "dependency": "pm-qa",
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
       "depends_on": []
@@ -1232,7 +1232,7 @@
       "owner_role": "pm-security",
       "priority": "medium",
       "dependency": "pm-backend",
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
       "depends_on": []
@@ -1290,6 +1290,149 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-05-28",
+      "depends_on": []
+    },
+    {
+      "id": "gap-6-1-announcement-creation",
+      "action": "Implement announcement creation & targeting backend: POST /announcements handler, targeting filters (building/org), scheduling, and DB migration for announcements table with org-scoped RLS.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-8a-1-channel-notification-toggles",
+      "action": "Implement channel-level notification toggle endpoints (GET/PUT /notification-preferences/channels/{channel}); expose per-channel mute/unmute in ppt-web UI.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-8a-2-critical-notification-override",
+      "action": "Implement critical notification override: some notifications (emergency, legal) must bypass user mute preferences; add override flag to notification_types table and enforce in fanout worker.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-10b-1-org-management-dashboard",
+      "action": "Implement organization management dashboard backend: GET /admin/organizations (list with stats), GET/PUT /admin/organizations/{id} (details/settings), tenant-scoped admin operations.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-10b-2-feature-flag-management",
+      "action": "Implement feature flag management: GET/PUT /admin/feature-flags/{key}, per-org overrides, flag evaluation helpers used by api-server handlers. Add LaunchDarkly-style rollout percentages.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-79-3-error-handling-toasts",
+      "action": "Implement error handling and toast notification system in ppt-web: global error boundary, toast context with auto-dismiss, wire to TanStack Query error callbacks and mutation error paths.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-79-4-websocket-realtime",
+      "action": "Implement WebSocket real-time integration in ppt-web: useWebSocket hook connecting to /ws endpoint, reconnect-backoff, dispatch to notification/fault event handlers, token-refresh on expiry.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-80-1-disputes-api-frontend",
+      "action": "Wire disputes API into ppt-web: GET /disputes, GET /disputes/{id}, file dispute flow using generated @ppt/api-client dispute endpoints, add DisputeListPage and DisputeDetailPage routes.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-83-3-portal-webhooks",
+      "action": "Implement real estate portal webhook delivery: POST /webhooks/portal/{event} receiver, signature verification, event normalization to reality-server listing schema, retry queue with exponential backoff.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-84-1-s3-presigned-urls",
+      "action": "Implement S3 presigned URL generation endpoint: GET /documents/{id}/download returns short-lived (15min) presigned URL; wire MinIO client in S3Config, add presigned_url_ttl config knob.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-84-3-price-tracking-favorites",
+      "action": "Implement price tracking for favorited listings in reality-server: daily price snapshot cron, price_history table, GET /favorites/{id}/price-history endpoint, push notification on >5% change.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-84-4-notification-triggers",
+      "action": "Implement notification trigger system: rule engine that fires push/email on listing-status-change, new-match-for-search-filter, price-drop; stored as notification_rules table with per-user subscriptions.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-84-5-pgvector-rag",
+      "action": "Migrate semantic search to pgvector RAG: add pgvector extension migration, listing embedding generation via OpenAI-compatible endpoint, cosine-similarity search in GET /listings, keep keyword fallback.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "coverage-tier1-2026-05-28",
+      "deadline": null,
+      "dependency": "none",
       "depends_on": []
     }
   ]
