@@ -27,7 +27,7 @@ use uuid::Uuid;
 
 use common::{create_authenticated_user, TestApp, TestUser};
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── helpers ───────────────────────────────────────────────────────────────────────────
 
 /// Build a PKCE (S256) code_verifier + code_challenge pair.
 fn pkce_pair() -> (String, String) {
@@ -140,7 +140,7 @@ async fn count_audit_rows(pool: &PgPool, user_id: Uuid, action: &str) -> i64 {
     .unwrap_or(0)
 }
 
-// ─── module: pkce_flow ──────────────────────────────────────────────────────
+// ─── module: pkce_flow ───────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod pkce_flow {
@@ -383,12 +383,13 @@ mod pkce_flow {
         assert_eq!(body["error"], "invalid_request");
     }
 
-    /// PKCE `plain` challenge method must be rejected — only S256 is accepted
-    /// (OAuth 2.1 §4.1.1 / RFC 7636 security considerations).
+    /// PKCE `plain` challenge method must be rejected at the token endpoint —
+    /// only S256 is accepted (OAuth 2.1 §4.1.1 / RFC 7636 §4.2).
     ///
-    /// A client that sends `code_challenge_method=plain` together with a raw
-    /// verifier as the challenge would defeat the purpose of PKCE entirely;
-    /// the server must reject such requests with `invalid_request`.
+    /// The authorize endpoint stores the `code_challenge_method` value without
+    /// validation and issues a code normally. The rejection happens at `/token`
+    /// via `verify_pkce`, which returns `false` for any method other than S256,
+    /// causing the server to return `invalid_grant`.
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_pkce_plain_method_rejected(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
@@ -397,7 +398,8 @@ mod pkce_flow {
         let (client_id, redirect_uri) = seed_public_client(&pool).await;
         let raw_verifier = format!("plain-verifier-{}", uuid::Uuid::new_v4());
 
-        // Submit a consent with code_challenge_method=plain (verifier == challenge)
+        // Authorize with code_challenge_method=plain. The server accepts this
+        // at /authorize (no method validation at consent stage).
         let consent_form = form_body(&[
             ("client_id", &client_id),
             ("redirect_uri", &redirect_uri),
@@ -413,48 +415,41 @@ mod pkce_flow {
                 &access_token,
             ))
             .await;
+        assert_eq!(
+            consent_resp.status,
+            StatusCode::OK,
+            "authorize must issue a code for plain method (validation deferred to /token). body={}",
+            consent_resp.text()
+        );
+        let code = consent_resp.json_value()["code"]
+            .as_str()
+            .expect("missing code in authorize response")
+            .to_string();
 
-        // If the server somehow issued a code, the token exchange with the
-        // correct verifier must still fail because plain is not supported.
-        if consent_resp.status == StatusCode::OK {
-            let code = consent_resp.json_value()["code"]
-                .as_str()
-                .expect("missing code")
-                .to_string();
-
-            // Token exchange: supply the raw verifier (which equals the challenge
-            // under plain), expecting rejection because S256 hash won't match.
-            let token_form = form_body(&[
-                ("grant_type", "authorization_code"),
-                ("code", &code),
-                ("redirect_uri", &redirect_uri),
-                ("client_id", &client_id),
-                ("code_verifier", &raw_verifier),
-            ]);
-            let token_resp = app
-                .execute(form_request("/api/v1/oauth/token", &token_form))
-                .await;
-            assert_eq!(
-                token_resp.status,
-                StatusCode::BAD_REQUEST,
-                "plain-method code exchange must be rejected at /token. body={}",
-                token_resp.text()
-            );
-            let err = token_resp.json_value();
-            assert!(
-                err["error"] == "invalid_grant" || err["error"] == "invalid_request",
-                "error must be invalid_grant or invalid_request for plain method, got {}",
-                err
-            );
-        } else {
-            // Preferred path: server rejects plain at the authorize stage.
-            assert!(
-                consent_resp.status.is_client_error(),
-                "plain code_challenge_method must be rejected with 4xx at /authorize, got {}. body={}",
-                consent_resp.status,
-                consent_resp.text()
-            );
-        }
+        // Token exchange: supply the raw verifier. verify_pkce rejects plain
+        // regardless of whether verifier matches challenge, returning invalid_grant.
+        let token_form = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &code),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("code_verifier", &raw_verifier),
+        ]);
+        let token_resp = app
+            .execute(form_request("/api/v1/oauth/token", &token_form))
+            .await;
+        assert_eq!(
+            token_resp.status,
+            StatusCode::BAD_REQUEST,
+            "plain-method code exchange must be rejected at /token. body={}",
+            token_resp.text()
+        );
+        let err = token_resp.json_value();
+        assert_eq!(
+            err["error"], "invalid_grant",
+            "plain method rejection must return invalid_grant (RFC 7636), got {}",
+            err
+        );
     }
 
     /// Authorization code replay must be rejected on second use.
@@ -515,7 +510,7 @@ mod pkce_flow {
     }
 }
 
-// ─── module: consent_revoke ──────────────────────────────────────────────────
+// ─── module: consent_revoke ─────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod consent_revoke {
@@ -676,7 +671,7 @@ mod consent_revoke {
     }
 }
 
-// ─── module: refresh_rotation ────────────────────────────────────────────────
+// ─── module: refresh_rotation ────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod refresh_rotation {
@@ -978,7 +973,7 @@ mod refresh_rotation {
     }
 }
 
-// ─── module: audit_trail ─────────────────────────────────────────────────────
+// ─── module: audit_trail ────────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod audit_trail {
@@ -1396,7 +1391,7 @@ mod audit_trail {
     }
 }
 
-// ─── module: token_endpoint_validation ───────────────────────────────────────
+// ─── module: token_endpoint_validation ──────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod token_endpoint_validation {
