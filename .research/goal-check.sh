@@ -38,6 +38,15 @@ record() {
 
 echo "==> goal-check (coverage=$COVERAGE action-list=$ACTION_LIST assign=$ASSIGN enforce=$ENFORCE)" >&2
 
+# Observe-only: a missing input file must never abort a dispatcher run.
+for f in "$COVERAGE" "$ACTION_LIST" "$ASSIGN"; do
+  if [ ! -f "$f" ]; then
+    echo "==> goal-check: SKIP (missing $f)" >&2
+    [ "$EMIT_JSON" = "1" ] && echo "[]"
+    exit 0
+  fi
+done
+
 # --- GC1: coverage referential integrity (record-only) ---
 # (a) every gap-* action-list item maps to a real coverage story
 #     (a story id is a prefix of the gap-id with the leading "gap-" stripped);
