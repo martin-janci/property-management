@@ -3316,6 +3316,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-10b-6-onboarding-api-retry",
+      "branch": "auto-impl/gap-10b-6-onboarding-api-retry",
+      "status": "merged",
+      "specialist": "db-migration",
+      "claimed_at": "2026-05-28T15:45:00Z",
+      "last_updated": "2026-05-28T15:28:00Z",
+      "status_changed_at": "2026-05-28T15:28:00Z",
+      "pr_number": 695,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/695",
+      "merged_at": "2026-05-28T15:28:00Z",
+      "implementer_summary": "pr=695 status=done specialist=db-migration scope_drift=false code_reuse_warn=none note=RLS migration for user_onboarding_progress; cargo check+clippy pass",
+      "reviewer_summary": "verdict=merged note=ci-push-event-fails-cold-compile-sigterm143;ci-pr-event-passes-warm-cache;merged-by-owner;migration-00164-rls-policies-sound",
+      "last_reviewed_oid": "a230d298d66f79b424e8db01a79747e71c88bd64",
+      "scope_drift": false,
+      "code_reuse_warn": "none",
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 1,
+      "merge_attempted_at": "2026-05-28T17:11:55Z"
     }
   ]
 }
