@@ -1,4 +1,1 @@
-2026-05-28T11:19:16Z
-scanned=15 clean=9 issues=6
-PRs with issues: #542 (issue #673 — e-sig nonce not persisted), #632 (issue #676 — stale tenant list on refresh), #645 (issue #677 — audit-hash domain changed without backfill), #636 (issue #679 — IDOR test unauthenticated only), #650 (issue #681 — Redis fanout test ignored, no CI), #658 (issue #683 — security-gate post-merge action unconfirmed)
-PRs clean: #642, #648, #649, #652, #653, #655, #656, #663, #664
+2026-05-28T11:20:23Z
