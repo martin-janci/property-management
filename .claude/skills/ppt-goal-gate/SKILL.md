@@ -20,6 +20,34 @@ mode: cloud-ok
 
 Stem-uniqueness is enforced separately as `T20` in `dispatcher-self-test.sh`.
 
+### Quarantine + pre-merge autofix + claim-time dedup (PR 5/5)
+
+**Quarantine** (`status=quarantined`): set by Phase 5.7 when
+`fix_rounds >= 3` and the reviewer still returns `verdict=changes`.
+Excluded from claim selection AND WIP count. Operator un-quarantines by
+editing `status` back to `review`. Self-test `T23` enforces
+`quarantined_at` + (`fix_rounds >= 3` OR `quarantine_reason`).
+
+**Pre-merge autofix** (Phase 5.4, between Phase 5 and Phase 5.5): for
+approved PRs failing CI with delta entirely inside the mechanical-only
+path set (SQLx offline, `Cargo.lock`, generated clients, lockfiles),
+spawn a subagent that runs `ppt-pr-merge` Step 2 (rebase + regenerate),
+force-pushes, re-triggers CI, and returns. Avoids routing mechanical-
+only failures through the expensive Phase 5.7 respawn. Cap: 1 mechanical
+autofix per row per 24h.
+
+**Claim-time dedup tightening:**
+- Phase 3 claim predicate now includes a stem-aware **active-or-quarantined**
+  check (parallel to the existing stem-aware terminal check), so an
+  `<id>-impl` variant cannot be claimed while `<id>` is in-flight or
+  under operator triage.
+- Routine `Phase 3 promote` extends `slug-stem uniqueness` to include
+  open action-list items, not just plans+assignments — closes the gap
+  where the planner emits both `<id>-retry` and `<id>-v2`.
+- Self-test `T24` enforces at-most-one-OPEN-per-stem in action-list.
+  Hard-fail; the pre-commit gate (PR 2/5) blocks the dispatcher commit
+  on violation, so the bad state never reaches `dev`.
+
 ### WIP throttle (PR 4/5 — `DISPATCHER_WIP_CAP`)
 
 Phase 3's `free_slots` is no longer a constant 3. It's
@@ -85,6 +113,6 @@ Enforced by self-test `T21` (epic_prefix matches `gap-N[a-z]?` or
 
 ## Cross-references
 - `.research/dispatcher-prompt.md` Phase 3 (WIP-throttle preamble, finish-first preamble + filter), Phase 6 (goal-check invocation), Phase 7 (WIP-throttle + Target-epic lines), HARD RULES.
-- `.research/dispatcher-self-test.sh` T20 (stem-uniqueness), T21 (objective.json shape), T22 (WIP bounds).
+- `.research/dispatcher-self-test.sh` T20 (active stem-uniqueness), T21 (objective.json shape), T22 (WIP bounds), T23 (quarantine invariants), T24 (action-list stem-uniqueness).
 - `.research/pick-target-epic.sh` + `.research/test-pick-target-epic.sh`.
 - `docs/superpowers/specs/2026-05-28-dispatcher-goal-convergence-design.md` (Pillar 1).

@@ -25,7 +25,7 @@ Schema per row:
 {
   "task_id":            "string",
   "branch":             "auto-impl/<slug>",
-  "status":             "in-progress | review | merged | failed",
+  "status":             "in-progress | review | merged | failed | quarantined",
   "specialist":         "string | null",
   "claimed_at":         "iso-8601",
   "last_updated":       "iso-8601",
@@ -43,6 +43,8 @@ Schema per row:
   "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
   "reclaim_attempts":   "int",             // count of sandbox-timeout reclaims attempted (P3); default 0, cap = 1
   "merge_attempted_at": "iso-8601 | null", // last time Phase 5.5 tried to merge this row (gap 4); used for CI-stuck back-off
+  "quarantined_at":     "iso-8601 | null", // (PR 5/5) set when Phase 2 quarantines a row after fix_rounds >= 3
+  "quarantine_reason":  "string | null",   // (PR 5/5) short reason; e.g. "fix_rounds=3 exhausted; verdict still changes"
 
   "implementer_summary": "string | null",
   "reviewer_summary":    "string | null"
@@ -104,8 +106,14 @@ epic descriptions like "Epic 2B WebSocket infrastructure") become
 | review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
 | review      | failed   | Phase 2 sees PR CLOSED without merge                            |
 | review      | review   | PR still open (no `status_changed_at` bump)                    |
+| review      | quarantined | (PR 5/5) Phase 2 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes`. Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
 
-`merged` / `failed` are TERMINAL.
+`merged` / `failed` are TERMINAL. **`quarantined` is SEMI-TERMINAL**: the
+dispatcher won't auto-transition out of it (no Phase 2/5/5.5 trigger
+returns from quarantined → other), but the operator may manually flip
+the status back to `review` to resume work. Quarantined rows are
+excluded from claim selection (Phase 3 dedup) AND from the WIP count
+(Phase 3 throttle) — they free a slot without confusing the active pool.
 
 ## Hang detection (Phase 7)
 
@@ -634,11 +642,20 @@ TERMINAL_IDS=$(jq -r '.assignments[]
   .research/management/assignments-archive.json \
   | sort -u)
 
+# PR 5/5 — stem-aware active check, parallel to the terminal check.
+# active_stems and quarantined_stems both block re-claim under a
+# suffix-variant slug; quarantined deserves explicit attention because
+# the operator may be mid-triage and a parallel claim under -impl/-v2
+# would duplicate the manual work in flight.
+active_stems = {stem(r.task_id) for r in assignments
+                if r.status in ("in-progress", "review", "quarantined")}
+
 candidates = [c for c in action-list
               if c.status == "open"
               and c.id not in active_ids
               and c.id not in TERMINAL_IDS                  # exact-id terminal check
               and stem(c.id) not in {stem(t) for t in TERMINAL_IDS}   # stem-aware terminal check
+              and stem(c.id) not in active_stems            # stem-aware active+quarantined check (PR 5/5)
               and claimable(c, TERMINAL_IDS)]
 candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
 ```
@@ -647,6 +664,13 @@ The stem-aware terminal check catches the case where a suffix-variant
 slug (e.g. `<id>-impl`, `<id>-v2`) is being claimed while the canonical
 `<id>` is already terminal. Without it the dispatcher would reclaim the
 same gap under a renamed task_id and produce a duplicate PR.
+
+The PR 5/5 stem-aware active+quarantined check extends the same idea to
+non-terminal states: if `<id>` is already `in-progress`, `review`, or
+`quarantined`, no variant `<id>-impl` can be claimed in parallel.
+Quarantined inclusion matters because the operator may be doing manual
+work on the row — silently claiming a sibling defeats the quarantine
+contract.
 
 The legacy `dependency` free-text field is NOT consulted by the claim
 predicate. Only `depends_on` is.
@@ -1118,6 +1142,97 @@ No cap on reviewer subagents — review every pending review row in parallel.
 
 ---
 
+## Phase 5.4 — Pre-merge autofix (mechanical short-circuit, PR 5/5)
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
+**Purpose.** Many "ci-fail" approved PRs fail only because the base
+moved and the failures are confined to **mechanical paths**: SQLx
+offline JSON, `Cargo.lock`, generated OpenAPI clients, lockfiles.
+Routing these directly to Phase 5.7 (full implementer respawn) is
+wasteful — the fix is a rebase + maybe a one-line regenerate command,
+not another implementation pass. Phase 5.4 intercepts these BEFORE
+Phase 5.5's per-blocker classification so the cheaper fix runs first.
+
+**Mechanical-only path set:**
+
+```
+backend/.sqlx/**
+Cargo.lock
+**/Cargo.lock
+backend/crates/api-client/**
+frontend/packages/api-client/**
+frontend/packages/openapi-client/**
+**/pnpm-lock.yaml
+**/package-lock.json
+**/Gemfile.lock
+docs/api/openapi.yaml
+docs/api/openapi.json
+```
+
+(`ppt-pr-merge`'s existing auto-resolve set is the source of truth —
+keep this list in sync; do not let it drift.)
+
+**Trigger.** For each row `status == "review"` AND `reviewer_summary`
+starts with `verdict=approve`:
+
+```bash
+gh pr view <pr> --json statusCheckRollup,mergeable,headRefOid --jq \
+  '{merge: .mergeable, head: .headRefOid,
+    failing: [.statusCheckRollup[] | select(.conclusion=="FAILURE") | .name]}'
+```
+
+If `failing` is non-empty OR `merge == "CONFLICTING"`, fetch the changed
+file set against `dev` and check whether the entire delta on the
+*failing* paths is inside the mechanical-only set. Use a single `gh pr diff
+<n> --name-only` and `grep -v` the mechanical patterns; if any non-
+mechanical path remains, **skip Phase 5.4** for this row and fall through
+to Phase 5.5's normal classification.
+
+**Action.** Spawn ONE Task subagent per qualifying row (cap 2 parallel,
+same as Phase 5.6's rebaser cap — both serialize on `dev` base):
+
+> You are a pre-merge mechanical autofixer for PR #<n>.
+>
+> 0. **Workspace isolation (MANDATORY — issue #7).** Run the standard
+>    worktree preamble: `TASK_ID=premerge-<n>`, `BRANCH=<row.branch>`.
+>    NEVER `gh pr checkout` in the dispatcher's working tree.
+> 1. Invoke `.claude/skills/ppt-pr-merge/SKILL.md` Step 2 (conflict
+>    auto-resolution) directly — that's the existing function that
+>    rebases against `dev` and regenerates SQLx / Cargo.lock /
+>    generated clients. Do NOT call `gh pr merge` from inside the skill
+>    yet (Phase 5.5 owns the merge).
+> 2. `git push --force-with-lease origin <branch>`.
+> 3. Re-trigger CI explicitly so we observe the new head's result
+>    before Phase 5.5 sees the row:
+>    `gh workflow run <workflow-on-the-pr> --ref <branch>` (best-effort).
+> 4. Return EXACTLY:
+>    `premerge=<applied|skipped|failed> pr=<n> note=<short>`.
+>
+> Failure mode: if the rebase produces any real (non-mechanical) conflict
+> after starting, `git rebase --abort` and return
+> `premerge=failed note=conflict-in:<paths>`. Phase 5.5's normal flow
+> will see `mergeable=CONFLICTING` next run and route to Phase 5.6 as
+> usual — no double-handling.
+
+**Bookkeeping.** Each `premerge=applied` bumps `rebase_attempts += 1`
+(single-owner rule — dispatcher does the write; subagent only returns).
+**Cap: 1 mechanical-autofix per row per 24h.** Without the cap, a
+genuinely-stuck PR could loop here forever; the existing 6h CI-stuck
+back-off in Phase 5.5 (gap 4) takes over if mechanical autofix doesn't
+unstick it.
+
+**What Phase 5.4 is NOT.** It does NOT format / lint code, does NOT
+modify non-mechanical paths, does NOT merge. It's a focused
+"rebase + regenerate" shortcut that converts a mechanical-fail into a
+green PR before Phase 5.5 has to decide.
+
+Phase 5.5 in this same run picks up the now-green PR via the standard
+path; the row goes from `approve + ci-fail` to `approve + ci-green`
+between phases of the same dispatcher cycle, no extra wait.
+
+---
+
 ## Phase 5.5 — Attempt merge for approved + green PRs
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
@@ -1248,8 +1363,35 @@ Phase 5.5 next run will pick up the now-clean PR via the standard path.
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
-For each row `status == "review"` where `reviewer_summary` starts with
-`"verdict=changes"`:
+**Quarantine gate (PR 5/5).** Before respawning, check `fix_rounds`. If
+`fix_rounds >= 3` the implementer has already had 3 attempts at this row
+and the reviewer is still returning `verdict=changes`. Further respawns
+are unlikely to converge — they burn implementer subagent budget and
+keep the row in the WIP pool, blocking new claims under the WIP throttle
+(PR 4/5). Quarantine the row instead:
+
+```bash
+for row in rows_with_verdict_changes:
+  if (row.fix_rounds // 0) >= 3:
+    row.status = "quarantined"
+    row.status_changed_at = now
+    row.quarantined_at = now
+    row.quarantine_reason = "fix_rounds=" + str(row.fix_rounds) + " exhausted; verdict still changes after " + str(row.fix_rounds) + " respawns"
+    row.last_updated = now
+    # Log to Phase 7 — see "Quarantined this run" line.
+    continue  # SKIP the respawn for this row
+  # else: fall through to the respawn spawn block below
+```
+
+The quarantined row is left ALONE on GitHub — the PR stays open, the
+branch is preserved, the implementer history (3 attempts' worth of
+commits) is intact for the operator to inspect. The dispatcher just
+stops feeding the implementer/reviewer cycle on this row. Un-quarantine
+is a manual edit (`status: "quarantined" → "review"`) once the operator
+has done whatever the bot couldn't.
+
+For each REMAINING row `status == "review"` where `reviewer_summary`
+starts with `"verdict=changes"` AND `fix_rounds < 3`:
 
 Spawn ONE Task subagent (cap 3 parallel — same as Phase 4's implementer cap):
 
@@ -1456,6 +1598,9 @@ Same-epic skipped:        [<id> (would exceed 2/epic), …]          (item #2; [
 Dup-skipped:              [<id> reason=<open-pr|open-assignment|file-overlap> conflicts_with=<#n|task_id>, …]   (cross-PR dedup guards; [] if none)
 Target epic:              <epic_prefix open=N claimable=M action=<keep|select|repick|empty> | off>   (PR 3/5 finish-first; "off" when DISPATCHER_FINISH_FIRST≠1)
 WIP throttle:             <wip=N/cap=M free_slots=K | disabled (cap=0)>   (PR 4/5; smooth back-pressure on Phase 3 claims)
+Quarantined this run:     [<task_id> reason=<short>, …]               (PR 5/5; [] if none)
+Quarantined total:        <N>   (PR 5/5; rows currently in status=quarantined across active assignments)
+Pre-merge autofix:        [PR#<n> premerge=<applied|skipped|failed> <note>, …]  (PR 5/5 Phase 5.4; [] if none)
 Transitions (this run):   [<id> in-progress→review, …]             ([] if none)
 In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>

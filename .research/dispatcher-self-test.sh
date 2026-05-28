@@ -521,6 +521,52 @@ else
 fi
 echo
 
+# --- T23: quarantine invariants (PR 5/5) -----------------------------------
+# Every quarantined row MUST have quarantined_at set AND either
+# fix_rounds >= 3 OR a non-null quarantine_reason. Hard-fail on violation.
+echo "T23 quarantine invariants (PR 5/5)"
+BAD23=$(jq -r '
+  [ .assignments[] | select(.status == "quarantined")
+    | select((.quarantined_at == null) or
+             (((.fix_rounds // 0) < 3) and ((.quarantine_reason // null) == null)))
+    | .task_id ] | length' "$ASSIGN")
+if [ "$BAD23" = "0" ]; then
+  note "all quarantined rows have quarantined_at + (fix_rounds>=3 OR reason)"
+else
+  fail "$BAD23 quarantined rows missing quarantined_at or fix_rounds/reason"
+  jq -r '.assignments[]
+    | select(.status == "quarantined")
+    | select((.quarantined_at == null) or
+             (((.fix_rounds // 0) < 3) and ((.quarantine_reason // null) == null)))
+    | "    \(.task_id) quarantined_at=\(.quarantined_at) fix_rounds=\(.fix_rounds // 0) reason=\(.quarantine_reason // "null")"' "$ASSIGN" >&2
+fi
+echo
+
+# --- T24: action-list stem-uniqueness (PR 5/5 claim-time dedup) ------------
+# At most one OPEN action-list item per stem. Suffix variants (-impl, -v2,
+# -fix, etc.) sharing a stem indicate dup work that bypassed the routine's
+# promotion-time stem guard.
+if [ -f "$ACTION_LIST" ]; then
+  echo "T24 action-list.json: at most one OPEN item per stem (PR 5/5)"
+  DUPES24=$(jq -r '
+    def stem: sub("^(auto-impl|impl)/";"")
+              | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+    [ .items[] | select(.status == "open") | (.id | stem) ]
+    | group_by(.) | map(select(length > 1)) | length' "$ACTION_LIST")
+  if [ "$DUPES24" = "0" ]; then
+    note "no two open action-list items share a stem"
+  else
+    fail "$DUPES24 stem collision(s) among open action-list items"
+    jq -r '
+      def stem: sub("^(auto-impl|impl)/";"")
+                | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+      [ .items[] | select(.status == "open") | {id, s: (.id|stem)} ]
+      | group_by(.s) | map(select(length > 1))[] | .[]
+      | "    \(.id) :: stem=\(.s)"' "$ACTION_LIST" >&2
+  fi
+  echo
+fi
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"

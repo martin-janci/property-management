@@ -348,11 +348,11 @@
     },
     {
       "id": "gap-82-3-search-enhancements",
-      "action": "Implement debounced search, infinite scroll pagination, CoreLocation integration + FilterSheet in HomeView/SearchView for SwiftUI Reality Portal (82-3 Home and Search Screens)",
+      "action": "[SUPERSEDED by gap-82-3-search-enhancements-fix (newer; higher priority); collapsed by PR 5/5 stem-uniqueness T24] Implement debounced search, infinite scroll pagination, CoreLocation integration + FilterSheet in HomeView/SearchView for SwiftUI Reality Portal (82-3 Home and Search Screens)",
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
       "depends_on": []
@@ -639,11 +639,11 @@
     },
     {
       "id": "gap-82-4-swiftui-listing-detail",
-      "action": "Implement ListingDetailView and FavoritesView in SwiftUI iOS app; wire to reality-server listings/{id} and favorites endpoints",
+      "action": "[SUPERSEDED by gap-82-4-swiftui-listing-detail-impl (newer); collapsed by PR 5/5 stem-uniqueness T24] Implement ListingDetailView and FavoritesView in SwiftUI iOS app; wire to reality-server listings/{id} and favorites endpoints",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-82-3-swiftui-home-search",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
@@ -726,11 +726,11 @@
     },
     {
       "id": "gap-82-6-kmp-android-home",
-      "action": "Wire HomeScreen and SearchScreen in KMP Android Compose UI to reality-server listings API via shared SDK",
+      "action": "[SUPERSEDED by gap-82-6-kmp-android-home-retry (newer); collapsed by PR 5/5 stem-uniqueness T24] Wire HomeScreen and SearchScreen in KMP Android Compose UI to reality-server listings API via shared SDK",
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": []
@@ -1013,11 +1013,11 @@
     },
     {
       "id": "gap-10b-7-help-backend-retry",
-      "action": "Implement contextual help handler bodies with SQLx for help.rs: articles/FAQ search routes; add help_articles and faq_entries migration; retry of failed gap-10b-7-help-impl",
+      "action": "[SUPERSEDED by gap-10b-7-help-backend-v2 (newer + higher priority); collapsed by PR 5/5 stem-uniqueness T24] Implement contextual help handler bodies with SQLx for help.rs: articles/FAQ search routes; add help_articles and faq_entries migration; retry of failed gap-10b-7-help-impl",
       "owner_role": "pm-backend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "dropped",
       "source": "gap-scan 2026-05-27",
       "depends_on": []
     },
