@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T11:16:33Z",
+  "generated": "2026-05-28T11:20:00Z",
   "assignments": [
     {
       "task_id": "fix-569-mediation-workspace-polish",
@@ -160,21 +160,26 @@
       "branch": "auto-impl/pm-security-oauth-10a-security-te",
       "status": "review",
       "claimed_at": "2026-05-28T09:40:26Z",
-      "last_updated": "2026-05-28T11:15:00Z",
+      "last_updated": "2026-05-28T11:20:00Z",
       "status_changed_at": "2026-05-28T10:35:00Z",
       "pr_number": 661,
       "pr_url": "https://github.com/martin-janci/property-management/pull/661",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
+<<<<<<< HEAD
       "reviewer_summary": "verdict=approve head_oid=3963be556acf527ad5710d6fc3a4b5f1c517c8bc note=11 tests correct; JWT secret matches TestApp 72-char constant; JwtService publicly exported; principal_kind enforcement reads DB not JWT claim; ARRAY['staff'] valid for TEXT[] column; minor: 4 behavioral duplicates vs outer security module, 1 loose is_client_error() assertion — neither blocking; test=failure on first concurrent run is infra-flaky (same pattern as PR#660 which passed on second run)",
       "last_reviewed_oid": "3963be556acf527ad5710d6fc3a4b5f1c517c8bc",
+=======
+      "reviewer_summary": "verdict=approve head_oid=eecd5774c52b481527c3d4d6f831b1a8a882a4e4 note=fixed test_redirect_uri_mismatch: server returned invalid_request but RFC 6749 \u00a75.2 requires invalid_grant for redirect_uri mismatch at token endpoint; oauth.rs exchange_code_for_tokens now returns InvalidGrant instead of InvalidRedirectUri; all 12 tests should pass; awaiting-ci",
+      "last_reviewed_oid": "eecd5774c52b481527c3d4d6f831b1a8a882a4e4",
+>>>>>>> 9a3efc67 (chore(research): PR#661 fix redirect_uri mismatch error code — awaiting-ci)
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     },
     {
