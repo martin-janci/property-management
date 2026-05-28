@@ -167,7 +167,7 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=f632ca2c note=rebased-on-dev(0.2.962): brought in IDOR fixes(reports.rs+report_schedule.rs)+report_schedule_sibling_scope_tests.rs; 3 PR commits cleanly rebased; prior fix(InvalidRedirectUri→InvalidGrant) retained; awaiting-ci",
+      "reviewer_summary": "verdict=approve head_oid=f632ca2c note=ci-green(run 26576663884 check_suite=success); rebased-on-dev(0.2.962): IDOR fixes+report_schedule_sibling_scope_tests; InvalidRedirectUri→InvalidGrant fix; all 12 provider_security tests pass",
       "last_reviewed_oid": "f632ca2c",
       "scope_drift": null,
       "code_reuse_warn": null,
