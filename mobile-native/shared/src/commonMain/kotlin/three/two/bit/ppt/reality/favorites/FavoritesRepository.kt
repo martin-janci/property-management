@@ -52,7 +52,7 @@ class FavoritesRepository(
                 client.post("$baseUrl/api/v1/favorites/$listingId") {
                     configureRequest()
                     // Empty body — the server accepts `{notes?: String}` which we omit.
-                    contentType(io.ktor.http.ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
                     setBody("{}")
                 }
 
