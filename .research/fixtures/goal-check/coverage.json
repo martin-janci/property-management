@@ -1,0 +1,9 @@
+{
+  "generated": "2026-05-28T00:00:00Z",
+  "scan_kind": "upkeep",
+  "stories": [
+    {"epic":"epic-6","id":"6-1-announcement","phase":"mvp","status":"done","gaps":[]},
+    {"epic":"epic-6","id":"6-2-announcement-web","phase":"mvp","status":"partial","gaps":["web UI"]},
+    {"epic":"epic-7a","id":"7a-1-upload","phase":"mvp","status":"not-started","gaps":["upload route"]}
+  ]
+}
