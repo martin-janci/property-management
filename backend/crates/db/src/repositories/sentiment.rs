@@ -172,10 +172,10 @@ impl SentimentRepository {
     /// Acknowledge an alert — tenant-scoped.
     ///
     /// `org_id` must originate from the verified request principal.
-    /// The `AND organization_id = $2` clause ensures a caller in org B cannot
-    /// acknowledge an alert belonging to org A; `fetch_one` returns
-    /// `RowNotFound` when either the alert does not exist or it belongs to a
-    /// different tenant (callers surface both as 404 to prevent enumeration).
+    /// `WHERE id = $1 AND organization_id = $2` ensures a caller in org B
+    /// cannot acknowledge an alert that belongs to org A; `fetch_one` returns
+    /// `RowNotFound` when either the alert does not exist or belongs to a
+    /// different tenant (callers should surface both as 404).
     pub async fn acknowledge_alert(
         &self,
         id: Uuid,
