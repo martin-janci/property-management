@@ -179,10 +179,11 @@ async fn list_sessions(
 
 async fn get_session(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.ai_chat_repo.find_session_by_id(session_id).await {
+    let org_id = require_tenant_id(&principal)?;
+    match state.ai_chat_repo.find_session_by_id(session_id, org_id).await {
         Ok(Some(session)) => Ok(Json(serde_json::json!(session))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -203,10 +204,11 @@ async fn get_session(
 
 async fn delete_session(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.ai_chat_repo.delete_session(session_id).await {
+    let org_id = require_tenant_id(&principal)?;
+    match state.ai_chat_repo.delete_session(session_id, org_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,
@@ -227,14 +229,16 @@ async fn delete_session(
 
 async fn list_messages(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = require_tenant_id(&principal)?;
     match state
         .ai_chat_repo
         .list_session_messages(
             session_id,
+            org_id,
             query.limit.unwrap_or(100),
             query.offset.unwrap_or(0),
         )
@@ -286,10 +290,10 @@ async fn send_message(
     // principal on the platform host has no `effective_org` and is rejected.
     let tenant_id = require_tenant_id(&principal)?;
 
-    // Verify session exists
+    // Verify session exists and belongs to this tenant.
     let _session = state
         .ai_chat_repo
-        .find_session_by_id(session_id)
+        .find_session_by_id(session_id, tenant_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to find session: {}", e);
@@ -312,7 +316,7 @@ async fn send_message(
     // Story 97.1: Load more messages for context, will be truncated to fit token limits
     let history = state
         .ai_chat_repo
-        .list_session_messages(session_id, DEFAULT_HISTORY_LIMIT, 0)
+        .list_session_messages(session_id, tenant_id, DEFAULT_HISTORY_LIMIT, 0)
         .await
         .unwrap_or_default();
 
@@ -906,13 +910,11 @@ async fn acknowledge_alert(
     principal: RequestPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // require_tenant_id ensures the request is tenant-scoped; the alert's
-    // org-scoping is enforced by repository RLS.
-    let _ = require_tenant_id(&principal)?;
+    let org_id = require_tenant_id(&principal)?;
 
     match state
         .sentiment_repo
-        .acknowledge_alert(alert_id, principal.user_id)
+        .acknowledge_alert(alert_id, org_id, principal.user_id)
         .await
     {
         Ok(alert) => Ok(Json(serde_json::json!(alert))),

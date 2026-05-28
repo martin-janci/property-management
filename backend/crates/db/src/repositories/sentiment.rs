@@ -169,21 +169,29 @@ impl SentimentRepository {
         }
     }
 
-    /// Acknowledge an alert.
+    /// Acknowledge an alert — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The `AND organization_id = $2` clause ensures a caller in org B cannot
+    /// acknowledge an alert belonging to org A; `fetch_one` returns
+    /// `RowNotFound` when either the alert does not exist or it belongs to a
+    /// different tenant (callers surface both as 404 to prevent enumeration).
     pub async fn acknowledge_alert(
         &self,
         id: Uuid,
+        org_id: Uuid,
         user_id: Uuid,
     ) -> Result<SentimentAlert, sqlx::Error> {
         sqlx::query_as(
             r#"
             UPDATE sentiment_alerts
-            SET acknowledged = TRUE, acknowledged_by = $2, acknowledged_at = NOW()
-            WHERE id = $1
+            SET acknowledged = TRUE, acknowledged_by = $3, acknowledged_at = NOW()
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .bind(user_id)
         .fetch_one(&self.pool)
         .await

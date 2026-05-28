@@ -366,3 +366,67 @@ async fn create_maintenance_on_other_org_equipment_is_rejected(pool: PgPool) {
         "no maintenance record must be created via cross-tenant POST"
     );
 }
+
+// ---------------------------------------------------------------------------
+// H7 — cross-tenant IDOR: acknowledge_prediction
+// ---------------------------------------------------------------------------
+
+async fn seed_prediction(pool: &PgPool, equipment_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO maintenance_predictions
+            (equipment_id, risk_score, confidence, recommendation, factors)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+        "#,
+    )
+    .bind(equipment_id)
+    .bind(0.85_f64)
+    .bind(0.9_f64)
+    .bind("Replace filter urgently")
+    .bind(sqlx::types::Json(serde_json::json!({})))
+    .fetch_one(pool)
+    .await
+    .expect("seed prediction")
+}
+
+/// POST /equipment/predictions/{id}/acknowledge from Org B targeting a
+/// prediction whose parent equipment belongs to Org A → rejected (4xx), and
+/// the prediction is NOT acknowledged.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn acknowledge_prediction_from_other_org_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "ack-pred-a").await;
+    let org_b = seed_org(&pool, "ack-pred-b").await;
+    let _user_a = seed_user(&pool, "ack-pred-a@idor.test").await;
+    let user_b = seed_user(&pool, "ack-pred-b@idor.test").await;
+    let building_a = seed_building(&pool, org_a, "ack-pred-a").await;
+    let equipment_in_a = seed_equipment(&pool, org_a, building_a).await;
+    let prediction_id = seed_prediction(&pool, equipment_in_a).await;
+
+    let ctx_b = tenant_context_header(org_b, user_b);
+    let uri = format!(
+        "/api/v1/ai/equipment/predictions/{}/acknowledge",
+        prediction_id
+    );
+    let body = json!({});
+
+    let response = app
+        .execute(req(Method::POST, &uri, &ctx_b, Some(body)))
+        .await;
+
+    assert_rejected(response.status, "acknowledge_prediction cross-tenant");
+
+    // Verify the prediction was NOT acknowledged.
+    let acknowledged: bool =
+        sqlx::query_scalar("SELECT acknowledged FROM maintenance_predictions WHERE id = $1")
+            .bind(prediction_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert!(
+        !acknowledged,
+        "prediction must not be acknowledged by cross-tenant POST"
+    );
+}
