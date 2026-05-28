@@ -6,6 +6,13 @@
  * the OpenAPI spec for the admin surface is regenerated.
  */
 
+// Import and re-export the canonical fault-status count type from the faults
+// module so that the admin support-data surface and the manager dashboard use
+// the same definition.  Consumers that already import FaultStatusCount from
+// '@ppt/api-client' (the admin sub-path) will continue to work unchanged.
+import type { FaultStatusCount } from '../faults/types';
+export type { FaultStatusCount };
+
 export type AgencyStatus = 'active' | 'suspended' | 'archived' | string;
 
 export interface Agency {
@@ -199,11 +206,9 @@ export interface CreateSystemAnnouncementResponse {
 // Support Data (Epic 10B.5)
 // ============================================================
 
-/** Per-status fault count returned inside `SupportData`. */
-export interface FaultStatusCount {
-  status: string;
-  count: number;
-}
+// NOTE: FaultStatusCount is the shared type re-exported from '../faults/types'
+// at the top of this file.  The admin support-data route and the manager
+// dashboard fault-statistics route both use the same bucket shape.
 
 /**
  * Platform-wide tenant diagnostics returned by
