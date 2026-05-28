@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
-  "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review (TEMP_PHASE_8). Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
-  "updated_at": "2026-05-28T13:41:00Z",
+  "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
+  "updated_at": "2026-05-28T14:42:00Z",
+  "generated_by": "561874d5bae75acb0ec6078ed8cbef27f2462612",
   "findings": [
     {
       "finding_id": "subagent-workspace-contamination",
@@ -18,7 +19,8 @@
         "Recurring issue tracked as #7"
       ],
       "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
-      "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)"
+      "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
+      "operator_notes": ""
     },
     {
       "finding_id": "subagent-race-on-dev-push",
@@ -33,7 +35,51 @@
         "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
       ],
       "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
-      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)"
+      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "archive-append-not-idempotent-duplicate-rows",
+      "title": "Phase 6 archive append is not idempotent — re-archiving an already-archived task_id appends a duplicate row inside assignments-archive.json",
+      "severity": "high",
+      "category": "self-test",
+      "status": "open",
+      "first_seen": "2026-05-28T14:42:00Z",
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 1,
+      "related_issue": 9,
+      "symptom": "Self-test T4 FAIL — 4 task_ids present twice (active=0, archive=2 each)",
+      "evidence": [
+        "561874d5: dispatcher-self-test T4 FAIL — duplicate task_id: gap-10b-5-support-data-ui, gap-82-4-swiftui-listing-detail-impl, gap-82-5-swiftui-inquiries-account, pm-data-support-data-tracking-events",
+        "Verified each is active=0 / archive=2 — duplicated WITHIN assignments-archive.json, not an active->archive leak (so T18/T19 pass while T4 fails)",
+        "6bf8e883 Phase 6 archive-split: 'merged with origin/dev state' — the merge re-appended rows already archived by a concurrent run"
+      ],
+      "root_cause": "Phase 6 merges this run's terminal rows into the archive by append rather than upsert-by-task_id; when a concurrent run or a prior cycle already archived the same task_id, the row is appended again instead of being deduped.",
+      "proposed_fix": "Phase 6 archive write must upsert by task_id (group_by(.task_id) | map(last)) before persisting assignments-archive.json. Add a self-test T18b that fails when archive contains duplicate task_ids (currently T4 catches it cross-file but the in-archive case is the actual bug). dispatcher-prompt.md Phase 6 archive-split step.",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 6 archive-split) + .research/dispatcher-self-test.sh",
+      "operator_notes": ""
+    },
+    {
+      "finding_id": "self-test-fail-recurs-each-run",
+      "title": "Dispatcher self-test FAILs on most runs (new rows missing hardening fields / duplicate archive rows), reducing it to a backfill-after-the-fact ritual",
+      "severity": "high",
+      "category": "self-test",
+      "status": "open",
+      "first_seen": "2026-05-28T14:42:00Z",
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 1,
+      "symptom": "Self-test fails at end of run, then state is hand-patched ('-> now backfilled')",
+      "evidence": [
+        "6bf8e883: 'self-test: T11 FAIL (5 new rows missing hardening fields -> now backfilled)'",
+        "561874d5 (this run): T4 FAIL (4 duplicate archive task_ids) — not yet repaired",
+        "Pattern: self-test is run AFTER state is written, so failures are repaired reactively rather than prevented"
+      ],
+      "root_cause": "Hardening fields and archive dedup are enforced only by the post-hoc self-test, not by the Phase 3 claim / Phase 6 archive writers themselves, so every claim/archive cycle can introduce a fresh violation.",
+      "proposed_fix": "Move the T11 (hardening fields) and T4 (archive dedup) invariants into the write path: Phase 3 claim template must stamp all hardening fields; Phase 6 must upsert-dedup before write. Keep the self-test as a gate but make it pass on first run. Add a Phase 6 pre-commit hook that runs dispatcher-self-test.sh and aborts the commit on FAIL.",
+      "effort": "medium",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 3 claim template + Phase 6 pre-commit self-test gate)",
+      "operator_notes": ""
     },
     {
       "finding_id": "double-counted-rebase-attempts",
@@ -47,7 +93,8 @@
         "rebase_attempts landed on 2 instead of 1; caught and fixed manually"
       ],
       "proposed_fix": "Assign a single owner for rebase_attempts mutation (either rebaser OR dispatcher, never both) and document it in the rebaser contract.",
-      "affected_artifact": ".research/dispatcher-prompt.md (rebaser contract / counter ownership)"
+      "affected_artifact": ".research/dispatcher-prompt.md (rebaser contract / counter ownership)",
+      "operator_notes": ""
     },
     {
       "finding_id": "no-run-level-lock-parallel-overlap",
@@ -55,13 +102,16 @@
       "severity": "high",
       "status": "open",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 3,
       "evidence": [
-        "A parallel run pushed state (generated=2026-05-28T12:32:35Z, 137 archived) mid-transition; reset to origin/dev and re-ran"
+        "A parallel run pushed state (generated=2026-05-28T12:32:35Z, 137 archived) mid-transition; reset to origin/dev and re-ran",
+        "d654512a 2026-05-28 02:15: 'R0 new (all captured by concurrent run)' — Phase 5 verdicts for #643/#641/#642 produced by a concurrent dispatcher",
+        "6bf8e883 2026-05-28 14:11: archive-append re-merged rows already archived by a concurrent run (root of T4 duplicate-archive FAIL)"
       ],
-      "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held.",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)"
+      "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held. This also prevents the archive-dedup and stale-base re-run failures which are downstream symptoms of overlap.",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
+      "operator_notes": ""
     },
     {
       "finding_id": "approved-but-unmergeable-pool-grows",
@@ -69,14 +119,16 @@
       "severity": "high",
       "status": "open",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 2,
       "evidence": [
         "5 approved PRs unmergeable: #633 ci-fail, #639 needs-human-review, #641 draft+needs-human-review, #643 ci-unknown/0-checks, #640 dirty",
-        "0 merged by dispatcher; approved pool only grows"
+        "0 merged by dispatcher; approved pool only grows",
+        "db36d8e5 2026-05-28 08:08: X=0 merged-now with 2 merge-attempts (PR#632, PR#650) and PR#643 stuck on ci-green-prefix anomaly"
       ],
       "proposed_fix": "Per-blocker routing in Phase 5.5: ci-fail -> Phase 5.7 respawn; needs-human-review -> explicit human-escalation tag + stop; dirty -> auto-rebase; ci-unknown/0-checks -> re-trigger CI or wait, don't strand.",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)"
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)",
+      "operator_notes": ""
     },
     {
       "finding_id": "ci-unknown-zero-checks-unhandled",
@@ -84,13 +136,15 @@
       "severity": "medium",
       "status": "open",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 2,
       "evidence": [
-        "PR#643 had CI=unknown / 0 checks; merger silently left it stuck"
+        "PR#643 had CI=unknown / 0 checks; merger silently left it stuck",
+        "db36d8e5 2026-05-28 08:08: 'Anomaly: PR#643 reviewer_summary=ci-green-prefix (not verdict=approve/changes); stuck until head changes'"
       ],
-      "proposed_fix": "Add an explicit ci-unknown/0-checks branch to the merge gate: re-trigger CI (or wait + recheck) rather than treating absent checks as indeterminate-and-stranded.",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 CI evaluation)"
+      "proposed_fix": "Add an explicit ci-unknown/0-checks branch to the merge gate: re-trigger CI (or wait + recheck) rather than treating absent checks as indeterminate-and-stranded. Also normalize reviewer_summary to a verdict= key so a 'ci-green-prefix' note is not mistaken for a verdict.",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 CI evaluation)",
+      "operator_notes": ""
     },
     {
       "finding_id": "compaction-loses-phase-decision-provenance",
@@ -104,7 +158,8 @@
         "Run resumed from a summary after context compaction; all phase decisions re-derived via GitHub API checks"
       ],
       "proposed_fix": "Persist a small per-run decisions ledger in management state so a post-compaction resume reloads decisions instead of re-deriving them.",
-      "affected_artifact": ".research/dispatcher-prompt.md (per-run decision ledger)"
+      "affected_artifact": ".research/dispatcher-prompt.md (per-run decision ledger)",
+      "operator_notes": ""
     },
     {
       "finding_id": "dup-suffix-variant-dodges-dedup",
@@ -112,15 +167,16 @@
       "severity": "high",
       "status": "open",
       "first_seen": "2026-05-28T12:28:33Z",
-      "last_seen": "2026-05-28T12:28:33Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 2,
       "evidence": [
         "gap-82-4-swiftui-listing-detail (PR#641) and gap-82-4-swiftui-listing-detail-impl (PR#644) both in review simultaneously",
         "Phase 7 dup-skip log keys on exact task_id; -impl variant slipped through and got its own PR",
-        "Prior run (005d515) dup-skipped gap-82-4 against #641,#644 — both already existed"
+        "005d5154 2026-05-28 11:13: 'Dup-skip: gap-82-4-swiftui-listing-detail reason=open-pr conflicts_with=#641,#644' — suffix variants again collided after the fact"
       ],
-      "proposed_fix": "Normalize task_id by stripping trailing -impl|-fix|-v\\d+ before the open-PR / same-epic conflict check, or key dedup on the gap-id prefix (gap-82-4-*) so suffix variants collide.",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2/3 dedup gate)"
+      "proposed_fix": "Normalize task_id by stripping trailing -impl|-fix|-v\\d+ before the open-PR / same-epic conflict check, or key dedup on the gap-id prefix (gap-82-4-*) so suffix variants collide. T20 already computes this stem for active rows — reuse the same stem function in the Phase 2/3 dedup gate.",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2/3 dedup gate)",
+      "operator_notes": ""
     },
     {
       "finding_id": "orphaned-prs-reconciliation-noise",
@@ -128,14 +184,16 @@
       "severity": "high",
       "status": "open",
       "first_seen": "2026-05-28T12:28:33Z",
-      "last_seen": "2026-05-28T12:28:33Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 2,
       "evidence": [
         "Phase 2 reconciliation discovered 4 orphaned PRs this run (#685, #686, #687, #641) with no assignment rows",
-        "Reconciliation/orphan noise present in 2 of the 3 visible runs"
+        "Reconciliation/orphan noise present in 2 of the 3 visible runs",
+        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' — spawned an implementer for an already-merged gap"
       ],
-      "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Keep Phase 2 reconciliation as a safety net only.",
-      "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)"
+      "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Also re-check remote merge state immediately before spawn to avoid spawning for already-merged gaps. Keep Phase 2 reconciliation as a safety net only.",
+      "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)",
+      "operator_notes": ""
     },
     {
       "finding_id": "post-merge-gate-fooled-by-clone-mtime",
@@ -149,7 +207,8 @@
         "Phase 7: 'Post-merge: skipped (mtime < 24h — fresh clone reset mtime)'"
       ],
       "proposed_fix": "Persist last_post_merge_review_at in management state (e.g. assignments.json meta) and gate Phase 6 on that timestamp rather than file mtime — immune to clone resets.",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 6 post-merge cadence)"
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 6 post-merge cadence)",
+      "operator_notes": ""
     },
     {
       "finding_id": "stale-local-base-wastes-cycle",
@@ -157,30 +216,33 @@
       "severity": "medium",
       "status": "open",
       "first_seen": "2026-05-28T12:28:33Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 2,
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 3,
       "evidence": [
         "Phase 7 note: 'Local dev was 50 commits behind origin/dev; reset to origin/dev and re-ran.'",
-        "2026-05-28T13:41Z: parallel run pushed state mid-transition; reset to origin/dev and re-ran phases"
+        "2026-05-28T13:41Z: parallel run pushed state mid-transition; reset to origin/dev and re-ran phases",
+        "6bf8e883 2026-05-28 14:11: Phase 6 archive-split 'merged with origin/dev state' — base drift again forced a remote-state merge"
       ],
       "proposed_fix": "At run start, git fetch and (when N commits behind) reset --hard origin/dev before any gate, so timing-sensitive phases run against current base on the first pass.",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)"
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
+      "operator_notes": ""
     },
     {
       "finding_id": "review-merge-conversion-bursty",
-      "title": "Review->merge conversion is bursty: both merge attempts failed, 0 merged vs 10 in review",
+      "title": "Review->merge conversion is bursty: merge attempts fail and merged-now swings wildly run-to-run",
       "severity": "low",
       "status": "open",
       "first_seen": "2026-05-28T12:28:33Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 2,
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 3,
       "evidence": [
         "Merge attempts: PR#633 merged=false ci-failed; PR#639 merged=false needs-human-review",
-        "Merged-now trend across visible runs: 4 -> 11 -> 0; in-review pool 14 -> 11 -> 12",
-        "2026-05-28T13:41Z: dispatcher merged 0 of 5 approved PRs (all blocked); only human merges (#686, #687) drained the pool"
+        "Merged-now trend across runs: 1 -> 0 -> 2 -> 1 -> 0 -> 2 -> 11 -> 11 (X across 7ceb1481..6bf8e883) — bursty, dispatcher M=0 on the two 11-merge runs (all human/concurrent merges)",
+        "2026-05-28T13:41Z: dispatcher merged 0 of 5 approved PRs (all blocked); only human merges drained the pool"
       ],
       "proposed_fix": "Track per-PR merge-blocker reason (ci-failed vs needs-human-review) as a metric; consider Phase 5.7-style auto-respawn on ci-failed and explicit human-escalation tagging for needs-human-review so the review pool drains steadily.",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)"
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)",
+      "operator_notes": ""
     },
     {
       "finding_id": "metrics-trailer-undercounts-skips",
@@ -188,14 +250,16 @@
       "severity": "low",
       "status": "open",
       "first_seen": "2026-05-28T12:28:33Z",
-      "last_seen": "2026-05-28T12:28:33Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-28T14:42:00Z",
+      "recurrence": 2,
       "evidence": [
         "Subject: C2 R4 M2 X0 F0 A12 — but Phase 7 recorded 4 dup-skips not surfaced in the trailer",
-        "Prior report (2026-05-28T09-47-03Z) already noted metrics-trailer drift (X2 vs 4 actually merged)"
+        "Prior report (2026-05-28T09-47-03Z) already noted metrics-trailer drift (X2 vs 4 actually merged)",
+        "005d5154 2026-05-28 11:13: subject 'X11 merged-now' but Phase 7 body also recorded 1 Dup-skip + 1 Dropped not in the trailer"
       ],
       "proposed_fix": "Recompute the metrics trailer after Phase 5.5 (post-merge) and add a dup-skip count token so commit subjects match the Phase 7 summary.",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 7 metrics trailer)"
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 7 metrics trailer)",
+      "operator_notes": ""
     }
   ]
 }
