@@ -3109,7 +3109,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/654",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=654 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=migration 00163 + SupportToolingEventKind enum + log_support_tooling_event repo + 3 fire-and-forget emitters in platform_admin routes; cargo check+test exit=0; fmt-fix=a93e62be (joined 5 short test assertions per cargo fmt)",
+      "implementer_summary": "pr=654 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=migration 00163 + SupportToolingEventKind enum + log_support_tooling_event repo + 3 fire-and-forget emitters in platform_admin routes; cargo check+test exit=0; fmt-fix=a93e62be (joined 5 short test assertions per cargo fmt); fmt-fix2=ce8352f6 (joined SupportSessionsRevoked event call in routes to single 100-char line)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": true,
@@ -3117,7 +3117,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 1,
+      "fix_rounds": 2,
       "merge_attempted_at": null
     },
     {
