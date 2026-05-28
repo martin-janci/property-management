@@ -1334,6 +1334,14 @@ pub async fn get_export_job_status(
 // ============================================================================
 
 /// Pause a report schedule (Story 81.1).
+///
+/// # Security (closes #646)
+///
+/// Uses `RlsConnection` (not `AuthUser`) so:
+/// - The caller's role is re-checked against the database on every request.
+/// - Only manager-tier roles may pause schedules.
+/// - `caller_org_id` is threaded into the repository UPDATE as
+///   `AND organization_id = $caller_org_id`, preventing cross-tenant pause.
 #[utoipa::path(
     put,
     path = "/api/v1/reports/schedules/{id}/pause",
@@ -1342,28 +1350,62 @@ pub async fn get_export_job_status(
     responses(
         (status = 200, description = "Schedule paused", body = ReportSchedule),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Insufficient role"),
         (status = 404, description = "Schedule not found"),
     )
 )]
 pub async fn pause_schedule(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to pause report schedules",
+            )),
+        ));
+    }
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
     state
         .report_schedule_repo
-        .pause(id)
+        .pause(id, caller_org_id)
         .await
         .map(Json)
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to pause schedule")),
-            )
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to pause schedule"
+            );
+            match e {
+                common::errors::AppError::NotFound(_) => (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new(
+                        "SCHEDULE_NOT_FOUND",
+                        "Report schedule not found",
+                    )),
+                ),
+                _ => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Failed to pause schedule")),
+                ),
+            }
         })
 }
 
 /// Resume a paused report schedule (Story 81.1).
+///
+/// # Security (closes #646)
+///
+/// Same contract as [`pause_schedule`]: manager-tier RBAC via `RlsConnection`,
+/// `caller_org_id` threaded into the UPDATE WHERE clause.
 #[utoipa::path(
     put,
     path = "/api/v1/reports/schedules/{id}/resume",
@@ -1372,24 +1414,53 @@ pub async fn pause_schedule(
     responses(
         (status = 200, description = "Schedule resumed", body = ReportSchedule),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Insufficient role"),
         (status = 404, description = "Schedule not found"),
     )
 )]
 pub async fn resume_schedule(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    if !rls.role().is_manager() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to resume report schedules",
+            )),
+        ));
+    }
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
     state
         .report_schedule_repo
-        .resume(id)
+        .resume(id, caller_org_id)
         .await
         .map(Json)
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to resume schedule")),
-            )
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to resume schedule"
+            );
+            match e {
+                common::errors::AppError::NotFound(_) => (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new(
+                        "SCHEDULE_NOT_FOUND",
+                        "Report schedule not found",
+                    )),
+                ),
+                _ => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Failed to resume schedule")),
+                ),
+            }
         })
 }
 
@@ -1460,10 +1531,16 @@ fn execution_download_url(exec: &db::models::report_schedule::ReportExecution) -
 )]
 pub async fn list_schedule_executions(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(params): Query<ListExecutionsParams>,
 ) -> Result<Json<ExecutionHistoryResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Capture the caller's tenant for the schedule existence/scope check.
+    // Closes #647: without this, a user in org B could list execution history
+    // for a schedule belonging to org A by knowing the UUID.
+    let caller_org_id = rls.tenant_id();
+    rls.release().await;
+
     // Validate status filter
     if let Some(ref s) = params.status {
         if !VALID_EXECUTION_STATUSES.contains(&s.to_lowercase().as_str()) {
@@ -1512,14 +1589,20 @@ pub async fn list_schedule_executions(
         }
     }
 
-    // Verify the schedule exists before querying executions.
-    // This prevents misleading "empty list" responses for non-existent schedules.
+    // Verify the schedule exists AND belongs to the caller's organisation
+    // before querying executions (closes #647). A cross-tenant attempt and a
+    // genuinely missing UUID both surface as 404 so no existence info leaks.
     let schedule = state
         .report_schedule_repo
-        .get_by_id(id)
+        .get_by_id_in_org(id, caller_org_id)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, schedule_id = %id, "Failed to look up report schedule");
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to look up report schedule"
+            );
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to look up schedule")),

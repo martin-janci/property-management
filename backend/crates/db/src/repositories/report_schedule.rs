@@ -29,7 +29,13 @@ impl ReportScheduleRepository {
     // Schedule operations
     // ============================================================================
 
-    /// Get a schedule by ID.
+    /// Get a schedule by ID (no tenant scoping).
+    ///
+    /// **Prefer [`get_by_id_in_org`] in route handlers** — this method exists
+    /// only for internal callers that have already verified tenant scope (e.g.
+    /// the scheduler worker iterating all schedules). Calling it directly from
+    /// a request handler with a caller-supplied `id` re-introduces the IDOR
+    /// class fixed in #624 / #646 / #647.
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<ReportSchedule>, AppError> {
         let row = sqlx::query_as::<_, ReportScheduleRow>(
             r#"
@@ -52,17 +58,71 @@ impl ReportScheduleRepository {
         Ok(row.map(ReportSchedule::from))
     }
 
+    /// Get a schedule by ID, scoped to the caller's organization.
+    ///
+    /// # Cross-tenant safety (closes #647)
+    ///
+    /// Returns `Ok(None)` both when the schedule does not exist and when it
+    /// exists in a different organisation — the handler maps both to 404 so
+    /// no cross-tenant existence information leaks.
+    pub async fn get_by_id_in_org(
+        &self,
+        id: Uuid,
+        caller_org_id: Uuid,
+    ) -> Result<Option<ReportSchedule>, AppError> {
+        let row = sqlx::query_as::<_, ReportScheduleRow>(
+            r#"
+            SELECT id, report_id, organization_id, name, frequency,
+                   day_of_week, day_of_month, time, timezone, format,
+                   recipients, is_active, status,
+                   last_run_at, next_run_at, created_at, updated_at
+            FROM report_schedules
+            WHERE id              = $1
+              AND organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(caller_org_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to get report schedule"
+            );
+            AppError::Database(e.to_string())
+        })?;
+
+        Ok(row.map(ReportSchedule::from))
+    }
+
     /// Pause a schedule (Story 81.1).
     ///
     /// Sets `is_active = false`, `status = 'paused'`.
-    pub async fn pause(&self, id: Uuid) -> Result<ReportSchedule, AppError> {
+    ///
+    /// # Cross-tenant safety (closes #646)
+    ///
+    /// The WHERE clause includes `AND organization_id = $caller_org_id` so a
+    /// principal in org A cannot pause a schedule that belongs to org B, even
+    /// if they know the schedule's UUID. The UPDATE returns no row (→ 404)
+    /// when the `id` exists but the `organization_id` does not match, giving
+    /// the same opaque response as "not found" to avoid leaking existence
+    /// information.
+    pub async fn pause(
+        &self,
+        id: Uuid,
+        caller_org_id: Uuid,
+    ) -> Result<ReportSchedule, AppError> {
         let row = sqlx::query_as::<_, ReportScheduleRow>(
             r#"
             UPDATE report_schedules
             SET is_active  = false,
                 status     = $1,
                 updated_at = NOW()
-            WHERE id = $2
+            WHERE id              = $2
+              AND organization_id = $3
             RETURNING id, report_id, organization_id, name, frequency,
                       day_of_week, day_of_month, time, timezone, format,
                       recipients, is_active, status,
@@ -71,10 +131,16 @@ impl ReportScheduleRepository {
         )
         .bind(report_schedule_status::PAUSED)
         .bind(id)
+        .bind(caller_org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, schedule_id = %id, "Failed to pause report schedule");
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to pause report schedule"
+            );
             AppError::Database(e.to_string())
         })?
         .ok_or_else(|| AppError::NotFound(format!("Report schedule {} not found", id)))?;
@@ -85,14 +151,24 @@ impl ReportScheduleRepository {
     /// Resume a paused schedule (Story 81.1).
     ///
     /// Sets `is_active = true`, `status = 'active'`.
-    pub async fn resume(&self, id: Uuid) -> Result<ReportSchedule, AppError> {
+    ///
+    /// # Cross-tenant safety (closes #646)
+    ///
+    /// Same tenant-scoping contract as [`pause`] — `AND organization_id = $3`
+    /// in the UPDATE WHERE clause, 404 on zero-row update.
+    pub async fn resume(
+        &self,
+        id: Uuid,
+        caller_org_id: Uuid,
+    ) -> Result<ReportSchedule, AppError> {
         let row = sqlx::query_as::<_, ReportScheduleRow>(
             r#"
             UPDATE report_schedules
             SET is_active  = true,
                 status     = $1,
                 updated_at = NOW()
-            WHERE id = $2
+            WHERE id              = $2
+              AND organization_id = $3
             RETURNING id, report_id, organization_id, name, frequency,
                       day_of_week, day_of_month, time, timezone, format,
                       recipients, is_active, status,
@@ -101,10 +177,16 @@ impl ReportScheduleRepository {
         )
         .bind(report_schedule_status::ACTIVE)
         .bind(id)
+        .bind(caller_org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, schedule_id = %id, "Failed to resume report schedule");
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to resume report schedule"
+            );
             AppError::Database(e.to_string())
         })?
         .ok_or_else(|| AppError::NotFound(format!("Report schedule {} not found", id)))?;
