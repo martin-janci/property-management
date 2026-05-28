@@ -471,7 +471,7 @@ impl ReportScheduleRepository {
     ///
     /// # Cross-tenant safety (closes #624)
     ///
-    /// The WHERE clause includes `AND organization_id = $caller_org_id` so a
+    /// The WHERE clause includes `AND organization_id = caller_org_id` so a
     /// principal in org A cannot mutate a schedule that belongs to org B, even
     /// if they know the schedule's UUID. The UPDATE returns no row (→ 404) when
     /// the `id` exists but the `organization_id` does not match, giving the same
