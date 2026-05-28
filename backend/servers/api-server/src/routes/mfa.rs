@@ -394,6 +394,23 @@ pub async fn verify_mfa_setup(
             })?;
     }
 
+    // Keep user_2fa.backup_codes_remaining in sync so /status reflects the count.
+    sqlx::query("UPDATE user_2fa SET backup_codes_remaining = $1 WHERE user_id = $2")
+        .bind(hashed_codes.len() as i32)
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to sync backup_codes_remaining");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to issue recovery codes",
+                )),
+            )
+        })?;
+
     tx.commit().await.map_err(|e| {
         tracing::error!(error = %e, "Failed to commit recovery codes transaction");
         (
