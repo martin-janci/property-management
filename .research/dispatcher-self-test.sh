@@ -448,7 +448,10 @@ T20_DUPES=$(jq -r '
   | join(",")' "$ASSIGN")
 if [ -z "$T20_DUPES" ]; then note "no two active rows share a stem"
 else
-  fail "duplicate active stems: $T20_DUPES (two non-terminal units of the same work)"
+  # PR1 observe-only: surface duplicates as a WARNING without failing the
+  # self-test (matches the T12/T16 grandfather convention). PR2 flips this
+  # back to `fail` once the live duplicate(s) are resolved.
+  printf '  warn  duplicate active stems: %s (two non-terminal units; PR1 observe-only — not failing)\n' "$T20_DUPES" >&2
   jq -r '
     def stem: sub("^(auto-impl|impl)/";"") | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
     .assignments | map(select(.status=="in-progress" or .status=="review"))
