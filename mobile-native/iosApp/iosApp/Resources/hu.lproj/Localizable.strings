@@ -283,6 +283,15 @@
 "either" = "Bármely";
 "send" = "Küldés";
 
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Érdeklődés";
+"inquiry_reply_placeholder" = "Írjon választ…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Kapcsolati adatok";
+"inquiry_message_placeholder" = "Írja le érdeklődését ezen ingatlan iránt…";
+"inquiry_sent_confirmation" = "Érdeklődése elküldve. Választ kap a megadott e-mail-címre.";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Üdvözöljük a Reality Portal-ban";
 "sign_in_description" = "Jelentkezzen be a kedvencek mentéséhez, érdeklődések követéséhez és személyre szabott ajánlatokhoz.";

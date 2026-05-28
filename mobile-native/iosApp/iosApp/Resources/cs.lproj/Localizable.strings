@@ -283,6 +283,15 @@
 "either" = "Jakýkoliv";
 "send" = "Odeslat";
 
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Dotaz";
+"inquiry_reply_placeholder" = "Napište odpověď…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Kontaktní údaje";
+"inquiry_message_placeholder" = "Popište váš zájem o tuto nemovitost…";
+"inquiry_sent_confirmation" = "Váš dotaz byl odeslán. Odpověď obdržíte na zadanou e-mailovou adresu.";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Vítejte v Reality Portál";
 "sign_in_description" = "Přihlaste se pro uložení oblíbených, sledování dotazů a personalizovaná doporučení.";

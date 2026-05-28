@@ -283,6 +283,15 @@
 "either" = "Dowolny";
 "send" = "Wyślij";
 
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Zapytanie";
+"inquiry_reply_placeholder" = "Napisz odpowiedź…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Dane kontaktowe";
+"inquiry_message_placeholder" = "Opisz swoje zainteresowanie tą nieruchomością…";
+"inquiry_sent_confirmation" = "Twoje zapytanie zostało wysłane. Odpowiedź otrzymasz na podany adres e-mail.";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Witaj w Reality Portal";
 "sign_in_description" = "Zaloguj się, aby zapisywać ulubione, śledzić zapytania i otrzymywać spersonalizowane rekomendacje.";

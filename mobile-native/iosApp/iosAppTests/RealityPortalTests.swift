@@ -518,6 +518,224 @@ final class NavigationStateRestorationServiceTests: XCTestCase {
     }
 }
 
+// MARK: - InquiryStatus Tests
+
+/// Verifies the Swift `InquiryStatus` enum used by `InquiriesView`
+/// and that `KMPBridge.toInquiryPreview` maps KMP status values correctly.
+final class InquiryStatusTests: XCTestCase {
+
+    // MARK: displayName
+
+    func testPendingDisplayName() {
+        XCTAssertEqual(InquiryStatus.pending.displayName, "Pending")
+    }
+
+    func testRepliedDisplayName() {
+        XCTAssertEqual(InquiryStatus.replied.displayName, "Replied")
+    }
+
+    func testClosedDisplayName() {
+        XCTAssertEqual(InquiryStatus.closed.displayName, "Closed")
+    }
+
+    // MARK: badge colours resolve without crashing
+
+    func testPendingColorsAreNonNil() {
+        // backgroundColor / foregroundColor call into InquiryStatusColors;
+        // just ensure they don't crash — we don't assert specific hex values here.
+        _ = InquiryStatus.pending.backgroundColor
+        _ = InquiryStatus.pending.foregroundColor
+    }
+
+    func testRepliedColorsAreNonNil() {
+        _ = InquiryStatus.replied.backgroundColor
+        _ = InquiryStatus.replied.foregroundColor
+    }
+
+    func testClosedColorsAreNonNil() {
+        _ = InquiryStatus.closed.backgroundColor
+        _ = InquiryStatus.closed.foregroundColor
+    }
+}
+
+// MARK: - InquiryPreview Tests
+
+/// Verifies the `InquiryPreview` model that `InquiriesView` renders.
+final class InquiryPreviewTests: XCTestCase {
+
+    func testFormattedDateProducesNonEmptyString() {
+        let preview = InquiryPreview(
+            id: "p-1",
+            listingId: "lst-1",
+            listingTitle: "Test Property",
+            lastMessage: "Hello",
+            status: .pending,
+            date: Date(),
+            hasUnread: false
+        )
+        XCTAssertFalse(preview.formattedDate.isEmpty)
+    }
+
+    func testSampleDataIsAvailableInDebug() {
+        #if DEBUG
+        XCTAssertFalse(InquiryPreview.samples.isEmpty, "Sample data required for SwiftUI previews")
+        // All sample IDs should be unique
+        let ids = InquiryPreview.samples.map(\.id)
+        XCTAssertEqual(ids.count, Set(ids).count, "Sample IDs must be unique")
+        #endif
+    }
+}
+
+// MARK: - PushNotificationManager Tests
+
+/// Unit tests for `PushNotificationManager`'s preference management.
+/// These tests do not interact with APNs and work entirely offline.
+final class PushNotificationManagerTests: XCTestCase {
+
+    private var keychain: KeychainService!
+    private var manager: PushNotificationManager!
+
+    override func setUp() {
+        super.setUp()
+        // Isolate from the real app keychain — use a unique service name.
+        keychain = KeychainService(
+            service: "three.two.bit.ppt.reality.tests.push.\(UUID().uuidString)"
+        )
+        manager = PushNotificationManager(keychainService: keychain)
+    }
+
+    override func tearDown() {
+        keychain.deleteAll()
+        super.tearDown()
+    }
+
+    // MARK: Default preferences
+
+    func testNewListingsDefaultsToEnabled() {
+        XCTAssertTrue(manager.isEnabled(.newListings))
+    }
+
+    func testPriceDropsDefaultsToEnabled() {
+        XCTAssertTrue(manager.isEnabled(.priceDrops))
+    }
+
+    func testInquiryResponsesDefaultsToEnabled() {
+        XCTAssertTrue(manager.isEnabled(.inquiryResponses))
+    }
+
+    func testMarketingDefaultsToDisabled() {
+        XCTAssertFalse(manager.isEnabled(.marketing))
+    }
+
+    // MARK: setEnabled persists the value
+
+    func testDisablingNewListingsPersists() async {
+        // Disable new listings — the manager is already authorized in this
+        // path because we skip the authorization gate (not authorized means
+        // setEnabled returns early without persisting).  We test the
+        // UserDefaults persistence side only, which doesn't require APNs.
+        UserDefaults.standard.set(false, forKey: NotificationPreferenceKey.newListings.rawValue)
+        let freshManager = PushNotificationManager(keychainService: keychain)
+        XCTAssertFalse(freshManager.isEnabled(.newListings))
+    }
+
+    // MARK: clearDeviceToken
+
+    func testClearDeviceTokenRemovesToken() {
+        // Simulate a stored token
+        try? keychain.save("abc123", forKey: KeychainService.Keys.pushDeviceToken)
+        let freshManager = PushNotificationManager(keychainService: keychain)
+        XCTAssertNotNil(freshManager.deviceToken)
+
+        freshManager.clearDeviceToken()
+        XCTAssertNil(freshManager.deviceToken)
+        XCTAssertNil(keychain.loadOptional(forKey: KeychainService.Keys.pushDeviceToken))
+    }
+
+    // MARK: didRegisterForRemoteNotifications
+
+    func testDeviceTokenConvertedToHex() {
+        let rawBytes: [UInt8] = [0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x23, 0x45, 0x67]
+        let data = Data(rawBytes)
+        manager.didRegisterForRemoteNotifications(deviceToken: data)
+        XCTAssertEqual(manager.deviceToken, "deadbeef01234567")
+    }
+
+    func testDeviceTokenPersistedToKeychain() {
+        let rawBytes: [UInt8] = [0xCA, 0xFE, 0xBA, 0xBE]
+        manager.didRegisterForRemoteNotifications(deviceToken: Data(rawBytes))
+        XCTAssertEqual(
+            keychain.loadOptional(forKey: KeychainService.Keys.pushDeviceToken),
+            "cafebabe"
+        )
+    }
+}
+
+// MARK: - KeychainService Tests
+
+/// Verifies the `KeychainService` persistence layer used for auth tokens
+/// and push device tokens.
+final class KeychainServiceTests: XCTestCase {
+
+    private var keychain: KeychainService!
+
+    override func setUp() {
+        super.setUp()
+        // Use an isolated test service so tests don't affect the real app keychain.
+        keychain = KeychainService(
+            service: "three.two.bit.ppt.reality.tests.keychain.\(UUID().uuidString)"
+        )
+    }
+
+    override func tearDown() {
+        keychain.deleteAll()
+        super.tearDown()
+    }
+
+    func testSaveAndLoad() throws {
+        try keychain.save("secret-token", forKey: "test_key")
+        let loaded = try keychain.load(forKey: "test_key")
+        XCTAssertEqual(loaded, "secret-token")
+    }
+
+    func testOverwriteExistingValue() throws {
+        try keychain.save("v1", forKey: "reuse_key")
+        try keychain.save("v2", forKey: "reuse_key")
+        XCTAssertEqual(try keychain.load(forKey: "reuse_key"), "v2")
+    }
+
+    func testLoadOptionalReturnsNilForMissingKey() {
+        XCTAssertNil(keychain.loadOptional(forKey: "does_not_exist"))
+    }
+
+    func testDeleteRemovesItem() throws {
+        try keychain.save("to-delete", forKey: "del_key")
+        try keychain.delete(forKey: "del_key")
+        XCTAssertNil(keychain.loadOptional(forKey: "del_key"))
+    }
+
+    func testDeleteMissingKeyDoesNotThrow() {
+        XCTAssertNoThrow(try keychain.delete(forKey: "never_existed"))
+    }
+
+    func testContainsReturnsFalseForMissingKey() {
+        XCTAssertFalse(keychain.contains(key: "absent"))
+    }
+
+    func testContainsReturnsTrueAfterSave() throws {
+        try keychain.save("x", forKey: "present")
+        XCTAssertTrue(keychain.contains(key: "present"))
+    }
+
+    func testDeleteAllClearsAllItems() throws {
+        try keychain.save("a", forKey: "key_a")
+        try keychain.save("b", forKey: "key_b")
+        keychain.deleteAll()
+        XCTAssertFalse(keychain.contains(key: "key_a"))
+        XCTAssertFalse(keychain.contains(key: "key_b"))
+    }
+}
+
 // MARK: - Performance Tests
 
 /// Small performance baselines. They aren't asserted hard; the

@@ -283,6 +283,15 @@
 "either" = "Either";
 "send" = "Send";
 
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Inquiry";
+"inquiry_reply_placeholder" = "Write a reply…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Contact Details";
+"inquiry_message_placeholder" = "Tell us about your interest in this property…";
+"inquiry_sent_confirmation" = "Your inquiry has been sent. You will receive a reply at the email address provided.";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Welcome to Reality Portal";
 "sign_in_description" = "Sign in to save favorites, track inquiries, and get personalized recommendations.";
