@@ -420,6 +420,24 @@ if [ -f "$ASSIGN_ARCHIVE" ]; then
   echo
 fi
 
+# --- T18b: archive contains AT MOST ONE row per task_id --------------------
+# Phase 6 archive write must upsert by task_id. Concurrent runs that each
+# computed the same move set used to append duplicate rows into the archive
+# (T4 caught it cross-file; T18b is the in-archive invariant proper). Plain
+# append → duplicate rows; group_by | map(last) → idempotent upsert.
+if [ -f "$ASSIGN_ARCHIVE" ]; then
+  echo "T18b archive has at most one row per task_id (in-archive dedup)"
+  DUPES=$(jq -r '
+    [.assignments | group_by(.task_id) | .[] | select(length>1) | .[0].task_id]
+    | length' "$ASSIGN_ARCHIVE")
+  if [ "$DUPES" = "0" ]; then note "no duplicate task_id rows in archive"
+  else
+    fail "$DUPES task_id(s) duplicated within archive (Phase 6 archive-append bug)"
+    jq -r '.assignments | group_by(.task_id) | .[] | select(length>1) | "    \(.[0].task_id) :: \(length) rows"' "$ASSIGN_ARCHIVE" >&2
+  fi
+  echo
+fi
+
 # --- T19: active contains NO terminal rows (issue #9) ----------------------
 # Inverse of T18: terminal rows must be moved to archive in Phase 6.
 echo "T19 active assignments contains NO terminal rows (issue #9)"

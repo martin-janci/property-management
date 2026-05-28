@@ -137,6 +137,25 @@ Fix: **every subagent that needs a different branch MUST do its work in a
 dedicated `git worktree` under `/tmp/ppt-worktrees/<task_id>/`**, NEVER in
 the dispatcher's working tree.
 
+**Spawn refusal rule.** Before spawning ANY subagent that performs git
+operations (Phase 4 implementer, Phase 5.6 rebaser, Phase 5.7 followup
+respawn), the dispatcher MUST assert that the subagent brief contains
+the worktree preamble below verbatim, AND that `WORKTREE_PATH` resolves
+to a directory under `/tmp/ppt-worktrees/`. If the assertion fails:
+refuse the spawn, log
+`Spawn-refused: <task_id> reason=missing-worktree-preamble` under
+Phase 7, and surface the row for next-run retry. There is no "soft"
+fallback — running git ops in the dispatcher CWD silently corrupts every
+file the dispatcher commits in Phase 6, and the cost is high enough
+(`subagent-workspace-contamination` finding: a local commit ahead of
+remote that contaminated `assignments.json`) that the safe failure mode
+is "don't spawn".
+
+The dispatcher's working tree is recognizable by the path resolving to
+the repo root (`git rev-parse --show-toplevel`) — any subagent
+exec'ing git commands from that path must abort its own work and
+return `status=blocked note=workspace-leak-prevented`.
+
 Standard preamble injected into every Phase 4 / 5.6 / 5.7 subagent brief:
 
 ```bash
@@ -326,6 +345,44 @@ fi
 - **branch exists, no PR**:
   - If `COMMITS_AHEAD == 0` → **EMPTY BRANCH** (item #1): `new_status="failed"`, `empty_branch=true`, `implementer_summary='branch pushed but 0 commits ahead of dev; nothing to PR'`. Delete the orphan: `git push origin --delete <branch>` (best-effort; ignore failure).
   - Else: `gh pr create --base dev --head <branch> --draft --title '<task_id>: <short>' --body 'Auto: <action>'`, `new_status="review"`, spawn REVIEWER.
+
+#### Orphan-PR discovery (stem-aware reconciliation)
+
+A PR can exist on remote with no matching row in `assignments.json` —
+typically because the spawning run crashed between `gh pr create` and the
+row-persist step, or because a sibling implementer race-pushed a branch
+the dispatcher never registered. The fire-and-forget pattern produced
+4 such orphans in one observed run.
+
+After the per-row pass above, scan remote for orphans:
+
+```bash
+# All open PRs whose head starts with auto-impl/ — the dispatcher's namespace.
+gh pr list --state open --limit 100 --search 'head:auto-impl/' \
+  --json number,headRefName,title,createdAt > /tmp/auto-impl-prs.json
+
+# Build the active-stem index. stem() definition below — same as Phase 3.
+ACTIVE_STEMS=$(jq -r '.assignments[]
+  | select(.status=="in-progress" or .status=="review")
+  | .task_id' .research/management/assignments.json \
+  | sed -E 's/^(auto-impl|impl)\///; s/-(impl|fix|v2|retry|followup|wip)[0-9]*$//')
+```
+
+For each `auto-impl/` PR not already matched to a row by exact branch
+match, compute `pr_stem = stem(headRefName)`. If `pr_stem` is in
+`ACTIVE_STEMS` → this is a **stem-orphan**: an in-flight row exists for
+the same work under a different suffix. Surface it in Phase 7 under
+`Stem-orphans:` and DO NOT auto-link (linking would obscure the bug).
+If `pr_stem` is NOT in `ACTIVE_STEMS` → this is a **clean orphan**:
+backfill a synthetic row (`status=review`, `pr_number=<n>`,
+`branch=<headRefName>`, `task_id=<headRefName.removeprefix("auto-impl/")>`,
+`claimed_at=<PR.createdAt>`, `implementer_summary='[orphan-recovered]'`)
+so subsequent phases can reason about it.
+
+Phase 4's "write row before spawn" rule (see Phase 4) is the upstream
+fix; this discovery step is the safety net that catches whatever slipped
+through it.
+
 - **no branch + in-progress** → run the **sandbox-reclaim helper** (P3):
 
   ```bash
@@ -492,13 +549,32 @@ def claimable(c, terminal_ids):
             return False
     return True
 
+# Fresh archive read RIGHT BEFORE claim (reclaim-of-already-merged-task-id
+# finding). The TERMINAL_IDS computed in Phase 2.6 may be stale by the
+# time we claim — a concurrent dispatcher run can archive a task_id
+# between Phase 2.6 and Phase 3. Refresh the terminal set from disk on
+# the fly so the claim predicate sees the latest archive state. Cheap
+# (one jq invocation, archive stays at filesystem level).
+TERMINAL_IDS=$(jq -r '.assignments[]
+                     | select(.status=="merged" or .status=="done")
+                     | .task_id' \
+  .research/management/assignments.json \
+  .research/management/assignments-archive.json \
+  | sort -u)
+
 candidates = [c for c in action-list
               if c.status == "open"
               and c.id not in active_ids
-              and c.id not in terminal_ids       # don't re-claim something already shipped
-              and claimable(c, terminal_ids)]
+              and c.id not in TERMINAL_IDS                  # exact-id terminal check
+              and stem(c.id) not in {stem(t) for t in TERMINAL_IDS}   # stem-aware terminal check
+              and claimable(c, TERMINAL_IDS)]
 candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
 ```
+
+The stem-aware terminal check catches the case where a suffix-variant
+slug (e.g. `<id>-impl`, `<id>-v2`) is being claimed while the canonical
+`<id>` is already terminal. Without it the dispatcher would reclaim the
+same gap under a renamed task_id and produce a duplicate PR.
 
 The legacy `dependency` free-text field is NOT consulted by the claim
 predicate. Only `depends_on` is.
@@ -644,6 +720,52 @@ Append to `assignments.json`:
 ```
 
 If fewer than 3 candidates available (buffer drained), claim what's there — don't block. Log: `Phase 3: claimed=<N> same_epic_skipped=<K> dup_skipped=<D>` where `D` is the count of cross-PR-dedup-guard rejections (sum across the three guards above).
+
+---
+
+## Phase 3.5 — Persist claims BEFORE spawning implementers
+
+Addresses the `orphaned-prs-reconciliation-noise` finding. The
+fire-and-forget Phase 4 model means a spawned implementer can open a PR
+on remote before the dispatcher's Phase 6 commits the claim row to
+`assignments.json` on `dev`. If the dispatcher aborts between Phase 4
+and Phase 6 (sandbox timeout, network blip, manual interrupt), the PR
+exists on remote but the row doesn't — Phase 2 of the next run sees an
+orphan PR with no row to link to.
+
+**Rule.** When Phase 3 claims ≥1 new row, commit + push the claim rows
+to `dev` BEFORE entering Phase 4. The commit body is minimal — just the
+list of claims — so it doesn't pollute the Phase 6 main commit:
+
+```bash
+if [ "$CLAIMED_COUNT" -gt 0 ]; then
+  bash .research/dispatcher-self-test.sh >/tmp/pre-claim-self-test.log 2>&1 || {
+    echo "Phase 3.5 ABORT: self-test FAIL after claim — refusing to publish claims. See /tmp/pre-claim-self-test.log" >&2
+    exit 0
+  }
+  git add .research/management/assignments.json
+  bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
+    --allow '.research/management/**' || exit 0
+  git commit -m "chore(research): dispatcher pre-spawn claim — ${CLAIMED_COUNT} new task(s)"
+  git push origin dev || {
+    # Push lost a race with a concurrent run — bail without spawning.
+    # Phase 6 of this run is a no-op; Phase 2 of the next run will see
+    # whichever rows actually landed on dev.
+    echo "Phase 3.5 ABORT: push lost race — claims not durable, NOT spawning implementers." >&2
+    exit 0
+  }
+fi
+```
+
+This commit is intentionally separate from the Phase 6 main commit. The
+two-commit pattern guarantees: by the time any implementer starts work,
+its claim row is durable on `dev`. If the rest of the run aborts, the
+claim is still recoverable. If the push loses a race, the dispatcher
+bails *before* spawning, so no orphan PR can ever exist for this run.
+
+Phase 6's commit later in the run picks up everything else (Phase 2
+reconciliation results, Phase 5 reviewer summaries, archive moves) on
+top of this base.
 
 ---
 
@@ -900,20 +1022,34 @@ SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 For each row `status=="review"` where `reviewer_summary` starts with `"verdict=approve"`:
 
-**Pre-flight:**
+**Pre-flight + per-blocker routing.**
+
 ```bash
-gh pr view <pr_number> --json statusCheckRollup,isDraft,reviewDecision,mergeable,state
+gh pr view <pr_number> --json statusCheckRollup,isDraft,reviewDecision,mergeable,state,labels
 ```
 
-Skip if `state != OPEN`, CI conclusion in
-`{FAILURE, CANCELLED, TIMED_OUT, ACTION_REQUIRED}`, or any CI status in
-`{IN_PROGRESS, QUEUED}`.
+Classify the PR into exactly one **blocker** based on the pre-flight result,
+and route per the table below. The previous "skip if anything's wrong" rule
+let approved PRs accumulate in a stranded pool with no escalation — the
+`approved-but-unmergeable-pool-grows` finding (5 PRs stuck across 3 runs).
+Each blocker now has a dedicated path.
 
-**Do NOT skip on `isDraft == true`** — `ppt-pr-merge` Step 1 auto-promotes
-draft PRs to ready when the approval + green-CI gates pass. Letting drafts
-through is the whole point of the auto-promote path; pre-filtering them here
-re-introduces the stall bug (dispatcher run on 2026-05-25: 0 merge attempts,
-all approved PRs draft).
+| Blocker classification | Detection | Routing |
+|---|---|---|
+| `state-closed` | `state != OPEN` | Skip silently; Phase 2 already reconciled. |
+| `ci-fail` | CI rollup has `FAILURE`/`CANCELLED`/`TIMED_OUT`/`ACTION_REQUIRED` | Route to **Phase 5.7 respawn** (verdict=changes path) so the implementer can fix the failing build. Do NOT mark `merged=false`. |
+| `ci-in-progress` | All checks `IN_PROGRESS`/`QUEUED` | If `merge_attempted_at` is null or < 6h old → SKIP this cycle, wait. If ≥6h → `ci-stuck escalation` below. |
+| `ci-unknown` | `statusCheckRollup` is empty/null (0 checks reported) | Re-trigger CI via `gh workflow run` (best-effort) and SKIP this cycle. Log under `Phase 7 → CI-retriggered:`. After 2 cycles with still-zero checks, escalate to human-review label and SKIP further attempts (genuine repo config issue, not a transient blip). |
+| `dirty` | `mergeable == "CONFLICTING"` | Route to **Phase 5.6 auto-rebase** (see below). |
+| `draft-ready` | `isDraft == true` AND review approved AND CI green | Pass through; `ppt-pr-merge` Step 1 auto-promotes draft → ready when the approval + green-CI gates pass. Letting drafts through is the whole point of the auto-promote path; pre-filtering re-introduces the stall (observed: 0 merge attempts in a run where every approved PR was draft). |
+| `needs-human-review` | Label `needs-human-review` present | SKIP; surface in Phase 7 under `Approved+human-gated:`. Do NOT keep retrying — humans add this label specifically to stop the dispatcher. |
+| `ready` | None of the above | Proceed with merge spawn. |
+
+**Skip-vs-fail discipline.** Only `ci-fail` mutates row state (routes to
+5.7 which sets `status=in-progress`); every other "skip" leaves the row
+in `status=review` and emits a Phase 7 line so the operator can see why
+it didn't merge this cycle. Approved-but-blocked PRs never disappear
+from the visible state.
 
 **CI-stuck escalation (gap 4):** if the PR's CI rollup is `IN_PROGRESS` or
 `QUEUED` AND `row.merge_attempted_at != null` AND
@@ -982,7 +1118,26 @@ Spawn ONE Task subagent (cap 1 parallel — rebases serialize on the same base):
 > 4. `git push --force-with-lease origin <branch>`
 > 5. Return EXACTLY: `rebased=<true|false> pr=<n> note=<short>`
 
-Capture line. Bump `rebase_attempts += 1`, `last_updated = now`.
+Capture line. Bump `last_updated = now`.
+
+**`rebase_attempts` ownership: dispatcher-only, exactly once per spawn.**
+Earlier behaviour had both the rebaser subagent AND the dispatcher
+incrementing the counter, double-counting to 2 instead of 1
+(`double-counted-rebase-attempts` finding). The rule:
+
+- The **dispatcher** increments `rebase_attempts += 1` here, immediately
+  after capturing the rebaser's return line, regardless of `rebased=true/false`.
+  This is the single authoritative write.
+- The **rebaser subagent** MUST NOT touch `rebase_attempts` (the row is
+  not even accessible from the subagent's worktree under the workspace-
+  isolation rule).
+- The rebaser's return line does NOT carry an attempt count — only
+  `rebased=<true|false>` and a short note. The dispatcher derives the new
+  count from the existing row.
+
+The same single-owner pattern applies to every counter on the assignment
+row: only the dispatcher writes; subagents communicate via return lines.
+
 Phase 5.5 next run will pick up the now-clean PR via the standard path.
 
 ---
@@ -1037,9 +1192,10 @@ Update `assignments.generated = now`. Include `action-list.json` if Phase 2.6 Ti
 
 **Archive move (issue #9 — token spending).**
 
-**Invariant** (T19): post-Phase-6, `assignments.json` carries NO row whose
-status is terminal (`merged` / `failed` / `done`). Every terminal row
-appears exactly once across (`assignments.json`, `assignments-archive.json`).
+**Invariant** (T19 + T18b): post-Phase-6, `assignments.json` carries NO
+row whose status is terminal (`merged` / `failed` / `done`); AND
+`assignments-archive.json` contains AT MOST ONE row per `task_id`. Every
+terminal row appears exactly once across the two files.
 
 **Sweep semantics, not transition-set semantics.** Compute the move set
 from the current file state, not from this run's transitions set. Earlier
@@ -1058,9 +1214,18 @@ MOVE_IDS_JSON=$(jq '[.assignments[]
   | select(.status=="merged" or .status=="failed" or .status=="done")
   | .task_id]' .research/management/assignments.json)
 
-# Append to archive, drop from active. Atomic via mv.
+# Append to archive AND upsert by task_id. Concurrent runs that each
+# re-archive the same id used to produce duplicate rows inside the
+# archive (T4 FAIL: gap-82-4-*-impl + 3 others present twice). The
+# upsert makes the write idempotent regardless of run overlap; group_by
+# preserves order within a group so `map(last)` keeps the freshest row
+# (latest merged_at / last_updated).
 jq --argjson ids "$MOVE_IDS_JSON" --slurpfile active .research/management/assignments.json '
-  .assignments += [ $active[0].assignments[] | select(.task_id as $t | $ids | index($t)) ]
+  .assignments = (
+    (.assignments + [ $active[0].assignments[] | select(.task_id as $t | $ids | index($t)) ])
+    | group_by(.task_id)
+    | map(last)
+  )
   | .archived_at = (now | todate)
 ' .research/management/assignments-archive.json > /tmp/archive.new
 
@@ -1122,6 +1287,33 @@ bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
   echo "dispatcher commit-scope-guard refused — staged paths outside .research/management/. NOT committing; surface in next run." >&2
   exit 0
 }
+
+# Pre-commit self-test gate. Phase 8 finding `self-test-fail-recurs-each-run`:
+# T11 / T4 / T18 / T19 were enforced only by the post-hoc self-test, so every
+# claim/archive cycle could introduce a fresh invariant violation that was
+# then back-filled reactively. Running the self-test BEFORE commit converts
+# it from a forensic ritual into a real gate. Abort on FAIL with a recovery
+# hint so the operator (or the next run) can fix the state before publishing
+# a known-broken snapshot to dev.
+if ! bash .research/dispatcher-self-test.sh >/tmp/dispatcher-self-test.log 2>&1; then
+  echo "PHASE 6 ABORT: dispatcher-self-test FAIL — refusing to commit state that violates invariants." >&2
+  tail -25 /tmp/dispatcher-self-test.log >&2
+  echo "" >&2
+  echo "  Recovery options:" >&2
+  echo "    1. Inspect /tmp/dispatcher-self-test.log to identify the failing T<N>." >&2
+  echo "    2. If state is genuinely corrupt: 'git checkout HEAD -- .research/management/'" >&2
+  echo "       and let the next run rebuild from a known-good base." >&2
+  echo "    3. If the self-test itself is wrong: fix the test, not the data, in a follow-up PR." >&2
+  echo "" >&2
+  echo "  Skip-gate (operator-only): DISPATCHER_SELF_TEST_GATE=0 bypasses this check" >&2
+  echo "  for a single run. Use only when you have manually verified state and need" >&2
+  echo "  to publish despite a known-stale self-test invariant." >&2
+  if [ "${DISPATCHER_SELF_TEST_GATE:-1}" != "0" ]; then
+    exit 0
+  fi
+  echo "  DISPATCHER_SELF_TEST_GATE=0 — continuing despite self-test FAIL." >&2
+fi
+
 git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merge-attempts, X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased'
 git push origin dev   # if another run committed since our pull: rebase + retry once;
                       # if still conflicts, log and bail — next run will re-evaluate state
