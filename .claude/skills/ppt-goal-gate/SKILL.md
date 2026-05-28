@@ -10,11 +10,12 @@ mode: cloud-ok
 - The dispatcher's Phase 6 runs `goal-check.sh` to record convergence health in the commit.
 - CI runs it on PRs touching the dispatcher prompt / scripts.
 - A human auditing whether the autonomous loop is making *measured* progress (not just merging PRs).
+- As of PR 2, `goal-check.sh` runs with `GOAL_CHECK_ENFORCE=1 in Phase 6` + CI; `T20` (in `dispatcher-self-test.sh`) and `GC7` (routine `G16`) also enforce.
 
 ## What it gives you
 `.research/goal-check.sh` emits `{check,passed,observed,expected,hard}` rows:
 - **GC1** coverage referential integrity — every `gap-*` action-list id maps to a real `coverage.json` story; no `done` story retains an open gap task.
-- **GC2** coverage progress — `done`-story count is monotonic non-decreasing vs HEAD (deep-scan commits exempt). HARD-FAIL once `GOAL_CHECK_ENFORCE=1`.
+- **GC2** coverage progress — `done`-story count is monotonic non-decreasing vs HEAD (deep-scan commits exempt). **ENFORCING (PR 2):** a regression ABORTS the dispatcher run and fails CI.
 - **GC3** buffer bounds — `open_claimable` in `[18, 60]` (catches both starvation and the 102/36 overflow).
 
 Stem-uniqueness is enforced separately as `T20` in `dispatcher-self-test.sh`.
