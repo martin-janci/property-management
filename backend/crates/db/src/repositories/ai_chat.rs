@@ -55,13 +55,11 @@ impl AiChatRepository {
         id: Uuid,
         org_id: Uuid,
     ) -> Result<Option<AiChatSession>, sqlx::Error> {
-        sqlx::query_as(
-            "SELECT * FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2",
-        )
-        .bind(id)
-        .bind(org_id)
-        .fetch_optional(&self.pool)
-        .await
+        sqlx::query_as("SELECT * FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2")
+            .bind(id)
+            .bind(org_id)
+            .fetch_optional(&self.pool)
+            .await
     }
 
     /// List user's chat sessions.

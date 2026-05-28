@@ -183,7 +183,11 @@ async fn get_session(
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     let org_id = require_tenant_id(&principal)?;
-    match state.ai_chat_repo.find_session_by_id(session_id, org_id).await {
+    match state
+        .ai_chat_repo
+        .find_session_by_id(session_id, org_id)
+        .await
+    {
         Ok(Some(session)) => Ok(Json(serde_json::json!(session))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
