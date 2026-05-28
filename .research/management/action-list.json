@@ -988,6 +988,7 @@
       "dependency": "none",
       "status": "open",
       "source": "gap-scan 2026-05-27",
+      "note": "scheduled for next sprint; unblocks story 79-2 promotion — cookie-Path security blocker resolved by PR #642 (merged 2026-05-28); e2e is the only remaining gap before 79-2 promotes partial->done",
       "depends_on": []
     },
     {
