@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
-  "updated_at": "2026-05-28T18:32:00Z",
-  "generated_by": "228ddc61a45ae162cf23e992d0f50d0111f1706d",
+  "updated_at": "2026-05-28T20:24:00Z",
+  "generated_by": "d807b2b3538968139fe75d3c3261d26e91e2f6d2",
   "findings": [
     {
       "finding_id": "subagent-workspace-contamination",
@@ -360,16 +360,100 @@
       "category": "push-path",
       "status": "workaround-in-place",
       "first_seen": "2026-05-28T18:21:53Z",
-      "last_seen": "2026-05-28T18:21:53Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-28T20:24:00Z",
+      "recurrence": 2,
       "evidence": [
         "All 4 retry attempts (2s/4s/8s/16s backoff) for git push returned HTTP 403 curl 22",
-        "mcp__github__push_files used successfully for Phase 3.5 and Phase 6 commits"
+        "mcp__github__push_files used successfully for Phase 3.5 and Phase 6 commits",
+        "2026-05-28 run (R8/X6): local git push again returned HTTP 403 from the proxy after several retries; fell back to mcp__github__push_files to land the findings/state commit"
       ],
-      "proposed_fix": "Treat mcp__github__push_files as the primary push path in this environment; fall back to git push only if MCP tool unavailable. Add PUSH_METHOD=mcp env flag to dispatcher-prompt.",
+      "proposed_fix": "Treat mcp__github__push_files as the primary push path in this environment; fall back to git push only if MCP tool unavailable. Add PUSH_METHOD=mcp env flag to dispatcher-prompt. Now recurring across runs — promote the MCP path from fallback to default rather than burning a 4-attempt backoff loop each run.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3.5 + Phase 6 push step)",
-      "operator_notes": ""
+      "operator_notes": "Confirmed recurring 2026-05-28 (R8 run). The retry loop wastes a full backoff cycle before falling back; default to MCP push."
+    },
+    {
+      "finding_id": "orphan-recovery-reinserts-archived-task-id",
+      "title": "Orphan-PR discovery re-inserts active rows whose task_id is already merged in the archive (follow-up/patch PRs on completed work)",
+      "severity": "high",
+      "category": "claim-dedup",
+      "status": "fixed-this-run",
+      "first_seen": "2026-05-28T20:24:00Z",
+      "last_seen": "2026-05-28T20:24:00Z",
+      "recurrence": 1,
+      "symptom": "Phase 2 orphan-PR discovery added 3 rows to active assignments.json whose task_id stems already exist as merged rows in assignments-archive.json.",
+      "evidence": [
+        "Orphan recovery inserted gap-10b-3-admin-health-ui, gap-81-1-report-schedule-edit-ui, gap-8a-3-websocket-realtime-sync into active assignments.json",
+        "All three share a task_id stem with an already-merged archive row — they are follow-up/patch PRs on completed work, not new tasks",
+        "Fix this run: deleted the 3 reinserted rows"
+      ],
+      "root_cause": "The orphan-recovery insert path keys orphan PRs to a synthesized task_id from the branch/gap stem and writes an active row without first checking assignments-archive.json for a terminal twin. A follow-up PR on already-merged work therefore re-enters the active set under the completed task's id. Same class as reclaim-of-already-merged-task-id and terminal-ids-excluded-failed-rows, but on the orphan-discovery write path rather than Phase 3 claim selection.",
+      "proposed_fix": "Before orphan recovery inserts an active row, check ALL_ARCHIVE_IDS (full archive, any status) for the task_id and its normalized stem; if present, attach the orphan PR as a follow-up/patch link on the existing archive row (or open a distinct -followup task_id) instead of creating an active duplicate. Reuse the same stem function as the Phase 3 dedup gate. Extend the self-test to assert no active row shares a stem with a merged archive row.",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2 orphan-PR recovery) + .research/dispatcher-self-test.sh",
+      "operator_notes": "Fixed inline this run by deleting the 3 rows. Root fix is to make orphan recovery archive-aware before insert."
+    },
+    {
+      "finding_id": "rebase-ours-takes-upstream-discards-state",
+      "title": "git checkout --ours during rebase onto origin/dev takes the UPSTREAM side, silently discarding the dispatcher's state writes",
+      "severity": "critical",
+      "category": "push-path",
+      "status": "workaround-in-place",
+      "first_seen": "2026-05-28T20:24:00Z",
+      "last_seen": "2026-05-28T20:24:00Z",
+      "recurrence": 1,
+      "symptom": "During `git rebase origin/dev`, `git checkout --ours <file>` resolved conflicts to origin/dev's version, dropping this run's assignments.json updates; the subsequent push was 'Everything up-to-date' (no change landed).",
+      "evidence": [
+        "Rebase conflict on assignments.json resolved with --ours, which during a rebase means the side being rebased ONTO (origin/dev), not the local branch",
+        "Push reported 'Everything up-to-date' — the dispatcher's state changes had been overwritten by the upstream version",
+        "Recovery: restored the correct tree from a reflog commit, then pushed via MCP API"
+      ],
+      "root_cause": "In a rebase, --ours/--theirs are inverted relative to a merge: --ours is the upstream (the commit you are replaying onto) and --theirs is your local change. The conflict-resolution step assumed merge semantics, so it kept upstream and threw away the local state write. The mistake was invisible because the push then had nothing to send.",
+      "proposed_fix": "In the dispatcher conflict-resolution spec, make state-file ownership explicit: for files the dispatcher OWNS (assignments.json, version), always resolve to the LOCAL/dispatcher side — during a rebase that is `--theirs`, not `--ours`. Better: never rebase owned state files — use `-X theirs` only for generated artifacts and reapply the dispatcher's state commit last (cherry-pick). Add a post-resolve guard that diffs the resolved file against the intended state and aborts the push if the dispatcher's changes are absent.",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (rebase / conflict-resolution step)",
+      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded — add an explicit no-op-push detector."
+    },
+    {
+      "finding_id": "ios-swiftui-prs-blocked-on-macos-build-gate",
+      "title": "iOS/SwiftUI PRs consistently land with needs-human-review because merge requires a macOS-only build the dispatcher cannot run",
+      "severity": "medium",
+      "category": "merge-gate",
+      "status": "open",
+      "first_seen": "2026-05-28T20:24:00Z",
+      "last_seen": "2026-05-28T20:24:00Z",
+      "recurrence": 1,
+      "symptom": "PRs #641, #705, #639 (all gap-82 iOS SwiftUI work) carry needs-human-review and are stranded in the approved pool; the dispatcher made no merge attempt on them.",
+      "evidence": [
+        "3 iOS SwiftUI PRs (#641, #705, #639) blocked on needs-human-review pending macOS build verification",
+        "Pattern matches the broader approved-but-unmergeable-pool-grows finding, but the blocker is structural: there is no macOS CI runner, so the dispatcher can never clear it"
+      ],
+      "root_cause": "iOS/SwiftUI changes need a macOS build (xcodebuild) to verify before merge, but the CI/dispatcher environment has no macOS runner. These PRs are therefore correctly gated to a human, but they accumulate in the approved pool with no routing, indistinguishable from transient blockers.",
+      "proposed_fix": "Recognize the iOS/macOS-build-gate as a distinct, expected terminal-for-dispatcher state: tag such PRs with an explicit human-escalation label (e.g. awaiting-macos-build), stop attempting to merge them, and surface a digest of pending-macos PRs in the Phase 7 summary instead of counting them as failures. Longer term, add a macOS CI runner so xcodebuild can gate them automatically. Until then they should not inflate the unmergeable-pool metric.",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate + Phase 7 summary)",
+      "operator_notes": "Distinct from generic needs-human-review: this is a permanent capability gap (no macOS runner), not a transient block. Track separately so it does not look like dispatcher merge failure."
+    },
+    {
+      "finding_id": "wip-over-cap-blocks-claims",
+      "title": "Active WIP exceeded the cap (10 > 8), forcing Phase 3 to claim 0 tasks until merges drained the backlog",
+      "severity": "low",
+      "category": "throughput",
+      "status": "open",
+      "first_seen": "2026-05-28T20:24:00Z",
+      "last_seen": "2026-05-28T20:24:00Z",
+      "recurrence": 1,
+      "symptom": "Run stats C0/R8/M9/X6/F0/A10 — Phase 3 claimed 0 because active WIP (10) was over the cap of 8.",
+      "evidence": [
+        "A10 active vs WIP cap 8 — over by 2 at run start",
+        "Phase 3 correctly claimed C0 (cap respected)",
+        "6 merges this run (X6) should bring WIP back toward cap; next run expected to have free slots"
+      ],
+      "root_cause": "WIP rose above the cap because claims in prior runs outpaced merges (the approved-but-unmergeable pool held PRs open, keeping rows active). Not a bug — the cap held correctly — but it idles the claim phase whenever the review/merge stage is the bottleneck.",
+      "proposed_fix": "Self-correcting: the 6 merges this run drain WIP back under cap. No code change required, but it confirms that draining the approved-but-unmergeable pool (see approved-but-unmergeable-pool-grows and ios-swiftui-prs-blocked-on-macos-build-gate) is the real throughput lever — when merges stall, claims stall too. Consider surfacing 'claims blocked by WIP cap' as a Phase 7 token so the bottleneck is visible.",
+      "effort": "trivial",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 3 WIP gate + Phase 7 summary)",
+      "operator_notes": "Expected behavior; recorded as a throughput signal. WIP should be back under cap next run after X6 merges."
     }
   ]
 }
