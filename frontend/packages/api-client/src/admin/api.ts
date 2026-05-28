@@ -122,6 +122,9 @@ export async function registerOAuthClient(
 
 /**
  * PATCH /api/v1/admin/oauth/clients/{id} — update an OAuth client.
+ *
+ * When `data.auditReason` is set (required for scope changes) it is forwarded
+ * as `reason` in the JSON body so the backend writes it to the audit log.
  */
 export async function updateOAuthClient(
   id: string,
@@ -136,6 +139,8 @@ export async function updateOAuthClient(
       scopes: data.scopes,
       is_active: data.isActive,
       rotate_refresh_tokens: data.rotateRefreshTokens,
+      // Audit trail: forwarded to the backend audit_log writer.
+      ...(data.auditReason ? { reason: data.auditReason } : {}),
     }),
   });
 }
