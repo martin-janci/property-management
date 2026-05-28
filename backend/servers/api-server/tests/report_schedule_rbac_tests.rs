@@ -121,11 +121,7 @@ async fn seed_schedule(pool: &PgPool, org_id: Uuid) -> Uuid {
 /// line of defence. In production (with a valid JWT for Org B) the
 /// tenant-scoped WHERE clause would return no row and the handler
 /// returns 404, achieving the IDOR isolation contract.
-fn put_schedule_req(
-    schedule_id: Uuid,
-    org_id: Uuid,
-    body: serde_json::Value,
-) -> Request<Body> {
+fn put_schedule_req(schedule_id: Uuid, org_id: Uuid, body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method(Method::PUT)
         .uri(format!("/api/v1/reports/schedules/{}", schedule_id))
