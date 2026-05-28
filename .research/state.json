@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-05-28T03:19:04Z",
-  "last_run_ms": 540000,
-  "last_pr_seen": 642,
-  "last_issue_seen": 629,
-  "last_commit_sha": "c20339727bb17791ea6073a95d28f6d6a245d015",
+  "last_run_iso": "2026-05-28T16:41:00Z",
+  "last_run_ms": 480000,
+  "last_pr_seen": 709,
+  "last_issue_seen": 716,
+  "last_commit_sha": "89d3c414c058f227125a62bc5a19e444018f6fdf",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -111,6 +111,21 @@
       "runs_seen": 1,
       "last_seen": "2026-05-28",
       "recent_churn": 193
+    },
+    "backend/servers/api-server/tests/oauth_integration_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-28",
+      "recent_churn": 1096
+    },
+    "backend/servers/api-server/tests/ws_integration_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-28",
+      "recent_churn": 642
+    },
+    "frontend/apps/admin-web/src/features/onboarding/TourOverlay.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-28",
+      "recent_churn": 596
     }
   },
   "seen_signals": [
@@ -124,7 +139,10 @@
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/integration/document_folder_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/ws_integration_tests.rs",
     "churn-hotspot-frontend/apps/admin-web/src/features/help/HelpSidebar.test.tsx",
+    "churn-hotspot-frontend/apps/admin-web/src/features/onboarding/TourOverlay.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/pages/SupportDataPage.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
@@ -139,6 +157,7 @@
     "closed-not-merged-pr-599",
     "closed-not-merged-pr-602",
     "closed-not-merged-pr-603",
+    "closed-not-merged-pr-644",
     "code-review-api-core-dispute-fsm-no-tests",
     "code-review-api-core-equipment-idor",
     "code-review-api-core-ssrf-outbound-fetch",
@@ -162,6 +181,7 @@
     "code-review-reality-web-realtor-mgmt-silent-error",
     "dep-update-noise-2026-05-20",
     "dep-update-noise-2026-05-23",
+    "dep-update-noise-2026-05-28",
     "fixme-in-merged-code-documentsbrowse-folder-preselect",
     "fixme-in-merged-code-pr-515-push-fanout-rs",
     "fixme-in-merged-code-pr-538-webhook-rs",
@@ -198,7 +218,7 @@
     "mobile-native-kmp": "2026-05-26"
   },
   "stats": {
-    "runs": 12,
+    "runs": 13,
     "vectors_created": 38,
     "plans_created": 6,
     "quiet_days": 0,

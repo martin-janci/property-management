@@ -1,191 +1,74 @@
 {
   "date": "2026-05-28",
-  "generated": "2026-05-28T03:19:04Z",
-  "run_mode": "incremental",
-  "run_note": "Incremental run ~3.5h after the 2026-05-27T23:41Z run. Window: 5 merged PRs (#635-#638, #642), 9 open draft PRs, issue #580 closed (resolved by #636), 35 commits on dev (mostly version-bump + dispatcher chore noise). Clean window — no reverts, no unchecked TODOs, no new FIXME/TODO markers in merged diffs, no route-file changes (no screen-map drift), no stalled reviews (oldest open PR ~1d). PR #642 (security cookie-Path) shipped WITH inline #[test] coverage + a runbook, so no test-gap signal. Phase 1.5 reviewed reality-web (never-reviewed segment) → 3 findings. Phase 1.6 ran pm-data + Scrum Master. No decay (oldest open item 2026-05-20 > today-14d). No promotions (no item score>=3; no security fast-track candidate).",
+  "generated": "2026-05-28T16:41:00Z",
+  "run_mode": "incremental-converge",
+  "run_note": "SECOND routine pass of 2026-05-28. The morning pass (03:19Z, committed at HEAD) covered PRs #635-#642, ran the reality-web code-review slice (3 findings, now in backlog), and ran pm-data + Scrum Master. This pass converges the day with the #643-#709 activity that landed after it: 21 merged PRs (#643-#691) + #633 (late-merge below the #642 cursor), 27 open PRs (16 dependabot), 24 new follow-up issues (all labelled -> none untriaged). Heavy security-fix + test-backfill window; no reverts, no stalled reviews, no new FIXME/TODO in checked merged diffs, no tracked-route changes (no screen-map drift). Phases 1.5/1.6 NOT re-run on the same-day convergence pass (already ran at 03:19); their cursors + management artifacts preserved -> G16 is a no-op this pass. No decay (oldest open item 2026-05-20 = 8d). No promotions (no open item score>=3; no open security item for the fast-track). One backlog evidence correction: report-schedule cron bug re-verified as still-open despite #643 removing its TODO marker (false-resolution guard). The 5 signals below are this pass's newly-derived signals; the morning pass's signals are preserved in git history at HEAD.",
   "signals": [
     {
-      "id": "churn-hotspot-backend/servers/api-server/tests/integration/document_folder_tests.rs",
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
       "type": "churn-hotspot",
-      "source": "merged PR #636 file churn",
+      "source": "merged PRs #649/#661 file churn",
       "score_delta": 1,
       "confidence": "high",
       "candidate_vector": "refactor",
-      "evidence": "Top-1 raw churn this run: 429 lines (PR #636 added 7 document-folder integration test cases, closes #580). Test file, single-run addition — no backlog item created (test growth is healthy, not instability); tracked in hotspot_history for repeated-churn detection."
+      "evidence": "Top-1 raw churn this pass: 1096 lines (PR #649 pm-qa-oauth-security-tests + PR #661 Epic 10a OAuth-provider security tests). New OAuth security integration-test file — healthy test backfill, not instability; no backlog item, tracked in hotspot_history for repeated-churn detection."
     },
     {
-      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/SupportDataPage.tsx",
+      "id": "churn-hotspot-backend/servers/api-server/tests/ws_integration_tests.rs",
       "type": "churn-hotspot",
-      "source": "merged PR #635 file churn",
+      "source": "merged PR #650 file churn",
       "score_delta": 1,
       "confidence": "high",
       "candidate_vector": "refactor",
-      "evidence": "Top-2 raw churn this run: 304 lines (PR #635, brand-new admin-web Support Data page, +304/-0). One-shot feature addition — no backlog item; tracked in hotspot_history."
+      "evidence": "Top-2 raw churn this pass: 642 lines (PR #650 gap-8a-3 WebSocket push integration tests). New test file — no backlog item; tracked in hotspot_history."
     },
     {
-      "id": "churn-hotspot-frontend/apps/admin-web/src/features/help/HelpSidebar.test.tsx",
+      "id": "churn-hotspot-frontend/apps/admin-web/src/features/onboarding/TourOverlay.tsx",
       "type": "churn-hotspot",
-      "source": "merged PR #637 file churn",
+      "source": "merged PR #690 file churn",
       "score_delta": 1,
       "confidence": "high",
       "candidate_vector": "refactor",
-      "evidence": "Top-3 raw churn this run: 193 lines (PR #637 HelpSidebar a11y test file, new). Test file — no backlog item; tracked in hotspot_history."
+      "evidence": "Top-3 raw churn this pass: 596 lines (PR #690 gap-10b-6 onboarding tour overlay in admin-web). One-shot new feature component — no backlog item; tracked in hotspot_history."
     },
     {
-      "id": "code-review-reality-web-realtor-mgmt-silent-error",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "evidence": "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:529-540 — InviteRealtorModal.handleSubmit awaits inviteRealtor.mutateAsync; on failure only console.error, never reads inviteRealtor.isError/.error nor sets an error message, so the modal stays open with the form intact and zero feedback (the useMutation at reality-api-client/src/agency/hooks.ts:231 exposes both). Created backlog item bug-reality-web-realtor-invite-silent-error.",
-      "expert": "frontend"
-    },
-    {
-      "id": "code-review-reality-web-comparison-url-i18n",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
+      "id": "closed-not-merged-pr-644",
+      "type": "closed-not-merged-pr",
+      "source": "PR #644",
       "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "refactor",
-      "evidence": "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:52,64 — 'Loading shared comparison...' and 'Failed to load shared comparison...' hardcoded in English instead of next-intl t(); reality-web ships sk/cs/de/en and 40 other files use useTranslations/getTranslations. Created backlog item refactor-reality-web-comparison-i18n.",
-      "expert": "frontend"
+      "candidate_vector": "triage",
+      "evidence": "gap-82-4-swiftui-listing-detail-impl closed unmerged 2026-05-28T13:38Z as a duplicate-implementer of the still-open gap-82-4 draft #641; closed by the dispatcher cross-PR dedup pack (#663, 'close duplicate-implementer class'). Benign duplicate close — the SwiftUI listing-detail work lands via #641 + #688 (gap-82-7). No backlog item created."
     },
     {
-      "id": "code-review-reality-web-listing-metadata-shape",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 1,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "evidence": "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:75 — getListing returns response.json() typed as ListingDetail with no runtime validation; generateMetadata:93 calls listing.description.slice(0,160) and listing.address.city guarded only by the !listing null-check at :86, so a 200 body with null description / missing address throws during SSR instead of degrading to the 'Listing Not Found' fallback. Created backlog item bug-reality-web-listing-metadata-ssr-throw.",
-      "expert": "frontend"
+      "id": "dep-update-noise-2026-05-28",
+      "type": "dep-update-noise",
+      "source": "dependabot PRs #665-#684, #709 (and closed #675)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "Dependabot opened a batch of dependency PRs this pass (cargo/npm/gradle/actions groups + sqlx 0.8.6->0.9.0 #666, sentry #674, etc.; #709 npm-minor-patch group across 1 dir with 14 updates; #675 superseded/closed). Score 0 per routine policy -> logged, not scored. None merged with a consumer-manifest lockfile-drift gap, so no Phase-5 lockfile-bump candidate."
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — only churn-hotspot + code-review-finding signals this run; neither type is in the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift dep-update, stalled-review)",
+  "auto_fix_skipped_reason": "no candidate — this pass's signals are churn-hotspot / closed-not-merged-pr / dep-update-noise; none is in the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift dep-update, stalled-review). No merged dependabot PR left a consumer-manifest lockfile gap.",
   "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f briefs/2026-05-28.md && head -1 matches '# 2026-05-28'",
-      "observed": "exit 0",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq state advanced vs HEAD",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "jq backlog ids unique",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "jq no non-cumulative signal double-counted",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "jq score cap<=8 & no open item >14d (0 qualify) & no score<0",
-      "observed": "cap true; 0 items needing decay; min>=0",
-      "expected": "true"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "adversarial annotation for each new plan",
-      "observed": "no new plans this run",
-      "expected": "pass"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "git diff --cached -A plans count",
-      "observed": "0 new plans",
-      "expected": "<=2"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "grep staged diff for secrets/hostnames",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "diff backlog.md vs render_research.py backlog",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "brief 'Phases that failed' vs cursor advancement",
-      "observed": "none failed; all cursors advanced",
-      "expected": "consistent"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "prior-run plan slugs still in plans/ or _archive/",
-      "observed": "all 3 present",
-      "expected": "all present"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "archive count this run >= HEAD",
-      "observed": "7 >= 7",
-      "expected": ">="
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "diff IDEAS_TRIAGE.md vs render_research.py triage",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "jq auto_fix_actions caps + idempotency",
-      "observed": "auto_fix_actions empty; no candidate",
-      "expected": "true"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "jq mgmt action-list/risks .items + project-state non-empty + pm_cursor 0..7",
-      "observed": "all parse; pm_cursor.next_index=7",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "grep staged added lines for telegram token value",
-      "observed": "0",
-      "expected": "0"
-    }
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-05-28.md && head -1 matches '# 2026-05-28'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq staged state advanced vs HEAD (cursors + seen_signals + hotspot_history)", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id from this pass already in prior seen_signals", "observed": "true (all 5 ids are new)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq score cap<=8 & no open item updated<=today-14 (0 qualify) & no score<0", "observed": "cap true; 0 items needing decay; min>=0", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "adversarial annotation for each new plan", "observed": "no new plans this pass", "expected": "pass" },
+    { "goal": "G7", "passed": true, "command": "git diff --cached -A plans count", "observed": "0 new plans", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep staged diff (excl baseline docs) for secrets/hostnames", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md regenerated from backlog.json (sort score desc, updated desc, idx desc)", "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' vs cursor advancement", "observed": "none failed; cursors advanced", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still in plans/ or _archive/", "observed": "all present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive count this run >= HEAD", "observed": "7 >= 7", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md regenerated (0 triage rows, empty table)", "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "jq auto_fix_actions caps + idempotency", "observed": "auto_fix_actions empty; no candidate", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this pass -> no-op; mgmt artifacts still parse & pm_cursor.next_index=7 in 0..7", "observed": "no-op (skipped); artifacts valid", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "grep staged added lines for telegram token value", "observed": "0", "expected": "0" }
   ]
 }

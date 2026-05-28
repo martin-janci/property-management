@@ -848,18 +848,20 @@
       "status": "open",
       "sources": [
         "PR #611",
-        "issue #616"
+        "issue #616",
+        "PR #643"
       ],
       "evidence": [
         "backend/crates/db/src/repositories/report_schedule.rs:299 — update_schedule carries a `TODO: UPDATE report_schedules SET cron_expression = COALESCE(...)` doc-comment describing the SQL it should run, but the body instead stores the cron string in `current.time` because the dedicated cron_expression column does not exist yet",
         "ties to open issue #616 (migration number comment wrong; cron_expression column missing from schema; no sqlx prepare --check) — surfaced by post-merge review of PR #611",
-        "real fix is a SQLx migration adding report_schedules.cron_expression + rewriting update_schedule to the documented UPDATE; until then cron edits round-trip through the overloaded `time` field"
+        "real fix is a SQLx migration adding report_schedules.cron_expression + rewriting update_schedule to the documented UPDATE; until then cron edits round-trip through the overloaded `time` field",
+        "2026-05-28: PR #643 (RBAC/cross-tenant fix) restructured update_schedule (now report_schedule.rs:479, org-scoped `WHERE id=$1 AND organization_id=$2`) and DELETED the TODO doc-comment, but the cron bug PERSISTS — line 504 still does `SET time = COALESCE($3, time)` with $3 bound to cron_expression (line 519); no dedicated cron_expression column exists. A grep-based evidence-gone check would now FALSE-POSITIVE (the TODO marker is gone) — do not auto-resolve; the real fix is still a SQLx migration adding report_schedules.cron_expression."
       ],
       "files": [
         "backend/crates/db/src/repositories/report_schedule.rs"
       ],
       "created_at": "2026-05-27",
-      "updated_at": "2026-05-27",
+      "updated_at": "2026-05-28",
       "plan": null
     },
     {

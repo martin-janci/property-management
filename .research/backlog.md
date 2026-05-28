@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-05-28 03:16 UTC by routine</sub>
+<sub>Last regenerated: 2026-05-28 16:40 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -19,9 +19,9 @@ picks from here.
 | 3 | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | security | issue #439, signatures.rs:628, integrations.rs:2743, PR #450 | 2026-05-25 | done |
 | 3 | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | security | code-review api-core 2026-05-23, ai.rs:3002, PR #461 | 2026-05-25 | done |
 | 2 | Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI | bug | code-review reality-web 2026-05-28, rotating-expert-review | 2026-05-28 | open |
+| 2 | ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column) | bug | PR #611, issue #616, PR #643 | 2026-05-28 | open |
 | 2 | Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape | bug | code-review mobile-rn 2026-05-27, rotating-expert-review | 2026-05-27 | open |
 | 2 | DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id) | dx | PR #623 | 2026-05-27 | open |
-| 2 | ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column) | bug | PR #611, issue #616 | 2026-05-27 | open |
 | 2 | Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test | test-gap | PR #607, issue #572 | 2026-05-27 | open |
 | 2 | MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure | bug | PR #555, code-review 2026-05-27 | 2026-05-27 | open |
 | 2 | Screen-map drift: report execution-history route (PR #547) added without a ppt screen doc | test-gap | PR #547, frontend/apps/ppt-web/src/routes/lazyRoutes.tsx, PR #623 | 2026-05-27 | done |
