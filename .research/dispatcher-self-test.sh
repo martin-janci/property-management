@@ -434,6 +434,29 @@ else
 fi
 echo
 
+# --- T20: stem-uniqueness among active rows (closes #641/#644 double-land) ---
+# At most one non-terminal (in-progress|review) row per stem(task_id), where
+# stem strips the auto-impl/|impl/ prefix and a trailing -(impl|fix|v2|retry|
+# followup|wip)<digits> suffix. Two active rows sharing a stem = duplicate work.
+echo "T20 stem-uniqueness among active (in-progress|review) rows"
+T20_DUPES=$(jq -r '
+  def stem: sub("^(auto-impl|impl)/";"") | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+  .assignments
+  | map(select(.status=="in-progress" or .status=="review"))
+  | group_by(.task_id | stem)
+  | map(select(length>1) | (.[0].task_id | stem))
+  | join(",")' "$ASSIGN")
+if [ -z "$T20_DUPES" ]; then note "no two active rows share a stem"
+else
+  fail "duplicate active stems: $T20_DUPES (two non-terminal units of the same work)"
+  jq -r '
+    def stem: sub("^(auto-impl|impl)/";"") | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+    .assignments | map(select(.status=="in-progress" or .status=="review"))
+    | group_by(.task_id | stem) | map(select(length>1))[] | .[]
+    | "    \(.task_id) :: stem=\(.task_id|stem) status=\(.status)"' "$ASSIGN" >&2
+fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
