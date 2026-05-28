@@ -1,1 +1,242 @@
-cGFja2FnZSB0aHJlZS50d28uYml0LnBwdC5yZWFsaXR5LmZhdm9yaXRlcwoKaW1wb3J0IGtvdGxpbi50ZXN0LlRlc3QKaW1wb3J0IGtvdGxpbi50ZXN0LmFzc2VydEVxdWFscwppbXBvcnQga290bGluLnRlc3QuYXNzZXJ0Tm90TnVsbAppbXBvcnQga290bGluLnRlc3QuYXNzZXJ0TnVsbAppbXBvcnQga290bGluLnRlc3QuYXNzZXJ0VHJ1ZQppbXBvcnQga290bGlueC5zZXJpYWxpemF0aW9uLmRlY29kZUZyb21TdHJpbmcKaW1wb3J0IGtvdGxpbnguc2VyaWFsaXphdGlvbi5lbmNvZGVUb1N0cmluZwppbXBvcnQga290bGlueC5zZXJpYWxpemF0aW9uLmpzb24uSnNvbgoKLyoqCiAqIENvbnRyYWN0IHRlc3RzIGZvciB0aGUgZmF2b3JpdGVzICsgc2F2ZWQtc2VhcmNoIERUT3MuCiAqCiAqIFBpbnMgdGhlIEpTT04gc2hhcGUgdGhhdCB0aGUgcmVhbGl0eS1zZXJ2ZXIgcmV0dXJucyBmb3IgdGhlIC9hcGkvdjEvZmF2b3JpdGVzIGFuZAogKiAvYXBpL3YxL3NhdmVkLXNlYXJjaGVzIGVuZHBvaW50cyBzbyB0aGUgY2xpZW50LXNpZGUgQFNlcmlhbE5hbWUgYW5ub3RhdGlvbnMgY2FuJ3QgZHJpZnQKICogdW5ub3RpY2VkLgogKi8KY2xhc3MgRmF2b3JpdGVzTW9kZWxzQ29udHJhY3RUZXN0IHsKCiAgICBwcml2YXRlIHZhbCBqc29uID0gSnNvbiB7CiAgICAgICAgaWdub3JlVW5rbm93bktleXMgPSB0cnVlCiAgICAgICAgZW5jb2RlRGVmYXVsdHMgPSBmYWxzZQogICAgfQoKICAgIEBUZXN0CiAgICBmdW4gZmF2b3JpdGVFbnRyeV9kZWNvZGVzX3NuYWtlX2Nhc2VfbGlzdGluZ19pZF9hbmRfdXNlcl9pZCgpIHsKICAgICAgICB2YWwgcmF3ID0KICAgICAgICAgICAgIiIiCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAiaWQiOiAiZmF2LTEiLAogICAgICAgICAgICAgICJsaXN0aW5nX2lkIjogImxzdC0xIiwKICAgICAgICAgICAgICAidXNlcl9pZCI6ICJ1LTEiLAogICAgICAgICAgICAgICJjcmVhdGVkX2F0IjogIjIwMjYtMDQtMjZUMTA6MDA6MDBaIgogICAgICAgICAgICB9CiAgICAgICAgICAgICIiIgogICAgICAgICAgICAgICAgLnRyaW1JbmRlbnQoKQogICAgICAgIHZhbCBlbnRyeTogRmF2b3JpdGVFbnRyeSA9IGpzb24uZGVjb2RlRnJvbVN0cmluZyhyYXcpCiAgICAgICAgYXNzZXJ0RXF1YWxzKCJsc3QtMSIsIGVudHJ5Lmxpc3RpbmdJZCkKICAgICAgICBhc3NlcnRFcXVhbHMoInUtMSIsIGVudHJ5LnVzZXJJZCkKICAgICAgICBhc3NlcnROdWxsKGVudHJ5Lmxpc3RpbmcpCiAgICB9CgogICAgLyoqCiAgICAgKiBQaW4gdGhlIGZsYXQgUG9ydGFsRmF2b3JpdGVXaXRoTGlzdGluZyBzaGFwZSByZXR1cm5lZCBieSBgR0VUIC9hcGkvdjEvZmF2b3JpdGVzYC4gVGhlIHNlcnZlcgogICAgICogZW1iZWRzIGxpc3RpbmcgZmllbGRzIGRpcmVjdGx5IG9uIHRoZSBmYXZvcml0ZSByb3cgcmF0aGVyIHRoYW4gbmVzdGluZyBhIGZ1bGwgTGlzdGluZ1N1bW1hcnkKICAgICAqIOKAlCB0aGUgS01QIGNsaWVudCBtdXN0IGRlY29kZSB0aGVzZSBmbGF0IGZpZWxkcyBzbyB0aGUgRmF2b3JpdGVzU2NyZWVuIGNhbiByZW5kZXIgY2FyZHMKICAgICAqIHdpdGhvdXQgZXh0cmEgcmVxdWVzdHMuCiAgICAgKi8KICAgIEBUZXN0CiAgICBmdW4gZmF2b3JpdGVFbnRyeV9kZWNvZGVzX2ZsYXRfcG9ydGFsX2Zhdm9yaXRlX3dpdGhfbGlzdGluZ19zaGFwZSgpIHsKICAgICAgICB2YWwgcmF3ID0KICAgICAgICAgICAgIiIiCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAiaWQiOiAiZmF2LTEiLAogICAgICAgICAgICAgICJsaXN0aW5nX2lkIjogIjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsCiAgICAgICAgICAgICAgImNyZWF0ZWRfYXQiOiAiMjAyNi0wNC0yNlQxMDowMDowMFoiLAogICAgICAgICAgICAgICJ0aXRsZSI6ICJCcmlnaHQgMmJyIGluIE9sZCBUb3duIiwKICAgICAgICAgICAgICAiY3VycmVudF9wcmljZSI6IDE4NTAwMCwKICAgICAgICAgICAgICAiY3VycmVuY3kiOiAiRVVSIiwKICAgICAgICAgICAgICAiY2l0eSI6ICJCcmF0aXNsYXZhIiwKICAgICAgICAgICAgICAicHJvcGVydHlfdHlwZSI6ICJhcGFydG1lbnQiLAogICAgICAgICAgICAgICJ0cmFuc2FjdGlvbl90eXBlIjogInNhbGUiLAogICAgICAgICAgICAgICJwaG90b191cmwiOiAiaHR0cHM6Ly9jZG4uZXhhbXBsZS5jb20vaW1nL2EuanBnIiwKICAgICAgICAgICAgICAic3RhdHVzIjogImFjdGl2ZSIsCiAgICAgICAgICAgICAgInByaWNlX2NoYW5nZWQiOiB0cnVlLAogICAgICAgICAgICAgICJwcmljZV9jaGFuZ2VfcGVyY2VudGFnZSI6IC01LjIsCiAgICAgICAgICAgICAgInByaWNlX2FsZXJ0X2VuYWJsZWQiOiBmYWxzZQogICAgICAgICAgICB9CiAgICAgICAgICAgICIiIgogICAgICAgICAgICAgICAgLnRyaW1JbmRlbnQoKQogICAgICAgIHZhbCBlbnRyeTogRmF2b3JpdGVFbnRyeSA9IGpzb24uZGVjb2RlRnJvbVN0cmluZyhyYXcpCiAgICAgICAgYXNzZXJ0RXF1YWxzKCJCcmlnaHQgMmJyIGluIE9sZCBUb3duIiwgZW50cnkudGl0bGUpCiAgICAgICAgYXNzZXJ0RXF1YWxzKDE4NV8wMDBMLCBlbnRyeS5jdXJyZW50UHJpY2UpCiAgICAgICAgYXNzZXJ0RXF1YWxzKCJFVVIiLCBlbnRyeS5jdXJyZW5jeSkKICAgICAgICBhc3NlcnRFcXVhbHMoIkJyYXRpc2xhdmEiLCBlbnRyeS5jaXR5KQogICAgICAgIGFzc2VydEVxdWFscygic2FsZSIsIGVudHJ5LnRyYW5zYWN0aW9uVHlwZSkKICAgICAgICBhc3NlcnRFcXVhbHMoImh0dHBzOi8vY2RuLmV4YW1wbGUuY29tL2ltZy9hLmpwZyIsIGVudHJ5LnBob3RvVXJsKQogICAgICAgIGFzc2VydFRydWUoZW50cnkucHJpY2VDaGFuZ2VkKQogICAgICAgIGFzc2VydE51bGwoZW50cnkudXNlcklkKSAvLyBub3QgaW4gUG9ydGFsRmF2b3JpdGVXaXRoTGlzdGluZwogICAgICAgIGFzc2VydE51bGwoZW50cnkubGlzdGluZykgLy8gbm8gbmVzdGVkIGxpc3Rpbmcgb24gdGhpcyBlbmRwb2ludAogICAgfQoKICAgIEBUZXN0CiAgICBmdW4gY2hlY2tGYXZvcml0ZVJlc3BvbnNlX2RlY29kZXNfaXNfZmF2b3JpdGVkX2ZpZWxkKCkgewogICAgICAgIHZhbCB0cnVlUmF3ID0gIiIieyJpc19mYXZvcml0ZWQiOiB0cnVlfSIiIgogICAgICAgIHZhbCBmYWxzZVJhdyA9ICIiInsiaXNfZmF2b3JpdGVkIjogZmFsc2V9IiIiCiAgICAgICAgdmFsIHRydWVSZXNwOiBDaGVja0Zhdm9yaXRlUmVzcG9uc2UgPSBqc29uLmRlY29kZUZyb21TdHJpbmcodHJ1ZVJhdykKICAgICAgICB2YWwgZmFsc2VSZXNwOiBDaGVja0Zhdm9yaXRlUmVzcG9uc2UgPSBqc29uLmRlY29kZUZyb21TdHJpbmcoZmFsc2VSYXcpCiAgICAgICAgYXNzZXJ0VHJ1ZSh0cnVlUmVzcC5pc0Zhdm9yaXRlZCkKICAgICAgICBhc3NlcnRFcXVhbHMoZmFsc2UsIGZhbHNlUmVzcC5pc0Zhdm9yaXRlZCkKICAgIH0KCiAgICBAVGVzdAogICAgZnVuIGZhdm9yaXRlc1Jlc3BvbnNlX21hcHNfdG90YWxfYWxvbmdzaWRlX2VudHJpZXMoKSB7CiAgICAgICAgdmFsIHJhdyA9CiAgICAgICAgICAgICIiIgogICAgICAgICAgICB7CiAgICAgICAgICAgICAgImZhdm9yaXRlcyI6IFsKICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgImlkIjogImZhdi0xIiwKICAgICAgICAgICAgICAgICAgImxpc3RpbmdfaWQiOiAibHN0LTEiLAogICAgICAgICAgICAgICAgICAidXNlcl9pZCI6ICJ1LTEiLAogICAgICAgICAgICAgICAgICAiY3JlYXRlZF9hdCI6ICIyMDI2LTA0LTI2VDEwOjAwOjAwWiIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAgICJpZCI6ICJmYXYtMiIsCiAgICAgICAgICAgICAgICAgICJsaXN0aW5nX2lkIjogImxzdC0yIiwKICAgICAgICAgICAgICAgICAgInVzZXJfaWQiOiAidS0xIiwKICAgICAgICAgICAgICAgICAgImNyZWF0ZWRfYXQiOiAiMjAyNi0wNC0yNlQxMTowMDowMFoiCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgXSwKICAgICAgICAgICAgICAidG90YWwiOiAyCiAgICAgICAgICAgIH0KICAgICAgICAgICAgIiIiCiAgICAgICAgICAgICAgICAudHJpbUluZGVudCgpCiAgICAgICAgdmFsIHJlc3BvbnNlOiBGYXZvcml0ZXNSZXNwb25zZSA9IGpzb24uZGVjb2RlRnJvbVN0cmluZyhyYXcpCiAgICAgICAgYXNzZXJ0RXF1YWxzKDJMLCByZXNwb25zZS50b3RhbCkKICAgICAgICBhc3NlcnRFcXVhbHMoMiwgcmVzcG9uc2UuZmF2b3JpdGVzLnNpemUpCiAgICAgICAgYXNzZXJ0RXF1YWxzKCJmYXYtMiIsIHJlc3BvbnNlLmZhdm9yaXRlc1sxXS5pZCkKICAgIH0KCiAgICAvKioKICAgICAqIGBBZGRGYXZvcml0ZVJlcXVlc3RgIHdhcyByZW1vdmVkIHdoZW4gdGhlIGFkZC1mYXZvcml0ZSBlbmRwb2ludCB3YXMgY29ycmVjdGVkIHRvIGBQT1NUCiAgICAgKiAvYXBpL3YxL2Zhdm9yaXRlcy97bGlzdGluZ19pZH1gIChsaXN0aW5nIElEIGFzIHBhdGggcGFyYW0pLiBUaGlzIHRlc3Qgbm93IHZlcmlmaWVzIHRoYXQKICAgICAqIFtBZGRGYXZvcml0ZVJlc3BvbnNlXSBkZWNvZGVzIHRoZSBzZXJ2ZXIncyBgUG9ydGFsRmF2b3JpdGVgIDIwMSByZXNwb25zZSwgd2hpY2ggaXMgdGhlIG9ubHkKICAgICAqIHdpcmUtZm9ybWF0IGNvbmNlcm4gcmVtYWluaW5nIGZvciB0aGUgYWRkIGZsb3cuCiAgICAgKi8KICAgIEBUZXN0CiAgICBmdW4gYWRkRmF2b3JpdGVSZXNwb25zZV9kZWNvZGVzX21pbmltYWxfcGF5bG9hZCgpIHsKICAgICAgICB2YWwgcmF3ID0KICAgICAgICAgICAgIiIiCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAiaWQiOiAiZmF2LTEiLAogICAgICAgICAgICAgICJsaXN0aW5nX2lkIjogImxzdC0xIiwKICAgICAgICAgICAgICAiY3JlYXRlZF9hdCI6ICIyMDI2LTA0LTI2VDEwOjAwOjAwWiIKICAgICAgICAgICAgfQogICAgICAgICAgICAiIiIKICAgICAgICAgICAgICAgIC50cmltSW5kZW50KCkKICAgICAgICB2YWwgcmVzcDogQWRkRmF2b3JpdGVSZXNwb25zZSA9IGpzb24uZGVjb2RlRnJvbVN0cmluZyhyYXcpCiAgICAgICAgYXNzZXJ0RXF1YWxzKCJmYXYtMSIsIHJlc3AuaWQpCiAgICAgICAgYXNzZXJ0RXF1YWxzKCJsc3QtMSIsIHJlc3AubGlzdGluZ0lkKQogICAgfQoKICAgIEBUZXN0CiAgICBmdW4gc2F2ZWRTZWFyY2hfbWFwc19hbGVydF9lbmFibGVkX2FuZF9uZXdfY291bnQoKSB7CiAgICAgICAgdmFsIHJhdyA9CiAgICAgICAgICAgICIiIgogICAgICAgICAgICB7CiAgICAgICAgICAgICAgImlkIjogInNzLTEiLAogICAgICAgICAgICAgICJuYW1lIjogIkJyYXRpc2xhdmEgMmJyIiwKICAgICAgICAgICAgICAicXVlcnkiOiAiYnJhdGlzbGF2YSIsCiAgICAgICAgICAgICAgImZpbHRlcnMiOiB7CiAgICAgICAgICAgICAgICAidHlwZSI6ICJyZW50IiwKICAgICAgICAgICAgICAgICJjaXR5IjogIkJyYXRpc2xhdmEiLAogICAgICAgICAgICAgICAgIm1pbl9wcmljZSI6IDUwMCwKICAgICAgICAgICAgICAgICJtYXhfcHJpY2UiOiAxNTAwLAogICAgICAgICAgICAgICAgIm1pbl9yb29tcyI6IDIKICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICJhbGVydF9lbmFibGVkIjogdHJ1ZSwKICAgICAgICAgICAgICAiY3JlYXRlZF9hdCI6ICIyMDI2LTA0LTI2VDEwOjAwOjAwWiIsCiAgICAgICAgICAgICAgImxhc3Rfbm90aWZpZWRfYXQiOiAiMjAyNi0wNC0yNlQxMTowMDowMFoiLAogICAgICAgICAgICAgICJuZXdfY291bnQiOiA3CiAgICAgICAgICAgIH0KICAgICAgICAgICAgIiIiCiAgICAgICAgICAgICAgICAudHJpbUluZGVudCgpCiAgICAgICAgdmFsIHNzOiBTYXZlZFNlYXJjaCA9IGpzb24uZGVjb2RlRnJvbVN0cmluZyhyYXcpCiAgICAgICAgYXNzZXJ0RXF1YWxzKCJzcy0xIiwgc3MuaWQpCiAgICAgICAgYXNzZXJ0VHJ1ZShzcy5hbGVydEVuYWJsZWQpCiAgICAgICAgYXNzZXJ0RXF1YWxzKDcsIHNzLm5ld0NvdW50KQogICAgICAgIGFzc2VydEVxdWFscygiMjAyNi0wNC0yNlQxMTowMDowMFoiLCBzcy5sYXN0Tm90aWZpZWRBdCkKICAgICAgICB2YWwgZmlsdGVycyA9IGFzc2VydE5vdE51bGwoc3MuZmlsdGVycykKICAgICAgICBhc3NlcnRFcXVhbHMoNTAwTCwgZmlsdGVycy5taW5QcmljZSkKICAgICAgICBhc3NlcnRFcXVhbHMoMTUwMEwsIGZpbHRlcnMubWF4UHJpY2UpCiAgICAgICAgYXNzZXJ0RXF1YWxzKDIsIGZpbHRlcnMubWluUm9vbXMpCiAgICB9CgogICAgQFRlc3QKICAgIGZ1biBzYXZlZFNlYXJjaF9kZWZhdWx0c193aGVuX29wdGlvbmFsX2ZpZWxkc19taXNzaW5nKCkgewogICAgICAgIHZhbCByYXcgPQogICAgICAgICAgICAiIiIKICAgICAgICAgICAgewogICAgICAgICAgICAgICJpZCI6ICJzcy0yIiwKICAgICAgICAgICAgICAibmFtZSI6ICJEZWZhdWx0IHNlYXJjaCIsCiAgICAgICAgICAgICAgImNyZWF0ZWRfYXQiOiAiMjAyNi0wNC0yNlQxMDowMDowMFoiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgIiIiCiAgICAgICAgICAgICAgICAudHJpbUluZGVudCgpCiAgICAgICAgdmFsIHNzOiBTYXZlZFNlYXJjaCA9IGpzb24uZGVjb2RlRnJvbVN0cmluZyhyYXcpCiAgICAgICAgYXNzZXJ0RXF1YWxzKGZhbHNlLCBzcy5hbGVydEVuYWJsZWQpIC8vIGRlZmF1bHQKICAgICAgICBhc3NlcnRFcXVhbHMoMCwgc3MubmV3Q291bnQpIC8vIGRlZmF1bHQKICAgICAgICBhc3NlcnROdWxsKHNzLnF1ZXJ5KQogICAgICAgIGFzc2VydE51bGwoc3MuZmlsdGVycykKICAgICAgICBhc3NlcnROdWxsKHNzLmxhc3ROb3RpZmllZEF0KQogICAgfQoKICAgIEBUZXN0CiAgICBmdW4gY3JlYXRlU2F2ZWRTZWFyY2hSZXF1ZXN0X3JvdW5kX3RyaXBzX3dpdGhfZmlsdGVycygpIHsKICAgICAgICB2YWwgcmVxID0KICAgICAgICAgICAgQ3JlYXRlU2F2ZWRTZWFyY2hSZXF1ZXN0KAogICAgICAgICAgICAgICAgbmFtZSA9ICJQZW50aG91c2VzIiwKICAgICAgICAgICAgICAgIHF1ZXJ5ID0gInBlbnRob3VzZSIsCiAgICAgICAgICAgICAgICBmaWx0ZXJzID0gU2F2ZWRTZWFyY2hGaWx0ZXJzKHR5cGUgPSAic2FsZSIsIGNpdHkgPSAiQnJhdGlzbGF2YSIsIG1pblJvb21zID0gMyksCiAgICAgICAgICAgICAgICBhbGVydEVuYWJsZWQgPSB0cnVlLAogICAgICAgICAgICApCiAgICAgICAgdmFsIGVuY29kZWQgPSBqc29uLmVuY29kZVRvU3RyaW5nKHJlcSkKICAgICAgICBhc3NlcnRUcnVlKGVuY29kZWQuY29udGFpbnMoIlwiYWxlcnRfZW5hYmxlZFwiOnRydWUiKSkKICAgICAgICBhc3NlcnRUcnVlKGVuY29kZWQuY29udGFpbnMoIlwibWluX3Jvb21zXCI6MyIpKQoKICAgICAgICB2YWwgZGVjb2RlZDogQ3JlYXRlU2F2ZWRTZWFyY2hSZXF1ZXN0ID0ganNvbi5kZWNvZGVGcm9tU3RyaW5nKGVuY29kZWQpCiAgICAgICAgYXNzZXJ0RXF1YWxzKHJlcSwgZGVjb2RlZCkKICAgIH0KCiAgICBAVGVzdAogICAgZnVuIHVwZGF0ZVNhdmVkU2VhcmNoUmVxdWVzdF9vbWl0c19udWxsX2ZpZWxkc193aXRoX2VuY29kZURlZmF1bHRzX2ZhbHNlKCkgewogICAgICAgIHZhbCByZXEgPSBVcGRhdGVTYXZlZFNlYXJjaFJlcXVlc3QoYWxlcnRFbmFibGVkID0gZmFsc2UpCiAgICAgICAgdmFsIGVuY29kZWQgPSBqc29uLmVuY29kZVRvU3RyaW5nKHJlcSkKCiAgICAgICAgLy8gYG5hbWVgIGlzIG51bGwgYW5kIHNob3VsZCBub3QgYXBwZWFyIGluIHRoZSBwYXlsb2FkLgogICAgICAgIGFzc2VydFRydWUoIWVuY29kZWQuY29udGFpbnMoIlwibmFtZVwiIiksICJuYW1lIHNob3VsZCBiZSBvbWl0dGVkOiAkZW5jb2RlZCIpCiAgICAgICAgYXNzZXJ0VHJ1ZShlbmNvZGVkLmNvbnRhaW5zKCJcImFsZXJ0X2VuYWJsZWRcIjpmYWxzZSIpKQogICAgfQoKICAgIEBUZXN0CiAgICBmdW4gc2F2ZWRTZWFyY2hlc1Jlc3BvbnNlX3JvdW5kX3RyaXBzKCkgewogICAgICAgIHZhbCByZXNwID0KICAgICAgICAgICAgU2F2ZWRTZWFyY2hlc1Jlc3BvbnNlKAogICAgICAgICAgICAgICAgc2VhcmNoZXMgPQogICAgICAgICAgICAgICAgICAgIGxpc3RPZigKICAgICAgICAgICAgICAgICAgICAgICAgU2F2ZWRTZWFyY2goCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBpZCA9ICJzcy0xIiwKICAgICAgICAgICAgICAgICAgICAgICAgICAgIG5hbWUgPSAiQSIsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBhbGVydEVuYWJsZWQgPSB0cnVlLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgY3JlYXRlZEF0ID0gIjIwMjYtMDQtMjZUMTA6MDA6MDBaIiwKICAgICAgICAgICAgICAgICAgICAgICAgKQogICAgICAgICAgICAgICAgICAgICksCiAgICAgICAgICAgICAgICB0b3RhbCA9IDEsCiAgICAgICAgICAgICkKICAgICAgICB2YWwgZGVjb2RlZDogU2F2ZWRTZWFyY2hlc1Jlc3BvbnNlID0ganNvbi5kZWNvZGVGcm9tU3RyaW5nKGpzb24uZW5jb2RlVG9TdHJpbmcocmVzcCkpCiAgICAgICAgYXNzZXJ0RXF1YWxzKHJlc3AsIGRlY29kZWQpCiAgICB9Cn0K
+package three.two.bit.ppt.reality.favorites
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
+/**
+ * Contract tests for the favorites + saved-search DTOs.
+ *
+ * Pins the JSON shape that the reality-server returns for the /api/v1/favorites and
+ * /api/v1/saved-searches endpoints so the client-side @SerialName annotations can't drift
+ * unnoticed.
+ */
+class FavoritesModelsContractTest {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = false
+    }
+
+    @Test
+    fun favoriteEntry_decodes_snake_case_listing_id_and_user_id() {
+        val raw =
+            """
+            {
+              "id": "fav-1",
+              "listing_id": "lst-1",
+              "user_id": "u-1",
+              "created_at": "2026-04-26T10:00:00Z"
+            }
+            """
+                .trimIndent()
+        val entry: FavoriteEntry = json.decodeFromString(raw)
+        assertEquals("lst-1", entry.listingId)
+        assertEquals("u-1", entry.userId)
+        assertNull(entry.listing)
+    }
+
+    /**
+     * Pin the flat PortalFavoriteWithListing shape returned by `GET /api/v1/favorites`. The server
+     * embeds listing fields directly on the favorite row rather than nesting a full ListingSummary
+     * — the KMP client must decode these flat fields so the FavoritesScreen can render cards
+     * without extra requests.
+     */
+    @Test
+    fun favoriteEntry_decodes_flat_portal_favorite_with_listing_shape() {
+        val raw =
+            """
+            {
+              "id": "fav-1",
+              "listing_id": "00000000-0000-0000-0000-000000000001",
+              "created_at": "2026-04-26T10:00:00Z",
+              "title": "Bright 2br in Old Town",
+              "current_price": 185000,
+              "currency": "EUR",
+              "city": "Bratislava",
+              "property_type": "apartment",
+              "transaction_type": "sale",
+              "photo_url": "https://cdn.example.com/img/a.jpg",
+              "status": "active",
+              "price_changed": true,
+              "price_change_percentage": -5.2,
+              "price_alert_enabled": false
+            }
+            """
+                .trimIndent()
+        val entry: FavoriteEntry = json.decodeFromString(raw)
+        assertEquals("Bright 2br in Old Town", entry.title)
+        assertEquals(185_000L, entry.currentPrice)
+        assertEquals("EUR", entry.currency)
+        assertEquals("Bratislava", entry.city)
+        assertEquals("sale", entry.transactionType)
+        assertEquals("https://cdn.example.com/img/a.jpg", entry.photoUrl)
+        assertTrue(entry.priceChanged)
+        assertNull(entry.userId) // not in PortalFavoriteWithListing
+        assertNull(entry.listing) // no nested listing on this endpoint
+    }
+
+    @Test
+    fun checkFavoriteResponse_decodes_is_favorited_field() {
+        val trueRaw = """{"is_favorited": true}"""
+        val falseRaw = """{"is_favorited": false}"""
+        val trueResp: CheckFavoriteResponse = json.decodeFromString(trueRaw)
+        val falseResp: CheckFavoriteResponse = json.decodeFromString(falseRaw)
+        assertTrue(trueResp.isFavorited)
+        assertEquals(false, falseResp.isFavorited)
+    }
+
+    @Test
+    fun favoritesResponse_maps_total_alongside_entries() {
+        val raw =
+            """
+            {
+              "favorites": [
+                {
+                  "id": "fav-1",
+                  "listing_id": "lst-1",
+                  "user_id": "u-1",
+                  "created_at": "2026-04-26T10:00:00Z"
+                },
+                {
+                  "id": "fav-2",
+                  "listing_id": "lst-2",
+                  "user_id": "u-1",
+                  "created_at": "2026-04-26T11:00:00Z"
+                }
+              ],
+              "total": 2
+            }
+            """
+                .trimIndent()
+        val response: FavoritesResponse = json.decodeFromString(raw)
+        assertEquals(2L, response.total)
+        assertEquals(2, response.favorites.size)
+        assertEquals("fav-2", response.favorites[1].id)
+    }
+
+    /**
+     * `AddFavoriteRequest` was removed when the add-favorite endpoint was corrected to `POST
+     * /api/v1/favorites/{listing_id}` (listing ID as path param). This test now verifies that
+     * [AddFavoriteResponse] decodes the server's `PortalFavorite` 201 response, which is the only
+     * wire-format concern remaining for the add flow.
+     */
+    @Test
+    fun addFavoriteResponse_decodes_minimal_payload() {
+        val raw =
+            """
+            {
+              "id": "fav-1",
+              "listing_id": "lst-1",
+              "created_at": "2026-04-26T10:00:00Z"
+            }
+            """
+                .trimIndent()
+        val resp: AddFavoriteResponse = json.decodeFromString(raw)
+        assertEquals("fav-1", resp.id)
+        assertEquals("lst-1", resp.listingId)
+    }
+
+    @Test
+    fun savedSearch_maps_alert_enabled_and_new_count() {
+        val raw =
+            """
+            {
+              "id": "ss-1",
+              "name": "Bratislava 2br",
+              "query": "bratislava",
+              "filters": {
+                "type": "rent",
+                "city": "Bratislava",
+                "min_price": 500,
+                "max_price": 1500,
+                "min_rooms": 2
+              },
+              "alert_enabled": true,
+              "created_at": "2026-04-26T10:00:00Z",
+              "last_notified_at": "2026-04-26T11:00:00Z",
+              "new_count": 7
+            }
+            """
+                .trimIndent()
+        val ss: SavedSearch = json.decodeFromString(raw)
+        assertEquals("ss-1", ss.id)
+        assertTrue(ss.alertEnabled)
+        assertEquals(7, ss.newCount)
+        assertEquals("2026-04-26T11:00:00Z", ss.lastNotifiedAt)
+        val filters = assertNotNull(ss.filters)
+        assertEquals(500L, filters.minPrice)
+        assertEquals(1500L, filters.maxPrice)
+        assertEquals(2, filters.minRooms)
+    }
+
+    @Test
+    fun savedSearch_defaults_when_optional_fields_missing() {
+        val raw =
+            """
+            {
+              "id": "ss-2",
+              "name": "Default search",
+              "created_at": "2026-04-26T10:00:00Z"
+            }
+            """
+                .trimIndent()
+        val ss: SavedSearch = json.decodeFromString(raw)
+        assertEquals(false, ss.alertEnabled) // default
+        assertEquals(0, ss.newCount) // default
+        assertNull(ss.query)
+        assertNull(ss.filters)
+        assertNull(ss.lastNotifiedAt)
+    }
+
+    @Test
+    fun createSavedSearchRequest_round_trips_with_filters() {
+        val req =
+            CreateSavedSearchRequest(
+                name = "Penthouses",
+                query = "penthouse",
+                filters = SavedSearchFilters(type = "sale", city = "Bratislava", minRooms = 3),
+                alertEnabled = true,
+            )
+        val encoded = json.encodeToString(req)
+        assertTrue(encoded.contains("\"alert_enabled\":true"))
+        assertTrue(encoded.contains("\"min_rooms\":3"))
+
+        val decoded: CreateSavedSearchRequest = json.decodeFromString(encoded)
+        assertEquals(req, decoded)
+    }
+
+    @Test
+    fun updateSavedSearchRequest_omits_null_fields_with_encodeDefaults_false() {
+        val req = UpdateSavedSearchRequest(alertEnabled = false)
+        val encoded = json.encodeToString(req)
+
+        // `name` is null and should not appear in the payload.
+        assertTrue(!encoded.contains("\"name\""), "name should be omitted: $encoded")
+        assertTrue(encoded.contains("\"alert_enabled\":false"))
+    }
+
+    @Test
+    fun savedSearchesResponse_round_trips() {
+        val resp =
+            SavedSearchesResponse(
+                searches =
+                    listOf(
+                        SavedSearch(
+                            id = "ss-1",
+                            name = "A",
+                            alertEnabled = true,
+                            createdAt = "2026-04-26T10:00:00Z",
+                        )
+                    ),
+                total = 1,
+            )
+        val decoded: SavedSearchesResponse = json.decodeFromString(json.encodeToString(resp))
+        assertEquals(resp, decoded)
+    }
+}
