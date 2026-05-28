@@ -2880,7 +2880,7 @@
       "branch": "auto-impl/pm-security-fix-update-schedule-rbac-sco",
       "status": "review",
       "claimed_at": "2026-05-28T00:13:00Z",
-      "last_updated": "2026-05-28T01:05:00Z",
+      "last_updated": "2026-05-28T01:35:00Z",
       "status_changed_at": "2026-05-28T01:05:00Z",
       "pr_number": 643,
       "pr_url": "https://github.com/martin-janci/property-management/pull/643",
@@ -2894,7 +2894,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 2,
       "merge_attempted_at": null
     },
     {
