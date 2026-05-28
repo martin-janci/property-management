@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T00:18:00Z",
+  "generated": "2026-05-28T00:46:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -2900,18 +2900,18 @@
     {
       "task_id": "pm-security-reconcile-cookie-path-565",
       "branch": "auto-impl/pm-security-reconcile-cookie-path-565",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-05-28T00:13:00Z",
-      "last_updated": "2026-05-28T00:13:00Z",
-      "status_changed_at": "2026-05-28T00:13:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-28T00:46:00Z",
+      "status_changed_at": "2026-05-28T00:46:00Z",
+      "pr_number": 642,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/642",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=642 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=8 cookie-path reconciliation tests + migration runbook; no prod code changes; confirms PR#565 Path values correct",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
