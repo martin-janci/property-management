@@ -371,4 +371,48 @@ mod tests {
         assert!(!announcement.is_acknowledged);
         assert!(announcement.is_dismissible);
     }
+
+    #[test]
+    fn active_announcement_acknowledged_variant() {
+        let announcement = ActiveAnnouncement {
+            id: Uuid::new_v4(),
+            title: "Critical Outage".to_string(),
+            message: "Service disruption in progress.".to_string(),
+            severity: "critical".to_string(),
+            start_at: Utc::now(),
+            end_at: Some(Utc::now() + chrono::Duration::hours(2)),
+            is_dismissible: false,
+            requires_acknowledgment: true,
+            is_acknowledged: true,
+        };
+
+        assert!(announcement.is_acknowledged);
+        assert!(!announcement.is_dismissible);
+        assert!(announcement.requires_acknowledgment);
+        assert!(announcement.end_at.is_some());
+    }
+
+    #[test]
+    fn active_announcement_serde_round_trip() {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+        let announcement = ActiveAnnouncement {
+            id,
+            title: "Maintenance".to_string(),
+            message: "Scheduled downtime.".to_string(),
+            severity: "warning".to_string(),
+            start_at: now,
+            end_at: None,
+            is_dismissible: true,
+            requires_acknowledgment: false,
+            is_acknowledged: false,
+        };
+
+        let json = serde_json::to_value(&announcement).expect("serialize");
+        assert_eq!(json["title"], "Maintenance");
+        assert_eq!(json["severity"], "warning");
+        assert_eq!(json["is_dismissible"], true);
+        assert_eq!(json["is_acknowledged"], false);
+        assert!(json["end_at"].is_null());
+    }
 }
