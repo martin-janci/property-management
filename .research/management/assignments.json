@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T00:10:00Z",
+  "generated": "2026-05-28T00:12:01Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -2856,13 +2856,13 @@
     {
       "task_id": "gap-85-2-ios-ci-fix",
       "branch": "auto-impl/gap-85-2-ios-ci-fix",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-05-27T22:08:18Z",
-      "last_updated": "2026-05-28T00:10:00Z",
-      "status_changed_at": "2026-05-27T22:25:00Z",
+      "last_updated": "2026-05-28T00:12:01Z",
+      "status_changed_at": "2026-05-28T00:12:01Z",
       "pr_number": 638,
       "pr_url": "https://github.com/martin-janci/property-management/pull/638",
-      "merged_at": null,
+      "merged_at": "2026-05-28T00:12:01Z",
       "specialist": "react-native",
       "implementer_summary": "pr=638 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=removed submit.staging from eas.json; guarded updates.url omission when EXPO_PROJECT_ID unset; @v4 pins already in dev via PR#595; typecheck+lint clean",
       "reviewer_summary": "verdict=approve head_oid=5d9d7acea0d53df5fa7410584704f167426a5eea note=ci-green-all-checks-pass;eas.json-submit.staging-removed;app.config.ts-updates.url-guarded;self-approval-blocked-posted-as-comment",
