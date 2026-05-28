@@ -116,7 +116,7 @@
       "branch": "auto-impl/pm-qa-upload-integration-tests",
       "status": "review",
       "claimed_at": "2026-05-28T02:21:06Z",
-      "last_updated": "2026-05-28T08:15:00Z",
+      "last_updated": "2026-05-28T13:36:36Z",
       "status_changed_at": "2026-05-28T02:51:00Z",
       "pr_number": 640,
       "pr_url": "https://github.com/martin-janci/property-management/pull/640",
@@ -128,7 +128,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": 0,
+      "rebase_attempts": 1,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
