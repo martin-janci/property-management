@@ -428,9 +428,11 @@ impl OAuthService {
             .await?
             .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
 
-        // Validate redirect URI matches
+        // Validate redirect URI matches.
+        // RFC 6749 §5.2: redirect_uri mismatch at the token endpoint is invalid_grant,
+        // not invalid_request (invalid_request applies at the authorize stage only).
         if auth_code.redirect_uri != *redirect_uri {
-            return Err(OAuthServiceError::InvalidRedirectUri);
+            return Err(OAuthServiceError::InvalidGrant);
         }
 
         // Validate PKCE if code challenge was provided
