@@ -323,34 +323,14 @@ pub async fn verify_mfa_setup(
         )
     })?;
 
-    // Enable MFA and issue recovery codes atomically:
-    //   1. enable user_2fa row
-    //   2. delete any stale mfa_recovery_codes (e.g. from a previous enable/disable cycle)
-    //   3. insert 10 fresh hashed codes into mfa_recovery_codes
+    // Enable MFA and issue recovery codes in a single transaction so a crash
+    // between the two steps cannot leave MFA enabled with zero recovery codes.
     //
-    // Using state.db (raw pool) here because:
-    //  - RlsConnection is already borrowed above for the get_by_user_id_rls call.
-    //  - The mfa_recovery_codes table has a permissive INSERT policy (`WITH CHECK (true)`)
-    //    and an RLS self-update policy; a super-admin or service-role context is not
-    //    required.  The connection uses the application role which can INSERT freely.
-    //  - The enable_rls call below re-uses the rls connection for the user_2fa UPDATE.
-    let pool = state.db.clone();
-
-    // First enable in user_2fa via RLS connection (Story 9.1 pattern).
-    state
-        .two_factor_repo
-        .enable_rls(&mut **rls.conn(), user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to enable MFA");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to enable MFA")),
-            )
-        })?;
-
-    // Then rotate recovery codes atomically.
-    let mut tx = pool.begin().await.map_err(|e| {
+    // state.db (raw pool) is used rather than the RlsConnection because the
+    // mfa_recovery_codes and user_2fa tables both allow application-role writes
+    // without a per-session RLS context — the WHERE user_id = $1 clause scoped
+    // to the verified JWT subject provides the equivalent tenant isolation.
+    let mut tx = state.db.begin().await.map_err(|e| {
         tracing::error!(error = %e, "Failed to begin recovery codes transaction");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -361,6 +341,20 @@ pub async fn verify_mfa_setup(
         )
     })?;
 
+    // 1. Enable MFA — inside the transaction so it rolls back if code insertion fails.
+    state
+        .two_factor_repo
+        .enable_rls(&mut *tx, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to enable MFA in transaction");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to enable MFA")),
+            )
+        })?;
+
+    // 2. Remove any stale codes from a previous enable/disable cycle.
     sqlx::query("DELETE FROM mfa_recovery_codes WHERE user_id = $1")
         .bind(user_id)
         .execute(&mut *tx)
@@ -989,7 +983,7 @@ pub struct VerifyRecoveryCodeResponse {
         (status = 400, description = "Invalid or already-used code", body = ErrorResponse),
         (status = 401, description = "Not authenticated", body = ErrorResponse),
         (status = 404, description = "MFA not enabled", body = ErrorResponse),
-        (status = 410, description = "All recovery codes exhausted", body = ErrorResponse)
+        (status = 400, description = "Invalid or exhausted recovery code", body = ErrorResponse)
     )
 )]
 pub async fn verify_recovery_code(
@@ -1074,10 +1068,10 @@ pub async fn verify_recovery_code(
             tracing::error!(error = %e, "Failed to write audit log for exhausted recovery codes");
         }
         return Err((
-            StatusCode::GONE,
+            StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
-                "NO_RECOVERY_CODES",
-                "All recovery codes have been used. Please regenerate them after logging in with your authenticator app.",
+                "INVALID_RECOVERY_CODE",
+                "Recovery code did not match. Check the code and try again.",
             )),
         ));
     }

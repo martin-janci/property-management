@@ -14,3 +14,4 @@ pub mod document_folder_tests;
 pub mod health_tests;
 pub mod integration_sync_tests;
 pub mod mfa_e2e_tests;
+pub mod mfa_recovery_codes_tests;
