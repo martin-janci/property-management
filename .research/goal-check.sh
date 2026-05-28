@@ -32,13 +32,33 @@ record() {
               '. += [{check:$c,passed:$p,observed:$o,expected:$e,hard:$h}]' <<<"$RESULTS")
   if [ "$passed" = "true" ]; then printf '  ok    %s — %s\n' "$check" "$observed" >&2
   else printf '  FAIL  %s — observed=%s expected=%s\n' "$check" "$observed" "$expected" >&2
-       [ "$hard" = "true" ] && HARD_FAIL=1
+       [ "$hard" = "true" ] && HARD_FAIL=1; return 0
   fi
 }
 
 echo "==> goal-check (coverage=$COVERAGE action-list=$ACTION_LIST assign=$ASSIGN enforce=$ENFORCE)" >&2
 
-# --- checks inserted by later tasks ---
+# --- GC1: coverage referential integrity (record-only) ---
+# (a) every gap-* action-list item maps to a real coverage story
+#     (a story id is a prefix of the gap-id with the leading "gap-" stripped);
+# (b) no `done` story retains an open gap-* task.
+GC1_ORPHANS=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile cov "$COVERAGE" '
+  ($cov[0].stories | map(.id)) as $sids
+  | [ $al[0].items[]
+      | select(.id | startswith("gap-"))
+      | (.id | ltrimstr("gap-")) as $rest
+      | select([ $sids[] | . as $sid | select($rest | startswith($sid)) ] | length == 0)
+      | .id ] | length')
+GC1_DONE_OPEN=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile cov "$COVERAGE" '
+  ($cov[0].stories | map(select(.status=="done") | .id)) as $done
+  | [ $al[0].items[]
+      | select(.status=="open" and (.id | startswith("gap-")))
+      | (.id | ltrimstr("gap-")) as $rest
+      | select([ $done[] | . as $sid | select($rest | startswith($sid)) ] | length > 0)
+      | .id ] | length')
+GC1_PASS=$([ "$GC1_ORPHANS" = "0" ] && [ "$GC1_DONE_OPEN" = "0" ] && echo true || echo false)
+record "GC1-referential-integrity" "$GC1_PASS" \
+  "orphans=$GC1_ORPHANS done_with_open_gap=$GC1_DONE_OPEN" "orphans=0 done_with_open_gap=0" false
 
 # --- emit + exit ---
 if [ "$EMIT_JSON" = "1" ]; then echo "$RESULTS"; fi
