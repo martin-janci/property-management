@@ -1,9 +1,31 @@
 {
-  "generated": "2026-05-28T11:19:16Z",
+  "generated": "2026-05-28T13:41:05Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-05-28T13:41:05Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 687,
+          "issue": 692,
+          "findings": 1,
+          "specialist": "generic",
+          "note": "admin-web missing from pm-frontend owner-areas.json — scope_drift=true on every future admin-web task"
+        },
+        {
+          "pr": 660,
+          "issue": 693,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "cross-tenant tests use no-JWT requests (hit auth gate, not DB org scope); delete_schedule listed in audit but endpoint does not exist"
+        }
+      ],
+      "skipped": [664, 663, 658, 656, 655, 653, 652, 650, 649, 648, 645, 642, 636]
+    },
     {
       "run_at": "2026-05-28T11:19:16Z",
       "prs_scanned": 15,
