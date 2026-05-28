@@ -87,13 +87,11 @@ async fn seed_token(pool: &PgPool, user_id: Uuid, token: &str, platform: &str) -
 
 /// Returns true if the given token value exists in `device_push_tokens`.
 async fn token_exists(pool: &PgPool, token: &str) -> bool {
-    sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM device_push_tokens WHERE token = $1",
-    )
-    .bind(token)
-    .fetch_one(pool)
-    .await
-    .expect("count tokens")
+    sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM device_push_tokens WHERE token = $1")
+        .bind(token)
+        .fetch_one(pool)
+        .await
+        .expect("count tokens")
         > 0
 }
 
@@ -105,7 +103,12 @@ async fn token_exists(pool: &PgPool, token: &str) -> bool {
 ///
 /// Uses the v1 HTTP path (project_id + oauth_token) so the mock only needs
 /// to handle `/v1/projects/…/messages:send`.
-fn make_adapter(pool: PgPool, base_url: String, project_id: &str, oauth_token: &str) -> FcmHttpAdapter {
+fn make_adapter(
+    pool: PgPool,
+    base_url: String,
+    project_id: &str,
+    oauth_token: &str,
+) -> FcmHttpAdapter {
     let config = FcmConfig {
         project_id: Some(project_id.to_string()),
         server_key: None,
@@ -152,12 +155,9 @@ async fn successful_fcm_delivery_receipt_returns_ok(pool: PgPool) {
     let server = MockServer::start().await;
     Mock::given(matchers::method("POST"))
         .and(matchers::path_regex(r"^/v1/projects/.*/messages:send$"))
-        .respond_with(
-            ResponseTemplate::new(200)
-                .set_body_json(serde_json::json!({
-                    "name": "projects/test-project/messages/abc123"
-                })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "name": "projects/test-project/messages/abc123"
+        })))
         .expect(1) // exactly one FCM call for one FCM token
         .mount(&server)
         .await;
@@ -167,7 +167,12 @@ async fn successful_fcm_delivery_receipt_returns_ok(pool: PgPool) {
     let token_value = format!("fcm-success-token-{}", Uuid::new_v4());
     seed_token(&pool, user_id, &token_value, "fcm").await;
 
-    let adapter = make_adapter(pool.clone(), server.uri(), "test-project", "test-oauth-token");
+    let adapter = make_adapter(
+        pool.clone(),
+        server.uri(),
+        "test-project",
+        "test-oauth-token",
+    );
     let notification = make_notification(user_id);
 
     let result = adapter.send(user_id, &[], &notification).await;
@@ -247,15 +252,13 @@ async fn fcm_not_registered_deletes_stale_token(pool: PgPool) {
     // FCM v1 returns the NOT_REGISTERED error body.
     Mock::given(matchers::method("POST"))
         .and(matchers::path_regex(r"^/v1/projects/.*/messages:send$"))
-        .respond_with(
-            ResponseTemplate::new(400).set_body_json(serde_json::json!({
-                "error": {
-                    "code": 400,
-                    "message": "The registration token is not a valid FCM registration token",
-                    "status": "NOT_REGISTERED"
-                }
-            })),
-        )
+        .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
+            "error": {
+                "code": 400,
+                "message": "The registration token is not a valid FCM registration token",
+                "status": "NOT_REGISTERED"
+            }
+        })))
         .expect(1)
         .mount(&server)
         .await;
@@ -270,7 +273,12 @@ async fn fcm_not_registered_deletes_stale_token(pool: PgPool) {
         "stale token must exist before the send attempt"
     );
 
-    let adapter = make_adapter(pool.clone(), server.uri(), "test-project", "test-oauth-token");
+    let adapter = make_adapter(
+        pool.clone(),
+        server.uri(),
+        "test-project",
+        "test-oauth-token",
+    );
     let notification = make_notification(user_id);
 
     // The adapter may return Err (all FCM attempts failed) — that is fine.
@@ -303,15 +311,13 @@ async fn fcm_failure_with_apns_token_returns_err_not_silent_ok(pool: PgPool) {
     // FCM returns a non-stale server error (INTERNAL) so the token is NOT deleted.
     Mock::given(matchers::method("POST"))
         .and(matchers::path_regex(r"^/v1/projects/.*/messages:send$"))
-        .respond_with(
-            ResponseTemplate::new(500).set_body_json(serde_json::json!({
-                "error": {
-                    "code": 500,
-                    "message": "Internal error encountered.",
-                    "status": "INTERNAL"
-                }
-            })),
-        )
+        .respond_with(ResponseTemplate::new(500).set_body_json(serde_json::json!({
+            "error": {
+                "code": 500,
+                "message": "Internal error encountered.",
+                "status": "INTERNAL"
+            }
+        })))
         .expect(1)
         .mount(&server)
         .await;
@@ -323,7 +329,12 @@ async fn fcm_failure_with_apns_token_returns_err_not_silent_ok(pool: PgPool) {
     seed_token(&pool, user_id, &fcm_token, "fcm").await;
     seed_token(&pool, user_id, &apns_token, "apns").await;
 
-    let adapter = make_adapter(pool.clone(), server.uri(), "test-project", "test-oauth-token");
+    let adapter = make_adapter(
+        pool.clone(),
+        server.uri(),
+        "test-project",
+        "test-oauth-token",
+    );
     let notification = make_notification(user_id);
 
     let result = adapter.send(user_id, &[], &notification).await;
@@ -362,14 +373,12 @@ async fn legacy_fcm_successful_delivery_returns_ok(pool: PgPool) {
 
     Mock::given(matchers::method("POST"))
         .and(matchers::path("/fcm/send"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "multicast_id": 123456,
-                "success": 1,
-                "failure": 0,
-                "results": [{"message_id": "legacy-msg-001"}]
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "multicast_id": 123456,
+            "success": 1,
+            "failure": 0,
+            "results": [{"message_id": "legacy-msg-001"}]
+        })))
         .expect(1)
         .mount(&server)
         .await;
@@ -405,14 +414,12 @@ async fn legacy_fcm_not_registered_deletes_stale_token(pool: PgPool) {
 
     Mock::given(matchers::method("POST"))
         .and(matchers::path("/fcm/send"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "multicast_id": 654321,
-                "success": 0,
-                "failure": 1,
-                "results": [{"error": "NotRegistered"}]
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "multicast_id": 654321,
+            "success": 0,
+            "failure": 1,
+            "results": [{"error": "NotRegistered"}]
+        })))
         .expect(1)
         .mount(&server)
         .await;
@@ -421,7 +428,10 @@ async fn legacy_fcm_not_registered_deletes_stale_token(pool: PgPool) {
     let stale_token = format!("fcm-legacy-stale-{}", Uuid::new_v4());
     seed_token(&pool, user_id, &stale_token, "fcm").await;
 
-    assert!(token_exists(&pool, &stale_token).await, "token must exist before send");
+    assert!(
+        token_exists(&pool, &stale_token).await,
+        "token must exist before send"
+    );
 
     let adapter = make_legacy_adapter(pool.clone(), server.uri(), "AAAA-legacy-server-key");
     let notification = make_notification(user_id);
