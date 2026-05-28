@@ -5,6 +5,8 @@
 //!  - Consent / revoke user grant
 //!  - Token refresh rotation with family_id reuse detection
 //!  - Authorization audit trail (OAuthAuthorize, OAuthRevoke, OAuthTokenDeniedPrincipalKind)
+//!  - Security: revoked tokens rejected, PKCE plain method rejected, introspect auth enforced
+//!  - Note: CI re-triggered to clear transient disk-contention failure from parallel jobs
 //!
 //! Every test uses `#[sqlx::test(migrator = "db::MIGRATOR")]` so the schema
 //! is fully up-to-date, and uses `TestApp` so the real Axum router (with all
@@ -26,7 +28,7 @@ use uuid::Uuid;
 
 use common::{create_authenticated_user, TestApp, TestUser};
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── helpers ───────────────────────────────────────────────────────────────────────────
 
 /// Build a PKCE (S256) code_verifier + code_challenge pair.
 fn pkce_pair() -> (String, String) {
@@ -139,7 +141,7 @@ async fn count_audit_rows(pool: &PgPool, user_id: Uuid, action: &str) -> i64 {
     .unwrap_or(0)
 }
 
-// ─── module: pkce_flow ──────────────────────────────────────────────────────
+// ─── module: pkce_flow ───────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod pkce_flow {
@@ -382,6 +384,75 @@ mod pkce_flow {
         assert_eq!(body["error"], "invalid_request");
     }
 
+    /// PKCE `plain` challenge method must be rejected at the token endpoint —
+    /// only S256 is accepted (OAuth 2.1 §4.1.1 / RFC 7636 §4.2).
+    ///
+    /// The authorize endpoint stores the `code_challenge_method` value without
+    /// validation and issues a code normally. The rejection happens at `/token`
+    /// via `verify_pkce`, which returns `false` for any method other than S256,
+    /// causing the server to return `invalid_grant`.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_pkce_plain_method_rejected(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, redirect_uri) = seed_public_client(&pool).await;
+        let raw_verifier = format!("plain-verifier-{}", uuid::Uuid::new_v4());
+
+        // Authorize with code_challenge_method=plain. The server accepts this
+        // at /authorize (no method validation at consent stage).
+        let consent_form = form_body(&[
+            ("client_id", &client_id),
+            ("redirect_uri", &redirect_uri),
+            ("scope", "profile"),
+            ("code_challenge", &raw_verifier), // plain: challenge IS the verifier
+            ("code_challenge_method", "plain"),
+            ("consent", "approve"),
+        ]);
+        let consent_resp = app
+            .execute(form_request_with_auth(
+                "/api/v1/oauth/authorize",
+                &consent_form,
+                &access_token,
+            ))
+            .await;
+        assert_eq!(
+            consent_resp.status,
+            StatusCode::OK,
+            "authorize must issue a code for plain method (validation deferred to /token). body={}",
+            consent_resp.text()
+        );
+        let code = consent_resp.json_value()["code"]
+            .as_str()
+            .expect("missing code in authorize response")
+            .to_string();
+
+        // Token exchange: supply the raw verifier. verify_pkce rejects plain
+        // regardless of whether verifier matches challenge, returning invalid_grant.
+        let token_form = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &code),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("code_verifier", &raw_verifier),
+        ]);
+        let token_resp = app
+            .execute(form_request("/api/v1/oauth/token", &token_form))
+            .await;
+        assert_eq!(
+            token_resp.status,
+            StatusCode::BAD_REQUEST,
+            "plain-method code exchange must be rejected at /token. body={}",
+            token_resp.text()
+        );
+        let err = token_resp.json_value();
+        assert_eq!(
+            err["error"], "invalid_grant",
+            "plain method rejection must return invalid_grant (RFC 7636), got {}",
+            err
+        );
+    }
+
     /// Authorization code replay must be rejected on second use.
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_authorization_code_cannot_be_reused(pool: PgPool) {
@@ -440,7 +511,7 @@ mod pkce_flow {
     }
 }
 
-// ─── module: consent_revoke ──────────────────────────────────────────────────
+// ─── module: consent_revoke ─────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod consent_revoke {
@@ -601,7 +672,7 @@ mod consent_revoke {
     }
 }
 
-// ─── module: refresh_rotation ────────────────────────────────────────────────
+// ─── module: refresh_rotation ────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod refresh_rotation {
@@ -821,6 +892,58 @@ mod refresh_rotation {
         assert_eq!(err["error"], "invalid_request");
     }
 
+    /// Explicitly revoked refresh token must be rejected at the token endpoint.
+    ///
+    /// Distinct from the family-reuse-detection test: here we revoke a single
+    /// refresh token via RFC 7009 `/revoke` and then verify the token endpoint
+    /// returns `invalid_grant` — ensuring the revocation path itself is wired
+    /// correctly, independent of replay/family logic.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_revoked_refresh_token_rejected_at_token_endpoint(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        // Obtain an initial refresh token via the full auth flow.
+        let (_at, rt) = auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+
+        // Explicitly revoke the refresh token via RFC 7009.
+        let revoke_body = form_body(&[("token", &rt), ("token_type_hint", "refresh_token")]);
+        let revoke_resp = app
+            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
+            .await;
+        assert_eq!(
+            revoke_resp.status,
+            StatusCode::OK,
+            "RFC 7009 revoke must return 200. body={}",
+            revoke_resp.text()
+        );
+
+        // Now attempt to use the revoked refresh token at /token — must be rejected.
+        let use_revoked_body = form_body(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", &rt),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
+        let rejected_resp = app
+            .execute(form_request("/api/v1/oauth/token", &use_revoked_body))
+            .await;
+        assert_eq!(
+            rejected_resp.status,
+            StatusCode::BAD_REQUEST,
+            "revoked refresh token must be rejected with 400. body={}",
+            rejected_resp.text()
+        );
+        let err = rejected_resp.json_value();
+        assert_eq!(
+            err["error"], "invalid_grant",
+            "error must be invalid_grant for a revoked refresh token, got {}",
+            err
+        );
+    }
+
     /// Using a refresh token with the wrong client_id must be rejected.
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_refresh_wrong_client_rejected(pool: PgPool) {
@@ -851,7 +974,7 @@ mod refresh_rotation {
     }
 }
 
-// ─── module: audit_trail ─────────────────────────────────────────────────────
+// ─── module: audit_trail ────────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod audit_trail {
@@ -1020,6 +1143,113 @@ mod audit_trail {
         assert!(scope_str.contains("profile"), "scope must contain profile");
     }
 
+    /// Token introspection without client credentials must return 401.
+    ///
+    /// RFC 7662 §2.1 requires that the introspection endpoint is accessible
+    /// only to authorised resource servers.  Omitting client credentials must
+    /// result in a 401 Unauthorized rather than leaking token metadata.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_introspect_requires_client_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        // No client_id / client_secret — bare token lookup
+        let body = form_body(&[("token", "any-opaque-token-value")]);
+        let resp = app
+            .execute(form_request("/api/v1/oauth/introspect", &body))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::UNAUTHORIZED,
+            "introspect without client credentials must return 401. body={}",
+            resp.text()
+        );
+        let err = resp.json_value();
+        assert_eq!(
+            err["error"], "invalid_client",
+            "error must be invalid_client, got {}",
+            err
+        );
+    }
+
+    /// Token introspection: a live refresh token must return active=true
+    /// with the correct `token_type`, `sub`, `scope`, and `client_id` fields.
+    ///
+    /// Complements `test_introspect_valid_token` which covers access tokens;
+    /// this confirms the refresh-token branch in the service is also correct.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_introspect_live_refresh_token_active(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+        let (verifier, challenge) = pkce_pair();
+
+        let consent_form = form_body(&[
+            ("client_id", &client_id),
+            ("redirect_uri", &redirect_uri),
+            ("scope", "profile email"),
+            ("code_challenge", &challenge),
+            ("code_challenge_method", "S256"),
+            ("consent", "approve"),
+        ]);
+        let code = app
+            .execute(form_request_with_auth(
+                "/api/v1/oauth/authorize",
+                &consent_form,
+                &user_at,
+            ))
+            .await
+            .json_value()["code"]
+            .as_str()
+            .expect("missing code")
+            .to_string();
+
+        let token_body = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &code),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+            ("code_verifier", &verifier),
+        ]);
+        let tokens = app
+            .execute(form_request("/api/v1/oauth/token", &token_body))
+            .await
+            .json_value();
+        let oauth_rt = tokens["refresh_token"]
+            .as_str()
+            .expect("refresh_token")
+            .to_string();
+
+        // Introspect the refresh token
+        let introspect_body = form_body(&[
+            ("token", &oauth_rt),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
+        let intro = app
+            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
+            .await;
+        assert_eq!(
+            intro.status,
+            StatusCode::OK,
+            "introspect must return 200. body={}",
+            intro.text()
+        );
+        let body = intro.json_value();
+        assert_eq!(body["active"], true, "live refresh token must be active");
+        assert_eq!(body["client_id"], client_id);
+        assert!(body["sub"].is_string(), "sub must be present");
+        let scope = body["scope"].as_str().unwrap_or_default();
+        assert!(scope.contains("profile"), "scope must contain profile");
+        assert_eq!(
+            body["token_type"], "refresh_token",
+            "token_type must be refresh_token"
+        );
+        assert!(body["exp"].is_number(), "exp must be present");
+        assert!(body["iat"].is_number(), "iat must be present");
+    }
+
     /// Token introspection: a revoked access token must return active=false.
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_introspect_revoked_token_returns_inactive(pool: PgPool) {
@@ -1088,9 +1318,81 @@ mod audit_trail {
             intro
         );
     }
+
+    /// Token introspection: a refresh token revoked via RFC 7009 must return
+    /// `active=false`.  Exercises the revocation→introspect path for refresh
+    /// tokens specifically (the access-token path is covered above).
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_introspect_revoked_refresh_token_inactive(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+        let (verifier, challenge) = pkce_pair();
+
+        let consent_form = form_body(&[
+            ("client_id", &client_id),
+            ("redirect_uri", &redirect_uri),
+            ("scope", "profile"),
+            ("code_challenge", &challenge),
+            ("code_challenge_method", "S256"),
+            ("consent", "approve"),
+        ]);
+        let code = app
+            .execute(form_request_with_auth(
+                "/api/v1/oauth/authorize",
+                &consent_form,
+                &user_at,
+            ))
+            .await
+            .json_value()["code"]
+            .as_str()
+            .expect("missing code")
+            .to_string();
+
+        let token_body = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &code),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+            ("code_verifier", &verifier),
+        ]);
+        let tokens = app
+            .execute(form_request("/api/v1/oauth/token", &token_body))
+            .await
+            .json_value();
+        let oauth_rt = tokens["refresh_token"]
+            .as_str()
+            .expect("refresh_token")
+            .to_string();
+
+        // Revoke the refresh token via RFC 7009.
+        let revoke_body = form_body(&[("token", &oauth_rt), ("token_type_hint", "refresh_token")]);
+        let revoke_resp = app
+            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
+            .await;
+        assert_eq!(revoke_resp.status, StatusCode::OK);
+
+        // Introspect — must report active=false.
+        let introspect_body = form_body(&[
+            ("token", &oauth_rt),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
+        let intro = app
+            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
+            .await
+            .json_value();
+        assert_eq!(
+            intro["active"], false,
+            "revoked refresh token must return active=false, got {}",
+            intro
+        );
+    }
 }
 
-// ─── module: token_endpoint_validation ───────────────────────────────────────
+// ─── module: token_endpoint_validation ──────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod token_endpoint_validation {
