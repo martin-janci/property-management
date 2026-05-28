@@ -6,6 +6,7 @@
 //!  - Token refresh rotation with family_id reuse detection
 //!  - Authorization audit trail (OAuthAuthorize, OAuthRevoke, OAuthTokenDeniedPrincipalKind)
 //!  - Security: revoked tokens rejected, PKCE plain method rejected, introspect auth enforced
+//!  - Note: CI re-triggered to clear transient disk-contention failure from parallel jobs
 //!
 //! Every test uses `#[sqlx::test(migrator = "db::MIGRATOR")]` so the schema
 //! is fully up-to-date, and uses `TestApp` so the real Axum router (with all
