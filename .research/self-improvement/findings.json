@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
-  "updated_at": "2026-05-28T14:42:00Z",
-  "generated_by": "561874d5bae75acb0ec6078ed8cbef27f2462612",
+  "updated_at": "2026-05-28T15:22:00Z",
+  "generated_by": "b8bf30ad92843ad998b924caea3d322fcd07f95f",
   "findings": [
     {
       "finding_id": "subagent-workspace-contamination",
@@ -67,13 +67,14 @@
       "category": "self-test",
       "status": "open",
       "first_seen": "2026-05-28T14:42:00Z",
-      "last_seen": "2026-05-28T14:42:00Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-28T15:22:00Z",
+      "recurrence": 2,
       "symptom": "Self-test fails at end of run, then state is hand-patched ('-> now backfilled')",
       "evidence": [
         "6bf8e883: 'self-test: T11 FAIL (5 new rows missing hardening fields -> now backfilled)'",
-        "561874d5 (this run): T4 FAIL (4 duplicate archive task_ids) — not yet repaired",
-        "Pattern: self-test is run AFTER state is written, so failures are repaired reactively rather than prevented"
+        "561874d5: T4 FAIL (4 duplicate archive task_ids)",
+        "b8bf30ad (this run): T4 FAIL again — gap-10a-1-oauth-tests, gap-10b-3-admin-health-ui present in BOTH active (in-progress, this run) and archive (merged #470/#471 on 2026-05-25). Distinct root cause from the in-archive dup — see reclaim-of-already-merged-task-id.",
+        "Pattern: self-test is run AFTER state is written, so failures are repaired reactively rather than prevented; FAIL now recurs 2+ consecutive runs on different T-numbers (T11 -> T4 -> T4)"
       ],
       "root_cause": "Hardening fields and archive dedup are enforced only by the post-hoc self-test, not by the Phase 3 claim / Phase 6 archive writers themselves, so every claim/archive cycle can introduce a fresh violation.",
       "proposed_fix": "Move the T11 (hardening fields) and T4 (archive dedup) invariants into the write path: Phase 3 claim template must stamp all hardening fields; Phase 6 must upsert-dedup before write. Keep the self-test as a gate but make it pass on first run. Add a Phase 6 pre-commit hook that runs dispatcher-self-test.sh and aborts the commit on FAIL.",
@@ -102,12 +103,13 @@
       "severity": "high",
       "status": "open",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T14:42:00Z",
-      "recurrence": 3,
+      "last_seen": "2026-05-28T15:22:00Z",
+      "recurrence": 4,
       "evidence": [
         "A parallel run pushed state (generated=2026-05-28T12:32:35Z, 137 archived) mid-transition; reset to origin/dev and re-ran",
         "d654512a 2026-05-28 02:15: 'R0 new (all captured by concurrent run)' — Phase 5 verdicts for #643/#641/#642 produced by a concurrent dispatcher",
-        "6bf8e883 2026-05-28 14:11: archive-append re-merged rows already archived by a concurrent run (root of T4 duplicate-archive FAIL)"
+        "6bf8e883 2026-05-28 14:11: archive-append re-merged rows already archived by a concurrent run (root of T4 duplicate-archive FAIL)",
+        "b8bf30ad 2026-05-28 15:17: re-claimed gap-10a-1/gap-10b-3 that a concurrent/prior run had already merged into archive 12h earlier — a lock would have surfaced the completed state before claim"
       ],
       "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held. This also prevents the archive-dedup and stale-base re-run failures which are downstream symptoms of overlap.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
@@ -119,12 +121,13 @@
       "severity": "high",
       "status": "open",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T14:42:00Z",
-      "recurrence": 2,
+      "last_seen": "2026-05-28T15:22:00Z",
+      "recurrence": 3,
       "evidence": [
         "5 approved PRs unmergeable: #633 ci-fail, #639 needs-human-review, #641 draft+needs-human-review, #643 ci-unknown/0-checks, #640 dirty",
         "0 merged by dispatcher; approved pool only grows",
-        "db36d8e5 2026-05-28 08:08: X=0 merged-now with 2 merge-attempts (PR#632, PR#650) and PR#643 stuck on ci-green-prefix anomaly"
+        "db36d8e5 2026-05-28 08:08: X=0 merged-now with 2 merge-attempts (PR#632, PR#650) and PR#643 stuck on ci-green-prefix anomaly",
+        "b8bf30ad 2026-05-28 15:17: M0 merge-attempts / X0 merged-now; 'Approved+blocked: PR#639, PR#641 (needs-human-review; no merge attempt)' — same two PRs still stranded across runs with no escalation routing"
       ],
       "proposed_fix": "Per-blocker routing in Phase 5.5: ci-fail -> Phase 5.7 respawn; needs-human-review -> explicit human-escalation tag + stop; dirty -> auto-rebase; ci-unknown/0-checks -> re-trigger CI or wait, don't strand.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)",
