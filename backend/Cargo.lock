@@ -167,7 +167,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "admin-core"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "api-core",
  "async-trait",
@@ -340,7 +340,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "async-trait",
  "axum",
@@ -351,7 +351,7 @@ dependencies = [
  "governor",
  "integrations",
  "jsonwebtoken",
- "metrics",
+ "metrics 0.24.6",
  "serde",
  "serde_json",
  "sqlx",
@@ -367,7 +367,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "admin-core",
  "aes-gcm",
@@ -396,7 +396,7 @@ dependencies = [
  "integrations",
  "jsonwebtoken",
  "lettre",
- "metrics",
+ "metrics 0.24.6",
  "metrics-exporter-prometheus",
  "once_cell",
  "opentelemetry",
@@ -1566,7 +1566,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "async-trait",
  "axum",
@@ -1994,7 +1994,7 @@ checksum = "a4ae5f15dda3c708c0ade84bfee31ccab44a3da4f88015ed22f63732abe300c8"
 
 [[package]]
 name = "db"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "argon2",
  "async-trait",
@@ -2047,7 +2047,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3536,7 +3536,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -3963,6 +3963,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "metrics"
+version = "0.24.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89550ee9f79e88fef3119de263694973a8adb26c21d75322164fb8c493039fe2"
+dependencies = [
+ "portable-atomic",
+ "rapidhash",
+]
+
+[[package]]
 name = "metrics-exporter-prometheus"
 version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3972,7 +3982,7 @@ dependencies = [
  "hyper 0.14.32",
  "indexmap 1.9.3",
  "ipnet",
- "metrics",
+ "metrics 0.21.1",
  "metrics-util",
  "quanta 0.11.1",
  "thiserror 1.0.69",
@@ -4000,7 +4010,7 @@ dependencies = [
  "crossbeam-epoch",
  "crossbeam-utils",
  "hashbrown 0.13.1",
- "metrics",
+ "metrics 0.21.1",
  "num_cpus",
  "quanta 0.11.1",
  "sketches-ddsketch",
@@ -5265,6 +5275,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
 
 [[package]]
+name = "rapidhash"
+version = "4.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5e48930979c155e2f33aa36ab3119b5ee81332beb6482199a8ecd6029b80b59"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "raw-cpuid"
 version = "10.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5284,7 +5303,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "anyhow",
  "api-core",
@@ -5298,7 +5317,7 @@ dependencies = [
  "dotenvy",
  "hex",
  "jsonwebtoken",
- "metrics",
+ "metrics 0.24.6",
  "metrics-exporter-prometheus",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -6792,7 +6811,7 @@ dependencies = [
 
 [[package]]
 name = "tenant-ops"
-version = "0.2.953"
+version = "0.2.999"
 dependencies = [
  "chrono",
  "common",
