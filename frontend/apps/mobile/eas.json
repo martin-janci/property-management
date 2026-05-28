@@ -93,19 +93,6 @@
         "releaseStatus": "completed",
         "changesNotSentForReview": false
       }
-    },
-    "staging": {
-      "ios": {
-        "appleId": "APPLE_ID_PLACEHOLDER",
-        "ascAppId": "ASC_APP_ID_PLACEHOLDER",
-        "appleTeamId": "APPLE_TEAM_ID_PLACEHOLDER",
-        "language": "en-US"
-      },
-      "android": {
-        "serviceAccountKeyPath": "./store-metadata/android/google-play-service-account.json",
-        "track": "internal",
-        "releaseStatus": "completed"
-      }
     }
   }
 }
