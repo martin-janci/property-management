@@ -1,6 +1,6 @@
 {
   "name": "@ppt/vite-plugin-worktree",
-  "version": "0.2.975",
+  "version": "0.2.976",
   "private": true,
   "type": "module",
   "main": "./src/index.js",
