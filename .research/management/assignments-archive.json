@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-05-28T15:17:09Z",
+  "archived_at": "2026-05-28T15:33:38Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -3293,6 +3293,28 @@
       "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-81-1-schedule-rbac-fix",
+      "branch": "auto-impl/gap-81-1-schedule-rbac-fix",
+      "status": "failed",
+      "claimed_at": "2026-05-28T15:17:09Z",
+      "last_updated": "2026-05-28T15:33:27Z",
+      "status_changed_at": "2026-05-28T15:33:27Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=RBAC guard already merged in PR#643 (commit 3b72f392); update_schedule uses rls.role().is_manager(); cargo check exit 0; no new commits needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
       "merge_attempted_at": null
     }
   ]

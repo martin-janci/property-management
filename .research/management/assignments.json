@@ -132,28 +132,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "gap-81-1-schedule-rbac-fix",
-      "branch": "auto-impl/gap-81-1-schedule-rbac-fix",
-      "status": "in-progress",
-      "claimed_at": "2026-05-28T15:17:09Z",
-      "last_updated": "2026-05-28T15:17:09Z",
-      "status_changed_at": "2026-05-28T15:17:09Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     }
   ]
 }
