@@ -6,7 +6,8 @@
 
 -- Enable RLS on user_onboarding_progress
 ALTER TABLE user_onboarding_progress ENABLE ROW LEVEL SECURITY;
--- Force RLS even for the table owner (needed for tests running as postgres user)
+-- Force RLS for the table owner (superusers always bypass RLS regardless;
+-- this applies to any non-superuser role that owns the table)
 ALTER TABLE user_onboarding_progress FORCE ROW LEVEL SECURITY;
 
 -- Policy: users can only SELECT their own rows; super-admins bypass
