@@ -326,10 +326,10 @@ async fn log_cross_region_access(
         id: Uuid::new_v4(),
         organization_id: org_id,
         user_id,
-        data_type: format!("{:?}", payload.data_type).to_lowercase(),
+        data_type: payload.data_type.to_string(),
         source_region: payload.source_region.location_code().to_string(),
         access_region: payload.access_region.location_code().to_string(),
-        access_type: format!("{:?}", payload.access_type).to_lowercase(),
+        access_type: payload.access_type.to_string(),
         resource_id: payload.resource_id,
         reason: payload.reason,
         ip_address: None,
@@ -746,9 +746,11 @@ fn get_compliance_zone(region: &DataRegion) -> &'static str {
 fn generate_audit_hash(entry: &AuditLogEntry, previous_hash: Option<&str>) -> String {
     let mut hasher = Sha256::new();
 
-    // Include entry data in hash
+    // Include entry data in hash.
+    // P1-04: use as_str() (stable snake_case) instead of {:?} (Debug) so the
+    // hash domain does not depend on Rust's internal PascalCase Debug output.
     hasher.update(entry.id.to_string());
-    hasher.update(format!("{:?}", entry.event_type));
+    hasher.update(entry.event_type.as_str());
     hasher.update(&entry.description);
     hasher.update(entry.created_at.to_rfc3339());
 
