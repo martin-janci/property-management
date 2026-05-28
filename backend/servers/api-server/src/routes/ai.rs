@@ -1283,14 +1283,22 @@ async fn acknowledge_prediction(
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgePredictionRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _ = require_tenant_id(&principal)?;
+    // SECURITY: tenant_id is derived from the verified JWT and passed to the
+    // repository so a caller in org B cannot acknowledge predictions belonging
+    // to org A. We return 404 for both "not found" and "wrong tenant" to
+    // prevent cross-tenant ID enumeration.
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .equipment_repo
-        .acknowledge_prediction(id, principal.user_id, req.action_taken.as_deref())
+        .acknowledge_prediction(id, tenant_id, principal.user_id, req.action_taken.as_deref())
         .await
     {
         Ok(prediction) => Ok(Json(serde_json::json!(prediction))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Prediction not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to acknowledge: {}", e);
             Err((
