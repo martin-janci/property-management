@@ -29,7 +29,10 @@ impl ReportScheduleRepository {
     // Schedule operations
     // ============================================================================
 
-    /// Get a schedule by ID.
+    /// Get a schedule by ID (unscoped — super-admin / internal use only).
+    ///
+    /// Prefer `get_by_id_scoped` in request handlers so the caller's
+    /// `organization_id` is enforced in the WHERE clause.
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<ReportSchedule>, AppError> {
         let row = sqlx::query_as::<_, ReportScheduleRow>(
             r#"
@@ -52,17 +55,57 @@ impl ReportScheduleRepository {
         Ok(row.map(ReportSchedule::from))
     }
 
-    /// Pause a schedule (Story 81.1).
+    /// Get a schedule by ID scoped to the caller's organisation (closes #646 / #647).
+    ///
+    /// Returns `NotFound` for both "does not exist" and "belongs to a different
+    /// org" to avoid leaking cross-tenant existence information.
+    pub async fn get_by_id_scoped(
+        &self,
+        id: Uuid,
+        caller_org_id: Uuid,
+    ) -> Result<Option<ReportSchedule>, AppError> {
+        let row = sqlx::query_as::<_, ReportScheduleRow>(
+            r#"
+            SELECT id, report_id, organization_id, name, frequency,
+                   day_of_week, day_of_month, time, timezone, format,
+                   recipients, is_active, status,
+                   last_run_at, next_run_at, created_at, updated_at
+            FROM report_schedules
+            WHERE id              = $1
+              AND organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(caller_org_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to get report schedule (scoped)"
+            );
+            AppError::Database(e.to_string())
+        })?;
+
+        Ok(row.map(ReportSchedule::from))
+    }
+
+    /// Pause a schedule (Story 81.1), scoped to the caller's organisation (closes #646).
     ///
     /// Sets `is_active = false`, `status = 'paused'`.
-    pub async fn pause(&self, id: Uuid) -> Result<ReportSchedule, AppError> {
+    /// Returns `NotFound` when the `id` does not exist **or** belongs to a
+    /// different organisation, giving the same opaque response in both cases.
+    pub async fn pause(&self, id: Uuid, caller_org_id: Uuid) -> Result<ReportSchedule, AppError> {
         let row = sqlx::query_as::<_, ReportScheduleRow>(
             r#"
             UPDATE report_schedules
             SET is_active  = false,
                 status     = $1,
                 updated_at = NOW()
-            WHERE id = $2
+            WHERE id              = $2
+              AND organization_id = $3
             RETURNING id, report_id, organization_id, name, frequency,
                       day_of_week, day_of_month, time, timezone, format,
                       recipients, is_active, status,
@@ -71,10 +114,16 @@ impl ReportScheduleRepository {
         )
         .bind(report_schedule_status::PAUSED)
         .bind(id)
+        .bind(caller_org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, schedule_id = %id, "Failed to pause report schedule");
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to pause report schedule"
+            );
             AppError::Database(e.to_string())
         })?
         .ok_or_else(|| AppError::NotFound(format!("Report schedule {} not found", id)))?;
@@ -82,17 +131,20 @@ impl ReportScheduleRepository {
         Ok(ReportSchedule::from(row))
     }
 
-    /// Resume a paused schedule (Story 81.1).
+    /// Resume a paused schedule (Story 81.1), scoped to the caller's organisation (closes #646).
     ///
     /// Sets `is_active = true`, `status = 'active'`.
-    pub async fn resume(&self, id: Uuid) -> Result<ReportSchedule, AppError> {
+    /// Returns `NotFound` when the `id` does not exist **or** belongs to a
+    /// different organisation, giving the same opaque response in both cases.
+    pub async fn resume(&self, id: Uuid, caller_org_id: Uuid) -> Result<ReportSchedule, AppError> {
         let row = sqlx::query_as::<_, ReportScheduleRow>(
             r#"
             UPDATE report_schedules
             SET is_active  = true,
                 status     = $1,
                 updated_at = NOW()
-            WHERE id = $2
+            WHERE id              = $2
+              AND organization_id = $3
             RETURNING id, report_id, organization_id, name, frequency,
                       day_of_week, day_of_month, time, timezone, format,
                       recipients, is_active, status,
@@ -101,10 +153,16 @@ impl ReportScheduleRepository {
         )
         .bind(report_schedule_status::ACTIVE)
         .bind(id)
+        .bind(caller_org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, schedule_id = %id, "Failed to resume report schedule");
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to resume report schedule"
+            );
             AppError::Database(e.to_string())
         })?
         .ok_or_else(|| AppError::NotFound(format!("Report schedule {} not found", id)))?;
@@ -184,7 +242,10 @@ impl ReportScheduleRepository {
         })
     }
 
-    /// Get a single execution by ID.
+    /// Get a single execution by ID (unscoped — internal use only).
+    ///
+    /// Prefer `get_execution_scoped` in request handlers so the caller's
+    /// `organization_id` is enforced via the parent schedule's tenant.
     pub async fn get_execution(&self, id: Uuid) -> Result<Option<ReportExecution>, AppError> {
         sqlx::query_as::<_, ReportExecution>(
             r#"
@@ -204,6 +265,118 @@ impl ReportScheduleRepository {
             tracing::error!(error = %e, execution_id = %id, "Failed to get execution");
             AppError::Database(e.to_string())
         })
+    }
+
+    /// Get a single execution scoped to the caller's organisation (closes #647).
+    ///
+    /// Joins `report_executions` → `report_schedules` and filters on
+    /// `report_schedules.organization_id = caller_org_id` so a principal in
+    /// org B cannot read an execution that belongs to org A's schedule.
+    /// Returns `None` for both "not found" and "wrong org" to avoid leaking
+    /// cross-tenant existence information.
+    pub async fn get_execution_scoped(
+        &self,
+        id: Uuid,
+        caller_org_id: Uuid,
+    ) -> Result<Option<ReportExecution>, AppError> {
+        sqlx::query_as::<_, ReportExecution>(
+            r#"
+            SELECT e.id, e.schedule_id, e.status,
+                   e.started_at, e.completed_at, e.duration_ms,
+                   e.file_key, e.file_name, e.file_size,
+                   e.error_code, e.error_message, e.error_details,
+                   e.created_at
+            FROM report_executions e
+            JOIN report_schedules  s ON s.id = e.schedule_id
+            WHERE e.id              = $1
+              AND s.organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(caller_org_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                execution_id = %id,
+                org_id = %caller_org_id,
+                "Failed to get execution (scoped)"
+            );
+            AppError::Database(e.to_string())
+        })
+    }
+
+    /// Retry a failed execution, scoped to the caller's organisation (closes #647).
+    ///
+    /// Like `get_execution_scoped` the UPDATE joins through `report_schedules`
+    /// to enforce the tenant boundary.  Returns `BadRequest` when the execution
+    /// is found but not in `failed` state, and `NotFound` when it does not exist
+    /// or belongs to a different organisation.
+    pub async fn retry_execution_scoped(
+        &self,
+        id: Uuid,
+        caller_org_id: Uuid,
+    ) -> Result<ReportExecution, AppError> {
+        // First verify the execution exists and belongs to the caller's org.
+        let execution = self
+            .get_execution_scoped(id, caller_org_id)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Execution {} not found", id)))?;
+
+        // Enforce "only failed executions may be retried" before touching the DB.
+        if execution.status != report_execution_status::FAILED {
+            return Err(AppError::BadRequest(
+                "Execution not in 'failed' state; only failed executions can be retried".into(),
+            ));
+        }
+
+        // Now reset the status.  Repeat the org check in the WHERE clause as a
+        // defence-in-depth measure (covers TOCTOU between the SELECT above and
+        // this UPDATE).
+        let updated = sqlx::query_as::<_, ReportExecution>(
+            r#"
+            UPDATE report_executions
+            SET status        = $1,
+                completed_at  = NULL,
+                duration_ms   = NULL,
+                error_code    = NULL,
+                error_message = NULL,
+                error_details = NULL
+            WHERE id = $2
+              AND status = $3
+              AND schedule_id IN (
+                  SELECT id FROM report_schedules WHERE organization_id = $4
+              )
+            RETURNING id, schedule_id, status,
+                      started_at, completed_at, duration_ms,
+                      file_key, file_name, file_size,
+                      error_code, error_message, error_details,
+                      created_at
+            "#,
+        )
+        .bind(report_execution_status::PENDING)
+        .bind(id)
+        .bind(report_execution_status::FAILED)
+        .bind(caller_org_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                execution_id = %id,
+                org_id = %caller_org_id,
+                "Failed to retry execution"
+            );
+            AppError::Database(e.to_string())
+        })?
+        .ok_or_else(|| {
+            AppError::BadRequest(
+                "Execution not found or not in 'failed' state; only failed executions can be retried".into(),
+            )
+        })?;
+
+        Ok(updated)
     }
 
     /// Get presigned download URL for a completed execution.
@@ -296,40 +469,75 @@ impl ReportScheduleRepository {
     ///
     /// All parameters are optional; only non-`None` values are applied.
     ///
-    /// TODO: UPDATE report_schedules
-    ///       SET cron_expression = COALESCE($2, cron_expression),
-    ///           recipients      = COALESCE($3, recipients),
-    ///           is_active       = COALESCE($4, is_active),
-    ///           status          = CASE WHEN $4 IS NOT NULL
-    ///                               THEN CASE WHEN $4 THEN 'active' ELSE 'paused' END
-    ///                               ELSE status END,
-    ///           updated_at      = NOW()
-    ///       WHERE id = $1
-    ///       RETURNING *
+    /// # Cross-tenant safety (closes #624)
+    ///
+    /// The WHERE clause includes `AND organization_id = caller_org_id` so a
+    /// principal in org A cannot mutate a schedule that belongs to org B, even
+    /// if they know the schedule's UUID. The UPDATE returns no row (→ 404) when
+    /// the `id` exists but the `organization_id` does not match, giving the same
+    /// opaque response as "not found" to avoid leaking existence information.
     pub async fn update_schedule(
         &self,
-        _id: Uuid,
+        id: Uuid,
+        caller_org_id: Uuid,
         cron_expression: Option<String>,
         recipients: Option<Vec<String>>,
         enabled: Option<bool>,
-        current: &mut ReportSchedule,
     ) -> Result<ReportSchedule, AppError> {
-        if let Some(cron) = cron_expression {
-            // Stored in `time` until the dedicated column is added via migration.
-            current.time = cron;
-        }
-        if let Some(recips) = recipients {
-            current.recipients = recips;
-        }
-        if let Some(is_enabled) = enabled {
-            current.is_active = is_enabled;
-            current.status = if is_enabled {
+        // Build the status string when `enabled` is being changed.
+        let new_status: Option<String> = enabled.map(|is_active| {
+            if is_active {
                 report_schedule_status::ACTIVE.to_string()
             } else {
                 report_schedule_status::PAUSED.to_string()
-            };
-        }
-        current.updated_at = Utc::now();
-        Ok(current.clone())
+            }
+        });
+
+        // Convert the recipients Vec<String> into a JSON array for JSONB storage.
+        let recipients_json: Option<serde_json::Value> = recipients.map(|v| {
+            serde_json::Value::Array(v.into_iter().map(serde_json::Value::String).collect())
+        });
+
+        let row = sqlx::query_as::<_, ReportScheduleRow>(
+            r#"
+            UPDATE report_schedules
+            SET time       = COALESCE($3, time),
+                recipients = COALESCE($4, recipients),
+                is_active  = COALESCE($5, is_active),
+                status     = COALESCE($6, status),
+                updated_at = NOW()
+            WHERE id              = $1
+              AND organization_id = $2
+            RETURNING id, report_id, organization_id, name, frequency,
+                      day_of_week, day_of_month, time, timezone, format,
+                      recipients, is_active, status,
+                      last_run_at, next_run_at, created_at, updated_at
+            "#,
+        )
+        .bind(id)
+        .bind(caller_org_id)
+        .bind(cron_expression.as_deref())
+        .bind(recipients_json.as_ref())
+        .bind(enabled)
+        .bind(new_status.as_deref())
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to update report schedule"
+            );
+            AppError::Database(e.to_string())
+        })?
+        .ok_or_else(|| {
+            // Either the schedule doesn't exist or it belongs to a different
+            // organisation.  Return the same 404 in both cases to avoid leaking
+            // cross-tenant existence information.
+            AppError::NotFound(format!("Report schedule {} not found", id))
+        })?;
+
+        Ok(ReportSchedule::from(row))
     }
 }
