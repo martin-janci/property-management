@@ -353,7 +353,9 @@ jobs:
               if [ -z "$NON_MECHANICAL" ] && [ -n "$CONFLICTS" ]; then
                 echo "Only mechanical conflicts; resolving from base..."
                 for f in $CONFLICTS; do
-                  git checkout --theirs -- "$f" || true
+                  # During `git rebase`, --ours = upstream/onto (dev), --theirs = branch being rebased.
+                  # We want the dev version of mechanical files, so we use --ours (not --theirs).
+                  git checkout --ours -- "$f" || true
                   git add -- "$f" || true
                 done
                 if git rebase --continue; then
