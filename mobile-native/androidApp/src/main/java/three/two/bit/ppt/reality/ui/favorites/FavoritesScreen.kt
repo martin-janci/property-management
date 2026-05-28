@@ -267,8 +267,7 @@ private fun applyFilterAndSort(
 ): List<FavoriteEntry> {
     // `transactionType` comes from the flat server field; fall back to the nested
     // listing type for any legacy/mock data that still uses the old shape.
-    fun FavoriteEntry.effectiveTransactionType(): String? =
-        transactionType ?: listing?.type?.name
+    fun FavoriteEntry.effectiveTransactionType(): String? = transactionType ?: listing?.type?.name
 
     val filtered =
         when (filter) {
@@ -480,10 +479,9 @@ private fun SortSegmentedControl(
 }
 
 /**
- * Card that renders a [FavoriteEntry] using the flat server fields
- * (`title`, `currentPrice`, `photoUrl`, `city`, etc.) returned by
- * `GET /api/v1/favorites`.  Falls back to the nested [FavoriteEntry.listing]
- * for any legacy / mock data that still carries the old shape.
+ * Card that renders a [FavoriteEntry] using the flat server fields (`title`, `currentPrice`,
+ * `photoUrl`, `city`, etc.) returned by `GET /api/v1/favorites`. Falls back to the nested
+ * [FavoriteEntry.listing] for any legacy / mock data that still carries the old shape.
  */
 @Composable
 private fun FavoriteEntryCard(
