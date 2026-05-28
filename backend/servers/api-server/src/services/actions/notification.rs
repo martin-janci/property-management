@@ -19,6 +19,23 @@ pub enum NotificationChannel {
     All,
 }
 
+impl NotificationChannel {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::InApp => "in_app",
+            Self::Push => "push",
+            Self::Sms => "sms",
+            Self::All => "all",
+        }
+    }
+}
+
+impl std::fmt::Display for NotificationChannel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// Target type for notification.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
