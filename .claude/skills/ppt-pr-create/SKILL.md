@@ -64,6 +64,64 @@ plan* commands all exited 0. You're about to open the PR.
    esac
    ```
 
+3.5. **Redundancy check — does an open PR already cover this work?**
+
+   Run BEFORE pushing. **Invariant** (enforced jointly with the
+   dispatcher's Phase 3 guards and the routine's promotion gate): at most
+   one non-terminal unit of work per slug-stem. This step is the last
+   defense — it catches the case where two implementers were already
+   spawned in parallel before either had pushed a PR, so the dispatcher's
+   open-PR scan couldn't see the collision yet.
+
+   ```bash
+   # 1. Derive the slug stem (drop -impl/-fix/-v2/-retry/-followup/-wip
+   #    suffix optionally followed by digits — matches the dispatcher rule).
+   STEM=$(echo "$SLUG" | sed -E 's/-(impl|fix|v2|retry|followup|wip)[0-9]*$//')
+
+   # 2. Look for an open PR with the same stem in title OR branch.
+   gh pr list --state open --limit 100 \
+     --json number,title,headRefName,isDraft \
+     --search "in:title $STEM" > /tmp/dup-title.json
+   gh pr list --state open --limit 100 \
+     --json number,title,headRefName,isDraft \
+     --search "head:auto-impl/$STEM" > /tmp/dup-head.json
+   gh pr list --state open --limit 100 \
+     --json number,title,headRefName,isDraft \
+     --search "head:impl/$STEM" >> /tmp/dup-head.json
+
+   # 3. Hit predicate: any matched row whose headRefName, after stripping the
+   #    auto-impl/ or impl/ prefix, has the same stem as $STEM.
+   HITS=$(jq -r --arg stem "$STEM" '
+     . | map(select(
+       (.headRefName | sub("^(auto-impl|impl)/"; "") | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$"; ""))
+       == $stem
+     )) | .[] | "#\(.number) \(.headRefName)"
+   ' /tmp/dup-title.json /tmp/dup-head.json | sort -u)
+
+   if [ -n "$HITS" ]; then
+     echo "REDUNDANT: another open PR already covers stem=$STEM:"
+     echo "$HITS"
+     # Post a comment on the FIRST conflicting PR so the operator + dispatcher see it.
+     FIRST_PR=$(echo "$HITS" | head -1 | sed -E 's/^#([0-9]+).*/\1/')
+     gh pr comment "$FIRST_PR" --body "Dispatcher dedup: implementer for \`$SLUG\` aborted PR-create — this PR already covers the same slug stem. If the two scopes actually differ, rename one slug stem to break the collision."
+     echo "Skipping gh pr create. Mark the assignment as needs-human-judgement and exit." >&2
+     exit 3
+   fi
+   ```
+
+   If `HITS` is empty → fall through to step 4. If non-empty → exit 3 and let
+   the implementer wrapper (dispatcher Phase 4 / ppt-implement) surface this
+   in the assignment row as `pr=none note=redundant-with:#<n>`. The
+   dispatcher's Phase 2 will route this to `status=failed` on the next run
+   (which is correct — the work is not lost, the *other* PR is shipping it).
+
+   **File-overlap secondary check** (optional, runs only if step 2 was
+   empty). For each open `auto-impl/*` PR, list its changed files via
+   `gh pr view <n> --json files -q '.files[].path'`, intersect with this
+   branch's changed files (`git diff --name-only $BASE...HEAD`). If
+   `|intersection| >= 2` with at least one non-test file → same abort as
+   above with `reason=file-overlap`.
+
 4. **Create**:
    ```bash
    gh pr create --base "$BASE" --head "impl/$SLUG" \

@@ -518,6 +518,93 @@ Define `epic_prefix(task_id)` as the first matching pattern:
 
 After candidate sort, walk the list and **claim at most 2 tasks per `epic_prefix` per run**, unless the epic has at least one task in `merged` status in `assignments.json` already (cold-epic protection: avoid spending all 3 slots on the same blocked epic). If the 3rd candidate has the same prefix as the first 2 picked, skip it and continue scanning for a different-prefix candidate. If no different-prefix candidate exists, claim only the 2 — `free_slots=1` is fine, do not pad with same-prefix.
 
+**Cross-PR dedup guards.**
+
+**Invariant.** At any time, for any `stem`, AT MOST ONE non-terminal unit
+of work exists across (a) open PRs on remote, (b) `assignments.json` rows
+in `{in-progress, review}`, (c) ready plans about to be claimed. Two units
+sharing a `stem` is a bug; two units touching ≥2 non-test files in common
+is a bug.
+
+**Stem definition** (single source of truth, reused by Phase 3, the routine
+promotion gate, and the implementer pre-create check):
+
+```python
+SUFFIX_RE = r'-(impl|fix|v2|retry|followup|wip)\d*$'
+def stem(task_id_or_branch_or_slug):
+    s = re.sub(r'^(auto-impl|impl)/', '', task_id_or_branch_or_slug)
+    return re.sub(SUFFIX_RE, '', s)
+```
+
+The suffix list is the *full* set of "second-attempt" markers used by the
+routine and by hand-edits. Add a new marker here in exactly one place when
+a new convention is observed; never inline-redefine the regex elsewhere.
+
+For each candidate that survived the same-epic guard, run three checks
+before appending. ANY check tripping → skip this candidate (do NOT append;
+do NOT consume a slot), continue scanning the sorted candidate list. Log
+each skip to Phase 7 under `Dup-skipped:` with the structured reason code
+listed below; the codes are the contract Phase 8 reads when proposing
+improvements.
+
+1. **Open-PR collision (reason code: `open-pr`).** Cheap GH probe per
+   candidate — title-substring search plus head-prefix search:
+
+   ```bash
+   gh pr list --state open --limit 100 \
+     --json number,title,headRefName,isDraft \
+     --search "in:title $stem_cur" > /tmp/dup-title.json
+   gh pr list --state open --limit 100 \
+     --json number,title,headRefName,isDraft \
+     --search "head:auto-impl/$stem_cur" > /tmp/dup-head.json
+   ```
+
+   Hit predicate: any matched row whose `stem(headRefName)` equals
+   `stem(candidate.id)`. Title-substring alone is not sufficient — a
+   bug-fix PR mentioning the stem in prose would over-trigger. The
+   stem-of-branch-name comparison is the load-bearing test.
+
+   Log: `Dup-skip: <candidate.id> reason=open-pr stem=<stem> conflicts_with=#<n>`.
+
+2. **In-flight assignment collision (reason code: `open-assignment`).**
+   Same-stem rows in `assignments.json` whose status is `in-progress` or
+   `review` block the claim even when no PR is open yet (sibling
+   implementer mid-implement, or PR not yet pushed):
+
+   ```python
+   for row in assignments["assignments"]:
+       if row["status"] in ("in-progress", "review") \
+              and stem(row["task_id"]) == stem(candidate.id):
+           skip(reason="open-assignment",
+                conflicts_with=row["task_id"],
+                other_status=row["status"])
+           break
+   ```
+
+3. **File-touch overlap (reason code: `file-overlap`).** Read
+   `candidate`'s plan at `.research/plans/<candidate.id>.md`, parse the
+   `## Files` section into a set `files_cur`. For each open assignment
+   row (`status in {in-progress, review}`), parse the same section from
+   its plan. Compute the intersection.
+
+   Trip when `|files_cur ∩ files_other| >= 2` AND at least one entry in
+   the intersection is not a test file (test paths: `**/tests/**`,
+   `**/*_test.rs`, `**/*.test.{ts,tsx,js,jsx}`, `**/__tests__/**`).
+   Test-only overlap is allowed (parallel test work is fine).
+
+   Log: `Dup-skip: <candidate.id> reason=file-overlap with=<other_id> shared=<count>:<first-3-paths>`.
+
+The three guards form a defense-in-depth ladder: (1) catches collisions
+across runs, (2) catches collisions within the same run, (3) catches
+semantically-equivalent slugs whose stems differ but whose plans land on
+the same files. Every skip writes a structured row that Phase 8 aggregates
+to detect systemic drift (e.g. repeated `open-assignment` skips on the
+same epic signal a planner bug, not a claim-time issue).
+
+Implementation note: all three guards rely on `stem(...)`. Define it once
+at the top of Phase 3 and reuse. The `gh pr list` calls are bounded by
+`free_slots` (≤3 per run × 2 calls) — at most 6 extra `gh` invocations.
+
 For each picked task: `branch = "auto-impl/" + first_40_chars_kebab(task_id)`.
 
 **Branch-prefix guard (ingestion contract — issue #573):**
@@ -556,7 +643,7 @@ Append to `assignments.json`:
 }
 ```
 
-If fewer than 3 candidates available (buffer drained), claim what's there — don't block. Log: `Phase 3: claimed=<N> same_epic_skipped=<K>`.
+If fewer than 3 candidates available (buffer drained), claim what's there — don't block. Log: `Phase 3: claimed=<N> same_epic_skipped=<K> dup_skipped=<D>` where `D` is the count of cross-PR-dedup-guard rejections (sum across the three guards above).
 
 ---
 
@@ -1033,6 +1120,7 @@ always appear so it is visible in dispatcher commits when the check actually ran
 ```
 Claimed (this run):       [<id> -> <specialist>, …]                (≤3, may be [])
 Same-epic skipped:        [<id> (would exceed 2/epic), …]          (item #2; [] if none)
+Dup-skipped:              [<id> reason=<open-pr|open-assignment|file-overlap> conflicts_with=<#n|task_id>, …]   (cross-PR dedup guards; [] if none)
 Transitions (this run):   [<id> in-progress→review, …]             ([] if none)
 In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>
@@ -1072,11 +1160,34 @@ Hang alerts:
 
 ## Phase 8 — Self-review (TEMPORARY, TEMP_PHASE_8)
 
-**Purpose:** generate a brief markdown post-mortem of this run so the
-operator can spot recurring failure modes, token-spending anomalies, or
-optimization opportunities that aren't visible from Phase 7's structured
-counters alone. Write-once → human-read. The routine never reads its own
-reports.
+**Purpose:** identify systemic issues in the dispatcher pipeline and
+propose concrete fixes. Two outputs:
+
+1. A per-run report at `.research/self-improvement/<iso8601-utc>.md`
+   (human-readable narrative — kept lightweight).
+2. A structured findings backlog at
+   `.research/self-improvement/findings.json` (the load-bearing output —
+   each finding has a stable `finding_id`, recurrence count, proposed
+   fix, and severity; this is what an operator triages, what the routine
+   surfaces in the daily brief, and what a future automation could turn
+   into auto-fix PRs).
+
+Self-review is NOT a post-mortem narrator. Its job is to look across the
+last N dispatcher commits + this run's Phase 7 counters + the structured
+skip/failure logs (`Dup-skipped`, `Sandbox reclaims`, `Failed-dep
+cascades`, `Empty branches`, `Scope-drift`, `Code-reuse`, `CI-stuck`,
+`Hang alerts`) and answer:
+
+- Which counters are non-zero **with recurrence ≥3** over the last 7
+  days? (A single bad run is noise; a pattern is a bug.)
+- For each recurring counter, what's the upstream cause? (Planner bug?
+  Prompt ambiguity? Missing automation? Race condition?)
+- What is the smallest spec/skill/code change that would prevent the
+  recurrence? Name file:line where possible.
+
+The routine never auto-applies findings — humans (or a future, separately
+scoped, kill-switched auto-fix flow) act on them. But the findings ARE
+machine-readable, so downstream tooling can consume them.
 
 **Off-switch:** if `DISPATCHER_SELF_REVIEW=0` (or empty), SKIP this phase
 entirely. Default behaviour when the env var is unset or `=1` is to run.
@@ -1097,40 +1208,142 @@ fi
 worth the extra cost for a temporary instrumented phase). NOT parallel
 with anything else — this is the last thing the run does.
 
-> You are the dispatcher self-review agent. Your job: produce ONE short
-> markdown post-mortem of the just-finished dispatcher run and write it
-> to `.research/self-improvement/<iso8601-utc>.md`.
+> You are the dispatcher self-review agent. Your job is NOT to narrate the
+> run. Your job is to detect systemic issues across the last 8 dispatcher
+> commits and propose concrete fixes. Output TWO files:
 >
-> Inputs you have (use bash):
+> 1. A short narrative report at
+>    `.research/self-improvement/<iso8601-utc>.md` (≤60 lines markdown).
+> 2. An updated structured findings backlog at
+>    `.research/self-improvement/findings.json` (you append/upsert findings;
+>    you do NOT rewrite from scratch — see "Findings persistence" below).
+>
+> ### Inputs (use bash)
 >
 > ```bash
-> # 1. The Phase 7 summary from the dispatcher commit that just landed
-> git -C . log -1 --format="%H%n%s%n%n%b"
+> # 1. This run's Phase 7 summary
+> git log -1 --format="%H%n%s%n%n%b"
 >
-> # 2. Recent dispatcher commits for trend (last 8 chore(research): commits)
+> # 2. Last 8 dispatcher commits — counter trend
 > git log --grep="chore(research): dispatcher" --pretty="%ai %s" -8
 >
-> # 3. Self-test status against current state
-> bash .research/dispatcher-self-test.sh 2>&1 | tail -25
+> # 3. Last 8 commit bodies — for cross-run structured-skip aggregation
+> git log --grep="chore(research): dispatcher" -8 --format="--RUN %H %ai%n%b%n"
 >
-> # 4. Active assignments snapshot (small now post-archive split)
-> jq '{active: (.assignments | length), by_status: (.assignments | group_by(.status) | map({s: .[0].status, n: length}))}' \
+> # 4. Self-test (mandatory — failing test is a finding by itself)
+> bash .research/dispatcher-self-test.sh 2>&1 | tail -40
+>
+> # 5. Active assignments shape
+> jq '{active: (.assignments | length),
+>      by_status: (.assignments | group_by(.status) | map({s: .[0].status, n: length})),
+>      oldest_review: (.assignments | map(select(.status=="review")) | sort_by(.status_changed_at) | first | {task_id, age_h: ((now - (.status_changed_at|fromdateiso8601))/3600|floor)})}' \
 >   .research/management/assignments.json
 >
-> # 5. What got archived this run (count only — never load archive into context)
+> # 6. Archive count only (do NOT load contents)
 > jq '.assignments | length' .research/management/assignments-archive.json
 >
-> # 6. Phase 7 grep — look for non-empty alert lines in the commit body
-> git log -1 --format="%b" | grep -E "^(Empty branches|Failed-dep cascades|Scope-drift|Code-reuse|CI-stuck|WARN|ALERT|disk_)"
+> # 7. Existing findings backlog (so you can update recurrence counts, not duplicate)
+> jq '.findings | map({id: .finding_id, status, last_seen, recurrence})' \
+>   .research/self-improvement/findings.json 2>/dev/null || echo '[]'
 > ```
 >
-> Inputs you do NOT need (do not read these — they bloat context):
+> ### Inputs you must NOT read
+>
 > - `.research/management/assignments-archive.json` content
 > - `.research/management/action-list-archive.json` content
 > - `.research/management/coverage.json`
-> - the dispatcher-prompt.md itself (you ARE the routine; you've seen it)
+> - `.research/dispatcher-prompt.md` (you ARE this routine; reading yourself is wasteful)
 >
-> Produce the report — keep it tight, **≤ 60 lines of markdown**:
+> ### Detection rubric
+>
+> Walk the last 8 commit bodies. For each Phase 7 structured line
+> (`Dup-skipped`, `Same-epic skipped`, `Sandbox reclaims`, `Empty branches`,
+> `Failed-dep cascades`, `Scope-drift`, `Code-reuse warnings`, `CI-stuck`,
+> `Approved+CI-pending`, `Review dedup-skipped`, `Hang alerts WARN/ALERT`,
+> `Tier 2 response`, `Disk warning`, `Self-test FAIL`), count occurrences.
+>
+> A counter qualifies as a **finding** when ANY of these hold:
+>
+> - Recurrence ≥ 3 of the same reason code (e.g. `Dup-skipped reason=open-pr`
+>   firing on 3+ distinct stems in 8 runs → upstream planner bug, not noise).
+> - Hang alert ALERT (>7d) referencing the same task_id across ≥2 runs.
+> - Self-test FAIL repeating the same `T<N>` across ≥2 runs.
+> - A single-occurrence event where the symptom is severe AND root cause is
+>   identifiable (e.g. one `disk_warning` plus identifiable cleanup target).
+>
+> Each finding gets ONE structured row. Same root cause → same `finding_id`;
+> on repeat runs you UPDATE recurrence/last_seen, not append a duplicate.
+>
+> ### Finding row schema
+>
+> ```jsonc
+> {
+>   "finding_id":   "fp-<short-kebab>",   // STABLE across runs. Derive from
+>                                          // root cause, not symptom (e.g.
+>                                          // "fp-planner-emits-impl-suffix-duplicates"
+>                                          // — same id for every recurrence).
+>   "first_seen":   "iso-8601",
+>   "last_seen":    "iso-8601",
+>   "recurrence":   3,                    // number of dispatcher commits in
+>                                          // which this finding's evidence
+>                                          // was observed (NOT count of
+>                                          // events; one bad run = +1).
+>   "severity":     "low|medium|high",    // high = blocks throughput / data
+>                                          //   integrity; medium = wastes
+>                                          //   tokens or operator time;
+>                                          //   low = aesthetic / non-load-bearing
+>   "category":     "planner|claim|review|merge|infra|spec|self-test",
+>   "symptom":      "<1-line counter evidence — what the Phase 7 lines showed>",
+>   "evidence":     ["<commit_sha>: <one-line excerpt>", "…"],   // ≥2 datapoints
+>   "root_cause":   "<1-2 sentences — why this is happening>",
+>   "proposed_fix": "<concrete: file:line+description, OR new self-test T<N>, OR new prompt section>",
+>   "effort":       "small|medium|large",  // small = single-file prompt edit;
+>                                           // medium = new skill section + test;
+>                                           // large = code change in dispatcher
+>                                           //   harness or new phase
+>   "status":       "open|acknowledged|resolved|wontfix",
+>   "operator_notes": ""                  // operator hand-writes; agent
+>                                          // leaves this untouched on update
+> }
+> ```
+>
+> ### Findings persistence (read-modify-write, NOT rewrite)
+>
+> ```bash
+> # Load existing findings (or empty array if file is absent)
+> EXISTING=$(jq '.findings // []' .research/self-improvement/findings.json 2>/dev/null || echo '[]')
+> ```
+>
+> For each finding you detect:
+>
+> 1. Compute `finding_id` from the root cause (deterministic — same root
+>    cause must produce the same id across runs).
+> 2. If `finding_id` exists in `EXISTING`:
+>    - `recurrence += 1`; `last_seen = now`; refresh `evidence` (append the
+>      new commit sha, keep at most the last 5).
+>    - Do NOT touch `status` (operator owns it) or `operator_notes`.
+>    - Do NOT touch `severity` unless the recurrence count crossed a
+>      threshold that demands it (e.g. recurrence ≥ 5 → bump low→medium).
+> 3. If new: emit a fresh row with `recurrence: 1`, `status: "open"`,
+>    `first_seen = last_seen = now`.
+>
+> Write the merged result back to `findings.json`:
+>
+> ```jsonc
+> {
+>   "schema_version": 1,
+>   "generated_at":   "<iso-8601>",
+>   "generated_by":   "<commit sha that triggered this self-review>",
+>   "findings": [ ...merged... ]
+> }
+> ```
+>
+> Sort findings by (severity desc, recurrence desc, last_seen desc) before
+> writing so the file is stable across runs.
+>
+> ### Narrative report (`.research/self-improvement/<iso8601-utc>.md`)
+>
+> ≤60 lines markdown. Format:
 >
 > ```markdown
 > # Dispatcher self-review — <iso8601-utc>
@@ -1138,48 +1351,59 @@ with anything else — this is the last thing the run does.
 > Commit: <sha> — <short subject>
 >
 > ## Run shape
-> Claimed=<C> Reviewed=<R> Merged-attempts=<M> Merged-now=<X> Failed=<F> Active=<A>
-> Buffer=<claimable>/<open> dep-blocked=<n>
-> Hang alerts: WARN=<n> ALERT=<n>
+> Claimed=<C> Reviewed=<R> Merged-attempts=<M> Merged-now=<X>
+> Failed=<F> Active=<A> Buffer=<claimable>/<open> dep-blocked=<n>
+> Hang alerts: WARN=<n> ALERT=<n>  Self-test: <pass|FAIL T<N>>
 >
-> ## What went well
-> - <1-3 bullets — what worked, what shipped, what got unblocked>
+> ## New findings this run
+> <one line per NEWLY-OPENED finding_id, format:
+>  `- fp-<id> [severity] — <symptom>; fix: <proposed_fix one-liner>`>
+> <or "None">
 >
-> ## Anomalies / errors this run
-> - <bullets — sandbox reclaims, empty-branches, scope-drift flags, CI-stuck,
->   reviewer dedup-skipped, disk warnings, anything unusual>
-> - If nothing unusual: "None. Steady-state run."
+> ## Recurring findings (≥2 runs, still open)
+> <one line per existing finding whose recurrence bumped this run.
+>  `- fp-<id> [recurrence=N, severity] — <symptom>`>
+> <or "None">
 >
-> ## Trend vs. last 8 runs
-> - <bullet — is failure rate rising, is buffer draining, are PRs hanging longer,
->   is review backlog growing, are version-bump commits eating throughput>
+> ## Anomalies this run (single occurrence, watching)
+> <bullets for non-recurring events that don't qualify as findings yet>
+> <or "None">
 >
-> ## Improvement ideas (concrete, scoped, optional)
-> - <0-3 bullets — prompt edits, new self-test cases, missing automation>
-> - <each one bounded to "1 line of change" / "small PR" / "needs separate spec">
->
-> ## Self-test
-> <copy the last few lines of dispatcher-self-test.sh output verbatim>
+> ## Self-test tail
+> <last 6 lines of dispatcher-self-test.sh verbatim>
 > ```
 >
-> Hard constraints:
+> ### Hard constraints
 >
-> 1. Output file path EXACTLY: `.research/self-improvement/$(date -u +%Y-%m-%dT%H-%M-%SZ).md`.
-> 2. Do NOT modify anything else. No edits to assignments / action-list /
->    prompts / skills. If you see something that looks broken, mention it
->    under "Improvement ideas" — do NOT fix it.
-> 3. Do NOT commit. Just write the file. Phase 6 has already pushed the
->    dispatcher commit; this report lives uncommitted in the working tree
->    until the operator decides whether to keep it. The
->    `.research/self-improvement/` dir is git-tracked so reports DO show
->    up in `git status` as untracked — that surfaces them naturally.
-> 4. Return EXACTLY (one line): `selfreview=ok path=<report-path> notes=<short>`
+> 1. The narrative report path is EXACTLY
+>    `.research/self-improvement/$(date -u +%Y-%m-%dT%H-%M-%SZ).md`.
+>    The findings backlog path is EXACTLY
+>    `.research/self-improvement/findings.json`.
+> 2. You MAY write to those two paths. You MAY NOT modify anything else —
+>    no edits to `assignments.json`, `action-list.json`, prompts, or skills.
+>    Even if you spot an obvious one-line bug, you write it under
+>    `proposed_fix` and stop.
+> 3. Do NOT commit. Phase 6 has already pushed the dispatcher commit; both
+>    files live uncommitted so they show up in `git status`. The operator
+>    decides whether to commit `findings.json` updates.
+> 4. NEVER auto-resolve a finding. Only the operator sets `status` away
+>    from `open`. (Exception: if the proposed fix file:line referenced in
+>    an open finding has been changed in the last 8 commits, you MAY mark
+>    `status: "acknowledged"` with `operator_notes` UNTOUCHED — meaning
+>    "fix appears to have landed; operator please confirm and close".)
+> 5. Return EXACTLY (one line):
+>    `selfreview=ok path=<narrative-path> findings_total=<N> findings_new=<K> findings_acknowledged=<A> notes=<short>`
 
 Capture the return line into the Phase 7 summary stdout as one extra line:
 
 ```
-Self-review: <selfreview=ok path=... notes=... | skipped: DISPATCHER_SELF_REVIEW=0 | skipped: SKIP_MUTATING>
+Self-review: <selfreview=ok path=... findings_total=N findings_new=K findings_acknowledged=A notes=... | skipped: DISPATCHER_SELF_REVIEW=0 | skipped: SKIP_MUTATING>
 ```
+
+When `findings_new > 0` OR `findings_acknowledged > 0` the routine's daily
+brief surfaces the delta — see `routine-prompt.md` Brief template additions
+under *Self-review findings*. Operators triage `findings.json` directly;
+the dispatcher never auto-applies a fix.
 
 This line is NOT in the regular Phase 7 list above because it depends on
 this whole phase being optional. Treat it as a Phase 8 epilogue line.

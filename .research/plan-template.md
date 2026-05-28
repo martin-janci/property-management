@@ -19,6 +19,15 @@ Paths are relative to the repo root and must currently exist on `main`.>
 - `<path/to/file>:<line?>`
 - `<path/to/file>`
 
+## Dependencies
+<Structured `depends_on` — list of task_ids (slug stems) that must reach
+terminal status (merged/done/failed) before this plan can be claimed by the
+dispatcher. Canonical, machine-checked field (memory gap #5). Omit the
+section or leave empty for no dependencies. Do NOT put free-text here —
+prose belongs in *Evidence*.>
+- <task_id>
+- <task_id>
+
 ## Required capabilities
 <Tick the ones the implementation agent needs. See implementer-prompt.md
 for what each provides. Be honest — over-asking wastes setup time,
