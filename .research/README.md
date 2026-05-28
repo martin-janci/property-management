@@ -39,6 +39,7 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 - `management/` — Phase 1.6 delivery artifacts: `project-state.md` (dashboard), `action-list.json`/`.md`, `risks.json`, `decisions.md`, `stakeholders.md`, `roles/<role>.md`. Maintained by the `ppt-project-management` skill.
   - `coverage.json` — 134-story delivery coverage map (done/partial/not-started + evidence + gaps), built by `/ppt-project-management scan` (local deep scan) and maintained cheaply by the daily routine.
   - `roadmap.md` — ranked gap plan generated from `coverage.json` (balanced rubric, owner + rationale per task).
+- `goal-check.sh` — deterministic goal/convergence checks (GC1 referential integrity, GC2 coverage-progress monotonicity, GC3 buffer bounds). Record-only in dispatcher Phase 6 + CI until `GOAL_CHECK_ENFORCE=1` (PR 2). See the `ppt-goal-gate` skill.
 
 In-repo skills the implementer agent uses live at **`.claude/skills/`** (one
 level up, at the repo root). `.claude/skills/` is auto-discovered by any

@@ -21,5 +21,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: dispatcher schema + invariant self-test
         run: bash .research/dispatcher-self-test.sh
+      - name: goal-check (observe-only)
+        continue-on-error: true
+        run: |
+          chmod +x .research/goal-check.sh
+          ./.research/goal-check.sh
       - name: scope-check unit tests
         run: bash .claude/skills/ppt-implement/scripts/test-scope-check.sh
