@@ -922,6 +922,10 @@ async fn acknowledge_alert(
         .await
     {
         Ok(alert) => Ok(Json(serde_json::json!(alert))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Alert not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to acknowledge alert: {}", e);
             Err((
