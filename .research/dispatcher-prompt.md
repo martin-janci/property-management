@@ -1076,6 +1076,20 @@ The Phase 7 summary's `Merged-now` / `Failed (this run)` counters are still
 derived from the in-memory transitions set — those are this-run-shaped
 quantities, distinct from the file-state-shaped move set above.
 
+**Goal-check (record-only — observe phase, PR 1).** Before committing, run the
+deterministic goal checks and capture the summary for the commit body. This
+NEVER blocks the commit in the observe phase (`goal-check.sh` exits 0 unless
+`GOAL_CHECK_ENFORCE=1`, which is unset until PR 2):
+
+```bash
+GOAL_CHECK=$(./.research/goal-check.sh --json 2>/dev/null || echo '[]')
+GOAL_LINE=$(echo "$GOAL_CHECK" | jq -r 'map("\(.check)=\(if .passed then "ok" else "FAIL" end)") | join(" ")')
+echo "goal-check: $GOAL_LINE"
+```
+
+Append `goal-check: <GOAL_LINE>` as a trailing line in the dispatcher commit
+message body so convergence health is visible per-run in `git log`.
+
 ```bash
 # Row-count regression guard (issue #8, adapted for split — issue #9).
 # Before split: assignments.json carried all rows; a sudden drop was always a bug.
@@ -1473,6 +1487,7 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
 - **subagent workspace isolation** (issue #7) — every Phase 4 (implementer), Phase 5.6 (rebaser), and Phase 5.7 (followup-respawn implementer) subagent MUST run its `git checkout` / `gh pr checkout` / build / commit work inside `/tmp/ppt-worktrees/<task_id>/` via the standard `git worktree add` preamble. NEVER touch the dispatcher's own working tree. Phase 5.5 (merger, API-only) and Phase 2 (read-only reconciliation) are exempt.
 - **TEMP_PHASE_8 — self-review** — Phase 8 spawns an Opus subagent that writes a post-mortem markdown to `.research/self-improvement/<iso8601>.md`. Off-switch: `DISPATCHER_SELF_REVIEW=0`. The subagent must NOT modify any state file or commit anything. **This phase is temporary** — remove by 2026-06-30 (search `TEMP_PHASE_8` to find every related artifact).
+- **goal-check (observe-only, PR 1)** — Phase 6 runs `.research/goal-check.sh --json` and records `goal-check: GC1=… GC2=… GC3=…` in the commit body. It does NOT block the commit while `GOAL_CHECK_ENFORCE` is unset. PR 2 flips GC2 to hard-fail.
 
 ---
 
