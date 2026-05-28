@@ -653,7 +653,7 @@ A backlog item is **ready** if **all** of these hold:
 - not blocked by an open question (`status != "needs-human-judgement"`)
 - no existing active plan references the same `sources` (check `plans/` + `plans/_archive/`)
 - vector is not `triage` (triage items stay in backlog for human review)
-- **slug-stem uniqueness** — define `stem(slug) = re.sub(r'-(impl|fix|v2|retry|followup|wip)\d*$', '', slug)`. The candidate's `stem` must not match the stem of any plan file currently in `plans/` (active) and must not match the `stem(row.task_id)` of any row in `.research/management/assignments.json` whose `status in {in-progress, review}`. Rationale: PRs #641 and #644 both implemented gap-82-4 ListingDetailView because `gap-82-4-swiftui-listing-detail` and `gap-82-4-swiftui-listing-detail-impl` were promoted as separate plans. This rule catches the duplicate at promotion time so the dispatcher never gets a chance to claim it twice.
+- **slug-stem uniqueness** — let `stem(slug) = re.sub(r'-(impl|fix|v2|retry|followup|wip)\d*$', '', slug)` (same definition used by `dispatcher-prompt.md` Phase 3 and `ppt-pr-create` Step 3.5 — keep these three in sync). The candidate's `stem` must not match the stem of any plan file currently in `plans/` (active) and must not match `stem(row.task_id)` for any row in `.research/management/assignments.json` whose `status in {in-progress, review}`. **Invariant:** at most one non-terminal unit of work per stem at any time. Promotion-time enforcement is the first line of defense; without it, two near-identical plans can co-exist in the backlog and a single dispatcher run can claim both before the open-PR scan would catch them.
 
 **Security fast-track:** if `vector == "security"` **and** `confidence == "high"` **and** `score >= 2`, the score threshold drops from 3 to 2 — all other gates still apply. A single high-confidence security signal is enough evidence to act; waiting for score compounding means a multi-tenant isolation gap or auth bypass sits open for two extra runs. The `security-rls-migration-residual` item from 2026-05-20 (score 2, confidence high) would have promoted immediately under this rule, not stayed open while the team fixed it manually.
 
@@ -990,6 +990,15 @@ Run these and verify each passes:
   - `disabled by env` — `ROUTINE_AUTOFIX_DISABLED=1` was set
   - `no candidate` — no signal met confidence=high + score≥3 + allowlist this run
   - one line per `auto_fix_actions[]` entry: `<action_type>: <signal-type> → <target_url> (<verify_all_exit | aborted: reason>)`
+
+## Self-review findings
+- <ONE bullet summarizing `.research/self-improvement/findings.json` if
+  the file exists. Format:
+  `open=N (high=H, medium=M, low=L); new this run=K; acknowledged=A`.
+  If the file is missing or empty, write `none`.>
+- <Then, for each finding with `severity == "high"` and `status == "open"`,
+  one bullet: `fp-<id> [recurrence=N] — <symptom>; fix: <proposed_fix>`.
+  Cap at 5 — if more, append `… and <X> more (see findings.json)`.>
 
 ## Open questions
 - <anything that needs human judgement before promoting to a plan>

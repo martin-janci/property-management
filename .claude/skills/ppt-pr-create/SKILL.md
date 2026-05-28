@@ -66,11 +66,12 @@ plan* commands all exited 0. You're about to open the PR.
 
 3.5. **Redundancy check — does an open PR already cover this work?**
 
-   Run BEFORE pushing. Goal: catch the #641-vs-#644 class — two implementers
-   spawned for nearly-identical plans, each producing a draft PR over the
-   same files. The dispatcher's Phase 3 dedup guards catch this at *claim*
-   time, but a sibling implementer that claimed earlier in the same run can
-   still race to PR-create. This check is the second line of defense.
+   Run BEFORE pushing. **Invariant** (enforced jointly with the
+   dispatcher's Phase 3 guards and the routine's promotion gate): at most
+   one non-terminal unit of work per slug-stem. This step is the last
+   defense — it catches the case where two implementers were already
+   spawned in parallel before either had pushed a PR, so the dispatcher's
+   open-PR scan couldn't see the collision yet.
 
    ```bash
    # 1. Derive the slug stem (drop -impl/-fix/-v2/-retry/-followup/-wip
