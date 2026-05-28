@@ -131,7 +131,7 @@ jobs:
 
           AHEAD_COUNT=$(echo "$AHEAD" | jq 'length')
           echo "ahead_count=$AHEAD_COUNT" >> "$GITHUB_OUTPUT"
-          echo "ahead_prs=$(echo "$AHEAD" | jq -r '[.[].number] | map("#\(.)") | join(", ")')" >> "$GITHUB_OUTPUT"
+          echo "ahead_prs=$(echo "$AHEAD" | jq -r '[.[].number] | map("#\(.)" ) | join(", ")')" >> "$GITHUB_OUTPUT"
 
           echo "PRs ahead in App.tsx queue: $AHEAD_COUNT"
           echo "$AHEAD" | jq '.'
@@ -304,7 +304,7 @@ jobs:
           echo "ahead_count=$AHEAD_COUNT" >> "$GITHUB_OUTPUT"
 
           if [ "$AHEAD_COUNT" -gt 0 ]; then
-            AHEAD_LIST=$(echo "$AHEAD" | jq -r '[.[].number] | map("#\(.)") | join(", ")')
+            AHEAD_LIST=$(echo "$AHEAD" | jq -r '[.[].number] | map("#\(.)" ) | join(", ")')
             echo "::warning::PR #$PR_NUMBER is NOT first in the App.tsx queue."
             echo "::warning::PRs ahead: $AHEAD_LIST"
             echo "::warning::Proceeding with rebase anyway (manual trigger) — expect conflicts if the earlier PRs touch the same routes."
@@ -351,10 +351,8 @@ jobs:
               NON_MECHANICAL=$(echo "$CONFLICTS" | grep -Ev "$MECHANICAL" || true)
 
               if [ -z "$NON_MECHANICAL" ] && [ -n "$CONFLICTS" ]; then
-                echo "Only mechanical conflicts; resolving from base..."
+                echo "Only mechanical conflicts; resolving from dev (--ours in rebase = the branch rebased onto)..."
                 for f in $CONFLICTS; do
-                  # During `git rebase`, --ours = upstream/onto (dev), --theirs = branch being rebased.
-                  # We want the dev version of mechanical files, so we use --ours (not --theirs).
                   git checkout --ours -- "$f" || true
                   git add -- "$f" || true
                 done
