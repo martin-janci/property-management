@@ -260,6 +260,33 @@ Requires the \`site_settings_write\` capability.`,
   docsUrl: '/docs/admin/system-announcements',
 };
 
+const ONBOARDING_TOURS: HelpArticle = {
+  id: 'onboarding-tours',
+  title: 'Onboarding Tours',
+  body: `Step-by-step tours that guide new admin users through key platform workflows.
+
+**Tour list**
+Each card shows the tour name, description, progress bar, and current status (Not started / In progress / Completed / Skipped).
+
+**Starting a tour**
+Click *Start tour* to open the interactive overlay. Complete each step in order by clicking *Complete step*. The tour remembers your progress between sessions.
+
+**Skipping a step**
+Click *Skip step* to advance without marking the step complete. This counts as completing the step for progress tracking.
+
+**Finishing a tour**
+After the last step, click *Finish tour*. The tour status changes to Completed.
+
+**Resetting a tour**
+Completed or skipped tours can be restarted. Open the tour overlay and click *Restart tour*.
+
+**Admin preview**
+As a platform admin you can run any tour yourself to verify the content before publishing it to end users.
+
+Requires the \`site_settings_write\` capability.`,
+  docsUrl: '/docs/admin/onboarding-tours',
+};
+
 const OAUTH_CLIENTS: HelpArticle = {
   id: 'oauth-clients',
   title: 'OAuth Clients',
@@ -299,6 +326,7 @@ export const ROUTE_HELP_MAP: Array<{ prefix: string; article: HelpArticle }> = [
   { prefix: '/platform/mobile', article: MOBILE_CONFIG },
   { prefix: '/platform/health', article: HEALTH },
   { prefix: '/platform/announcements', article: ANNOUNCEMENTS },
+  { prefix: '/platform/onboarding', article: ONBOARDING_TOURS },
   { prefix: '/', article: DASHBOARD },
 ];
 
