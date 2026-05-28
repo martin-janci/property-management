@@ -296,40 +296,74 @@ impl ReportScheduleRepository {
     ///
     /// All parameters are optional; only non-`None` values are applied.
     ///
-    /// TODO: UPDATE report_schedules
-    ///       SET cron_expression = COALESCE($2, cron_expression),
-    ///           recipients      = COALESCE($3, recipients),
-    ///           is_active       = COALESCE($4, is_active),
-    ///           status          = CASE WHEN $4 IS NOT NULL
-    ///                               THEN CASE WHEN $4 THEN 'active' ELSE 'paused' END
-    ///                               ELSE status END,
-    ///           updated_at      = NOW()
-    ///       WHERE id = $1
-    ///       RETURNING *
+    /// # Cross-tenant safety (closes #624)
+    ///
+    /// The WHERE clause includes `AND organization_id = $caller_org_id` so a
+    /// principal in org A cannot mutate a schedule that belongs to org B, even
+    /// if they know the schedule's UUID. The UPDATE returns no row (→ 404) when
+    /// the `id` exists but the `organization_id` does not match, giving the same
+    /// opaque response as "not found" to avoid leaking existence information.
     pub async fn update_schedule(
         &self,
-        _id: Uuid,
+        id: Uuid,
+        caller_org_id: Uuid,
         cron_expression: Option<String>,
         recipients: Option<Vec<String>>,
         enabled: Option<bool>,
-        current: &mut ReportSchedule,
     ) -> Result<ReportSchedule, AppError> {
-        if let Some(cron) = cron_expression {
-            // Stored in `time` until the dedicated column is added via migration.
-            current.time = cron;
-        }
-        if let Some(recips) = recipients {
-            current.recipients = recips;
-        }
-        if let Some(is_enabled) = enabled {
-            current.is_active = is_enabled;
-            current.status = if is_enabled {
+        // Build the status string when `enabled` is being changed.
+        let new_status: Option<String> = enabled.map(|is_active| {
+            if is_active {
                 report_schedule_status::ACTIVE.to_string()
             } else {
                 report_schedule_status::PAUSED.to_string()
-            };
-        }
-        current.updated_at = Utc::now();
-        Ok(current.clone())
+            }
+        });
+
+        // Convert the recipients Vec<String> into a JSON array for JSONB storage.
+        let recipients_json: Option<serde_json::Value> = recipients
+            .map(|v| serde_json::Value::Array(v.into_iter().map(serde_json::Value::String).collect()));
+
+        let row = sqlx::query_as::<_, ReportScheduleRow>(
+            r#"
+            UPDATE report_schedules
+            SET time       = COALESCE($3, time),
+                recipients = COALESCE($4, recipients),
+                is_active  = COALESCE($5, is_active),
+                status     = COALESCE($6, status),
+                updated_at = NOW()
+            WHERE id              = $1
+              AND organization_id = $2
+            RETURNING id, report_id, organization_id, name, frequency,
+                      day_of_week, day_of_month, time, timezone, format,
+                      recipients, is_active, status,
+                      last_run_at, next_run_at, created_at, updated_at
+            "#,
+        )
+        .bind(id)
+        .bind(caller_org_id)
+        .bind(cron_expression.as_deref())
+        .bind(recipients_json.as_ref())
+        .bind(enabled)
+        .bind(new_status.as_deref())
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to update report schedule"
+            );
+            AppError::Database(e.to_string())
+        })?
+        .ok_or_else(|| {
+            // Either the schedule doesn't exist or it belongs to a different
+            // organisation.  Return the same 404 in both cases to avoid leaking
+            // cross-tenant existence information.
+            AppError::NotFound(format!("Report schedule {} not found", id))
+        })?;
+
+        Ok(ReportSchedule::from(row))
     }
 }

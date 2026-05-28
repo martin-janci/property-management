@@ -16,7 +16,6 @@ use axum::{
 };
 use chrono::NaiveDate;
 use common::errors::ErrorResponse;
-use common::TenantRole;
 use db::models::{
     report_schedule::ExecutionHistoryQuery, ConsumptionAnomaly, ConsumptionSummary, DateRange,
     ExecutionDownloadUrl, ExecutionHistoryResponse, FaultStatistics, FaultTrends, OccupancySummary,
@@ -1725,6 +1724,16 @@ fn validate_cron_expression(expr: &str) -> bool {
 /// Update a report schedule (gap-81-1).
 ///
 /// Partial-update semantics: any field omitted from the request body is left unchanged.
+///
+/// # Security (closes #614, #624)
+///
+/// Uses `RlsConnection` (not the deprecated `AuthUser`) so that:
+/// - The caller's tenant membership is **re-verified against the database** on
+///   every request (defends against stale JWT role claims / leak #10).
+/// - The RBAC check (`is_manager()`) is performed against the DB-derived role
+///   stored in `RlsConnection`, not the JWT `role` claim.
+/// - The caller's `tenant_id` is threaded into the repository UPDATE as
+///   `organization_id`, preventing cross-tenant mutation (closes #624).
 #[utoipa::path(
     put,
     path = "/api/v1/reports/schedules/{id}",
@@ -1741,13 +1750,16 @@ fn validate_cron_expression(expr: &str) -> bool {
 )]
 pub async fn update_schedule(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateScheduleRequest>,
 ) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
     // RBAC: only manager-tier roles may mutate report schedules.
-    let role = auth.role.unwrap_or(TenantRole::Guest);
-    if !role.is_manager() {
+    // Role is derived from the DB-backed `RlsConnection`, NOT from JWT claims.
+    // This closes #614: a user with a stale JWT claiming a higher role cannot
+    // bypass the check because `rls.role()` reflects current DB state.
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -1756,6 +1768,14 @@ pub async fn update_schedule(
             )),
         ));
     }
+
+    // Capture the caller's tenant_id for cross-tenant WHERE scoping (closes #624).
+    let caller_org_id = rls.tenant_id();
+
+    // We no longer need the DB connection for further lookups in this handler —
+    // the UPDATE in update_schedule() uses the pool directly.
+    rls.release().await;
+
     // At least one field must be supplied.
     if req.cron_expression.is_none() && req.recipients.is_none() && req.enabled.is_none() {
         return Err((
@@ -1802,44 +1822,39 @@ pub async fn update_schedule(
             }
         }
     }
-    // Load current schedule (returns 404 when absent).
-    let mut schedule = state
-        .report_schedule_repo
-        .get_by_id(id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, schedule_id = %id, "Failed to fetch schedule");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to fetch schedule")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "SCHEDULE_NOT_FOUND",
-                    "Report schedule not found",
-                )),
-            )
-        })?;
     // Apply updates and persist.
+    // The repository enforces `AND organization_id = caller_org_id` in the
+    // UPDATE WHERE clause so a cross-tenant attempt silently returns 404.
     let updated = state
         .report_schedule_repo
         .update_schedule(
             id,
+            caller_org_id,
             req.cron_expression,
             req.recipients,
             req.enabled,
-            &mut schedule,
         )
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, schedule_id = %id, "Failed to update schedule");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to update schedule")),
-            )
+            tracing::error!(
+                error = %e,
+                schedule_id = %id,
+                org_id = %caller_org_id,
+                "Failed to update schedule"
+            );
+            match e {
+                common::errors::AppError::NotFound(_) => (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new(
+                        "SCHEDULE_NOT_FOUND",
+                        "Report schedule not found",
+                    )),
+                ),
+                _ => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Failed to update schedule")),
+                ),
+            }
         })?;
     Ok(Json(updated))
 }
