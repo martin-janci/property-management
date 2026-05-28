@@ -208,9 +208,7 @@ async fn create_aml_assessment(
         recommendations.push("Conduct PEP screening".to_string());
     }
 
-    let country_risk_str = assessment
-        .country_risk
-        .map(|r| r.to_string());
+    let country_risk_str = assessment.country_risk.map(|r| r.to_string());
 
     Ok(Json(AmlAssessmentResponse {
         id: assessment.id,
@@ -323,9 +321,7 @@ async fn get_aml_assessment(
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
 
-    let country_risk_str = assessment
-        .country_risk
-        .map(|r| r.to_string());
+    let country_risk_str = assessment.country_risk.map(|r| r.to_string());
 
     let mut recommendations = Vec::new();
     if assessment.flagged_for_review {
@@ -404,9 +400,7 @@ async fn review_aml_assessment(
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
 
-    let country_risk_str = assessment
-        .country_risk
-        .map(|r| r.to_string());
+    let country_risk_str = assessment.country_risk.map(|r| r.to_string());
 
     Ok(Json(AmlAssessmentResponse {
         id: assessment.id,
