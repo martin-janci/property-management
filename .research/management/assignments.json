@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T11:20:00Z",
+  "generated": "2026-05-28T11:22:00Z",
   "assignments": [
     {
       "task_id": "fix-569-mediation-workspace-polish",
@@ -138,15 +138,15 @@
       "branch": "auto-impl/pm-data-support-data-tracking-events",
       "status": "review",
       "claimed_at": "2026-05-28T08:08:33Z",
-      "last_updated": "2026-05-28T09:45:50Z",
+      "last_updated": "2026-05-28T11:22:00Z",
       "status_changed_at": "2026-05-28T08:30:42Z",
       "pr_number": 654,
       "pr_url": "https://github.com/martin-janci/property-management/pull/654",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=654 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=migration 00163 + SupportToolingEventKind enum + log_support_tooling_event repo + 3 fire-and-forget emitters in platform_admin routes; cargo check+test exit=0; fmt-fix=a93e62be (joined 5 short test assertions per cargo fmt); fmt-fix2=ce8352f6 (joined SupportSessionsRevoked event call in routes to single 100-char line); fmt-fix3=4255236f (added missing trailing newline to db platform_admin.rs)",
-      "reviewer_summary": "verdict=approve head_oid=0528a2b0dc82234f32913ec9d8d78b75d9c25d17 note=fmt-all-clean(0528a2b0): expand-derive+assert_eq+event-calls+revert-mod-rs; awaiting-ci",
-      "last_reviewed_oid": "0528a2b0dc82234f32913ec9d8d78b75d9c25d17",
+      "reviewer_summary": "verdict=approve head_oid=0528a2b0dc82234f32913ec9d8d78b75d9c25d17 note=fmt-all-clean(0528a2b0): expand-derive+assert_eq+event-calls+revert-mod-rs; no-op-retrigger-commit-d2ee305d-same-code; awaiting-ci",
+      "last_reviewed_oid": "d2ee305d898fe16244f9accb4592b672b0de2686",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -167,41 +167,14 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-<<<<<<< HEAD
-      "reviewer_summary": "verdict=approve head_oid=3963be556acf527ad5710d6fc3a4b5f1c517c8bc note=11 tests correct; JWT secret matches TestApp 72-char constant; JwtService publicly exported; principal_kind enforcement reads DB not JWT claim; ARRAY['staff'] valid for TEXT[] column; minor: 4 behavioral duplicates vs outer security module, 1 loose is_client_error() assertion — neither blocking; test=failure on first concurrent run is infra-flaky (same pattern as PR#660 which passed on second run)",
-      "last_reviewed_oid": "3963be556acf527ad5710d6fc3a4b5f1c517c8bc",
-=======
-      "reviewer_summary": "verdict=approve head_oid=eecd5774c52b481527c3d4d6f831b1a8a882a4e4 note=fixed test_redirect_uri_mismatch: server returned invalid_request but RFC 6749 \u00a75.2 requires invalid_grant for redirect_uri mismatch at token endpoint; oauth.rs exchange_code_for_tokens now returns InvalidGrant instead of InvalidRedirectUri; all 12 tests should pass; awaiting-ci",
+      "reviewer_summary": "verdict=approve head_oid=eecd5774c52b481527c3d4d6f831b1a8a882a4e4 note=fixed test_redirect_uri_mismatch: server returned invalid_request but RFC 6749 §5.2 requires invalid_grant for redirect_uri mismatch at token endpoint; oauth.rs exchange_code_for_tokens now returns InvalidGrant instead of InvalidRedirectUri; all 12 tests should pass; awaiting-ci",
       "last_reviewed_oid": "eecd5774c52b481527c3d4d6f831b1a8a882a4e4",
->>>>>>> 9a3efc67 (chore(research): PR#661 fix redirect_uri mismatch error code — awaiting-ci)
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "pm-security-audit-reports-sibling-scope",
-      "branch": "auto-impl/pm-security-audit-reports-sibli",
-      "status": "review",
-      "claimed_at": "2026-05-28T09:40:26Z",
-      "last_updated": "2026-05-28T11:15:00Z",
-      "status_changed_at": "2026-05-28T10:05:32Z",
-      "pr_number": 660,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/660",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=660 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=all 6 sibling handlers fixed (#646 pause/resume IDOR, #647 executions IDOR); cargo check+clippy+fmt clean; 14 regression tests added; update_schedule PR-643 fix incorporated",
-      "reviewer_summary": "verdict=approve head_oid=56c6010e87d50771688c2c2cbd6a6173c88dbe97 note=all 6 handlers correctly scope WHERE to caller_org_id via RlsConnection; TOCTOU in retry_execution_scoped closed by subquery repeat; 14 tests cover no-auth+cross-tenant isolation with DB-state assertions; no blocking issues",
-      "last_reviewed_oid": "56c6010e87d50771688c2c2cbd6a6173c88dbe97",
-      "scope_drift": false,
-      "code_reuse_warn": "none",
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
       "merge_attempted_at": null
     },
     {
