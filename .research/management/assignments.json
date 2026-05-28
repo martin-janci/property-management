@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T17:22:00Z",
+  "generated": "2026-05-28T17:31:00Z",
   "assignments": [
     {
       "task_id": "gap-82-5-ios-keychain-push-v2",
@@ -92,18 +92,18 @@
     {
       "task_id": "gap-10b-3-health-ui-mfa-bypass-fix",
       "branch": "auto-impl/gap-10b-3-health-ui-mfa-bypass-fix",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-05-28T17:11:55Z",
-      "last_updated": "2026-05-28T17:17:30Z",
-      "status_changed_at": "2026-05-28T17:11:55Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-28T17:31:00Z",
+      "status_changed_at": "2026-05-28T17:31:00Z",
+      "pr_number": 720,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/720",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=720 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=added 10 unit tests for authenticatedFetchJson MFA interception (lib/fetch.test.ts) + regression test in PlatformHealthPage.test.tsx; fixed 2 pre-existing getByText-ambiguous test failures; screen-map agent log updated; api-client 22/22 + admin-web 182/183 (1 unrelated pre-existing CapabilitiesAdminPage failure); biome+typecheck+build clean",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
