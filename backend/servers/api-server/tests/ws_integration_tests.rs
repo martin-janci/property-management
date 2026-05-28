@@ -442,7 +442,7 @@ async fn validate_ws_token_accepts_valid_token_and_returns_user_id() {
 /// provision a Redis instance.  To run it locally:
 ///
 /// ```sh
-/// REDIS_URL=redis://localhost:6379 \
+/// REDIS_URL=redis://localhost:6379 \\
 ///   cargo test -p api-server -- ws_pubsub_fanout_delivers_to_correct_subscriber --include-ignored
 /// ```
 ///
@@ -485,12 +485,18 @@ async fn ws_pubsub_fanout_delivers_to_correct_subscriber(pool: PgPool) {
         ));
         let tenant_rate_limiters =
             std::sync::Arc::new(api_core::middleware::TenantRateLimiterSet::new());
-        let state = AppState::new(pool, email_service, jwt_service, tenant_cache, tenant_rate_limiters)
-            .with_redis(
-                integrations::RedisClient::new(integrations::RedisConfig::new(&redis_url))
-                    .await
-                    .unwrap(),
-            );
+        let state = AppState::new(
+            pool,
+            email_service,
+            jwt_service,
+            tenant_cache,
+            tenant_rate_limiters,
+        )
+        .with_redis(
+            integrations::RedisClient::new(integrations::RedisConfig::new(&redis_url))
+                .await
+                .unwrap(),
+        );
 
         let router = api_server::create_router(state).layer(MockConnectInfo(
             std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
@@ -499,9 +505,7 @@ async fn ws_pubsub_fanout_delivers_to_correct_subscriber(pool: PgPool) {
     };
 
     // `build` returns `TestServer` directly (panics on internal failure).
-    let server = TestServerBuilder::new()
-        .http_transport()
-        .build(test_app);
+    let server = TestServerBuilder::new().http_transport().build(test_app);
 
     let user_a = Uuid::new_v4();
     let user_b = Uuid::new_v4();
