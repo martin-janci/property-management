@@ -605,6 +605,126 @@ impl PlatformAdminRepository {
     }
 }
 
+// ==================== Support Tooling Analytics Events (#635) ====================
+
+/// Identifies which support-tooling action was performed.
+///
+/// These three variants map 1-to-1 onto the `event_kind` CHECK constraint
+/// defined in migration 00163.  They are stored as snake_case strings so the
+/// DB column is human-readable without a lookup table.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SupportToolingEventKind {
+    /// Admin opened / refreshed the Support Data overview page.
+    SupportDataViewed,
+    /// Admin ran a per-user lookup or free-text search.
+    SupportUserSearched,
+    /// Admin revoked all active sessions for a target user.
+    SupportSessionsRevoked,
+}
+
+impl SupportToolingEventKind {
+    /// Stable database string.  MUST match the `event_kind` CHECK in
+    /// migration 00163.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::SupportDataViewed => "support_data_viewed",
+            Self::SupportUserSearched => "support_user_searched",
+            Self::SupportSessionsRevoked => "support_sessions_revoked",
+        }
+    }
+}
+
+impl std::fmt::Display for SupportToolingEventKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// Props for `support_data_viewed`.
+///
+/// Captures the snapshot values visible to the admin at the time of the page
+/// visit so support-tooling usage can be correlated with the platform state
+/// that was shown.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportDataViewedProps {
+    /// Platform-wide tenant count (total organisations, all statuses).
+    pub tenant_count: i64,
+    /// Total fault count across all organisations at time of view.
+    pub fault_total: i64,
+}
+
+/// Props for `support_user_searched`.
+///
+/// Records what search terms were used so repeated lookups for the same user
+/// can be spotted in an audit query.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportUserSearchedProps {
+    /// Free-text query string, if any (may be `None` for unfiltered listings).
+    pub query: Option<String>,
+    /// Status filter applied, if any.
+    pub status_filter: Option<String>,
+    /// Number of results returned.
+    pub result_count: i64,
+}
+
+/// Props for `support_sessions_revoked`.
+///
+/// Links the revocation to the targeted user so the event is meaningful
+/// without joining to other tables.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportSessionsRevokedProps {
+    /// The user whose sessions were revoked.
+    pub target_user_id: Uuid,
+    /// Number of sessions actually revoked in this operation.
+    pub revoked_count: i64,
+}
+
+/// A persisted row from `support_tooling_events`.
+///
+/// Returned by `log_support_tooling_event` so callers have the row id and
+/// timestamp for logging or structured spans.
+#[derive(Debug, Clone, sqlx::FromRow, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportToolingEventRow {
+    pub id: Uuid,
+    pub event_kind: String,
+    pub admin_user_id: Uuid,
+    pub props: serde_json::Value,
+    pub occurred_at: DateTime<Utc>,
+}
+
+impl PlatformAdminRepository {
+    /// Append a support-tooling analytics event to `support_tooling_events`.
+    ///
+    /// The method is deliberately fire-and-forget in production callers: a
+    /// failure to persist a tracking event must **not** fail the user-facing
+    /// response.  Callers are expected to log the error and continue.
+    ///
+    /// # Arguments
+    /// * `admin_user_id` — UUID of the platform admin who performed the action.
+    /// * `kind`          — Which of the three event kinds fired.
+    /// * `props`         — Structured payload serialised to JSONB.
+    pub async fn log_support_tooling_event(
+        &self,
+        admin_user_id: Uuid,
+        kind: SupportToolingEventKind,
+        props: serde_json::Value,
+    ) -> Result<SupportToolingEventRow, SqlxError> {
+        sqlx::query_as::<_, SupportToolingEventRow>(
+            r#"
+            INSERT INTO support_tooling_events (event_kind, admin_user_id, props)
+            VALUES ($1, $2, $3)
+            RETURNING id, event_kind, admin_user_id, props, occurred_at
+            "#,
+        )
+        .bind(kind.as_str())
+        .bind(admin_user_id)
+        .bind(props)
+        .fetch_one(&self.pool)
+        .await
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -621,5 +741,92 @@ mod tests {
 
         assert_eq!(stats.active_orgs, 10);
         assert_eq!(stats.suspended_orgs, 2);
+    }
+
+    // ==================== SupportToolingEventKind unit tests ====================
+
+    #[test]
+    fn event_kind_strings_are_stable_and_match_db_constraint() {
+        assert_eq!(
+            SupportToolingEventKind::SupportDataViewed.as_str(),
+            "support_data_viewed"
+        );
+        assert_eq!(
+            SupportToolingEventKind::SupportUserSearched.as_str(),
+            "support_user_searched"
+        );
+        assert_eq!(
+            SupportToolingEventKind::SupportSessionsRevoked.as_str(),
+            "support_sessions_revoked"
+        );
+    }
+
+    #[test]
+    fn event_kind_display_matches_as_str() {
+        for kind in [
+            SupportToolingEventKind::SupportDataViewed,
+            SupportToolingEventKind::SupportUserSearched,
+            SupportToolingEventKind::SupportSessionsRevoked,
+        ] {
+            assert_eq!(format!("{kind}"), kind.as_str());
+        }
+    }
+
+    #[test]
+    fn support_data_viewed_props_round_trips_json() {
+        let props = SupportDataViewedProps {
+            tenant_count: 42,
+            fault_total: 1234,
+        };
+        let json = serde_json::to_value(&props).expect("serialize");
+        assert_eq!(json["tenant_count"], 42);
+        assert_eq!(json["fault_total"], 1234);
+        let back: SupportDataViewedProps =
+            serde_json::from_value(json).expect("deserialize");
+        assert_eq!(back.tenant_count, 42);
+        assert_eq!(back.fault_total, 1234);
+    }
+
+    #[test]
+    fn support_user_searched_props_round_trips_json() {
+        let props = SupportUserSearchedProps {
+            query: Some("alice@example.com".into()),
+            status_filter: Some("active".into()),
+            result_count: 3,
+        };
+        let json = serde_json::to_value(&props).expect("serialize");
+        assert_eq!(json["query"], "alice@example.com");
+        assert_eq!(json["status_filter"], "active");
+        assert_eq!(json["result_count"], 3);
+    }
+
+    #[test]
+    fn support_sessions_revoked_props_round_trips_json() {
+        let target = Uuid::new_v4();
+        let props = SupportSessionsRevokedProps {
+            target_user_id: target,
+            revoked_count: 5,
+        };
+        let json = serde_json::to_value(&props).expect("serialize");
+        assert_eq!(
+            json["target_user_id"].as_str().unwrap(),
+            target.to_string()
+        );
+        assert_eq!(json["revoked_count"], 5);
+    }
+
+    #[test]
+    fn event_kind_serde_round_trip() {
+        let kinds = [
+            SupportToolingEventKind::SupportDataViewed,
+            SupportToolingEventKind::SupportUserSearched,
+            SupportToolingEventKind::SupportSessionsRevoked,
+        ];
+        for kind in kinds {
+            let json = serde_json::to_value(kind).expect("serialize");
+            let back: SupportToolingEventKind =
+                serde_json::from_value(json).expect("deserialize");
+            assert_eq!(kind, back);
+        }
     }
 }
