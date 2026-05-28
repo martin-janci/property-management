@@ -123,14 +123,10 @@ struct MainTabView: View {
             InquiriesView()
 
         case .inquiryDetail(let id):
-            // Inquiry conversation view
-            Text("Inquiry: \(id)")
-                .navigationTitle("Conversation")
+            InquiryDetailView(inquiryId: id)
 
         case .newInquiry(let listingId):
-            // New inquiry form
-            Text("New inquiry for: \(listingId)")
-                .navigationTitle("Send Inquiry")
+            SendInquiryView(listingId: listingId)
 
         case .account:
             AccountView()
