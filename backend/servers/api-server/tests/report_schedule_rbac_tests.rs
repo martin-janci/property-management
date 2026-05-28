@@ -73,17 +73,20 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 
 /// Insert a membership row so the user is a recognised tenant member.
 ///
-/// `role` should be a valid TenantRole string, e.g. `"Manager"`, `"Resident"`.
+/// Uses `organization_members` (the table queried by `OrganizationMemberRepository`
+/// via `ValidatedTenantExtractor`). Matches the pattern used by push_token_tests
+/// and document_upload_tests.
 async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
     sqlx::query(
         r#"
-        INSERT INTO user_memberships (user_id, organization_id, role, status)
-        VALUES ($1, $2, $3, 'active')
-        ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role
+        INSERT INTO organization_members (id, organization_id, user_id, role_type, status, created_at)
+        VALUES ($1, $2, $3, $4, 'active', NOW())
+        ON CONFLICT DO NOTHING
         "#,
     )
-    .bind(user_id)
+    .bind(Uuid::new_v4())
     .bind(org_id)
+    .bind(user_id)
     .bind(role)
     .execute(pool)
     .await
