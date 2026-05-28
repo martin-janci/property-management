@@ -152,9 +152,10 @@ describe('PlatformHealthPage', () => {
     });
     renderPage();
     await waitFor(() => expect(screen.getByText('active_sessions')).toBeDefined());
-    expect(screen.getByText('error_rate')).toBeDefined();
-    // critical badge
-    expect(screen.getByText('Critical')).toBeDefined();
+    // error_rate appears in both the metric card and the alert row — use getAllByText
+    expect(screen.getAllByText('error_rate').length).toBeGreaterThanOrEqual(1);
+    // critical badge — may also appear as a threshold column header
+    expect(screen.getAllByText('Critical').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders thresholds table', async () => {
@@ -163,11 +164,15 @@ describe('PlatformHealthPage', () => {
       if (url.includes('/health/dashboard')) {
         return { ok: true, status: 200, json: async () => DASHBOARD } as Response;
       }
+      if (url.includes('/health/alerts')) {
+        return { ok: true, status: 200, json: async () => DASHBOARD.alerts } as Response;
+      }
       return { ok: false, status: 404 } as Response;
     });
     renderPage();
-    await waitFor(() => expect(screen.getByText('Metric Thresholds')).toBeDefined());
-    // threshold row
+    // Wait for threshold data to appear (requires dashboard to have loaded)
+    await waitFor(() => expect(screen.getByText('50')).toBeDefined());
+    // threshold row contains error_rate
     expect(screen.getAllByText('error_rate').length).toBeGreaterThanOrEqual(1);
   });
 
