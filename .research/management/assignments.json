@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T23:27:11Z",
+  "generated": "2026-05-28T00:10:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -2836,15 +2836,15 @@
       "branch": "auto-impl/gap-82-3-search-enhancements-fix",
       "status": "review",
       "claimed_at": "2026-05-27T22:08:18Z",
-      "last_updated": "2026-05-27T22:28:00Z",
+      "last_updated": "2026-05-28T00:10:00Z",
       "status_changed_at": "2026-05-27T22:28:00Z",
       "pr_number": 639,
       "pr_url": "https://github.com/martin-janci/property-management/pull/639",
       "merged_at": null,
       "specialist": "ios-swiftui",
       "implementer_summary": "pr=639 status=done specialist=ios-swiftui scope_drift=false code_reuse_warn=none note=bug1(alert binding) already fixed in dev; bug2 fixed: translated filter_min_value/filter_max_value in SK/CS/PL/DE/HU plus filter_radius\u2192Umkreis in DE; all 16 Story 82.3 keys verified",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=83a198deaf5d1dfde19352b76f6ea348d3380f4a note=i18n-translations-correct-all-11-changes-verified;macos-reviewer-required;needs-human-review-label-added",
+      "last_reviewed_oid": "83a198deaf5d1dfde19352b76f6ea348d3380f4a",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -2858,22 +2858,22 @@
       "branch": "auto-impl/gap-85-2-ios-ci-fix",
       "status": "review",
       "claimed_at": "2026-05-27T22:08:18Z",
-      "last_updated": "2026-05-27T22:25:00Z",
+      "last_updated": "2026-05-28T00:10:00Z",
       "status_changed_at": "2026-05-27T22:25:00Z",
       "pr_number": 638,
       "pr_url": "https://github.com/martin-janci/property-management/pull/638",
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=638 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=removed submit.staging from eas.json; guarded updates.url omission when EXPO_PROJECT_ID unset; @v4 pins already in dev via PR#595; typecheck+lint clean",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=5d9d7acea0d53df5fa7410584704f167426a5eea note=ci-green-all-checks-pass;eas.json-submit.staging-removed;app.config.ts-updates.url-guarded;self-approval-blocked-posted-as-comment",
+      "last_reviewed_oid": "5d9d7acea0d53df5fa7410584704f167426a5eea",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-05-28T00:10:00Z"
     }
   ],
   "assignments.generated": "2026-05-27T11:03:00Z"
