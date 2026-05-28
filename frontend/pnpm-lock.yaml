@@ -135,8 +135,8 @@ importers:
         specifier: ~55.0.19
         version: 55.0.19(expo@55.0.25)(react-native@0.85.3)
       expo-image-picker:
-        specifier: ~55.0.20
-        version: 55.0.20(expo@55.0.25)
+        specifier: ~56.0.14
+        version: 56.0.14(expo@55.0.25)
       expo-local-authentication:
         specifier: ~55.0.13
         version: 55.0.13(expo@55.0.25)
@@ -7164,21 +7164,21 @@ packages:
       react: 19.2.0
       react-native: 0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3)(@types/react@19.2.14)(react@19.2.0)
 
-  /expo-image-loader@55.0.0(expo@55.0.25):
-    resolution: {integrity: sha512-NOjp56wDrfuA5aiNAybBIjqIn1IxKeGJ8CECWZncQ/GzjZfyTYAHTCyeApYkdKkMBLHINzI4BbTGSlbCa0fXXQ==}
+  /expo-image-loader@56.0.3(expo@55.0.25):
+    resolution: {integrity: sha512-JgUo4fUeU1ZC+z8iBFj8v7yoGQnZrLbOVPyNE+DWVrld55F2F6R1ck+rmdm/8TNWLz1LhNQfD7c3XYP1ZikxXA==}
     peerDependencies:
       expo: '*'
     dependencies:
       expo: 55.0.25(@babel/core@7.29.0)(@expo/dom-webview@55.0.6)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
     dev: false
 
-  /expo-image-picker@55.0.20(expo@55.0.25):
-    resolution: {integrity: sha512-lfWt/0rPWdKz8AdDEGmGHZIJSNlVc720Dlx5bfou10FU16ZV5wAbTU63nm2jkXd8hbXke4a/2Ha1dzxCVA+LQQ==}
+  /expo-image-picker@56.0.14(expo@55.0.25):
+    resolution: {integrity: sha512-OKirR7XcJC3awoSGYDzFIdPibTEzw9FL1KHoTSxf86ZmssBiFbJvJhb1JQAVe2Y/U0sQ4e9gMoOrCKwqJnGDEQ==}
     peerDependencies:
       expo: '*'
     dependencies:
       expo: 55.0.25(@babel/core@7.29.0)(@expo/dom-webview@55.0.6)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
-      expo-image-loader: 55.0.0(expo@55.0.25)
+      expo-image-loader: 56.0.3(expo@55.0.25)
     dev: false
 
   /expo-keep-awake@55.0.8(expo@55.0.25)(react@19.2.0):
