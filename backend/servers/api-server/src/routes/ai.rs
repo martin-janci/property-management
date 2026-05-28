@@ -1291,7 +1291,12 @@ async fn acknowledge_prediction(
 
     match state
         .equipment_repo
-        .acknowledge_prediction(id, tenant_id, principal.user_id, req.action_taken.as_deref())
+        .acknowledge_prediction(
+            id,
+            tenant_id,
+            principal.user_id,
+            req.action_taken.as_deref(),
+        )
         .await
     {
         Ok(prediction) => Ok(Json(serde_json::json!(prediction))),
