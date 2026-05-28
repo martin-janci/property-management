@@ -231,11 +231,17 @@ struct InquiryDetailView: View {
     // MARK: - Helpers
 
     /// Converts the KMP InquiryStatus enum to the Swift InquiryStatus used by UI.
+    ///
+    /// Name mismatch is intentional: the KMP shared layer uses `.responded` (past-tense
+    /// server terminology), while the Swift UI layer uses `.replied` (user-facing label
+    /// that matches `InquiryStatus.displayName`). If a new KMP status is added, a
+    /// compile-time exhaustive-switch warning on the `InquiryStatus` side in
+    /// `InquiriesView.swift` will surface the gap before it reaches production.
     private func swiftInquiryStatus(from kmpStatus: InquiryStatus) -> InquiryStatusSwift {
         switch kmpStatus {
-        case .pending: return .pending
-        case .responded: return .replied
-        case .closed: return .closed
+        case .pending:   return .pending
+        case .responded: return .replied   // KMP name differs from Swift UI name — see doc comment above
+        case .closed:    return .closed
         }
     }
 }
@@ -277,10 +283,7 @@ private struct MessageBubble: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(bubbleColor)
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 18)
-                            .inset(by: 0)
-                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
                     .cornerRadius(isFromUser ? 4 : 18, corners: isFromUser ? .bottomRight : .bottomLeft)
 
                 Text(formattedDate(from: timestamp))
@@ -292,8 +295,16 @@ private struct MessageBubble: View {
         }
     }
 
+    // ISO8601DateFormatter is expensive to allocate (bootstraps locale/calendar/timezone data).
+    // Using a static instance avoids a fresh allocation for every bubble on every redraw.
+    private static let iso8601Formatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
     private func formattedDate(from iso8601: String) -> String {
-        guard let date = ISO8601DateFormatter().date(from: iso8601) else { return iso8601 }
+        guard let date = Self.iso8601Formatter.date(from: iso8601) else { return iso8601 }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())

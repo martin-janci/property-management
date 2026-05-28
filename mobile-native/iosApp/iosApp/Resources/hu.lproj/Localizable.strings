@@ -292,6 +292,15 @@
 "inquiry_message_placeholder" = "Írja le érdeklődését ezen ingatlan iránt…";
 "inquiry_sent_confirmation" = "Érdeklődése elküldve. Választ kap a megadott e-mail-címre.";
 
+/* Inquiries Screen */
+"inquiries_sign_in_description" = "Kövesse nyomon ingatlan-érdeklődéseit és az ügynökökkel folytatott beszélgetéseit.";
+"failed_to_load_inquiries" = "Nem sikerült betölteni az érdeklődéseket";
+
+/* Inquiry Status Badge */
+"inquiry_status_pending" = "Függőben";
+"inquiry_status_replied" = "Megválaszolt";
+"inquiry_status_closed" = "Lezárt";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Üdvözöljük a Reality Portal-ban";
 "sign_in_description" = "Jelentkezzen be a kedvencek mentéséhez, érdeklődések követéséhez és személyre szabott ajánlatokhoz.";

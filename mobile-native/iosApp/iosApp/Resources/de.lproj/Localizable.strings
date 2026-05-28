@@ -292,6 +292,15 @@
 "inquiry_message_placeholder" = "Beschreiben Sie Ihr Interesse an dieser Immobilie…";
 "inquiry_sent_confirmation" = "Ihre Anfrage wurde gesendet. Sie erhalten eine Antwort an die angegebene E-Mail-Adresse.";
 
+/* Inquiries Screen */
+"inquiries_sign_in_description" = "Verfolgen Sie Ihre Immobilienanfragen und Gespräche mit Maklern.";
+"failed_to_load_inquiries" = "Anfragen konnten nicht geladen werden";
+
+/* Inquiry Status Badge */
+"inquiry_status_pending" = "Ausstehend";
+"inquiry_status_replied" = "Beantwortet";
+"inquiry_status_closed" = "Geschlossen";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Willkommen bei Reality Portal";
 "sign_in_description" = "Melden Sie sich an, um Favoriten zu speichern, Anfragen zu verfolgen und personalisierte Empfehlungen zu erhalten.";

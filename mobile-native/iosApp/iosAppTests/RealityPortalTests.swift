@@ -525,17 +525,33 @@ final class NavigationStateRestorationServiceTests: XCTestCase {
 final class InquiryStatusTests: XCTestCase {
 
     // MARK: displayName
+    //
+    // displayName now calls String(localized:) so the resolved string depends on the
+    // test runner's locale.  Assert that each case returns a non-empty string rather
+    // than a hardcoded English value — locale-fragile assertions break on non-English
+    // CI runners and are meaningless as a correctness check.
 
-    func testPendingDisplayName() {
-        XCTAssertEqual(InquiryStatus.pending.displayName, "Pending")
+    func testPendingDisplayNameIsNonEmpty() {
+        XCTAssertFalse(InquiryStatus.pending.displayName.isEmpty,
+                       "pending.displayName must resolve to a non-empty localised string")
     }
 
-    func testRepliedDisplayName() {
-        XCTAssertEqual(InquiryStatus.replied.displayName, "Replied")
+    func testRepliedDisplayNameIsNonEmpty() {
+        XCTAssertFalse(InquiryStatus.replied.displayName.isEmpty,
+                       "replied.displayName must resolve to a non-empty localised string")
     }
 
-    func testClosedDisplayName() {
-        XCTAssertEqual(InquiryStatus.closed.displayName, "Closed")
+    func testClosedDisplayNameIsNonEmpty() {
+        XCTAssertFalse(InquiryStatus.closed.displayName.isEmpty,
+                       "closed.displayName must resolve to a non-empty localised string")
+    }
+
+    func testAllDisplayNamesAreDistinct() {
+        let names = [InquiryStatus.pending.displayName,
+                     InquiryStatus.replied.displayName,
+                     InquiryStatus.closed.displayName]
+        XCTAssertEqual(names.count, Set(names).count,
+                       "Each InquiryStatus must have a distinct displayName")
     }
 
     // MARK: badge colours resolve without crashing

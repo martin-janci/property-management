@@ -97,10 +97,10 @@
 "inquiry_sent" = "Zapytanie wysłane";
 "inquiry_pending" = "Oczekujące";
 "inquiry_responded" = "Odpowiedziano";
-"inquiries_sign_in_description" = "Śledź zapytania dotyczące nieruchomości i rozmowy z agentami.";
-"error_load_inquiries" = "Nie udało się wczytać zapytań";
+"inquiries_sign_in_description" = "Śledź swoje zapytania dotyczące nieruchomości i rozmowy z agentami.";
+"failed_to_load_inquiries" = "Nie udało się załadować zapytań";
 "inquiry_status_pending" = "Oczekujące";
-"inquiry_status_replied" = "Udzielono odpowiedzi";
+"inquiry_status_replied" = "Odpowiedziane";
 "inquiry_status_closed" = "Zamknięte";
 
 /* Account */

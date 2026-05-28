@@ -292,6 +292,15 @@
 "inquiry_message_placeholder" = "Popište váš zájem o tuto nemovitost…";
 "inquiry_sent_confirmation" = "Váš dotaz byl odeslán. Odpověď obdržíte na zadanou e-mailovou adresu.";
 
+/* Inquiries Screen */
+"inquiries_sign_in_description" = "Sledujte své dotazy na nemovitosti a konverzace s agenty.";
+"failed_to_load_inquiries" = "Nepodařilo se načíst dotazy";
+
+/* Inquiry Status Badge */
+"inquiry_status_pending" = "Čekající";
+"inquiry_status_replied" = "Zodpovězený";
+"inquiry_status_closed" = "Uzavřený";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Vítejte v Reality Portál";
 "sign_in_description" = "Přihlaste se pro uložení oblíbených, sledování dotazů a personalizovaná doporučení.";
