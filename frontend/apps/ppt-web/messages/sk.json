@@ -799,7 +799,8 @@
         "send": "Odoslať na podpis"
       },
       "role": {
-        "tenant": "Nájomník"
+        "tenant": "Nájomník",
+        "manager": "Správca"
       },
       "status": {
         "pending": "Čaká na podpis",
