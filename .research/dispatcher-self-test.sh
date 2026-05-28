@@ -14,11 +14,29 @@
 set -euo pipefail
 
 ASSIGN="${1:-.research/management/assignments.json}"
+# Archive split (issue #9). Terminal rows live in a sibling file. If absent
+# (pre-split repo state), tests degrade gracefully — they use ASSIGN only.
+ASSIGN_ARCHIVE="${ASSIGN_ARCHIVE:-.research/management/assignments-archive.json}"
 PROMPT="${DISPATCHER_PROMPT:-.research/dispatcher-prompt.md}"
 SKILLS_DIR="${SKILLS_DIR:-.claude/skills}"
 # Cutoff for hardening-era checks. Rows claimed before this date are legacy
 # (pre-merged_at, pre-hardening-fields) and are exempted from T5 + T11.
 HARDENING_DATE="${HARDENING_DATE:-2026-05-25T00:00:00Z}"
+
+# Build the list of files to scan for combined-row checks (T2/T3/T4/T5/T11).
+# T7 (non-terminal branch convention) and T16 (ingestion guard) stay
+# active-only — terminal rows in the archive are historical and exempt.
+ASSIGN_FILES=("$ASSIGN")
+if [ -f "$ASSIGN_ARCHIVE" ]; then
+  ASSIGN_FILES+=("$ASSIGN_ARCHIVE")
+fi
+
+# Cross-file slurp helper: emits one flat array of all rows across active +
+# archive (or just active if archive is absent). Use as input to jq filters
+# that want to scan every row regardless of which file it lives in.
+combined_rows_jq() {
+  jq -s '[.[].assignments[]]' "${ASSIGN_FILES[@]}"
+}
 
 FAIL=0
 note() { printf '  ok    %s\n' "$1"; }
@@ -26,6 +44,11 @@ fail() { printf '  FAIL  %s\n' "$1" >&2; FAIL=1; }
 
 echo "==> dispatcher-self-test"
 echo "    assignments: $ASSIGN"
+if [ -f "$ASSIGN_ARCHIVE" ]; then
+  echo "    archive:     $ASSIGN_ARCHIVE"
+else
+  echo "    archive:     (absent — pre-split repo state)"
+fi
 echo "    prompt:      $PROMPT"
 echo
 
@@ -50,8 +73,9 @@ echo
 
 # --- T2: row schema --------------------------------------------------------
 echo "T2  every row has required fields (task_id, branch, status, claimed_at, last_updated, status_changed_at)"
-MISSING=$(jq -r '
-  .assignments
+# Combined active + archive — invariant holds regardless of which file holds the row.
+MISSING=$(jq -s -r '
+  [.[].assignments[]]
   | map(select(
       (.task_id == null) or
       (.branch  == null) or
@@ -60,33 +84,33 @@ MISSING=$(jq -r '
       (.last_updated == null) or
       (.status_changed_at == null)
     ))
-  | length' "$ASSIGN")
-if [ "$MISSING" = "0" ]; then note "all rows have core schema"
+  | length' "${ASSIGN_FILES[@]}")
+if [ "$MISSING" = "0" ]; then note "all rows have core schema (across ${#ASSIGN_FILES[@]} file(s))"
 else fail "$MISSING rows missing one or more required fields"; fi
 echo
 
 # --- T3: status enum -------------------------------------------------------
 echo "T3  status ∈ {in-progress, review, merged, failed, done}  (done = legacy compat)"
-BAD=$(jq -r '
-  .assignments
+BAD=$(jq -s -r '
+  [.[].assignments[]]
   | map(select((.status as $s | ["in-progress","review","merged","failed","done"] | index($s) | not)))
-  | length' "$ASSIGN")
+  | length' "${ASSIGN_FILES[@]}")
 if [ "$BAD" = "0" ]; then note "all status values in allowed set"
 else
   fail "$BAD rows with disallowed status"
-  jq -r '.assignments[] | select((.status as $s | ["in-progress","review","merged","failed","done"] | index($s) | not)) | "    \(.task_id) :: status=\(.status)"' "$ASSIGN" >&2
+  jq -s -r '[.[].assignments[]] | .[] | select((.status as $s | ["in-progress","review","merged","failed","done"] | index($s) | not)) | "    \(.task_id) :: status=\(.status)"' "${ASSIGN_FILES[@]}" >&2
 fi
 echo
 
-# --- T4: no duplicate task_id ----------------------------------------------
-echo "T4  task_id unique"
-DUPES=$(jq -r '
-  .assignments
+# --- T4: no duplicate task_id (cross-file — issue #9) ----------------------
+echo "T4  task_id unique across active + archive"
+DUPES=$(jq -s -r '
+  [.[].assignments[]]
   | group_by(.task_id)
   | map(select(length>1) | .[0].task_id)
-  | join(",")' "$ASSIGN")
-if [ -z "$DUPES" ]; then note "all task_id values unique"
-else fail "duplicate task_id: $DUPES"; fi
+  | join(",")' "${ASSIGN_FILES[@]}")
+if [ -z "$DUPES" ]; then note "all task_id values unique across all files"
+else fail "duplicate task_id: $DUPES (a row exists in both active and archive — Phase 6 move bug)"; fi
 echo
 
 # --- T5: terminal-state discipline -----------------------------------------
@@ -94,16 +118,16 @@ echo
 # pre-date the merged_at field being wired into Phase 2 and were merged via
 # legacy logic; we don't rewrite them.
 echo "T5  merged rows claimed on/after $HARDENING_DATE must have merged_at AND pr_number"
-BAD=$(jq --arg d "$HARDENING_DATE" '
-  .assignments
+BAD=$(jq -s --arg d "$HARDENING_DATE" '
+  [.[].assignments[]]
   | map(select(.status == "merged"
                and .claimed_at >= $d
                and ((.merged_at == null) or (.pr_number == null))))
-  | length' "$ASSIGN")
+  | length' "${ASSIGN_FILES[@]}")
 if [ "$BAD" = "0" ]; then note "all merged rows in window have merged_at + pr_number"
 else
   fail "$BAD merged rows missing merged_at or pr_number (post-cutoff)"
-  jq --arg d "$HARDENING_DATE" -r '.assignments[] | select(.status=="merged" and .claimed_at >= $d and ((.merged_at==null) or (.pr_number==null))) | "    \(.task_id) :: claimed=\(.claimed_at) merged_at=\(.merged_at) pr=\(.pr_number)"' "$ASSIGN" >&2
+  jq -s --arg d "$HARDENING_DATE" -r '[.[].assignments[]] | .[] | select(.status=="merged" and .claimed_at >= $d and ((.merged_at==null) or (.pr_number==null))) | "    \(.task_id) :: claimed=\(.claimed_at) merged_at=\(.merged_at) pr=\(.pr_number)"' "${ASSIGN_FILES[@]}" >&2
 fi
 echo
 
@@ -176,20 +200,21 @@ echo
 
 # --- T11: per-row hardening fields backfilled (allow null, just must exist) -
 # Only checks rows claimed AFTER the hardening date; older rows are legacy.
+# Combined active + archive (issue #9).
 echo "T11 rows claimed on/after $HARDENING_DATE carry hardening fields"
-NEW_ROWS=$(jq --arg d "$HARDENING_DATE" '.assignments | map(select(.claimed_at >= $d)) | length' "$ASSIGN")
+NEW_ROWS=$(jq -s --arg d "$HARDENING_DATE" '[.[].assignments[]] | map(select(.claimed_at >= $d)) | length' "${ASSIGN_FILES[@]}")
 if [ "$NEW_ROWS" = "0" ]; then
   printf '  skip  no rows claimed on/after %s yet (will check on next dispatcher run)\n' "$HARDENING_DATE"
 else
-  BAD=$(jq --arg d "$HARDENING_DATE" '
-    .assignments
+  BAD=$(jq -s --arg d "$HARDENING_DATE" '
+    [.[].assignments[]]
     | map(select(.claimed_at >= $d
                  and ((has("last_reviewed_oid") | not)
                    or (has("scope_drift") | not)
                    or (has("code_reuse_warn") | not)
                    or (has("empty_branch") | not)
                    or (has("rebase_attempts") | not))))
-    | length' "$ASSIGN")
+    | length' "${ASSIGN_FILES[@]}")
   if [ "$BAD" = "0" ]; then note "all $NEW_ROWS new rows carry hardening fields"
   else fail "$BAD new rows missing one or more hardening fields"; fi
 fi
@@ -348,24 +373,64 @@ if [ "$INFO_LEGACY" -gt "0" ]; then
 fi
 echo
 
-# --- T17: row-count regression guard (issue #8) ----------------------------
-# Sanity check: assignments.json should not have shrunk by more than 2 rows
-# vs the version on the current branch's HEAD. Catches the stale-read → Edit
-# race observed in commit 4def18ce (118 -> 2 rows). Only meaningful when run
-# from a git checkout AND HEAD has assignments.json — skipped otherwise so
-# the test stays portable (CI tarballs, fresh clones).
-echo "T17 assignments.json row count vs HEAD (issue #8 — destructive-write guard)"
+# --- T17: row-count regression guard (issue #8, adapted for split — #9) ---
+# Combined active + archive count should not drop by more than 2 vs HEAD.
+# Catches the stale-read → Edit race (commit 4def18ce, 118→2 rows). Rows
+# legitimately move from active to archive during Phase 6, so we must
+# compare the COMBINED total — not per-file — to avoid false alarms.
+echo "T17 combined assignments row count (active + archive) vs HEAD (issue #8 — destructive-write guard)"
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
    && git cat-file -e "HEAD:$ASSIGN" 2>/dev/null; then
-  NEW_COUNT=$(jq '.assignments | length' "$ASSIGN")
-  OLD_COUNT=$(git show "HEAD:$ASSIGN" | jq '.assignments | length' 2>/dev/null || echo 0)
-  if [ "$NEW_COUNT" -lt "$((OLD_COUNT - 2))" ]; then
-    fail "row count regressed: HEAD=$OLD_COUNT current=$NEW_COUNT (loss > 2)"
+  NEW_ACTIVE=$(jq '.assignments | length' "$ASSIGN")
+  NEW_ARCH=0
+  if [ -f "$ASSIGN_ARCHIVE" ]; then
+    NEW_ARCH=$(jq '.assignments | length' "$ASSIGN_ARCHIVE")
+  fi
+  NEW_COMBINED=$((NEW_ACTIVE + NEW_ARCH))
+  OLD_ACTIVE=$(git show "HEAD:$ASSIGN" | jq '.assignments | length' 2>/dev/null || echo 0)
+  OLD_ARCH=0
+  if git cat-file -e "HEAD:$ASSIGN_ARCHIVE" 2>/dev/null; then
+    OLD_ARCH=$(git show "HEAD:$ASSIGN_ARCHIVE" | jq '.assignments | length' 2>/dev/null || echo 0)
+  fi
+  OLD_COMBINED=$((OLD_ACTIVE + OLD_ARCH))
+  if [ "$NEW_COMBINED" -lt "$((OLD_COMBINED - 2))" ]; then
+    fail "combined row count regressed: HEAD=$OLD_COMBINED current=$NEW_COMBINED (loss > 2; active=$OLD_ACTIVE→$NEW_ACTIVE, archive=$OLD_ARCH→$NEW_ARCH)"
   else
-    note "row count OK: HEAD=$OLD_COUNT current=$NEW_COUNT"
+    note "combined row count OK: HEAD=$OLD_COMBINED current=$NEW_COMBINED (active=$NEW_ACTIVE, archive=$NEW_ARCH)"
   fi
 else
   printf '  skip  not in git tree or HEAD missing %s\n' "$ASSIGN"
+fi
+echo
+
+# --- T18: archive contains only terminal rows (issue #9) -------------------
+# Invariant of the active/archive split: archive holds merged/failed/done ONLY.
+# Any in-progress or review row in archive means Phase 6 archived prematurely.
+if [ -f "$ASSIGN_ARCHIVE" ]; then
+  echo "T18 archive contains only terminal rows (issue #9)"
+  BAD=$(jq -r '
+    .assignments
+    | map(select(.status != "merged" and .status != "failed" and .status != "done"))
+    | length' "$ASSIGN_ARCHIVE")
+  if [ "$BAD" = "0" ]; then note "all archive rows are terminal"
+  else
+    fail "$BAD archive rows with non-terminal status"
+    jq -r '.assignments[] | select(.status != "merged" and .status != "failed" and .status != "done") | "    \(.task_id) :: status=\(.status)"' "$ASSIGN_ARCHIVE" >&2
+  fi
+  echo
+fi
+
+# --- T19: active contains NO terminal rows (issue #9) ----------------------
+# Inverse of T18: terminal rows must be moved to archive in Phase 6.
+echo "T19 active assignments contains NO terminal rows (issue #9)"
+BAD=$(jq -r '
+  .assignments
+  | map(select(.status == "merged" or .status == "failed" or .status == "done"))
+  | length' "$ASSIGN")
+if [ "$BAD" = "0" ]; then note "no terminal rows leaked into active"
+else
+  fail "$BAD terminal rows still in active assignments.json (Phase 6 archive-move bug)"
+  jq -r '.assignments[] | select(.status=="merged" or .status=="failed" or .status=="done") | "    \(.task_id) :: status=\(.status)"' "$ASSIGN" >&2
 fi
 echo
 
