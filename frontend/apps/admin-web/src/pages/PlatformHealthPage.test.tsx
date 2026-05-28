@@ -171,9 +171,7 @@ describe('PlatformHealthPage', () => {
     renderPage();
     await waitFor(() => expect(screen.getByText('Metric Thresholds')).toBeDefined());
     // threshold row — error_rate may appear in multiple sections (metric, alert, threshold)
-    await waitFor(() =>
-      expect(screen.getAllByText('error_rate').length).toBeGreaterThanOrEqual(1)
-    );
+    await waitFor(() => expect(screen.getAllByText('error_rate').length).toBeGreaterThanOrEqual(1));
   });
 
   it('hides Acknowledge button when site_settings_write is absent', async () => {
