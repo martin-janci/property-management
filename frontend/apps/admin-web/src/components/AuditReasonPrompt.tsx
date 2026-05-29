@@ -104,6 +104,16 @@ const ACTION_META: Record<AuditReasonAction, ActionMeta> = {
   },
 };
 
+/**
+ * Default minimum reason length for an action — the single source of truth
+ * shared with callers that need it (e.g. to drive `useAuditReasonValid`
+ * before the component is mounted). Avoids re-hardcoding per-action lengths
+ * at call sites where they would silently drift from `ACTION_META`.
+ */
+export function auditReasonMinLength(action: AuditReasonAction): number {
+  return ACTION_META[action].defaultMinLength;
+}
+
 // ---------------------------------------------------------------------------
 // Validation hook
 // ---------------------------------------------------------------------------

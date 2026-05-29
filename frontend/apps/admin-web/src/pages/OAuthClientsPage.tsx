@@ -39,7 +39,11 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
+import {
+  AuditReasonPrompt,
+  auditReasonMinLength,
+  useAuditReasonValid,
+} from '../components/AuditReasonPrompt';
 import { DestructiveConfirmDialog } from '../components/DestructiveConfirmDialog';
 import { useToast } from '../components/Toast';
 import { HelpTooltip } from '../features/help';
@@ -231,27 +235,33 @@ interface ScopeInfoTipProps {
 
 function ScopeInfoTip({ description }: ScopeInfoTipProps) {
   const [visible, setVisible] = useState(false);
+  // Stable id so the trigger can reference the tooltip via aria-describedby.
+  const tooltipId = useId();
   return (
     <span className="ppt-oc-scope-info">
       <button
         type="button"
         className="ppt-oc-scope-info-btn"
         aria-label="Scope description"
+        aria-describedby={visible ? tooltipId : undefined}
+        aria-expanded={visible}
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
         onFocus={() => setVisible(true)}
         onBlur={() => setVisible(false)}
+        // Touch devices have no hover — toggle on click/tap too.
+        onClick={() => setVisible((v) => !v)}
         tabIndex={0}
       >
         ?
       </button>
-      <span
-        className="ppt-oc-scope-tooltip"
-        role="tooltip"
-        style={{ visibility: visible ? 'visible' : 'hidden' }}
-      >
-        {description}
-      </span>
+      {/* Conditional render keeps the hidden tooltip out of the a11y tree
+          (visibility:hidden alone can still be announced by some AT). */}
+      {visible && (
+        <span id={tooltipId} className="ppt-oc-scope-tooltip" role="tooltip">
+          {description}
+        </span>
+      )}
     </span>
   );
 }
@@ -629,15 +639,20 @@ interface EditDialogProps {
   onClose: () => void;
 }
 
-/** Returns true when two string arrays contain the same items (order-independent). */
+/**
+ * Returns true when two scope lists differ as sets (order-independent).
+ * O(n) — builds a Set from `a` and checks membership/length against `b`,
+ * avoiding the allocate-and-sort churn on every render. Scope lists are
+ * de-duplicated server-side, so set semantics are sufficient here.
+ */
 function scopesChanged(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return true;
-  const sa = [...a].sort();
-  const sb = [...b].sort();
-  return sa.some((v, i) => v !== sb[i]);
+  const setA = new Set(a);
+  return b.some((v) => !setA.has(v));
 }
 
-const SCOPE_AUDIT_MIN_LENGTH = 20;
+// Resolved from AuditReasonPrompt's per-action metadata so the two never drift.
+const SCOPE_AUDIT_MIN_LENGTH = auditReasonMinLength('oauth_scope_grant');
 
 function EditDialog({ open, client, onClose }: EditDialogProps) {
   const { t } = useTranslation();
@@ -780,7 +795,6 @@ function EditDialog({ open, client, onClose }: EditDialogProps) {
             <div style={{ marginTop: 10 }}>
               <AuditReasonPrompt
                 action="oauth_scope_grant"
-                minLength={SCOPE_AUDIT_MIN_LENGTH}
                 value={auditReason}
                 onChange={setAuditReason}
                 required

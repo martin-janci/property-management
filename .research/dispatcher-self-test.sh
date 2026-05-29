@@ -549,8 +549,10 @@ echo
 if [ -f "$ACTION_LIST" ]; then
   echo "T24 action-list.json: at most one OPEN item per stem (PR 5/5)"
   DUPES24=$(jq -r '
-    def stem: sub("^(auto-impl|impl)/";"")
-              | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+    # Canonical stem(): suffix-strip only — same definition as routine-prompt.md
+    # line ~670, dispatcher-prompt.md Phase 3, and ppt-pr-create Step 3.5.
+    # Keep these in sync (no branch-prefix strip — action-list IDs are bare slugs).
+    def stem: sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
     [ .items[] | select(.status == "open") | (.id | stem) ]
     | group_by(.) | map(select(length > 1)) | length' "$ACTION_LIST")
   if [ "$DUPES24" = "0" ]; then
@@ -558,8 +560,7 @@ if [ -f "$ACTION_LIST" ]; then
   else
     fail "$DUPES24 stem collision(s) among open action-list items"
     jq -r '
-      def stem: sub("^(auto-impl|impl)/";"")
-                | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+      def stem: sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
       [ .items[] | select(.status == "open") | {id, s: (.id|stem)} ]
       | group_by(.s) | map(select(length > 1))[] | .[]
       | "    \(.id) :: stem=\(.s)"' "$ACTION_LIST" >&2

@@ -130,6 +130,9 @@ export async function updateOAuthClient(
   id: string,
   data: UpdateOAuthClientRequest
 ): Promise<OAuthClientSummary> {
+  // Normalize at the client boundary so whitespace-only reasons (which are
+  // truthy) don't produce empty audit-log entries for any caller.
+  const auditReason = data.auditReason?.trim();
   return authenticatedFetchJson<OAuthClientSummary>(`${API_BASE}/oauth/clients/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({
@@ -140,7 +143,7 @@ export async function updateOAuthClient(
       is_active: data.isActive,
       rotate_refresh_tokens: data.rotateRefreshTokens,
       // Audit trail: forwarded to the backend audit_log writer.
-      ...(data.auditReason ? { reason: data.auditReason } : {}),
+      ...(auditReason ? { reason: auditReason } : {}),
     }),
   });
 }
