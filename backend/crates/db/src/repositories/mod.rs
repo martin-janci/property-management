@@ -12,6 +12,7 @@ pub mod delegation;
 pub mod device_push_token;
 pub mod document;
 pub mod document_template;
+pub mod e_signature_nonce;
 pub mod facility;
 pub mod fault;
 pub mod feature_flag;
@@ -116,6 +117,7 @@ pub use platform_admin::{
 };
 pub use portal_password_reset::PortalPasswordResetRepository;
 pub use role::RoleRepository;
+pub use e_signature_nonce::ESignatureNonceRepository;
 pub use session::SessionRepository;
 pub use signature_request::SignatureRequestRepository;
 pub use system_announcement::{ActiveAnnouncement, SystemAnnouncementRepository};
