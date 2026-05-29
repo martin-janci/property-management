@@ -525,9 +525,32 @@ Persist: `last_updated=now` (always); if `new_status != prev_status`: `status=ne
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
-If `.research/management/last-merged-review.txt` missing OR mtime > 24h:
+**Cadence gate (finding `post-merge-gate-fooled-by-clone-mtime`).** Gate on the
+ISO timestamp stored *inside* `last-merged-review.txt`, NOT the file's mtime. A
+fresh clone resets every file's mtime to clone-time, so an mtime gate reads
+`age < 24h` forever and the review never fires again after a clone. The file's
+CONTENT is the last-run timestamp (the skill writes `date -u +%FT%TZ` into it),
+and content survives a clone untouched. Run the post-merge review when the file
+is missing/empty/unparseable OR its stored timestamp is > 24h old:
+
+```bash
+MARKER=.research/management/last-merged-review.txt
+DUE=1
+if [ -s "$MARKER" ]; then
+  LAST=$(tr -d '[:space:]' < "$MARKER")
+  LAST_EPOCH=$(date -u -d "$LAST" +%s 2>/dev/null || echo 0)
+  if [ "$LAST_EPOCH" -gt 0 ]; then
+    AGE_H=$(( ( $(date -u +%s) - LAST_EPOCH ) / 3600 ))
+    [ "$AGE_H" -lt 24 ] && DUE=0
+  fi
+  # LAST_EPOCH==0 (missing/garbled timestamp) leaves DUE=1 — fail safe = run.
+fi
+```
+
+If `DUE=1` (missing/empty/unparseable marker OR stored timestamp > 24h old):
 spawn ONE Task subagent invoking `.claude/skills/ppt-review-merged/SKILL.md`
-with `DISPATCHER_OWNED_COMMIT=1` in its env.
+with `DISPATCHER_OWNED_COMMIT=1` in its env. Else SKIP (log
+`Post-merge: skipped (last review <AGE_H>h ago < 24h)`).
 
 Inputs: `repo=martin-janci/property-management`, `window=14d`, `base=dev`,
 `max_prs=15`, `label=follow-up,from-merged-review`.
@@ -1824,7 +1847,7 @@ Disk warning:             <none | "free=N%; cleaned to M%">         (item #7)
 Merged total: <Mt_total>; this cycle: <Mt_this>
 Failed total: <F_total>;  this cycle: <F_this>
 Buffer:     claimable=<open_claimable_count>/<BUFFER_TARGET> ceil=<BUFFER_CEIL> (open=<open_count>, dep_blocked=<dep_blocked_count>) <T0: drained -N | T1: refilled +N | T2: upstream kicked | OK>
-Post-merge: <due | skipped> [<scanned=N clean=K issues=M>]
+Post-merge: <due (last <AGE_H>h ago | no-marker) scanned=N clean=K issues=M | skipped (last <AGE_H>h ago < 24h)>   (content-age gate, not mtime)
 Hang alerts:
   WARN (review >48h): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)
   ALERT (review >7d): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)

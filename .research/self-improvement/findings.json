@@ -211,7 +211,7 @@
       ],
       "proposed_fix": "Persist last_post_merge_review_at in management state (e.g. assignments.json meta) and gate Phase 6 on that timestamp rather than file mtime — immune to clone resets.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 6 post-merge cadence)",
-      "operator_notes": ""
+      "operator_notes": "Drafted on fix/dispatcher-postmerge-cadence-clone-mtime. Simpler than the proposed fix (no new assignments.json meta field needed): last-merged-review.txt ALREADY stores an ISO timestamp as its content — the bug was the gate reading the file's mtime instead of its content. Phase 2.5 cadence gate rewritten to parse the ISO timestamp inside the file (date -u -d) and compute age; missing/empty/unparseable/>24h => DUE=1 (fail-safe = run). Content survives a clone untouched; mtime does not. Verified against the live marker (content 16:24 vs mtime 19:07 — exactly the divergence that breaks mtime) plus fresh/ancient/garbled/empty/missing cases. The gate lives in Phase 2.5, not Phase 6 (affected_artifact said Phase 6 — corrected). Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "stale-local-base-wastes-cycle",
