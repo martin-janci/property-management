@@ -209,7 +209,7 @@ impl BackgroundJobRepository {
             "SELECT COUNT(*) FROM background_jobs WHERE {}",
             where_clause
         );
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
+        let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
 
         if let Some(ref job_type) = query.job_type {
             count_q = count_q.bind(job_type);
@@ -248,7 +248,7 @@ impl BackgroundJobRepository {
             where_clause, limit_param, offset_param
         );
 
-        let mut data_q = sqlx::query_as::<_, BackgroundJob>(&data_query);
+        let mut data_q = sqlx::query_as::<_, BackgroundJob>(sqlx::AssertSqlSafe(data_query));
 
         if let Some(ref job_type) = query.job_type {
             data_q = data_q.bind(job_type);

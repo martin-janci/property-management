@@ -498,7 +498,8 @@ impl FaultRepository {
         );
 
         // Build query dynamically
-        let mut query_builder = sqlx::query_as::<_, FaultSummary>(&sql).bind(org_id);
+        let mut query_builder =
+            sqlx::query_as::<_, FaultSummary>(sqlx::AssertSqlSafe(sql)).bind(org_id);
 
         if let Some(building_id) = query.building_id {
             query_builder = query_builder.bind(building_id);

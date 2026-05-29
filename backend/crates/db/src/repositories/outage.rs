@@ -252,7 +252,7 @@ impl OutageRepository {
             conditions.join(" AND ")
         );
 
-        let outages = sqlx::query_as::<_, OutageSummary>(&sql)
+        let outages = sqlx::query_as::<_, OutageSummary>(sqlx::AssertSqlSafe(sql))
             .bind(limit)
             .bind(offset)
             .fetch_all(executor)
@@ -281,7 +281,9 @@ impl OutageRepository {
             conditions.join(" AND ")
         );
 
-        let row = sqlx::query(&sql).fetch_one(executor).await?;
+        let row = sqlx::query(sqlx::AssertSqlSafe(sql))
+            .fetch_one(executor)
+            .await?;
         let count: i64 = row.get("count");
 
         Ok(count)

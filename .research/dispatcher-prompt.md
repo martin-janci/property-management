@@ -43,7 +43,7 @@ Schema per row:
   "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
   "reclaim_attempts":   "int",             // count of sandbox-timeout reclaims attempted (P3); default 0, cap = 1
   "merge_attempted_at": "iso-8601 | null", // last time Phase 5.5 tried to merge this row (gap 4); used for CI-stuck back-off
-  "quarantined_at":     "iso-8601 | null", // (PR 5/5) set when Phase 2 quarantines a row after fix_rounds >= 3
+  "quarantined_at":     "iso-8601 | null", // (PR 5/5) set when Phase 5.7 quarantines a row after fix_rounds >= 3
   "quarantine_reason":  "string | null",   // (PR 5/5) short reason; e.g. "fix_rounds=3 exhausted; verdict still changes"
 
   "implementer_summary": "string | null",
@@ -83,9 +83,21 @@ re-parse `dependency` text on each run.
 Migration (one-time, gap 3): for any row missing `depends_on`,
 best-effort-parse the legacy `dependency` field by splitting on
 `, ; and / AND` and matching kebab-case task-id-shaped tokens
-(`gap-…`, `pm-…`, `epic-…`). Unparseable values (owner-role names,
-epic descriptions like "Epic 2B WebSocket infrastructure") become
-`[]` and the free-text is left in `dependency` for human follow-up.
+(`gap-…`, `pm-…`, `epic-…`) AGAINST the set of known action-list
+ids. For unparseable non-empty values (owner-role names like
+`pm-frontend`/`pm-qa`/`rust-backend`, or epic descriptions like
+"Epic 2B WebSocket infrastructure"), write a **poisoned sentinel**
+`depends_on: ["UNRESOLVED:<original-text-truncated-to-80-chars>"]`
+instead of `[]` (issue #583). The Phase 3 `claimable()` predicate
+already rejects any `depends_on` entry whose id is not a terminal
+row in `assignments` — the poisoned sentinel naturally fails that
+check, so the row stays blocked until a human resolves the legacy
+text into a real task_id (or explicitly clears `depends_on` to
+`[]`). Values of `null`, `""`, or the literal string `"none"`
+(case-insensitive) in the legacy `dependency` field are treated as
+no-dependency and migrate to `[]` (not sentinel). Phase 7 surfaces
+poisoned rows under the `Unresolved-dep items:` line so they're
+visible every cycle.
 
 ## Timestamp semantics
 
@@ -106,7 +118,7 @@ epic descriptions like "Epic 2B WebSocket infrastructure") become
 | review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
 | review      | failed   | Phase 2 sees PR CLOSED without merge                            |
 | review      | review   | PR still open (no `status_changed_at` bump)                    |
-| review      | quarantined | (PR 5/5) Phase 2 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes`. Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
+| review      | quarantined | (PR 5/5) Phase 5.7 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes` (the quarantine gate at the top of Phase 5.7, before respawn). Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
 
 `merged` / `failed` are TERMINAL. **`quarantined` is SEMI-TERMINAL**: the
 dispatcher won't auto-transition out of it (no Phase 2/5/5.5 trigger
@@ -1836,6 +1848,7 @@ Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; 
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
+Unresolved-dep items:     [<id> dep="<truncated-legacy-text>", …]   (issue #583 — poisoned-sentinel rows whose legacy `dependency` text didn't parse; need human resolution; [] if none)
 GC1 cascade:              <closed-leak=<N> orphan-triage=<M> | clean>   (gc1-reconcile; archive-terminal closes + coverage-missing orphans)
 Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)

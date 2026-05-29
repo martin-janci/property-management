@@ -205,7 +205,7 @@ pub async fn get_price_map(
 
     let city_pattern = query.city.as_ref().map(|c| format!("%{}%", c));
 
-    let rows = sqlx::query(&sql)
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&mode)
         .bind(&query.property_type)
         .bind(&city_pattern)

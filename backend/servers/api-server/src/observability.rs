@@ -379,7 +379,7 @@ pub fn report_error(error: &dyn std::error::Error, context: &ErrorContext) {
     );
 
     // Also increment error counter
-    counter!("errors_total", 1);
+    counter!("errors_total").increment(1);
 }
 
 /// Request metrics tracking.
@@ -404,14 +404,14 @@ impl RequestMetrics {
         let duration = self.start_time.elapsed().as_secs_f64();
 
         // Record request duration
-        histogram!("http_request_duration_seconds", duration);
+        histogram!("http_request_duration_seconds").record(duration);
 
         // Increment request counter
-        counter!("http_requests_total", 1);
+        counter!("http_requests_total").increment(1);
 
         // Track errors separately
         if status_code >= 400 {
-            counter!("http_requests_errors_total", 1);
+            counter!("http_requests_errors_total").increment(1);
         }
     }
 }

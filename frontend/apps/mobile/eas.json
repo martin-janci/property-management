@@ -71,6 +71,7 @@
         "credentialsSource": "remote",
         "image": "latest"
       },
+      "$comment_env": "Issue #620 / #523 — API_BASE_URL and WS_BASE_URL are intentionally NOT inlined here. .env.production ships the __SET_BY_CI__ sentinel which would trip the placeholder guard in app.config.ts. Provide the real prod hosts via EAS project secrets (eas secret:create --scope project --name API_BASE_URL --value https://api.<prod-host>; same for WS_BASE_URL) — those land in process.env at build time and are picked up by app.config.ts. The EXPO_PUBLIC_ prefix is deliberately NOT used because those values cannot reach ios.infoPlist (Metro-only inlining).",
       "env": {
         "APP_ENV": "production"
       }
@@ -88,6 +89,7 @@
         "metadataPath": "./store-metadata/ios"
       },
       "android": {
+        "$comment": "Issue #626 -- Google Play service account credentials. serviceAccountKeyPath points at a gitignored local file; if missing at submit time eas submit fails with a file-not-found error. EAS-secret alternative for CI: eas secret:create --scope project --name GOOGLE_PLAY_SERVICE_ACCOUNT_KEY_JSON --type file --value ./google-play-service-account.json -- when present EAS resolves credentials from it and ignores serviceAccountKeyPath. Mirrors how GOOGLE_SERVICES_JSON is wired for the Android build (see app.config.ts > android > googleServicesFile).",
         "serviceAccountKeyPath": "./store-metadata/android/google-play-service-account.json",
         "track": "production",
         "releaseStatus": "completed",

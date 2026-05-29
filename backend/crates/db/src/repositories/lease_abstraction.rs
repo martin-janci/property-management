@@ -141,7 +141,7 @@ impl LeaseAbstractionRepository {
             now
         );
 
-        sqlx::query(&query)
+        sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(id)
             .bind(status)
             .bind(error_message)

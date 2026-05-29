@@ -434,7 +434,7 @@ impl ComplianceRepository {
             order_clause
         );
 
-        let cases = sqlx::query_as::<_, ModerationCase>(&query)
+        let cases = sqlx::query_as::<_, ModerationCase>(sqlx::AssertSqlSafe(query))
             .bind(status)
             .bind(content_type)
             .bind(violation_type)

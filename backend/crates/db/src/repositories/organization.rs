@@ -207,7 +207,7 @@ impl OrganizationRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, Organization>(&query).bind(id);
+        let mut q = sqlx::query_as::<_, Organization>(sqlx::AssertSqlSafe(query)).bind(id);
 
         if let Some(name) = &data.name {
             q = q.bind(name);
@@ -441,7 +441,7 @@ impl OrganizationRepository {
         );
 
         // Execute count query
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
+        let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
         if let Some(status) = status_filter {
             count_q = count_q.bind(status);
         }
@@ -451,7 +451,7 @@ impl OrganizationRepository {
         let total = count_q.fetch_one(&self.pool).await?;
 
         // Execute data query
-        let mut data_q = sqlx::query_as::<_, OrganizationSummary>(&data_query)
+        let mut data_q = sqlx::query_as::<_, OrganizationSummary>(sqlx::AssertSqlSafe(data_query))
             .bind(limit)
             .bind(offset);
         if let Some(status) = status_filter {
@@ -497,7 +497,7 @@ impl OrganizationRepository {
         );
 
         // Execute count query
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
+        let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
         if let Some(status) = status_filter {
             count_q = count_q.bind(status);
         }
@@ -507,7 +507,7 @@ impl OrganizationRepository {
         let total = count_q.fetch_one(&self.pool).await?;
 
         // Execute data query
-        let mut data_q = sqlx::query_as::<_, Organization>(&data_query)
+        let mut data_q = sqlx::query_as::<_, Organization>(sqlx::AssertSqlSafe(data_query))
             .bind(limit)
             .bind(offset);
         if let Some(status) = status_filter {

@@ -45,10 +45,19 @@ impl AiChatRepository {
         .await
     }
 
-    /// Get session by ID.
-    pub async fn find_session_by_id(&self, id: Uuid) -> Result<Option<AiChatSession>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM ai_chat_sessions WHERE id = $1")
+    /// Get session by ID — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// Returns `None` for both "not found" and "belongs to another tenant"
+    /// to prevent cross-tenant ID enumeration.
+    pub async fn find_session_by_id(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<AiChatSession>, sqlx::Error> {
+        sqlx::query_as("SELECT * FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .fetch_optional(&self.pool)
             .await
     }
@@ -128,34 +137,47 @@ impl AiChatRepository {
         Ok(message)
     }
 
-    /// Get messages for a session.
+    /// Get messages for a session — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The JOIN ensures a caller in org B cannot enumerate messages from a
+    /// session owned by org A.
     pub async fn list_session_messages(
         &self,
         session_id: Uuid,
+        org_id: Uuid,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<AiChatMessage>, sqlx::Error> {
         sqlx::query_as(
             r#"
-            SELECT * FROM ai_chat_messages
-            WHERE session_id = $1
-            ORDER BY created_at ASC
-            LIMIT $2 OFFSET $3
+            SELECT m.* FROM ai_chat_messages m
+            JOIN ai_chat_sessions s ON s.id = m.session_id
+            WHERE m.session_id = $1 AND s.organization_id = $2
+            ORDER BY m.created_at ASC
+            LIMIT $3 OFFSET $4
             "#,
         )
         .bind(session_id)
+        .bind(org_id)
         .bind(limit)
         .bind(offset)
         .fetch_all(&self.pool)
         .await
     }
 
-    /// Delete a session and all its messages.
-    pub async fn delete_session(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM ai_chat_sessions WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a session and all its messages — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// Returns `false` for both "not found" and "belongs to another tenant"
+    /// to prevent cross-tenant ID enumeration.
+    pub async fn delete_session(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+        let result =
+            sqlx::query("DELETE FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(&self.pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
