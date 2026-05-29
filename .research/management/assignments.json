@@ -233,7 +233,7 @@
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=725 status=done specialist=rust-backend scope_drift=true scope_drift_justified=true code_reuse_warn=none note=IDOR fixes: find_maintenance_by_id+acknowledge_prediction (equipment.rs JOIN/EXISTS), B1 chat-session IDOR (ai_chat.rs org-scope), B2 sentiment.acknowledge_alert org-scope, B3 cross-tenant regression test; ci-run=26601325701 check+test+security-tests=pass",
-      "reviewer_summary": "verdict=approve head_oid=fa49540c fix_rounds=3 note=all-B1/B2/B3-resolved; non-blocking-nit(acknowledge_alert RowNotFound→404) already-fixed-in-code; LGTM; pending-merge-conflict-resolution",
+      "reviewer_summary": "verdict=approve head_oid=fa49540c fix_rounds=3 note=all-B1/B2/B3-resolved; acknowledge_alert RowNotFound→404 confirmed fixed; CI fully green (build+test+security-tests+check+cargo-deny=success rls-smoke=skipped); LGTM; pending rebase+draft-removal for merge",
       "last_reviewed_oid": "fa49540c834836008a24574d8304f3a3d0e1cdbc",
       "scope_drift": true,
       "code_reuse_warn": null,
