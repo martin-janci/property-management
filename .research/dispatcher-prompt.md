@@ -83,9 +83,21 @@ re-parse `dependency` text on each run.
 Migration (one-time, gap 3): for any row missing `depends_on`,
 best-effort-parse the legacy `dependency` field by splitting on
 `, ; and / AND` and matching kebab-case task-id-shaped tokens
-(`gap-…`, `pm-…`, `epic-…`). Unparseable values (owner-role names,
-epic descriptions like "Epic 2B WebSocket infrastructure") become
-`[]` and the free-text is left in `dependency` for human follow-up.
+(`gap-…`, `pm-…`, `epic-…`) AGAINST the set of known action-list
+ids. For unparseable non-empty values (owner-role names like
+`pm-frontend`/`pm-qa`/`rust-backend`, or epic descriptions like
+"Epic 2B WebSocket infrastructure"), write a **poisoned sentinel**
+`depends_on: ["UNRESOLVED:<original-text-truncated-to-80-chars>"]`
+instead of `[]` (issue #583). The Phase 3 `claimable()` predicate
+already rejects any `depends_on` entry whose id is not a terminal
+row in `assignments` — the poisoned sentinel naturally fails that
+check, so the row stays blocked until a human resolves the legacy
+text into a real task_id (or explicitly clears `depends_on` to
+`[]`). Values of `null`, `""`, or the literal string `"none"`
+(case-insensitive) in the legacy `dependency` field are treated as
+no-dependency and migrate to `[]` (not sentinel). Phase 7 surfaces
+poisoned rows under the `Unresolved-dep items:` line so they're
+visible every cycle.
 
 ## Timestamp semantics
 
@@ -1611,6 +1623,7 @@ Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; 
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
+Unresolved-dep items:     [<id> dep="<truncated-legacy-text>", …]   (issue #583 — poisoned-sentinel rows whose legacy `dependency` text didn't parse; need human resolution; [] if none)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
 Tier 2 response:          <http=<code> body="<truncated>" | not-fired>          (issue #5)
 Review dedup-skipped:     [PR#<n> existing-at=<iso>, …]             (issue #3; [] if none)
