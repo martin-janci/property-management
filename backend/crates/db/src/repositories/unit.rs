@@ -166,7 +166,7 @@ impl UnitRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, Unit>(sqlx::query::AssertSqlSafe(&query)).bind(id);
+        let mut q = sqlx::query_as::<_, Unit>(&query).bind(id);
 
         if let Some(entrance) = &data.entrance {
             q = q.bind(entrance);
@@ -303,7 +303,7 @@ impl UnitRepository {
             where_clause
         );
 
-        let mut data_q = sqlx::query_as::<_, UnitSummary>(sqlx::query::AssertSqlSafe(&data_query))
+        let mut data_q = sqlx::query_as::<_, UnitSummary>(&data_query)
             .bind(building_id)
             .bind(limit)
             .bind(offset);
@@ -388,7 +388,7 @@ impl UnitRepository {
             data_where_clause
         );
 
-        let mut data_q = sqlx::query_as::<_, UnitSummary>(sqlx::query::AssertSqlSafe(&data_query))
+        let mut data_q = sqlx::query_as::<_, UnitSummary>(&data_query)
             .bind(building_id)
             .bind(limit)
             .bind(offset);
@@ -551,7 +551,7 @@ impl UnitRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, UnitOwner>(sqlx::query::AssertSqlSafe(&query))
+        let mut q = sqlx::query_as::<_, UnitOwner>(&query)
             .bind(unit_id)
             .bind(user_id);
 
@@ -824,7 +824,7 @@ impl UnitRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, UnitOwner>(sqlx::query::AssertSqlSafe(&query))
+        let mut q = sqlx::query_as::<_, UnitOwner>(&query)
             .bind(unit_id)
             .bind(user_id);
 
