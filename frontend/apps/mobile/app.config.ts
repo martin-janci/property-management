@@ -44,6 +44,10 @@ import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
+// Custom Expo config plugin -- re-adds legacy storage perms with
+// maxSdkVersion=32 so they apply only on API <= 32. Issue #626.
+import withLegacyStoragePermissions from './plugins/withLegacyStoragePermissions';
+
 /** Supported environments */
 type AppEnvironment = 'development' | 'staging' | 'production';
 
@@ -166,10 +170,26 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...(googleServicesFile !== undefined ? { googleServicesFile } : {}),
 
       // Permissions declared in AndroidManifest.xml.
+      //
+      // Issue #626 -- API 33+ (Android 13+) deprecates broad external-storage
+      // perms and replaces them with granular media perms. The Play Store
+      // requires targetSdkVersion >= 34 for new submissions; Expo SDK 55
+      // (used here, see package.json) defaults compileSdkVersion=35 and
+      // targetSdkVersion=34 via the prebuild-generated Gradle config, so
+      // no override via `expo-build-properties` is required. The granular
+      // perms below are the source of truth on modern devices.
+      //
+      // Legacy READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE are still
+      // needed on API <= 32 (Android 12L and older). They are re-injected
+      // via the `withLegacyStoragePermissions` plugin (registered below)
+      // with `android:maxSdkVersion="32"` so they are automatically
+      // suppressed on API 33+.
       permissions: [
         'android.permission.CAMERA',
-        'android.permission.READ_EXTERNAL_STORAGE',
-        'android.permission.WRITE_EXTERNAL_STORAGE',
+        // API 33+ granular media permissions (replace READ_EXTERNAL_STORAGE).
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+        'android.permission.READ_MEDIA_AUDIO',
         'android.permission.ACCESS_FINE_LOCATION',
         'android.permission.ACCESS_COARSE_LOCATION',
         'android.permission.RECEIVE_BOOT_COMPLETED',
@@ -209,6 +229,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'expo-notifications',
         { icon: './assets/images/notification-icon.png', color: '#1A73E8', sounds: [] },
       ],
+      // Issue #626 -- re-injects READ/WRITE_EXTERNAL_STORAGE into
+      // AndroidManifest.xml with android:maxSdkVersion="32" so older
+      // devices (API <= 32) keep working while API 33+ uses the granular
+      // READ_MEDIA_* permissions declared in `android.permissions` above.
+      withLegacyStoragePermissions,
     ],
 
     extra: {

@@ -177,6 +177,9 @@ importers:
       '@babel/plugin-transform-flow-strip-types':
         specifier: ^7.29.7
         version: 7.29.7(@babel/core@7.29.7)
+      '@expo/config-plugins':
+        specifier: ~55.0.10
+        version: 55.0.10
       '@expo/metro-config':
         specifier: ~55.0.22
         version: 55.0.22(expo@55.0.25)(typescript@5.9.3)
@@ -2164,25 +2167,6 @@ packages:
 
   /@expo/config-plugins@55.0.10:
     resolution: {integrity: sha512-1txnRnMLIO5lM/Of/VyvDkCwZap0YFvCyfSTIlUQamhwhx6Rh7r8TXfcIstaDYUQ7X6GTMkNxLXWbcYS6ZAFDw==}
-    dependencies:
-      '@expo/config-types': 55.0.5
-      '@expo/json-file': 10.0.15
-      '@expo/plist': 0.5.4
-      '@expo/sdk-runtime-versions': 1.0.0
-      chalk: 4.1.2
-      debug: 4.4.3(supports-color@8.1.1)
-      getenv: 2.0.0
-      glob: 13.0.6
-      resolve-from: 5.0.0
-      semver: 7.8.1
-      slugify: 1.6.9
-      xcode: 3.0.1
-      xml2js: 0.6.0
-    transitivePeerDependencies:
-      - supports-color
-
-  /@expo/config-plugins@55.0.9:
-    resolution: {integrity: sha512-jLfpxru8dTo7eU0cqeTWuQav7byyjb37eF/mbXl1/3eTBHBvFU1VGxpeKxanUdTQAAjqzH8KGgWb0fWcce+z1w==}
     dependencies:
       '@expo/config-types': 55.0.5
       '@expo/json-file': 10.0.15
@@ -7232,7 +7216,7 @@ packages:
       '@babel/runtime': 7.29.2
       '@expo/cli': 55.0.31(@expo/dom-webview@55.0.6)(expo-constants@55.0.16)(expo-font@55.0.8)(expo@55.0.25)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
       '@expo/config': 55.0.17(typescript@5.9.3)
-      '@expo/config-plugins': 55.0.9
+      '@expo/config-plugins': 55.0.10
       '@expo/devtools': 55.0.3(react-native@0.85.3)(react@19.2.0)
       '@expo/dom-webview': 55.0.6(expo@55.0.25)(react-native@0.85.3)(react@19.2.0)
       '@expo/fingerprint': 0.16.7
