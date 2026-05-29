@@ -189,6 +189,115 @@ against `git rev-list/fetch`; no checkout needed.
 
 ---
 
+## Phase 0.5 — Run-level lock (acquire)
+
+**Why this exists (invariant, not war story):** at most one dispatcher run may
+be in its *mutating* phases (3/3.5/5.5/6) against `origin/dev` at any instant.
+When two runs overlap, every timing-sensitive phase corrupts: the claim pool is
+read from a base that doesn't reflect the other run's archive (re-claiming
+already-merged ids), Phase 6 archive-append races into duplicate rows, and the
+local base drifts mid-run forcing a reset+re-run. The `assignments.generated`
+soft-gate in Phase 1 only catches an overlapping run's *second pass*; it cannot
+prevent two *first* passes from colliding. This lock closes that window.
+
+**Mechanism — a GitHub ref as an atomic mutex, acquired over the REST API.**
+Acquisition is a server-side compare-and-swap: `POST /git/refs` succeeds (201)
+only if the ref does not exist, and returns 422 if it does. This is the only
+atomic primitive available here, and it goes through `gh api` (REST), **not**
+`git push` — direct push is HTTP-403'd by the local proxy in this environment
+(finding `git-push-blocked-by-proxy`), so a push-based lock would never acquire.
+TTL + holder identity ride in an annotated **tag object** the ref points at, so
+the lock is fully self-describing and a dead holder is reclaimable.
+
+```bash
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+LOCK_REF="refs/tags/dispatcher-lock"
+LOCK_TTL_MIN=45                       # > a healthy run; a holder older than this is presumed dead
+RUN_ID="${GITHUB_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
+HOST="$(hostname -s 2>/dev/null || echo unknown)"
+NOW_EPOCH=$(date -u +%s)
+git fetch origin dev --quiet 2>/dev/null || true   # Phase 0.5 runs before Phase 1's fetch
+BASE_SHA=$(git rev-parse origin/dev 2>/dev/null || git rev-parse HEAD)  # tag anchor only
+
+# Lock payload — everything a later run needs to judge staleness lives here.
+LOCK_JSON=$(jq -nc --arg r "$RUN_ID" --arg h "$HOST" \
+  --argjson acq "$NOW_EPOCH" --argjson exp "$((NOW_EPOCH + LOCK_TTL_MIN*60))" \
+  '{run_id:$r, host:$h, acquired_at:$acq, expires_at:$exp}')
+
+acquire_lock() {
+  # 1) create the tag object carrying the payload (cheap; orphaned if we lose the race)
+  local tag_sha
+  tag_sha=$(gh api -X POST "/repos/$REPO/git/tags" \
+    -f tag=dispatcher-lock -f message="$LOCK_JSON" -f object="$BASE_SHA" -f type=commit \
+    --jq .sha 2>/dev/null) || return 1
+  # 2) atomic CAS: create the ref pointing at it. 201 = we won; 422 = already held.
+  gh api -X POST "/repos/$REPO/git/refs" \
+    -f ref="$LOCK_REF" -f sha="$tag_sha" >/dev/null 2>&1
+}
+
+read_holder_field() {  # $1 = json key; echoes the current holder's value, or empty
+  local ref_sha
+  ref_sha=$(gh api "/repos/$REPO/git/$LOCK_REF" --jq .object.sha 2>/dev/null) || return 1
+  gh api "/repos/$REPO/git/tags/$ref_sha" --jq .message 2>/dev/null \
+    | jq -r --arg k "$1" '.[$k] // empty' 2>/dev/null
+}
+read_holder_exp()        { read_holder_field expires_at; }
+read_holder_exp_runid()  { read_holder_field run_id; }
+
+if ! acquire_lock; then
+  HOLDER_EXP=$(read_holder_exp)
+  if [ -n "$HOLDER_EXP" ] && [ "$NOW_EPOCH" -lt "$HOLDER_EXP" ]; then
+    echo "lock: held by a live run (expires in $(( (HOLDER_EXP-NOW_EPOCH)/60 ))m) — aborting fast, no mutation."
+    exit 0                               # another run owns the mutex; do nothing
+  fi
+  # Stale (expired TTL) or unreadable holder → steal: repoint the ref, then re-confirm.
+  echo "lock: stale/expired holder (exp=${HOLDER_EXP:-unknown}) — stealing."
+  STEAL_TAG=$(gh api -X POST "/repos/$REPO/git/tags" -f tag=dispatcher-lock \
+    -f message="$LOCK_JSON" -f object="$BASE_SHA" -f type=commit --jq .sha 2>/dev/null)
+  gh api -X PATCH "/repos/$REPO/git/$LOCK_REF" -f sha="$STEAL_TAG" -F force=true >/dev/null 2>&1 \
+    || { echo "lock: steal lost to a concurrent steal — aborting fast."; exit 0; }
+  HOLDER_EXP=$(read_holder_exp)          # re-read: confirm WE are the holder now
+  [ "$HOLDER_EXP" != "$((NOW_EPOCH + LOCK_TTL_MIN*60))" ] && { echo "lock: lost re-confirm — aborting."; exit 0; }
+fi
+export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
+echo "lock: acquired ($RUN_ID, ttl=${LOCK_TTL_MIN}m)"
+```
+
+**Release contract.** The lock MUST be released on EVERY exit path — normal
+completion, a Phase 6 abort (goal-check / self-test / scope-guard bail), or a
+mid-run error. Release is idempotent and only deletes a lock this run owns:
+
+```bash
+release_lock() {
+  [ "${DISPATCHER_LOCK_HELD:-0}" = "1" ] || return 0
+  # Only delete a lock WE still own — if another run stole it after our TTL
+  # lapsed, leave theirs alone (read_holder_exp_runid defined above).
+  local cur; cur=$(read_holder_exp_runid)
+  if [ "$cur" = "$RUN_ID" ]; then
+    gh api -X DELETE "/repos/$REPO/git/$DISPATCHER_LOCK_REF" >/dev/null 2>&1 \
+      && echo "lock: released ($RUN_ID)" || echo "lock: release failed — TTL (${LOCK_TTL_MIN}m) will reclaim"
+  else
+    echo "lock: not ours anymore (cur=$cur) — leaving for $cur"
+  fi
+}
+trap release_lock EXIT       # fires on normal exit, error, and the `exit 0` aborts above
+```
+
+> The `exit 0` fast-abort *before* `DISPATCHER_LOCK_HELD=1` is set leaves no lock
+> to release (we never acquired one) — correct. After acquisition, the `trap`
+> guarantees release even on the Phase 6 `exit 0` bail paths. If the process is
+> hard-killed (SIGKILL, sandbox teardown) the `trap` may not fire — that is what
+> the TTL is for: the next run sees an expired holder and steals. Set
+> `LOCK_TTL_MIN` comfortably above the 95th-percentile run duration.
+
+The Phase 1 `assignments.generated` soft-gate (step 2 below) **stays** as a
+cheap second line of defence for the narrow window between release and the next
+run's `git pull`; the hard lock is primary. Phase 7 prints
+`Run lock: acquired <run_id> ttl=<m>m | stole-stale | abort-held` so overlap and
+TTL steals are visible per-run in the commit log.
+
+---
+
 ## Phase 1 — Read state + preflight
 
 1. `git fetch origin && git checkout dev && git pull --ff-only`
@@ -471,7 +580,27 @@ dep_blocked_count    = count(open items where is_dep_blocked(item, terminal_ids)
 open_claimable_count = open_count - dep_blocked_count
 ```
 
-- **Tier 1 (self-refill):** if `open_claimable_count < 18` (half of the 36 target) → **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, append top `(36 - open_claimable_count)`. Log `Tier 1: <old_claimable> → <new_claimable> (+N)`. When `open_claimable_count >= 18` the file is never opened, saving ~10k tokens / run.
+**Buffer bounds (shared with `goal-check.sh` GC3 — finding `goal-check-gc3-buffer-overshoot`).**
+The floor/target/ceiling are ONE source of truth, defined in `goal-check.sh`
+(`BUFFER_FLOOR=18`, `BUFFER_TARGET=36`, `BUFFER_CEIL=60`). Export the same three
+here so refill, drain, and the GC3 gate can never disagree — a forked literal
+is exactly how claimable drifted to ~2× the ceiling (112/60) unmeasured-against:
+
+```bash
+# Read the canonical defaults straight out of goal-check.sh (which owns them)
+# so the dispatcher and the GC3 gate share one value. The grep pulls the
+# `${BUFFER_FLOOR:-18}`-style default; the `:=` fallbacks below cover the case
+# where the line moves or is unreadable, so the run never aborts on this.
+read_bound() { grep -oE "$1:-[0-9]+" .research/goal-check.sh | head -1 | grep -oE '[0-9]+$'; }
+BUFFER_FLOOR="${BUFFER_FLOOR:-$(read_bound BUFFER_FLOOR)}"
+BUFFER_TARGET="${BUFFER_TARGET:-$(read_bound BUFFER_TARGET)}"
+BUFFER_CEIL="${BUFFER_CEIL:-$(read_bound BUFFER_CEIL)}"
+: "${BUFFER_FLOOR:=18}" "${BUFFER_TARGET:=36}" "${BUFFER_CEIL:=60}"
+export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
+```
+
+- **Tier 0 (overflow drain — NEW):** if `open_claimable_count > BUFFER_CEIL` → the buffer is overfull (a coverage-rubric or planner push exceeded the cap; Tier 1's own top-up can never overshoot, but external pushes can). **Drain the excess back to backlog** so claimable converges to `BUFFER_CEIL`: sort the currently-claimable open items by ascending priority/score and set `status="deferred"` on the lowest-scoring `(open_claimable_count - BUFFER_CEIL)` of them (they stay in `action-list.json`, just leave the claimable pool; a later run re-opens them once the buffer drops below `BUFFER_TARGET`). This is a bounded, scored drop — **never silent**: log each deferred id. Log `Tier 0: drained <N> (claimable <old> → <BUFFER_CEIL>); deferred=[<id>, …]`. Include `action-list.json` in the Phase 6 commit when any item is deferred.
+- **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
 
   ```bash
@@ -1611,6 +1740,7 @@ Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; 
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
+Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
 Tier 2 response:          <http=<code> body="<truncated>" | not-fired>          (issue #5)
 Review dedup-skipped:     [PR#<n> existing-at=<iso>, …]             (issue #3; [] if none)
@@ -1619,7 +1749,7 @@ Code-reuse warnings:      [PR#<n> task=<id> note=<helper>, …]       (item #4; 
 Disk warning:             <none | "free=N%; cleaned to M%">         (item #7)
 Merged total: <Mt_total>; this cycle: <Mt_this>
 Failed total: <F_total>;  this cycle: <F_this>
-Buffer:     claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>) <T1: refilled +N | T2: upstream kicked | OK>
+Buffer:     claimable=<open_claimable_count>/<BUFFER_TARGET> ceil=<BUFFER_CEIL> (open=<open_count>, dep_blocked=<dep_blocked_count>) <T0: drained -N | T1: refilled +N | T2: upstream kicked | OK>
 Post-merge: <due | skipped> [<scanned=N clean=K issues=M>]
 Hang alerts:
   WARN (review >48h): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)

@@ -21,6 +21,15 @@ ENFORCE="${GOAL_CHECK_ENFORCE:-0}"
 EMIT_JSON=0
 [ "${1:-}" = "--json" ] && EMIT_JSON=1
 
+# Buffer bounds — SINGLE SOURCE OF TRUTH, shared with dispatcher Phase 2.6.
+# GC3 checks claimable ∈ [FLOOR, CEIL]; Phase 2.6 refills toward TARGET and
+# drains anything above CEIL. Override via env to keep the two in lockstep
+# (the dispatcher exports the same three before reading coverage). Changing a
+# bound here must be mirrored in dispatcher-prompt.md Phase 2.6, never forked.
+BUFFER_FLOOR="${BUFFER_FLOOR:-18}"   # below this = starving → Tier-1 refill
+BUFFER_TARGET="${BUFFER_TARGET:-36}" # refill brings claimable up to this
+BUFFER_CEIL="${BUFFER_CEIL:-60}"     # above this = overflow → Phase 2.6 drains
+
 RESULTS='[]'           # accumulates {check,passed,observed,expected,hard}
 HARD_FAIL=0
 
@@ -87,8 +96,10 @@ fi
 
 # --- GC3: buffer bounds. open_claimable = open action-list items not already
 # in active assignments, minus dep-blocked (a depends_on entry not pointing at
-# a merged/done assignment). Healthy band [18, 60]; below 18 = starving,
-# above 60 = overflow (the 102/36 explosion). Record-only here.
+# a merged/done assignment). Healthy band [BUFFER_FLOOR, BUFFER_CEIL]; below
+# FLOOR = starving, above CEIL = overflow (the 102/36 explosion). Bounds are
+# the shared constants above so the Phase 2.6 refill/drain and this check can
+# never disagree. Record-only here.
 GC3_OPEN=$(jq --slurpfile a "$ASSIGN" '
   [.items[] | select(.status=="open")
             | .id as $id
@@ -103,9 +114,10 @@ GC3_BLOCKED=$(jq --slurpfile a "$ASSIGN" '
                              | (($a[0].assignments | map(select(.task_id==$dep)) | .[0].status // "missing")
                                 | IN("merged","done") | not)))] | length' "$ACTION_LIST")
 GC3_CLAIMABLE=$((GC3_OPEN - GC3_BLOCKED))
-GC3_PASS=$([ "$GC3_CLAIMABLE" -ge 18 ] && [ "$GC3_CLAIMABLE" -le 60 ] && echo true || echo false)
+GC3_PASS=$([ "$GC3_CLAIMABLE" -ge "$BUFFER_FLOOR" ] && [ "$GC3_CLAIMABLE" -le "$BUFFER_CEIL" ] && echo true || echo false)
 record "GC3-buffer-bounds" "$GC3_PASS" \
-  "claimable=$GC3_CLAIMABLE (open=$GC3_OPEN dep_blocked=$GC3_BLOCKED)" "18<=claimable<=60" false
+  "claimable=$GC3_CLAIMABLE (open=$GC3_OPEN dep_blocked=$GC3_BLOCKED)" \
+  "$BUFFER_FLOOR<=claimable<=$BUFFER_CEIL" false
 
 # --- emit + exit ---
 if [ "$EMIT_JSON" = "1" ]; then echo "$RESULTS"; fi
