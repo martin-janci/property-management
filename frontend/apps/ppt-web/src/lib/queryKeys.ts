@@ -311,6 +311,40 @@ export const queryKeys = {
 } as const;
 
 // ============================================================================
+// Public / Session-Scoped Query Conventions
+// ============================================================================
+
+/**
+ * Prefix that marks a query key as public (not bound to the authenticated
+ * session). Public queries survive logout — see {@link isPublicQueryKey} and
+ * the logout flow in `AuthContext`.
+ *
+ * Convention: any query whose first key segment is `'public'` is considered
+ * non-user-scoped (e.g. landing-page lookups, shared lookup tables, feature
+ * flags). All other queries are session-scoped and purged on logout.
+ *
+ * @example
+ *   useQuery({
+ *     queryKey: [PUBLIC_QUERY_PREFIX, 'feature-flags'],
+ *     queryFn: fetchFeatureFlags,
+ *   });
+ *
+ * @see Issue #712 — logout queryClient.clear() was too aggressive
+ */
+export const PUBLIC_QUERY_PREFIX = 'public' as const;
+
+/**
+ * Returns `true` when the given query key represents a public (non
+ * session-scoped) query.
+ *
+ * Used by the logout cache-purge predicate to *keep* shared/public data
+ * cached across sessions while removing user-scoped queries.
+ */
+export function isPublicQueryKey(queryKey: readonly unknown[]): boolean {
+  return queryKey.length > 0 && queryKey[0] === PUBLIC_QUERY_PREFIX;
+}
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 

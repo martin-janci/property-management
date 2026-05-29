@@ -24,6 +24,7 @@ import {
 } from '@ppt/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
+import { isPublicQueryKey } from '../lib/queryKeys';
 import {
   createContext,
   useCallback,
@@ -507,9 +508,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
    *  1. Clear localStorage tokens (immediate — prevents any further API calls
    *     from including a bearer token).
    *  2. Reset React state so the UI reflects the unauthenticated state.
-   *  3. Purge the TanStack Query cache so user-scoped data never leaks into
-   *     the next session (e.g. a different user logging in on the same device).
+   *  3. Purge session-scoped queries from the TanStack Query cache so
+   *     user-bound data never leaks into the next session. Queries whose
+   *     first key segment is `PUBLIC_QUERY_PREFIX` (`'public'`) are kept,
+   *     so non-personal data (lookup tables, feature flags, etc.) survives
+   *     and avoids a blank-screen re-fetch flash on the next login.
    *  4. Best-effort server-side token revocation (fire-and-forget).
+   *
+   * @see Issue #712 — replaced `queryClient.clear()` with a scoped removal.
    */
   const logout = useCallback(async (): Promise<void> => {
     const refreshTokenValue = tokenStorage.getRefreshToken();
@@ -518,8 +524,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     tokenStorage.clear();
     setUser(null);
 
-    // 3 — Purge all cached query data to prevent cross-session data leakage.
-    queryClient.clear();
+    // 3 — Remove only session-scoped queries; public queries are retained.
+    queryClient.removeQueries({
+      predicate: (query) => !isPublicQueryKey(query.queryKey),
+    });
 
     // 4 — Attempt to invalidate the refresh token on the server.
     if (refreshTokenValue) {
