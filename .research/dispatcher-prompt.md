@@ -525,13 +525,42 @@ Persist: `last_updated=now` (always); if `new_status != prev_status`: `status=ne
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
-If `.research/management/last-merged-review.txt` missing OR mtime > 24h:
-spawn ONE Task subagent invoking `.claude/skills/ppt-review-merged/SKILL.md`.
+**Cadence gate (finding `post-merge-gate-fooled-by-clone-mtime`).** Gate on the
+ISO timestamp stored *inside* `last-merged-review.txt`, NOT the file's mtime. A
+fresh clone resets every file's mtime to clone-time, so an mtime gate reads
+`age < 24h` forever and the review never fires again after a clone. The file's
+CONTENT is the last-run timestamp (the skill writes `date -u +%FT%TZ` into it),
+and content survives a clone untouched. Run the post-merge review when the file
+is missing/empty/unparseable OR its stored timestamp is > 24h old:
+
+```bash
+MARKER=.research/management/last-merged-review.txt
+DUE=1
+if [ -s "$MARKER" ]; then
+  LAST=$(tr -d '[:space:]' < "$MARKER")
+  LAST_EPOCH=$(date -u -d "$LAST" +%s 2>/dev/null || echo 0)
+  if [ "$LAST_EPOCH" -gt 0 ]; then
+    AGE_H=$(( ( $(date -u +%s) - LAST_EPOCH ) / 3600 ))
+    [ "$AGE_H" -lt 24 ] && DUE=0
+  fi
+  # LAST_EPOCH==0 (missing/garbled timestamp) leaves DUE=1 — fail safe = run.
+fi
+```
+
+If `DUE=1` (missing/empty/unparseable marker OR stored timestamp > 24h old):
+spawn ONE Task subagent invoking `.claude/skills/ppt-review-merged/SKILL.md`
+with `DISPATCHER_OWNED_COMMIT=1` in its env. Else SKIP (log
+`Post-merge: skipped (last review <AGE_H>h ago < 24h)`).
 
 Inputs: `repo=martin-janci/property-management`, `window=14d`, `base=dev`,
 `max_prs=15`, `label=follow-up,from-merged-review`.
 
-The skill commits + pushes its own files.
+**State-write ownership (finding `subagent-race-on-dev-push`).** With
+`DISPATCHER_OWNED_COMMIT=1` the skill WRITES `post-merge-review.json` +
+`last-merged-review.txt` into the working tree and RETURNS without
+committing/pushing. Phase 6 commits them with the rest of the dispatcher's
+`.research/` delta — one push, not two. (The skill still opens GitHub issues
+via API; that is not a `.research/` write and is unaffected.)
 
 Return EXACTLY: `scanned=<N> clean=<K> issues=<M> note=<short>`.
 
@@ -1099,6 +1128,37 @@ run**. If it doesn't return (the SDK backgrounds it past the dispatcher's
 own exit — the common case), skip this capture entirely; leave the row
 as `status=in-progress` with `claimed_at=now`, and let Phase 2 of the
 next dispatcher run observe the outcome from GitHub.
+
+### State-write ownership (single-writer contract — finding `subagent-race-on-dev-push`)
+
+**Invariant.** `.research/**` on `dev` has exactly one writer: the dispatcher
+process. Every other actor either writes to its own feature branch or acts on a
+PR through the GitHub API — never commits or pushes `.research/**`.
+
+**Why.** Each independent push to `dev` is a discrete event: `research-land`
+replays it and (outside the GITHUB_TOKEN-no-retrigger path) `version-bump` fires.
+When a spawned skill pushes its own `.research/` state mid-run, two failures
+follow: (1) the version churns once per extra push (observed 0.2.964→0.2.968 in
+one run), and (2) the dispatcher's Phase 6 `git commit` finds *nothing to commit*
+because the skill already published the delta the dispatcher intended to own.
+Collapsing all `.research/` writes into the dispatcher's two commits makes the
+Phase 6 delta deterministic and cuts dev pushes to the minimum.
+
+**Per-actor write rules:**
+
+| Actor (phase) | May write | MUST NOT |
+|---|---|---|
+| Implementer (4), rebaser (5.6), followup (5.7) | its own feature branch, inside `/tmp/ppt-worktrees/<task_id>/` | touch `.research/**`; push `dev`; run git ops in the dispatcher CWD |
+| Reviewer (5) | a GitHub PR review via API | write any file; push anything |
+| Merger (5.5) | `gh pr merge` (the PR landing) + the PR head branch for conflict fixups | write `.research/**` |
+| Analysis: dev-review (1.5), project-management (1.6), post-merge-review (2.5) | `.research/**` artifact files **in the working tree**, then RETURN | `git add/commit/push` — persistence is deferred to the owning orchestrator's commit |
+| **Orchestrator** — dispatcher (2.5/3.5/6) or routine (1.5/1.6 → its Phase 6 `git add .research/`) | commits + pushes ALL `.research/**` for the phases it owns | — |
+
+**Mechanism.** When the dispatcher spawns an analysis skill it exports
+`DISPATCHER_OWNED_COMMIT=1`. Each such skill checks that flag and, when set,
+skips its own commit/push step (it still writes its files). Phase 6 then stages
+those files alongside the assignment/action-list state and commits once. Skills
+invoked standalone (no flag) keep committing as before.
 
 STATE TRANSITION (fast-path only — gap 5):
 
@@ -1684,7 +1744,17 @@ fi
 
 git add .research/management/assignments.json \
         .research/management/assignments-archive.json \
-        [.research/management/action-list.json if refilled]
+        [.research/management/action-list.json if refilled or GC1 cascade closed rows] \
+        [.research/management/gc1-orphan-triage.md if GC1 cascade wrote it] \
+        [.research/management/post-merge-review.json .research/management/last-merged-review.txt if Phase 2.5 ran]
+# State-write ownership (finding subagent-race-on-dev-push): the dispatcher is
+# the single writer of .research/management/** for the phases IT owns, so when
+# Phase 2.5 runs its post-merge artifacts are folded into THIS commit rather
+# than pushed by ppt-review-merged itself (it now defers under
+# DISPATCHER_OWNED_COMMIT=1). All paths are under .research/management/, so the
+# commit-scope guard below still passes. (Phase 1.5/1.6 artifacts are owned by
+# the routine, not the dispatcher — the routine's own Phase 6 `git add .research/`
+# stages those; do not duplicate them here.)
 # Commit-scope guard (#526): before the dispatcher's self-commit, refuse
 # if `git diff --cached` strays outside `.research/management/`. Catches
 # the PR #496 class of failure (stop hook bundling parallel-agent work
@@ -1777,7 +1847,7 @@ Disk warning:             <none | "free=N%; cleaned to M%">         (item #7)
 Merged total: <Mt_total>; this cycle: <Mt_this>
 Failed total: <F_total>;  this cycle: <F_this>
 Buffer:     claimable=<open_claimable_count>/<BUFFER_TARGET> ceil=<BUFFER_CEIL> (open=<open_count>, dep_blocked=<dep_blocked_count>) <T0: drained -N | T1: refilled +N | T2: upstream kicked | OK>
-Post-merge: <due | skipped> [<scanned=N clean=K issues=M>]
+Post-merge: <due (last <AGE_H>h ago | no-marker) scanned=N clean=K issues=M | skipped (last <AGE_H>h ago < 24h)>   (content-age gate, not mtime)
 Hang alerts:
   WARN (review >48h): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)
   ALERT (review >7d): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)
@@ -2092,6 +2162,7 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
 - **subagent workspace isolation** (issue #7) — every Phase 4 (implementer), Phase 5.6 (rebaser), and Phase 5.7 (followup-respawn implementer) subagent MUST run its `git checkout` / `gh pr checkout` / build / commit work inside `/tmp/ppt-worktrees/<task_id>/` via the standard `git worktree add` preamble. NEVER touch the dispatcher's own working tree. Phase 5.5 (merger, API-only) and Phase 2 (read-only reconciliation) are exempt.
+- **state-write ownership / single writer** (finding `subagent-race-on-dev-push`) — `.research/**` on `dev` is written by the ORCHESTRATOR process only, never by a spawned skill. The dispatcher owns the phases it runs (the Phase 3.5 claim commit + the Phase 6 main commit); the research routine owns its own Phase 1.5/1.6 outputs via its single `git add .research/` at the routine's Phase 6. NO spawned subagent may `git add/commit/push` any `.research/**` file: analysis skills (dev-review, project-management, post-merge-review) WRITE their artifacts into the working tree and RETURN, and the owning orchestrator folds them into its one commit. Implementers/rebasers/followups commit only on their own feature branch inside their worktree; reviewers/mergers act only via the GitHub API on the PR. Each independent `.research/` push to `dev` is a separate research-land replay + version-bump and can empty the orchestrator's commit by pre-empting its delta — see the contract under "Subagent execution model". The orchestrator sets `DISPATCHER_OWNED_COMMIT=1` in the env of every analysis subagent it spawns; those skills gate their own commit/push on it. (`ppt-project-management` and `ppt-dev-review` already return without committing; `ppt-review-merged` is the one that self-pushed and is fixed here.)
 - **TEMP_PHASE_8 — self-review** — Phase 8 spawns an Opus subagent that writes a post-mortem markdown to `.research/self-improvement/<iso8601>.md`. Off-switch: `DISPATCHER_SELF_REVIEW=0`. The subagent must NOT modify any state file or commit anything. **This phase is temporary** — remove by 2026-06-30 (search `TEMP_PHASE_8` to find every related artifact).
 - **goal-check (ENFORCING, PR 2)** — Phase 6 runs `GOAL_CHECK_ENFORCE=1 .research/goal-check.sh`. GC2 (coverage regression) ABORTS the commit; GC1/GC3 are recorded but non-blocking. The `goal-check:` summary line is still written to the commit body.
 
