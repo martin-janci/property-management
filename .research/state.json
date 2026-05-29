@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-05-28T16:41:00Z",
-  "last_run_ms": 480000,
-  "last_pr_seen": 709,
+  "last_run_iso": "2026-05-29T03:18:00Z",
+  "last_run_ms": 720000,
+  "last_pr_seen": 730,
   "last_issue_seen": 716,
-  "last_commit_sha": "89d3c414c058f227125a62bc5a19e444018f6fdf",
+  "last_commit_sha": "299704ddff7eedd72e52b8876a4c1d81b1912210",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -126,6 +126,21 @@
       "runs_seen": 1,
       "last_seen": "2026-05-28",
       "recent_churn": 596
+    },
+    "frontend/packages/api-client/src/lib/fetch.test.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-29",
+      "recent_churn": 169
+    },
+    "frontend/apps/admin-web/src/pages/OAuthClientsPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-29",
+      "recent_churn": 124
+    },
+    "mobile-native/iosApp/iosAppTests/RealityPortalTests.swift": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-29",
+      "recent_churn": 75
     }
   },
   "seen_signals": [
@@ -204,12 +219,19 @@
     "unchecked-todo-portfolio-dashboard-stubs",
     "unchecked-todo-pr-476",
     "unchecked-todo-pr-497",
-    "unchecked-todo-rls-migration-residual"
+    "unchecked-todo-rls-migration-residual",
+    "code-review-api-core-llm-doc-idor",
+    "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
+    "churn-hotspot-frontend/apps/admin-web/src/pages/OAuthClientsPage.tsx",
+    "churn-hotspot-mobile-native/iosApp/iosAppTests/RealityPortalTests.swift",
+    "unchecked-todo-pr-718",
+    "dep-update-noise-2026-05-29",
+    "closed-not-merged-pr-671"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-05-23",
-    "api-core": "2026-05-25",
+    "api-core": "2026-05-29",
     "reality-server": "2026-05-26",
     "ppt-web-ui": "2026-05-27",
     "ppt-web-core": "2026-05-25",
@@ -218,9 +240,9 @@
     "mobile-native-kmp": "2026-05-26"
   },
   "stats": {
-    "runs": 13,
-    "vectors_created": 38,
-    "plans_created": 6,
+    "runs": 14,
+    "vectors_created": 39,
+    "plans_created": 7,
     "quiet_days": 0,
     "auto_fix_count": 0
   },
@@ -235,7 +257,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 7,
+    "next_index": 0,
     "role_last_run": {
       "pm-tech-lead": "2026-05-23",
       "pm-backend": "2026-05-24",
@@ -244,10 +266,10 @@
       "pm-devops": "2026-05-27",
       "pm-security": "2026-05-27",
       "pm-data": "2026-05-28",
-      "pm-integration": null
+      "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 6
+    "next_index": 7
   }
 }

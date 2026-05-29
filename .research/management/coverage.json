@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T04:35:00Z",
+  "generated": "2026-05-29T03:18:00Z",
   "scan_kind": "upkeep",
   "stories": [
     {
@@ -790,18 +790,15 @@
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "EditScheduleModal.tsx with full form",
-        "useUpdateSchedule/usePauseSchedule/useResumeSchedule hooks",
-        "API client functions pause/resume at /schedules/{id}/(pause|resume)",
-        "integrated into ReportsPage",
-        "merged PR #93"
+        "EditScheduleModal.tsx + useUpdate/usePause/useResumeSchedule hooks (PR #93/#623)",
+        "PR #643 restructured update_schedule org-scoped (WHERE id=$1 AND organization_id=$2) — closes RBAC #614 + tenant-scope #624",
+        "integrated into ReportsPage"
       ],
       "gaps": [
-        "schedule update_schedule handler missing RBAC (follow-up #614) + tenant/org scope (follow-up #624)",
-        "backend pause/resume route handlers still to be confirmed in reports.rs/report_schedule.rs"
+        "cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616)"
       ],
-      "notes": "Report schedule editor UI merged this window (PR #623) + backend report_schedule.rs in churn. Open security follow-ups: #614 update_schedule missing RBAC, #624 missing tenant/org scope — must close before promotion. Remains partial.",
-      "last_checked": "2026-05-27"
+      "notes": "Rotating-epic recheck (coverage_cursor idx 6/epic-81). #643 closed the cross-tenant/RBAC gaps (#614/#624); remaining gap is the missing cron_expression column. Stays partial.",
+      "last_checked": "2026-05-29"
     },
     {
       "epic": "epic-81",
@@ -815,18 +812,15 @@
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "ExecutionHistory.tsx + HistoryFilters.tsx",
-        "useReportExecutionHistory hook",
-        "API client getReportExecutionHistory/getReportExecutionDownloadUrl/retryReportExecution",
-        "integrated into ReportsPage",
-        "merged PR #93"
+        "report_executions table + execution-history API (PR #611)",
+        "execution-history table in ScheduleDetailPage + route (PR #547/#623)",
+        "docs/screens/ppt/reports.md updated to cover exec-history surface"
       ],
       "gaps": [
-        "backend GET /executions/{id}/download (presigned) still to confirm",
-        "retry logic end-to-end verify pending"
+        "confirm presigned download + retry end-to-end on the execution-history surface"
       ],
-      "notes": "report_executions table migration merged this window (PR #611) — execution-history backend persistence now exists; GET /schedules/{id}/executions backing store landed. Advanced toward done; remains partial pending download/retry verify.",
-      "last_checked": "2026-05-27"
+      "notes": "Rotating-epic recheck (epic-81). Exec-history API (#611) + UI (#547/#623) present; verify download/retry e2e. Stays partial.",
+      "last_checked": "2026-05-29"
     },
     {
       "epic": "epic-82",
@@ -911,15 +905,15 @@
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "ListingDetailView.swift basic detail",
-        "FavoritesView.swift exists"
+        "SwiftUI ListingDetailView + FavoritesScreen wired to reality-server (PR #688)",
+        "gesture-mask + sheet-env (LocationManager) fixes (PR #718, closes #618/#625)",
+        "draft PR #641 gap-82-4 SwiftUI listing detail in flight"
       ],
       "gaps": [
-        "PhotoGalleryView pinch-zoom not evidenced",
-        "favorites sync across views unverified",
-        "share feature integration unclear"
+        "remaining SwiftUI listing-detail polish in draft #641; no docs/screens/ reality-mobile maps"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-05-29",
+      "notes": "#718 fixed ZoomablePhoto DragGesture vs TabView swipe (#618) + FilterSheet LocationManager env (#625). Stays partial pending draft #641."
     },
     {
       "epic": "epic-82",
@@ -1037,22 +1031,23 @@
       "id": "84-2-esignature-email",
       "title": "E-Signature Email Integration",
       "phase": "phase2",
-      "status": "not-started",
+      "status": "partial",
       "confidence": "high",
       "platform": [
         "backend"
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "forms.rs basic signature image validation only - no workflow"
+        "e-signature workflow + HMAC provider (PR #513/#495)",
+        "manager/landlord added to signerParties (PR #719)",
+        "cs/de i18n keys + all 6 PR#513 follow-up issues resolved (#719)",
+        "request/track UI present in LeaseDetailPage"
       ],
       "gaps": [
-        "no DocuSign/e-signature service integration",
-        "no signature request email templates",
-        "no reminder scheduling system",
-        "no decline notification handling"
+        "e-signature email-send + status-tracking polish; webhook idempotency guard (terminal-state) still missing"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-05-29",
+      "notes": "PR #719 (gap-84-2) resolved all 6 PR#513 follow-ups (signerParties manager/landlord, cs/de i18n); moved not-started -> partial. Remaining: webhook idempotency + status-tracking polish."
     },
     {
       "epic": "epic-84",
