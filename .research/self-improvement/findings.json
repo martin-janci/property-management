@@ -36,7 +36,7 @@
       ],
       "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
       "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
-      "operator_notes": ""
+      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "archive-append-not-idempotent-duplicate-rows",
