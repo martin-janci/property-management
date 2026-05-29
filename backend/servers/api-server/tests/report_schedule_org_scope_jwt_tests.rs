@@ -172,13 +172,12 @@ async fn pause_schedule_from_other_org_returns_404(pool: PgPool) {
     seed_membership(&pool, org_b, attacker_user_id, "manager").await;
 
     // Sanity: schedule starts `is_active = true, status = 'active'`.
-    let (initial_active, initial_status): (bool, String) = sqlx::query_as(
-        "SELECT is_active, status FROM report_schedules WHERE id = $1",
-    )
-    .bind(schedule_in_a)
-    .fetch_one(&pool)
-    .await
-    .expect("fetch initial state");
+    let (initial_active, initial_status): (bool, String) =
+        sqlx::query_as("SELECT is_active, status FROM report_schedules WHERE id = $1")
+            .bind(schedule_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch initial state");
     assert!(initial_active, "pre: schedule must start active");
     assert_eq!(initial_status, "active", "pre: status must start 'active'");
 
@@ -201,13 +200,12 @@ async fn pause_schedule_from_other_org_returns_404(pool: PgPool) {
     );
 
     // The schedule in Org A must be untouched — same is_active + status.
-    let (after_active, after_status): (bool, String) = sqlx::query_as(
-        "SELECT is_active, status FROM report_schedules WHERE id = $1",
-    )
-    .bind(schedule_in_a)
-    .fetch_one(&pool)
-    .await
-    .expect("fetch post-call state");
+    let (after_active, after_status): (bool, String) =
+        sqlx::query_as("SELECT is_active, status FROM report_schedules WHERE id = $1")
+            .bind(schedule_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch post-call state");
     assert!(
         after_active,
         "#710: Org A schedule must remain active after cross-tenant pause attempt"
@@ -265,13 +263,12 @@ async fn resume_schedule_from_other_org_returns_404(pool: PgPool) {
     );
 
     // Schedule must remain paused.
-    let (after_active, after_status): (bool, String) = sqlx::query_as(
-        "SELECT is_active, status FROM report_schedules WHERE id = $1",
-    )
-    .bind(schedule_in_a)
-    .fetch_one(&pool)
-    .await
-    .expect("fetch post-call state");
+    let (after_active, after_status): (bool, String) =
+        sqlx::query_as("SELECT is_active, status FROM report_schedules WHERE id = $1")
+            .bind(schedule_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch post-call state");
     assert!(
         !after_active,
         "#710: Org A schedule must remain paused after cross-tenant resume attempt"
