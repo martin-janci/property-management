@@ -311,7 +311,7 @@ struct SearchView: View {
     private func buildKMPFilters() -> ListingSearchFilters? {
         guard filters.hasActiveFilters else { return nil }
 
-        // Map Swift ListingTypeFilter to KMP ListingType
+        // Map Swift ListingKind to KMP ListingType
         var listingType: ListingType? = nil
         if let swiftType = filters.listingType {
             switch swiftType {
