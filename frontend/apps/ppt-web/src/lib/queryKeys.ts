@@ -311,38 +311,47 @@ export const queryKeys = {
 } as const;
 
 // ============================================================================
-// Public / Session-Scoped Query Conventions
+// Auth-Scoped Query Roots (used by AuthContext.logout)
 // ============================================================================
 
 /**
- * Prefix that marks a query key as public (not bound to the authenticated
- * session). Public queries survive logout — see {@link isPublicQueryKey} and
- * the logout flow in `AuthContext`.
+ * First-segment root keys of every query that is bound to the authenticated
+ * session. On logout, `AuthContext` iterates this list and calls
+ * `queryClient.removeQueries({ queryKey: [root] })` for each entry, scoping
+ * the cache purge to user data while leaving any unrelated/non-session cache
+ * (e.g. router-internal caches, future public/lookup queries) untouched.
  *
- * Convention: any query whose first key segment is `'public'` is considered
- * non-user-scoped (e.g. landing-page lookups, shared lookup tables, feature
- * flags). All other queries are session-scoped and purged on logout.
+ * Covers both the centralized {@link queryKeys} factory roots and the
+ * ad-hoc roots used directly in feature hooks (`developer`, `ocr`,
+ * `actionQueue`, `executionLogs`, `executionStats`, `ai-chat`).
  *
- * @example
- *   useQuery({
- *     queryKey: [PUBLIC_QUERY_PREFIX, 'feature-flags'],
- *     queryFn: fetchFeatureFlags,
- *   });
+ * When you add a new auth-scoped query root, add it here too — otherwise the
+ * cached data will leak into the next user's session.
  *
- * @see Issue #712 — logout queryClient.clear() was too aggressive
+ * @see Issue #712 — logout `queryClient.clear()` was too aggressive
  */
-export const PUBLIC_QUERY_PREFIX = 'public' as const;
-
-/**
- * Returns `true` when the given query key represents a public (non
- * session-scoped) query.
- *
- * Used by the logout cache-purge predicate to *keep* shared/public data
- * cached across sessions while removing user-scoped queries.
- */
-export function isPublicQueryKey(queryKey: readonly unknown[]): boolean {
-  return queryKey.length > 0 && queryKey[0] === PUBLIC_QUERY_PREFIX;
-}
+export const AUTHED_QUERY_KEY_ROOTS = [
+  // queryKeys factory roots
+  'announcements',
+  'faults',
+  'documents',
+  'votes',
+  'messages',
+  'neighbors',
+  'forms',
+  'person-months',
+  'self-readings',
+  'user',
+  'buildings',
+  'notifications',
+  // Ad-hoc roots used directly in feature hooks
+  'developer',
+  'ocr',
+  'actionQueue',
+  'executionLogs',
+  'executionStats',
+  'ai-chat',
+] as const;
 
 // ============================================================================
 // Type Exports

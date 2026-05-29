@@ -24,7 +24,6 @@ import {
 } from '@ppt/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
-import { isPublicQueryKey } from '../lib/queryKeys';
 import {
   createContext,
   useCallback,
@@ -34,6 +33,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { AUTHED_QUERY_KEY_ROOTS } from '../lib/queryKeys';
 
 export type { AuthErrorCode, AuthUser };
 // Re-export types from api-client for convenience
@@ -509,10 +509,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
    *     from including a bearer token).
    *  2. Reset React state so the UI reflects the unauthenticated state.
    *  3. Purge session-scoped queries from the TanStack Query cache so
-   *     user-bound data never leaks into the next session. Queries whose
-   *     first key segment is `PUBLIC_QUERY_PREFIX` (`'public'`) are kept,
-   *     so non-personal data (lookup tables, feature flags, etc.) survives
-   *     and avoids a blank-screen re-fetch flash on the next login.
+   *     user-bound data never leaks into the next session. We iterate the
+   *     explicit `AUTHED_QUERY_KEY_ROOTS` list and remove each subtree —
+   *     anything outside that list (router-internal caches, third-party
+   *     library caches, future lookup tables) is left untouched.
    *  4. Best-effort server-side token revocation (fire-and-forget).
    *
    * @see Issue #712 — replaced `queryClient.clear()` with a scoped removal.
@@ -524,10 +524,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     tokenStorage.clear();
     setUser(null);
 
-    // 3 — Remove only session-scoped queries; public queries are retained.
-    queryClient.removeQueries({
-      predicate: (query) => !isPublicQueryKey(query.queryKey),
-    });
+    // 3 — Remove every auth-scoped query subtree. Each root is the first
+    // segment of a query key (see lib/queryKeys.ts for the catalogue);
+    // `removeQueries({ queryKey: [root] })` does a prefix match.
+    for (const root of AUTHED_QUERY_KEY_ROOTS) {
+      queryClient.removeQueries({ queryKey: [root] });
+    }
 
     // 4 — Attempt to invalidate the refresh token on the server.
     if (refreshTokenValue) {

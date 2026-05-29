@@ -6,8 +6,8 @@
  *      redirect to /login.
  *   2. User-scoped (protected) cached queries are removed from the
  *      TanStack Query cache.
- *   3. Public queries (those whose first key segment is `PUBLIC_QUERY_PREFIX`)
- *      survive logout — avoiding the blank-screen re-fetch flash.
+ *   3. Queries whose first key segment is NOT in `AUTHED_QUERY_KEY_ROOTS`
+ *      survive logout — only the explicit auth-scoped subtrees are purged.
  */
 /// <reference types="vitest/globals" />
 
@@ -52,7 +52,7 @@ import { useEffect } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProtectedRoute } from '../components/ProtectedRoute';
-import { PUBLIC_QUERY_PREFIX } from '../lib/queryKeys';
+import { AUTHED_QUERY_KEY_ROOTS } from '../lib/queryKeys';
 import { AuthProvider, useAuth } from './AuthContext';
 
 // ---------------------------------------------------------------------------
@@ -174,7 +174,7 @@ describe('AuthContext.logout — Issue #712', () => {
     localStorage.clear();
   });
 
-  it('removes session-scoped cached queries while preserving public queries', async () => {
+  it('removes auth-scoped subtrees while leaving non-auth-scoped cache intact', async () => {
     const { ctxRef, queryClient } = renderAuthApp();
 
     // Wait for AuthProvider to bootstrap the authed state from storage.
@@ -182,18 +182,33 @@ describe('AuthContext.logout — Issue #712', () => {
       expect(ctxRef.current?.isAuthenticated).toBe(true);
     });
 
-    // Seed three cache entries:
-    //   - protected (user-scoped)
-    //   - protected (another resource)
-    //   - public (must survive logout)
+    // Sanity: AUTHED_QUERY_KEY_ROOTS must cover the real query keys we
+    // expect to evict. If a root is dropped from the source list, this
+    // assertion will fail loudly rather than letting data silently leak.
+    for (const root of ['user', 'faults', 'announcements', 'ai-chat', 'developer']) {
+      expect(AUTHED_QUERY_KEY_ROOTS).toContain(root);
+    }
+
+    // Seed auth-scoped entries using REAL query keys from the codebase —
+    // factory keys (`['user','profile']`, `['faults','list',…]`,
+    // `['announcements',…]`) and ad-hoc keys (`['ai-chat',…]`,
+    // `['developer','apiKeys']`) — plus a non-auth-scoped key
+    // (`['router','breadcrumbs']`) whose root is intentionally absent
+    // from AUTHED_QUERY_KEY_ROOTS and must survive logout.
     queryClient.setQueryData(['user', 'profile'], { id: 'u-1', name: 'Alice' });
     queryClient.setQueryData(['faults', 'list', { page: 1 }], [{ id: 'f-1' }]);
-    queryClient.setQueryData([PUBLIC_QUERY_PREFIX, 'feature-flags'], { newFaultsUi: true });
+    queryClient.setQueryData(['announcements', 'unread-count'], 3);
+    queryClient.setQueryData(['ai-chat', 'sessions'], [{ id: 's-1' }]);
+    queryClient.setQueryData(['developer', 'apiKeys'], [{ id: 'k-1' }]);
+    queryClient.setQueryData(['router', 'breadcrumbs'], ['home']);
 
-    // Sanity: all three are present before logout.
+    // Sanity: all entries present before logout.
     expect(queryClient.getQueryData(['user', 'profile'])).toBeDefined();
     expect(queryClient.getQueryData(['faults', 'list', { page: 1 }])).toBeDefined();
-    expect(queryClient.getQueryData([PUBLIC_QUERY_PREFIX, 'feature-flags'])).toBeDefined();
+    expect(queryClient.getQueryData(['announcements', 'unread-count'])).toBeDefined();
+    expect(queryClient.getQueryData(['ai-chat', 'sessions'])).toBeDefined();
+    expect(queryClient.getQueryData(['developer', 'apiKeys'])).toBeDefined();
+    expect(queryClient.getQueryData(['router', 'breadcrumbs'])).toBeDefined();
 
     // Trigger logout via the live context.
     await act(async () => {
@@ -207,14 +222,16 @@ describe('AuthContext.logout — Issue #712', () => {
     expect(screen.queryByText('Dashboard page')).not.toBeInTheDocument();
     expect(ctxRef.current?.isAuthenticated).toBe(false);
 
-    // (b) Session-scoped queries are gone.
+    // (b) Every auth-scoped subtree is gone — both factory keys and ad-hoc.
     expect(queryClient.getQueryData(['user', 'profile'])).toBeUndefined();
     expect(queryClient.getQueryData(['faults', 'list', { page: 1 }])).toBeUndefined();
+    expect(queryClient.getQueryData(['announcements', 'unread-count'])).toBeUndefined();
+    expect(queryClient.getQueryData(['ai-chat', 'sessions'])).toBeUndefined();
+    expect(queryClient.getQueryData(['developer', 'apiKeys'])).toBeUndefined();
 
-    // (c) Public queries survive — no blank-screen re-fetch on next login.
-    expect(queryClient.getQueryData([PUBLIC_QUERY_PREFIX, 'feature-flags'])).toEqual({
-      newFaultsUi: true,
-    });
+    // (c) Non-auth-scoped cache survives — the purge is bounded to the
+    // AUTHED_QUERY_KEY_ROOTS list, not a blanket `queryClient.clear()`.
+    expect(queryClient.getQueryData(['router', 'breadcrumbs'])).toEqual(['home']);
 
     // Token storage is cleared.
     expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
