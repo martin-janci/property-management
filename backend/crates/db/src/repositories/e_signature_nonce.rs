@@ -73,11 +73,7 @@ impl ESignatureNonceRepository {
     ///
     /// Mostly useful for tests and audit endpoints; the hot path should
     /// rely on `record_nonce` returning [`RecordNonceError::Replay`].
-    pub async fn nonce_exists(
-        &self,
-        envelope_id: Uuid,
-        nonce: Uuid,
-    ) -> Result<bool, SqlxError> {
+    pub async fn nonce_exists(&self, envelope_id: Uuid, nonce: Uuid) -> Result<bool, SqlxError> {
         let row: Option<(Uuid,)> = sqlx::query_as(
             r#"
             SELECT id FROM e_signature_nonces
