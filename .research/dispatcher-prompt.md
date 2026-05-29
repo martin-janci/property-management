@@ -237,12 +237,22 @@ LOCK_JSON=$(jq -nc --arg r "$RUN_ID" --arg h "$HOST" \
   '{run_id:$r, host:$h, acquired_at:$acq, expires_at:$exp}')
 
 acquire_lock() {
-  # 1) create the tag object carrying the payload (cheap; orphaned if we lose the race)
+  # Fast-path: if the ref already exists, someone holds it — skip the tag-object
+  # POST entirely. This avoids leaking unreferenced tag objects on every contended
+  # acquire (a non-trivial accumulation at ~12 runs/day over months). The two-step
+  # is still required when the ref does NOT exist because POST /git/refs needs an
+  # object to point at, but the common contended case is now zero-side-effect.
+  if gh api "/repos/$REPO/git/$LOCK_REF" --jq .object.sha >/dev/null 2>&1; then
+    return 1                              # ref exists → contended; caller reads holder
+  fi
+  # 1) create the tag object carrying the payload (cheap; orphaned only if we
+  #    lose the race between the existence-check above and the ref POST below)
   local tag_sha
   tag_sha=$(gh api -X POST "/repos/$REPO/git/tags" \
     -f tag=dispatcher-lock -f message="$LOCK_JSON" -f object="$BASE_SHA" -f type=commit \
     --jq .sha 2>/dev/null) || return 1
-  # 2) atomic CAS: create the ref pointing at it. 201 = we won; 422 = already held.
+  # 2) atomic CAS: create the ref pointing at it. 201 = we won; 422 = already held
+  #    (lost the narrow race). Orphaned tag in the 422 case is documented above.
   gh api -X POST "/repos/$REPO/git/refs" \
     -f ref="$LOCK_REF" -f sha="$tag_sha" >/dev/null 2>&1
 }
@@ -254,7 +264,20 @@ read_holder_field() {  # $1 = json key; echoes the current holder's value, or em
     | jq -r --arg k "$1" '.[$k] // empty' 2>/dev/null
 }
 read_holder_exp()        { read_holder_field expires_at; }
-read_holder_exp_runid()  { read_holder_field run_id; }
+read_holder_runid()      { read_holder_field run_id; }
+
+release_lock() {
+  [ "${DISPATCHER_LOCK_HELD:-0}" = "1" ] || return 0
+  # Only delete a lock WE still own — if another run stole it after our TTL
+  # lapsed, leave theirs alone (read_holder_runid defined above).
+  local cur; cur=$(read_holder_runid)
+  if [ "$cur" = "$RUN_ID" ]; then
+    gh api -X DELETE "/repos/$REPO/git/$DISPATCHER_LOCK_REF" >/dev/null 2>&1 \
+      && echo "lock: released ($RUN_ID)" || echo "lock: release failed — TTL (${LOCK_TTL_MIN}m) will reclaim"
+  else
+    echo "lock: not ours anymore (cur=$cur) — leaving for $cur"
+  fi
+}
 
 if ! acquire_lock; then
   HOLDER_EXP=$(read_holder_exp)
@@ -268,32 +291,29 @@ if ! acquire_lock; then
     -f message="$LOCK_JSON" -f object="$BASE_SHA" -f type=commit --jq .sha 2>/dev/null)
   gh api -X PATCH "/repos/$REPO/git/$LOCK_REF" -f sha="$STEAL_TAG" -F force=true >/dev/null 2>&1 \
     || { echo "lock: steal lost to a concurrent steal — aborting fast."; exit 0; }
+  # Install release path BEFORE the re-confirm — any failure between the PATCH
+  # success above and a later trap install would otherwise leak the stolen lock
+  # until TTL expiry. release_lock is idempotent and ownership-checked, so it's
+  # safe even if we lose the re-confirm right below.
+  export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
+  trap release_lock EXIT
   HOLDER_EXP=$(read_holder_exp)          # re-read: confirm WE are the holder now
   [ "$HOLDER_EXP" != "$((NOW_EPOCH + LOCK_TTL_MIN*60))" ] && { echo "lock: lost re-confirm — aborting."; exit 0; }
+else
+  export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
+  trap release_lock EXIT                 # install immediately on a clean acquire
 fi
-export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
 echo "lock: acquired ($RUN_ID, ttl=${LOCK_TTL_MIN}m)"
 ```
 
 **Release contract.** The lock MUST be released on EVERY exit path — normal
 completion, a Phase 6 abort (goal-check / self-test / scope-guard bail), or a
-mid-run error. Release is idempotent and only deletes a lock this run owns:
-
-```bash
-release_lock() {
-  [ "${DISPATCHER_LOCK_HELD:-0}" = "1" ] || return 0
-  # Only delete a lock WE still own — if another run stole it after our TTL
-  # lapsed, leave theirs alone (read_holder_exp_runid defined above).
-  local cur; cur=$(read_holder_exp_runid)
-  if [ "$cur" = "$RUN_ID" ]; then
-    gh api -X DELETE "/repos/$REPO/git/$DISPATCHER_LOCK_REF" >/dev/null 2>&1 \
-      && echo "lock: released ($RUN_ID)" || echo "lock: release failed — TTL (${LOCK_TTL_MIN}m) will reclaim"
-  else
-    echo "lock: not ours anymore (cur=$cur) — leaving for $cur"
-  fi
-}
-trap release_lock EXIT       # fires on normal exit, error, and the `exit 0` aborts above
-```
+mid-run error. `release_lock` is defined *before* `acquire_lock` is invoked
+(see above) and the `trap` is installed the instant we win the ref — on a
+clean acquire, in the `else` branch; on a steal, between the PATCH success
+and the re-confirm read. This closes the window where a failure between
+stealing the ref and installing the trap would have leaked the lock until
+TTL expiry.
 
 > The `exit 0` fast-abort *before* `DISPATCHER_LOCK_HELD=1` is set leaves no lock
 > to release (we never acquired one) — correct. After acquisition, the `trap`
@@ -666,8 +686,29 @@ BUFFER_CEIL="${BUFFER_CEIL:-$(read_bound BUFFER_CEIL)}"
 export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
 ```
 
-- **Tier 0 (overflow drain — NEW):** if `open_claimable_count > BUFFER_CEIL` → the buffer is overfull (a coverage-rubric or planner push exceeded the cap; Tier 1's own top-up can never overshoot, but external pushes can). **Drain the excess back to backlog** so claimable converges to `BUFFER_CEIL`: sort the currently-claimable open items by ascending priority/score and set `status="deferred"` on the lowest-scoring `(open_claimable_count - BUFFER_CEIL)` of them (they stay in `action-list.json`, just leave the claimable pool; a later run re-opens them once the buffer drops below `BUFFER_TARGET`). This is a bounded, scored drop — **never silent**: log each deferred id. Log `Tier 0: drained <N> (claimable <old> → <BUFFER_CEIL>); deferred=[<id>, …]`. Include `action-list.json` in the Phase 6 commit when any item is deferred.
-- **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
+- **Tier 0 (overflow drain — NEW):** if `open_claimable_count > BUFFER_CEIL` → the buffer is overfull (a coverage-rubric or planner push exceeded the cap; Tier 1's own top-up can never overshoot, but external pushes can). **Drain the excess back to backlog** so claimable converges to `BUFFER_CEIL`. The sort key is the canonical priority rank — `critical=4, high=3, medium=2, low=1` (anything else=0), the same `pri_rank` used by `.research/pick-target-epic.sh:99-104` — **ascending**, with `id` ascending as the deterministic tiebreaker so two runs picking the same overflowing buffer drop the same rows. Set `status="deferred"` on the lowest-ranking `(open_claimable_count - BUFFER_CEIL)` items (they stay in `action-list.json`, just leave the claimable pool — Tier 1 re-opens them per the inverse path below). This is a bounded, scored drop — **never silent**: log each deferred id with its rank. Log `Tier 0: drained <N> (claimable <old> → <BUFFER_CEIL>); deferred=[<id> rank=<r>, …]`. Include `action-list.json` in the Phase 6 commit when any item is deferred.
+
+  Concrete jq (mirrors `pick-target-epic.sh`'s pri_rank — keep them in sync; any deviation re-opens the determinism gap this finding closed):
+
+  ```bash
+  jq -r '
+    def pri_rank:
+      if . == "critical" then 4
+      elif . == "high" then 3
+      elif . == "medium" then 2
+      elif . == "low" then 1
+      else 0 end;
+    [ .items[] | select(.status=="open") ]
+    | map(. + { _rank: (.priority | pri_rank) })
+    | sort_by([._rank, .id])
+    | .[0:(($claimable | tonumber) - ($ceil | tonumber))]
+    | .[].id
+  ' --arg claimable "$open_claimable_count" --arg ceil "$BUFFER_CEIL" \
+    .research/management/action-list.json
+  ```
+
+  **Self-test impact.** `"deferred"` is a new action-list `status` value not present in any existing fixture. Self-tests that classify rows by status (T24 one-open-per-stem, the legacy-dependency invariants, any coverage of `action-list.json` rows) must treat `deferred` as a **non-terminal claimable-pool exclusion** — equivalent to `open` for stem-uniqueness and dep-graph checks, but NOT counted toward `open_claimable_count`. When adding fixtures, include at least one `deferred` row so the predicates are exercised.
+- **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **first, re-open any deferred rows** (inverse of Tier 0): flip `status` from `deferred` back to `open` in `pri_rank` *descending* order (id ascending tiebreaker) until either no deferred rows remain OR `open_claimable_count == BUFFER_TARGET`. This is the closing half of the Tier 0 / Tier 1 cycle — without it, deferred rows would accumulate and the buffer could starve while a valid backlog sits idle. Log `Tier 1: re-opened <N> deferred [<id>, …]` when any flip occurs. **Then**, if still below `BUFFER_FLOOR`, **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
 
   ```bash
