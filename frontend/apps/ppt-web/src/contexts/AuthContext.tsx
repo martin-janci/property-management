@@ -33,6 +33,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { AUTHED_QUERY_KEY_ROOTS } from '../lib/queryKeys';
 
 export type { AuthErrorCode, AuthUser };
 // Re-export types from api-client for convenience
@@ -507,9 +508,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
    *  1. Clear localStorage tokens (immediate — prevents any further API calls
    *     from including a bearer token).
    *  2. Reset React state so the UI reflects the unauthenticated state.
-   *  3. Purge the TanStack Query cache so user-scoped data never leaks into
-   *     the next session (e.g. a different user logging in on the same device).
+   *  3. Purge session-scoped queries from the TanStack Query cache so
+   *     user-bound data never leaks into the next session. We iterate the
+   *     explicit `AUTHED_QUERY_KEY_ROOTS` list and remove each subtree —
+   *     anything outside that list (router-internal caches, third-party
+   *     library caches, future lookup tables) is left untouched.
    *  4. Best-effort server-side token revocation (fire-and-forget).
+   *
+   * @see Issue #712 — replaced `queryClient.clear()` with a scoped removal.
    */
   const logout = useCallback(async (): Promise<void> => {
     const refreshTokenValue = tokenStorage.getRefreshToken();
@@ -518,8 +524,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     tokenStorage.clear();
     setUser(null);
 
-    // 3 — Purge all cached query data to prevent cross-session data leakage.
-    queryClient.clear();
+    // 3 — Remove every auth-scoped query subtree. Each root is the first
+    // segment of a query key (see lib/queryKeys.ts for the catalogue);
+    // `removeQueries({ queryKey: [root] })` does a prefix match.
+    for (const root of AUTHED_QUERY_KEY_ROOTS) {
+      queryClient.removeQueries({ queryKey: [root] });
+    }
 
     // 4 — Attempt to invalidate the refresh token on the server.
     if (refreshTokenValue) {
