@@ -541,6 +541,32 @@ Return EXACTLY: `scanned=<N> clean=<K> issues=<M> note=<short>`.
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
+**Coverage referential-integrity cascade (NEW — finding `goal-check-gc1-orphan-action-list-items`).**
+Run this FIRST, before computing the claimable pool — closing shipped-but-open
+items shrinks `open_count`, so the same leak no longer inflates the buffer (it
+was a hidden contributor to the GC3 overshoot too). The cascade is the
+idempotent `gc1-reconcile.sh` and drains the two ACTIONABLE GC1 violations:
+
+```bash
+# (1) archive-terminal leak → auto-close (open gap item whose exact task_id is
+#     already merged/done in the archive; same leak as reclaim-of-already-merged-task-id).
+# (2) stem orphan → emit to gc1-orphan-triage.md for a coverage author (NOT closed:
+#     these are real stories missing from coverage.json — relink, never prune).
+# Legitimate open follow-ups under a done story (exact task not merged) are left alone.
+bash .research/gc1-reconcile.sh --apply
+```
+
+This is bounded and self-describing: every closed row gets a `gc1_closed`
+stamp (merged PR + date), every orphan lands in the triage doc — **never a
+silent prune of live work**. Include `action-list.json` (and the triage doc)
+in the Phase 6 commit when the cascade closed any row. Matching is by the
+`<epic>-<story>` stem, identical to `goal-check.sh` GC1 — the stem, not the
+descriptive slug, is the stable join key (the slug mismatch is what made GC1
+false-flag ~95 live items as orphans before this fix). Going forward GC1 stays
+green run-to-run because the leak is drained here every cycle; once the orphan
+triage backlog reaches 0 (coverage authored for the missing stems), flip GC1 to
+a hard Phase 6 gate (`hard=true`) the same way GC2 is enforced today.
+
 **Archive lookup pattern (issue #9 — token spending).** With terminal rows
 split into `assignments-archive.json`, the dep_blocked check below MUST
 consult BOTH files when resolving a `depends_on` entry. Compute a set of
@@ -1740,6 +1766,7 @@ Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; 
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
+GC1 cascade:              <closed-leak=<N> orphan-triage=<M> | clean>   (gc1-reconcile; archive-terminal closes + coverage-missing orphans)
 Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
 Tier 2 response:          <http=<code> body="<truncated>" | not-fired>          (issue #5)

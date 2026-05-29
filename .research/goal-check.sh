@@ -17,6 +17,7 @@ set -euo pipefail
 COVERAGE="${COVERAGE:-.research/management/coverage.json}"
 ACTION_LIST="${ACTION_LIST:-.research/management/action-list.json}"
 ASSIGN="${ASSIGN:-.research/management/assignments.json}"
+ARCHIVE="${ARCHIVE:-.research/management/assignments-archive.json}"
 ENFORCE="${GOAL_CHECK_ENFORCE:-0}"
 EMIT_JSON=0
 [ "${1:-}" = "--json" ] && EMIT_JSON=1
@@ -57,26 +58,38 @@ for f in "$COVERAGE" "$ACTION_LIST" "$ASSIGN"; do
 done
 
 # --- GC1: coverage referential integrity (record-only) ---
-# (a) every gap-* action-list item maps to a real coverage story
-#     (a story id is a prefix of the gap-id with the leading "gap-" stripped);
-# (b) no `done` story retains an open gap-* task.
-GC1_ORPHANS=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile cov "$COVERAGE" '
-  ($cov[0].stories | map(.id)) as $sids
-  | [ $al[0].items[]
-      | select(.id | startswith("gap-"))
-      | (.id | ltrimstr("gap-")) as $rest
-      | select([ $sids[] | . as $sid | select($rest | startswith($sid)) ] | length == 0)
-      | .id ] | length')
-GC1_DONE_OPEN=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile cov "$COVERAGE" '
-  ($cov[0].stories | map(select(.status=="done") | .id)) as $done
+# Match on the <epic>-<story> NUMERIC STEM, never the full slug. Coverage story
+# ids and action-list gap ids carry DIFFERENT descriptive slugs for the same
+# story (cov "10b-3-platform-health-monitoring" vs gap "gap-10b-3-admin-health-ui"),
+# so the old full-slug prefix match false-flagged ~95 live items as orphans.
+# The stem (e.g. "10b-3", "8a-3", "7a-1") is the stable join key.
+#
+# (a) orphans: a coverage-keyed gap item (id matches gap-<num>-<num>…) whose
+#     stem maps to NO coverage story. Ad-hoc gaps (e.g. gap-security-*) are not
+#     coverage-keyed and are exempt. A true orphan means coverage is missing
+#     that story — author it (relink), do not prune live work.
+# (b) leak: an OPEN gap item whose EXACT task_id is already merged/done in the
+#     archive — shipped-but-never-closed. This replaces the old story-level
+#     "done story has open gap" check, which false-alarmed on legitimate open
+#     follow-ups under a done story (tests, retries, v2). The per-task archive
+#     signal is precise and is the same leak as finding reclaim-of-already-merged-task-id.
+GC1_STEM='capture("^(?<s>[0-9]+[a-z]?-[0-9]+)").s'
+GC1_ORPHANS=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile cov "$COVERAGE" "
+  (\$cov[0].stories | map(.id | $GC1_STEM) | unique) as \$cstems
+  | [ \$al[0].items[]
+      | select(.id | test(\"^gap-[0-9]+[a-z]?-[0-9]+\"))
+      | ((.id | ltrimstr(\"gap-\")) | $GC1_STEM) as \$g
+      | select((\$cstems | index(\$g)) == null)
+      | .id ] | length")
+GC1_LEAK=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile arc "$ARCHIVE" '
+  ($arc[0].assignments | map(select(.status=="merged" or .status=="done") | .task_id)) as $term
   | [ $al[0].items[]
       | select(.status=="open" and (.id | startswith("gap-")))
-      | (.id | ltrimstr("gap-")) as $rest
-      | select([ $done[] | . as $sid | select($rest | startswith($sid)) ] | length > 0)
-      | .id ] | length')
-GC1_PASS=$([ "$GC1_ORPHANS" = "0" ] && [ "$GC1_DONE_OPEN" = "0" ] && echo true || echo false)
+      | .id as $id | select($term | index($id))
+      | $id ] | length')
+GC1_PASS=$([ "$GC1_ORPHANS" = "0" ] && [ "$GC1_LEAK" = "0" ] && echo true || echo false)
 record "GC1-referential-integrity" "$GC1_PASS" \
-  "orphans=$GC1_ORPHANS done_with_open_gap=$GC1_DONE_OPEN" "orphans=0 done_with_open_gap=0" false
+  "orphans=$GC1_ORPHANS archive_terminal_leak=$GC1_LEAK" "orphans=0 archive_terminal_leak=0" false
 
 # --- GC2: coverage progress — done-story count is monotonic non-decreasing
 # vs the previously-committed coverage.json (HEAD). This is the HARD-FAIL
