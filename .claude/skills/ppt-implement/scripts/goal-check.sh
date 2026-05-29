@@ -23,8 +23,9 @@
 #
 # Exit codes:
 #   0 = all hard checks passed (warnings allowed)
-#   1 = at least one hard check failed
-#   64 = bad usage (missing args, jq absent, plan file absent)
+#   1 = at least one hard check failed (incl. a missing plan file, which is
+#       an IG1 FAIL — not a usage error)
+#   64 = bad usage (missing/empty flag args, jq absent)
 #
 # Goal coverage:
 #   IG1 plan exists                                 HARD
@@ -42,11 +43,22 @@ SLUG=""
 BASE="dev"
 SKIP_LIST=""
 
+# Under `set -u`, a bare `--slug` (no value) would otherwise abort with an
+# unbound-variable error and exit 1. Validate the value is present so the
+# script emits a consistent usage error (exit 64) instead.
+require_val() {
+  # $1 = flag name, $2 = remaining arg count ($#)
+  if [ "$2" -lt 2 ]; then
+    echo "error: $1 requires a value" >&2
+    exit 64
+  fi
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
-    --slug) SLUG="$2"; shift 2;;
-    --base) BASE="$2"; shift 2;;
-    --skip) SKIP_LIST="$2"; shift 2;;
+    --slug) require_val "$1" "$#"; SLUG="$2"; shift 2;;
+    --base) require_val "$1" "$#"; BASE="$2"; shift 2;;
+    --skip) require_val "$1" "$#"; SKIP_LIST="$2"; shift 2;;
     -h|--help)
       sed -n '2,40p' "$0"
       exit 0
@@ -108,10 +120,12 @@ else
     in_fm { next }
     /^# / { print; exit }
   ' "$PLAN_PATH")"
-  if [ -n "$first_h1" ]; then
-    ok "first H1: '$first_h1'"
-  else
+  if [ -z "$first_h1" ]; then
     fail "plan has no markdown H1 after optional frontmatter"
+  elif [ "$first_h1" = "# $SLUG" ]; then
+    ok "first H1 matches slug: '$first_h1'"
+  else
+    fail "first H1 is '$first_h1' — expected '# $SLUG' (per implementer-prompt.md IG1)"
   fi
 fi
 echo
@@ -144,7 +158,7 @@ else
   # Range: BASE..HEAD on this branch.
   range="$BASE..HEAD"
   if ! git -C "$REPO_ROOT" rev-parse "$BASE" >/dev/null 2>&1; then
-    warn "base '$BASE' not found locally — cannot diff. Run: git fetch origin $BASE"
+    fail "base '$BASE' not found locally — cannot verify this HARD check. Run: git fetch origin $BASE (or pass --skip IG3 if the vector truly doesn't need it)"
   else
     test_commits="$(git -C "$REPO_ROOT" log "$range" --pretty=%s 2>/dev/null | grep -cE '^test(\([^)]+\))?:' || true)"
     fix_commits="$(git -C "$REPO_ROOT" log "$range" --pretty=%s 2>/dev/null | grep -cE '^(fix|feat|perf|refactor)(\([^)]+\))?:' || true)"
@@ -212,7 +226,7 @@ else
     ok "no Out-of-scope paths declared"
   else
     if ! git -C "$REPO_ROOT" rev-parse "$BASE" >/dev/null 2>&1; then
-      warn "base '$BASE' not found — cannot diff against OOS paths"
+      fail "base '$BASE' not found — cannot verify OOS paths (HARD). Run: git fetch origin $BASE (or --skip IG6)"
     else
       changed="$(git -C "$REPO_ROOT" diff --name-only "$BASE"..HEAD)"
       breach=""
@@ -229,7 +243,9 @@ else
       if [ -z "$breach" ]; then
         ok "no changed paths under declared OOS prefixes"
       else
-        fail "diff touches Out-of-scope paths:$(printf "$breach")"
+        # %b expands the \n escapes in $breach WITHOUT treating path content
+        # (which may contain %) as a printf format string.
+        fail "diff touches Out-of-scope paths:$(printf '%b' "$breach")"
       fi
     fi
   fi
@@ -244,6 +260,10 @@ echo "IG7  just check + just test"
 if skipped IG7; then skip "IG7 skipped via --skip (run before pushing)"
 elif ! command -v just >/dev/null 2>&1; then
   warn "just not installed — skipping"
+elif [ ! -f "$REPO_ROOT/justfile" ]; then
+  # Distinguish "no justfile at all" from "recipe missing" — otherwise a
+  # missing/corrupt justfile is misreported below as "recipe not found".
+  warn "justfile not found at $REPO_ROOT/justfile — skipping IG7"
 else
   if just --justfile "$REPO_ROOT/justfile" --list 2>/dev/null | grep -q '^    check'; then
     if (cd "$REPO_ROOT" && just check) >/tmp/goal-check.check.log 2>&1; then
@@ -277,7 +297,7 @@ echo "IG8  archive move + backlog status=done in this PR"
 if skipped IG8; then skip "IG8 skipped via --skip (pre-final-commit)"
 else
   if ! git -C "$REPO_ROOT" rev-parse "$BASE" >/dev/null 2>&1; then
-    warn "base '$BASE' not found — cannot inspect diff"
+    fail "base '$BASE' not found — cannot verify archive move (HARD). Run: git fetch origin $BASE (or --skip IG8 pre-final-commit)"
   else
     renames="$(git -C "$REPO_ROOT" log "$BASE..HEAD" --diff-filter=R --name-status 2>/dev/null \
       | awk -v slug=".research/plans/$SLUG.md" -v arch=".research/plans/_archive/$SLUG.md" '

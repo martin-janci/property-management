@@ -43,7 +43,7 @@ Schema per row:
   "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
   "reclaim_attempts":   "int",             // count of sandbox-timeout reclaims attempted (P3); default 0, cap = 1
   "merge_attempted_at": "iso-8601 | null", // last time Phase 5.5 tried to merge this row (gap 4); used for CI-stuck back-off
-  "quarantined_at":     "iso-8601 | null", // (PR 5/5) set when Phase 2 quarantines a row after fix_rounds >= 3
+  "quarantined_at":     "iso-8601 | null", // (PR 5/5) set when Phase 5.7 quarantines a row after fix_rounds >= 3
   "quarantine_reason":  "string | null",   // (PR 5/5) short reason; e.g. "fix_rounds=3 exhausted; verdict still changes"
 
   "implementer_summary": "string | null",
@@ -118,7 +118,7 @@ visible every cycle.
 | review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
 | review      | failed   | Phase 2 sees PR CLOSED without merge                            |
 | review      | review   | PR still open (no `status_changed_at` bump)                    |
-| review      | quarantined | (PR 5/5) Phase 2 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes`. Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
+| review      | quarantined | (PR 5/5) Phase 5.7 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes` (the quarantine gate at the top of Phase 5.7, before respawn). Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
 
 `merged` / `failed` are TERMINAL. **`quarantined` is SEMI-TERMINAL**: the
 dispatcher won't auto-transition out of it (no Phase 2/5/5.5 trigger
