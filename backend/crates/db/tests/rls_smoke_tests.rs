@@ -935,7 +935,7 @@ async fn smoke_test_phase0_rls_cross_tenant_isolation() {
             .expect("set non-super-admin context");
 
         for (table, predicate) in own_org_tables.iter().chain(child_tables.iter()) {
-            let count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(&format!(
+            let count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
                 "SELECT COUNT(*) FROM {table} WHERE {predicate}"
             )))
             .fetch_one(&db.pool)
@@ -952,7 +952,7 @@ async fn smoke_test_phase0_rls_cross_tenant_isolation() {
     // ---- Null context sees nothing ----
     db.clear_context().await.expect("clear context");
     for (table, predicate) in own_org_tables.iter().chain(child_tables.iter()) {
-        let count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(&format!(
+        let count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
             "SELECT COUNT(*) FROM {table} WHERE {predicate}"
         )))
         .fetch_one(&db.pool)
