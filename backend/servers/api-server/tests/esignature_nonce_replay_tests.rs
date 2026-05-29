@@ -135,12 +135,10 @@ async fn same_nonce_across_different_envelopes_is_allowed(pool: PgPool) {
     repo.record_nonce(envelope_a, shared_nonce)
         .await
         .expect("envelope A first use");
-    repo.record_nonce(envelope_b, shared_nonce)
-        .await
-        .expect(
-            "envelope B with same nonce VALUE must succeed — the constraint \
+    repo.record_nonce(envelope_b, shared_nonce).await.expect(
+        "envelope B with same nonce VALUE must succeed — the constraint \
              is on (envelope_id, nonce), not nonce alone",
-        );
+    );
 }
 
 /// Different nonces on the SAME envelope are allowed — a single signature

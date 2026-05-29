@@ -85,7 +85,7 @@ pub use delegation::DelegationRepository;
 pub use device_push_token::DevicePushTokenRepository;
 pub use document::DocumentRepository;
 pub use document_template::DocumentTemplateRepository;
-pub use e_signature_nonce::ESignatureNonceRepository;
+pub use e_signature_nonce::{ESignatureNonceRepository, RecordNonceError};
 pub use facility::FacilityRepository;
 pub use fault::FaultRepository;
 pub use feature_flag::{
@@ -118,7 +118,6 @@ pub use platform_admin::{
 };
 pub use portal_password_reset::PortalPasswordResetRepository;
 pub use role::RoleRepository;
-pub use e_signature_nonce::{ESignatureNonceRepository, RecordNonceError};
 pub use session::SessionRepository;
 pub use signature_request::SignatureRequestRepository;
 pub use system_announcement::{ActiveAnnouncement, SystemAnnouncementRepository};
