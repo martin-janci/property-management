@@ -2,7 +2,7 @@
   "schema_version": 1,
   "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
   "updated_at": "2026-05-28T20:24:00Z",
-  "generated_by": "d807b2b3538968139fe75d3c3261d26e91e2f6d2",
+  "generated_by": "ae6e6a2cf5620aa197d22fe5593bba4abe09dde9",
   "findings": [
     {
       "finding_id": "subagent-workspace-contamination",
@@ -10,17 +10,19 @@
       "severity": "critical",
       "status": "acknowledged",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
+      "last_seen": "2026-05-29T16:11:42Z",
+      "recurrence": 2,
       "related_issue": 7,
       "evidence": [
         "Phase 5 reviewer for PR#661 ran git ops in /home/user/property-management, creating a local commit ahead of remote",
         "PR#640 rebaser likely did the same",
-        "Recurring issue tracked as #7"
+        "Recurring issue tracked as #7",
+        "ae6e6a2cf562: PR#723 head c4341ff still includes assignments.json (+73/-28); reviewer verdict=changes"
       ],
       "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
       "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice.",
+      "symptom": "PR-author branches carry .research/management/assignments.json into the diff; merging would overwrite live dispatcher state on dev"
     },
     {
       "finding_id": "subagent-race-on-dev-push",
@@ -40,7 +42,7 @@
     },
     {
       "finding_id": "archive-append-not-idempotent-duplicate-rows",
-      "title": "Phase 6 archive append is not idempotent — re-archiving an already-archived task_id appends a duplicate row inside assignments-archive.json",
+      "title": "Phase 6 archive append is not idempotent \u2014 re-archiving an already-archived task_id appends a duplicate row inside assignments-archive.json",
       "severity": "high",
       "category": "self-test",
       "status": "acknowledged",
@@ -48,17 +50,17 @@
       "last_seen": "2026-05-28T14:42:00Z",
       "recurrence": 1,
       "related_issue": 9,
-      "symptom": "Self-test T4 FAIL — 4 task_ids present twice (active=0, archive=2 each)",
+      "symptom": "Self-test T4 FAIL \u2014 4 task_ids present twice (active=0, archive=2 each)",
       "evidence": [
-        "561874d5: dispatcher-self-test T4 FAIL — duplicate task_id: gap-10b-5-support-data-ui, gap-82-4-swiftui-listing-detail-impl, gap-82-5-swiftui-inquiries-account, pm-data-support-data-tracking-events",
-        "Verified each is active=0 / archive=2 — duplicated WITHIN assignments-archive.json, not an active->archive leak (so T18/T19 pass while T4 fails)",
-        "6bf8e883 Phase 6 archive-split: 'merged with origin/dev state' — the merge re-appended rows already archived by a concurrent run"
+        "561874d5: dispatcher-self-test T4 FAIL \u2014 duplicate task_id: gap-10b-5-support-data-ui, gap-82-4-swiftui-listing-detail-impl, gap-82-5-swiftui-inquiries-account, pm-data-support-data-tracking-events",
+        "Verified each is active=0 / archive=2 \u2014 duplicated WITHIN assignments-archive.json, not an active->archive leak (so T18/T19 pass while T4 fails)",
+        "6bf8e883 Phase 6 archive-split: 'merged with origin/dev state' \u2014 the merge re-appended rows already archived by a concurrent run"
       ],
       "root_cause": "Phase 6 merges this run's terminal rows into the archive by append rather than upsert-by-task_id; when a concurrent run or a prior cycle already archived the same task_id, the row is appended again instead of being deduped.",
       "proposed_fix": "Phase 6 archive write must upsert by task_id (group_by(.task_id) | map(last)) before persisting assignments-archive.json. Add a self-test T18b that fails when archive contains duplicate task_ids (currently T4 catches it cross-file but the in-archive case is the actual bug). dispatcher-prompt.md Phase 6 archive-split step.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 6 archive-split) + .research/dispatcher-self-test.sh",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "self-test-fail-recurs-each-run",
@@ -73,14 +75,14 @@
       "evidence": [
         "6bf8e883: 'self-test: T11 FAIL (5 new rows missing hardening fields -> now backfilled)'",
         "561874d5: T4 FAIL (4 duplicate archive task_ids)",
-        "b8bf30ad (this run): T4 FAIL again — gap-10a-1-oauth-tests, gap-10b-3-admin-health-ui present in BOTH active (in-progress, this run) and archive (merged #470/#471 on 2026-05-25). Distinct root cause from the in-archive dup — see reclaim-of-already-merged-task-id.",
+        "b8bf30ad (this run): T4 FAIL again \u2014 gap-10a-1-oauth-tests, gap-10b-3-admin-health-ui present in BOTH active (in-progress, this run) and archive (merged #470/#471 on 2026-05-25). Distinct root cause from the in-archive dup \u2014 see reclaim-of-already-merged-task-id.",
         "Pattern: self-test is run AFTER state is written, so failures are repaired reactively rather than prevented; FAIL now recurs 2+ consecutive runs on different T-numbers (T11 -> T4 -> T4)"
       ],
       "root_cause": "Hardening fields and archive dedup are enforced only by the post-hoc self-test, not by the Phase 3 claim / Phase 6 archive writers themselves, so every claim/archive cycle can introduce a fresh violation.",
       "proposed_fix": "Move the T11 (hardening fields) and T4 (archive dedup) invariants into the write path: Phase 3 claim template must stamp all hardening fields; Phase 6 must upsert-dedup before write. Keep the self-test as a gate but make it pass on first run. Add a Phase 6 pre-commit hook that runs dispatcher-self-test.sh and aborts the commit on FAIL.",
       "effort": "medium",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3 claim template + Phase 6 pre-commit self-test gate)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "double-counted-rebase-attempts",
@@ -95,7 +97,7 @@
       ],
       "proposed_fix": "Assign a single owner for rebase_attempts mutation (either rebaser OR dispatcher, never both) and document it in the rebaser contract.",
       "affected_artifact": ".research/dispatcher-prompt.md (rebaser contract / counter ownership)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "no-run-level-lock-parallel-overlap",
@@ -107,9 +109,9 @@
       "recurrence": 4,
       "evidence": [
         "A parallel run pushed state (generated=2026-05-28T12:32:35Z, 137 archived) mid-transition; reset to origin/dev and re-ran",
-        "d654512a 2026-05-28 02:15: 'R0 new (all captured by concurrent run)' — Phase 5 verdicts for #643/#641/#642 produced by a concurrent dispatcher",
+        "d654512a 2026-05-28 02:15: 'R0 new (all captured by concurrent run)' \u2014 Phase 5 verdicts for #643/#641/#642 produced by a concurrent dispatcher",
         "6bf8e883 2026-05-28 14:11: archive-append re-merged rows already archived by a concurrent run (root of T4 duplicate-archive FAIL)",
-        "b8bf30ad 2026-05-28 15:17: re-claimed gap-10a-1/gap-10b-3 that a concurrent/prior run had already merged into archive 12h earlier — a lock would have surfaced the completed state before claim"
+        "b8bf30ad 2026-05-28 15:17: re-claimed gap-10a-1/gap-10b-3 that a concurrent/prior run had already merged into archive 12h earlier \u2014 a lock would have surfaced the completed state before claim"
       ],
       "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held. This also prevents the archive-dedup and stale-base re-run failures which are downstream symptoms of overlap.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
@@ -127,11 +129,11 @@
         "5 approved PRs unmergeable: #633 ci-fail, #639 needs-human-review, #641 draft+needs-human-review, #643 ci-unknown/0-checks, #640 dirty",
         "0 merged by dispatcher; approved pool only grows",
         "db36d8e5 2026-05-28 08:08: X=0 merged-now with 2 merge-attempts (PR#632, PR#650) and PR#643 stuck on ci-green-prefix anomaly",
-        "b8bf30ad 2026-05-28 15:17: M0 merge-attempts / X0 merged-now; 'Approved+blocked: PR#639, PR#641 (needs-human-review; no merge attempt)' — same two PRs still stranded across runs with no escalation routing"
+        "b8bf30ad 2026-05-28 15:17: M0 merge-attempts / X0 merged-now; 'Approved+blocked: PR#639, PR#641 (needs-human-review; no merge attempt)' \u2014 same two PRs still stranded across runs with no escalation routing"
       ],
       "proposed_fix": "Per-blocker routing in Phase 5.5: ci-fail -> Phase 5.7 respawn; needs-human-review -> explicit human-escalation tag + stop; dirty -> auto-rebase; ci-unknown/0-checks -> re-trigger CI or wait, don't strand.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "ci-unknown-zero-checks-unhandled",
@@ -147,7 +149,7 @@
       ],
       "proposed_fix": "Add an explicit ci-unknown/0-checks branch to the merge gate: re-trigger CI (or wait + recheck) rather than treating absent checks as indeterminate-and-stranded. Also normalize reviewer_summary to a verdict= key so a 'ci-green-prefix' note is not mistaken for a verdict.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 CI evaluation)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "compaction-loses-phase-decision-provenance",
@@ -175,11 +177,11 @@
       "evidence": [
         "gap-82-4-swiftui-listing-detail (PR#641) and gap-82-4-swiftui-listing-detail-impl (PR#644) both in review simultaneously",
         "Phase 7 dup-skip log keys on exact task_id; -impl variant slipped through and got its own PR",
-        "005d5154 2026-05-28 11:13: 'Dup-skip: gap-82-4-swiftui-listing-detail reason=open-pr conflicts_with=#641,#644' — suffix variants again collided after the fact"
+        "005d5154 2026-05-28 11:13: 'Dup-skip: gap-82-4-swiftui-listing-detail reason=open-pr conflicts_with=#641,#644' \u2014 suffix variants again collided after the fact"
       ],
-      "proposed_fix": "Normalize task_id by stripping trailing -impl|-fix|-v\\d+ before the open-PR / same-epic conflict check, or key dedup on the gap-id prefix (gap-82-4-*) so suffix variants collide. T20 already computes this stem for active rows — reuse the same stem function in the Phase 2/3 dedup gate.",
+      "proposed_fix": "Normalize task_id by stripping trailing -impl|-fix|-v\\d+ before the open-PR / same-epic conflict check, or key dedup on the gap-id prefix (gap-82-4-*) so suffix variants collide. T20 already computes this stem for active rows \u2014 reuse the same stem function in the Phase 2/3 dedup gate.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2/3 dedup gate)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "orphaned-prs-reconciliation-noise",
@@ -192,24 +194,24 @@
       "evidence": [
         "Phase 2 reconciliation discovered 4 orphaned PRs this run (#685, #686, #687, #641) with no assignment rows",
         "Reconciliation/orphan noise present in 2 of the 3 visible runs",
-        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' — spawned an implementer for an already-merged gap"
+        "005d5154 2026-05-28 11:13: 'Implementers spawned (fire-and-forget): ... gap-81-1-report-schedule-edit-ui (stale-already merged)' \u2014 spawned an implementer for an already-merged gap"
       ],
       "proposed_fix": "Write the assignment row (status=in-progress, branch set) BEFORE firing the implementer, so a PR can never be orphaned. Also re-check remote merge state immediately before spawn to avoid spawning for already-merged gaps. Keep Phase 2 reconciliation as a safety net only.",
       "affected_artifact": ".research/dispatcher-prompt.md (implementer-spawn step)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "post-merge-gate-fooled-by-clone-mtime",
-      "title": "Post-merge review cadence gate uses file mtime, which a fresh clone resets to now — gate never fires after a clone",
+      "title": "Post-merge review cadence gate uses file mtime, which a fresh clone resets to now \u2014 gate never fires after a clone",
       "severity": "medium",
       "status": "open",
       "first_seen": "2026-05-28T12:28:33Z",
       "last_seen": "2026-05-28T12:28:33Z",
       "recurrence": 1,
       "evidence": [
-        "Phase 7: 'Post-merge: skipped (mtime < 24h — fresh clone reset mtime)'"
+        "Phase 7: 'Post-merge: skipped (mtime < 24h \u2014 fresh clone reset mtime)'"
       ],
-      "proposed_fix": "Persist last_post_merge_review_at in management state (e.g. assignments.json meta) and gate Phase 6 on that timestamp rather than file mtime — immune to clone resets.",
+      "proposed_fix": "Persist last_post_merge_review_at in management state (e.g. assignments.json meta) and gate Phase 6 on that timestamp rather than file mtime \u2014 immune to clone resets.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 6 post-merge cadence)",
       "operator_notes": ""
     },
@@ -224,7 +226,7 @@
       "evidence": [
         "Phase 7 note: 'Local dev was 50 commits behind origin/dev; reset to origin/dev and re-ran.'",
         "2026-05-28T13:41Z: parallel run pushed state mid-transition; reset to origin/dev and re-ran phases",
-        "6bf8e883 2026-05-28 14:11: Phase 6 archive-split 'merged with origin/dev state' — base drift again forced a remote-state merge",
+        "6bf8e883 2026-05-28 14:11: Phase 6 archive-split 'merged with origin/dev state' \u2014 base drift again forced a remote-state merge",
         "b8bf30ad 2026-05-28 15:17: claim of already-merged gap-10a-1/gap-10b-3 indicates the claim pool was read from a base that did not reflect the archive's merged state"
       ],
       "proposed_fix": "At run start, git fetch and (when N commits behind) reset --hard origin/dev before any gate, so timing-sensitive phases run against current base on the first pass.",
@@ -241,9 +243,9 @@
       "recurrence": 4,
       "evidence": [
         "Merge attempts: PR#633 merged=false ci-failed; PR#639 merged=false needs-human-review",
-        "Merged-now trend across runs: 1 -> 0 -> 2 -> 1 -> 0 -> 2 -> 11 -> 11 (X across 7ceb1481..6bf8e883) — bursty, dispatcher M=0 on the two 11-merge runs (all human/concurrent merges)",
+        "Merged-now trend across runs: 1 -> 0 -> 2 -> 1 -> 0 -> 2 -> 11 -> 11 (X across 7ceb1481..6bf8e883) \u2014 bursty, dispatcher M=0 on the two 11-merge runs (all human/concurrent merges)",
         "2026-05-28T13:41Z: dispatcher merged 0 of 5 approved PRs (all blocked); only human merges drained the pool",
-        "b8bf30ad 2026-05-28 15:17: X0 merged-now, M0 merge-attempts (prior run X11) — extreme run-to-run swing continues; dispatcher again contributed 0 merges"
+        "b8bf30ad 2026-05-28 15:17: X0 merged-now, M0 merge-attempts (prior run X11) \u2014 extreme run-to-run swing continues; dispatcher again contributed 0 merges"
       ],
       "proposed_fix": "Track per-PR merge-blocker reason (ci-failed vs needs-human-review) as a metric; consider Phase 5.7-style auto-respawn on ci-failed and explicit human-escalation tagging for needs-human-review so the review pool drains steadily.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)",
@@ -258,7 +260,7 @@
       "last_seen": "2026-05-28T14:42:00Z",
       "recurrence": 2,
       "evidence": [
-        "Subject: C2 R4 M2 X0 F0 A12 — but Phase 7 recorded 4 dup-skips not surfaced in the trailer",
+        "Subject: C2 R4 M2 X0 F0 A12 \u2014 but Phase 7 recorded 4 dup-skips not surfaced in the trailer",
         "Prior report (2026-05-28T09-47-03Z) already noted metrics-trailer drift (X2 vs 4 actually merged)",
         "005d5154 2026-05-28 11:13: subject 'X11 merged-now' but Phase 7 body also recorded 1 Dup-skip + 1 Dropped not in the trailer"
       ],
@@ -276,18 +278,18 @@
       "last_seen": "2026-05-28T15:22:00Z",
       "recurrence": 1,
       "related_issue": 9,
-      "symptom": "Self-test T4 FAIL — gap-10a-1-oauth-tests and gap-10b-3-admin-health-ui each present in BOTH active (in-progress, claimed this run) and archive (merged). Also surfaces in goal-check as GC1 done_with_open_gap=10.",
+      "symptom": "Self-test T4 FAIL \u2014 gap-10a-1-oauth-tests and gap-10b-3-admin-health-ui each present in BOTH active (in-progress, claimed this run) and archive (merged). Also surfaces in goal-check as GC1 done_with_open_gap=10.",
       "evidence": [
         "b8bf30ad Phase 7 'Claimed: gap-10a-1-oauth-tests, gap-10b-3-admin-health-ui' at 2026-05-28T15:17:09Z",
-        "Archive already holds gap-10a-1-oauth-tests merged=PR#470 (merged_at 2026-05-25T00:45Z) and gap-10b-3-admin-health-ui merged=PR#471 (merged_at 2026-05-24T20:51Z) — work shipped ~12h before re-claim",
-        "dispatcher-self-test T4 FAIL: 'a row exists in both active and archive — Phase 6 move bug'",
-        "goal-check.sh GC1-referential-integrity FAIL includes done_with_open_gap=10 — coverage gaps marked done but still re-opened/claimable, the same class of bug at the coverage layer"
+        "Archive already holds gap-10a-1-oauth-tests merged=PR#470 (merged_at 2026-05-25T00:45Z) and gap-10b-3-admin-health-ui merged=PR#471 (merged_at 2026-05-24T20:51Z) \u2014 work shipped ~12h before re-claim",
+        "dispatcher-self-test T4 FAIL: 'a row exists in both active and archive \u2014 Phase 6 move bug'",
+        "goal-check.sh GC1-referential-integrity FAIL includes done_with_open_gap=10 \u2014 coverage gaps marked done but still re-opened/claimable, the same class of bug at the coverage layer"
       ],
       "root_cause": "The Phase 2.6 buffer / Phase 3 claim selection picks claimable gaps from the coverage/action-list pool without subtracting task_ids already terminal in assignments-archive.json. A merged-then-still-open coverage gap (done_with_open_gap) re-enters the claimable set, so the dispatcher claims a fresh in-progress row for an already-merged task_id.",
       "proposed_fix": "In Phase 3 claim selection, exclude any candidate whose task_id (and its normalized stem) already appears with a terminal status in assignments-archive.json before stamping an in-progress row. Reconcile coverage 'done' state against archive merges in Phase 2.6 so a merged gap cannot remain claimable (fixes goal-check done_with_open_gap). Add self-test assertion that a newly-claimed task_id has no terminal archive twin.",
       "effort": "medium",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill + Phase 3 claim selection) + .research/dispatcher-self-test.sh",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Addressed in fix/dispatcher-findings \u2014 spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "goal-check-gc1-orphan-action-list-items",
@@ -298,11 +300,11 @@
       "first_seen": "2026-05-28T15:22:00Z",
       "last_seen": "2026-05-28T15:22:00Z",
       "recurrence": 1,
-      "symptom": "goal-check.sh GC1-referential-integrity FAIL — observed orphans=105, done_with_open_gap=10 (expected 0/0). First run where goal-check.sh actually executes (prior run it was SKIP/not-found), immediately red.",
+      "symptom": "goal-check.sh GC1-referential-integrity FAIL \u2014 observed orphans=105, done_with_open_gap=10 (expected 0/0). First run where goal-check.sh actually executes (prior run it was SKIP/not-found), immediately red.",
       "evidence": [
-        "bash .research/goal-check.sh: 'FAIL GC1-referential-integrity — observed=orphans=105 done_with_open_gap=10 expected=orphans=0 done_with_open_gap=0'",
+        "bash .research/goal-check.sh: 'FAIL GC1-referential-integrity \u2014 observed=orphans=105 done_with_open_gap=10 expected=orphans=0 done_with_open_gap=0'",
         "b8bf30ad Phase 7: 'goal-check: GC1-referential-integrity=FAIL'",
-        "Prior run 6bf8e883: 'goal-check: SKIP (goal-check.sh not found)' — the gate was effectively absent until this run, so accumulated coverage/action-list drift went unmeasured",
+        "Prior run 6bf8e883: 'goal-check: SKIP (goal-check.sh not found)' \u2014 the gate was effectively absent until this run, so accumulated coverage/action-list drift went unmeasured",
         "done_with_open_gap=10 overlaps the reclaim-of-already-merged-task-id root cause (merged gaps still flagged open)"
       ],
       "root_cause": "action-list.json carries 105 items whose coverage reference no longer exists in coverage.json (coverage entries removed/renamed without cascading to action-list), plus 10 coverage gaps marked done while still open. The newly-added goal-check.sh exposes a backlog of referential drift that was never enforced before.",
@@ -313,19 +315,19 @@
     },
     {
       "finding_id": "goal-check-gc3-buffer-overshoot",
-      "title": "goal-check GC3 buffer-bounds FAILs — claimable=117 is ~2x the upper bound of 60 after a +30 Phase 2.6 refill",
+      "title": "goal-check GC3 buffer-bounds FAILs \u2014 claimable=117 is ~2x the upper bound of 60 after a +30 Phase 2.6 refill",
       "severity": "high",
       "category": "goal-check",
       "status": "open",
       "first_seen": "2026-05-28T15:22:00Z",
       "last_seen": "2026-05-28T15:22:00Z",
       "recurrence": 1,
-      "symptom": "goal-check.sh GC3-buffer-bounds FAIL — observed claimable=117 (open=134, dep_blocked=17), expected 18<=claimable<=60. Buffer nearly double the ceiling.",
+      "symptom": "goal-check.sh GC3-buffer-bounds FAIL \u2014 observed claimable=117 (open=134, dep_blocked=17), expected 18<=claimable<=60. Buffer nearly double the ceiling.",
       "evidence": [
-        "bash .research/goal-check.sh: 'FAIL GC3-buffer-bounds — observed=claimable=117 (open=134 dep_blocked=17) expected=18<=claimable<=60'",
-        "6bf8e883 Phase 2.6: 'Buffer refilled +30 items (coverage rubric 2026-05-28) | claimable=142/159' — refill ran with no upper-bound guard",
-        "b8bf30ad subject: 'B152/159 dep-blocked=7' — buffer continues to sit far above the 60 ceiling run-to-run",
-        "self-test T15 also reports open_claimable=117 — consistent with goal-check"
+        "bash .research/goal-check.sh: 'FAIL GC3-buffer-bounds \u2014 observed=claimable=117 (open=134 dep_blocked=17) expected=18<=claimable<=60'",
+        "6bf8e883 Phase 2.6: 'Buffer refilled +30 items (coverage rubric 2026-05-28) | claimable=142/159' \u2014 refill ran with no upper-bound guard",
+        "b8bf30ad subject: 'B152/159 dep-blocked=7' \u2014 buffer continues to sit far above the 60 ceiling run-to-run",
+        "self-test T15 also reports open_claimable=117 \u2014 consistent with goal-check"
       ],
       "root_cause": "Phase 2.6 buffer refill targets a minimum (top-up to keep work flowing) but has no maximum cap, so a single large coverage-rubric refill (+30) pushed claimable well past the GC3 ceiling of 60. The refill step does not consult GC3 bounds before adding items.",
       "proposed_fix": "Make Phase 2.6 refill bound-aware: stop refilling once claimable reaches the GC3 upper bound (60), and refill only up to that cap. Optionally drain excess by deferring lowest-score claimable items back to backlog rather than holding them claimable. Wire GC3 bounds as the single source of truth shared by refill and goal-check.",
@@ -355,7 +357,7 @@
     },
     {
       "finding_id": "git-push-blocked-by-proxy",
-      "title": "Local proxy at 127.0.0.1:36415 returns HTTP 403 for git push — retry loop exhausted, must use MCP fallback",
+      "title": "Local proxy at 127.0.0.1:36415 returns HTTP 403 for git push \u2014 retry loop exhausted, must use MCP fallback",
       "severity": "medium",
       "category": "push-path",
       "status": "workaround-in-place",
@@ -367,7 +369,7 @@
         "mcp__github__push_files used successfully for Phase 3.5 and Phase 6 commits",
         "2026-05-28 run (R8/X6): local git push again returned HTTP 403 from the proxy after several retries; fell back to mcp__github__push_files to land the findings/state commit"
       ],
-      "proposed_fix": "Treat mcp__github__push_files as the primary push path in this environment; fall back to git push only if MCP tool unavailable. Add PUSH_METHOD=mcp env flag to dispatcher-prompt. Now recurring across runs — promote the MCP path from fallback to default rather than burning a 4-attempt backoff loop each run.",
+      "proposed_fix": "Treat mcp__github__push_files as the primary push path in this environment; fall back to git push only if MCP tool unavailable. Add PUSH_METHOD=mcp env flag to dispatcher-prompt. Now recurring across runs \u2014 promote the MCP path from fallback to default rather than burning a 4-attempt backoff loop each run.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3.5 + Phase 6 push step)",
       "operator_notes": "Confirmed recurring 2026-05-28 (R8 run). The retry loop wastes a full backoff cycle before falling back; default to MCP push."
@@ -384,7 +386,7 @@
       "symptom": "Phase 2 orphan-PR discovery added 3 rows to active assignments.json whose task_id stems already exist as merged rows in assignments-archive.json.",
       "evidence": [
         "Orphan recovery inserted gap-10b-3-admin-health-ui, gap-81-1-report-schedule-edit-ui, gap-8a-3-websocket-realtime-sync into active assignments.json",
-        "All three share a task_id stem with an already-merged archive row — they are follow-up/patch PRs on completed work, not new tasks",
+        "All three share a task_id stem with an already-merged archive row \u2014 they are follow-up/patch PRs on completed work, not new tasks",
         "Fix this run: deleted the 3 reinserted rows"
       ],
       "root_cause": "The orphan-recovery insert path keys orphan PRs to a synthesized task_id from the branch/gap stem and writes an active row without first checking assignments-archive.json for a terminal twin. A follow-up PR on already-merged work therefore re-enters the active set under the completed task's id. Same class as reclaim-of-already-merged-task-id and terminal-ids-excluded-failed-rows, but on the orphan-discovery write path rather than Phase 3 claim selection.",
@@ -405,14 +407,14 @@
       "symptom": "During `git rebase origin/dev`, `git checkout --ours <file>` resolved conflicts to origin/dev's version, dropping this run's assignments.json updates; the subsequent push was 'Everything up-to-date' (no change landed).",
       "evidence": [
         "Rebase conflict on assignments.json resolved with --ours, which during a rebase means the side being rebased ONTO (origin/dev), not the local branch",
-        "Push reported 'Everything up-to-date' — the dispatcher's state changes had been overwritten by the upstream version",
+        "Push reported 'Everything up-to-date' \u2014 the dispatcher's state changes had been overwritten by the upstream version",
         "Recovery: restored the correct tree from a reflog commit, then pushed via MCP API"
       ],
       "root_cause": "In a rebase, --ours/--theirs are inverted relative to a merge: --ours is the upstream (the commit you are replaying onto) and --theirs is your local change. The conflict-resolution step assumed merge semantics, so it kept upstream and threw away the local state write. The mistake was invisible because the push then had nothing to send.",
-      "proposed_fix": "In the dispatcher conflict-resolution spec, make state-file ownership explicit: for files the dispatcher OWNS (assignments.json, version), always resolve to the LOCAL/dispatcher side — during a rebase that is `--theirs`, not `--ours`. Better: never rebase owned state files — use `-X theirs` only for generated artifacts and reapply the dispatcher's state commit last (cherry-pick). Add a post-resolve guard that diffs the resolved file against the intended state and aborts the push if the dispatcher's changes are absent.",
+      "proposed_fix": "In the dispatcher conflict-resolution spec, make state-file ownership explicit: for files the dispatcher OWNS (assignments.json, version), always resolve to the LOCAL/dispatcher side \u2014 during a rebase that is `--theirs`, not `--ours`. Better: never rebase owned state files \u2014 use `-X theirs` only for generated artifacts and reapply the dispatcher's state commit last (cherry-pick). Add a post-resolve guard that diffs the resolved file against the intended state and aborts the push if the dispatcher's changes are absent.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (rebase / conflict-resolution step)",
-      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded — add an explicit no-op-push detector."
+      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded \u2014 add an explicit no-op-push detector."
     },
     {
       "finding_id": "ios-swiftui-prs-blocked-on-macos-build-gate",
@@ -443,17 +445,18 @@
       "first_seen": "2026-05-28T20:24:00Z",
       "last_seen": "2026-05-28T20:24:00Z",
       "recurrence": 1,
-      "symptom": "Run stats C0/R8/M9/X6/F0/A10 — Phase 3 claimed 0 because active WIP (10) was over the cap of 8.",
+      "symptom": "Run stats C0/R8/M9/X6/F0/A10 \u2014 Phase 3 claimed 0 because active WIP (10) was over the cap of 8.",
       "evidence": [
-        "A10 active vs WIP cap 8 — over by 2 at run start",
+        "A10 active vs WIP cap 8 \u2014 over by 2 at run start",
         "Phase 3 correctly claimed C0 (cap respected)",
         "6 merges this run (X6) should bring WIP back toward cap; next run expected to have free slots"
       ],
-      "root_cause": "WIP rose above the cap because claims in prior runs outpaced merges (the approved-but-unmergeable pool held PRs open, keeping rows active). Not a bug — the cap held correctly — but it idles the claim phase whenever the review/merge stage is the bottleneck.",
-      "proposed_fix": "Self-correcting: the 6 merges this run drain WIP back under cap. No code change required, but it confirms that draining the approved-but-unmergeable pool (see approved-but-unmergeable-pool-grows and ios-swiftui-prs-blocked-on-macos-build-gate) is the real throughput lever — when merges stall, claims stall too. Consider surfacing 'claims blocked by WIP cap' as a Phase 7 token so the bottleneck is visible.",
+      "root_cause": "WIP rose above the cap because claims in prior runs outpaced merges (the approved-but-unmergeable pool held PRs open, keeping rows active). Not a bug \u2014 the cap held correctly \u2014 but it idles the claim phase whenever the review/merge stage is the bottleneck.",
+      "proposed_fix": "Self-correcting: the 6 merges this run drain WIP back under cap. No code change required, but it confirms that draining the approved-but-unmergeable pool (see approved-but-unmergeable-pool-grows and ios-swiftui-prs-blocked-on-macos-build-gate) is the real throughput lever \u2014 when merges stall, claims stall too. Consider surfacing 'claims blocked by WIP cap' as a Phase 7 token so the bottleneck is visible.",
       "effort": "trivial",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3 WIP gate + Phase 7 summary)",
       "operator_notes": "Expected behavior; recorded as a throughput signal. WIP should be back under cap next run after X6 merges."
     }
-  ]
+  ],
+  "generated_at": "2026-05-29T16:11:42Z"
 }
