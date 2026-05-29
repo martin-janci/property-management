@@ -73,7 +73,11 @@ impl ESignatureNonceRepository {
     ///
     /// Mostly useful for tests and audit endpoints; the hot path should
     /// rely on `record_nonce` returning [`RecordNonceError::Replay`].
-    pub async fn nonce_exists(&self, envelope_id: Uuid, nonce: Uuid) -> Result<bool, SqlxError> {
+    pub async fn nonce_exists(
+        &self,
+        envelope_id: Uuid,
+        nonce: Uuid,
+    ) -> Result<bool, SqlxError> {
         let row: Option<(Uuid,)> = sqlx::query_as(
             r#"
             SELECT id FROM e_signature_nonces
@@ -92,3 +96,4 @@ impl ESignatureNonceRepository {
 // Postgres SQLSTATE `23505` is `unique_violation`. Checked inline at the
 // match arm above to avoid the `Box<dyn DatabaseError>` -> `&dyn DatabaseError`
 // coercion dance.
+
