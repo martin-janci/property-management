@@ -88,6 +88,7 @@
         "metadataPath": "./store-metadata/ios"
       },
       "android": {
+        "$comment": "Issue #626 -- Google Play service account credentials. serviceAccountKeyPath points at a gitignored local file; if missing at submit time eas submit fails with a file-not-found error. EAS-secret alternative for CI: eas secret:create --scope project --name GOOGLE_PLAY_SERVICE_ACCOUNT_KEY_JSON --type file --value ./google-play-service-account.json -- when present EAS resolves credentials from it and ignores serviceAccountKeyPath. Mirrors how GOOGLE_SERVICES_JSON is wired for the Android build (see app.config.ts > android > googleServicesFile).",
         "serviceAccountKeyPath": "./store-metadata/android/google-play-service-account.json",
         "track": "production",
         "releaseStatus": "completed",
