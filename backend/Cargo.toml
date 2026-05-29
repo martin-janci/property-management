@@ -81,7 +81,7 @@ opentelemetry = { version = "0.32", features = ["metrics", "trace"] }
 opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "0.32", features = ["grpc-tonic"] }
 tracing-opentelemetry = "0.33"
-metrics = "0.21"
+metrics = "0.24"
 metrics-exporter-prometheus = "0.12"
 
 # Error tracking (Epic 95)

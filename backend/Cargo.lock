@@ -351,7 +351,7 @@ dependencies = [
  "governor",
  "integrations",
  "jsonwebtoken",
- "metrics",
+ "metrics 0.24.6",
  "serde",
  "serde_json",
  "sqlx",
@@ -396,7 +396,7 @@ dependencies = [
  "integrations",
  "jsonwebtoken",
  "lettre",
- "metrics",
+ "metrics 0.24.6",
  "metrics-exporter-prometheus",
  "once_cell",
  "opentelemetry",
@@ -3938,6 +3938,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "metrics"
+version = "0.24.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89550ee9f79e88fef3119de263694973a8adb26c21d75322164fb8c493039fe2"
+dependencies = [
+ "portable-atomic",
+ "rapidhash",
+]
+
+[[package]]
 name = "metrics-exporter-prometheus"
 version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3947,7 +3957,7 @@ dependencies = [
  "hyper 0.14.32",
  "indexmap 1.9.3",
  "ipnet",
- "metrics",
+ "metrics 0.21.1",
  "metrics-util",
  "quanta 0.11.1",
  "thiserror 1.0.69",
@@ -3975,7 +3985,7 @@ dependencies = [
  "crossbeam-epoch",
  "crossbeam-utils",
  "hashbrown 0.13.1",
- "metrics",
+ "metrics 0.21.1",
  "num_cpus",
  "quanta 0.11.1",
  "sketches-ddsketch",
@@ -5234,6 +5244,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
 
 [[package]]
+name = "rapidhash"
+version = "4.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5e48930979c155e2f33aa36ab3119b5ee81332beb6482199a8ecd6029b80b59"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "raw-cpuid"
 version = "10.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5267,7 +5286,7 @@ dependencies = [
  "dotenvy",
  "hex",
  "jsonwebtoken",
- "metrics",
+ "metrics 0.24.6",
  "metrics-exporter-prometheus",
  "opentelemetry",
  "opentelemetry-otlp",
