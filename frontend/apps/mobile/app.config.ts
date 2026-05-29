@@ -71,6 +71,21 @@ function getAppEnv(): AppEnvironment {
 }
 
 /**
+ * Sentinel value written into `.env.production` — must be overridden by CI
+ * (e.g. eas.json `env` or `eas secret:create`) before a production build is
+ * shipped. See issue #620 / #523.
+ */
+const PROD_URL_SENTINEL = '__SET_BY_CI__';
+
+/**
+ * Returns true for known-placeholder values that must never reach a production
+ * `.ipa` / `.aab`: the CI sentinel above, or any RFC 2606 example domain.
+ */
+function isPlaceholderUrl(value: string): boolean {
+  return value === PROD_URL_SENTINEL || /(^|\.)example\.(com|net|org)(:|\/|$)/i.test(value);
+}
+
+/**
  * Returns true when a real google-services.json exists beside this config file.
  * EAS Cloud builds inject this via GOOGLE_SERVICES_JSON secret; local dev
  * without Firebase falls back gracefully so `expo prebuild` does not fail.
@@ -84,12 +99,28 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const appEnv = getAppEnv();
   const envVars = loadEnvFile(appEnv);
 
-  // Resolved values (env file takes priority, then process.env fallback)
-  const apiBaseUrl =
-    envVars.API_BASE_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.ppt.example.com';
+  // Resolved values — single source of truth is the `.env.<appEnv>` file loaded
+  // via dotenv above. CI may also pre-seed process.env (e.g. eas.json `env` or
+  // `eas secret:create`) for the same names. We deliberately do NOT use the
+  // `EXPO_PUBLIC_` prefix here: those vars are inlined by Metro into JS only
+  // and cannot reach `ios.infoPlist`, which would force hand-syncing two paths.
+  // See issue #523 (architecture decision) and #620 (PR #535 regression).
+  const apiBaseUrl = envVars.API_BASE_URL ?? process.env.API_BASE_URL ?? 'http://localhost:8080';
 
   const wsBaseUrl =
-    envVars.WS_BASE_URL ?? process.env.EXPO_PUBLIC_WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
+    envVars.WS_BASE_URL ?? process.env.WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
+
+  // Fail fast if a production build is about to ship with a placeholder URL.
+  // Without this guard a misconfigured CI run can silently produce a signed
+  // `.ipa` / `.aab` that points at `__SET_BY_CI__` or `*.example.com` —
+  // see issue #620 (regression from PR #535, originally introduced in #523).
+  if (appEnv === 'production' && (isPlaceholderUrl(apiBaseUrl) || isPlaceholderUrl(wsBaseUrl))) {
+    throw new Error(
+      '[app.config.ts] Refusing to build production with placeholder API URL ' +
+        `(API_BASE_URL=${apiBaseUrl}, WS_BASE_URL=${wsBaseUrl}). ` +
+        'Override via CI (e.g. eas.json env or eas secret:create) before building.'
+    );
+  }
 
   const environment: AppEnvironment = (envVars.ENVIRONMENT as AppEnvironment | undefined) ?? appEnv;
 

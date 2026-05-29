@@ -71,6 +71,7 @@
         "credentialsSource": "remote",
         "image": "latest"
       },
+      "$comment_env": "Issue #620 / #523 — API_BASE_URL and WS_BASE_URL are intentionally NOT inlined here. .env.production ships the __SET_BY_CI__ sentinel which would trip the placeholder guard in app.config.ts. Provide the real prod hosts via EAS project secrets (eas secret:create --scope project --name API_BASE_URL --value https://api.<prod-host>; same for WS_BASE_URL) — those land in process.env at build time and are picked up by app.config.ts. The EXPO_PUBLIC_ prefix is deliberately NOT used because those values cannot reach ios.infoPlist (Metro-only inlining).",
       "env": {
         "APP_ENV": "production"
       }

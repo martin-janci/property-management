@@ -26,7 +26,8 @@ use db::{
         PlatformAdminRepository, PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
         PredictiveMaintenanceRepository, PropertyValuationRepository, RegistryRepository,
         RentalRepository, ReportScheduleRepository, ReserveFundRepository, RoleRepository,
-        SensorRepository, SentimentRepository, SessionRepository, SignatureRequestRepository,
+        ESignatureNonceRepository, SensorRepository, SentimentRepository, SessionRepository,
+        SignatureRequestRepository,
         SubscriptionRepository, SystemAnnouncementRepository, TwoFactorAuthRepository,
         UnitRepository, UnitResidentRepository, UserRepository, VendorRepository,
         ViolationRepository, VoteRepository, WorkOrderRepository, WorkflowRepository,
@@ -73,6 +74,7 @@ pub struct AppState {
     pub onboarding_repo: OnboardingRepository,
     pub help_repo: HelpRepository,
     pub signature_request_repo: SignatureRequestRepository,
+    pub e_signature_nonce_repo: ESignatureNonceRepository,
     pub financial_repo: FinancialRepository,
     pub meter_repo: MeterRepository,
     // Epic 13: AI Assistant & Automation
@@ -239,6 +241,7 @@ impl AppState {
         let onboarding_repo = OnboardingRepository::new(db.clone());
         let help_repo = HelpRepository::new(db.clone());
         let signature_request_repo = SignatureRequestRepository::new(db.clone());
+        let e_signature_nonce_repo = ESignatureNonceRepository::new(db.clone());
         let financial_repo = FinancialRepository::new(db.clone());
         let meter_repo = MeterRepository::new(db.clone());
         // Epic 13: AI Assistant & Automation
@@ -382,6 +385,7 @@ impl AppState {
             onboarding_repo,
             help_repo,
             signature_request_repo,
+            e_signature_nonce_repo,
             financial_repo,
             meter_repo,
             ai_chat_repo,
