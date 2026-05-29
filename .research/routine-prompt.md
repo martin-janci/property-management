@@ -667,7 +667,14 @@ A backlog item is **ready** if **all** of these hold:
 - not blocked by an open question (`status != "needs-human-judgement"`)
 - no existing active plan references the same `sources` (check `plans/` + `plans/_archive/`)
 - vector is not `triage` (triage items stay in backlog for human review)
-- **slug-stem uniqueness** — let `stem(slug) = re.sub(r'-(impl|fix|v2|retry|followup|wip)\d*$', '', slug)` (same definition used by `dispatcher-prompt.md` Phase 3 and `ppt-pr-create` Step 3.5 — keep these three in sync). The candidate's `stem` must not match the stem of any plan file currently in `plans/` (active) and must not match `stem(row.task_id)` for any row in `.research/management/assignments.json` whose `status in {in-progress, review}`. **Invariant:** at most one non-terminal unit of work per stem at any time. Promotion-time enforcement is the first line of defense; without it, two near-identical plans can co-exist in the backlog and a single dispatcher run can claim both before the open-PR scan would catch them.
+- **slug-stem uniqueness** — let `stem(slug) = re.sub(r'-(impl|fix|v2|retry|followup|wip)\d*$', '', slug)` (same definition used by `dispatcher-prompt.md` Phase 3 and `ppt-pr-create` Step 3.5 — keep these three in sync). The candidate's `stem` must not match:
+  - the stem of any plan file currently in `plans/` (active), AND
+  - `stem(row.task_id)` for any row in `.research/management/assignments.json` whose `status in {in-progress, review, quarantined}` (PR 5/5 adds `quarantined` to the active set — see *Quarantine* in `dispatcher-prompt.md`), AND
+  - `stem(item.id)` for any **open action-list item** (PR 5/5 — `.research/management/action-list.json`). This catches the case where the planner emits both `<id>-retry` and `<id>-v2` for the same stem; only one may be open at a time.
+
+  **Invariant:** at most one non-terminal unit of work per stem at any time. Promotion-time enforcement is the first line of defense; the dispatcher's claim-time check + `T24` self-test catch anything that slips through.
+
+  **If a stem collision is detected at promotion time,** keep the candidate whose source is most recent (or whose priority is higher when sources tie) and mark the older variant `status=dropped` with action prefix `"[SUPERSEDED by <newer-id> ...]"` so the trail is visible. Do NOT silently drop — the audit log matters.
 
 **Security fast-track:** if `vector == "security"` **and** `confidence == "high"` **and** `score >= 2`, the score threshold drops from 3 to 2 — all other gates still apply. A single high-confidence security signal is enough evidence to act; waiting for score compounding means a multi-tenant isolation gap or auth bypass sits open for two extra runs. The `security-rls-migration-residual` item from 2026-05-20 (score 2, confidence high) would have promoted immediately under this rule, not stayed open while the team fixed it manually.
 

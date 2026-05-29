@@ -118,6 +118,81 @@ final class AuthenticationTests: XCTestCase {
         let auth = AuthManager()
         XCTAssertFalse(auth.isAuthenticated)
     }
+
+    // MARK: SSO CSRF nonce (closes #578 secondary finding)
+    //
+    // These tests pin the contract of `beginSsoFlow` / `consumeSsoState`:
+    // a freshly minted nonce must validate exactly once, all other inputs
+    // (nil, empty, mismatched, replay) must be rejected, and successive
+    // calls to `beginSsoFlow` must yield distinct values.
+
+    func testBeginSsoFlowReturnsHexString() throws {
+        let auth = AuthManager()
+        let nonce = auth.beginSsoFlow()
+        // 32 random bytes → 64 hex chars; allow the UUID fallback (≥ 32 chars).
+        XCTAssertGreaterThanOrEqual(nonce.count, 32)
+        let allowed = CharacterSet(charactersIn: "0123456789abcdefABCDEF-")
+        XCTAssertTrue(nonce.unicodeScalars.allSatisfy { allowed.contains($0) })
+    }
+
+    func testBeginSsoFlowGeneratesUniqueNoncesAcrossCalls() throws {
+        let auth = AuthManager()
+        // We compare two successive calls — the second overwrites the first
+        // pending value, which is acceptable (caller starts a new flow).
+        let first = auth.beginSsoFlow()
+        let second = auth.beginSsoFlow()
+        XCTAssertNotEqual(first, second, "Two SSO flows must mint different nonces")
+    }
+
+    func testConsumeSsoStateAcceptsMatchingNonce() throws {
+        let auth = AuthManager()
+        let nonce = auth.beginSsoFlow()
+        XCTAssertTrue(auth.consumeSsoState(nonce))
+    }
+
+    func testConsumeSsoStateRejectsMismatch() throws {
+        let auth = AuthManager()
+        _ = auth.beginSsoFlow()
+        XCTAssertFalse(auth.consumeSsoState("not-the-real-nonce"))
+    }
+
+    func testConsumeSsoStateRejectsNil() throws {
+        let auth = AuthManager()
+        _ = auth.beginSsoFlow()
+        XCTAssertFalse(auth.consumeSsoState(nil))
+    }
+
+    func testConsumeSsoStateRejectsEmptyString() throws {
+        let auth = AuthManager()
+        _ = auth.beginSsoFlow()
+        XCTAssertFalse(auth.consumeSsoState(""))
+    }
+
+    func testConsumeSsoStateIsSingleUse() throws {
+        // Replay protection: a successful consume must clear the pending
+        // value, so a second attempt with the same nonce returns false.
+        let auth = AuthManager()
+        let nonce = auth.beginSsoFlow()
+        XCTAssertTrue(auth.consumeSsoState(nonce))
+        XCTAssertFalse(auth.consumeSsoState(nonce))
+    }
+
+    func testConsumeSsoStateRejectsWhenNoFlowStarted() throws {
+        // Fresh AuthManager — no `beginSsoFlow` call — must reject any input.
+        let auth = AuthManager()
+        XCTAssertFalse(auth.consumeSsoState("anything"))
+        XCTAssertFalse(auth.consumeSsoState(nil))
+    }
+
+    func testFailedConsumeAlsoClearsPendingState() throws {
+        // A mismatched consume must also clear the pending nonce so a
+        // probe with the wrong state can't be retried with the right one.
+        let auth = AuthManager()
+        let nonce = auth.beginSsoFlow()
+        XCTAssertFalse(auth.consumeSsoState("wrong"))
+        XCTAssertFalse(auth.consumeSsoState(nonce),
+                       "First consume cleared the pending nonce, second must fail")
+    }
 }
 
 // MARK: - Deep Link / URL Parsing Tests

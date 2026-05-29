@@ -63,3 +63,4 @@ UC-51.1 agency directory. Placed under the Search tab by `NavigationCoordinator`
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Agencies/AgenciesView.swift (UC-51.1). Missing agency-detail route noted.
+- 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.

@@ -1,48 +1,42 @@
-# Role: pm-scrum-master — 2026-05-28
+# Role: pm-scrum-master — 2026-05-29
 
 > Delivery lead / coordinator. Always runs. Static read-only.
 
-**Summary:** Quiet-but-productive window — 5 PRs merged (#635–#638, #642), all from-merged-review / gap delivery, advancing four coverage stories to fresh `done` evidence (7a-2, 10b-5, 10b-7, 79-2 security leg) and closing issue #580. The most material outcome is PR #642 reconciling the #617 cookie-Path regression with tests, clearing the last security blocker on story 79-2; only an e2e verification remains there. Backend authz follow-ups (#614/#624) still gate Epic 81, and mobile remains the most-behind platform (10 of 22 candidates).
+## Summary
 
-## Shipped since last run
-
-- **#635** — admin-web Support Data page (SupportDataPage.tsx + FaultByStatusTable); 10b-5 frontend surface now exists (+395/-0).
-- **#636** — 7 backend integration test cases for document folders (document_folder_tests.rs); CLOSES issue #580 (+331/-98); 7a-2 web slice now tested.
-- **#637** — HelpSidebar a11y (focus-trap, dialog role, tooltips) across 11 admin-web pages + HelpSidebar.test.tsx; 10b-7 contextual-help surface (+490/-51).
-- **#638** — mobile EAS iOS CI config: removed submit.staging, guarded updates.url against missing EXPO_PROJECT_ID.
-- **#642** — auth.rs + sso.rs cookie-Path reconciliation + runbook, with inline tests; resolves the #617 cookie-Path regression class (+370/-0).
+This window (#717–#730 plus late-arriving #597/#657/#659/#685/#695/#706) delivered 4 app-gap PRs and confirmed the reports IDOR PR (#662) awaiting review; the bulk of activity was research/dispatcher infra. Coverage now reads 27 done / 22 partial / 0 not-started (49 stories), with `sprint-status.yaml` stale on 10b-3/10b-4/10b-6 (all delivered) and several test-hardening issues (#480–#487) still open and blocking story promotions.
 
 ## Sprint progress
 
-- Sprint: "Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"
-- Epics done: 2 / 13 (epic-8a, epic-9 fully done; coverage 27 done / 21 partial / 1 not-started across 49 stories).
+- Sprint: Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth.
+- Epics done: 2 / 6 active (epic-8a, epic-9 fully done; epic-10b complete in coverage).
+
+## Shipped since last run
+
+- #718 fix(ios): gesture-mask + sheet-env (LocationManager) + SSO CSRF tests — closes #618/#625/#578
+- #719 gap-84-2 e-signature UI: manager/landlord signerParties + cs/de i18n — resolves all 6 PR#513 follow-ups
+- #720 gap-10b-3 admin Platform Health UI: MFA-interception test coverage
+- #724 gap-10a-4 OAuth scope picker (admin-web) + scope-grant audit trail
+- Late-merges below the prior cursor: #695 gap-10b-6 onboarding SQLx, #706 gap-10b-4 system-announcements CRUD+tests, #685 gap-81-1 CronPicker isNaN→Number.isNaN, #597 gap-8a-3 WebSocket sync confirmed, #657 JWT/RUST_ENV test-guard consolidation (#629), #659 reality-mobile screen agent-logs (#581)
 
 ## Next actions
 
-| Action | Priority | Dependency | Definition of done |
-|---|---|---|---|
-| Close report-schedule authz holes #614 (missing RBAC) + #624 (missing tenant/org scope) together; cross-tenant regression test. | high | pm-security/pm-backend | Both issues closed; Epic 81 unblocked for promotion. |
-| Implement/confirm POST `/api/v1/documents/upload` + 81 backend pause/resume + executions-download routes. | high | pm-backend | Routes return non-404; 7a-1/81-1/81-2 promotable. |
-| Schedule gap-79-2-auth-callback-e2e now that #642 reconciled cookie-Path. | medium | pm-qa | e2e covers /auth/callback token store + refresh + logout; 79-2 promotes done. |
-| Triage remaining from-merged-review follow-ups (fix-569/573/574/581/583) into the dispatcher buffer with owners. | medium | none | Each item owned; close-rate confirmed ≥ ingest-rate. |
-| Land 6-2/6-3/6-4 announcement web UI out of draft in #474→#475→#479 order. | medium | pm-frontend | Three drafts merged without AnnouncementsPage conflict; apiStatus verified. |
-
-## Risks
-
-| Risk | Prob | Impact | Mitigation |
-|---|---|---|---|
-| Reports authz #614/#624 cross-tenant report-schedule IDOR gates Epic 81 promotion. | high | high | RequireCapability extractor + principal tenant/org in WHERE; regression test; block 81 until closed. |
-| 9 open PRs all draft + unreviewed (#597,#632,#633,#639–#641,#643–#645) — review-queue backlog can stall the merge train. | medium | medium | Walk the draft queue; promote ready ones, request review, drop stale. |
-
-## Open questions
-
-- Are any of the 9 open drafts ready to promote, or all still in active implementation?
-
-## Decisions needed
-
-- (carried) Merge sequence for the Epic 6 announcement web UI drafts (#474→#475→#479) — owner: pm-frontend / pm-scrum-master.
+1. [high] Review + merge #662 (reports cross-tenant IDOR, closes #646/#647) — owner: pm-security.
+2. [high] Resolve #725 verdict=changes (ai-maintenance/session/sentiment IDOR + missing test) — owner: pm-security.
+3. [high] Promote draft #723 (gap-9-2 MFA recovery codes backend) to review/merge — owner: pm-backend.
+4. [medium] Sync sprint-status.yaml: 10b-3/10b-4/10b-6 done, 8a-3 WS done; epic-10b → done — owner: pm-scrum-master.
+5. [medium] Triage gap-82 drafts #639/#641/#705 to non-draft review — owner: pm-frontend (mobile-lag owner).
 
 ## Blockers
 
-- Reports authz (#614 + #624) — `update_schedule` cross-tenant + missing-RBAC; Epic 81 cannot promote. Owner: pm-backend.
-- 7a-1 / 81 backend endpoints — upload + pause/resume/executions-download routes still to confirm. Owner: pm-backend.
+- **Epic 81 — Reports promotion:** cron_expression column missing (#616); 81-1/81-2 partial. (RBAC #614 + tenant-scope #624 closed by #643.)
+- **Test-hardening batch #480–#487:** open; gates 8a-3/10a-1/10a-3/7a-5/6-2/6-5 from done.
+- **80-2 dispute-filing-flow (partial):** EvidenceUploader.tsx + useDraftStorage.ts missing; no owner assigned.
+
+## Open questions
+
+- Are Epic 81 backend pause/resume/executions-download routes implemented or still missing?
+- Disposition of dependabot sqlx 0.8→0.9 (#665/#666) — compatibility pass needed before merge?
+- Is #723 (MFA recovery backend) reviewed yet or purely draft?
+- Is the 80-2 EvidenceUploader gap owned by anyone?
+- Do the 5 newly-closed follow-ups (#578/#581/#618/#625/#629) unblock any sprint-status gates?

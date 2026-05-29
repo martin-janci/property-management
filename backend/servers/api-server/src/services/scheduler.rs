@@ -4,8 +4,8 @@
 //! and session cleanup.
 
 use db::repositories::{
-    AnnouncementRepository, MeterRepository, SessionRepository, SignatureRequestRepository,
-    UnitResidentRepository, VoteRepository,
+    AnnouncementRepository, ESignatureNonceRepository, MeterRepository, SessionRepository,
+    SignatureRequestRepository, UnitResidentRepository, VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -77,6 +77,7 @@ pub struct Scheduler {
     meter_repo: MeterRepository,
     unit_resident_repo: UnitResidentRepository,
     signature_request_repo: SignatureRequestRepository,
+    e_signature_nonce_repo: ESignatureNonceRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
@@ -103,6 +104,7 @@ impl Scheduler {
             meter_repo: MeterRepository::new(pool.clone()),
             unit_resident_repo: UnitResidentRepository::new(pool.clone()),
             signature_request_repo: SignatureRequestRepository::new(pool.clone()),
+            e_signature_nonce_repo: ESignatureNonceRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -126,6 +128,7 @@ impl Scheduler {
             meter_repo: MeterRepository::new(pool.clone()),
             unit_resident_repo: UnitResidentRepository::new(pool.clone()),
             signature_request_repo: SignatureRequestRepository::new(pool.clone()),
+            e_signature_nonce_repo: ESignatureNonceRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -876,7 +879,24 @@ impl Scheduler {
                     &org_id_str,
                     &signer_status,
                 ) {
-                    Ok(s) => s.url,
+                    Ok(s) => {
+                        // Persist the freshly-issued nonce so the future
+                        // /sign consumer can reject a replay (issue #673).
+                        if let Err(e) = self
+                            .e_signature_nonce_repo
+                            .record_nonce(sig_req.id, s.nonce)
+                            .await
+                        {
+                            tracing::error!(
+                                error = %e,
+                                signature_request_id = %sig_req.id,
+                                signer_email = %signer.email,
+                                "Failed to persist e-signature nonce — skipping reminder for this signer"
+                            );
+                            continue;
+                        }
+                        s.url
+                    }
                     Err(e) => {
                         tracing::error!(
                             error = %e,

@@ -221,6 +221,42 @@ Quote each command + exit code in the PR body under `## Tested` (Band A),
 the required band fails: do NOT open a PR. Push partial work to the branch
 and return `pr=none status=partial note=<command-that-failed>`.
 
+## Step 3.5 — IG1–IG8 goal-check (deterministic, MANDATORY before draft PR)
+
+Mirror of the IG1–IG8 success criteria from `.research/implementer-prompt.md`,
+extracted into a single runnable script so the implementer doesn't have to
+grep the prompt for snippets. Run after Step 3's verify gate and before
+`gh pr create`:
+
+```bash
+bash .claude/skills/ppt-implement/scripts/goal-check.sh \
+  --slug "$SLUG" --base dev \
+  --skip IG7        # IG7 = just check + just test — Step 3 already ran them
+  # Add --skip IG8 on pre-final commits (archive move is intentionally the
+  # LAST commit before merge). Add --skip IG3 only for vectors that
+  # legitimately don't require a regression test (e.g. pure docs/refactor —
+  # see implementer-prompt.md IG3 trigger list).
+```
+
+Exit codes:
+- `0` — all hard checks passed (warnings allowed). Proceed to Step 5.
+- `1` — at least one hard check failed. **Do not open a ready-to-review PR.**
+  Either fix the goal failure (preferred) or push partial work and return
+  `pr=none status=partial note=<which-IG-failed>`.
+
+Each check prints a T-style line so the output is grep-friendly. Findings
+fall into three buckets:
+
+- `ok` — verifiable pass.
+- `WARN` — advisory: the check needs human confirmation (e.g. IG4 asks
+  whether each Suggested-approach step is addressed in the PR body —
+  the script can't see the PR body until after `gh pr create`).
+- `FAIL` — hard fail. Exit 1.
+
+The script is intentionally narrower than the verify gate: it checks
+goal-shape (test:+fix: commit pair, archive move, OOS path respect) rather
+than build/test correctness. Step 3 owns the latter.
+
 ## Step 4 — (Optional) Remote verify
 
 If the `ppt-bridge` MCP is connected in your session (cloud routine may have
