@@ -118,6 +118,7 @@ pub use platform_admin::{
 };
 pub use portal_password_reset::PortalPasswordResetRepository;
 pub use role::RoleRepository;
+pub use e_signature_nonce::{ESignatureNonceRepository, RecordNonceError};
 pub use session::SessionRepository;
 pub use signature_request::SignatureRequestRepository;
 pub use system_announcement::{ActiveAnnouncement, SystemAnnouncementRepository};
