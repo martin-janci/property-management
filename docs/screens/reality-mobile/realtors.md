@@ -60,3 +60,4 @@ UC-49.1 realtor directory. `NavigationCoordinator.navigate(to: .realtors)` place
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Realtors/RealtorsView.swift (UC-49.1). API gap (no directory endpoint) documented.
+- 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.

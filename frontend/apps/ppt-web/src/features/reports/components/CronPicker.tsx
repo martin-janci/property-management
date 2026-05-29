@@ -92,7 +92,7 @@ export function isValidCron(expr: string): boolean {
     // range: x-y
     if (field.includes('-')) {
       const [a, b] = field.split('-').map(Number);
-      if (isNaN(a) || isNaN(b) || a > b) return false;
+      if (Number.isNaN(a) || Number.isNaN(b) || a > b) return false;
       return a >= min && b <= max;
     }
 
@@ -247,7 +247,7 @@ export function CronPicker({ value, onChange, error, disabled }: CronPickerProps
   const handleDomChange = useCallback(
     (dm: string) => {
       const n = Number(dm);
-      if (isNaN(n) || n < 1 || n > 31) return;
+      if (Number.isNaN(n) || n < 1 || n > 31) return;
       setDom(dm);
       emitSimple(preset, hour, minute, dow, dm);
     },

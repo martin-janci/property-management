@@ -22,7 +22,18 @@ needs.
 ## Goals (verifiable)
 
 Each goal has a plain-language success criterion and the exact command that
-verifies it. Run the relevant goal checks before opening the PR; quote the
+verifies it. All eight checks are also bundled into a single runnable
+script — prefer it over re-typing the inline commands:
+
+```bash
+bash .claude/skills/ppt-implement/scripts/goal-check.sh --slug "$SLUG" --base dev
+```
+
+Exit 0 = all hard checks passed (warnings OK); exit 1 = open a draft, not a
+ready PR. The individual `IG<N>` definitions below remain canonical — the
+script just bundles them.
+
+Run the relevant goal checks before opening the PR; quote the
 output in the PR body.
 
 ### IG1 — Plan exists and was loaded

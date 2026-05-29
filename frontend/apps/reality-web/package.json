@@ -16,9 +16,9 @@
     "@ppt/reality-api-client": "workspace:*",
     "@ppt/shared": "workspace:*",
     "@ppt/ui-kit": "workspace:*",
-    "@tanstack/react-query": "^5.100.11",
+    "@tanstack/react-query": "^5.100.14",
     "next": "^16.0.0",
-    "next-intl": "^4.12.0",
+    "next-intl": "^4.13.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },

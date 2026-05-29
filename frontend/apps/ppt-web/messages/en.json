@@ -2610,7 +2610,8 @@
         "send": "Send for Signature"
       },
       "role": {
-        "tenant": "Tenant"
+        "tenant": "Tenant",
+        "manager": "Manager"
       },
       "status": {
         "pending": "Pending Signature",

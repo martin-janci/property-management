@@ -600,11 +600,17 @@ private struct ZoomablePhotoPage: View {
                             .scaleEffect(effectiveScale)
                             .offset(x: offset.width + gestureOffset.width,
                                     y: offset.height + gestureOffset.height)
+                            // Magnification is always active. The drag gesture
+                            // is mask-disabled at 1x so the parent TabView's
+                            // swipe-to-page recognizer wins horizontal swipes
+                            // when the photo is not zoomed in (closes #618).
+                            // Without this, DragGesture competed with TabView
+                            // even though `gestureOffset` was guarded — the
+                            // recognizer still consumed touches arbitrarily.
+                            .gesture(magnificationGesture)
                             .gesture(
-                                SimultaneousGesture(
-                                    magnificationGesture,
-                                    dragGesture
-                                )
+                                dragGesture,
+                                including: scale > minScale ? .all : .none
                             )
                             .onTapGesture(count: 2) {
                                 handleDoubleTap()

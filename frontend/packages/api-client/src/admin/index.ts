@@ -82,4 +82,4 @@ export type {
   UpdateSystemAnnouncementRequest,
   UpdateThresholdRequest,
 } from './types';
-export { KNOWN_OAUTH_SCOPES } from './types';
+export { KNOWN_OAUTH_SCOPES, OAUTH_SCOPE_DESCRIPTIONS } from './types';

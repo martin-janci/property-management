@@ -74,3 +74,4 @@ Search tab root. Calls `listingRepository.searchListings(request:)` via KMP. Pag
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Search/SearchView.swift (epic-82 story 82.3). Sort and map-toggle gaps noted.
 - 2026-05-25 — agent: added SortOption enum (7 cases) with toolbar button; added onAppear to consume pendingSearchFilters from HomeView; mapped ListingTypeFilter to KMP ListingType in buildKMPFilters. buildStatus → shipped. Map toggle remains future work.
+- 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.

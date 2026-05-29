@@ -1,0 +1,200 @@
+{
+  "date": "2026-05-29",
+  "generated": "2026-05-29T03:18:00Z",
+  "run_mode": "incremental",
+  "run_note": "Normal incremental run (next day after the 2026-05-28 two-pass day). Window: merged PRs #717-#730 (since #709 cursor) + late-merges below the cursor (#597/#657/#659/#685/#695/#706). App-code slice small (#718 iOS, #719 gap-84-2 esignature, #720 gap-10b-3 admin-health test, #724 gap-10a-4 OAuth scope picker); bulk was research/dispatcher infra + Dependabot. Phases 1.5 (api-core Rust review) + 1.6 (Scrum Master + pm-integration) ran. No reverts, no stalled reviews (oldest open PR 1d), no new FIXME/TODO in checked merged app diffs, no tracked-route changes (no screen-map drift/orphan). No decay (oldest open item 2026-05-20 = 9d). One new vector + one promoted plan from the api-core review: security-llm-doc-idor (high-confidence cross-tenant IDOR in ai.rs LLM-document handlers), code-verified this run.",
+  "signals": [
+    {
+      "id": "code-review-api-core-llm-doc-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai.rs:2620 publish_description binds `_principal: RequestPrincipal` (discards it) and calls llm_document_repo.publish_description(id); wired POST /api/v1/ai/llm/listing/descriptions/{id}/publish in llm_router() (mounted lib.rs:231 + main.rs:568). Repo SQL llm_document.rs:397 `UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *` has no org/owner predicate -> any authenticated user can publish another tenant's listing description by UUID (state-mutating cross-tenant IDOR).",
+        "ai.rs:2599 list_listing_descriptions discards _principal; repo SQL llm_document.rs:358 `SELECT * FROM generated_listing_descriptions WHERE listing_id = $1` tenant-blind -> cross-tenant read.",
+        "ai.rs:2847 get_photo_enhancement discards _principal; repo SQL llm_document.rs:977 `SELECT * FROM photo_enhancements WHERE id = $1` tenant-blind -> cross-tenant read. Distinct from PR #725 scope (maintenance/chat-session/sentiment); sibling ai.rs handlers correctly call require_tenant_id, these Epic-64 LLM-doc handlers do not. Code-verified this run; confidence upgraded medium->high (full call path traced)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/packages/api-client/src/lib/fetch.test.ts",
+      "type": "churn-hotspot",
+      "source": "merged PR #720 file churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-1 app-source raw churn this run: 169 lines (PR #720 api-client fetch MFA-interception tests). New test file — healthy test backfill, not instability; no backlog item, tracked in hotspot_history (runs_seen=1)."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/OAuthClientsPage.tsx",
+      "type": "churn-hotspot",
+      "source": "merged PR #724 file churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-2 app-source raw churn this run: 124 lines (PR #724 gap-10a-4 OAuth scope picker + scope-grant audit trail). One-shot admin-web feature growth — no backlog item, tracked in hotspot_history (runs_seen=1)."
+    },
+    {
+      "id": "churn-hotspot-mobile-native/iosApp/iosAppTests/RealityPortalTests.swift",
+      "type": "churn-hotspot",
+      "source": "merged PR #718 file churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 app-source raw churn this run: 75 lines (PR #718 iOS SSO CSRF tests). New test file — no backlog item, tracked in hotspot_history (runs_seen=1)."
+    },
+    {
+      "id": "unchecked-todo-pr-718",
+      "type": "unchecked-todo",
+      "source": "PR #718",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #718 body has 4 unchecked boxes, but all are post-merge verification gates — 2 CI ('build-ios builds', 'CI runs new AuthenticationTests') and 2 manual iOS UI QA (photo-gallery swipe at 1x, Search->Filters Near Me location). The actual fixes (#618 gesture-mask, #625 sheet-env) shipped and #578 SSO CSRF is covered by the new automated AuthenticationTests; no deferred code. Scored 0 (CI/manual-QA checklist, not a work item) -> logged, no backlog item; matches the reachability-gate precedent of emit-for-visibility."
+    },
+    {
+      "id": "closed-not-merged-pr-671",
+      "type": "closed-not-merged-pr",
+      "source": "PR #671",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "Dependabot cargo-minor-patch group PR (#671) closed unmerged 2026-05-28T20:05Z, superseded by the re-rolled group PR #728. Benign dependabot churn — score 0, no backlog item."
+    },
+    {
+      "id": "dep-update-noise-2026-05-29",
+      "type": "dep-update-noise",
+      "source": "dependabot PRs (merged group #667-#709 squashes; open #665/#666/#672/#728; closed #671)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": "Dependabot merged a batch of group bumps this window (npm-minor-patch #709 with 14 updates, gradle-minor-patch #670, cargo group, actions setup-node/checkout/pnpm-action, @hookform/resolvers, sentry, expo-*) and left #665/#666 (sqlx 0.8.6->0.9.0)/#672/#728 open. Score 0 per policy. The sqlx 0.9 major bump (#666) is surfaced separately as a pm-integration risk (workspace-wide query!/migrate breakage). No merged dependabot PR left a consumer-manifest lockfile-drift gap -> no Phase-5 lockfile-bump candidate."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — this run's actionable signal is a code-review-finding (security IDOR), which is NOT in the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift dep-update, stalled-review). The IDOR is a code fix -> manual plan path (plans/security-llm-doc-idor.md). No screen-map drift/orphan, no stalled review, no merged-dependabot lockfile-drift gap this run.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-05-29.md && head -1 == '# 2026-05-29'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq staged state advanced vs HEAD",
+      "observed": "true (last_pr_seen 709->730, +7 seen_signals, +3 hotspots)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id from this run already in prior seen_signals with score_delta!=0",
+      "observed": "true (all ids new)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap<=8 & no open item updated<=today-14",
+      "observed": "cap true; 0 items qualify for decay (oldest open 2026-05-20=9d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial annotation per new plan in brief",
+      "observed": "plans/security-llm-doc-idor.md -> adversarial pass: passed",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new-plan count + 15 sections + files-exist + mode",
+      "observed": "1 new plan; 4 metadata + 11 headings + cap ticked + Mode: cloud-ok + both Files paths exist",
+      "expected": "<=2 & complete"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep staged diff (excl baseline docs) for secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regenerated from backlog.json (score desc, updated desc)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' vs cursor advancement",
+      "observed": "none failed; all cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regenerated (0 triage rows, empty table)",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps + idempotency",
+      "observed": "auto_fix_actions empty; no candidate (code-review-finding not in allowlist)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts parse + pm_cursor 0..7 + GC7 coverage_cursor in [0,13) & advanced when pm_cursor advanced",
+      "observed": "action-list/risks parse; project-state non-empty; pm_cursor 7->0; coverage_cursor 6->7; epics=13",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep staged added lines for telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

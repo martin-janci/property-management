@@ -1010,6 +1010,34 @@
       "created_at": "2026-05-28",
       "updated_at": "2026-05-28",
       "plan": null
+    },
+    {
+      "id": "security-llm-doc-idor",
+      "title": "IDOR: ai.rs LLM-doc handlers publish/list/get any tenant's listing descriptions & photo enhancements unscoped",
+      "vector": "security",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "code-review api-core 2026-05-29",
+        "ai.rs:2620",
+        "ai.rs:2599",
+        "ai.rs:2847"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai.rs:2620 — publish_description binds `_principal: RequestPrincipal` but discards it, calling llm_document_repo.publish_description(id) with only the path id; wired POST /api/v1/ai/llm/listing/descriptions/{id}/publish in llm_router() (mounted lib.rs:231 + main.rs:568)",
+        "backend/crates/db/src/repositories/llm_document.rs:397 — `UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *` has no org/owner/tenant predicate; any authenticated user can publish (make public) another tenant's generated listing description by enumerating the UUID — state-mutating cross-tenant IDOR",
+        "ai.rs:2599 list_listing_descriptions discards _principal; repo SQL `SELECT * FROM generated_listing_descriptions WHERE listing_id = $1` (llm_document.rs:358) is tenant-blind — cross-tenant read (GET /api/v1/ai/llm/listing/descriptions/{listing_id})",
+        "ai.rs:2847 get_photo_enhancement discards _principal; repo SQL `SELECT * FROM photo_enhancements WHERE id = $1` (llm_document.rs:977) is tenant-blind — cross-tenant read",
+        "distinct from in-flight PR #725 (maintenance/chat-session/sentiment IDOR) and the done equipment/voice-device IDOR clusters; sibling handlers in ai.rs correctly call require_tenant_id — these Epic 64 LLM-document handlers do not. Found by rotating expert review (Rust, api-core), full call path traced and code-verified this run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai.rs",
+        "backend/crates/db/src/repositories/llm_document.rs"
+      ],
+      "created_at": "2026-05-29",
+      "updated_at": "2026-05-29",
+      "plan": "plans/security-llm-doc-idor.md"
     }
   ]
 }

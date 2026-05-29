@@ -783,5 +783,32 @@
       "statusCancelled": "Zrušeno",
       "statusSkipped": "Přeskočeno"
     }
+  },
+  "leases": {
+    "esign": {
+      "requestSignature": "Požádat o podpis",
+      "modal": {
+        "title": "Požádat o podpis",
+        "selectSigners": "Vybrat podepisující",
+        "subject": "Předmět (volitelné)",
+        "subjectPlaceholder": "např. Podpis nájemní smlouvy",
+        "message": "Zpráva pro podepisující (volitelné)",
+        "messagePlaceholder": "Prosím zkontrolujte a podepište přiloženou nájemní smlouvu.",
+        "sending": "Odesílání…",
+        "send": "Odeslat na podpis"
+      },
+      "role": {
+        "tenant": "Nájemník",
+        "manager": "Správce"
+      },
+      "status": {
+        "pending": "Čeká na podpis",
+        "in_progress": "Podpis probíhá",
+        "completed": "Podepsáno",
+        "declined": "Odmítnuto",
+        "expired": "Vypršelo",
+        "cancelled": "Zrušeno"
+      }
+    }
   }
 }
