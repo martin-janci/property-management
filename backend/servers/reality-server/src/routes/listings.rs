@@ -668,7 +668,7 @@ async fn fetch_top_listings(
         RICH_LISTING_SELECT
     );
 
-    let rows = sqlx::query_as::<_, RichListingRow>(&sql)
+    let rows = sqlx::query_as::<_, RichListingRow>(sqlx::AssertSqlSafe(sql))
         .bind(transaction_type)
         .bind(limit)
         .fetch_all(&mut *conn)

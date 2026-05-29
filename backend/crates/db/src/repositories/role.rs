@@ -154,7 +154,7 @@ impl RoleRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, Role>(&query).bind(id);
+        let mut q = sqlx::query_as::<_, Role>(sqlx::AssertSqlSafe(query)).bind(id);
 
         if let Some(name) = &data.name {
             q = q.bind(name);

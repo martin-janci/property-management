@@ -62,7 +62,7 @@ impl ESignatureNonceRepository {
 
         match result {
             Ok(_) => Ok(()),
-            Err(SqlxError::Database(db_err)) if is_unique_violation(&db_err) => {
+            Err(SqlxError::Database(db_err)) if db_err.code().as_deref() == Some("23505") => {
                 Err(RecordNonceError::Replay)
             }
             Err(e) => Err(RecordNonceError::Database(e)),
@@ -73,11 +73,7 @@ impl ESignatureNonceRepository {
     ///
     /// Mostly useful for tests and audit endpoints; the hot path should
     /// rely on `record_nonce` returning [`RecordNonceError::Replay`].
-    pub async fn nonce_exists(
-        &self,
-        envelope_id: Uuid,
-        nonce: Uuid,
-    ) -> Result<bool, SqlxError> {
+    pub async fn nonce_exists(&self, envelope_id: Uuid, nonce: Uuid) -> Result<bool, SqlxError> {
         let row: Option<(Uuid,)> = sqlx::query_as(
             r#"
             SELECT id FROM e_signature_nonces
@@ -93,7 +89,6 @@ impl ESignatureNonceRepository {
     }
 }
 
-/// Postgres SQLSTATE `23505` is `unique_violation`.
-fn is_unique_violation(err: &(dyn sqlx::error::DatabaseError + 'static)) -> bool {
-    err.code().as_deref() == Some("23505")
-}
+// Postgres SQLSTATE `23505` is `unique_violation`. Checked inline at the
+// match arm above to avoid the `Box<dyn DatabaseError>` -> `&dyn DatabaseError`
+// coercion dance.
