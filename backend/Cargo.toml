@@ -41,7 +41,7 @@ utoipa-swagger-ui = { version = "9", features = ["axum"] }
 validator = { version = "0.20", features = ["derive"] }
 
 # Database
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
 rust_decimal = { version = "1.34", features = ["serde", "serde-str"] }
 rust_decimal_macros = "1.34"
 

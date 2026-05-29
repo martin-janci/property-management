@@ -176,7 +176,7 @@ impl BuildingRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, Building>(&query).bind(id);
+        let mut q = sqlx::query_as::<_, Building>(sqlx::AssertSqlSafe(query)).bind(id);
 
         if let Some(street) = &data.street {
             q = q.bind(street);
@@ -286,7 +286,7 @@ impl BuildingRepository {
             where_clause
         );
 
-        let mut data_q = sqlx::query_as::<_, BuildingSummary>(&data_query)
+        let mut data_q = sqlx::query_as::<_, BuildingSummary>(sqlx::AssertSqlSafe(data_query))
             .bind(organization_id)
             .bind(limit)
             .bind(offset);
@@ -335,7 +335,8 @@ impl BuildingRepository {
             where_clause
         );
 
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query).bind(organization_id);
+        let mut count_q =
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query)).bind(organization_id);
         if let Some(s) = search {
             count_q = count_q.bind(s);
         }
@@ -354,7 +355,7 @@ impl BuildingRepository {
             where_clause
         );
 
-        let mut data_q = sqlx::query_as::<_, BuildingSummary>(&data_query)
+        let mut data_q = sqlx::query_as::<_, BuildingSummary>(sqlx::AssertSqlSafe(data_query))
             .bind(organization_id)
             .bind(limit)
             .bind(offset);
@@ -588,14 +589,15 @@ impl BuildingRepository {
         );
 
         // Execute count query
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query).bind(organization_id);
+        let mut count_q =
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query)).bind(organization_id);
         if let Some(s) = search {
             count_q = count_q.bind(s);
         }
         let total = count_q.fetch_one(&self.pool).await?;
 
         // Execute data query
-        let mut data_q = sqlx::query_as::<_, BuildingSummary>(&data_query)
+        let mut data_q = sqlx::query_as::<_, BuildingSummary>(sqlx::AssertSqlSafe(data_query))
             .bind(organization_id)
             .bind(limit)
             .bind(offset);

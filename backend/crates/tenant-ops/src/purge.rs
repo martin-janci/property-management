@@ -149,7 +149,11 @@ where
         sanitize_ident(&tbl.table),
         sanitize_ident(&tbl.org_column)
     );
-    match sqlx::query(&sql).bind(org_id).execute(conn).await {
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(org_id)
+        .execute(conn)
+        .await
+    {
         Ok(res) => PerTableReport {
             table: tbl.table.clone(),
             rows_deleted: res.rows_affected(),

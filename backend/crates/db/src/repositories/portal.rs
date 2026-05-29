@@ -132,7 +132,7 @@ impl PortalRepository {
     /// Phase 6: reads from `users` (principal_kind='public').
     pub async fn find_user_by_id(&self, id: Uuid) -> Result<Option<PortalUser>, SqlxError> {
         let sql = format!("{} AND u.id = $1", Self::portal_user_projection());
-        let user = sqlx::query_as::<_, PortalUser>(&sql)
+        let user = sqlx::query_as::<_, PortalUser>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .fetch_optional(&self.pool)
             .await?;
@@ -148,7 +148,7 @@ impl PortalRepository {
             "{} AND LOWER(u.email) = LOWER($1)",
             Self::portal_user_projection()
         );
-        let user = sqlx::query_as::<_, PortalUser>(&sql)
+        let user = sqlx::query_as::<_, PortalUser>(sqlx::AssertSqlSafe(sql))
             .bind(email)
             .fetch_optional(&self.pool)
             .await?;
@@ -282,7 +282,7 @@ impl PortalRepository {
             _ => "l.published_at DESC",
         };
 
-        let rows = sqlx::query_as::<_, PublicListingRow>(&format!(
+        let sql = format!(
             r#"
             SELECT
                 l.id, l.title, l.description, l.price, l.currency,
@@ -306,22 +306,23 @@ impl PortalRepository {
             LIMIT $12 OFFSET $13
             "#,
             order_by
-        ))
-        .bind(&query.q)
-        .bind(&query.property_type)
-        .bind(&query.transaction_type)
-        .bind(query.price_min)
-        .bind(query.price_max)
-        .bind(query.area_min)
-        .bind(query.area_max)
-        .bind(query.rooms_min)
-        .bind(query.rooms_max)
-        .bind(&query.city)
-        .bind(&query.country)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+        );
+        let rows = sqlx::query_as::<_, PublicListingRow>(sqlx::AssertSqlSafe(sql))
+            .bind(&query.q)
+            .bind(&query.property_type)
+            .bind(&query.transaction_type)
+            .bind(query.price_min)
+            .bind(query.price_max)
+            .bind(query.area_min)
+            .bind(query.area_max)
+            .bind(query.rooms_min)
+            .bind(query.rooms_max)
+            .bind(&query.city)
+            .bind(&query.country)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?;
 
         // Convert to PublicListingSummary
         let listings = rows

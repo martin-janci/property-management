@@ -186,7 +186,7 @@ where
         sanitize_ident(table),
         sanitize_ident(table)
     );
-    sqlx::query(&sql)
+    sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(row.to_string())
         .execute(conn)
         .await?;

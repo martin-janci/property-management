@@ -114,7 +114,7 @@ impl PredictiveMaintenanceRepository {
             _ => format!("name {}", sort_order),
         };
 
-        let equipment = sqlx::query_as::<_, Equipment>(&format!(
+        let sql = format!(
             r#"
             SELECT * FROM equipment_registry
             WHERE organization_id = $1
@@ -127,18 +127,19 @@ impl PredictiveMaintenanceRepository {
             LIMIT $7 OFFSET $8
             "#,
             order_clause
-        ))
-        .bind(org_id)
-        .bind(query.building_id)
-        .bind(&query.equipment_type)
-        .bind(&query.status)
-        .bind(query.min_health_score)
-        .bind(query.max_health_score)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        );
+        let equipment = sqlx::query_as::<_, Equipment>(sqlx::AssertSqlSafe(sql))
+            .bind(org_id)
+            .bind(query.building_id)
+            .bind(&query.equipment_type)
+            .bind(&query.status)
+            .bind(query.min_health_score)
+            .bind(query.max_health_score)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(equipment)
     }

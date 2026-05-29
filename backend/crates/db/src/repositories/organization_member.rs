@@ -134,10 +134,11 @@ impl OrganizationMemberRepository {
             status_clause
         );
 
-        let mut data_q = sqlx::query_as::<_, OrganizationMemberWithUser>(&data_query)
-            .bind(org_id)
-            .bind(limit)
-            .bind(offset);
+        let mut data_q =
+            sqlx::query_as::<_, OrganizationMemberWithUser>(sqlx::AssertSqlSafe(data_query))
+                .bind(org_id)
+                .bind(limit)
+                .bind(offset);
         if let Some(status) = &status_filter {
             data_q = data_q.bind(status.as_str());
         }
@@ -156,7 +157,8 @@ impl OrganizationMemberRepository {
             }
         );
 
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query).bind(org_id);
+        let mut count_q =
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query)).bind(org_id);
         if let Some(status) = &status_filter {
             count_q = count_q.bind(status.as_str());
         }
@@ -307,7 +309,7 @@ impl OrganizationMemberRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, OrganizationMember>(&query).bind(id);
+        let mut q = sqlx::query_as::<_, OrganizationMember>(sqlx::AssertSqlSafe(query)).bind(id);
 
         if let Some(role_id) = data.role_id {
             q = q.bind(role_id);
@@ -386,17 +388,19 @@ impl OrganizationMemberRepository {
         );
 
         // Execute count query
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query).bind(org_id);
+        let mut count_q =
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query)).bind(org_id);
         if let Some(status) = &status_filter {
             count_q = count_q.bind(status.as_str());
         }
         let total = count_q.fetch_one(&self.pool).await?;
 
         // Execute data query
-        let mut data_q = sqlx::query_as::<_, OrganizationMemberWithUser>(&data_query)
-            .bind(org_id)
-            .bind(limit)
-            .bind(offset);
+        let mut data_q =
+            sqlx::query_as::<_, OrganizationMemberWithUser>(sqlx::AssertSqlSafe(data_query))
+                .bind(org_id)
+                .bind(limit)
+                .bind(offset);
         if let Some(status) = &status_filter {
             data_q = data_q.bind(status.as_str());
         }
