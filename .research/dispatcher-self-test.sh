@@ -568,6 +568,35 @@ if [ -f "$ACTION_LIST" ]; then
   echo
 fi
 
+# --- T25: unparseable-legacy-dep guard (issue #583) -----------------------
+# When an action-list item carries a non-empty, non-"none" legacy `dependency`
+# free-text field, `depends_on` MUST NOT be empty -- it must either contain
+# real task_id(s) (when parseable) or a poisoned sentinel
+# `["UNRESOLVED:<truncated>"]` (when unparseable). An empty `depends_on` with a
+# meaningful legacy `dependency` value silently makes the item claimable while
+# its real dependency is unresolved (the gap-3 migration trap; PR #562 fallout).
+if [ -f "$ACTION_LIST" ]; then
+  echo "T25 action-list items: non-empty legacy 'dependency' => depends_on non-empty (issue #583)"
+  BAD25=$(jq -r '
+    [ .items[]
+      | select(((.dependency // "") | ascii_downcase) as $d
+               | ($d != "" and $d != "none"))
+      | select(((.depends_on // []) | length) == 0)
+    ] | length' "$ACTION_LIST")
+  if [ "$BAD25" = "0" ]; then
+    note "no action-list rows with non-empty legacy dependency and empty depends_on"
+  else
+    fail "$BAD25 action-list rows have legacy 'dependency' set but empty depends_on (gap-3 migration must emit poisoned sentinel \"UNRESOLVED:<text>\" -- issue #583)"
+    jq -r '
+      .items[]
+      | select(((.dependency // "") | ascii_downcase) as $d
+               | ($d != "" and $d != "none"))
+      | select(((.depends_on // []) | length) == 0)
+      | "    \(.id) :: dependency=\(.dependency) depends_on=[]"' "$ACTION_LIST" >&2
+  fi
+  echo
+fi
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
