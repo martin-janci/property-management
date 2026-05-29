@@ -34,11 +34,12 @@ async fn read_guc(pool: &PgPool, name: &str) -> Option<String> {
     // `current_setting(name, true)` is the missing_ok form — returns NULL
     // (NOT '') when the setting has never been set on this session, so the
     // scalar must be decoded as Option<String>.
-    let raw: Option<String> =
-        sqlx::query_scalar(&format!("SELECT current_setting('{name}', true)"))
-            .fetch_one(pool)
-            .await
-            .expect("read_guc query");
+    let raw: Option<String> = sqlx::query_scalar(sqlx::AssertSqlSafe(&format!(
+        "SELECT current_setting('{name}', true)"
+    )))
+    .fetch_one(pool)
+    .await
+    .expect("read_guc query");
 
     match raw {
         Some(s) if !s.is_empty() => Some(s),

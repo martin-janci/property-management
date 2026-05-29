@@ -95,7 +95,7 @@ impl VendorRepository {
 
         let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
-        sqlx::query_as(&sql)
+        sqlx::query_as(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .bind(&query.status)
             .bind(&query.service)

@@ -546,7 +546,8 @@ impl VoteRepository {
             where_clause, limit, offset
         );
 
-        let mut query_builder = sqlx::query_as::<_, VoteSummary>(&sql).bind(org_id);
+        let mut query_builder =
+            sqlx::query_as::<_, VoteSummary>(sqlx::AssertSqlSafe(sql)).bind(org_id);
 
         if let Some(building_id) = query.building_id {
             query_builder = query_builder.bind(building_id);
@@ -1284,7 +1285,7 @@ impl VoteRepository {
             hidden_filter, hidden_filter
         );
 
-        let rows = sqlx::query_as::<_, CommentWithUserRow>(&sql)
+        let rows = sqlx::query_as::<_, CommentWithUserRow>(sqlx::AssertSqlSafe(sql))
             .bind(vote_id)
             .fetch_all(&self.pool)
             .await?;
@@ -1343,7 +1344,7 @@ impl VoteRepository {
             hidden_filter, hidden_filter
         );
 
-        let rows = sqlx::query_as::<_, CommentWithUserRow>(&sql)
+        let rows = sqlx::query_as::<_, CommentWithUserRow>(sqlx::AssertSqlSafe(sql))
             .bind(parent_id)
             .fetch_all(&self.pool)
             .await?;

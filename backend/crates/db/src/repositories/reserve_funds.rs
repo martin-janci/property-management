@@ -94,7 +94,7 @@ impl ReserveFundRepository {
 
         query.push_str(" ORDER BY name");
 
-        let mut q = sqlx::query_as::<_, ReserveFund>(&query).bind(org_id);
+        let mut q = sqlx::query_as::<_, ReserveFund>(sqlx::AssertSqlSafe(query)).bind(org_id);
 
         if let Some(ft) = fund_type {
             q = q.bind(ft);

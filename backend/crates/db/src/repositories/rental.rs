@@ -646,7 +646,8 @@ impl RentalRepository {
             where_clause
         );
 
-        let mut count_builder = sqlx::query_as::<_, (i64,)>(&count_query).bind(org_id);
+        let mut count_builder =
+            sqlx::query_as::<_, (i64,)>(sqlx::AssertSqlSafe(count_query)).bind(org_id);
 
         if let Some(unit_id) = query.unit_id {
             count_builder = count_builder.bind(unit_id);

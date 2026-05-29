@@ -161,7 +161,11 @@ where
         sanitize_ident(org_column)
     );
 
-    let rows = match sqlx::query(&sql).bind(org_id).fetch_all(conn).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(org_id)
+        .fetch_all(conn)
+        .await
+    {
         Ok(r) => r,
         Err(sqlx::Error::Database(db_err)) if db_err.message().contains("does not exist") => {
             // Schema drift — table or column missing. Soft-fail with empty.
