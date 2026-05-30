@@ -50,6 +50,14 @@ pub struct PrincipalClaims {
     /// from the `users` table (defense in depth; never trusted as authority).
     #[serde(default)]
     pub kind: Option<String>,
+    /// Token discriminator. Access tokens carry `token_type: "access"`;
+    /// refresh tokens carry `"refresh"`. Unlike `kind`, this IS enforced:
+    /// a refresh token must never be accepted on an access-only route
+    /// (mirrors the `auth.rs` RUST-002 fix). Kept `Option` + `serde(default)`
+    /// so any legacy token that omits the claim still decodes and is treated
+    /// as access — only an *explicit* non-access value is rejected.
+    #[serde(default)]
+    pub token_type: Option<String>,
 }
 
 /// The authoritative per-request principal. Built fresh on every request from
@@ -113,6 +121,24 @@ where
             &Validation::default(),
         )
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid or expired token"))?;
+
+        // Reject refresh tokens (and any other non-access discriminator)
+        // BEFORE touching the DB. A token that omits `token_type` is treated
+        // as access for backward-compat; an explicit "refresh" is denied so
+        // a refresh token cannot be replayed against an access-only route.
+        if let Some(token_type) = token_data.claims.token_type.as_deref() {
+            if token_type != "access" {
+                tracing::warn!(
+                    token_type = %token_type,
+                    "RequestPrincipal: rejected non-access token on access-only route"
+                );
+                return Err((
+                    StatusCode::UNAUTHORIZED,
+                    "Invalid token type for this endpoint",
+                ));
+            }
+        }
+
         let user_id = token_data.claims.sub;
 
         // ----- (2) Lookup the principal_kind from the trusted users table. -----
