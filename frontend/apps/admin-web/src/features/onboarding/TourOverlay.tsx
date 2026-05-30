@@ -17,8 +17,14 @@ interface TourOverlayProps {
   tour: OnboardingTour;
   progress: UserOnboardingProgress | null;
   isMutating: boolean;
-  onCompleteStep: (stepId: string) => void;
-  onCompleteTour: () => void;
+  /**
+   * Called when the user completes a step.
+   *
+   * `isLast` lets the parent chain the `completeTour` mutation into the
+   * `onSuccess` callback of the step mutation, so the two POSTs are
+   * sequenced rather than racing (see issue #702 finding #1).
+   */
+  onCompleteStep: (stepId: string, isLast: boolean) => void;
   onSkipTour: () => void;
   onResetTour: () => void;
   onClose: () => void;
@@ -88,7 +94,6 @@ interface StepRowProps {
   isLast: boolean;
   isMutating: boolean;
   onComplete: () => void;
-  onSkip: () => void;
 }
 
 function StepRow({
@@ -100,7 +105,6 @@ function StepRow({
   isLast,
   isMutating,
   onComplete,
-  onSkip,
 }: StepRowProps) {
   const { t } = useTranslation();
 
@@ -203,24 +207,12 @@ function StepRow({
             >
               {isLast ? t('onboarding.finishTour') : t('onboarding.completeStep')}
             </button>
-            {!isLast && (
-              <button
-                type="button"
-                disabled={isMutating}
-                onClick={onSkip}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: 13,
-                  background: 'transparent',
-                  color: 'var(--ppt-fg-muted, #6b7280)',
-                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-                  borderRadius: 6,
-                  cursor: isMutating ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {t('onboarding.skipStep')}
-              </button>
-            )}
+            {/*
+              "Skip step" button removed (issue #702 finding #2): there is no
+              backend skip-step endpoint, and aliasing it to the complete-step
+              POST recorded a misleading "completed" entry in the audit trail.
+              Tour-level skip is still available in the footer via `onSkipTour`.
+            */}
           </div>
         )}
       </div>
@@ -235,7 +227,6 @@ export function TourOverlay({
   progress,
   isMutating,
   onCompleteStep,
-  onCompleteTour,
   onSkipTour,
   onResetTour,
   onClose,
@@ -252,21 +243,17 @@ export function TourOverlay({
   const isCompleted = displayStatus === 'completed';
   const isSkipped = displayStatus === 'skipped';
 
-  // Handle the "complete step" action — auto-complete tour after last step
-  const handleCompleteStep = (stepId: string, isLast: boolean) => {
-    onCompleteStep(stepId);
-    if (isLast) {
-      onCompleteTour();
-    }
-  };
-
   return (
     /* Backdrop */
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 1000,
+        // 1050 sits above Toast (z-index 1000 in Toast.css) and below the
+        // OAuthClients modal (9000) and DestructiveConfirmDialog (9999), so
+        // mutation-success toasts render on top of an open tour overlay
+        // instead of behind it (issue #702 finding #3).
+        zIndex: 1050,
         background: 'rgba(0,0,0,0.45)',
         display: 'flex',
         alignItems: 'center',
@@ -498,11 +485,7 @@ export function TourOverlay({
                   isCurrent={isCurrent}
                   isLast={isLast}
                   isMutating={isMutating}
-                  onComplete={() => handleCompleteStep(step.id, isLast)}
-                  onSkip={() => {
-                    // Skipping a step: mark it complete to advance
-                    handleCompleteStep(step.id, isLast);
-                  }}
+                  onComplete={() => onCompleteStep(step.id, isLast)}
                 />
               );
             })}

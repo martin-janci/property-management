@@ -265,11 +265,35 @@ export default function OnboardingToursPage() {
     }
   };
 
-  const handleCompleteStep = (stepId: string) => {
+  const handleCompleteStep = (stepId: string, isLast: boolean) => {
     if (!activeTour) return;
+    const tourId = activeTour.tour.tour_id;
+    const tourName = activeTour.tour.name;
     completeStepMutation.mutate(
-      { tourId: activeTour.tour.tour_id, stepId },
+      { tourId, stepId },
       {
+        onSuccess: () => {
+          // Chain `completeOnboardingTour` only after the final step POST
+          // has succeeded — keeps the two requests sequenced instead of
+          // racing against the backend (issue #702 finding #1).
+          if (!isLast) return;
+          completeTourMutation.mutate(tourId, {
+            onSuccess: () => {
+              showToast({
+                title: t('onboarding.toast.completedTitle'),
+                message: t('onboarding.toast.completedMessage', { name: tourName }),
+                type: 'success',
+              });
+            },
+            onError: (err) => {
+              showToast({
+                title: t('onboarding.toast.completeFailedTitle'),
+                message: err instanceof Error ? err.message : t('common.unknown'),
+                type: 'error',
+              });
+            },
+          });
+        },
         onError: (err) => {
           showToast({
             title: t('onboarding.toast.stepFailedTitle'),
@@ -279,26 +303,6 @@ export default function OnboardingToursPage() {
         },
       }
     );
-  };
-
-  const handleCompleteTour = () => {
-    if (!activeTour) return;
-    completeTourMutation.mutate(activeTour.tour.tour_id, {
-      onSuccess: () => {
-        showToast({
-          title: t('onboarding.toast.completedTitle'),
-          message: t('onboarding.toast.completedMessage', { name: activeTour.tour.name }),
-          type: 'success',
-        });
-      },
-      onError: (err) => {
-        showToast({
-          title: t('onboarding.toast.completeFailedTitle'),
-          message: err instanceof Error ? err.message : t('common.unknown'),
-          type: 'error',
-        });
-      },
-    });
   };
 
   const handleSkipTour = () => {
@@ -486,7 +490,6 @@ export default function OnboardingToursPage() {
           progress={syncedActiveTour.progress}
           isMutating={isMutating}
           onCompleteStep={handleCompleteStep}
-          onCompleteTour={handleCompleteTour}
           onSkipTour={handleSkipTour}
           onResetTour={handleResetTour}
           onClose={() => setActiveTour(null)}
