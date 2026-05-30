@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
-  "updated_at": "2026-05-28T20:24:00Z",
+  "updated_at": "2026-05-30T00:00:00Z",
   "generated_by": "d807b2b3538968139fe75d3c3261d26e91e2f6d2",
   "findings": [
     {
@@ -26,7 +26,7 @@
       "finding_id": "subagent-race-on-dev-push",
       "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
       "severity": "critical",
-      "status": "open",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T13:41:00Z",
       "last_seen": "2026-05-28T13:41:00Z",
       "recurrence": 1,
@@ -36,7 +36,7 @@
       ],
       "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
       "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
-      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Awaiting next dispatcher run to confirm."
+      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "archive-append-not-idempotent-duplicate-rows",
@@ -101,7 +101,7 @@
       "finding_id": "no-run-level-lock-parallel-overlap",
       "title": "Two dispatcher cycles overlap with no lock, forcing a mid-run reset + re-run on push conflict",
       "severity": "high",
-      "status": "open",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T13:41:00Z",
       "last_seen": "2026-05-28T15:22:00Z",
       "recurrence": 4,
@@ -113,7 +113,7 @@
       ],
       "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held. This also prevents the archive-dedup and stale-base re-run failures which are downstream symptoms of overlap.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
-      "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap: new Phase 0.5 — GitHub ref (refs/tags/dispatcher-lock) as an atomic CAS mutex via `gh api POST /git/refs` (201=win, 422=held). TTL+holder ride in the tag object's message so a dead holder is reclaimable; release via DELETE on an EXIT trap covering Phase 6 abort paths. Uses gh REST not git push (the proxy 403s push — finding git-push-blocked-by-proxy), so the lock can actually acquire here. Awaiting next dispatcher run to confirm in practice."
+      "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap: new Phase 0.5 — GitHub ref (refs/tags/dispatcher-lock) as an atomic CAS mutex via `gh api POST /git/refs` (201=win, 422=held). TTL+holder ride in the tag object's message so a dead holder is reclaimable; release via DELETE on an EXIT trap covering Phase 6 abort paths. Uses gh REST not git push (the proxy 403s push — finding git-push-blocked-by-proxy), so the lock can actually acquire here. Landed as commit 9e61f4eb on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm in practice."
     },
     {
       "finding_id": "approved-but-unmergeable-pool-grows",
@@ -202,7 +202,7 @@
       "finding_id": "post-merge-gate-fooled-by-clone-mtime",
       "title": "Post-merge review cadence gate uses file mtime, which a fresh clone resets to now — gate never fires after a clone",
       "severity": "medium",
-      "status": "open",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T12:28:33Z",
       "last_seen": "2026-05-28T12:28:33Z",
       "recurrence": 1,
@@ -211,13 +211,13 @@
       ],
       "proposed_fix": "Persist last_post_merge_review_at in management state (e.g. assignments.json meta) and gate Phase 6 on that timestamp rather than file mtime — immune to clone resets.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 6 post-merge cadence)",
-      "operator_notes": "Drafted on fix/dispatcher-postmerge-cadence-clone-mtime. Simpler than the proposed fix (no new assignments.json meta field needed): last-merged-review.txt ALREADY stores an ISO timestamp as its content — the bug was the gate reading the file's mtime instead of its content. Phase 2.5 cadence gate rewritten to parse the ISO timestamp inside the file (date -u -d) and compute age; missing/empty/unparseable/>24h => DUE=1 (fail-safe = run). Content survives a clone untouched; mtime does not. Verified against the live marker (content 16:24 vs mtime 19:07 — exactly the divergence that breaks mtime) plus fresh/ancient/garbled/empty/missing cases. The gate lives in Phase 2.5, not Phase 6 (affected_artifact said Phase 6 — corrected). Awaiting next dispatcher run to confirm."
+      "operator_notes": "Drafted on fix/dispatcher-postmerge-cadence-clone-mtime. Simpler than the proposed fix (no new assignments.json meta field needed): last-merged-review.txt ALREADY stores an ISO timestamp as its content — the bug was the gate reading the file's mtime instead of its content. Phase 2.5 cadence gate rewritten to parse the ISO timestamp inside the file (date -u -d) and compute age; missing/empty/unparseable/>24h => DUE=1 (fail-safe = run). Content survives a clone untouched; mtime does not. Verified against the live marker (content 16:24 vs mtime 19:07 — exactly the divergence that breaks mtime) plus fresh/ancient/garbled/empty/missing cases. The gate lives in Phase 2.5, not Phase 6 (affected_artifact said Phase 6 — corrected). Landed as commit 8b63235e (HEAD) on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "stale-local-base-wastes-cycle",
       "title": "Local dev branch drifts behind origin/dev, forcing a mid-run reset + re-run",
       "severity": "medium",
-      "status": "open",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T12:28:33Z",
       "last_seen": "2026-05-28T15:22:00Z",
       "recurrence": 4,
@@ -229,7 +229,7 @@
       ],
       "proposed_fix": "At run start, git fetch and (when N commits behind) reset --hard origin/dev before any gate, so timing-sensitive phases run against current base on the first pass.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
-      "operator_notes": ""
+      "operator_notes": "Fixed in Phase 1 step 1: fetch first, then if local dev is AHEAD of origin/dev (contamination — the dispatcher never leaves work on local dev) hard-reset to origin/dev; if only BEHIND, fast-forward. Replaces the bare `git pull --ff-only` that failed on divergence and forced the reset+re-run. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "review-merge-conversion-bursty",
@@ -253,7 +253,7 @@
       "finding_id": "metrics-trailer-undercounts-skips",
       "title": "Commit-subject metrics trailer omits dup-skip volume, undercounting run activity for trend reads",
       "severity": "low",
-      "status": "open",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T12:28:33Z",
       "last_seen": "2026-05-28T14:42:00Z",
       "recurrence": 2,
@@ -264,7 +264,7 @@
       ],
       "proposed_fix": "Recompute the metrics trailer after Phase 5.5 (post-merge) and add a dup-skip count token so commit subjects match the Phase 7 summary.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 7 metrics trailer)",
-      "operator_notes": ""
+      "operator_notes": "FIXED: the Phase 6 commit subject now carries a `DS dup-skipped` token, and the Phase 2.6 commit-message template adds the token + a note that the trailer is recomputed after Phase 5.5 (subject reflects this run's actual merges/skips) and every subject token must agree with its Phase 7 line. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "reclaim-of-already-merged-task-id",
@@ -294,7 +294,7 @@
       "title": "goal-check GC1 referential-integrity FAILs with 105 orphan action-list items referencing nonexistent coverage entries",
       "severity": "high",
       "category": "goal-check",
-      "status": "open",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T15:22:00Z",
       "last_seen": "2026-05-28T15:22:00Z",
       "recurrence": 1,
@@ -309,14 +309,14 @@
       "proposed_fix": "Add a Phase 2.6 cascade step that prunes/relinks orphan action-list items when coverage entries change, and reconciles coverage done-state against archive merges. Make goal-check.sh GC1 a Phase 6 gate (record-only first, enforcing once the 105-item backlog is drained). Triage the existing 105 orphans into prune-vs-relink as a one-time cleanup.",
       "effort": "medium",
       "affected_artifact": ".research/management/action-list.json + .research/management/coverage.json + .research/dispatcher-prompt.md (Phase 2.6 cascade)",
-      "operator_notes": "REFRAMED + drafted on fix/dispatcher-gc1-referential-integrity. The 105 orphans were mostly a GC1 MEASUREMENT BUG: GC1 prefix-matched the full coverage slug, but action-list gap ids carry a different slug than coverage ids for the same story (gap-10b-3-admin-health-ui vs coverage 10b-3-platform-health-monitoring). Matching on the <epic>-<story> numeric stem instead drops false orphans 105->10. The 10 true orphans (82-6..82-9, 85-3, 9-2, 10a-4) are real roadmap stories MISSING from coverage.json -> author them (relink), never prune live work (13 were in-progress). Separately, the real integrity leak is 46 OPEN gap items whose exact task_id is already merged/done in the archive (shipped-but-never-closed; same as reclaim-of-already-merged-task-id). Fix: (a) goal-check.sh GC1 now stem-matches + replaces the story-level done check (which false-alarmed on 25 legit follow-ups) with a precise per-task archive-terminal leak check; (b) new idempotent .research/gc1-reconcile.sh auto-closes the 46 leaks (stamps merged PR+date) and emits the 10 orphans to gc1-orphan-triage.md; (c) Phase 2.6 runs the reconcile every cycle BEFORE computing the claimable pool (also shrinks GC3 overshoot). Did NOT commit a mutated action-list.json (volatile state); the cascade drains it on the next run. Enforce GC1 as a Phase 6 gate once the orphan-triage backlog hits 0."
+      "operator_notes": "REFRAMED + drafted on fix/dispatcher-gc1-referential-integrity. The 105 orphans were mostly a GC1 MEASUREMENT BUG: GC1 prefix-matched the full coverage slug, but action-list gap ids carry a different slug than coverage ids for the same story (gap-10b-3-admin-health-ui vs coverage 10b-3-platform-health-monitoring). Matching on the <epic>-<story> numeric stem instead drops false orphans 105->10. The 10 true orphans (82-6..82-9, 85-3, 9-2, 10a-4) are real roadmap stories MISSING from coverage.json -> author them (relink), never prune live work (13 were in-progress). Separately, the real integrity leak is 46 OPEN gap items whose exact task_id is already merged/done in the archive (shipped-but-never-closed; same as reclaim-of-already-merged-task-id). Fix: (a) goal-check.sh GC1 now stem-matches + replaces the story-level done check (which false-alarmed on 25 legit follow-ups) with a precise per-task archive-terminal leak check; (b) new idempotent .research/gc1-reconcile.sh auto-closes the 46 leaks (stamps merged PR+date) and emits the 10 orphans to gc1-orphan-triage.md; (c) Phase 2.6 runs the reconcile every cycle BEFORE computing the claimable pool (also shrinks GC3 overshoot). Did NOT commit a mutated action-list.json (volatile state); the cascade drains it on the next run. Enforce GC1 as a Phase 6 gate once the orphan-triage backlog hits 0. Landed as commit 17463444 on fix/dispatcher-postmerge-cadence-clone-mtime."
     },
     {
       "finding_id": "goal-check-gc3-buffer-overshoot",
       "title": "goal-check GC3 buffer-bounds FAILs — claimable=117 is ~2x the upper bound of 60 after a +30 Phase 2.6 refill",
       "severity": "high",
       "category": "goal-check",
-      "status": "open",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T15:22:00Z",
       "last_seen": "2026-05-28T15:22:00Z",
       "recurrence": 1,
@@ -331,7 +331,7 @@
       "proposed_fix": "Make Phase 2.6 refill bound-aware: stop refilling once claimable reaches the GC3 upper bound (60), and refill only up to that cap. Optionally drain excess by deferring lowest-score claimable items back to backlog rather than holding them claimable. Wire GC3 bounds as the single source of truth shared by refill and goal-check.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill) + .research/goal-check.sh (shared bounds)",
-      "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap. goal-check.sh now owns BUFFER_FLOOR/TARGET/CEIL (18/36/60, env-overridable) as the single source of truth; GC3 reads them. Phase 2.6 mirrors them via read_bound() and adds Tier 0 (overflow drain): when claimable>CEIL, defer the lowest-scored excess back to backlog (logged, never silent) until claimable==CEIL; Tier 1 refill capped at min(TARGET,CEIL). Does NOT auto-drain the existing 112->60 backlog in one shot — it converges over runs as Tier 0 fires. Awaiting next dispatcher run to confirm."
+      "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap. goal-check.sh now owns BUFFER_FLOOR/TARGET/CEIL (18/36/60, env-overridable) as the single source of truth; GC3 reads them. Phase 2.6 mirrors them via read_bound() and adds Tier 0 (overflow drain): when claimable>CEIL, defer the lowest-scored excess back to backlog (logged, never silent) until claimable==CEIL; Tier 1 refill capped at min(TARGET,CEIL). Does NOT auto-drain the existing 112->60 backlog in one shot — it converges over runs as Tier 0 fires. Landed as commit 9e61f4eb on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "terminal-ids-excluded-failed-rows",
@@ -358,7 +358,7 @@
       "title": "Local proxy at 127.0.0.1:36415 returns HTTP 403 for git push — retry loop exhausted, must use MCP fallback",
       "severity": "medium",
       "category": "push-path",
-      "status": "workaround-in-place",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T18:21:53Z",
       "last_seen": "2026-05-28T20:24:00Z",
       "recurrence": 2,
@@ -370,7 +370,7 @@
       "proposed_fix": "Treat mcp__github__push_files as the primary push path in this environment; fall back to git push only if MCP tool unavailable. Add PUSH_METHOD=mcp env flag to dispatcher-prompt. Now recurring across runs — promote the MCP path from fallback to default rather than burning a 4-attempt backoff loop each run.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3.5 + Phase 6 push step)",
-      "operator_notes": "Confirmed recurring 2026-05-28 (R8 run). The retry loop wastes a full backoff cycle before falling back; default to MCP push."
+      "operator_notes": "Confirmed recurring 2026-05-28 (R8 run). The retry loop wastes a full backoff cycle before falling back; default to MCP push. FIXED in Phase 6 push step: PUSH_METHOD defaults to `mcp` (mcp__github__push_files); `git push` is the fallback only when MCP is unavailable, and `PUSH_METHOD=git` forces it. No more 4-attempt 403 backoff per run. (Phase 0.5 lock already uses gh REST for the same reason.) Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "orphan-recovery-reinserts-archived-task-id",
@@ -398,7 +398,7 @@
       "title": "git checkout --ours during rebase onto origin/dev takes the UPSTREAM side, silently discarding the dispatcher's state writes",
       "severity": "critical",
       "category": "push-path",
-      "status": "workaround-in-place",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T20:24:00Z",
       "last_seen": "2026-05-28T20:24:00Z",
       "recurrence": 1,
@@ -412,14 +412,14 @@
       "proposed_fix": "In the dispatcher conflict-resolution spec, make state-file ownership explicit: for files the dispatcher OWNS (assignments.json, version), always resolve to the LOCAL/dispatcher side — during a rebase that is `--theirs`, not `--ours`. Better: never rebase owned state files — use `-X theirs` only for generated artifacts and reapply the dispatcher's state commit last (cherry-pick). Add a post-resolve guard that diffs the resolved file against the intended state and aborts the push if the dispatcher's changes are absent.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (rebase / conflict-resolution step)",
-      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded — add an explicit no-op-push detector."
+      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded — add an explicit no-op-push detector. FIXED in Phase 6 push step: (a) owned-state conflict-resolution rule — during a REBASE keep OUR side via `git checkout --theirs` for `.research/management/**`+`VERSION` (--ours is upstream in a rebase, the inverse of a merge); any non-owned conflict aborts+bails; (b) no-op-push detector greps push output for 'Everything up-to-date' after a state commit and refuses to mark the run successful; (c) post-push verification diffs the landed origin/dev tree against the intended tree. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "ios-swiftui-prs-blocked-on-macos-build-gate",
       "title": "iOS/SwiftUI PRs consistently land with needs-human-review because merge requires a macOS-only build the dispatcher cannot run",
       "severity": "medium",
       "category": "merge-gate",
-      "status": "open",
+      "status": "acknowledged",
       "first_seen": "2026-05-28T20:24:00Z",
       "last_seen": "2026-05-28T20:24:00Z",
       "recurrence": 1,
@@ -432,7 +432,7 @@
       "proposed_fix": "Recognize the iOS/macOS-build-gate as a distinct, expected terminal-for-dispatcher state: tag such PRs with an explicit human-escalation label (e.g. awaiting-macos-build), stop attempting to merge them, and surface a digest of pending-macos PRs in the Phase 7 summary instead of counting them as failures. Longer term, add a macOS CI runner so xcodebuild can gate them automatically. Until then they should not inflate the unmergeable-pool metric.",
       "effort": "small",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate + Phase 7 summary)",
-      "operator_notes": "Distinct from generic needs-human-review: this is a permanent capability gap (no macOS runner), not a transient block. Track separately so it does not look like dispatcher merge failure."
+      "operator_notes": "Distinct from generic needs-human-review: this is a permanent capability gap (no macOS runner), not a transient block. Track separately so it does not look like dispatcher merge failure. FIXED: Phase 5.5 gains a `macos-build-gated` blocker classification (iOS/Swift head paths + missing macOS check) that tags the PR `awaiting-macos-build`, SKIPs, and surfaces in a dedicated Phase 7 `Awaiting-macOS-build:` digest — NOT the merge-failure or human-gated buckets. Label is created idempotently in Phase 1 step 7. Longer-term macOS-runner CI remains out of scope. Awaiting next dispatcher run to confirm."
     },
     {
       "finding_id": "wip-over-cap-blocks-claims",
@@ -455,5 +455,6 @@
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3 WIP gate + Phase 7 summary)",
       "operator_notes": "Expected behavior; recorded as a throughput signal. WIP should be back under cap next run after X6 merges."
     }
-  ]
+  ],
+  "last_status_reconcile": "2026-05-30 — flipped 5 findings open->acknowledged after their drafted fixes were consolidated onto branch fix/dispatcher-postmerge-cadence-clone-mtime (commits 8b63235e, cdcd1ce3, 17463444, 9e61f4eb); still awaiting a live dispatcher run to confirm in practice."
 }
