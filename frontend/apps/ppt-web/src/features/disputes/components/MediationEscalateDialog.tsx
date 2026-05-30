@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 export interface MediationEscalateDialogProps {
   onConfirm: (reason: string) => void;
@@ -14,12 +15,16 @@ export function MediationEscalateDialog({
 }: MediationEscalateDialogProps) {
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, onCancel);
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="escalate-dialog-title"
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
     >
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
@@ -28,10 +33,14 @@ export function MediationEscalateDialog({
         </h2>
         <p className="text-sm text-gray-500 mb-4">{t('disputes.mediation.escalateDescription')}</p>
 
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="escalate-dialog-reason"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           {t('disputes.mediation.reasonForEscalation')}
         </label>
         <textarea
+          id="escalate-dialog-reason"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={4}
