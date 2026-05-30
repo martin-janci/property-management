@@ -5,7 +5,7 @@
  */
 
 import type { ReportExecutionStatus } from '@ppt/api-client';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export interface ExecutionFilters {
@@ -22,15 +22,18 @@ interface HistoryFiltersProps {
 export function HistoryFilters({ filters, onChange }: HistoryFiltersProps) {
   const { t } = useTranslation();
 
-  const STATUS_OPTIONS: { value: ReportExecutionStatus | ''; label: string }[] = [
-    { value: '', label: t('reports.filters.allStatuses', 'All Statuses') },
-    { value: 'completed', label: t('reports.filters.statusCompleted', 'Completed') },
-    { value: 'failed', label: t('reports.filters.statusFailed', 'Failed') },
-    { value: 'running', label: t('reports.filters.statusRunning', 'Running') },
-    { value: 'pending', label: t('reports.filters.statusPending', 'Pending') },
-    { value: 'cancelled', label: t('reports.filters.statusCancelled', 'Cancelled') },
-    { value: 'skipped', label: t('reports.filters.statusSkipped', 'Skipped') },
-  ];
+  const STATUS_OPTIONS: { value: ReportExecutionStatus | ''; label: string }[] = useMemo(
+    () => [
+      { value: '', label: t('reports.filters.allStatuses', 'All Statuses') },
+      { value: 'completed', label: t('reports.filters.statusCompleted', 'Completed') },
+      { value: 'failed', label: t('reports.filters.statusFailed', 'Failed') },
+      { value: 'running', label: t('reports.filters.statusRunning', 'Running') },
+      { value: 'pending', label: t('reports.filters.statusPending', 'Pending') },
+      { value: 'cancelled', label: t('reports.filters.statusCancelled', 'Cancelled') },
+      { value: 'skipped', label: t('reports.filters.statusSkipped', 'Skipped') },
+    ],
+    [t]
+  );
 
   const handleStatusChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
