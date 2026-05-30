@@ -44,7 +44,7 @@ fn get_request(uri: &str) -> Request<Body> {
 
 // ==================== Articles ====================
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_articles_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app.execute(get_request("/api/v1/help/articles")).await;
@@ -55,7 +55,7 @@ async fn test_list_articles_returns_200(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_search_articles_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -68,7 +68,7 @@ async fn test_search_articles_returns_200(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_articles_by_category_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -83,7 +83,7 @@ async fn test_list_articles_by_category_returns_200(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_articles_by_context_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -98,7 +98,7 @@ async fn test_list_articles_by_context_returns_200(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_get_article_not_found_returns_404(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -113,7 +113,7 @@ async fn test_get_article_not_found_returns_404(pool: PgPool) {
 
 // ==================== Categories ====================
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_categories_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app.execute(get_request("/api/v1/help/categories")).await;
@@ -124,7 +124,7 @@ async fn test_list_categories_returns_200(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_get_category_not_found_returns_404(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -139,7 +139,7 @@ async fn test_get_category_not_found_returns_404(pool: PgPool) {
 
 // ==================== FAQ ====================
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_faq_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app.execute(get_request("/api/v1/help/faq")).await;
@@ -150,7 +150,7 @@ async fn test_list_faq_returns_200(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_search_faq_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -163,7 +163,7 @@ async fn test_search_faq_returns_200(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_faq_by_category_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -178,7 +178,7 @@ async fn test_list_faq_by_category_returns_200(pool: PgPool) {
 
 // ==================== Tooltips ====================
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_tooltips_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app.execute(get_request("/api/v1/help/tooltips")).await;
@@ -189,7 +189,7 @@ async fn test_list_tooltips_returns_200(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_get_tooltip_not_found_returns_404(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -202,7 +202,7 @@ async fn test_get_tooltip_not_found_returns_404(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_tooltips_by_prefix_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
@@ -219,7 +219,7 @@ async fn test_list_tooltips_by_prefix_returns_200(pool: PgPool) {
 
 /// Article feedback requires a valid bearer token.
 /// Without auth it must be rejected with 401.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_submit_feedback_without_auth_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool).await;
 
