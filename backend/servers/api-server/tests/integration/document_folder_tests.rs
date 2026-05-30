@@ -16,6 +16,10 @@
 //! - DELETE (non-manager -> 403)
 //!
 //! ### Cross-org IDOR guard **[PR#580]**
+//! ### Cross-org IDOR guard — authenticated (RLS isolation -> 404) **[#679]**
+//! - GET    /folders/{id} (org_b manager → org_a folder) → 404
+//! - PUT    /folders/{id} (org_b manager → org_a folder) → 404, row unchanged
+//! - DELETE /folders/{id} (org_b manager → org_a folder) → 404, row still exists
 //! ### Depth-limit trigger (6th level -> 400 MAX_DEPTH_EXCEEDED) **[PR#580]**
 //! ### Schema assertions (FK, column, table existence)
 
@@ -254,13 +258,16 @@ async fn test_delete_folder_non_manager_returns_403(pool: PgPool) {
 }
 
 // ---------------------------------------------------------------------------
-// Cross-org IDOR guard — new **[PR#580]**
+// Cross-org IDOR guard — unauthenticated (existing, **[PR#580]**)
 //
 // Without host_tenant_middleware, an unauthenticated request that supplies
 // X-Tenant-ID for Org B is rejected (4xx) before any Org A row is mutated.
+// This is the legitimate outer-gate test and is intentionally kept as-is —
+// it proves the JWT gate (AuthUser) blocks anonymous callers. The authenticated
+// IDOR contract is exercised by the `*_authenticated_*` tests below (#679).
 // ---------------------------------------------------------------------------
 
-/// Cross-org folder create is rejected; Org A row count unchanged.
+/// Cross-org folder create without a Bearer token is rejected; Org A row count unchanged.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_cross_org_folder_idor_is_rejected(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -290,6 +297,136 @@ async fn test_cross_org_folder_idor_is_rejected(pool: PgPool) {
 
     assert_eq!(count_before, count_after,
         "cross-org request must not mutate Org A folder count");
+}
+
+// ---------------------------------------------------------------------------
+// Cross-org IDOR guard — AUTHENTICATED (new, **[issue #679]**)
+//
+// The existing unauth test above only proves the outer JWT gate works.
+// The real IDOR scenario is: a Manager authenticated in Org B sends a valid
+// Bearer token + `X-Tenant-ID: org_b` but targets a folder UUID owned by
+// Org A. The request passes `AuthUser`, passes `ValidatedTenantExtractor`
+// (the user IS a member of org_b), reaches `RlsConnection` which sets the
+// RLS context to org_b, and the `find_folder_by_id_rls` lookup for org_a's
+// folder returns `None` because the RLS policy on `document_folders` hides
+// rows owned by other orgs. The handler maps `None → 404 NOT_FOUND`.
+//
+// For PUT/DELETE the `tenant.role.is_manager()` RBAC check fires BEFORE the
+// repo lookup — to reach the RLS-isolation branch we must mint a JWT with
+// `role: "manager"` so the RBAC gate passes. (Same trick as the depth-limit
+// test below.) For GET there is no RBAC check; any authenticated member of
+// org_b sees the same 404.
+//
+// We also seed an `organization_members` row in org_b so
+// `ValidatedTenantExtractor` (used by `RlsConnection`) accepts the user.
+// ---------------------------------------------------------------------------
+
+/// Authenticated Manager in Org B GETs a folder owned by Org A → 404
+/// (RLS hides cross-org rows; not 401, not 403).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_cross_org_folder_idor_authenticated_get_returns_404(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_a = seed_org_f(&pool, "idor-auth-get-a").await;
+    let org_b = seed_org_f(&pool, "idor-auth-get-b").await;
+
+    // Seed an Org A user + folder (the IDOR target).
+    let user_a = seed_user_f(&pool, "owner-get@folder-test.example").await;
+    let folder_in_a = seed_folder_f(&pool, org_a, None, "OrgA Folder", user_a).await;
+
+    // Attacker: a real user with a Manager membership in Org B.
+    let attacker = seed_user_f(&pool, "attacker-get@folder-test.example").await;
+    seed_member_f(&pool, org_b, attacker, "manager").await;
+    let token = mint_jwt_with_role(attacker, "manager");
+
+    let resp = app.execute(
+        Request::builder().method(Method::GET)
+            .uri(format!("/api/v1/documents/folders/{folder_in_a}"))
+            .header(header::AUTHORIZATION, format!("Bearer {token}"))
+            .header("X-Tenant-ID", org_b.to_string())
+            .body(Body::empty()).unwrap()).await;
+
+    assert_eq!(resp.status, StatusCode::NOT_FOUND,
+        "#679: authenticated cross-org GET must hit RLS isolation and return 404, \
+         got {} body: {}", resp.status, resp.text());
+
+    // Folder still exists in Org A (bypass-RLS query via app pool).
+    let still_there: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM document_folders WHERE id = $1 AND organization_id = $2")
+        .bind(folder_in_a).bind(org_a)
+        .fetch_one(&pool).await.expect("post-GET existence check");
+    assert_eq!(still_there, 1, "Org A folder must remain untouched after cross-org GET");
+}
+
+/// Authenticated Manager in Org B PUTs (updates) a folder owned by Org A → 404
+/// (RLS hides cross-org rows; row unchanged).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_cross_org_folder_idor_authenticated_update_returns_404(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_a = seed_org_f(&pool, "idor-auth-put-a").await;
+    let org_b = seed_org_f(&pool, "idor-auth-put-b").await;
+
+    let user_a = seed_user_f(&pool, "owner-put@folder-test.example").await;
+    let folder_in_a = seed_folder_f(&pool, org_a, None, "OrgA Original", user_a).await;
+
+    let attacker = seed_user_f(&pool, "attacker-put@folder-test.example").await;
+    seed_member_f(&pool, org_b, attacker, "manager").await;
+    let token = mint_jwt_with_role(attacker, "manager");
+
+    let resp = app.execute(
+        Request::builder().method(Method::PUT)
+            .uri(format!("/api/v1/documents/folders/{folder_in_a}"))
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::AUTHORIZATION, format!("Bearer {token}"))
+            .header("X-Tenant-ID", org_b.to_string())
+            .body(Body::from(r#"{"name":"Pwned by OrgB"}"#)).unwrap()).await;
+
+    assert_eq!(resp.status, StatusCode::NOT_FOUND,
+        "#679: authenticated cross-org PUT must hit RLS isolation and return 404 \
+         (not 403 RBAC, not 401 auth), got {} body: {}", resp.status, resp.text());
+
+    // Org A's folder name must be unchanged.
+    let name_after: String = sqlx::query_scalar(
+        "SELECT name FROM document_folders WHERE id = $1")
+        .bind(folder_in_a)
+        .fetch_one(&pool).await.expect("post-PUT name check");
+    assert_eq!(name_after, "OrgA Original",
+        "Org A folder name must not be mutated by a cross-org PUT");
+}
+
+/// Authenticated Manager in Org B DELETEs a folder owned by Org A → 404
+/// (RLS hides cross-org rows; folder still exists).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_cross_org_folder_idor_authenticated_delete_returns_404(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_a = seed_org_f(&pool, "idor-auth-del-a").await;
+    let org_b = seed_org_f(&pool, "idor-auth-del-b").await;
+
+    let user_a = seed_user_f(&pool, "owner-del@folder-test.example").await;
+    let folder_in_a = seed_folder_f(&pool, org_a, None, "OrgA Survivor", user_a).await;
+
+    let attacker = seed_user_f(&pool, "attacker-del@folder-test.example").await;
+    seed_member_f(&pool, org_b, attacker, "manager").await;
+    let token = mint_jwt_with_role(attacker, "manager");
+
+    let resp = app.execute(
+        Request::builder().method(Method::DELETE)
+            .uri(format!("/api/v1/documents/folders/{folder_in_a}"))
+            .header(header::AUTHORIZATION, format!("Bearer {token}"))
+            .header("X-Tenant-ID", org_b.to_string())
+            .body(Body::empty()).unwrap()).await;
+
+    assert_eq!(resp.status, StatusCode::NOT_FOUND,
+        "#679: authenticated cross-org DELETE must hit RLS isolation and return 404 \
+         (not 403 RBAC, not 401 auth, not 204 success), got {} body: {}",
+        resp.status, resp.text());
+
+    // Folder must still exist in Org A (bypass-RLS query via app pool).
+    let still_there: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM document_folders WHERE id = $1 AND organization_id = $2")
+        .bind(folder_in_a).bind(org_a)
+        .fetch_one(&pool).await.expect("post-DELETE existence check");
+    assert_eq!(still_there, 1,
+        "Org A folder must still exist after a cross-org DELETE attempt");
 }
 
 // ---------------------------------------------------------------------------
