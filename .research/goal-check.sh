@@ -97,14 +97,41 @@ record "GC1-referential-integrity" "$GC1_PASS" \
 # (a deliberate human refresh may legitimately re-classify done -> partial).
 GC2_NOW=$(jq '[.stories[] | select(.status=="done")] | length' "$COVERAGE")
 GC2_KIND=$(jq -r '.scan_kind // "upkeep"' "$COVERAGE")
-GC2_HEAD=$(git show "HEAD:$COVERAGE" 2>/dev/null \
-           | jq '[.stories[] | select(.status=="done")] | length' 2>/dev/null || echo "$GC2_NOW")
-if [ "$GC2_KIND" = "deep" ]; then
-  record "GC2-coverage-progress" true "done=$GC2_NOW (deep-scan exempt)" "done>=$GC2_HEAD" true
-elif [ "$GC2_NOW" -ge "$GC2_HEAD" ]; then
-  record "GC2-coverage-progress" true "done=$GC2_NOW head=$GC2_HEAD" "done>=$GC2_HEAD" true
+# Read HEAD's done-story count. Distinguish three states explicitly (issue #700):
+#   GC2_BASELINE=present   — git show succeeded, count is the prior committed value
+#   GC2_BASELINE=missing   — git show failed (first commit of coverage.json,
+#                            shallow clone where the blob isn't fetched, detached
+#                            HEAD). Treated as monotonic pass but the head=N
+#                            marker is suffixed `(no-baseline)` so it's auditable.
+#   GC2_BASELINE=corrupt   — git show returned bytes but jq couldn't parse them.
+#                            Also treated as monotonic pass + marked.
+GC2_HEAD_RAW=$(git show "HEAD:$COVERAGE" 2>/dev/null || true)
+if [ -z "$GC2_HEAD_RAW" ]; then
+  GC2_HEAD="$GC2_NOW"
+  GC2_BASELINE="missing"
 else
-  record "GC2-coverage-progress" false "done=$GC2_NOW head=$GC2_HEAD" "done>=$GC2_HEAD" true
+  GC2_HEAD=$(printf '%s' "$GC2_HEAD_RAW" | jq '[.stories[] | select(.status=="done")] | length' 2>/dev/null || true)
+  if [ -z "$GC2_HEAD" ]; then
+    GC2_HEAD="$GC2_NOW"
+    GC2_BASELINE="corrupt"
+  else
+    GC2_BASELINE="present"
+  fi
+fi
+# Audit suffix: when the baseline is absent the line reads e.g.
+# `done=24 head=24(no-baseline)`, surfacing the gap in the commit log instead of
+# pretending the monotonicity check ran.
+if [ "$GC2_BASELINE" = "present" ]; then
+  GC2_HEAD_FMT="$GC2_HEAD"
+else
+  GC2_HEAD_FMT="$GC2_HEAD(no-baseline:$GC2_BASELINE)"
+fi
+if [ "$GC2_KIND" = "deep" ]; then
+  record "GC2-coverage-progress" true "done=$GC2_NOW (deep-scan exempt)" "done>=$GC2_HEAD_FMT" true
+elif [ "$GC2_NOW" -ge "$GC2_HEAD" ]; then
+  record "GC2-coverage-progress" true "done=$GC2_NOW head=$GC2_HEAD_FMT" "done>=$GC2_HEAD_FMT" true
+else
+  record "GC2-coverage-progress" false "done=$GC2_NOW head=$GC2_HEAD_FMT" "done>=$GC2_HEAD_FMT" true
 fi
 
 # --- GC3: buffer bounds. open_claimable = open action-list items not already
