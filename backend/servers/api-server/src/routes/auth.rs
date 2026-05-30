@@ -433,6 +433,20 @@ pub struct LoginRequest {
     pub two_factor_code: Option<String>,
 }
 
+/// User's membership in a tenant/organization, as exposed to clients on
+/// login and on token refresh. Mirrors the TypeSpec `TenantMembership`
+/// model in `docs/api/typespec/domains/auth.tsp`.
+#[derive(Debug, Clone, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TenantMembership {
+    /// Tenant / organization ID.
+    pub tenant_id: uuid::Uuid,
+    /// Tenant / organization display name.
+    pub tenant_name: String,
+    /// User's role within this tenant (e.g. `manager`, `owner`).
+    pub role: String,
+}
+
 /// Login response.
 #[derive(Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -451,6 +465,50 @@ pub struct LoginResponse {
     /// Temporary token for MFA verification (only present if mfa_required)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mfa_token: Option<String>,
+    /// Active tenant memberships for this user, queried fresh from the
+    /// database on every login and every token refresh. The frontend
+    /// persists this list to back `deriveActiveRole`; returning it on
+    /// refresh closes the staleness gap from #676 where a server-side
+    /// membership revocation would not propagate until the next full
+    /// re-login. Empty on the MFA-required intermediate response.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tenants: Vec<TenantMembership>,
+}
+
+/// Load the user's currently-active tenant memberships from the database.
+///
+/// "Active" here means `organization_members.status = 'active'` AND the
+/// owning organization is not soft-deleted. The repository already filters
+/// `status != 'removed'`; we additionally drop `pending` / `suspended` rows
+/// here because those memberships must not grant access in the access-token
+/// lifetime that the response unlocks.
+///
+/// This helper is the single source of truth for both `login()` and
+/// `refresh_token()` so the two code paths cannot drift (#676).
+async fn load_tenant_memberships(state: &AppState, user_id: uuid::Uuid) -> Vec<TenantMembership> {
+    match state.org_member_repo.get_user_memberships(user_id).await {
+        Ok(rows) => rows
+            .into_iter()
+            .filter(|row| row.status == "active")
+            .map(|row| TenantMembership {
+                tenant_id: row.organization_id,
+                tenant_name: row.organization_name,
+                role: row.role_type,
+            })
+            .collect(),
+        Err(err) => {
+            // Fail open with an empty list rather than 500 — the access
+            // token itself is the authoritative authz signal; the tenants
+            // list is a UX hint for the client to pick which tenant to act
+            // as. Logging at warn so a persistent DB issue is still visible.
+            tracing::warn!(
+                error = %err,
+                user_id = %user_id,
+                "Failed to load tenant memberships; returning empty list"
+            );
+            Vec::new()
+        }
+    }
 }
 
 /// Login endpoint.
@@ -710,6 +768,10 @@ pub async fn login(
                         token_type: "Bearer".to_string(),
                         mfa_required: Some(true),
                         mfa_token: None,
+                        // Tenants are intentionally omitted on the MFA
+                        // gate response: the client has no usable access
+                        // token yet, so a tenant picker would be useless.
+                        tenants: Vec::new(),
                     })
                     .into_response());
                 }
@@ -851,6 +913,11 @@ pub async fn login(
         }
     }
 
+    // Issue #676: populate `tenants` with a fresh DB read so the frontend
+    // can persist an accurate membership list. Login and refresh share the
+    // same `load_tenant_memberships` helper to prevent drift.
+    let tenants = load_tenant_memberships(&state, user.id).await;
+
     Ok((
         headers,
         Json(LoginResponse {
@@ -860,6 +927,7 @@ pub async fn login(
             token_type: "Bearer".to_string(),
             mfa_required: None,
             mfa_token: None,
+            tenants,
         }),
     )
         .into_response())
@@ -1236,6 +1304,15 @@ pub async fn refresh_token(
 
     tracing::info!(user_id = %user.id, "Token refreshed successfully");
 
+    // Issue #676: re-read tenant memberships from the database on every
+    // refresh. The frontend persists this list at login and, prior to
+    // this fix, had no way to learn that a membership was revoked
+    // server-side until the user logged out and back in — letting
+    // `deriveActiveRole` keep handing back a removed role for up to the
+    // refresh-token lifetime. Sharing `load_tenant_memberships` with
+    // `login()` keeps the two paths in lockstep.
+    let tenants = load_tenant_memberships(&state, user.id).await;
+
     Ok(Json(LoginResponse {
         access_token,
         refresh_token: new_refresh_token,
@@ -1243,6 +1320,7 @@ pub async fn refresh_token(
         token_type: "Bearer".to_string(),
         mfa_required: None,
         mfa_token: None,
+        tenants,
     }))
 }
 
