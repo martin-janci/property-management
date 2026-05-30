@@ -529,17 +529,31 @@ pub struct SupportData {
 impl PlatformAdminRepository {
     /// Get platform tenant diagnostics for the support-data endpoint.
     ///
-    /// Runs four focused cross-tenant queries:
-    ///   1. User counts grouped by `status`.
-    ///   2. Active session count (refresh tokens neither revoked nor expired).
-    ///   3. Total fault count.
-    ///   4. Fault counts per `status` enum value.
+    /// Runs five focused cross-tenant queries:
+    ///   1. Total organisation count.
+    ///   2. User counts grouped by `status`.
+    ///   3. Active session count (refresh tokens neither revoked nor expired).
+    ///   4. Total fault count.
+    ///   5. Fault counts per `status` enum value.
+    ///
+    /// All queries run inside a single `REPEATABLE READ` transaction so the
+    /// aggregate counters reflect a consistent snapshot — without this,
+    /// concurrent writes between queries can make `total_faults` disagree
+    /// with the sum of `fault_by_status`, or `active_sessions` lag behind
+    /// `total_users`. See issue #628.
     ///
     /// All queries bypass RLS — caller must hold `AuditRead` capability.
     pub async fn get_support_data(&self) -> Result<SupportData, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        // Pin all subsequent reads in this tx to a single MVCC snapshot.
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            .execute(&mut *tx)
+            .await?;
+
         // 1. Total organisation count (all statuses)
         let total_orgs: i64 = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM organizations")
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await?;
 
         // 2. User counts per status
@@ -550,7 +564,7 @@ impl PlatformAdminRepository {
             GROUP BY status
             "#,
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *tx)
         .await?;
 
         let mut total_users: i64 = 0;
@@ -575,12 +589,12 @@ impl PlatformAdminRepository {
             WHERE is_revoked = false AND expires_at > NOW()
             "#,
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         // 4. Total fault count
         let total_faults: i64 = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM faults")
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await?;
 
         // 5. Fault counts per status
@@ -592,8 +606,10 @@ impl PlatformAdminRepository {
             ORDER BY cnt DESC
             "#,
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *tx)
         .await?;
+
+        tx.commit().await?;
 
         let fault_by_status = fault_rows
             .into_iter()
