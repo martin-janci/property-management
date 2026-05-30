@@ -128,6 +128,37 @@ jobs:
             --non-interactive \
             --no-wait
 
+      - name: Surface EAS build URL in job summary (issue #715)
+        # --no-wait above returns the moment the build is enqueued; the EAS
+        # job then runs minutes later on expo.dev with no feedback in
+        # GitHub Actions. Look up the just-enqueued build and write its URL
+        # to the step summary so the developer has a direct link instead of
+        # navigating expo.dev manually. Non-fatal — never block the build
+        # on the summary write.
+        if: always()
+        working-directory: frontend/apps/mobile
+        env:
+          EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+        run: |
+          set +e
+          build_json=$(eas build:list --platform android --limit 1 --non-interactive --json 2>/dev/null)
+          build_url=$(echo "$build_json" | jq -r '.[0].buildProfile as $bp | "\(.[0].id) [\(.[0].status)] profile=\($bp) → https://expo.dev/accounts/_/projects/_/builds/\(.[0].id)"' 2>/dev/null)
+          {
+            echo "## EAS Android build (profile=${{ steps.profile.outputs.profile }})"
+            if [ -n "$build_url" ] && [ "$build_url" != "null" ]; then
+              echo ""
+              echo "Latest build: $build_url"
+              echo ""
+              echo "Raw JSON:"
+              echo '```json'
+              echo "$build_json" | jq '.[0] | {id, status, platform, buildProfile, createdAt}'
+              echo '```'
+            else
+              echo ""
+              echo "Could not read build via \`eas build:list\` — check expo.dev directly."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Submit to Google Play
         # Only submit when: manual dispatch + submit=true + production profile
         if: |
