@@ -216,8 +216,18 @@ impl FacilityRepository {
 
     /// Find booking by ID.
     pub async fn find_booking_by_id(&self, id: Uuid) -> Result<Option<FacilityBooking>, SqlxError> {
+        // `status` is the `booking_status` Postgres enum; sqlx 0.9 refuses to
+        // decode an enum column straight into a Rust `String`, so cast it to
+        // text. (The `FacilityBooking` model keeps `status: String`.) Columns
+        // are listed explicitly because `SELECT *` cannot override one column's
+        // type. See the sqlx-0.9 enum-decode tracking issue for the rest.
         let booking = sqlx::query_as::<_, FacilityBooking>(
-            r#"SELECT * FROM facility_bookings WHERE id = $1"#,
+            r#"SELECT id, facility_id, user_id, unit_id, start_time, end_time,
+                      status::text AS status, purpose, attendees, notes,
+                      approved_by, approved_at, rejected_by, rejected_at,
+                      rejection_reason, cancelled_at, cancellation_reason,
+                      total_fee, deposit_paid, created_at, updated_at
+               FROM facility_bookings WHERE id = $1"#,
         )
         .bind(id)
         .fetch_optional(&self.pool)
