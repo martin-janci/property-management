@@ -555,6 +555,25 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/v1/listings", routes::listings::router())
         // Integration routes
         .nest("/api/v1/integrations", routes::integrations::router())
+        // Routes that were registered in `lib.rs::create_router` (so tests
+        // passed) but were missing from this production binary, making them
+        // unreachable in prod (closes #836; also fixes MFA recovery codes,
+        // pricing, property valuations and data residency). Keep in sync with
+        // `lib.rs`.
+        .nest(
+            "/api/v1/users/me/push-tokens",
+            routes::push_tokens::router(),
+        )
+        .nest(
+            "/api/v1/users/me/mfa/recovery-codes",
+            routes::mfa::recovery_codes_router(),
+        )
+        .nest("/api/v1/pricing", routes::market_pricing::router())
+        .nest(
+            "/api/v1/property-valuations",
+            routes::property_valuation::router(),
+        )
+        .nest("/api/v1/data-residency", routes::data_residency::router())
         // Financial routes (Epic 11)
         .nest("/api/v1/financial", routes::financial::router())
         // Meters routes (Epic 12)
