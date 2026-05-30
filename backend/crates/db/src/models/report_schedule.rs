@@ -36,7 +36,8 @@ pub mod report_execution_status {
 /// A report schedule (API representation).
 ///
 /// Maps to the `report_schedules` table created by migration
-/// `00159_create_report_schedules_executions.sql`.
+/// `00162_create_report_schedules_executions.sql`, with the
+/// `cron_expression` column added by `00163_report_schedules_add_cron_expression.sql`.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ReportSchedule {
     pub id: Uuid,
@@ -46,6 +47,7 @@ pub struct ReportSchedule {
     pub frequency: String,
     pub day_of_week: Option<i32>,
     pub day_of_month: Option<i32>,
+    /// Legacy HH:MM time-of-day. Prefer `cron_expression` for new code.
     pub time: String,
     pub timezone: String,
     pub format: String,
@@ -57,6 +59,10 @@ pub struct ReportSchedule {
     pub next_run_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    /// 5-field UNIX cron expression (gap-81-1). When set, supersedes the
+    /// legacy `time` HH:MM column.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cron_expression: Option<String>,
 }
 
 /// Raw DB row for `report_schedules`.
@@ -82,6 +88,7 @@ pub struct ReportScheduleRow {
     pub next_run_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub cron_expression: Option<String>,
 }
 
 impl From<ReportScheduleRow> for ReportSchedule {
@@ -113,6 +120,7 @@ impl From<ReportScheduleRow> for ReportSchedule {
             next_run_at: row.next_run_at,
             created_at: row.created_at,
             updated_at: row.updated_at,
+            cron_expression: row.cron_expression,
         }
     }
 }
