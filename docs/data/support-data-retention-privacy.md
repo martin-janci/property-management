@@ -1,0 +1,154 @@
+# Support Data — Retention & Privacy Posture
+
+> Scope: the read-only GET endpoints behind the Support Data admin page (issue #635).
+> Audience: platform support engineers, data-protection / GDPR reviewers.
+> Grounded in code as of branch `auto-impl/pm-data-support-data-retention-privacy`.
+
+## Overview
+
+The Support Data feature gives platform-level support engineers a read-only
+window into platform health and into an individual user's account state, plus a
+single mutating action (session revocation). It is implemented in:
+
+- Routes: `backend/servers/api-server/src/routes/platform_admin.rs`
+- Repository / SQL: `backend/crates/db/src/repositories/platform_admin.rs`
+
+All endpoints are cross-tenant (they bypass Postgres RLS) and are gated behind
+the platform SuperAdmin role plus an admin capability.
+
+## What is read
+
+### `GET /api/v1/platform-admin/support-data`
+
+Aggregated, platform-wide diagnostics (no per-user PII). Handler
+`get_support_data`; repository `get_support_data` runs five counting queries
+inside a single `REPEATABLE READ` transaction (consistent snapshot, see #628):
+
+| Field | Source table / query |
+|-------|----------------------|
+| `total_orgs` | `COUNT(*) FROM organizations` |
+| `total_users` / `active_users` / `pending_users` / `suspended_users` | `COUNT(*) FROM users GROUP BY status` |
+| `active_sessions` | `COUNT(*) FROM refresh_tokens WHERE is_revoked = false AND expires_at > NOW()` |
+| `total_faults` | `COUNT(*) FROM faults` |
+| `fault_by_status` | `COUNT(*) FROM faults GROUP BY status` |
+
+This response is **counts only** — no names, emails, or row-level data.
+
+### `GET /api/v1/platform-admin/support/users/{id}` (and `/memberships`, `/sessions`, `/activity`)
+
+These return row-level data for one user and **do contain PII**:
+
+- **User detail** (`get_user_for_support`) — `SupportUserInfo`: `id`, `email`,
+  `display_name`, `first_name`, `last_name`, `status`, `email_verified`,
+  `created_at`, `updated_at`, `last_login_at` (from `users`).
+- **Memberships** (`get_user_memberships`) — `organization_id`,
+  `organization_name`, `role_name`, `joined_at` (from `organization_members`).
+- **Sessions** (`get_user_sessions`) — from `refresh_tokens`: `id`,
+  `created_at`, `expires_at`, `last_used_at`, **`user_agent`**, **`ip_address`**.
+  Filtered to `is_revoked = false AND expires_at > NOW()` (active sessions only).
+- **Activity log** (`get_user_activity_log`) — from `audit_logs`: `id`,
+  `action`, `resource_type`, `resource_id`, `details` (JSONB), `created_at`.
+  Limited via the `limit` query param (default 50, clamped 1–500).
+
+### Mutating action (for completeness)
+
+`POST /api/v1/platform-admin/support/users/{id}/sessions/revoke`
+(`revoke_user_sessions`) sets `is_revoked = true` on all of the user's active
+refresh tokens. Not a read, but it operates on the same session data.
+
+## Access control
+
+| Endpoint | Capability (`require_capability`) | Additional gate |
+|----------|-----------------------------------|-----------------|
+| `support-data` | `AuditRead` | SuperAdmin role enforced in-handler |
+| `support/users/{id}/sessions` | `UsersRead` | SuperAdmin role enforced in-handler |
+| `support/users/{id}/sessions/revoke` | `UsersWrite` | SuperAdmin role enforced in-handler |
+| `support/users/{id}/activity` | `AuditRead` | SuperAdmin role enforced in-handler |
+
+Every handler calls `extract_super_admin_token` (in `platform_admin.rs`), which
+validates the bearer access token and rejects the request with `403` unless the
+token carries the SuperAdmin role (`has_super_admin_role`). Capabilities are
+defined in `backend/crates/admin-core/src/capability.rs` (`AuditRead`,
+`UsersRead`, `UsersWrite`). So access requires **both** the SuperAdmin role and
+the listed capability — a defence-in-depth pairing.
+
+`audit_logs` itself is additionally RLS-protected (migration
+`00025_create_audit_logs.sql`): the `audit_logs_super_admin` policy restricts
+direct table access to super admins, and users may read only their own rows.
+
+## Access is itself audited
+
+Each Support Data read/action emits an append-only analytics event via
+`log_support_tooling_event` into `support_tooling_events` (migration
+`00163_create_support_tooling_events.sql`):
+
+- `support_data_viewed` — props: `tenant_count`, `fault_total`.
+- `support_user_searched` — props: `query_length`, `status_filter`,
+  `result_count`. The **raw search string is deliberately NOT stored** (it
+  commonly contains emails / PII) — only its character length.
+- `support_sessions_revoked` — props: `target_user_id`, `revoked_count`.
+
+These events are fire-and-forget (a tracking failure never fails the user-facing
+response) and the table is **immutable**: DB triggers reject `UPDATE`/`DELETE`,
+and `admin_user_id` ties each event to the acting admin. This gives a tamper-
+resistant record of *who looked at what, when*.
+
+## Retention posture
+
+| Data set | Table | Retention behaviour |
+|----------|-------|---------------------|
+| Sessions | `refresh_tokens` | Token lifetime is **7 days** (`refresh_token_lifetime`, `services/jwt.rs`); access tokens are 15 min. A scheduled cleanup deletes rows where `expires_at < NOW() OR revoked_at < NOW() - INTERVAL '7 days'` — `SessionRepository::cleanup_expired_tokens`, invoked by the background scheduler `cleanup_sessions` (default tick every 60s, `services/scheduler.rs`). So expired/revoked sessions are purged within ~7 days. |
+| Activity log | `audit_logs` | **Append-only, no automated retention/expiry found.** Rows persist indefinitely; `user_id` is `ON DELETE SET NULL` so the entry survives user deletion (anonymised). Used for compliance (Epic 9 / Story 9.6). |
+| Support-tooling events | `support_tooling_events` | **Append-only, immutable, no automated retention found.** `admin_user_id` is `ON DELETE CASCADE`. |
+| Aggregate counts | n/a (computed) | Not stored; recomputed per request. |
+
+## PII / GDPR considerations
+
+What the per-user endpoints expose that is personal data:
+
+- **Direct identifiers:** email, first/last name, display name (`users`).
+- **Network / device data:** `ip_address` and `user_agent` on each session
+  (`refresh_tokens`) — IP is personal data under GDPR.
+- **Behavioural data:** the activity log (`audit_logs.action` + `details`
+  JSONB) is a record of the user's actions; `details` may carry request context.
+
+Mitigations already in place:
+
+- Cross-tenant reads require SuperAdmin **and** an explicit capability.
+- Every access is recorded in an immutable `support_tooling_events` trail.
+- The free-text search term (likely email) is not persisted to analytics.
+- Session listing is limited to *active* tokens, and expired/revoked tokens are
+  garbage-collected within ~7 days, limiting the IP/UA exposure window.
+- `audit_logs` is RLS-locked and supports user self-service reads for GDPR
+  transparency.
+
+Recommendations / gaps:
+
+1. **No documented retention limit for `audit_logs` or `support_tooling_events`.**
+   GDPR storage-limitation (Art. 5(1)(e)) expects a defined retention period.
+   Recommend defining and enforcing one (e.g. a scheduled prune) and documenting
+   the legal basis for indefinite audit retention if that is intentional.
+2. **IP / user-agent in `details` JSONB** of `audit_logs` is unstructured — a
+   data-subject erasure (Art. 17) would need to account for PII that may be
+   embedded there, not just the `user_id` SET NULL.
+3. The `support_user_searched` props omit the query string but **do** store
+   `status_filter` and `result_count`; confirm these are not sensitive in
+   combination.
+
+## Open questions (verify before relying on this doc)
+
+1. **`is_revoked` vs `revoked_at` column mismatch.** The only DDL for
+   `refresh_tokens` (migration `00002_create_refresh_tokens.sql`) and the model
+   `crates/db/src/models/refresh_token.rs` use `revoked_at TIMESTAMPTZ` (nullable)
+   — but the Support Data queries (`get_user_sessions`, `revoke_user_sessions`,
+   `get_support_data`) reference `is_revoked` (and `updated_at`). No migration
+   adding `is_revoked`/`updated_at` to `refresh_tokens` was found, and these are
+   runtime `query_as` calls (not compile-time-checked, so absent from `.sqlx/`).
+   This may be a latent runtime bug **or** there is an undocumented schema change
+   not present in this checkout. Needs confirmation against the live schema.
+2. **`audit_logs` / `support_tooling_events` retention** — is indefinite
+   retention an intentional compliance decision, or a missing cleanup job? (See
+   recommendation 1.)
+3. **`details` JSONB contents** — what PII actually lands in `audit_logs.details`
+   in practice was not exhaustively traced; the audit producers should be
+   reviewed before treating it as PII-free.
