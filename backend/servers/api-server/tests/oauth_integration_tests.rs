@@ -2094,12 +2094,11 @@ mod provider_security {
         .await
         .expect("insert public user");
 
-        // Generate a valid JWT for this public user using the test secret.
-        // TestConfig::default() uses the 72-character secret below.
-        const TEST_JWT_SECRET: &str =
-            "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
-        let jwt_svc =
-            api_server::services::JwtService::new(TEST_JWT_SECRET).expect("jwt service for test");
+        // Generate a valid JWT for this public user using the TestApp's
+        // configured secret. Reading it back off `app.config` keeps the test
+        // honest if `TestConfig` ever rotates its default — issue #704 R4.
+        let jwt_svc = api_server::services::JwtService::new(&app.config.jwt_secret)
+            .expect("jwt service for test");
         let public_at = jwt_svc
             .generate_access_token(public_user_id, &public_email, "Portal User", None, None)
             .expect("access token for public user");
@@ -2156,6 +2155,62 @@ mod provider_security {
         assert_eq!(
             err["error"], "access_denied",
             "error must be access_denied for principal_kind mismatch, got {}",
+            err
+        );
+    }
+
+    /// R3 (issue #704): `OAuthService::refresh_tokens` re-checks
+    /// `allowed_principal_kinds` so a token issued while the user's kind was
+    /// permitted cannot be refreshed once that kind is removed from the
+    /// client's policy (e.g. an admin tightens access after issuance).
+    ///
+    /// Strategy: a normal staff user gets tokens from a client whose default
+    /// `allowed_principal_kinds=['public','staff','platform']` permits staff,
+    /// then we mutate the client's policy down to `['public']` only and
+    /// attempt to refresh. There is no DB trigger on `oauth_clients` so the
+    /// UPDATE proceeds without GUC gymnastics. The expected response is
+    /// HTTP 403 with `error=access_denied`, mirroring the code-exchange path.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_principal_kind_mismatch_rejected_at_refresh(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+        // Default allowed_principal_kinds covers 'staff', so initial issuance succeeds.
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        let (_at, rt) =
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+
+        // Tighten policy: client now only allows 'public'. The staff user's
+        // kind ('staff') is no longer in the allowed set, but they hold a
+        // live refresh token issued under the old policy.
+        sqlx::query(
+            "UPDATE oauth_clients SET allowed_principal_kinds = ARRAY['public'] WHERE client_id = $1",
+        )
+        .bind(&client_id)
+        .execute(&pool)
+        .await
+        .expect("tighten allowed_principal_kinds");
+
+        let refresh_body = form_body(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", &rt),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
+        let refresh_resp = app
+            .execute(form_request("/api/v1/oauth/token", &refresh_body))
+            .await;
+        assert_eq!(
+            refresh_resp.status,
+            StatusCode::FORBIDDEN,
+            "refresh with newly-disallowed principal_kind must return 403. body={}",
+            refresh_resp.text()
+        );
+        let err = refresh_resp.json_value();
+        assert_eq!(
+            err["error"], "access_denied",
+            "error must be access_denied at refresh principal_kind mismatch, got {}",
             err
         );
     }
@@ -2248,11 +2303,25 @@ mod provider_security {
         let refresh_resp = app
             .execute(form_request("/api/v1/oauth/token", &refresh_body))
             .await;
-        assert!(
-            refresh_resp.status.is_client_error(),
-            "deactivated client must be rejected at token endpoint (got {}). body={}",
+        // R2 (issue #704): mirror the precision of the introspect-side
+        // assertion. The token endpoint looks the client up via
+        // `find_active_client_by_client_id` BEFORE reaching the refresh-token
+        // lookup (routes/oauth.rs:297-307), so a deactivated client must
+        // produce 401 + `invalid_client` — not any 4xx. Asserting the exact
+        // status + error pins the order of checks so a future regression
+        // that hits the refresh-token lookup first (and returns 400
+        // invalid_grant) cannot pass silently.
+        assert_eq!(
             refresh_resp.status,
+            StatusCode::UNAUTHORIZED,
+            "deactivated client at token endpoint must return 401. body={}",
             refresh_resp.text()
+        );
+        let err = refresh_resp.json_value();
+        assert_eq!(
+            err["error"], "invalid_client",
+            "error must be invalid_client for deactivated client at token endpoint, got {}",
+            err
         );
     }
 
