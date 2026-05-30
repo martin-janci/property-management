@@ -72,7 +72,9 @@ async fn test_search_articles_returns_200(pool: PgPool) {
 async fn test_list_articles_by_category_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
-        .execute(get_request("/api/v1/help/articles/category/getting-started"))
+        .execute(get_request(
+            "/api/v1/help/articles/category/getting-started",
+        ))
         .await;
     assert_eq!(
         response.status,
@@ -85,7 +87,9 @@ async fn test_list_articles_by_category_returns_200(pool: PgPool) {
 async fn test_list_articles_by_context_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let response = app
-        .execute(get_request("/api/v1/help/articles/context/page%3Adashboard"))
+        .execute(get_request(
+            "/api/v1/help/articles/context/page%3Adashboard",
+        ))
         .await;
     assert_eq!(
         response.status,
@@ -112,9 +116,7 @@ async fn test_get_article_not_found_returns_404(pool: PgPool) {
 #[sqlx::test]
 async fn test_list_categories_returns_200(pool: PgPool) {
     let app = TestApp::new(pool).await;
-    let response = app
-        .execute(get_request("/api/v1/help/categories"))
-        .await;
+    let response = app.execute(get_request("/api/v1/help/categories")).await;
     assert_eq!(
         response.status,
         StatusCode::OK,
