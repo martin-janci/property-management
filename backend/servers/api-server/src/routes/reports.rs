@@ -1016,6 +1016,7 @@ pub enum ExportReportResponseUnion {
 pub async fn export_report(
     State(state): State<AppState>,
     auth: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<ExportReportRequest>,
 ) -> Result<(StatusCode, Json<ExportReportResponseUnion>), (StatusCode, Json<ErrorResponse>)> {
     // Validate format
@@ -1041,6 +1042,22 @@ pub async fn export_report(
             )),
         ));
     }
+
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may export across orgs). Closes a cross-tenant IDOR where a
+    // caller could export another org's data by supplying its UUID (#832).
+    // Mirrors get_fault_statistics_report and the other report handlers.
+    if !rls.is_super_admin() && req.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
+    }
+    rls.release().await;
 
     // Story 88.5: Estimate row count to decide sync vs async processing
     let estimated_rows = estimate_report_row_count(
@@ -1264,6 +1281,7 @@ pub struct ExportJobPath {
 pub async fn get_export_job_status(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     axum::extract::Path(path): axum::extract::Path<ExportJobPath>,
 ) -> Result<Json<ExportJobStatusResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Get job from repository
@@ -1284,6 +1302,20 @@ pub async fn get_export_job_status(
                 Json(ErrorResponse::new("JOB_NOT_FOUND", "Export job not found")),
             )
         })?;
+
+    // Scope the job to the caller's tenant: export jobs record their org_id
+    // (set from the export request), so only members of that org — or
+    // super-admins — may read the status and download URL. Closes a
+    // cross-tenant IDOR (#832). Return 404 to avoid leaking the existence of
+    // another org's job.
+    if !rls.is_super_admin() && job.org_id != Some(rls.tenant_id()) {
+        rls.release().await;
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("JOB_NOT_FOUND", "Export job not found")),
+        ));
+    }
+    rls.release().await;
 
     // Map job status to response
     let status = match job.status {
