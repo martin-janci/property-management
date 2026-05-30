@@ -390,6 +390,14 @@ impl WorkflowExecutor {
                 WorkflowExecutionError::InvalidConfig(format!("Invalid webhook config: {}", e))
             })?;
 
+        // SSRF guard (#835): a workflow's webhook URL is attacker-influenced
+        // config, so validate it before issuing the request — reject private/
+        // reserved IPs, localhost, link-local (cloud metadata), .local/.internal
+        // and non-http(s) schemes. Mirrors routes/integrations/webhook.rs.
+        common::url_validation::validate_external_url(&webhook_config.url).map_err(|e| {
+            WorkflowExecutionError::InvalidConfig(format!("Webhook URL rejected: {}", e))
+        })?;
+
         let method = webhook_config
             .method
             .unwrap_or_else(|| "POST".to_string())
