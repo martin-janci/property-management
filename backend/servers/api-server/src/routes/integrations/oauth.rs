@@ -104,9 +104,11 @@ pub async fn airbnb_oauth_callback(
         ));
     }
 
-    let client_id = std::env::var("AIRBNB_CLIENT_ID").unwrap_or_default();
-    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").unwrap_or_default();
-    let redirect_uri = std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default();
+    // Issue #711: pull Airbnb OAuth credentials from the AppState-cached
+    // config rather than re-reading the env on every callback.
+    let client_id = state.airbnb_config.client_id.clone();
+    let client_secret = state.airbnb_config.client_secret.clone();
+    let redirect_uri = state.airbnb_config.redirect_uri.clone();
 
     if client_id.is_empty() {
         return Err((

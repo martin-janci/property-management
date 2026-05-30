@@ -35,6 +35,47 @@ use db::{
 };
 use integrations::{LlmClient, PubSubService, RedisClient, SessionStore, StorageService};
 
+/// Airbnb integration configuration loaded once at startup (issue #711).
+///
+/// Previously each handler called `std::env::var("AIRBNB_…")` per request:
+///   * a missing env was only discovered when a user hit the endpoint,
+///   * env reads on the hot path are a minor perf concern,
+///   * it diverged from the project pattern of wiring credentials into
+///     `AppState` at startup.
+///
+/// We now load these at server boot and stash them on `AppState`. Handlers
+/// receive them via `State(state)` and check `airbnb_config.is_some()` /
+/// emptiness exactly as before, just without touching the environment per
+/// request.
+#[derive(Debug, Clone, Default)]
+pub struct AirbnbAppConfig {
+    /// `AIRBNB_CLIENT_ID` — required for any Airbnb OAuth flow.
+    pub client_id: String,
+    /// `AIRBNB_CLIENT_SECRET` — required for token exchange.
+    pub client_secret: String,
+    /// `AIRBNB_REDIRECT_URI` — optional; defaulted by individual handlers
+    /// when absent (kept here for completeness so handlers never re-read
+    /// the env).
+    pub redirect_uri: String,
+    /// `AIRBNB_WEBHOOK_SECRET` — required for inbound webhook signature
+    /// verification.
+    pub webhook_secret: String,
+}
+
+impl AirbnbAppConfig {
+    /// Load from the standard env vars. Empty strings are preserved so the
+    /// handlers can still emit `NOT_CONFIGURED` for missing values — this
+    /// matches the previous per-request behaviour exactly.
+    pub fn from_env() -> Self {
+        Self {
+            client_id: std::env::var("AIRBNB_CLIENT_ID").unwrap_or_default(),
+            client_secret: std::env::var("AIRBNB_CLIENT_SECRET").unwrap_or_default(),
+            redirect_uri: std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default(),
+            webhook_secret: std::env::var("AIRBNB_WEBHOOK_SECRET").unwrap_or_default(),
+        }
+    }
+}
+
 /// Application state shared across all handlers.
 #[derive(Clone)]
 pub struct AppState {
@@ -197,6 +238,10 @@ pub struct AppState {
     /// per-tenant overrides via `tenant_rate_limiters.set_override(org, rpm)`
     /// (e.g. after `tenant_settings.rate_limit_rpm` is updated).
     pub tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    /// Airbnb integration configuration loaded once at startup (issue #711).
+    /// Eliminates per-request `std::env::var` reads in Airbnb handlers and
+    /// surfaces misconfiguration at boot rather than at runtime.
+    pub airbnb_config: AirbnbAppConfig,
 }
 
 impl AppState {
@@ -455,6 +500,9 @@ impl AppState {
             tenant_resolution_cache,
             // Phase 5.5: shared per-tenant rate limiter set (defense leak #15)
             tenant_rate_limiters,
+            // Issue #711: Airbnb integration env vars cached at startup so
+            // handlers never call `std::env::var` per request.
+            airbnb_config: AirbnbAppConfig::from_env(),
         }
     }
 

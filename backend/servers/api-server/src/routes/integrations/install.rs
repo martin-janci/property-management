@@ -421,7 +421,7 @@ pub async fn get_airbnb_status(
     tag = "Integrations - Airbnb"
 )]
 pub async fn connect_airbnb(
-    State(_state): State<crate::state::AppState>,
+    State(state): State<crate::state::AppState>,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<AirbnbConnectRequest>,
@@ -432,11 +432,12 @@ pub async fn connect_airbnb(
         "Initiating Airbnb OAuth connection"
     );
 
-    let client_id = std::env::var("AIRBNB_CLIENT_ID").unwrap_or_default();
-    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").unwrap_or_default();
+    // Issue #711: AppState carries Airbnb credentials loaded once at startup.
+    let client_id = state.airbnb_config.client_id.clone();
+    let client_secret = state.airbnb_config.client_secret.clone();
     let redirect_uri = request
         .redirect_uri
-        .unwrap_or_else(|| std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default());
+        .unwrap_or_else(|| state.airbnb_config.redirect_uri.clone());
 
     if client_id.is_empty() {
         return Err((
@@ -524,10 +525,11 @@ pub async fn sync_airbnb(
         )
     })?;
 
+    // Issue #711: read cached config from AppState rather than the env.
     let oauth_config = AirbnbOAuthConfig {
-        client_id: std::env::var("AIRBNB_CLIENT_ID").unwrap_or_default(),
-        client_secret: std::env::var("AIRBNB_CLIENT_SECRET").unwrap_or_default(),
-        redirect_uri: std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default(),
+        client_id: state.airbnb_config.client_id.clone(),
+        client_secret: state.airbnb_config.client_secret.clone(),
+        redirect_uri: state.airbnb_config.redirect_uri.clone(),
     };
     let client = AirbnbClient::new(oauth_config);
 
@@ -1740,28 +1742,33 @@ pub async fn direct_connect_airbnb(
 
     let org_id = path.org_id;
 
-    // Validate required env vars before making any external calls.
-    let client_id = std::env::var("AIRBNB_CLIENT_ID").map_err(|_| {
+    // Issue #711: credentials are loaded once at server startup and cached
+    // on AppState. Per-request env reads are gone — misconfiguration is
+    // surfaced here (empty string -> NOT_CONFIGURED) but never round-trips
+    // through `std::env::var`.
+    let client_id = state.airbnb_config.client_id.clone();
+    if client_id.is_empty() {
         tracing::error!("AIRBNB_CLIENT_ID is not configured");
-        (
+        return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::new(
                 "NOT_CONFIGURED",
                 "Airbnb integration is not configured",
             )),
-        )
-    })?;
-    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").map_err(|_| {
+        ));
+    }
+    let client_secret = state.airbnb_config.client_secret.clone();
+    if client_secret.is_empty() {
         tracing::error!("AIRBNB_CLIENT_SECRET is not configured");
-        (
+        return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::new(
                 "NOT_CONFIGURED",
                 "Airbnb integration is not configured",
             )),
-        )
-    })?;
-    let redirect_uri = std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default();
+        ));
+    }
+    let redirect_uri = state.airbnb_config.redirect_uri.clone();
 
     // Verify the token is valid by fetching listings.
     let oauth_config = AirbnbOAuthConfig {
