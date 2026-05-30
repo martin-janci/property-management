@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gap-10a",
-  "selected_at": "2026-05-28T18:50:52Z",
-  "last_action": "select",
-  "reason": "initial selection: closest-to-done is 'gap-10a' (open=2 claimable=1)",
+  "epic_prefix": "gap-10b",
+  "selected_at": "2026-05-30T02:09:16Z",
+  "last_action": "repick",
+  "reason": "prior target 'gap-10a' exhausted; closest-to-done is 'gap-10b' (open=5 claimable=1)",
   "stats_at_selection": {
-    "open": 2,
+    "open": 5,
     "claimable": 1
   }
 }
