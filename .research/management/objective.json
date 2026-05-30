@@ -1,1 +1,11 @@
-{"schema_version":1,"epic_prefix":"gap-81","selected_at":"2026-05-30T13:16:18Z","last_action":"repick","reason":"prior target 'gap-10b' exhausted; closest-to-done is 'gap-81' (open=3 claimable=1)","stats_at_selection":{"open":3,"claimable":1}}
+{
+  "schema_version": 1,
+  "epic_prefix": "pm-data",
+  "selected_at": "2026-05-30T14:13:23Z",
+  "last_action": "repick",
+  "reason": "prior target 'gap-81' exhausted; closest-to-done is 'pm-data' (open=3 claimable=1)",
+  "stats_at_selection": {
+    "open": 3,
+    "claimable": 1
+  }
+}
