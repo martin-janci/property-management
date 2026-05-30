@@ -2151,7 +2151,14 @@ mod tests {
 
     #[test]
     fn invalid_named_macros_rejected() {
-        for macro_expr in ["@daily", "@hourly", "@weekly", "@monthly", "@yearly", "@annually"] {
+        for macro_expr in [
+            "@daily",
+            "@hourly",
+            "@weekly",
+            "@monthly",
+            "@yearly",
+            "@annually",
+        ] {
             assert!(
                 !validate_cron_expression(macro_expr),
                 "macro {macro_expr:?} must be rejected (macros are unsupported)"
