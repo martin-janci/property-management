@@ -2134,4 +2134,99 @@ mod tests {
         // lo > hi in a range
         assert!(!validate_cron_expression("* * 31-1 * *"));
     }
+
+    // --- macros / shorthand (gap-81-1: PR #531 review) ---
+    //
+    // The validator implements *only* the 5-field UNIX syntax. The `@reboot`,
+    // `@daily`, `@hourly`, etc. macros are NOT supported: each macro is a single
+    // whitespace-delimited token, so the field-count guard rejects them. These
+    // tests pin that contract so a future refactor can't silently start
+    // accepting (or mis-parsing) macros without updating the handler docs.
+
+    #[test]
+    fn invalid_reboot_macro_rejected() {
+        // `@reboot` is one token -> field count is 1, not 5 -> rejected.
+        assert!(!validate_cron_expression("@reboot"));
+    }
+
+    #[test]
+    fn invalid_named_macros_rejected() {
+        for macro_expr in ["@daily", "@hourly", "@weekly", "@monthly", "@yearly", "@annually"] {
+            assert!(
+                !validate_cron_expression(macro_expr),
+                "macro {macro_expr:?} must be rejected (macros are unsupported)"
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_macro_padded_to_five_tokens_rejected() {
+        // Even if a macro string happens to contain five whitespace-separated
+        // tokens, each token must still be a valid numeric/`*` field.
+        assert!(!validate_cron_expression(
+            "@hourly @daily @weekly @monthly @yearly"
+        ));
+    }
+
+    // --- additional edge cases ---
+
+    #[test]
+    fn valid_range_with_step() {
+        // A step applied to an explicit range: minutes 5..15 every 3.
+        assert!(validate_cron_expression("5-15/3 * * * *"));
+    }
+
+    #[test]
+    fn valid_step_on_wildcard_dow() {
+        // `*/2` over the day-of-week wildcard.
+        assert!(validate_cron_expression("* * * * */2"));
+    }
+
+    #[test]
+    fn valid_explicit_value_list() {
+        // Comma list of discrete minute values.
+        assert!(validate_cron_expression("0,15,30,45 * * * *"));
+    }
+
+    #[test]
+    fn valid_full_range_every_field() {
+        // The inclusive bounds of every field expressed as ranges.
+        assert!(validate_cron_expression("0-59 0-23 1-31 1-12 0-7"));
+    }
+
+    #[test]
+    fn valid_tab_separated_fields() {
+        // `split_whitespace` collapses any run of whitespace, so tabs work too.
+        assert!(validate_cron_expression("0\t8\t*\t*\t1"));
+    }
+
+    #[test]
+    fn invalid_whitespace_only() {
+        // Only whitespace -> zero fields -> rejected.
+        assert!(!validate_cron_expression("     "));
+    }
+
+    #[test]
+    fn invalid_empty_list_element() {
+        // A trailing/empty comma element (`1,,`) is not a valid sub-field.
+        assert!(!validate_cron_expression("1,, * * * *"));
+    }
+
+    #[test]
+    fn invalid_dangling_range_bound() {
+        // A range missing its upper bound (`1-`) fails to parse.
+        assert!(!validate_cron_expression("1- * * * *"));
+    }
+
+    #[test]
+    fn invalid_negative_value() {
+        // Leading `-` makes the field parse as a malformed range.
+        assert!(!validate_cron_expression("-1 * * * *"));
+    }
+
+    #[test]
+    fn invalid_non_numeric_step() {
+        // Step value must be a positive integer.
+        assert!(!validate_cron_expression("*/x * * * *"));
+    }
 }
