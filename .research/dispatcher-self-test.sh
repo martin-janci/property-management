@@ -549,8 +549,10 @@ echo
 if [ -f "$ACTION_LIST" ]; then
   echo "T24 action-list.json: at most one OPEN item per stem (PR 5/5)"
   DUPES24=$(jq -r '
-    def stem: sub("^(auto-impl|impl)/";"")
-              | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+    # Canonical stem(): suffix-strip only — same definition as routine-prompt.md
+    # line ~670, dispatcher-prompt.md Phase 3, and ppt-pr-create Step 3.5.
+    # Keep these in sync (no branch-prefix strip — action-list IDs are bare slugs).
+    def stem: sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
     [ .items[] | select(.status == "open") | (.id | stem) ]
     | group_by(.) | map(select(length > 1)) | length' "$ACTION_LIST")
   if [ "$DUPES24" = "0" ]; then
@@ -558,11 +560,39 @@ if [ -f "$ACTION_LIST" ]; then
   else
     fail "$DUPES24 stem collision(s) among open action-list items"
     jq -r '
-      def stem: sub("^(auto-impl|impl)/";"")
-                | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+      def stem: sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
       [ .items[] | select(.status == "open") | {id, s: (.id|stem)} ]
       | group_by(.s) | map(select(length > 1))[] | .[]
       | "    \(.id) :: stem=\(.s)"' "$ACTION_LIST" >&2
+  fi
+  echo
+fi
+
+# --- T25: unparseable-legacy-dep guard (issue #583) -----------------------
+# When an action-list item carries a non-empty, non-"none" legacy `dependency`
+# free-text field, `depends_on` MUST NOT be empty -- it must either contain
+# real task_id(s) (when parseable) or a poisoned sentinel
+# `["UNRESOLVED:<truncated>"]` (when unparseable). An empty `depends_on` with a
+# meaningful legacy `dependency` value silently makes the item claimable while
+# its real dependency is unresolved (the gap-3 migration trap; PR #562 fallout).
+if [ -f "$ACTION_LIST" ]; then
+  echo "T25 action-list items: non-empty legacy 'dependency' => depends_on non-empty (issue #583)"
+  BAD25=$(jq -r '
+    [ .items[]
+      | select(((.dependency // "") | ascii_downcase) as $d
+               | ($d != "" and $d != "none"))
+      | select(((.depends_on // []) | length) == 0)
+    ] | length' "$ACTION_LIST")
+  if [ "$BAD25" = "0" ]; then
+    note "no action-list rows with non-empty legacy dependency and empty depends_on"
+  else
+    fail "$BAD25 action-list rows have legacy 'dependency' set but empty depends_on (gap-3 migration must emit poisoned sentinel \"UNRESOLVED:<text>\" -- issue #583)"
+    jq -r '
+      .items[]
+      | select(((.dependency // "") | ascii_downcase) as $d
+               | ($d != "" and $d != "none"))
+      | select(((.depends_on // []) | length) == 0)
+      | "    \(.id) :: dependency=\(.dependency) depends_on=[]"' "$ACTION_LIST" >&2
   fi
   echo
 fi

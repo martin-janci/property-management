@@ -43,7 +43,7 @@ Schema per row:
   "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
   "reclaim_attempts":   "int",             // count of sandbox-timeout reclaims attempted (P3); default 0, cap = 1
   "merge_attempted_at": "iso-8601 | null", // last time Phase 5.5 tried to merge this row (gap 4); used for CI-stuck back-off
-  "quarantined_at":     "iso-8601 | null", // (PR 5/5) set when Phase 2 quarantines a row after fix_rounds >= 3
+  "quarantined_at":     "iso-8601 | null", // (PR 5/5) set when Phase 5.7 quarantines a row after fix_rounds >= 3
   "quarantine_reason":  "string | null",   // (PR 5/5) short reason; e.g. "fix_rounds=3 exhausted; verdict still changes"
 
   "implementer_summary": "string | null",
@@ -83,9 +83,21 @@ re-parse `dependency` text on each run.
 Migration (one-time, gap 3): for any row missing `depends_on`,
 best-effort-parse the legacy `dependency` field by splitting on
 `, ; and / AND` and matching kebab-case task-id-shaped tokens
-(`gap-…`, `pm-…`, `epic-…`). Unparseable values (owner-role names,
-epic descriptions like "Epic 2B WebSocket infrastructure") become
-`[]` and the free-text is left in `dependency` for human follow-up.
+(`gap-…`, `pm-…`, `epic-…`) AGAINST the set of known action-list
+ids. For unparseable non-empty values (owner-role names like
+`pm-frontend`/`pm-qa`/`rust-backend`, or epic descriptions like
+"Epic 2B WebSocket infrastructure"), write a **poisoned sentinel**
+`depends_on: ["UNRESOLVED:<original-text-truncated-to-80-chars>"]`
+instead of `[]` (issue #583). The Phase 3 `claimable()` predicate
+already rejects any `depends_on` entry whose id is not a terminal
+row in `assignments` — the poisoned sentinel naturally fails that
+check, so the row stays blocked until a human resolves the legacy
+text into a real task_id (or explicitly clears `depends_on` to
+`[]`). Values of `null`, `""`, or the literal string `"none"`
+(case-insensitive) in the legacy `dependency` field are treated as
+no-dependency and migrate to `[]` (not sentinel). Phase 7 surfaces
+poisoned rows under the `Unresolved-dep items:` line so they're
+visible every cycle.
 
 ## Timestamp semantics
 
@@ -106,7 +118,7 @@ epic descriptions like "Epic 2B WebSocket infrastructure") become
 | review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
 | review      | failed   | Phase 2 sees PR CLOSED without merge                            |
 | review      | review   | PR still open (no `status_changed_at` bump)                    |
-| review      | quarantined | (PR 5/5) Phase 2 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes`. Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
+| review      | quarantined | (PR 5/5) Phase 5.7 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes` (the quarantine gate at the top of Phase 5.7, before respawn). Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
 
 `merged` / `failed` are TERMINAL. **`quarantined` is SEMI-TERMINAL**: the
 dispatcher won't auto-transition out of it (no Phase 2/5/5.5 trigger
@@ -225,12 +237,22 @@ LOCK_JSON=$(jq -nc --arg r "$RUN_ID" --arg h "$HOST" \
   '{run_id:$r, host:$h, acquired_at:$acq, expires_at:$exp}')
 
 acquire_lock() {
-  # 1) create the tag object carrying the payload (cheap; orphaned if we lose the race)
+  # Fast-path: if the ref already exists, someone holds it — skip the tag-object
+  # POST entirely. This avoids leaking unreferenced tag objects on every contended
+  # acquire (a non-trivial accumulation at ~12 runs/day over months). The two-step
+  # is still required when the ref does NOT exist because POST /git/refs needs an
+  # object to point at, but the common contended case is now zero-side-effect.
+  if gh api "/repos/$REPO/git/$LOCK_REF" --jq .object.sha >/dev/null 2>&1; then
+    return 1                              # ref exists → contended; caller reads holder
+  fi
+  # 1) create the tag object carrying the payload (cheap; orphaned only if we
+  #    lose the race between the existence-check above and the ref POST below)
   local tag_sha
   tag_sha=$(gh api -X POST "/repos/$REPO/git/tags" \
     -f tag=dispatcher-lock -f message="$LOCK_JSON" -f object="$BASE_SHA" -f type=commit \
     --jq .sha 2>/dev/null) || return 1
-  # 2) atomic CAS: create the ref pointing at it. 201 = we won; 422 = already held.
+  # 2) atomic CAS: create the ref pointing at it. 201 = we won; 422 = already held
+  #    (lost the narrow race). Orphaned tag in the 422 case is documented above.
   gh api -X POST "/repos/$REPO/git/refs" \
     -f ref="$LOCK_REF" -f sha="$tag_sha" >/dev/null 2>&1
 }
@@ -242,7 +264,20 @@ read_holder_field() {  # $1 = json key; echoes the current holder's value, or em
     | jq -r --arg k "$1" '.[$k] // empty' 2>/dev/null
 }
 read_holder_exp()        { read_holder_field expires_at; }
-read_holder_exp_runid()  { read_holder_field run_id; }
+read_holder_runid()      { read_holder_field run_id; }
+
+release_lock() {
+  [ "${DISPATCHER_LOCK_HELD:-0}" = "1" ] || return 0
+  # Only delete a lock WE still own — if another run stole it after our TTL
+  # lapsed, leave theirs alone (read_holder_runid defined above).
+  local cur; cur=$(read_holder_runid)
+  if [ "$cur" = "$RUN_ID" ]; then
+    gh api -X DELETE "/repos/$REPO/git/$DISPATCHER_LOCK_REF" >/dev/null 2>&1 \
+      && echo "lock: released ($RUN_ID)" || echo "lock: release failed — TTL (${LOCK_TTL_MIN}m) will reclaim"
+  else
+    echo "lock: not ours anymore (cur=$cur) — leaving for $cur"
+  fi
+}
 
 if ! acquire_lock; then
   HOLDER_EXP=$(read_holder_exp)
@@ -256,32 +291,29 @@ if ! acquire_lock; then
     -f message="$LOCK_JSON" -f object="$BASE_SHA" -f type=commit --jq .sha 2>/dev/null)
   gh api -X PATCH "/repos/$REPO/git/$LOCK_REF" -f sha="$STEAL_TAG" -F force=true >/dev/null 2>&1 \
     || { echo "lock: steal lost to a concurrent steal — aborting fast."; exit 0; }
+  # Install release path BEFORE the re-confirm — any failure between the PATCH
+  # success above and a later trap install would otherwise leak the stolen lock
+  # until TTL expiry. release_lock is idempotent and ownership-checked, so it's
+  # safe even if we lose the re-confirm right below.
+  export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
+  trap release_lock EXIT
   HOLDER_EXP=$(read_holder_exp)          # re-read: confirm WE are the holder now
   [ "$HOLDER_EXP" != "$((NOW_EPOCH + LOCK_TTL_MIN*60))" ] && { echo "lock: lost re-confirm — aborting."; exit 0; }
+else
+  export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
+  trap release_lock EXIT                 # install immediately on a clean acquire
 fi
-export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
 echo "lock: acquired ($RUN_ID, ttl=${LOCK_TTL_MIN}m)"
 ```
 
 **Release contract.** The lock MUST be released on EVERY exit path — normal
 completion, a Phase 6 abort (goal-check / self-test / scope-guard bail), or a
-mid-run error. Release is idempotent and only deletes a lock this run owns:
-
-```bash
-release_lock() {
-  [ "${DISPATCHER_LOCK_HELD:-0}" = "1" ] || return 0
-  # Only delete a lock WE still own — if another run stole it after our TTL
-  # lapsed, leave theirs alone (read_holder_exp_runid defined above).
-  local cur; cur=$(read_holder_exp_runid)
-  if [ "$cur" = "$RUN_ID" ]; then
-    gh api -X DELETE "/repos/$REPO/git/$DISPATCHER_LOCK_REF" >/dev/null 2>&1 \
-      && echo "lock: released ($RUN_ID)" || echo "lock: release failed — TTL (${LOCK_TTL_MIN}m) will reclaim"
-  else
-    echo "lock: not ours anymore (cur=$cur) — leaving for $cur"
-  fi
-}
-trap release_lock EXIT       # fires on normal exit, error, and the `exit 0` aborts above
-```
+mid-run error. `release_lock` is defined *before* `acquire_lock` is invoked
+(see above) and the `trap` is installed the instant we win the ref — on a
+clean acquire, in the `else` branch; on a steal, between the PATCH success
+and the re-confirm read. This closes the window where a failure between
+stealing the ref and installing the trap would have leaked the lock until
+TTL expiry.
 
 > The `exit 0` fast-abort *before* `DISPATCHER_LOCK_HELD=1` is set leaves no lock
 > to release (we never acquired one) — correct. After acquisition, the `trap`
@@ -684,8 +716,29 @@ BUFFER_CEIL="${BUFFER_CEIL:-$(read_bound BUFFER_CEIL)}"
 export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
 ```
 
-- **Tier 0 (overflow drain — NEW):** if `open_claimable_count > BUFFER_CEIL` → the buffer is overfull (a coverage-rubric or planner push exceeded the cap; Tier 1's own top-up can never overshoot, but external pushes can). **Drain the excess back to backlog** so claimable converges to `BUFFER_CEIL`: sort the currently-claimable open items by ascending priority/score and set `status="deferred"` on the lowest-scoring `(open_claimable_count - BUFFER_CEIL)` of them (they stay in `action-list.json`, just leave the claimable pool; a later run re-opens them once the buffer drops below `BUFFER_TARGET`). This is a bounded, scored drop — **never silent**: log each deferred id. Log `Tier 0: drained <N> (claimable <old> → <BUFFER_CEIL>); deferred=[<id>, …]`. Include `action-list.json` in the Phase 6 commit when any item is deferred.
-- **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
+- **Tier 0 (overflow drain — NEW):** if `open_claimable_count > BUFFER_CEIL` → the buffer is overfull (a coverage-rubric or planner push exceeded the cap; Tier 1's own top-up can never overshoot, but external pushes can). **Drain the excess back to backlog** so claimable converges to `BUFFER_CEIL`. The sort key is the canonical priority rank — `critical=4, high=3, medium=2, low=1` (anything else=0), the same `pri_rank` used by `.research/pick-target-epic.sh:99-104` — **ascending**, with `id` ascending as the deterministic tiebreaker so two runs picking the same overflowing buffer drop the same rows. Set `status="deferred"` on the lowest-ranking `(open_claimable_count - BUFFER_CEIL)` items (they stay in `action-list.json`, just leave the claimable pool — Tier 1 re-opens them per the inverse path below). This is a bounded, scored drop — **never silent**: log each deferred id with its rank. Log `Tier 0: drained <N> (claimable <old> → <BUFFER_CEIL>); deferred=[<id> rank=<r>, …]`. Include `action-list.json` in the Phase 6 commit when any item is deferred.
+
+  Concrete jq (mirrors `pick-target-epic.sh`'s pri_rank — keep them in sync; any deviation re-opens the determinism gap this finding closed):
+
+  ```bash
+  jq -r '
+    def pri_rank:
+      if . == "critical" then 4
+      elif . == "high" then 3
+      elif . == "medium" then 2
+      elif . == "low" then 1
+      else 0 end;
+    [ .items[] | select(.status=="open") ]
+    | map(. + { _rank: (.priority | pri_rank) })
+    | sort_by([._rank, .id])
+    | .[0:(($claimable | tonumber) - ($ceil | tonumber))]
+    | .[].id
+  ' --arg claimable "$open_claimable_count" --arg ceil "$BUFFER_CEIL" \
+    .research/management/action-list.json
+  ```
+
+  **Self-test impact.** `"deferred"` is a new action-list `status` value not present in any existing fixture. Self-tests that classify rows by status (T24 one-open-per-stem, the legacy-dependency invariants, any coverage of `action-list.json` rows) must treat `deferred` as a **non-terminal claimable-pool exclusion** — equivalent to `open` for stem-uniqueness and dep-graph checks, but NOT counted toward `open_claimable_count`. When adding fixtures, include at least one `deferred` row so the predicates are exercised.
+- **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **first, re-open any deferred rows** (inverse of Tier 0): flip `status` from `deferred` back to `open` in `pri_rank` *descending* order (id ascending tiebreaker) until either no deferred rows remain OR `open_claimable_count == BUFFER_TARGET`. This is the closing half of the Tier 0 / Tier 1 cycle — without it, deferred rows would accumulate and the buffer could starve while a valid backlog sits idle. Log `Tier 1: re-opened <N> deferred [<id>, …]` when any flip occurs. **Then**, if still below `BUFFER_FLOOR`, **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
 
   ```bash
@@ -1705,35 +1758,43 @@ won't see it in *their* transitions set either. The sweep formulation is
 idempotent and self-healing — every run cleans up any orphans left by
 prior runs at zero extra cost.
 
+The move is delegated to `.research/archive-reconcile.sh --apply`. The script
+is the single source of truth for sweep semantics (sibling of
+`.research/gc1-reconcile.sh`); it can also be invoked outside a dispatcher
+run — see the **Merge-time reconcile** note below.
+
 ```bash
-# Build the move set from CURRENT active file state (sweep), not from
-# this run's transitions. Terminal = status in {merged, failed, done}.
-MOVE_IDS_JSON=$(jq '[.assignments[]
-  | select(.status=="merged" or .status=="failed" or .status=="done")
-  | .task_id]' .research/management/assignments.json)
-
-# Append to archive AND upsert by task_id. Concurrent runs that each
-# re-archive the same id used to produce duplicate rows inside the
-# archive (T4 FAIL: gap-82-4-*-impl + 3 others present twice). The
-# upsert makes the write idempotent regardless of run overlap; group_by
-# preserves order within a group so `map(last)` keeps the freshest row
-# (latest merged_at / last_updated).
-jq --argjson ids "$MOVE_IDS_JSON" --slurpfile active .research/management/assignments.json '
-  .assignments = (
-    (.assignments + [ $active[0].assignments[] | select(.task_id as $t | $ids | index($t)) ])
-    | group_by(.task_id)
-    | map(last)
-  )
-  | .archived_at = (now | todate)
-' .research/management/assignments-archive.json > /tmp/archive.new
-
-jq --argjson ids "$MOVE_IDS_JSON" '
-  .assignments |= map(select(.task_id as $t | $ids | index($t) | not))
-' .research/management/assignments.json > /tmp/active.new
-
-mv /tmp/archive.new .research/management/assignments-archive.json
-mv /tmp/active.new  .research/management/assignments.json
+bash .research/archive-reconcile.sh --apply
 ```
+
+The script does the equivalent of:
+
+- Build the move set from current active file state (sweep — `status ∈
+  {merged, failed, done}`).
+- Append matching rows to `assignments-archive.json` and upsert by
+  `task_id` (concurrent runs that each re-archive the same id used to
+  produce duplicate archive rows — T4 FAIL: gap-82-4-*-impl + 3 others
+  present twice; `group_by | map(last)` is the dedupe).
+- Drop those rows from `assignments.json`.
+- Stamp `archived_at = now` on the archive.
+- T17 guard: refuse to write if combined active+archive count would
+  change (move, not copy).
+
+**Merge-time reconcile (issue #759).** Phase 6 only runs inside a
+dispatcher run, so a stacked dispatcher PR that merges `origin/dev` into
+its branch will pull dev's newer terminal rows for ids the branch still
+has as `review` — the CI self-test then trips T19 before the next
+dispatcher run gets a chance to sweep (observed on PR #734: two leaked
+rows, `gap-82-5-ios-keychain-push-v2` and `gap-82-3-search-enhancements-fix`).
+After any `git merge origin/dev` on a branch that carries
+`.research/management/assignments.json`, run:
+
+```bash
+bash .research/archive-reconcile.sh           # dry-run; lists any leaks
+bash .research/archive-reconcile.sh --apply   # move + commit alongside the merge
+```
+
+The script is idempotent and a no-op on a clean state.
 
 The Phase 7 summary's `Merged-now` / `Failed (this run)` counters are still
 derived from the in-memory transitions set — those are this-run-shaped
@@ -1929,6 +1990,7 @@ Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; 
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
+Unresolved-dep items:     [<id> dep="<truncated-legacy-text>", …]   (issue #583 — poisoned-sentinel rows whose legacy `dependency` text didn't parse; need human resolution; [] if none)
 GC1 cascade:              <closed-leak=<N> orphan-triage=<M> | clean>   (gc1-reconcile; archive-terminal closes + coverage-missing orphans)
 Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)

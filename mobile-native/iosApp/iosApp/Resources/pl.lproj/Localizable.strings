@@ -260,8 +260,8 @@
 "filter_listing_type" = "Typ ogłoszenia";
 "filter_price_min" = "Min cena";
 "filter_price_max" = "Max cena";
-"filter_min_value" = "Min: %d";
-"filter_max_value" = "Max: %d";
+"filter_min_value" = "Od: %d";
+"filter_max_value" = "Do: %d";
 "filter_bathrooms" = "Łazienki";
 
 /* Account Screen - Additional */

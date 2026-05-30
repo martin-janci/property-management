@@ -292,7 +292,7 @@ impl SensorRepository {
             interval_sql
         );
 
-        sqlx::query_as(&query)
+        sqlx::query_as(sqlx::AssertSqlSafe(query))
             .bind(sensor_id)
             .bind(from)
             .bind(to)
@@ -656,7 +656,7 @@ impl SensorRepository {
             values_parts.join(", ")
         );
 
-        let mut query_builder = sqlx::query(&query);
+        let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(query));
         for reading in &readings {
             query_builder = query_builder
                 .bind(sensor_id)

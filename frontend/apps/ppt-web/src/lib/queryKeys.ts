@@ -311,6 +311,49 @@ export const queryKeys = {
 } as const;
 
 // ============================================================================
+// Auth-Scoped Query Roots (used by AuthContext.logout)
+// ============================================================================
+
+/**
+ * First-segment root keys of every query that is bound to the authenticated
+ * session. On logout, `AuthContext` iterates this list and calls
+ * `queryClient.removeQueries({ queryKey: [root] })` for each entry, scoping
+ * the cache purge to user data while leaving any unrelated/non-session cache
+ * (e.g. router-internal caches, future public/lookup queries) untouched.
+ *
+ * Covers both the centralized {@link queryKeys} factory roots and the
+ * ad-hoc roots used directly in feature hooks (`developer`, `ocr`,
+ * `actionQueue`, `executionLogs`, `executionStats`, `ai-chat`).
+ *
+ * When you add a new auth-scoped query root, add it here too — otherwise the
+ * cached data will leak into the next user's session.
+ *
+ * @see Issue #712 — logout `queryClient.clear()` was too aggressive
+ */
+export const AUTHED_QUERY_KEY_ROOTS = [
+  // queryKeys factory roots
+  'announcements',
+  'faults',
+  'documents',
+  'votes',
+  'messages',
+  'neighbors',
+  'forms',
+  'person-months',
+  'self-readings',
+  'user',
+  'buildings',
+  'notifications',
+  // Ad-hoc roots used directly in feature hooks
+  'developer',
+  'ocr',
+  'actionQueue',
+  'executionLogs',
+  'executionStats',
+  'ai-chat',
+] as const;
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 

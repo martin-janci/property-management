@@ -495,7 +495,8 @@ impl InvestorPortalRepository {
         sql.push_str(&params.join(""));
         sql.push_str(" ORDER BY period_end DESC");
 
-        let mut query_builder = sqlx::query_as::<_, RoiCalculation>(&sql).bind(org_id);
+        let mut query_builder =
+            sqlx::query_as::<_, RoiCalculation>(sqlx::AssertSqlSafe(sql)).bind(org_id);
 
         if let Some(portfolio_id) = query.portfolio_id {
             query_builder = query_builder.bind(portfolio_id);

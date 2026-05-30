@@ -44,6 +44,10 @@ import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
+// Custom Expo config plugin -- re-adds legacy storage perms with
+// maxSdkVersion=32 so they apply only on API <= 32. Issue #626.
+import withLegacyStoragePermissions from './plugins/withLegacyStoragePermissions';
+
 /** Supported environments */
 type AppEnvironment = 'development' | 'staging' | 'production';
 
@@ -67,6 +71,21 @@ function getAppEnv(): AppEnvironment {
 }
 
 /**
+ * Sentinel value written into `.env.production` — must be overridden by CI
+ * (e.g. eas.json `env` or `eas secret:create`) before a production build is
+ * shipped. See issue #620 / #523.
+ */
+const PROD_URL_SENTINEL = '__SET_BY_CI__';
+
+/**
+ * Returns true for known-placeholder values that must never reach a production
+ * `.ipa` / `.aab`: the CI sentinel above, or any RFC 2606 example domain.
+ */
+function isPlaceholderUrl(value: string): boolean {
+  return value === PROD_URL_SENTINEL || /(^|\.)example\.(com|net|org)(:|\/|$)/i.test(value);
+}
+
+/**
  * Returns true when a real google-services.json exists beside this config file.
  * EAS Cloud builds inject this via GOOGLE_SERVICES_JSON secret; local dev
  * without Firebase falls back gracefully so `expo prebuild` does not fail.
@@ -80,12 +99,28 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const appEnv = getAppEnv();
   const envVars = loadEnvFile(appEnv);
 
-  // Resolved values (env file takes priority, then process.env fallback)
-  const apiBaseUrl =
-    envVars.API_BASE_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.ppt.example.com';
+  // Resolved values — single source of truth is the `.env.<appEnv>` file loaded
+  // via dotenv above. CI may also pre-seed process.env (e.g. eas.json `env` or
+  // `eas secret:create`) for the same names. We deliberately do NOT use the
+  // `EXPO_PUBLIC_` prefix here: those vars are inlined by Metro into JS only
+  // and cannot reach `ios.infoPlist`, which would force hand-syncing two paths.
+  // See issue #523 (architecture decision) and #620 (PR #535 regression).
+  const apiBaseUrl = envVars.API_BASE_URL ?? process.env.API_BASE_URL ?? 'http://localhost:8080';
 
   const wsBaseUrl =
-    envVars.WS_BASE_URL ?? process.env.EXPO_PUBLIC_WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
+    envVars.WS_BASE_URL ?? process.env.WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
+
+  // Fail fast if a production build is about to ship with a placeholder URL.
+  // Without this guard a misconfigured CI run can silently produce a signed
+  // `.ipa` / `.aab` that points at `__SET_BY_CI__` or `*.example.com` —
+  // see issue #620 (regression from PR #535, originally introduced in #523).
+  if (appEnv === 'production' && (isPlaceholderUrl(apiBaseUrl) || isPlaceholderUrl(wsBaseUrl))) {
+    throw new Error(
+      '[app.config.ts] Refusing to build production with placeholder API URL ' +
+        `(API_BASE_URL=${apiBaseUrl}, WS_BASE_URL=${wsBaseUrl}). ` +
+        'Override via CI (e.g. eas.json env or eas secret:create) before building.'
+    );
+  }
 
   const environment: AppEnvironment = (envVars.ENVIRONMENT as AppEnvironment | undefined) ?? appEnv;
 
@@ -166,10 +201,26 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...(googleServicesFile !== undefined ? { googleServicesFile } : {}),
 
       // Permissions declared in AndroidManifest.xml.
+      //
+      // Issue #626 -- API 33+ (Android 13+) deprecates broad external-storage
+      // perms and replaces them with granular media perms. The Play Store
+      // requires targetSdkVersion >= 34 for new submissions; Expo SDK 55
+      // (used here, see package.json) defaults compileSdkVersion=35 and
+      // targetSdkVersion=34 via the prebuild-generated Gradle config, so
+      // no override via `expo-build-properties` is required. The granular
+      // perms below are the source of truth on modern devices.
+      //
+      // Legacy READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE are still
+      // needed on API <= 32 (Android 12L and older). They are re-injected
+      // via the `withLegacyStoragePermissions` plugin (registered below)
+      // with `android:maxSdkVersion="32"` so they are automatically
+      // suppressed on API 33+.
       permissions: [
         'android.permission.CAMERA',
-        'android.permission.READ_EXTERNAL_STORAGE',
-        'android.permission.WRITE_EXTERNAL_STORAGE',
+        // API 33+ granular media permissions (replace READ_EXTERNAL_STORAGE).
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+        'android.permission.READ_MEDIA_AUDIO',
         'android.permission.ACCESS_FINE_LOCATION',
         'android.permission.ACCESS_COARSE_LOCATION',
         'android.permission.RECEIVE_BOOT_COMPLETED',
@@ -209,6 +260,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'expo-notifications',
         { icon: './assets/images/notification-icon.png', color: '#1A73E8', sounds: [] },
       ],
+      // Issue #626 -- re-injects READ/WRITE_EXTERNAL_STORAGE into
+      // AndroidManifest.xml with android:maxSdkVersion="32" so older
+      // devices (API <= 32) keep working while API 33+ uses the granular
+      // READ_MEDIA_* permissions declared in `android.permissions` above.
+      withLegacyStoragePermissions,
     ],
 
     extra: {

@@ -99,13 +99,13 @@ impl ViolationRepository {
         query.push_str(" ORDER BY category, rule_code");
 
         if building_id.is_some() {
-            sqlx::query_as::<_, CommunityRule>(&query)
+            sqlx::query_as::<_, CommunityRule>(sqlx::AssertSqlSafe(query))
                 .bind(org_id)
                 .bind(building_id)
                 .fetch_all(&self.pool)
                 .await
         } else {
-            sqlx::query_as::<_, CommunityRule>(&query)
+            sqlx::query_as::<_, CommunityRule>(sqlx::AssertSqlSafe(query))
                 .bind(org_id)
                 .fetch_all(&self.pool)
                 .await

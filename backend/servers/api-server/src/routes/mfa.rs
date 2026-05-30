@@ -1,4 +1,4 @@
-//! Multi-Factor Authentication routes (Epic 9, Story 9.1).
+//! Multi-Factor Authentication routes (Epic 9, Story 9.1 + 9.2).
 
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -15,7 +15,10 @@ use utoipa::ToSchema;
 
 use crate::state::AppState;
 
-/// Create MFA router.
+/// Create MFA router (mounted at `/api/v1/auth/mfa`).
+///
+/// The recovery-code verify endpoint is mounted separately at
+/// `/api/v1/users/me/mfa/recovery-codes/verify` by the caller (see `lib.rs`).
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/setup", post(setup_mfa))
@@ -25,9 +28,19 @@ pub fn router() -> Router<AppState> {
         .route("/backup-codes/regenerate", post(regenerate_backup_codes))
 }
 
+/// Create the recovery-codes sub-router (mounted at
+/// `/api/v1/users/me/mfa/recovery-codes`).
+pub fn recovery_codes_router() -> Router<AppState> {
+    Router::new().route("/verify", post(verify_recovery_code))
+}
+
 // ==================== Setup MFA (Story 9.1) ====================
 
 /// MFA setup response.
+///
+/// Note: Recovery codes are issued on the `/verify` call (when MFA is
+/// actually enabled), not here.  This keeps the setup step idempotent
+/// (can be retried before verification without burning codes).
 #[derive(Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MfaSetupResponse {
@@ -35,8 +48,6 @@ pub struct MfaSetupResponse {
     pub secret: String,
     /// URI for QR code generation
     pub qr_uri: String,
-    /// Backup codes (only shown once, user must save them)
-    pub backup_codes: Vec<String>,
 }
 
 /// Setup MFA endpoint.
@@ -114,18 +125,6 @@ pub async fn setup_mfa(
             )
         })?;
 
-    // Generate backup codes
-    let (plain_codes, hashed_codes) = state.totp_service.generate_backup_codes().map_err(|e| {
-        tracing::error!(error = %e, "Failed to generate backup codes");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "BACKUP_CODES_ERROR",
-                "Failed to generate backup codes",
-            )),
-        )
-    })?;
-
     // Encrypt secret before storage - encryption is REQUIRED for security
     if !state.totp_service.is_encryption_enabled() {
         tracing::error!("TOTP encryption key not configured - MFA setup blocked for security");
@@ -150,11 +149,13 @@ pub async fn setup_mfa(
         )
     })?;
 
-    // Store the setup (not enabled yet)
+    // Store the pending setup (not enabled yet). Recovery codes are generated
+    // only on the /verify call (when MFA actually becomes active) so that
+    // a retried /setup does not burn fresh codes prematurely.
     let create_data = CreateTwoFactorAuth {
         user_id,
         secret: stored_secret,
-        backup_codes: hashed_codes,
+        backup_codes: vec![], // populated in mfa_recovery_codes on verify
     };
 
     state
@@ -176,11 +177,7 @@ pub async fn setup_mfa(
 
     rls.release().await;
 
-    Ok(Json(MfaSetupResponse {
-        secret,
-        qr_uri,
-        backup_codes: plain_codes,
-    }))
+    Ok(Json(MfaSetupResponse { secret, qr_uri }))
 }
 
 // ==================== Verify MFA Setup (Story 9.1) ====================
@@ -200,6 +197,9 @@ pub struct VerifyMfaResponse {
     pub message: String,
     /// Whether MFA is now enabled
     pub enabled: bool,
+    /// 10 single-use recovery codes (shown ONCE — user must save them).
+    /// Each code is usable via `POST /api/v1/users/me/mfa/recovery-codes/verify`.
+    pub recovery_codes: Vec<String>,
 }
 
 /// Verify MFA setup endpoint.
@@ -261,10 +261,13 @@ pub async fn verify_mfa_setup(
 
     if mfa_record.enabled {
         rls.release().await;
-        return Ok(Json(VerifyMfaResponse {
-            message: "Two-factor authentication is already enabled".to_string(),
-            enabled: true,
-        }));
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "MFA_ALREADY_ENABLED",
+                "Two-factor authentication is already enabled.",
+            )),
+        ));
     }
 
     // Decrypt secret if needed
@@ -308,18 +311,110 @@ pub async fn verify_mfa_setup(
         ));
     }
 
-    // Enable MFA
+    // Generate 10 single-use recovery codes.
+    let (plain_codes, hashed_codes) = state.totp_service.generate_backup_codes().map_err(|e| {
+        tracing::error!(error = %e, "Failed to generate recovery codes");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "RECOVERY_CODES_ERROR",
+                "Failed to generate recovery codes",
+            )),
+        )
+    })?;
+
+    // Enable MFA and issue recovery codes in a single transaction so a crash
+    // between the two steps cannot leave MFA enabled with zero recovery codes.
+    //
+    // state.db (raw pool) is used rather than the RlsConnection because the
+    // mfa_recovery_codes and user_2fa tables both allow application-role writes
+    // without a per-session RLS context — the WHERE user_id = $1 clause scoped
+    // to the verified JWT subject provides the equivalent tenant isolation.
+    let mut tx = state.db.begin().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to begin recovery codes transaction");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to issue recovery codes",
+            )),
+        )
+    })?;
+
+    // 1. Enable MFA — inside the transaction so it rolls back if code insertion fails.
     state
         .two_factor_repo
-        .enable_rls(&mut **rls.conn(), user_id)
+        .enable_rls(&mut *tx, user_id)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, "Failed to enable MFA");
+            tracing::error!(error = %e, "Failed to enable MFA in transaction");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", "Failed to enable MFA")),
             )
         })?;
+
+    // 2. Remove any stale codes from a previous enable/disable cycle.
+    sqlx::query("DELETE FROM mfa_recovery_codes WHERE user_id = $1")
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to clear old recovery codes");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to issue recovery codes",
+                )),
+            )
+        })?;
+
+    for hash in &hashed_codes {
+        sqlx::query("INSERT INTO mfa_recovery_codes (user_id, code_hash) VALUES ($1, $2)")
+            .bind(user_id)
+            .bind(hash)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Failed to insert recovery code");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DATABASE_ERROR",
+                        "Failed to issue recovery codes",
+                    )),
+                )
+            })?;
+    }
+
+    // Keep user_2fa.backup_codes_remaining in sync so /status reflects the count.
+    sqlx::query("UPDATE user_2fa SET backup_codes_remaining = $1 WHERE user_id = $2")
+        .bind(hashed_codes.len() as i32)
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to sync backup_codes_remaining");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to issue recovery codes",
+                )),
+            )
+        })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to commit recovery codes transaction");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to issue recovery codes",
+            )),
+        )
+    })?;
 
     // Log MFA enabled (Story 9.6 - Audit logging)
     if let Err(e) = state
@@ -341,13 +436,14 @@ pub async fn verify_mfa_setup(
         tracing::error!(error = %e, user_id = %user_id, "Failed to create audit log for MFA enabled");
     }
 
-    tracing::info!(user_id = %user_id, "MFA enabled successfully");
+    tracing::info!(user_id = %user_id, codes = plain_codes.len(), "MFA enabled successfully; recovery codes issued");
 
     rls.release().await;
 
     Ok(Json(VerifyMfaResponse {
-        message: "Two-factor authentication has been enabled".to_string(),
+        message: "Two-factor authentication has been enabled. Store your recovery codes — they will not be shown again.".to_string(),
         enabled: true,
+        recovery_codes: plain_codes,
     }))
 }
 
@@ -457,17 +553,39 @@ pub async fn disable_mfa(
         .verify_code(&decrypted_secret, &req.code)
         .unwrap_or(false);
 
-    // If TOTP failed, try backup codes
+    // If TOTP failed, try recovery codes from the mfa_recovery_codes table.
+    // The JSONB backup_codes field in user_2fa is no longer used for new enrollments;
+    // new codes are stored in mfa_recovery_codes (per-row, single-use).
     let is_valid = if is_totp_valid {
         true
     } else {
-        let backup_codes: Vec<String> =
-            serde_json::from_value(mfa_record.backup_codes.clone()).unwrap_or_default();
-        state
-            .totp_service
-            .verify_backup_code(&req.code, &backup_codes)
-            .map(|result| result.is_some())
-            .unwrap_or(false)
+        // Load unused recovery codes for this user.
+        let rows: Vec<(uuid::Uuid, String)> = sqlx::query_as(
+            "SELECT id, code_hash FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
+        )
+        .bind(user_id)
+        .fetch_all(&state.db)
+        .await
+        .unwrap_or_default();
+
+        if rows.is_empty() {
+            // Fall back to legacy JSONB backup_codes for users enrolled before the migration.
+            let backup_codes: Vec<String> =
+                serde_json::from_value(mfa_record.backup_codes.clone()).unwrap_or_default();
+            state
+                .totp_service
+                .verify_backup_code(&req.code, &backup_codes)
+                .map(|result| result.is_some())
+                .unwrap_or(false)
+        } else {
+            let normalized = req.code.trim().replace(['-', ' '], "").to_uppercase();
+            let hashes: Vec<String> = rows.iter().map(|(_, h)| h.clone()).collect();
+            state
+                .totp_service
+                .verify_backup_code(&normalized, &hashes)
+                .map(|result| result.is_some())
+                .unwrap_or(false)
+        }
     };
 
     if !is_valid {
@@ -476,12 +594,53 @@ pub async fn disable_mfa(
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
                 "INVALID_CODE",
-                "Invalid verification code. Use your authenticator app or a backup code.",
+                "Invalid verification code. Use your authenticator app or a recovery code.",
             )),
         ));
     }
 
-    // Disable MFA
+    // Disable MFA and invalidate all recovery codes atomically.
+    let mut tx = state.db.begin().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to begin disable transaction");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to disable MFA",
+            )),
+        )
+    })?;
+
+    // Mark all recovery codes as used (invalidate without deleting for audit trail).
+    sqlx::query(
+        "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL",
+    )
+    .bind(user_id)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, "Failed to invalidate recovery codes");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to disable MFA",
+            )),
+        )
+    })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to commit disable transaction");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to disable MFA",
+            )),
+        )
+    })?;
+
+    // Disable in user_2fa (via RLS connection).
     state
         .two_factor_repo
         .disable_rls(&mut **rls.conn(), user_id)
@@ -517,7 +676,7 @@ pub async fn disable_mfa(
         tracing::error!(error = %e, user_id = %user_id, "Failed to create audit log for MFA disabled");
     }
 
-    tracing::info!(user_id = %user_id, "MFA disabled");
+    tracing::info!(user_id = %user_id, "MFA disabled; recovery codes invalidated");
 
     rls.release().await;
 
@@ -782,6 +941,254 @@ pub async fn regenerate_backup_codes(
     Ok(Json(RegenerateBackupCodesResponse {
         backup_codes: plain_codes,
         message: "Backup codes have been regenerated. Save them securely.".to_string(),
+    }))
+}
+
+// ==================== Verify Recovery Code (Story 9.2) ====================
+
+/// Request body for `POST /api/v1/users/me/mfa/recovery-codes/verify`.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VerifyRecoveryCodeRequest {
+    /// Plaintext recovery code (as shown at MFA enable time).
+    pub code: String,
+}
+
+/// Response for `POST /api/v1/users/me/mfa/recovery-codes/verify`.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct VerifyRecoveryCodeResponse {
+    /// Success message.
+    pub message: String,
+    /// How many recovery codes remain after this call.
+    pub codes_remaining: i64,
+}
+
+/// Consume a single-use MFA recovery code.
+///
+/// The code is matched (via Argon2 hash comparison) against the unused rows in
+/// `mfa_recovery_codes` that belong to the authenticated user.  On success:
+///   1. The matched row is marked `used_at = NOW()` (single-use guarantee).
+///   2. An audit log entry is emitted.
+///
+/// Codes are invalidated atomically via a `used_at IS NULL` guard + row-affected
+/// check to prevent replay attacks under concurrent requests.
+#[utoipa::path(
+    post,
+    path = "/api/v1/users/me/mfa/recovery-codes/verify",
+    tag = "Multi-Factor Authentication",
+    security(("bearer_auth" = [])),
+    request_body = VerifyRecoveryCodeRequest,
+    responses(
+        (status = 200, description = "Recovery code accepted", body = VerifyRecoveryCodeResponse),
+        (status = 400, description = "Invalid or already-used code", body = ErrorResponse),
+        (status = 401, description = "Not authenticated", body = ErrorResponse),
+        (status = 404, description = "MFA not enabled", body = ErrorResponse),
+        (status = 400, description = "Invalid or exhausted recovery code", body = ErrorResponse)
+    )
+)]
+pub async fn verify_recovery_code(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<VerifyRecoveryCodeRequest>,
+) -> Result<Json<VerifyRecoveryCodeResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let token = extract_bearer_token(&headers)?;
+    let claims = validate_access_token(&state, &token)?;
+
+    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
+        )
+    })?;
+
+    // Verify MFA is enabled for this user.
+    let enrolled: Option<bool> =
+        sqlx::query_scalar("SELECT enabled FROM user_2fa WHERE user_id = $1")
+            .bind(user_id)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "recovery/verify: fetch enrollment failed");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DATABASE_ERROR",
+                        "Failed to check MFA status",
+                    )),
+                )
+            })?;
+
+    if !matches!(enrolled, Some(true)) {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "MFA_NOT_ENABLED",
+                "Two-factor authentication is not enabled.",
+            )),
+        ));
+    }
+
+    // Load unused recovery codes for this user.
+    let rows: Vec<(uuid::Uuid, String)> = sqlx::query_as(
+        "SELECT id, code_hash FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
+    )
+    .bind(user_id)
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, "recovery/verify: fetch codes failed");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to fetch recovery codes",
+            )),
+        )
+    })?;
+
+    if rows.is_empty() {
+        if let Err(e) = state
+            .audit_log_repo
+            .create(CreateAuditLog {
+                user_id: Some(user_id),
+                action: AuditAction::MfaBackupCodeUsed,
+                resource_type: Some("mfa_recovery_no_codes".to_string()),
+                resource_id: Some(user_id),
+                org_id: None,
+                details: Some(
+                    serde_json::json!({ "outcome": "denied", "reason": "no_codes_remaining" }),
+                ),
+                old_values: None,
+                new_values: None,
+                ip_address: None,
+                user_agent: None,
+            })
+            .await
+        {
+            tracing::error!(error = %e, "Failed to write audit log for exhausted recovery codes");
+        }
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_RECOVERY_CODE",
+                "Recovery code did not match. Check the code and try again.",
+            )),
+        ));
+    }
+
+    // Constant-time Argon2 comparison against each unused hash.
+    let normalized = req.code.trim().replace(['-', ' '], "").to_uppercase();
+    let hashes: Vec<String> = rows.iter().map(|(_, h)| h.clone()).collect();
+    let matched_idx = state
+        .totp_service
+        .verify_backup_code(&normalized, &hashes)
+        .map_err(|e| {
+            tracing::error!(error = %e, "recovery/verify: hash comparison failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "VERIFICATION_ERROR",
+                    "Failed to verify recovery code",
+                )),
+            )
+        })?;
+
+    let Some(idx) = matched_idx else {
+        if let Err(e) = state
+            .audit_log_repo
+            .create(CreateAuditLog {
+                user_id: Some(user_id),
+                action: AuditAction::MfaBackupCodeUsed,
+                resource_type: Some("mfa_recovery_invalid".to_string()),
+                resource_id: Some(user_id),
+                org_id: None,
+                details: Some(serde_json::json!({ "outcome": "denied" })),
+                old_values: None,
+                new_values: None,
+                ip_address: None,
+                user_agent: None,
+            })
+            .await
+        {
+            tracing::error!(error = %e, "Failed to write audit log for invalid recovery code");
+        }
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_RECOVERY_CODE",
+                "Recovery code did not match. Check the code and try again.",
+            )),
+        ));
+    };
+
+    let matched_id = rows[idx].0;
+
+    // Mark as used atomically. The `AND used_at IS NULL` guard + rows_affected
+    // check prevents replay under concurrent requests.
+    let upd = sqlx::query(
+        "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL",
+    )
+    .bind(matched_id)
+    .execute(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, "recovery/verify: mark used failed");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to consume recovery code",
+            )),
+        )
+    })?;
+
+    if upd.rows_affected() == 0 {
+        // Lost race to a concurrent caller — fail closed.
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_RECOVERY_CODE",
+                "Recovery code did not match. Check the code and try again.",
+            )),
+        ));
+    }
+
+    // Count remaining unused codes.
+    let remaining: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
+    )
+    .bind(user_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    // Audit success.
+    if let Err(e) = state
+        .audit_log_repo
+        .create(CreateAuditLog {
+            user_id: Some(user_id),
+            action: AuditAction::MfaBackupCodeUsed,
+            resource_type: Some("mfa_recovery_used".to_string()),
+            resource_id: Some(user_id),
+            org_id: None,
+            details: Some(
+                serde_json::json!({ "outcome": "allowed", "codes_remaining": remaining }),
+            ),
+            old_values: None,
+            new_values: None,
+            ip_address: None,
+            user_agent: None,
+        })
+        .await
+    {
+        tracing::error!(error = %e, "Failed to write audit log for recovery code used");
+    }
+
+    tracing::info!(user_id = %user_id, remaining, "MFA recovery code consumed");
+
+    Ok(Json(VerifyRecoveryCodeResponse {
+        message: "Recovery code accepted.".to_string(),
+        codes_remaining: remaining,
     }))
 }
 

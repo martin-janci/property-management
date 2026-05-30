@@ -20,6 +20,23 @@
   `expo run:ios`. Trigger a native prebuild + compile, require full Xcode /
   Android SDK + NDK.
 
+## EAS CLI — install globally, not as a devDep
+
+`pnpm build:android:staging` / `build:ios:staging` / `submit:*` shell out to
+the `eas` binary. **You must install it globally** — it is intentionally NOT
+in `devDependencies` (issue #715: it bundled the full Node CLI, ~80–100 MB
+through the workspace, and CI already installs it via
+`expo/expo-github-action@v8` with `eas-version: latest`).
+
+```bash
+npm install -g eas-cli                # one-time, on your workstation
+eas login                             # or set EXPO_TOKEN in the env
+eas whoami                            # sanity-check
+```
+
+CI builds (`.github/workflows/eas-build-{android,ios}.yml`) use the
+expo-github-action's global install — they do not consult the package.json.
+
 ## Screen-Map integration
 
 When implementing or modifying a screen in this app:

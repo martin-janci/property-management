@@ -65,7 +65,9 @@
       "status": "done",
       "deadline": null,
       "source": "gap-scan",
-      "depends_on": [],
+      "depends_on": [
+        "UNRESOLVED:Epic 2B WebSocket infrastructure"
+      ],
       "resolved_by": "PR #597 — WebSocket realtime sync confirmed present on dev",
       "updated_at": "2026-05-29"
     },
@@ -756,7 +758,9 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-05-25",
-      "depends_on": []
+      "depends_on": [
+        "UNRESOLVED:rust-backend"
+      ]
     },
     {
       "id": "pm-qa-verify-respond-to-inquiry-post-api-v1",
@@ -767,7 +771,9 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-05-25",
-      "depends_on": []
+      "depends_on": [
+        "UNRESOLVED:rust-backend"
+      ]
     },
     {
       "id": "pm-qa-establish-pr-merge-policy-requiring-a",
@@ -1118,7 +1124,9 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "depends_on": [
+        "UNRESOLVED:pm-frontend"
+      ]
     },
     {
       "id": "pm-devops-enforce-security-test-gate",
@@ -1129,7 +1137,9 @@
       "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ]
     },
     {
       "id": "pm-devops-app-tsx-churn-merge-queue",
@@ -1217,7 +1227,9 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "depends_on": [
+        "UNRESOLVED:pm-backend"
+      ]
     },
     {
       "id": "pm-security-p1-04-audit-debug-format",
@@ -1239,7 +1251,9 @@
       "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ]
     },
     {
       "id": "pm-security-audit-reports-sibling-scope",
@@ -1250,7 +1264,9 @@
       "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "depends_on": [
+        "UNRESOLVED:pm-backend"
+      ]
     },
     {
       "id": "pm-data-support-data-tracking-events",
@@ -1305,7 +1321,9 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-05-28",
-      "depends_on": []
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ]
     },
     {
       "id": "gap-6-1-announcement-creation",
@@ -1514,7 +1532,9 @@
       "source": "coverage-refill 2026-05-28",
       "deadline": null,
       "dependency": "gap-83-1-airbnb-integration-backend",
-      "depends_on": []
+      "depends_on": [
+        "gap-83-1-airbnb-integration-backend"
+      ]
     },
     {
       "id": "gap-83-2-booking-integration-ui",
@@ -1525,7 +1545,9 @@
       "source": "coverage-refill 2026-05-28",
       "deadline": null,
       "dependency": "gap-83-2-booking-integration-backend",
-      "depends_on": []
+      "depends_on": [
+        "gap-83-2-booking-integration-backend"
+      ]
     },
     {
       "id": "gap-84-2-esignature-ui-blocking-fixes",
@@ -1558,7 +1580,9 @@
       "source": "coverage-refill 2026-05-28",
       "deadline": null,
       "dependency": "gap-80-3-mediation-sessions-backend",
-      "depends_on": []
+      "depends_on": [
+        "gap-80-3-mediation-sessions-backend"
+      ]
     },
     {
       "id": "gap-8a-3-fcm-rn-property-push",
@@ -1679,7 +1703,9 @@
       "source": "coverage-refill 2026-05-28",
       "deadline": null,
       "dependency": "gap-9-2-mfa-recovery-codes-backend",
-      "depends_on": []
+      "depends_on": [
+        "gap-9-2-mfa-recovery-codes-backend"
+      ]
     },
     {
       "id": "gap-10a-4-oauth-scopes-admin-ui",

@@ -29,9 +29,22 @@ if ! command -v gh >/dev/null 2>&1; then
   exit 1
 fi
 
-# gh auth status may report non-zero if any configured account has a stale
-# token, even when the active account is fine. Treat the script's ability
-# to call `gh api` as the real auth check (done below).
+if ! command -v jq >/dev/null 2>&1; then
+  echo "ERROR: jq required (install 'jq' to parse the GitHub API response)." >&2
+  exit 1
+fi
+
+# Probe auth up-front so we can distinguish "not authenticated" (exit 1)
+# from a genuinely unexpected API error (exit 2) later on.
+#
+# We deliberately do NOT use `gh auth status` here: it returns non-zero
+# whenever any configured account has a stale token, even if the active
+# account is fine. A cheap authenticated `gh api user` call is the real
+# liveness check for the active account.
+if ! gh api user >/dev/null 2>&1; then
+  echo "ERROR: gh CLI missing or not authenticated. Run 'gh auth login'." >&2
+  exit 1
+fi
 
 # Resolve owner/repo from the current git remote so the script works in any clone.
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)
@@ -46,15 +59,23 @@ echo "Branch:     $BRANCH"
 echo
 
 API_PATH="repos/$REPO/branches/$BRANCH/protection/required_status_checks"
-RAW=$(gh api "$API_PATH" 2>&1) || RC=$? && RC=${RC:-0}
+RC=0
+RAW=$(gh api "$API_PATH" 2>&1) || RC=$?
 
-if [ "${RC:-0}" -ne 0 ]; then
-  # Branch unprotected or no required checks configured — common after a
-  # fresh repo or before branch-protection-setup.yml has been run.
-  if echo "$RAW" | grep -qE 'Branch not protected|Not Found|404'; then
+if [ "$RC" -ne 0 ]; then
+  # "Branch not protected" is the API's explicit message when the branch
+  # exists but has no protection rule — treat as success (exit 0).
+  if echo "$RAW" | grep -qi 'Branch not protected'; then
     echo "Branch '$BRANCH' has NO branch-protection rule."
     echo "Required status checks: (none)"
     exit 0
+  fi
+  # A generic 404 here usually means the branch itself does not exist —
+  # surface that as an error rather than masking it as "unprotected".
+  if echo "$RAW" | grep -qE 'Not Found|HTTP 404'; then
+    echo "ERROR: branch '$BRANCH' not found on $REPO (or insufficient permissions)." >&2
+    echo "$RAW" >&2
+    exit 2
   fi
   echo "ERROR: unexpected response from GitHub API:" >&2
   echo "$RAW" >&2
@@ -63,19 +84,21 @@ fi
 
 # Pretty-print the JSON, then list the contexts one per line.
 echo "Raw API response:"
-echo "$RAW" | python3 -m json.tool --no-ensure-ascii 2>/dev/null || echo "$RAW"
+echo "$RAW" | jq . 2>/dev/null || echo "$RAW"
 echo
 
 echo "Required status checks:"
-echo "$RAW" | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-checks = d.get('checks') or []
-contexts = d.get('contexts') or []
-names = [c['context'] for c in checks] if checks else contexts
-if not names:
-    print('  (none)')
-else:
-    for n in names:
-        print(f'  - {n}')
-"
+NAMES=$(echo "$RAW" | jq -r '
+  (.checks // []) as $c
+  | (.contexts // []) as $x
+  | (if ($c | length) > 0 then ($c | map(.context)) else $x end)
+  | .[]
+' 2>/dev/null || true)
+
+if [ -z "$NAMES" ]; then
+  echo "  (none)"
+else
+  while IFS= read -r n; do
+    [ -n "$n" ] && echo "  - $n"
+  done <<<"$NAMES"
+fi
