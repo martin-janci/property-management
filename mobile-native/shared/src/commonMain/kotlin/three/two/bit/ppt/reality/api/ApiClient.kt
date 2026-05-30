@@ -3,6 +3,7 @@ package three.two.bit.ppt.reality.api
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import three.two.bit.ppt.reality.favorites.AddFavoriteBody
 import three.two.bit.ppt.reality.favorites.AddFavoriteResponse
 import three.two.bit.ppt.reality.favorites.FavoritesResponse
 import three.two.bit.ppt.reality.inquiry.CreateInquiryRequest
@@ -118,8 +119,10 @@ class ApiClient(
             val response =
                 client.post("$baseUrl/api/v1/favorites/$listingId") {
                     configureRequest()
+                    // Empty typed body — `AddFavoriteBody` serializes to `{}` via
+                    // ContentNegotiation, keeping this call on the same pipeline as every other.
                     contentType(ContentType.Application.Json)
-                    setBody("{}")
+                    setBody(AddFavoriteBody)
                 }
             if (response.status.isSuccess()) {
                 Result.success(response.body())

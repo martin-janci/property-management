@@ -496,7 +496,14 @@ private fun FavoriteEntryCard(
     val photoUrl = entry.photoUrl ?: entry.listing?.primaryImage?.url ?: ""
     val metaText = buildString {
         entry.city?.let { append(it) } ?: entry.listing?.address?.city?.let { append(it) }
-        if (entry.priceChanged) append(" · ↓")
+        if (entry.priceChanged) {
+            // `price_change_percentage = (current - original) / original * 100`, so a positive
+            // percentage means the price went up (↑) and a negative one means it went down (↓).
+            // When the percentage is null but `priceChanged` is true, fall back to ↓ to preserve
+            // the prior visual (the only case the server still emits today).
+            val pct = entry.priceChangePercentage
+            append(if (pct != null && pct > 0) " · ↑" else " · ↓")
+        }
     }
 
     Card(
