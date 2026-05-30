@@ -26,8 +26,19 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::TestApp;
+use std::sync::Once;
 
 const JWT_SECRET: &str = "test-secret-key-at-least-32-chars-long!!";
+
+static SECRET_ONCE: Once = Once::new();
+
+/// Stamp `JWT_SECRET` so the `AuthUser` extractor validates against the same
+/// key our tokens are minted with. Must run before `TestApp::new`, which only
+/// sets a default when the var is unset (CI does not export it). Mirrors the
+/// pattern in `token_scope_tests.rs`.
+fn ensure_jwt_secret() {
+    SECRET_ONCE.call_once(|| std::env::set_var("JWT_SECRET", JWT_SECRET));
+}
 
 /// Mirrors `api_server`'s access-token Claims as consumed by the `AuthUser`
 /// extractor (`token_type` must be "access"; email/name are required).
@@ -135,6 +146,7 @@ fn get_with_token(uri: &str, token: Option<&str>) -> Request<Body> {
 /// user's booking. On dev `get_booking` ignored `_auth` and returned 200.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_booking_from_other_user_is_rejected(pool: PgPool) {
+    ensure_jwt_secret();
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "x").await;
     let owner = seed_user(&pool, "owner@booking-idor.test").await;
@@ -162,6 +174,7 @@ async fn get_booking_from_other_user_is_rejected(pool: PgPool) {
 /// The owner can still read their own booking (the fix must not over-restrict).
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_booking_as_owner_is_allowed(pool: PgPool) {
+    ensure_jwt_secret();
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "y").await;
     let owner = seed_user(&pool, "owner2@booking-idor.test").await;
@@ -188,6 +201,7 @@ async fn get_booking_as_owner_is_allowed(pool: PgPool) {
 /// No token at all is rejected (4xx), never 200.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_booking_without_auth_is_rejected(pool: PgPool) {
+    ensure_jwt_secret();
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool, "z").await;
     let owner = seed_user(&pool, "owner3@booking-idor.test").await;
