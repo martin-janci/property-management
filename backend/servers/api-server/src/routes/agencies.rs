@@ -92,8 +92,13 @@ pub async fn create_agency(
 )]
 pub async fn get_agency(
     State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Agency>, (axum::http::StatusCode, String)> {
+    // Only members of the agency may read its record (closes #818 — the
+    // endpoint previously had no auth and leaked the full agency to anyone).
+    verify_agency_member(&state, id, tenant.user_id).await?;
+
     let agency = state.agency_repo.find_by_id(id).await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -195,9 +200,12 @@ pub async fn update_branding(
 )]
 pub async fn list_members(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AgencyMembersResponse>, (axum::http::StatusCode, String)> {
+    // Only members may see the agency roster (closes #818).
+    verify_agency_member(&state, id, tenant.user_id).await?;
+
     let members = state.agency_repo.get_members(id).await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -556,6 +564,11 @@ pub async fn create_import_job(
     Path(id): Path<Uuid>,
     Json(data): Json<db::models::CreateImportJob>,
 ) -> Result<Json<ListingImportJob>, (axum::http::StatusCode, String)> {
+    // Starting an import is an admin action scoped to the caller's agency
+    // (closes #818 — previously any authenticated user could import into
+    // any agency by id).
+    verify_agency_admin(&state, id, tenant.user_id).await?;
+
     let job = state
         .agency_repo
         .create_import_job(id, tenant.user_id, &data.source)
@@ -586,8 +599,12 @@ pub async fn create_import_job(
 )]
 pub async fn get_import_job(
     State(state): State<AppState>,
-    Path((_id, job_id)): Path<(Uuid, Uuid)>,
+    TenantExtractor(tenant): TenantExtractor,
+    Path((id, job_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<ListingImportJob>, (axum::http::StatusCode, String)> {
+    // Only members of the agency may read its import jobs (closes #818).
+    verify_agency_member(&state, id, tenant.user_id).await?;
+
     let job = state
         .agency_repo
         .get_import_job(job_id)
@@ -600,8 +617,11 @@ pub async fn get_import_job(
         })?;
 
     match job {
-        Some(j) => Ok(Json(j)),
-        None => Err((
+        // Bind the job to the agency in the path: the caller is a verified
+        // member of `id`, but the job is fetched by `job_id` alone, so a job
+        // belonging to a different agency must not be returned (closes #818).
+        Some(j) if j.agency_id == id => Ok(Json(j)),
+        _ => Err((
             axum::http::StatusCode::NOT_FOUND,
             "Import job not found".to_string(),
         )),
@@ -621,9 +641,12 @@ pub async fn get_import_job(
 )]
 pub async fn list_import_jobs(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ListingImportJob>>, (axum::http::StatusCode, String)> {
+    // Only members may list the agency's import jobs (closes #818).
+    verify_agency_member(&state, id, tenant.user_id).await?;
+
     let jobs = state
         .agency_repo
         .get_import_jobs(id, 20)
@@ -641,6 +664,35 @@ pub async fn list_import_jobs(
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/// Verify that the user is an active member of the specified agency (any
+/// role). Used to gate *reads* of agency-scoped resources so the data is
+/// only exposed to people who belong to the agency. Returns Ok(()) if the
+/// user has an active membership, Err with 403 otherwise.
+async fn verify_agency_member(
+    state: &AppState,
+    agency_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    let member = state
+        .agency_repo
+        .get_member(agency_id, user_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to check membership: {}", e),
+            )
+        })?;
+
+    match member {
+        Some(m) if m.is_active => Ok(()),
+        _ => Err((
+            axum::http::StatusCode::FORBIDDEN,
+            "You are not a member of this agency".to_string(),
+        )),
+    }
+}
 
 /// Verify that the user is an admin of the specified agency.
 /// Returns Ok(()) if authorized, Err with 403 status if not.
