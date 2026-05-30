@@ -947,6 +947,23 @@ async fn test_upload_denied_mime_types_rejected(pool: PgPool) {
             "UNSUPPORTED_FILE_TYPE",
             "error code for '{mime}' must be UNSUPPORTED_FILE_TYPE"
         );
+
+        // Orphan-record guard (issue #701 finding 3): a future refactor that
+        // persists the documents row before MIME validation would otherwise
+        // leak orphans on every rejected upload. T13 already checks this for
+        // the oversized-file path; T11b matches it here for denied-MIME.
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM documents WHERE organization_id = $1 AND title = $2",
+        )
+        .bind(org_id)
+        .bind(format!("Denied MIME test {mime}"))
+        .fetch_one(&pool)
+        .await
+        .expect("count query");
+        assert_eq!(
+            count, 0,
+            "no document record must be created for denied MIME '{mime}'"
+        );
     }
 
     cleanup_test_user(&pool, &user.email).await;
@@ -956,17 +973,19 @@ async fn test_upload_denied_mime_types_rejected(pool: PgPool) {
 // T12 / T13: File size limit — 50 MiB boundary enforcement
 // ============================================================================
 
-/// Verifies the 50 MiB file size limit.  The test exercises the handler's
-/// `size_bytes > MAX_FILE_SIZE` guard by constructing a file that is clearly
-/// within limit (1 MiB) and confirming it returns 201.
-///
-/// A full MAX_FILE_SIZE file cannot be exercised in a test because the
-/// multipart envelope overhead would push the request body beyond the
-/// `DefaultBodyLimit::max(52_428_800)` axum layer, causing a layer-level 413
-/// before the handler can inspect `size_bytes`.  The 1 MiB case is sufficient
-/// to confirm the validation path is active and passes for valid-size uploads.
+/// Verifies that an upload well within the 50 MiB file-size limit succeeds.
+/// Renamed from `test_upload_file_at_size_limit_succeeds` (issue #701
+/// finding 2): the old name implied an exact-boundary test, but the
+/// handler's `size_bytes == MAX_FILE_SIZE` case is not exercisable here
+/// — the multipart envelope overhead pushes a full-size body past the
+/// `DefaultBodyLimit::max(52_428_800)` axum layer, which 413s before
+/// the handler can inspect `size_bytes`. The 1 MiB case is sufficient
+/// to confirm the validation path is active and passes for valid-size
+/// uploads. A near-boundary test (e.g. MAX_FILE_SIZE − envelope) would
+/// require a fragile multipart-overhead calculation; the over-limit
+/// test below covers the failing edge end-to-end.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn test_upload_file_at_size_limit_succeeds(pool: PgPool) {
+async fn test_upload_file_within_limit_succeeds(pool: PgPool) {
     const ONE_MIB: usize = 1 * 1024 * 1024; // 1 MiB — well within 50 MiB limit
 
     let app = TestApp::new(pool.clone()).await;
@@ -1068,10 +1087,13 @@ async fn test_upload_file_over_size_limit_rejected(pool: PgPool) {
     let response = app.execute(request).await;
 
     // The body-limit layer returns 413; the handler's in-stream check also
-    // returns 413.  Either fires first — what matters is 4xx rejection.
-    assert!(
-        response.status == StatusCode::PAYLOAD_TOO_LARGE || response.status.is_client_error(),
-        "file over MAX_FILE_SIZE must be rejected (4xx), got {}. Body: {}",
+    // returns 413. Either fires first — but both must return EXACTLY 413.
+    // A regression that returned 400 (wrong error type), 401, 422, or any
+    // other 4xx would otherwise pass silently (issue #701 finding 1).
+    assert_eq!(
+        response.status,
+        StatusCode::PAYLOAD_TOO_LARGE,
+        "file over MAX_FILE_SIZE must be rejected with 413, got {}. Body: {}",
         response.status,
         response.text()
     );
