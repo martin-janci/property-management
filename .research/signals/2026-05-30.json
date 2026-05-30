@@ -1,0 +1,451 @@
+{
+  "signals": [
+    {
+      "id": "untriaged-issue-749",
+      "type": "untriaged-issue",
+      "source": "#749",
+      "score_delta": 1,
+      "evidence": "Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-750",
+      "type": "untriaged-issue",
+      "source": "#750",
+      "score_delta": 1,
+      "evidence": "Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-751",
+      "type": "untriaged-issue",
+      "source": "#751",
+      "score_delta": 1,
+      "evidence": "Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-752",
+      "type": "untriaged-issue",
+      "source": "#752",
+      "score_delta": 1,
+      "evidence": "Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-753",
+      "type": "untriaged-issue",
+      "source": "#753",
+      "score_delta": 1,
+      "evidence": "Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-754",
+      "type": "untriaged-issue",
+      "source": "#754",
+      "score_delta": 1,
+      "evidence": "Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-755",
+      "type": "untriaged-issue",
+      "source": "#755",
+      "score_delta": 1,
+      "evidence": "Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-756",
+      "type": "untriaged-issue",
+      "source": "#756",
+      "score_delta": 1,
+      "evidence": "Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-757",
+      "type": "untriaged-issue",
+      "source": "#757",
+      "score_delta": 1,
+      "evidence": "Issue #757 (no labels, OPEN): Current dev review: Epic 10B Platform Administration",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-760",
+      "type": "untriaged-issue",
+      "source": "#760",
+      "score_delta": 1,
+      "evidence": "Issue #760 (no labels, OPEN): Current dev review: Epic 79 Disputes & Mediation",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-761",
+      "type": "untriaged-issue",
+      "source": "#761",
+      "score_delta": 1,
+      "evidence": "Issue #761 (no labels, OPEN): Current dev review: Epic 84 E-Signature & Leases",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-762",
+      "type": "untriaged-issue",
+      "source": "#762",
+      "score_delta": 1,
+      "evidence": "Issue #762 (no labels, OPEN): Current dev review: Reports & Schedules",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-763",
+      "type": "untriaged-issue",
+      "source": "#763",
+      "score_delta": 1,
+      "evidence": "Issue #763 (no labels, OPEN): Current dev review: Reality Server & Inquiries",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-764",
+      "type": "untriaged-issue",
+      "source": "#764",
+      "score_delta": 1,
+      "evidence": "Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-765",
+      "type": "untriaged-issue",
+      "source": "#765",
+      "score_delta": 1,
+      "evidence": "Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-766",
+      "type": "untriaged-issue",
+      "source": "#766",
+      "score_delta": 1,
+      "evidence": "Issue #766 (no labels, OPEN): Current dev review: AI & LLM routes",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-767",
+      "type": "untriaged-issue",
+      "source": "#767",
+      "score_delta": 1,
+      "evidence": "Issue #767 (no labels, OPEN): Current dev review: Mobile RN Property Management app",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-768",
+      "type": "untriaged-issue",
+      "source": "#768",
+      "score_delta": 1,
+      "evidence": "Issue #768 (no labels, OPEN): Current dev review: Admin-web features (10B)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-769",
+      "type": "untriaged-issue",
+      "source": "#769",
+      "score_delta": 1,
+      "evidence": "Issue #769 (no labels, OPEN): Current dev review: Deploy server",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-770",
+      "type": "untriaged-issue",
+      "source": "#770",
+      "score_delta": 1,
+      "evidence": "Issue #770 (no labels, OPEN): Current dev review: Faults & triage",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-771",
+      "type": "untriaged-issue",
+      "source": "#771",
+      "score_delta": 1,
+      "evidence": "Issue #771 (no labels, OPEN): Current dev review: Research dispatcher & CI automation",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-772",
+      "type": "untriaged-issue",
+      "source": "#772",
+      "score_delta": 1,
+      "evidence": "Issue #772 (no labels, OPEN): Current dev review: Auth core (delta confirmation)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-773",
+      "type": "untriaged-issue",
+      "source": "#773",
+      "score_delta": 1,
+      "evidence": "Issue #773 (no labels, OPEN): Current dev review: Leases & rental",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-774",
+      "type": "untriaged-issue",
+      "source": "#774",
+      "score_delta": 1,
+      "evidence": "Issue #774 (no labels, OPEN): Current dev review: Reality server (broad)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-775",
+      "type": "untriaged-issue",
+      "source": "#775",
+      "score_delta": 1,
+      "evidence": "Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-776",
+      "type": "untriaged-issue",
+      "source": "#776",
+      "score_delta": 1,
+      "evidence": "Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-777",
+      "type": "untriaged-issue",
+      "source": "#777",
+      "score_delta": 1,
+      "evidence": "Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-778",
+      "type": "untriaged-issue",
+      "source": "#778",
+      "score_delta": 1,
+      "evidence": "Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonation",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-779",
+      "type": "untriaged-issue",
+      "source": "#779",
+      "score_delta": 1,
+      "evidence": "Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-788",
+      "type": "untriaged-issue",
+      "source": "#788",
+      "score_delta": 1,
+      "evidence": "Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-789",
+      "type": "untriaged-issue",
+      "source": "#789",
+      "score_delta": 1,
+      "evidence": "Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-790",
+      "type": "untriaged-issue",
+      "source": "#790",
+      "score_delta": 1,
+      "evidence": "Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-791",
+      "type": "untriaged-issue",
+      "source": "#791",
+      "score_delta": 1,
+      "evidence": "Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "dep-update-noise-pr-665",
+      "type": "dep-update-noise",
+      "source": "PR #665",
+      "score_delta": 0,
+      "evidence": "Dependabot merged: axum-test 20.0.0 \u2192 20.1.0",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-666",
+      "type": "dep-update-noise",
+      "source": "PR #666",
+      "score_delta": 0,
+      "evidence": "Dependabot merged: sqlx 0.8.6 \u2192 0.9.0 (workspace breaking change resolved)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-672",
+      "type": "dep-update-noise",
+      "source": "PR #672",
+      "score_delta": 0,
+      "evidence": "Dependabot merged: metrics 0.21.1 \u2192 0.24.6",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-05-30.md && head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state vs HEAD progress",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "true (no items >8; no items >14d updated_at)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new-plan annotation",
+      "observed": "no new plans this run \u2014 vacuously satisfied",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + readiness",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-.research/ paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached secrets grep",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases vs cursors",
+      "observed": "phase-1.5/1.6/churn skipped; review_cursor, pm_cursor, coverage_cursor, hotspot_history all unchanged from HEAD",
+      "expected": "cursors for failed phases unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence vs HEAD",
+      "observed": "all 4 HEAD plans (p0-10-mock-route-wiring, security-llm-doc-idor, security-realtors-mark-inquiry-read-idor, test-gap-inquiry-idor-regression) still present in plans/",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=7 head=7 (.gitkeep + 6 archived plans)",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (cap + idempotency)",
+      "observed": "auto_fix_actions=[] (no candidate)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "Phase 1.6 skipped \u2192 no-op",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached telegram token grep",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched the certainty bar (no screen-map-drift/orphan, no fixme-in-merged-code, no lockfile-drift dep-update, no stalled-review)"
+}
