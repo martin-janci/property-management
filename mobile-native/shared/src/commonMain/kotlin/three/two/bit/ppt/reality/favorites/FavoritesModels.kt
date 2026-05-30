@@ -65,6 +65,15 @@ data class FavoriteEntry(
 @Serializable data class CheckFavoriteResponse(@SerialName("is_favorited") val isFavorited: Boolean)
 
 /**
+ * Empty body for `POST /api/v1/favorites/{listing_id}`.
+ *
+ * The server's `AddFavorite` schema is `{notes?: String}`; we omit the optional `notes`. Encoding
+ * via a typed `@Serializable data object` routes through Ktor's `ContentNegotiation` pipeline (same
+ * as every other call), instead of bypassing it with a raw `setBody("{}")` string literal.
+ */
+@Serializable data object AddFavoriteBody
+
+/**
  * Add favorite response from `POST /api/v1/favorites/{listing_id}`.
  *
  * Matches `PortalFavorite` returned by the server on 201.

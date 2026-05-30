@@ -51,9 +51,11 @@ class FavoritesRepository(
             val response =
                 client.post("$baseUrl/api/v1/favorites/$listingId") {
                     configureRequest()
-                    // Empty body — the server accepts `{notes?: String}` which we omit.
+                    // Empty typed body — server's `AddFavorite` is `{notes?: String}`; we omit it.
+                    // Using the @Serializable `AddFavoriteBody` keeps the call on the
+                    // ContentNegotiation pipeline instead of bypassing it with a raw "{}" string.
                     contentType(ContentType.Application.Json)
-                    setBody("{}")
+                    setBody(AddFavoriteBody)
                 }
 
             if (response.status.isSuccess()) {
