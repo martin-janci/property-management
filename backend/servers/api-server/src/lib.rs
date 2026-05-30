@@ -186,8 +186,13 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/organizations/{org_id}/critical-notifications",
             routes::critical_notifications::router(),
         )
-        // MFA routes
+        // MFA routes (auth flow)
         .nest("/api/v1/auth/mfa", routes::mfa::router())
+        // MFA recovery-code consumption (Story 9.2)
+        .nest(
+            "/api/v1/users/me/mfa/recovery-codes",
+            routes::mfa::recovery_codes_router(),
+        )
         // OAuth routes
         .nest("/api/v1/oauth", routes::oauth::router())
         .nest("/api/v1/admin/oauth", routes::oauth::admin_router())
