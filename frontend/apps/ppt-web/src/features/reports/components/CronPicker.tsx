@@ -116,7 +116,7 @@ export function isValidCron(expr: string): boolean {
 }
 
 /** Derive the SimplePreset from a cron expression, falling back to "custom". */
-function detectPreset(cron: string): SimplePreset {
+export function detectPreset(cron: string): SimplePreset {
   const fields = cron.trim().split(/\s+/);
   if (fields.length !== 5) return 'custom';
   const [, , dom, month, dow] = fields;
@@ -130,7 +130,7 @@ function detectPreset(cron: string): SimplePreset {
 }
 
 /** Build a cron string from simple preset parts. */
-function buildCron(
+export function buildCron(
   preset: SimplePreset,
   minute: string,
   hour: string,
