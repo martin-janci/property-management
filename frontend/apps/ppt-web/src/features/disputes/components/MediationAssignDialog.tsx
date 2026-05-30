@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 export interface MediationAssignDialogProps {
   onConfirm: (mediatorId: string) => void;
@@ -14,12 +15,16 @@ export function MediationAssignDialog({
 }: MediationAssignDialogProps) {
   const { t } = useTranslation();
   const [mediatorId, setMediatorId] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, onCancel);
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="assign-dialog-title"
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
     >
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
@@ -30,10 +35,14 @@ export function MediationAssignDialog({
           {t('disputes.mediation.assignMediatorDescription')}
         </p>
 
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="assign-dialog-mediator-id"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           {t('disputes.mediation.mediatorUserId')}
         </label>
         <input
+          id="assign-dialog-mediator-id"
           type="text"
           value={mediatorId}
           onChange={(e) => setMediatorId(e.target.value)}
