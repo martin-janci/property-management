@@ -25,7 +25,7 @@ Schema per row:
 {
   "task_id":            "string",
   "branch":             "auto-impl/<slug>",
-  "status":             "in-progress | review | merged | failed",
+  "status":             "in-progress | review | merged | failed | quarantined",
   "specialist":         "string | null",
   "claimed_at":         "iso-8601",
   "last_updated":       "iso-8601",
@@ -43,6 +43,8 @@ Schema per row:
   "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
   "reclaim_attempts":   "int",             // count of sandbox-timeout reclaims attempted (P3); default 0, cap = 1
   "merge_attempted_at": "iso-8601 | null", // last time Phase 5.5 tried to merge this row (gap 4); used for CI-stuck back-off
+  "quarantined_at":     "iso-8601 | null", // (PR 5/5) set when Phase 5.7 quarantines a row after fix_rounds >= 3
+  "quarantine_reason":  "string | null",   // (PR 5/5) short reason; e.g. "fix_rounds=3 exhausted; verdict still changes"
 
   "implementer_summary": "string | null",
   "reviewer_summary":    "string | null"
@@ -81,9 +83,21 @@ re-parse `dependency` text on each run.
 Migration (one-time, gap 3): for any row missing `depends_on`,
 best-effort-parse the legacy `dependency` field by splitting on
 `, ; and / AND` and matching kebab-case task-id-shaped tokens
-(`gap-…`, `pm-…`, `epic-…`). Unparseable values (owner-role names,
-epic descriptions like "Epic 2B WebSocket infrastructure") become
-`[]` and the free-text is left in `dependency` for human follow-up.
+(`gap-…`, `pm-…`, `epic-…`) AGAINST the set of known action-list
+ids. For unparseable non-empty values (owner-role names like
+`pm-frontend`/`pm-qa`/`rust-backend`, or epic descriptions like
+"Epic 2B WebSocket infrastructure"), write a **poisoned sentinel**
+`depends_on: ["UNRESOLVED:<original-text-truncated-to-80-chars>"]`
+instead of `[]` (issue #583). The Phase 3 `claimable()` predicate
+already rejects any `depends_on` entry whose id is not a terminal
+row in `assignments` — the poisoned sentinel naturally fails that
+check, so the row stays blocked until a human resolves the legacy
+text into a real task_id (or explicitly clears `depends_on` to
+`[]`). Values of `null`, `""`, or the literal string `"none"`
+(case-insensitive) in the legacy `dependency` field are treated as
+no-dependency and migrate to `[]` (not sentinel). Phase 7 surfaces
+poisoned rows under the `Unresolved-dep items:` line so they're
+visible every cycle.
 
 ## Timestamp semantics
 
@@ -104,8 +118,14 @@ epic descriptions like "Epic 2B WebSocket infrastructure") become
 | review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
 | review      | failed   | Phase 2 sees PR CLOSED without merge                            |
 | review      | review   | PR still open (no `status_changed_at` bump)                    |
+| review      | quarantined | (PR 5/5) Phase 5.7 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes` (the quarantine gate at the top of Phase 5.7, before respawn). Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
 
-`merged` / `failed` are TERMINAL.
+`merged` / `failed` are TERMINAL. **`quarantined` is SEMI-TERMINAL**: the
+dispatcher won't auto-transition out of it (no Phase 2/5/5.5 trigger
+returns from quarantined → other), but the operator may manually flip
+the status back to `review` to resume work. Quarantined rows are
+excluded from claim selection (Phase 3 dedup) AND from the WIP count
+(Phase 3 throttle) — they free a slot without confusing the active pool.
 
 ## Hang detection (Phase 7)
 
@@ -117,8 +137,8 @@ Per-run, claim up to **3 NEW** tasks. There is NO global in-progress cap —
 multiple cron runs can overlap and each may contribute 3 in-progress, so the
 global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrency.
 
-- Phase 3: `free_slots = 3` (constant). Always try to claim 3 new tasks per run, regardless of current in-progress count.
-- Phase 4: hard cap of 3 implementer subagents spawned per run (matches `free_slots`).
+- Phase 3: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the count of `{in-progress, review}` rows in `assignments.json`. Default `DISPATCHER_WIP_CAP=8`. Set `DISPATCHER_WIP_CAP=0` to restore the legacy `free_slots=3` (uncapped) behavior. See *WIP-throttle preamble* in Phase 3.
+- Phase 4: hard cap of 3 implementer subagents spawned per run (matches `free_slots` ceiling).
 
 ## Buffer
 
@@ -136,6 +156,25 @@ conflicts, assignments.json written against feature branches).
 Fix: **every subagent that needs a different branch MUST do its work in a
 dedicated `git worktree` under `/tmp/ppt-worktrees/<task_id>/`**, NEVER in
 the dispatcher's working tree.
+
+**Spawn refusal rule.** Before spawning ANY subagent that performs git
+operations (Phase 4 implementer, Phase 5.6 rebaser, Phase 5.7 followup
+respawn), the dispatcher MUST assert that the subagent brief contains
+the worktree preamble below verbatim, AND that `WORKTREE_PATH` resolves
+to a directory under `/tmp/ppt-worktrees/`. If the assertion fails:
+refuse the spawn, log
+`Spawn-refused: <task_id> reason=missing-worktree-preamble` under
+Phase 7, and surface the row for next-run retry. There is no "soft"
+fallback — running git ops in the dispatcher CWD silently corrupts every
+file the dispatcher commits in Phase 6, and the cost is high enough
+(`subagent-workspace-contamination` finding: a local commit ahead of
+remote that contaminated `assignments.json`) that the safe failure mode
+is "don't spawn".
+
+The dispatcher's working tree is recognizable by the path resolving to
+the repo root (`git rev-parse --show-toplevel`) — any subagent
+exec'ing git commands from that path must abort its own work and
+return `status=blocked note=workspace-leak-prevented`.
 
 Standard preamble injected into every Phase 4 / 5.6 / 5.7 subagent brief:
 
@@ -159,6 +198,135 @@ GitHub API call, no local checkout.
 
 Phase 2 (state reconciliation) is read-only against `gh` and read-only
 against `git rev-list/fetch`; no checkout needed.
+
+---
+
+## Phase 0.5 — Run-level lock (acquire)
+
+**Why this exists (invariant, not war story):** at most one dispatcher run may
+be in its *mutating* phases (3/3.5/5.5/6) against `origin/dev` at any instant.
+When two runs overlap, every timing-sensitive phase corrupts: the claim pool is
+read from a base that doesn't reflect the other run's archive (re-claiming
+already-merged ids), Phase 6 archive-append races into duplicate rows, and the
+local base drifts mid-run forcing a reset+re-run. The `assignments.generated`
+soft-gate in Phase 1 only catches an overlapping run's *second pass*; it cannot
+prevent two *first* passes from colliding. This lock closes that window.
+
+**Mechanism — a GitHub ref as an atomic mutex, acquired over the REST API.**
+Acquisition is a server-side compare-and-swap: `POST /git/refs` succeeds (201)
+only if the ref does not exist, and returns 422 if it does. This is the only
+atomic primitive available here, and it goes through `gh api` (REST), **not**
+`git push` — direct push is HTTP-403'd by the local proxy in this environment
+(finding `git-push-blocked-by-proxy`), so a push-based lock would never acquire.
+TTL + holder identity ride in an annotated **tag object** the ref points at, so
+the lock is fully self-describing and a dead holder is reclaimable.
+
+```bash
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+LOCK_REF="refs/tags/dispatcher-lock"
+LOCK_TTL_MIN=45                       # > a healthy run; a holder older than this is presumed dead
+RUN_ID="${GITHUB_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
+HOST="$(hostname -s 2>/dev/null || echo unknown)"
+NOW_EPOCH=$(date -u +%s)
+git fetch origin dev --quiet 2>/dev/null || true   # Phase 0.5 runs before Phase 1's fetch
+BASE_SHA=$(git rev-parse origin/dev 2>/dev/null || git rev-parse HEAD)  # tag anchor only
+
+# Lock payload — everything a later run needs to judge staleness lives here.
+LOCK_JSON=$(jq -nc --arg r "$RUN_ID" --arg h "$HOST" \
+  --argjson acq "$NOW_EPOCH" --argjson exp "$((NOW_EPOCH + LOCK_TTL_MIN*60))" \
+  '{run_id:$r, host:$h, acquired_at:$acq, expires_at:$exp}')
+
+acquire_lock() {
+  # Fast-path: if the ref already exists, someone holds it — skip the tag-object
+  # POST entirely. This avoids leaking unreferenced tag objects on every contended
+  # acquire (a non-trivial accumulation at ~12 runs/day over months). The two-step
+  # is still required when the ref does NOT exist because POST /git/refs needs an
+  # object to point at, but the common contended case is now zero-side-effect.
+  if gh api "/repos/$REPO/git/$LOCK_REF" --jq .object.sha >/dev/null 2>&1; then
+    return 1                              # ref exists → contended; caller reads holder
+  fi
+  # 1) create the tag object carrying the payload (cheap; orphaned only if we
+  #    lose the race between the existence-check above and the ref POST below)
+  local tag_sha
+  tag_sha=$(gh api -X POST "/repos/$REPO/git/tags" \
+    -f tag=dispatcher-lock -f message="$LOCK_JSON" -f object="$BASE_SHA" -f type=commit \
+    --jq .sha 2>/dev/null) || return 1
+  # 2) atomic CAS: create the ref pointing at it. 201 = we won; 422 = already held
+  #    (lost the narrow race). Orphaned tag in the 422 case is documented above.
+  gh api -X POST "/repos/$REPO/git/refs" \
+    -f ref="$LOCK_REF" -f sha="$tag_sha" >/dev/null 2>&1
+}
+
+read_holder_field() {  # $1 = json key; echoes the current holder's value, or empty
+  local ref_sha
+  ref_sha=$(gh api "/repos/$REPO/git/$LOCK_REF" --jq .object.sha 2>/dev/null) || return 1
+  gh api "/repos/$REPO/git/tags/$ref_sha" --jq .message 2>/dev/null \
+    | jq -r --arg k "$1" '.[$k] // empty' 2>/dev/null
+}
+read_holder_exp()        { read_holder_field expires_at; }
+read_holder_runid()      { read_holder_field run_id; }
+
+release_lock() {
+  [ "${DISPATCHER_LOCK_HELD:-0}" = "1" ] || return 0
+  # Only delete a lock WE still own — if another run stole it after our TTL
+  # lapsed, leave theirs alone (read_holder_runid defined above).
+  local cur; cur=$(read_holder_runid)
+  if [ "$cur" = "$RUN_ID" ]; then
+    gh api -X DELETE "/repos/$REPO/git/$DISPATCHER_LOCK_REF" >/dev/null 2>&1 \
+      && echo "lock: released ($RUN_ID)" || echo "lock: release failed — TTL (${LOCK_TTL_MIN}m) will reclaim"
+  else
+    echo "lock: not ours anymore (cur=$cur) — leaving for $cur"
+  fi
+}
+
+if ! acquire_lock; then
+  HOLDER_EXP=$(read_holder_exp)
+  if [ -n "$HOLDER_EXP" ] && [ "$NOW_EPOCH" -lt "$HOLDER_EXP" ]; then
+    echo "lock: held by a live run (expires in $(( (HOLDER_EXP-NOW_EPOCH)/60 ))m) — aborting fast, no mutation."
+    exit 0                               # another run owns the mutex; do nothing
+  fi
+  # Stale (expired TTL) or unreadable holder → steal: repoint the ref, then re-confirm.
+  echo "lock: stale/expired holder (exp=${HOLDER_EXP:-unknown}) — stealing."
+  STEAL_TAG=$(gh api -X POST "/repos/$REPO/git/tags" -f tag=dispatcher-lock \
+    -f message="$LOCK_JSON" -f object="$BASE_SHA" -f type=commit --jq .sha 2>/dev/null)
+  gh api -X PATCH "/repos/$REPO/git/$LOCK_REF" -f sha="$STEAL_TAG" -F force=true >/dev/null 2>&1 \
+    || { echo "lock: steal lost to a concurrent steal — aborting fast."; exit 0; }
+  # Install release path BEFORE the re-confirm — any failure between the PATCH
+  # success above and a later trap install would otherwise leak the stolen lock
+  # until TTL expiry. release_lock is idempotent and ownership-checked, so it's
+  # safe even if we lose the re-confirm right below.
+  export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
+  trap release_lock EXIT
+  HOLDER_EXP=$(read_holder_exp)          # re-read: confirm WE are the holder now
+  [ "$HOLDER_EXP" != "$((NOW_EPOCH + LOCK_TTL_MIN*60))" ] && { echo "lock: lost re-confirm — aborting."; exit 0; }
+else
+  export DISPATCHER_LOCK_HELD=1 DISPATCHER_LOCK_REF="$LOCK_REF" RUN_ID
+  trap release_lock EXIT                 # install immediately on a clean acquire
+fi
+echo "lock: acquired ($RUN_ID, ttl=${LOCK_TTL_MIN}m)"
+```
+
+**Release contract.** The lock MUST be released on EVERY exit path — normal
+completion, a Phase 6 abort (goal-check / self-test / scope-guard bail), or a
+mid-run error. `release_lock` is defined *before* `acquire_lock` is invoked
+(see above) and the `trap` is installed the instant we win the ref — on a
+clean acquire, in the `else` branch; on a steal, between the PATCH success
+and the re-confirm read. This closes the window where a failure between
+stealing the ref and installing the trap would have leaked the lock until
+TTL expiry.
+
+> The `exit 0` fast-abort *before* `DISPATCHER_LOCK_HELD=1` is set leaves no lock
+> to release (we never acquired one) — correct. After acquisition, the `trap`
+> guarantees release even on the Phase 6 `exit 0` bail paths. If the process is
+> hard-killed (SIGKILL, sandbox teardown) the `trap` may not fire — that is what
+> the TTL is for: the next run sees an expired holder and steals. Set
+> `LOCK_TTL_MIN` comfortably above the 95th-percentile run duration.
+
+The Phase 1 `assignments.generated` soft-gate (step 2 below) **stays** as a
+cheap second line of defence for the narrow window between release and the next
+run's `git pull`; the hard lock is primary. Phase 7 prints
+`Run lock: acquired <run_id> ttl=<m>m | stole-stale | abort-held` so overlap and
+TTL steals are visible per-run in the commit log.
 
 ---
 
@@ -326,6 +494,44 @@ fi
 - **branch exists, no PR**:
   - If `COMMITS_AHEAD == 0` → **EMPTY BRANCH** (item #1): `new_status="failed"`, `empty_branch=true`, `implementer_summary='branch pushed but 0 commits ahead of dev; nothing to PR'`. Delete the orphan: `git push origin --delete <branch>` (best-effort; ignore failure).
   - Else: `gh pr create --base dev --head <branch> --draft --title '<task_id>: <short>' --body 'Auto: <action>'`, `new_status="review"`, spawn REVIEWER.
+
+#### Orphan-PR discovery (stem-aware reconciliation)
+
+A PR can exist on remote with no matching row in `assignments.json` —
+typically because the spawning run crashed between `gh pr create` and the
+row-persist step, or because a sibling implementer race-pushed a branch
+the dispatcher never registered. The fire-and-forget pattern produced
+4 such orphans in one observed run.
+
+After the per-row pass above, scan remote for orphans:
+
+```bash
+# All open PRs whose head starts with auto-impl/ — the dispatcher's namespace.
+gh pr list --state open --limit 100 --search 'head:auto-impl/' \
+  --json number,headRefName,title,createdAt > /tmp/auto-impl-prs.json
+
+# Build the active-stem index. stem() definition below — same as Phase 3.
+ACTIVE_STEMS=$(jq -r '.assignments[]
+  | select(.status=="in-progress" or .status=="review")
+  | .task_id' .research/management/assignments.json \
+  | sed -E 's/^(auto-impl|impl)\///; s/-(impl|fix|v2|retry|followup|wip)[0-9]*$//')
+```
+
+For each `auto-impl/` PR not already matched to a row by exact branch
+match, compute `pr_stem = stem(headRefName)`. If `pr_stem` is in
+`ACTIVE_STEMS` → this is a **stem-orphan**: an in-flight row exists for
+the same work under a different suffix. Surface it in Phase 7 under
+`Stem-orphans:` and DO NOT auto-link (linking would obscure the bug).
+If `pr_stem` is NOT in `ACTIVE_STEMS` → this is a **clean orphan**:
+backfill a synthetic row (`status=review`, `pr_number=<n>`,
+`branch=<headRefName>`, `task_id=<headRefName.removeprefix("auto-impl/")>`,
+`claimed_at=<PR.createdAt>`, `implementer_summary='[orphan-recovered]'`)
+so subsequent phases can reason about it.
+
+Phase 4's "write row before spawn" rule (see Phase 4) is the upstream
+fix; this discovery step is the safety net that catches whatever slipped
+through it.
+
 - **no branch + in-progress** → run the **sandbox-reclaim helper** (P3):
 
   ```bash
@@ -351,13 +557,42 @@ Persist: `last_updated=now` (always); if `new_status != prev_status`: `status=ne
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
-If `.research/management/last-merged-review.txt` missing OR mtime > 24h:
-spawn ONE Task subagent invoking `.claude/skills/ppt-review-merged/SKILL.md`.
+**Cadence gate (finding `post-merge-gate-fooled-by-clone-mtime`).** Gate on the
+ISO timestamp stored *inside* `last-merged-review.txt`, NOT the file's mtime. A
+fresh clone resets every file's mtime to clone-time, so an mtime gate reads
+`age < 24h` forever and the review never fires again after a clone. The file's
+CONTENT is the last-run timestamp (the skill writes `date -u +%FT%TZ` into it),
+and content survives a clone untouched. Run the post-merge review when the file
+is missing/empty/unparseable OR its stored timestamp is > 24h old:
+
+```bash
+MARKER=.research/management/last-merged-review.txt
+DUE=1
+if [ -s "$MARKER" ]; then
+  LAST=$(tr -d '[:space:]' < "$MARKER")
+  LAST_EPOCH=$(date -u -d "$LAST" +%s 2>/dev/null || echo 0)
+  if [ "$LAST_EPOCH" -gt 0 ]; then
+    AGE_H=$(( ( $(date -u +%s) - LAST_EPOCH ) / 3600 ))
+    [ "$AGE_H" -lt 24 ] && DUE=0
+  fi
+  # LAST_EPOCH==0 (missing/garbled timestamp) leaves DUE=1 — fail safe = run.
+fi
+```
+
+If `DUE=1` (missing/empty/unparseable marker OR stored timestamp > 24h old):
+spawn ONE Task subagent invoking `.claude/skills/ppt-review-merged/SKILL.md`
+with `DISPATCHER_OWNED_COMMIT=1` in its env. Else SKIP (log
+`Post-merge: skipped (last review <AGE_H>h ago < 24h)`).
 
 Inputs: `repo=martin-janci/property-management`, `window=14d`, `base=dev`,
 `max_prs=15`, `label=follow-up,from-merged-review`.
 
-The skill commits + pushes its own files.
+**State-write ownership (finding `subagent-race-on-dev-push`).** With
+`DISPATCHER_OWNED_COMMIT=1` the skill WRITES `post-merge-review.json` +
+`last-merged-review.txt` into the working tree and RETURNS without
+committing/pushing. Phase 6 commits them with the rest of the dispatcher's
+`.research/` delta — one push, not two. (The skill still opens GitHub issues
+via API; that is not a `.research/` write and is unaffected.)
 
 Return EXACTLY: `scanned=<N> clean=<K> issues=<M> note=<short>`.
 
@@ -366,6 +601,32 @@ Return EXACTLY: `scanned=<N> clean=<K> issues=<M> note=<short>`.
 ## Phase 2.6 — Buffer guard
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
+**Coverage referential-integrity cascade (NEW — finding `goal-check-gc1-orphan-action-list-items`).**
+Run this FIRST, before computing the claimable pool — closing shipped-but-open
+items shrinks `open_count`, so the same leak no longer inflates the buffer (it
+was a hidden contributor to the GC3 overshoot too). The cascade is the
+idempotent `gc1-reconcile.sh` and drains the two ACTIONABLE GC1 violations:
+
+```bash
+# (1) archive-terminal leak → auto-close (open gap item whose exact task_id is
+#     already merged/done in the archive; same leak as reclaim-of-already-merged-task-id).
+# (2) stem orphan → emit to gc1-orphan-triage.md for a coverage author (NOT closed:
+#     these are real stories missing from coverage.json — relink, never prune).
+# Legitimate open follow-ups under a done story (exact task not merged) are left alone.
+bash .research/gc1-reconcile.sh --apply
+```
+
+This is bounded and self-describing: every closed row gets a `gc1_closed`
+stamp (merged PR + date), every orphan lands in the triage doc — **never a
+silent prune of live work**. Include `action-list.json` (and the triage doc)
+in the Phase 6 commit when the cascade closed any row. Matching is by the
+`<epic>-<story>` stem, identical to `goal-check.sh` GC1 — the stem, not the
+descriptive slug, is the stable join key (the slug mismatch is what made GC1
+false-flag ~95 live items as orphans before this fix). Going forward GC1 stays
+green run-to-run because the leak is drained here every cycle; once the orphan
+triage backlog reaches 0 (coverage authored for the missing stems), flip GC1 to
+a hard Phase 6 gate (`hard=true`) the same way GC2 is enforced today.
 
 **Archive lookup pattern (issue #9 — token spending).** With terminal rows
 split into `assignments-archive.json`, the dep_blocked check below MUST
@@ -406,7 +667,48 @@ dep_blocked_count    = count(open items where is_dep_blocked(item, terminal_ids)
 open_claimable_count = open_count - dep_blocked_count
 ```
 
-- **Tier 1 (self-refill):** if `open_claimable_count < 18` (half of the 36 target) → **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, append top `(36 - open_claimable_count)`. Log `Tier 1: <old_claimable> → <new_claimable> (+N)`. When `open_claimable_count >= 18` the file is never opened, saving ~10k tokens / run.
+**Buffer bounds (shared with `goal-check.sh` GC3 — finding `goal-check-gc3-buffer-overshoot`).**
+The floor/target/ceiling are ONE source of truth, defined in `goal-check.sh`
+(`BUFFER_FLOOR=18`, `BUFFER_TARGET=36`, `BUFFER_CEIL=60`). Export the same three
+here so refill, drain, and the GC3 gate can never disagree — a forked literal
+is exactly how claimable drifted to ~2× the ceiling (112/60) unmeasured-against:
+
+```bash
+# Read the canonical defaults straight out of goal-check.sh (which owns them)
+# so the dispatcher and the GC3 gate share one value. The grep pulls the
+# `${BUFFER_FLOOR:-18}`-style default; the `:=` fallbacks below cover the case
+# where the line moves or is unreadable, so the run never aborts on this.
+read_bound() { grep -oE "$1:-[0-9]+" .research/goal-check.sh | head -1 | grep -oE '[0-9]+$'; }
+BUFFER_FLOOR="${BUFFER_FLOOR:-$(read_bound BUFFER_FLOOR)}"
+BUFFER_TARGET="${BUFFER_TARGET:-$(read_bound BUFFER_TARGET)}"
+BUFFER_CEIL="${BUFFER_CEIL:-$(read_bound BUFFER_CEIL)}"
+: "${BUFFER_FLOOR:=18}" "${BUFFER_TARGET:=36}" "${BUFFER_CEIL:=60}"
+export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
+```
+
+- **Tier 0 (overflow drain — NEW):** if `open_claimable_count > BUFFER_CEIL` → the buffer is overfull (a coverage-rubric or planner push exceeded the cap; Tier 1's own top-up can never overshoot, but external pushes can). **Drain the excess back to backlog** so claimable converges to `BUFFER_CEIL`. The sort key is the canonical priority rank — `critical=4, high=3, medium=2, low=1` (anything else=0), the same `pri_rank` used by `.research/pick-target-epic.sh:99-104` — **ascending**, with `id` ascending as the deterministic tiebreaker so two runs picking the same overflowing buffer drop the same rows. Set `status="deferred"` on the lowest-ranking `(open_claimable_count - BUFFER_CEIL)` items (they stay in `action-list.json`, just leave the claimable pool — Tier 1 re-opens them per the inverse path below). This is a bounded, scored drop — **never silent**: log each deferred id with its rank. Log `Tier 0: drained <N> (claimable <old> → <BUFFER_CEIL>); deferred=[<id> rank=<r>, …]`. Include `action-list.json` in the Phase 6 commit when any item is deferred.
+
+  Concrete jq (mirrors `pick-target-epic.sh`'s pri_rank — keep them in sync; any deviation re-opens the determinism gap this finding closed):
+
+  ```bash
+  jq -r '
+    def pri_rank:
+      if . == "critical" then 4
+      elif . == "high" then 3
+      elif . == "medium" then 2
+      elif . == "low" then 1
+      else 0 end;
+    [ .items[] | select(.status=="open") ]
+    | map(. + { _rank: (.priority | pri_rank) })
+    | sort_by([._rank, .id])
+    | .[0:(($claimable | tonumber) - ($ceil | tonumber))]
+    | .[].id
+  ' --arg claimable "$open_claimable_count" --arg ceil "$BUFFER_CEIL" \
+    .research/management/action-list.json
+  ```
+
+  **Self-test impact.** `"deferred"` is a new action-list `status` value not present in any existing fixture. Self-tests that classify rows by status (T24 one-open-per-stem, the legacy-dependency invariants, any coverage of `action-list.json` rows) must treat `deferred` as a **non-terminal claimable-pool exclusion** — equivalent to `open` for stem-uniqueness and dep-graph checks, but NOT counted toward `open_claimable_count`. When adding fixtures, include at least one `deferred` row so the predicates are exercised.
+- **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **first, re-open any deferred rows** (inverse of Tier 0): flip `status` from `deferred` back to `open` in `pri_rank` *descending* order (id ascending tiebreaker) until either no deferred rows remain OR `open_claimable_count == BUFFER_TARGET`. This is the closing half of the Tier 0 / Tier 1 cycle — without it, deferred rows would accumulate and the buffer could starve while a valid backlog sits idle. Log `Tier 1: re-opened <N> deferred [<id>, …]` when any flip occurs. **Then**, if still below `BUFFER_FLOOR`, **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
 - **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
 
   ```bash
@@ -480,8 +782,80 @@ Idempotency: items already `status=="dropped"` are skipped.
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
+### Finish-first preamble (PR 3/5 — behind `DISPATCHER_FINISH_FIRST=1`)
+
+When the flag is set, the dispatcher biases all 3 slots toward **one
+target epic per run** instead of spraying claims across epics. The goal
+is depth-first convergence: close out one epic before starting the next.
+
+The target epic lives in `.research/management/objective.json` (schema:
+`{schema_version, epic_prefix, selected_at, last_action, reason,
+stats_at_selection}`). The picker keeps it idempotent — re-running on a
+target with claimable work is a no-op KEEP.
+
+```bash
+if [ "${DISPATCHER_FINISH_FIRST:-0}" = "1" ]; then
+  PICK_OUT=$(.research/pick-target-epic.sh --update --json)
+  TARGET_EP=$(echo "$PICK_OUT" | jq -r .epic_prefix)
+  PICK_ACTION=$(echo "$PICK_OUT" | jq -r .action)
+  # Surface in Phase 7 → "Target epic:" line (see Phase 7 spec).
+  echo "Phase 3 finish-first: $PICK_OUT"
+fi
+```
+
+The picker rule is **closest-to-done**: prefer the epic with the fewest
+remaining claimable open tasks, tie-break by max priority. The dispatcher
+abandons the current target only when it is exhausted (0 claimable opens
+left). See `pick-target-epic.sh` for the full rule.
+
+### WIP-throttle preamble (PR 4/5 — addresses `approved-but-unmergeable-pool-grows`)
+
+Before sizing `free_slots`, compute the dispatcher's current
+**Work-In-Progress** count and derive how many new claims this run can
+absorb without growing the pool further. The throttle is a global cap on
+rows whose status is `in-progress` or `review`. Goal: prevent the
+approved-but-unmergeable pool from compounding when merges are slower
+than claims, and create back-pressure that surfaces merge-pipeline
+bottlenecks early.
+
+```bash
+WIP_CAP="${DISPATCHER_WIP_CAP:-8}"   # default 8; set 0 to disable
+if [ "$WIP_CAP" = "0" ]; then
+  free_slots=3
+  WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
+    .research/management/assignments.json)
+  echo "Phase 3 WIP throttle: disabled (DISPATCHER_WIP_CAP=0); WIP=$WIP_NOW (informational)"
+else
+  WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
+    .research/management/assignments.json)
+  # max(0, cap - WIP), then clamp to the per-run cap of 3.
+  HEADROOM=$(( WIP_CAP - WIP_NOW ))
+  [ "$HEADROOM" -lt 0 ] && HEADROOM=0
+  free_slots=$HEADROOM
+  [ "$free_slots" -gt 3 ] && free_slots=3
+  echo "Phase 3 WIP throttle: WIP=$WIP_NOW/$WIP_CAP free_slots=$free_slots (was 3)"
+fi
+```
+
+**Smooth back-pressure.** With WIP=7 and cap=8, this run claims at most
+1 new task. With WIP=8, claims 0. With WIP=10 (already over cap, e.g.
+because PRs piled into review), claims 0 until merges drain it.
+Phases 5 / 5.5 / 5.6 / 5.7 (review, merge, rebase, respawn) still run —
+they drain the pool. Only Phase 3 (new claims) is throttled.
+
+**Interaction with finish-first (PR 3/5).** The WIP throttle applies
+UNIFORMLY regardless of `DISPATCHER_FINISH_FIRST`. Finish-first
+concentrates the *quality* of claims (one epic); WIP throttles the
+*quantity* (how many can be open at once). The two compose: if WIP is at
+cap, no claim happens even when finish-first has a target ready. The
+target persists in `objective.json` and the next run picks it up once
+merges create headroom.
+
+**Disable via `DISPATCHER_WIP_CAP=0`.** When disabled, Phase 3 behaves
+as before (`free_slots=3`); the current WIP is logged informationally.
+
 ```python
-free_slots = 3   # constant per run
+free_slots = $free_slots   # from the WIP-throttle preamble above
 
 # gap 3 + issue #9: claimable iff every depends_on entry is in TERMINAL_IDS
 # (the set built in Phase 2.6 from active + archive — reuse it here, do not
@@ -492,13 +866,48 @@ def claimable(c, terminal_ids):
             return False
     return True
 
+# Fresh archive read RIGHT BEFORE claim (reclaim-of-already-merged-task-id
+# finding). The TERMINAL_IDS computed in Phase 2.6 may be stale by the
+# time we claim — a concurrent dispatcher run can archive a task_id
+# between Phase 2.6 and Phase 3. Refresh the terminal set from disk on
+# the fly so the claim predicate sees the latest archive state. Cheap
+# (one jq invocation, archive stays at filesystem level).
+TERMINAL_IDS=$(jq -r '.assignments[]
+                     | select(.status=="merged" or .status=="done")
+                     | .task_id' \
+  .research/management/assignments.json \
+  .research/management/assignments-archive.json \
+  | sort -u)
+
+# PR 5/5 — stem-aware active check, parallel to the terminal check.
+# active_stems and quarantined_stems both block re-claim under a
+# suffix-variant slug; quarantined deserves explicit attention because
+# the operator may be mid-triage and a parallel claim under -impl/-v2
+# would duplicate the manual work in flight.
+active_stems = {stem(r.task_id) for r in assignments
+                if r.status in ("in-progress", "review", "quarantined")}
+
 candidates = [c for c in action-list
               if c.status == "open"
               and c.id not in active_ids
-              and c.id not in terminal_ids       # don't re-claim something already shipped
-              and claimable(c, terminal_ids)]
+              and c.id not in TERMINAL_IDS                  # exact-id terminal check
+              and stem(c.id) not in {stem(t) for t in TERMINAL_IDS}   # stem-aware terminal check
+              and stem(c.id) not in active_stems            # stem-aware active+quarantined check (PR 5/5)
+              and claimable(c, TERMINAL_IDS)]
 candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
 ```
+
+The stem-aware terminal check catches the case where a suffix-variant
+slug (e.g. `<id>-impl`, `<id>-v2`) is being claimed while the canonical
+`<id>` is already terminal. Without it the dispatcher would reclaim the
+same gap under a renamed task_id and produce a duplicate PR.
+
+The PR 5/5 stem-aware active+quarantined check extends the same idea to
+non-terminal states: if `<id>` is already `in-progress`, `review`, or
+`quarantined`, no variant `<id>-impl` can be claimed in parallel.
+Quarantined inclusion matters because the operator may be doing manual
+work on the row — silently claiming a sibling defeats the quarantine
+contract.
 
 The legacy `dependency` free-text field is NOT consulted by the claim
 predicate. Only `depends_on` is.
@@ -517,6 +926,27 @@ Define `epic_prefix(task_id)` as the first matching pattern:
 - else: full `task_id`
 
 After candidate sort, walk the list and **claim at most 2 tasks per `epic_prefix` per run**, unless the epic has at least one task in `merged` status in `assignments.json` already (cold-epic protection: avoid spending all 3 slots on the same blocked epic). If the 3rd candidate has the same prefix as the first 2 picked, skip it and continue scanning for a different-prefix candidate. If no different-prefix candidate exists, claim only the 2 — `free_slots=1` is fine, do not pad with same-prefix.
+
+**Finish-first override (PR 3/5).** When `DISPATCHER_FINISH_FIRST=1` AND the
+finish-first preamble selected a target epic (`TARGET_EP != "NONE"`):
+
+1. Before sort, **filter candidates** to those whose `epic_prefix == TARGET_EP`.
+2. The same-epic 2/run cap is **lifted** — claim up to all 3 slots from the
+   target epic. The whole point of finish-first is depth-first concentration.
+3. **Fallback to the unfiltered pool** if the target epic yields 0 claimable
+   candidates after the filter (e.g. all dep-blocked at this exact moment).
+   This prevents the run from going idle when the target is temporarily
+   stuck; the picker will repick on the next exhaustion.
+4. Cold-epic protection (the existing carve-out) doesn't apply when
+   finish-first is active — the operator chose to concentrate on the target
+   even if it has no merges yet; that's the bootstrap case.
+
+The fallback is intentionally narrow: it only triggers when the *filtered*
+candidate list is empty, NOT when finish-first claims fewer than 3 from the
+target. If the target has only 1 claimable task, claim 1 — don't pad with
+other-epic candidates. Filling the run with off-target work defeats the
+finish-first contract and dilutes the signal in Phase 7's `Target epic:`
+line.
 
 **Cross-PR dedup guards.**
 
@@ -647,6 +1077,52 @@ If fewer than 3 candidates available (buffer drained), claim what's there — do
 
 ---
 
+## Phase 3.5 — Persist claims BEFORE spawning implementers
+
+Addresses the `orphaned-prs-reconciliation-noise` finding. The
+fire-and-forget Phase 4 model means a spawned implementer can open a PR
+on remote before the dispatcher's Phase 6 commits the claim row to
+`assignments.json` on `dev`. If the dispatcher aborts between Phase 4
+and Phase 6 (sandbox timeout, network blip, manual interrupt), the PR
+exists on remote but the row doesn't — Phase 2 of the next run sees an
+orphan PR with no row to link to.
+
+**Rule.** When Phase 3 claims ≥1 new row, commit + push the claim rows
+to `dev` BEFORE entering Phase 4. The commit body is minimal — just the
+list of claims — so it doesn't pollute the Phase 6 main commit:
+
+```bash
+if [ "$CLAIMED_COUNT" -gt 0 ]; then
+  bash .research/dispatcher-self-test.sh >/tmp/pre-claim-self-test.log 2>&1 || {
+    echo "Phase 3.5 ABORT: self-test FAIL after claim — refusing to publish claims. See /tmp/pre-claim-self-test.log" >&2
+    exit 0
+  }
+  git add .research/management/assignments.json
+  bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
+    --allow '.research/management/**' || exit 0
+  git commit -m "chore(research): dispatcher pre-spawn claim — ${CLAIMED_COUNT} new task(s)"
+  git push origin dev || {
+    # Push lost a race with a concurrent run — bail without spawning.
+    # Phase 6 of this run is a no-op; Phase 2 of the next run will see
+    # whichever rows actually landed on dev.
+    echo "Phase 3.5 ABORT: push lost race — claims not durable, NOT spawning implementers." >&2
+    exit 0
+  }
+fi
+```
+
+This commit is intentionally separate from the Phase 6 main commit. The
+two-commit pattern guarantees: by the time any implementer starts work,
+its claim row is durable on `dev`. If the rest of the run aborts, the
+claim is still recoverable. If the push loses a race, the dispatcher
+bails *before* spawning, so no orphan PR can ever exist for this run.
+
+Phase 6's commit later in the run picks up everything else (Phase 2
+reconciliation results, Phase 5 reviewer summaries, archive moves) on
+top of this base.
+
+---
+
 ## Phase 4 — Spawn implementer subagents (PARALLEL via Task)
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
@@ -706,6 +1182,37 @@ own exit — the common case), skip this capture entirely; leave the row
 as `status=in-progress` with `claimed_at=now`, and let Phase 2 of the
 next dispatcher run observe the outcome from GitHub.
 
+### State-write ownership (single-writer contract — finding `subagent-race-on-dev-push`)
+
+**Invariant.** `.research/**` on `dev` has exactly one writer: the dispatcher
+process. Every other actor either writes to its own feature branch or acts on a
+PR through the GitHub API — never commits or pushes `.research/**`.
+
+**Why.** Each independent push to `dev` is a discrete event: `research-land`
+replays it and (outside the GITHUB_TOKEN-no-retrigger path) `version-bump` fires.
+When a spawned skill pushes its own `.research/` state mid-run, two failures
+follow: (1) the version churns once per extra push (observed 0.2.964→0.2.968 in
+one run), and (2) the dispatcher's Phase 6 `git commit` finds *nothing to commit*
+because the skill already published the delta the dispatcher intended to own.
+Collapsing all `.research/` writes into the dispatcher's two commits makes the
+Phase 6 delta deterministic and cuts dev pushes to the minimum.
+
+**Per-actor write rules:**
+
+| Actor (phase) | May write | MUST NOT |
+|---|---|---|
+| Implementer (4), rebaser (5.6), followup (5.7) | its own feature branch, inside `/tmp/ppt-worktrees/<task_id>/` | touch `.research/**`; push `dev`; run git ops in the dispatcher CWD |
+| Reviewer (5) | a GitHub PR review via API | write any file; push anything |
+| Merger (5.5) | `gh pr merge` (the PR landing) + the PR head branch for conflict fixups | write `.research/**` |
+| Analysis: dev-review (1.5), project-management (1.6), post-merge-review (2.5) | `.research/**` artifact files **in the working tree**, then RETURN | `git add/commit/push` — persistence is deferred to the owning orchestrator's commit |
+| **Orchestrator** — dispatcher (2.5/3.5/6) or routine (1.5/1.6 → its Phase 6 `git add .research/`) | commits + pushes ALL `.research/**` for the phases it owns | — |
+
+**Mechanism.** When the dispatcher spawns an analysis skill it exports
+`DISPATCHER_OWNED_COMMIT=1`. Each such skill checks that flag and, when set,
+skips its own commit/push step (it still writes its files). Phase 6 then stages
+those files alongside the assignment/action-list state and commits once. Skills
+invoked standalone (no flag) keep committing as before.
+
 STATE TRANSITION (fast-path only — gap 5):
 
 ```python
@@ -732,6 +1239,15 @@ if new_status != prev_status:
 ## Phase 5 — Spawn reviewer subagents (PARALLEL via Task)
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
+**Spawn config:** every reviewer subagent runs with
+`subagent_type=general-purpose, model=opus` (pinned to Opus 4.8). The
+reviewer's job — diff-triage, security read, scope-drift judgement, vendor
+the verdict line — benefits materially from Opus's reasoning over Sonnet's
+default; the dispatcher's per-PR review is the single point where the
+bot decides "merge or block", so cost-per-PR is well spent. Reviewer cap
+is unbounded by phase contract; the cost ceiling is the count of pending
+`review` rows in `assignments.json`.
 
 For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.headRefOid != row.last_reviewed_oid`):
 
@@ -894,26 +1410,131 @@ No cap on reviewer subagents — review every pending review row in parallel.
 
 ---
 
+## Phase 5.4 — Pre-merge autofix (mechanical short-circuit, PR 5/5)
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
+**Purpose.** Many "ci-fail" approved PRs fail only because the base
+moved and the failures are confined to **mechanical paths**: SQLx
+offline JSON, `Cargo.lock`, generated OpenAPI clients, lockfiles.
+Routing these directly to Phase 5.7 (full implementer respawn) is
+wasteful — the fix is a rebase + maybe a one-line regenerate command,
+not another implementation pass. Phase 5.4 intercepts these BEFORE
+Phase 5.5's per-blocker classification so the cheaper fix runs first.
+
+**Mechanical-only path set:**
+
+```
+backend/.sqlx/**
+Cargo.lock
+**/Cargo.lock
+backend/crates/api-client/**
+frontend/packages/api-client/**
+frontend/packages/openapi-client/**
+**/pnpm-lock.yaml
+**/package-lock.json
+**/Gemfile.lock
+docs/api/openapi.yaml
+docs/api/openapi.json
+```
+
+(`ppt-pr-merge`'s existing auto-resolve set is the source of truth —
+keep this list in sync; do not let it drift.)
+
+**Trigger.** For each row `status == "review"` AND `reviewer_summary`
+starts with `verdict=approve`:
+
+```bash
+gh pr view <pr> --json statusCheckRollup,mergeable,headRefOid --jq \
+  '{merge: .mergeable, head: .headRefOid,
+    failing: [.statusCheckRollup[] | select(.conclusion=="FAILURE") | .name]}'
+```
+
+If `failing` is non-empty OR `merge == "CONFLICTING"`, fetch the changed
+file set against `dev` and check whether the entire delta on the
+*failing* paths is inside the mechanical-only set. Use a single `gh pr diff
+<n> --name-only` and `grep -v` the mechanical patterns; if any non-
+mechanical path remains, **skip Phase 5.4** for this row and fall through
+to Phase 5.5's normal classification.
+
+**Action.** Spawn ONE Task subagent per qualifying row (cap 2 parallel,
+same as Phase 5.6's rebaser cap — both serialize on `dev` base):
+
+> You are a pre-merge mechanical autofixer for PR #<n>.
+>
+> 0. **Workspace isolation (MANDATORY — issue #7).** Run the standard
+>    worktree preamble: `TASK_ID=premerge-<n>`, `BRANCH=<row.branch>`.
+>    NEVER `gh pr checkout` in the dispatcher's working tree.
+> 1. Invoke `.claude/skills/ppt-pr-merge/SKILL.md` Step 2 (conflict
+>    auto-resolution) directly — that's the existing function that
+>    rebases against `dev` and regenerates SQLx / Cargo.lock /
+>    generated clients. Do NOT call `gh pr merge` from inside the skill
+>    yet (Phase 5.5 owns the merge).
+> 2. `git push --force-with-lease origin <branch>`.
+> 3. Re-trigger CI explicitly so we observe the new head's result
+>    before Phase 5.5 sees the row:
+>    `gh workflow run <workflow-on-the-pr> --ref <branch>` (best-effort).
+> 4. Return EXACTLY:
+>    `premerge=<applied|skipped|failed> pr=<n> note=<short>`.
+>
+> Failure mode: if the rebase produces any real (non-mechanical) conflict
+> after starting, `git rebase --abort` and return
+> `premerge=failed note=conflict-in:<paths>`. Phase 5.5's normal flow
+> will see `mergeable=CONFLICTING` next run and route to Phase 5.6 as
+> usual — no double-handling.
+
+**Bookkeeping.** Each `premerge=applied` bumps `rebase_attempts += 1`
+(single-owner rule — dispatcher does the write; subagent only returns).
+**Cap: 1 mechanical-autofix per row per 24h.** Without the cap, a
+genuinely-stuck PR could loop here forever; the existing 6h CI-stuck
+back-off in Phase 5.5 (gap 4) takes over if mechanical autofix doesn't
+unstick it.
+
+**What Phase 5.4 is NOT.** It does NOT format / lint code, does NOT
+modify non-mechanical paths, does NOT merge. It's a focused
+"rebase + regenerate" shortcut that converts a mechanical-fail into a
+green PR before Phase 5.5 has to decide.
+
+Phase 5.5 in this same run picks up the now-green PR via the standard
+path; the row goes from `approve + ci-fail` to `approve + ci-green`
+between phases of the same dispatcher cycle, no extra wait.
+
+---
+
 ## Phase 5.5 — Attempt merge for approved + green PRs
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 For each row `status=="review"` where `reviewer_summary` starts with `"verdict=approve"`:
 
-**Pre-flight:**
+**Pre-flight + per-blocker routing.**
+
 ```bash
-gh pr view <pr_number> --json statusCheckRollup,isDraft,reviewDecision,mergeable,state
+gh pr view <pr_number> --json statusCheckRollup,isDraft,reviewDecision,mergeable,state,labels
 ```
 
-Skip if `state != OPEN`, CI conclusion in
-`{FAILURE, CANCELLED, TIMED_OUT, ACTION_REQUIRED}`, or any CI status in
-`{IN_PROGRESS, QUEUED}`.
+Classify the PR into exactly one **blocker** based on the pre-flight result,
+and route per the table below. The previous "skip if anything's wrong" rule
+let approved PRs accumulate in a stranded pool with no escalation — the
+`approved-but-unmergeable-pool-grows` finding (5 PRs stuck across 3 runs).
+Each blocker now has a dedicated path.
 
-**Do NOT skip on `isDraft == true`** — `ppt-pr-merge` Step 1 auto-promotes
-draft PRs to ready when the approval + green-CI gates pass. Letting drafts
-through is the whole point of the auto-promote path; pre-filtering them here
-re-introduces the stall bug (dispatcher run on 2026-05-25: 0 merge attempts,
-all approved PRs draft).
+| Blocker classification | Detection | Routing |
+|---|---|---|
+| `state-closed` | `state != OPEN` | Skip silently; Phase 2 already reconciled. |
+| `ci-fail` | CI rollup has `FAILURE`/`CANCELLED`/`TIMED_OUT`/`ACTION_REQUIRED` | Route to **Phase 5.7 respawn** (verdict=changes path) so the implementer can fix the failing build. Do NOT mark `merged=false`. |
+| `ci-in-progress` | All checks `IN_PROGRESS`/`QUEUED` | If `merge_attempted_at` is null or < 6h old → SKIP this cycle, wait. If ≥6h → `ci-stuck escalation` below. |
+| `ci-unknown` | `statusCheckRollup` is empty/null (0 checks reported) | Re-trigger CI via `gh workflow run` (best-effort) and SKIP this cycle. Log under `Phase 7 → CI-retriggered:`. After 2 cycles with still-zero checks, escalate to human-review label and SKIP further attempts (genuine repo config issue, not a transient blip). |
+| `dirty` | `mergeable == "CONFLICTING"` | Route to **Phase 5.6 auto-rebase** (see below). |
+| `draft-ready` | `isDraft == true` AND review approved AND CI green | Pass through; `ppt-pr-merge` Step 1 auto-promotes draft → ready when the approval + green-CI gates pass. Letting drafts through is the whole point of the auto-promote path; pre-filtering re-introduces the stall (observed: 0 merge attempts in a run where every approved PR was draft). |
+| `needs-human-review` | Label `needs-human-review` present | SKIP; surface in Phase 7 under `Approved+human-gated:`. Do NOT keep retrying — humans add this label specifically to stop the dispatcher. |
+| `ready` | None of the above | Proceed with merge spawn. |
+
+**Skip-vs-fail discipline.** Only `ci-fail` mutates row state (routes to
+5.7 which sets `status=in-progress`); every other "skip" leaves the row
+in `status=review` and emits a Phase 7 line so the operator can see why
+it didn't merge this cycle. Approved-but-blocked PRs never disappear
+from the visible state.
 
 **CI-stuck escalation (gap 4):** if the PR's CI rollup is `IN_PROGRESS` or
 `QUEUED` AND `row.merge_attempted_at != null` AND
@@ -982,7 +1603,26 @@ Spawn ONE Task subagent (cap 1 parallel — rebases serialize on the same base):
 > 4. `git push --force-with-lease origin <branch>`
 > 5. Return EXACTLY: `rebased=<true|false> pr=<n> note=<short>`
 
-Capture line. Bump `rebase_attempts += 1`, `last_updated = now`.
+Capture line. Bump `last_updated = now`.
+
+**`rebase_attempts` ownership: dispatcher-only, exactly once per spawn.**
+Earlier behaviour had both the rebaser subagent AND the dispatcher
+incrementing the counter, double-counting to 2 instead of 1
+(`double-counted-rebase-attempts` finding). The rule:
+
+- The **dispatcher** increments `rebase_attempts += 1` here, immediately
+  after capturing the rebaser's return line, regardless of `rebased=true/false`.
+  This is the single authoritative write.
+- The **rebaser subagent** MUST NOT touch `rebase_attempts` (the row is
+  not even accessible from the subagent's worktree under the workspace-
+  isolation rule).
+- The rebaser's return line does NOT carry an attempt count — only
+  `rebased=<true|false>` and a short note. The dispatcher derives the new
+  count from the existing row.
+
+The same single-owner pattern applies to every counter on the assignment
+row: only the dispatcher writes; subagents communicate via return lines.
+
 Phase 5.5 next run will pick up the now-clean PR via the standard path.
 
 ---
@@ -991,8 +1631,35 @@ Phase 5.5 next run will pick up the now-clean PR via the standard path.
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
-For each row `status == "review"` where `reviewer_summary` starts with
-`"verdict=changes"`:
+**Quarantine gate (PR 5/5).** Before respawning, check `fix_rounds`. If
+`fix_rounds >= 3` the implementer has already had 3 attempts at this row
+and the reviewer is still returning `verdict=changes`. Further respawns
+are unlikely to converge — they burn implementer subagent budget and
+keep the row in the WIP pool, blocking new claims under the WIP throttle
+(PR 4/5). Quarantine the row instead:
+
+```bash
+for row in rows_with_verdict_changes:
+  if (row.fix_rounds // 0) >= 3:
+    row.status = "quarantined"
+    row.status_changed_at = now
+    row.quarantined_at = now
+    row.quarantine_reason = "fix_rounds=" + str(row.fix_rounds) + " exhausted; verdict still changes after " + str(row.fix_rounds) + " respawns"
+    row.last_updated = now
+    # Log to Phase 7 — see "Quarantined this run" line.
+    continue  # SKIP the respawn for this row
+  # else: fall through to the respawn spawn block below
+```
+
+The quarantined row is left ALONE on GitHub — the PR stays open, the
+branch is preserved, the implementer history (3 attempts' worth of
+commits) is intact for the operator to inspect. The dispatcher just
+stops feeding the implementer/reviewer cycle on this row. Un-quarantine
+is a manual edit (`status: "quarantined" → "review"`) once the operator
+has done whatever the bot couldn't.
+
+For each REMAINING row `status == "review"` where `reviewer_summary`
+starts with `"verdict=changes"` AND `fix_rounds < 3`:
 
 Spawn ONE Task subagent (cap 3 parallel — same as Phase 4's implementer cap):
 
@@ -1037,9 +1704,10 @@ Update `assignments.generated = now`. Include `action-list.json` if Phase 2.6 Ti
 
 **Archive move (issue #9 — token spending).**
 
-**Invariant** (T19): post-Phase-6, `assignments.json` carries NO row whose
-status is terminal (`merged` / `failed` / `done`). Every terminal row
-appears exactly once across (`assignments.json`, `assignments-archive.json`).
+**Invariant** (T19 + T18b): post-Phase-6, `assignments.json` carries NO
+row whose status is terminal (`merged` / `failed` / `done`); AND
+`assignments-archive.json` contains AT MOST ONE row per `task_id`. Every
+terminal row appears exactly once across the two files.
 
 **Sweep semantics, not transition-set semantics.** Compute the move set
 from the current file state, not from this run's transitions set. Earlier
@@ -1058,9 +1726,18 @@ MOVE_IDS_JSON=$(jq '[.assignments[]
   | select(.status=="merged" or .status=="failed" or .status=="done")
   | .task_id]' .research/management/assignments.json)
 
-# Append to archive, drop from active. Atomic via mv.
+# Append to archive AND upsert by task_id. Concurrent runs that each
+# re-archive the same id used to produce duplicate rows inside the
+# archive (T4 FAIL: gap-82-4-*-impl + 3 others present twice). The
+# upsert makes the write idempotent regardless of run overlap; group_by
+# preserves order within a group so `map(last)` keeps the freshest row
+# (latest merged_at / last_updated).
 jq --argjson ids "$MOVE_IDS_JSON" --slurpfile active .research/management/assignments.json '
-  .assignments += [ $active[0].assignments[] | select(.task_id as $t | $ids | index($t)) ]
+  .assignments = (
+    (.assignments + [ $active[0].assignments[] | select(.task_id as $t | $ids | index($t)) ])
+    | group_by(.task_id)
+    | map(last)
+  )
   | .archived_at = (now | todate)
 ' .research/management/assignments-archive.json > /tmp/archive.new
 
@@ -1076,15 +1753,23 @@ The Phase 7 summary's `Merged-now` / `Failed (this run)` counters are still
 derived from the in-memory transitions set — those are this-run-shaped
 quantities, distinct from the file-state-shaped move set above.
 
-**Goal-check (record-only — observe phase, PR 1).** Before committing, run the
-deterministic goal checks and capture the summary for the commit body. This
-NEVER blocks the commit in the observe phase (`goal-check.sh` exits 0 unless
-`GOAL_CHECK_ENFORCE=1`, which is unset until PR 2):
+**Goal-check (ENFORCING — PR 2).** Before committing, run the deterministic
+goal checks with enforcement on. A hard failure (GC2 — coverage regression)
+ABORTS the commit (the run bails; the next run re-evaluates once coverage is
+corrected). GC1/GC3 remain record-only (`hard=false`). The `goal-check: …`
+line is still recorded in the commit body on the pass path.
 
 ```bash
-GOAL_CHECK=$(./.research/goal-check.sh --json 2>/dev/null || echo '[]')
+# PR 2: enforce. GC2 (coverage regression) hard-fails the run; GC1/GC3 stay
+# record-only (hard=false). Capture the summary line either way.
+GOAL_CHECK=$(GOAL_CHECK_ENFORCE=1 ./.research/goal-check.sh --json 2>/dev/null); GOAL_RC=$?
+[ -z "$GOAL_CHECK" ] && GOAL_CHECK='[]'
 GOAL_LINE=$(echo "$GOAL_CHECK" | jq -r 'map("\(.check)=\(if .passed then "ok" else "FAIL" end)") | join(" ")')
-echo "goal-check: $GOAL_LINE"
+echo "goal-check: $GOAL_LINE (enforce rc=$GOAL_RC)"
+if [ "$GOAL_RC" -ne 0 ]; then
+  echo "ABORT: goal-check hard failure (coverage regression — GC2). Not committing." >&2
+  exit 0   # bail without committing; next run re-evaluates once coverage is fixed
+fi
 ```
 
 Append `goal-check: <GOAL_LINE>` as a trailing line in the dispatcher commit
@@ -1112,7 +1797,17 @@ fi
 
 git add .research/management/assignments.json \
         .research/management/assignments-archive.json \
-        [.research/management/action-list.json if refilled]
+        [.research/management/action-list.json if refilled or GC1 cascade closed rows] \
+        [.research/management/gc1-orphan-triage.md if GC1 cascade wrote it] \
+        [.research/management/post-merge-review.json .research/management/last-merged-review.txt if Phase 2.5 ran]
+# State-write ownership (finding subagent-race-on-dev-push): the dispatcher is
+# the single writer of .research/management/** for the phases IT owns, so when
+# Phase 2.5 runs its post-merge artifacts are folded into THIS commit rather
+# than pushed by ppt-review-merged itself (it now defers under
+# DISPATCHER_OWNED_COMMIT=1). All paths are under .research/management/, so the
+# commit-scope guard below still passes. (Phase 1.5/1.6 artifacts are owned by
+# the routine, not the dispatcher — the routine's own Phase 6 `git add .research/`
+# stages those; do not duplicate them here.)
 # Commit-scope guard (#526): before the dispatcher's self-commit, refuse
 # if `git diff --cached` strays outside `.research/management/`. Catches
 # the PR #496 class of failure (stop hook bundling parallel-agent work
@@ -1122,6 +1817,33 @@ bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
   echo "dispatcher commit-scope-guard refused — staged paths outside .research/management/. NOT committing; surface in next run." >&2
   exit 0
 }
+
+# Pre-commit self-test gate. Phase 8 finding `self-test-fail-recurs-each-run`:
+# T11 / T4 / T18 / T19 were enforced only by the post-hoc self-test, so every
+# claim/archive cycle could introduce a fresh invariant violation that was
+# then back-filled reactively. Running the self-test BEFORE commit converts
+# it from a forensic ritual into a real gate. Abort on FAIL with a recovery
+# hint so the operator (or the next run) can fix the state before publishing
+# a known-broken snapshot to dev.
+if ! bash .research/dispatcher-self-test.sh >/tmp/dispatcher-self-test.log 2>&1; then
+  echo "PHASE 6 ABORT: dispatcher-self-test FAIL — refusing to commit state that violates invariants." >&2
+  tail -25 /tmp/dispatcher-self-test.log >&2
+  echo "" >&2
+  echo "  Recovery options:" >&2
+  echo "    1. Inspect /tmp/dispatcher-self-test.log to identify the failing T<N>." >&2
+  echo "    2. If state is genuinely corrupt: 'git checkout HEAD -- .research/management/'" >&2
+  echo "       and let the next run rebuild from a known-good base." >&2
+  echo "    3. If the self-test itself is wrong: fix the test, not the data, in a follow-up PR." >&2
+  echo "" >&2
+  echo "  Skip-gate (operator-only): DISPATCHER_SELF_TEST_GATE=0 bypasses this check" >&2
+  echo "  for a single run. Use only when you have manually verified state and need" >&2
+  echo "  to publish despite a known-stale self-test invariant." >&2
+  if [ "${DISPATCHER_SELF_TEST_GATE:-1}" != "0" ]; then
+    exit 0
+  fi
+  echo "  DISPATCHER_SELF_TEST_GATE=0 — continuing despite self-test FAIL." >&2
+fi
+
 git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merge-attempts, X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased'
 git push origin dev   # if another run committed since our pull: rebase + retry once;
                       # if still conflicts, log and bail — next run will re-evaluate state
@@ -1152,6 +1874,11 @@ always appear so it is visible in dispatcher commits when the check actually ran
 Claimed (this run):       [<id> -> <specialist>, …]                (≤3, may be [])
 Same-epic skipped:        [<id> (would exceed 2/epic), …]          (item #2; [] if none)
 Dup-skipped:              [<id> reason=<open-pr|open-assignment|file-overlap> conflicts_with=<#n|task_id>, …]   (cross-PR dedup guards; [] if none)
+Target epic:              <epic_prefix open=N claimable=M action=<keep|select|repick|empty> | off>   (PR 3/5 finish-first; "off" when DISPATCHER_FINISH_FIRST≠1)
+WIP throttle:             <wip=N/cap=M free_slots=K | disabled (cap=0)>   (PR 4/5; smooth back-pressure on Phase 3 claims)
+Quarantined this run:     [<task_id> reason=<short>, …]               (PR 5/5; [] if none)
+Quarantined total:        <N>   (PR 5/5; rows currently in status=quarantined across active assignments)
+Pre-merge autofix:        [PR#<n> premerge=<applied|skipped|failed> <note>, …]  (PR 5/5 Phase 5.4; [] if none)
 Transitions (this run):   [<id> in-progress→review, …]             ([] if none)
 In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>
@@ -1162,6 +1889,9 @@ Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; 
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
+Unresolved-dep items:     [<id> dep="<truncated-legacy-text>", …]   (issue #583 — poisoned-sentinel rows whose legacy `dependency` text didn't parse; need human resolution; [] if none)
+GC1 cascade:              <closed-leak=<N> orphan-triage=<M> | clean>   (gc1-reconcile; archive-terminal closes + coverage-missing orphans)
+Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
 Tier 2 response:          <http=<code> body="<truncated>" | not-fired>          (issue #5)
 Review dedup-skipped:     [PR#<n> existing-at=<iso>, …]             (issue #3; [] if none)
@@ -1170,8 +1900,8 @@ Code-reuse warnings:      [PR#<n> task=<id> note=<helper>, …]       (item #4; 
 Disk warning:             <none | "free=N%; cleaned to M%">         (item #7)
 Merged total: <Mt_total>; this cycle: <Mt_this>
 Failed total: <F_total>;  this cycle: <F_this>
-Buffer:     claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>) <T1: refilled +N | T2: upstream kicked | OK>
-Post-merge: <due | skipped> [<scanned=N clean=K issues=M>]
+Buffer:     claimable=<open_claimable_count>/<BUFFER_TARGET> ceil=<BUFFER_CEIL> (open=<open_count>, dep_blocked=<dep_blocked_count>) <T0: drained -N | T1: refilled +N | T2: upstream kicked | OK>
+Post-merge: <due (last <AGE_H>h ago | no-marker) scanned=N clean=K issues=M | skipped (last <AGE_H>h ago < 24h)>   (content-age gate, not mtime)
 Hang alerts:
   WARN (review >48h): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)
   ALERT (review >7d): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)
@@ -1235,7 +1965,7 @@ fi
 ```
 
 **Spawn:** one Task subagent (`subagent_type=general-purpose`,
-**`model=opus`** — pin to Opus 4.7 for sharper diff-of-runs reasoning;
+**`model=opus`** — pin to Opus 4.8 for sharper diff-of-runs reasoning;
 worth the extra cost for a temporary instrumented phase). NOT parallel
 with anything else — this is the last thing the run does.
 
@@ -1439,7 +2169,7 @@ the dispatcher never auto-applies a fix.
 This line is NOT in the regular Phase 7 list above because it depends on
 this whole phase being optional. Treat it as a Phase 8 epilogue line.
 
-**Cost note (TEMP_PHASE_8):** Opus 4.7 input is ~5× Sonnet. A typical
+**Cost note (TEMP_PHASE_8):** Opus 4.8 input is ~5× Sonnet. A typical
 self-review subagent run will consume ~5-10k input tokens (gathering bash
 outputs + writing 60 lines markdown). Per-run cost: roughly $0.10-0.30 in
 Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
@@ -1455,8 +2185,8 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 ## HARD RULES
 
 - per-run cap: claim at most 3 NEW tasks AND spawn at most 3 implementer subagents
-- NO global in-progress cap — parallel runs can overlap, total in-progress may exceed 3
-- per-run **per-epic** cap of 2 (item #2)
+- **WIP throttle (PR 4/5)**: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))`. Default `DISPATCHER_WIP_CAP=8`. Set `=0` to disable. Counts rows in `{in-progress, review}`. Smooth back-pressure: claims trickle until exactly at cap, then 0 until merges drain.
+- per-run **per-epic** cap of 2 (item #2). Lifted when `DISPATCHER_FINISH_FIRST=1` AND a target epic is selected (PR 3/5).
 - state transitions are MANDATORY; `merged` / `failed` are TERMINAL
 - legacy `status == "done"` is equivalent to `merged` (counting only); never auto-migrate or rewrite those rows
 - `status_changed_at` bumped ONLY on actual status value change
@@ -1486,8 +2216,9 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
 - **subagent workspace isolation** (issue #7) — every Phase 4 (implementer), Phase 5.6 (rebaser), and Phase 5.7 (followup-respawn implementer) subagent MUST run its `git checkout` / `gh pr checkout` / build / commit work inside `/tmp/ppt-worktrees/<task_id>/` via the standard `git worktree add` preamble. NEVER touch the dispatcher's own working tree. Phase 5.5 (merger, API-only) and Phase 2 (read-only reconciliation) are exempt.
+- **state-write ownership / single writer** (finding `subagent-race-on-dev-push`) — `.research/**` on `dev` is written by the ORCHESTRATOR process only, never by a spawned skill. The dispatcher owns the phases it runs (the Phase 3.5 claim commit + the Phase 6 main commit); the research routine owns its own Phase 1.5/1.6 outputs via its single `git add .research/` at the routine's Phase 6. NO spawned subagent may `git add/commit/push` any `.research/**` file: analysis skills (dev-review, project-management, post-merge-review) WRITE their artifacts into the working tree and RETURN, and the owning orchestrator folds them into its one commit. Implementers/rebasers/followups commit only on their own feature branch inside their worktree; reviewers/mergers act only via the GitHub API on the PR. Each independent `.research/` push to `dev` is a separate research-land replay + version-bump and can empty the orchestrator's commit by pre-empting its delta — see the contract under "Subagent execution model". The orchestrator sets `DISPATCHER_OWNED_COMMIT=1` in the env of every analysis subagent it spawns; those skills gate their own commit/push on it. (`ppt-project-management` and `ppt-dev-review` already return without committing; `ppt-review-merged` is the one that self-pushed and is fixed here.)
 - **TEMP_PHASE_8 — self-review** — Phase 8 spawns an Opus subagent that writes a post-mortem markdown to `.research/self-improvement/<iso8601>.md`. Off-switch: `DISPATCHER_SELF_REVIEW=0`. The subagent must NOT modify any state file or commit anything. **This phase is temporary** — remove by 2026-06-30 (search `TEMP_PHASE_8` to find every related artifact).
-- **goal-check (observe-only, PR 1)** — Phase 6 runs `.research/goal-check.sh --json` and records `goal-check: GC1=… GC2=… GC3=…` in the commit body. It does NOT block the commit while `GOAL_CHECK_ENFORCE` is unset. PR 2 flips GC2 to hard-fail.
+- **goal-check (ENFORCING, PR 2)** — Phase 6 runs `GOAL_CHECK_ENFORCE=1 .research/goal-check.sh`. GC2 (coverage regression) ABORTS the commit; GC1/GC3 are recorded but non-blocking. The `goal-check:` summary line is still written to the commit body.
 
 ---
 

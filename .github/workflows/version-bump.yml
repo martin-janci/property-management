@@ -29,20 +29,49 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      # Defence-in-depth for finding subagent-race-on-dev-push: a push that
+      # touches ONLY .research/** is dispatcher/routine bookkeeping, not a
+      # product change, so it must never bump the product version. This caps the
+      # "rapid version-bump cycles" from research-state pushes; real feature
+      # merges (which touch code) still bump as before.
+      - name: Detect .research/-only push
+        id: detect
+        run: |
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.event.after }}"
+          ZERO="0000000000000000000000000000000000000000"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "$ZERO" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"; echo "no before-sha — bumping"; exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BEFORE" "$AFTER" 2>/dev/null) || {
+            echo "skip=false" >> "$GITHUB_OUTPUT"; echo "diff failed — bumping to be safe"; exit 0; }
+          if [ -z "$CHANGED" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"; echo "empty diff — bumping to be safe"; exit 0
+          fi
+          if echo "$CHANGED" | grep -qvE '^\.research/'; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"; echo "non-.research changes present — bumping"
+          else
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo ".research/-only push — skipping version bump"
+          fi
+
       - name: Configure git
+        if: steps.detect.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Setup Node (for package.json sync)
+        if: steps.detect.outputs.skip != 'true'
         uses: actions/setup-node@v6
         with:
           node-version: '20'
 
       - name: Bump patch version
+        if: steps.detect.outputs.skip != 'true'
         run: ./scripts/bump-version.sh patch
 
       - name: Commit and push version bump
+        if: steps.detect.outputs.skip != 'true'
         run: |
           VERSION=$(cat VERSION | tr -d '[:space:]')
           git add VERSION

@@ -286,7 +286,8 @@ impl AnnouncementRepository {
             where_clause, limit, offset
         );
 
-        let mut query_builder = sqlx::query_as::<_, AnnouncementSummary>(&sql).bind(org_id);
+        let mut query_builder =
+            sqlx::query_as::<_, AnnouncementSummary>(sqlx::AssertSqlSafe(sql)).bind(org_id);
 
         if let Some(ref status) = query.status {
             query_builder = query_builder.bind(status);
@@ -392,7 +393,7 @@ impl AnnouncementRepository {
             where_clause
         );
 
-        let mut query_builder = sqlx::query_scalar::<_, i64>(&sql).bind(org_id);
+        let mut query_builder = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql)).bind(org_id);
 
         if let Some(ref status) = query.status {
             query_builder = query_builder.bind(status);

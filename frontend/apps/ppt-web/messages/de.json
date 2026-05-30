@@ -779,5 +779,32 @@
       "statusCancelled": "Abgebrochen",
       "statusSkipped": "Übersprungen"
     }
+  },
+  "leases": {
+    "esign": {
+      "requestSignature": "Unterschrift anfordern",
+      "modal": {
+        "title": "Unterschrift anfordern",
+        "selectSigners": "Unterzeichner auswählen",
+        "subject": "Betreff (optional)",
+        "subjectPlaceholder": "z.B. Mietvertrag Unterzeichnung",
+        "message": "Nachricht an Unterzeichner (optional)",
+        "messagePlaceholder": "Bitte prüfen und unterschreiben Sie den beigefügten Mietvertrag.",
+        "sending": "Wird gesendet…",
+        "send": "Zur Unterschrift senden"
+      },
+      "role": {
+        "tenant": "Mieter",
+        "manager": "Verwalter"
+      },
+      "status": {
+        "pending": "Unterschrift ausstehend",
+        "in_progress": "Unterschrift läuft",
+        "completed": "Unterzeichnet",
+        "declined": "Abgelehnt",
+        "expired": "Abgelaufen",
+        "cancelled": "Abgebrochen"
+      }
+    }
   }
 }

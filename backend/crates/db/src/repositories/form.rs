@@ -777,7 +777,8 @@ impl FormRepository {
             count_where
         );
 
-        let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql).bind(org_id);
+        let mut count_query =
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql)).bind(org_id);
         if let Some(ref form_id) = query.form_id {
             count_query = count_query.bind(form_id);
         }

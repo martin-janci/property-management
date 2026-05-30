@@ -193,6 +193,65 @@ jobs:
           echo "  - PRs without the 'security' label: 'security-test-gate' is skipped →"
           echo "    'security-gate-conclusion' succeeds → merge is not blocked."
 
+      - name: Self-check — verify security-gate-conclusion is required
+        # Idempotent audit step. Reads back required_status_checks from the
+        # API after the apply step ran and fails the run if
+        # 'security-gate-conclusion' is not present. This makes the workflow
+        # self-auditing: a green run guarantees the gate is registered.
+        #
+        # In dry-run mode this only warns (the apply step did not patch).
+        env:
+          GH_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          REQUIRED_CHECK="security-gate-conclusion"
+
+          echo "Reading back required status checks for dev..."
+          RESPONSE=$(gh api "repos/$REPO/branches/dev/protection/required_status_checks" 2>&1) || {
+            echo "ERROR: could not fetch required status checks (branch may not be protected)."
+            echo "$RESPONSE"
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "DRY-RUN: skipping hard failure."
+              exit 0
+            fi
+            exit 1
+          }
+
+          echo "Raw API response:"
+          echo "$RESPONSE" | python3 -m json.tool --no-ensure-ascii 2>/dev/null || echo "$RESPONSE"
+
+          NAMES=$(echo "$RESPONSE" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          checks = d.get('checks') or []
+          contexts = d.get('contexts') or []
+          names = [c['context'] for c in checks] if checks else contexts
+          print('\n'.join(names))
+          ")
+
+          echo ""
+          echo "Required status checks on dev:"
+          if [ -z "$NAMES" ]; then
+            echo "  (none)"
+          else
+            echo "$NAMES" | sed 's/^/  - /'
+          fi
+
+          if echo "$NAMES" | grep -qxF "$REQUIRED_CHECK"; then
+            echo ""
+            echo "OK: '$REQUIRED_CHECK' is registered as a required status check on dev."
+          else
+            echo ""
+            echo "ERROR: '$REQUIRED_CHECK' is NOT in the required status checks for dev."
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "DRY-RUN: not failing the run (apply step did not patch)."
+              exit 0
+            fi
+            exit 1
+          fi
+
       - name: Summary
         if: always()
         env:

@@ -72,7 +72,7 @@ impl PlatformAdminRepository {
         );
 
         // Execute count query
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
+        let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
         if let Some(status) = status_filter {
             count_q = count_q.bind(status);
         }
@@ -82,7 +82,7 @@ impl PlatformAdminRepository {
         let total = count_q.fetch_one(&self.pool).await?;
 
         // Execute data query
-        let mut data_q = sqlx::query_as::<_, OrganizationMetrics>(&data_query)
+        let mut data_q = sqlx::query_as::<_, OrganizationMetrics>(sqlx::AssertSqlSafe(data_query))
             .bind(limit)
             .bind(offset);
         if let Some(status) = status_filter {
@@ -319,7 +319,7 @@ impl PlatformAdminRepository {
         );
 
         // Execute count query with bound parameters
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
+        let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
         if let Some(s) = status {
             count_q = count_q.bind(s);
         }
@@ -329,7 +329,7 @@ impl PlatformAdminRepository {
         let total = count_q.fetch_one(&self.pool).await?;
 
         // Execute data query with bound parameters
-        let mut data_q = sqlx::query_as::<_, SupportUserInfo>(&data_query)
+        let mut data_q = sqlx::query_as::<_, SupportUserInfo>(sqlx::AssertSqlSafe(data_query))
             .bind(limit)
             .bind(offset);
         if let Some(s) = status {

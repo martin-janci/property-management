@@ -10,8 +10,12 @@
  */
 
 export {
+  /** @deprecated Import from '../lib/mfa-handler' instead. This shim exists only for backward compatibility. */
   hasMfaChallengeHandler,
+  /** @deprecated Import from '../lib/mfa-handler' instead. This shim exists only for backward compatibility. */
   type MfaChallengeHandler,
+  /** @deprecated Import from '../lib/mfa-handler' instead. This shim exists only for backward compatibility. */
   requestMfaChallenge,
+  /** @deprecated Import from '../lib/mfa-handler' instead. This shim exists only for backward compatibility. */
   setMfaChallengeHandler,
 } from '../lib/mfa-handler';

@@ -420,6 +420,24 @@ if [ -f "$ASSIGN_ARCHIVE" ]; then
   echo
 fi
 
+# --- T18b: archive contains AT MOST ONE row per task_id --------------------
+# Phase 6 archive write must upsert by task_id. Concurrent runs that each
+# computed the same move set used to append duplicate rows into the archive
+# (T4 caught it cross-file; T18b is the in-archive invariant proper). Plain
+# append → duplicate rows; group_by | map(last) → idempotent upsert.
+if [ -f "$ASSIGN_ARCHIVE" ]; then
+  echo "T18b archive has at most one row per task_id (in-archive dedup)"
+  DUPES=$(jq -r '
+    [.assignments | group_by(.task_id) | .[] | select(length>1) | .[0].task_id]
+    | length' "$ASSIGN_ARCHIVE")
+  if [ "$DUPES" = "0" ]; then note "no duplicate task_id rows in archive"
+  else
+    fail "$DUPES task_id(s) duplicated within archive (Phase 6 archive-append bug)"
+    jq -r '.assignments | group_by(.task_id) | .[] | select(length>1) | "    \(.[0].task_id) :: \(length) rows"' "$ASSIGN_ARCHIVE" >&2
+  fi
+  echo
+fi
+
 # --- T19: active contains NO terminal rows (issue #9) ----------------------
 # Inverse of T18: terminal rows must be moved to archive in Phase 6.
 echo "T19 active assignments contains NO terminal rows (issue #9)"
@@ -448,10 +466,9 @@ T20_DUPES=$(jq -r '
   | join(",")' "$ASSIGN")
 if [ -z "$T20_DUPES" ]; then note "no two active rows share a stem"
 else
-  # PR1 observe-only: surface duplicates as a WARNING without failing the
-  # self-test (matches the T12/T16 grandfather convention). PR2 flips this
-  # back to `fail` once the live duplicate(s) are resolved.
-  printf '  warn  duplicate active stems: %s (two non-terminal units; PR1 observe-only — not failing)\n' "$T20_DUPES" >&2
+  # Duplicate active work is a data-integrity violation (the #641/#644
+  # double-land class). Enforcing as of PR 2.
+  fail "duplicate active stems: $T20_DUPES (two non-terminal units of the same work)"
   jq -r '
     def stem: sub("^(auto-impl|impl)/";"") | sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
     .assignments | map(select(.status=="in-progress" or .status=="review"))
@@ -459,6 +476,126 @@ else
     | "    \(.task_id) :: stem=\(.task_id|stem) status=\(.status)"' "$ASSIGN" >&2
 fi
 echo
+
+# --- T21: objective.json sanity (PR 3/5 finish-first) ----------------------
+# When DISPATCHER_FINISH_FIRST=1, the dispatcher reads/writes
+# .research/management/objective.json. T21 enforces:
+#   * if the file exists, it's valid JSON with the expected schema
+#   * epic_prefix is a non-empty string and either matches one of the
+#     epic-prefix regexes used by the dispatcher (gap-N[a-z]? or pm-<role>)
+#     OR equals "NONE" (the picker's "no claimable work" sentinel).
+# Soft-fail: if the file doesn't exist, T21 is a no-op (the picker
+# creates it on first finish-first run; absence is the default state).
+OBJECTIVE_FILE="${OBJECTIVE_FILE:-.research/management/objective.json}"
+if [ -f "$OBJECTIVE_FILE" ]; then
+  echo "T21 objective.json schema + epic_prefix shape (PR 3/5)"
+  if ! jq -e '.schema_version and .epic_prefix and .selected_at' "$OBJECTIVE_FILE" >/dev/null 2>&1; then
+    fail "$OBJECTIVE_FILE missing one of {schema_version, epic_prefix, selected_at}"
+  else
+    EP=$(jq -r '.epic_prefix' "$OBJECTIVE_FILE")
+    case "$EP" in
+      NONE) note "objective=NONE (no claimable work)";;
+      gap-[0-9]*|pm-*) note "objective epic_prefix='$EP' is well-formed";;
+      *) fail "objective.epic_prefix='$EP' does not match gap-N[a-z]? or pm-<role> or NONE";;
+    esac
+  fi
+  echo
+fi
+
+# --- T22: WIP throttle bounds (PR 4/5) -------------------------------------
+# Soft invariant: WIP (count of {in-progress, review} rows) should stay
+# within DISPATCHER_WIP_CAP. State on disk may already be over cap when the
+# throttle is first enabled, so being-over-cap is a `note`, not a `fail`.
+# Hard-fail only when WIP exceeds 2 × cap (clear runaway).
+echo "T22 WIP throttle bounds (PR 4/5)"
+WIP_CAP_FOR_TEST="${DISPATCHER_WIP_CAP:-8}"
+WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' "$ASSIGN")
+if [ "$WIP_CAP_FOR_TEST" = "0" ]; then
+  note "WIP throttle disabled (DISPATCHER_WIP_CAP=0); current WIP=$WIP_NOW"
+elif [ "$WIP_NOW" -gt $(( WIP_CAP_FOR_TEST * 2 )) ]; then
+  fail "WIP=$WIP_NOW exceeds 2× cap (cap=$WIP_CAP_FOR_TEST) — clear runaway, merge throughput collapsed"
+elif [ "$WIP_NOW" -gt "$WIP_CAP_FOR_TEST" ]; then
+  note "WIP=$WIP_NOW over cap=$WIP_CAP_FOR_TEST (drain by merges; Phase 3 will claim 0 until under cap)"
+else
+  note "WIP=$WIP_NOW within cap=$WIP_CAP_FOR_TEST"
+fi
+echo
+
+# --- T23: quarantine invariants (PR 5/5) -----------------------------------
+# Every quarantined row MUST have quarantined_at set AND either
+# fix_rounds >= 3 OR a non-null quarantine_reason. Hard-fail on violation.
+echo "T23 quarantine invariants (PR 5/5)"
+BAD23=$(jq -r '
+  [ .assignments[] | select(.status == "quarantined")
+    | select((.quarantined_at == null) or
+             (((.fix_rounds // 0) < 3) and ((.quarantine_reason // null) == null)))
+    | .task_id ] | length' "$ASSIGN")
+if [ "$BAD23" = "0" ]; then
+  note "all quarantined rows have quarantined_at + (fix_rounds>=3 OR reason)"
+else
+  fail "$BAD23 quarantined rows missing quarantined_at or fix_rounds/reason"
+  jq -r '.assignments[]
+    | select(.status == "quarantined")
+    | select((.quarantined_at == null) or
+             (((.fix_rounds // 0) < 3) and ((.quarantine_reason // null) == null)))
+    | "    \(.task_id) quarantined_at=\(.quarantined_at) fix_rounds=\(.fix_rounds // 0) reason=\(.quarantine_reason // "null")"' "$ASSIGN" >&2
+fi
+echo
+
+# --- T24: action-list stem-uniqueness (PR 5/5 claim-time dedup) ------------
+# At most one OPEN action-list item per stem. Suffix variants (-impl, -v2,
+# -fix, etc.) sharing a stem indicate dup work that bypassed the routine's
+# promotion-time stem guard.
+if [ -f "$ACTION_LIST" ]; then
+  echo "T24 action-list.json: at most one OPEN item per stem (PR 5/5)"
+  DUPES24=$(jq -r '
+    # Canonical stem(): suffix-strip only — same definition as routine-prompt.md
+    # line ~670, dispatcher-prompt.md Phase 3, and ppt-pr-create Step 3.5.
+    # Keep these in sync (no branch-prefix strip — action-list IDs are bare slugs).
+    def stem: sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+    [ .items[] | select(.status == "open") | (.id | stem) ]
+    | group_by(.) | map(select(length > 1)) | length' "$ACTION_LIST")
+  if [ "$DUPES24" = "0" ]; then
+    note "no two open action-list items share a stem"
+  else
+    fail "$DUPES24 stem collision(s) among open action-list items"
+    jq -r '
+      def stem: sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
+      [ .items[] | select(.status == "open") | {id, s: (.id|stem)} ]
+      | group_by(.s) | map(select(length > 1))[] | .[]
+      | "    \(.id) :: stem=\(.s)"' "$ACTION_LIST" >&2
+  fi
+  echo
+fi
+
+# --- T25: unparseable-legacy-dep guard (issue #583) -----------------------
+# When an action-list item carries a non-empty, non-"none" legacy `dependency`
+# free-text field, `depends_on` MUST NOT be empty -- it must either contain
+# real task_id(s) (when parseable) or a poisoned sentinel
+# `["UNRESOLVED:<truncated>"]` (when unparseable). An empty `depends_on` with a
+# meaningful legacy `dependency` value silently makes the item claimable while
+# its real dependency is unresolved (the gap-3 migration trap; PR #562 fallout).
+if [ -f "$ACTION_LIST" ]; then
+  echo "T25 action-list items: non-empty legacy 'dependency' => depends_on non-empty (issue #583)"
+  BAD25=$(jq -r '
+    [ .items[]
+      | select(((.dependency // "") | ascii_downcase) as $d
+               | ($d != "" and $d != "none"))
+      | select(((.depends_on // []) | length) == 0)
+    ] | length' "$ACTION_LIST")
+  if [ "$BAD25" = "0" ]; then
+    note "no action-list rows with non-empty legacy dependency and empty depends_on"
+  else
+    fail "$BAD25 action-list rows have legacy 'dependency' set but empty depends_on (gap-3 migration must emit poisoned sentinel \"UNRESOLVED:<text>\" -- issue #583)"
+    jq -r '
+      .items[]
+      | select(((.dependency // "") | ascii_downcase) as $d
+               | ($d != "" and $d != "none"))
+      | select(((.depends_on // []) | length) == 0)
+      | "    \(.id) :: dependency=\(.dependency) depends_on=[]"' "$ACTION_LIST" >&2
+  fi
+  echo
+fi
 
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then

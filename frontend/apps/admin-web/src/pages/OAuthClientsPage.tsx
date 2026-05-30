@@ -17,6 +17,7 @@
 
 import {
   KNOWN_OAUTH_SCOPES,
+  OAUTH_SCOPE_DESCRIPTIONS,
   type OAuthClientSummary,
   type RegisterOAuthClientRequest,
   type UpdateOAuthClientRequest,
@@ -38,6 +39,11 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import {
+  AuditReasonPrompt,
+  auditReasonMinLength,
+  useAuditReasonValid,
+} from '../components/AuditReasonPrompt';
 import { DestructiveConfirmDialog } from '../components/DestructiveConfirmDialog';
 import { useToast } from '../components/Toast';
 import { HelpTooltip } from '../features/help';
@@ -159,6 +165,41 @@ function ensureStyles() {
     .ppt-oc-textarea { resize: vertical; min-height: 72px; font-family: inherit; }
     .ppt-oc-scope-grid { display: flex; flex-wrap: wrap; gap: 10px; }
     .ppt-oc-scope-label { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 13px; color: var(--ppt-fg-secondary,#374151); }
+    .ppt-oc-scope-info {
+      position: relative; display: inline-flex; align-items: center;
+    }
+    .ppt-oc-scope-info-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 1px solid var(--ppt-border-default,#e5e7eb);
+      background: var(--ppt-bg-subtle,#f3f4f6); color: var(--ppt-fg-muted,#6b7280);
+      font-size: 9px; font-weight: 700; cursor: default; line-height: 1; padding: 0;
+      flex-shrink: 0;
+    }
+    .ppt-oc-scope-info-btn:hover, .ppt-oc-scope-info-btn:focus {
+      background: var(--ppt-brand-100,#dbeafe); border-color: var(--ppt-brand-300,#93c5fd);
+      color: var(--ppt-brand-700,#1d4ed8); outline: none;
+    }
+    .ppt-oc-scope-tooltip {
+      position: absolute; bottom: calc(100% + 5px); left: 50%;
+      transform: translateX(-50%);
+      background: var(--ppt-fg-primary,#111827); color: #fff;
+      font-size: 11px; line-height: 1.5; padding: 5px 8px;
+      border-radius: 5px; width: 190px; white-space: normal;
+      pointer-events: none; z-index: 400;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .ppt-oc-scope-tooltip::after {
+      content: ''; position: absolute; top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: var(--ppt-fg-primary,#111827);
+    }
+    .ppt-oc-audit-notice {
+      font-size: 12px; color: var(--ppt-warning-700,#b45309);
+      background: #fef3c7; border-radius: 5px; padding: 7px 10px;
+      border: 1px solid #fde68a;
+    }
     .ppt-oc-uri-list { display: flex; flex-direction: column; gap: 6px; }
     .ppt-oc-uri-row { display: flex; gap: 6px; align-items: center; }
     .ppt-oc-uri-input { flex: 1; }
@@ -185,6 +226,47 @@ function ensureStyles() {
 }
 
 // ============================================================
+// ScopeInfoTip — small (?) button with hover/focus tooltip
+// ============================================================
+
+interface ScopeInfoTipProps {
+  description: string;
+}
+
+function ScopeInfoTip({ description }: ScopeInfoTipProps) {
+  const [visible, setVisible] = useState(false);
+  // Stable id so the trigger can reference the tooltip via aria-describedby.
+  const tooltipId = useId();
+  return (
+    <span className="ppt-oc-scope-info">
+      <button
+        type="button"
+        className="ppt-oc-scope-info-btn"
+        aria-label="Scope description"
+        aria-describedby={visible ? tooltipId : undefined}
+        aria-expanded={visible}
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onFocus={() => setVisible(true)}
+        onBlur={() => setVisible(false)}
+        // Touch devices have no hover — toggle on click/tap too.
+        onClick={() => setVisible((v) => !v)}
+        tabIndex={0}
+      >
+        ?
+      </button>
+      {/* Conditional render keeps the hidden tooltip out of the a11y tree
+          (visibility:hidden alone can still be announced by some AT). */}
+      {visible && (
+        <span id={tooltipId} className="ppt-oc-scope-tooltip" role="tooltip">
+          {description}
+        </span>
+      )}
+    </span>
+  );
+}
+
+// ============================================================
 // ScopeSelector
 // ============================================================
 
@@ -207,6 +289,11 @@ function ScopeSelector({ selected, onChange }: ScopeSelectorProps) {
             onChange={() => toggle(scope)}
           />
           <code>{scope}</code>
+          <ScopeInfoTip
+            description={
+              OAUTH_SCOPE_DESCRIPTIONS[scope as keyof typeof OAUTH_SCOPE_DESCRIPTIONS] ?? scope
+            }
+          />
         </label>
       ))}
     </div>
@@ -552,6 +639,21 @@ interface EditDialogProps {
   onClose: () => void;
 }
 
+/**
+ * Returns true when two scope lists differ as sets (order-independent).
+ * O(n) — builds a Set from `a` and checks membership/length against `b`,
+ * avoiding the allocate-and-sort churn on every render. Scope lists are
+ * de-duplicated server-side, so set semantics are sufficient here.
+ */
+function scopesChanged(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return true;
+  const setA = new Set(a);
+  return b.some((v) => !setA.has(v));
+}
+
+// Resolved from AuditReasonPrompt's per-action metadata so the two never drift.
+const SCOPE_AUDIT_MIN_LENGTH = auditReasonMinLength('oauth_scope_grant');
+
 function EditDialog({ open, client, onClose }: EditDialogProps) {
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -561,24 +663,36 @@ function EditDialog({ open, client, onClose }: EditDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [scopes, setScopes] = useState<string[]>([]);
+  const [originalScopes, setOriginalScopes] = useState<string[]>([]);
   const [isActive, setIsActive] = useState(true);
+  const [auditReason, setAuditReason] = useState('');
 
   useEffect(() => {
     if (client) {
       setName(client.name);
       setDescription(client.description ?? '');
       setScopes(client.scopes);
+      setOriginalScopes(client.scopes);
       setIsActive(client.isActive);
+      setAuditReason('');
     }
   }, [client]);
 
+  const hasScopeChange = scopesChanged(scopes, originalScopes);
+  const auditReasonValid = useAuditReasonValid(auditReason, SCOPE_AUDIT_MIN_LENGTH);
+  // Submit is blocked when scopes changed and no valid reason has been provided.
+  const submitDisabled =
+    updateMutation.isPending || !name.trim() || (hasScopeChange && !auditReasonValid);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (hasScopeChange && !auditReasonValid) return;
     const req: UpdateOAuthClientRequest = {
       name: name.trim(),
       description: description.trim() || undefined,
       scopes,
       isActive,
+      auditReason: hasScopeChange && auditReason.trim() ? auditReason.trim() : undefined,
     };
     try {
       await updateMutation.mutateAsync(req);
@@ -617,7 +731,12 @@ function EditDialog({ open, client, onClose }: EditDialogProps) {
             type="submit"
             form="edit-oauth-form"
             className="ppt-oc-btn ppt-oc-btn--primary"
-            disabled={updateMutation.isPending || !name.trim()}
+            disabled={submitDisabled}
+            title={
+              hasScopeChange && !auditReasonValid
+                ? 'Provide an audit reason before saving scope changes'
+                : undefined
+            }
           >
             {updateMutation.isPending && <span className="ppt-oc-spinner" aria-hidden="true" />}
             Save
@@ -666,6 +785,23 @@ function EditDialog({ open, client, onClose }: EditDialogProps) {
           />
           Active
         </label>
+
+        {/* Scope-grant audit trail — shown only when the scope list has changed */}
+        {hasScopeChange && (
+          <div className="ppt-oc-field">
+            <div className="ppt-oc-audit-notice" role="note">
+              Scope grants changed — an audit reason is required before saving.
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <AuditReasonPrompt
+                action="oauth_scope_grant"
+                value={auditReason}
+                onChange={setAuditReason}
+                required
+              />
+            </div>
+          </div>
+        )}
       </form>
     </Modal>
   );

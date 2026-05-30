@@ -151,7 +151,7 @@ impl UserRepository {
 
         query.push_str(" WHERE id = $1 AND status != 'deleted' RETURNING *");
 
-        let mut q = sqlx::query_as::<_, User>(&query).bind(id);
+        let mut q = sqlx::query_as::<_, User>(sqlx::AssertSqlSafe(query)).bind(id);
 
         if let Some(name) = &data.name {
             q = q.bind(name);
@@ -380,7 +380,7 @@ impl UserRepository {
         let count_where = count_conditions.join(" AND ");
         let count_query = format!("SELECT COUNT(*) FROM users WHERE {}", count_where);
 
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
+        let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
         if let Some(status) = status_filter {
             count_q = count_q.bind(status);
         }
@@ -409,7 +409,7 @@ impl UserRepository {
             data_where
         );
 
-        let mut data_q = sqlx::query_as::<_, User>(&data_query)
+        let mut data_q = sqlx::query_as::<_, User>(sqlx::AssertSqlSafe(data_query))
             .bind(limit)
             .bind(offset);
         if let Some(status) = status_filter {
@@ -480,7 +480,7 @@ impl UserRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, (String, bool)>(&query).bind(user_id);
+        let mut q = sqlx::query_as::<_, (String, bool)>(sqlx::AssertSqlSafe(query)).bind(user_id);
 
         if let Some(ref visibility) = data.profile_visibility {
             q = q.bind(visibility.as_str());

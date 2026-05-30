@@ -59,3 +59,4 @@ Account tab root. Auth state driven by `AuthManager.isAuthenticated` (`@Observab
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Account/AccountView.swift (epic-82 story 82.5). Profile/Settings stubs noted.
+- 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.

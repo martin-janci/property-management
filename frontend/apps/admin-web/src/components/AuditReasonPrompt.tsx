@@ -27,7 +27,8 @@ export type AuditReasonAction =
   | 'grant_tenant_purge'
   | 'force_update_floor_bump'
   | 'maintenance_mode_on'
-  | 'feature_flag_toggle';
+  | 'feature_flag_toggle'
+  | 'oauth_scope_grant';
 
 export interface AuditReasonPromptProps {
   action: AuditReasonAction;
@@ -95,7 +96,23 @@ const ACTION_META: Record<AuditReasonAction, ActionMeta> = {
       'Explain why this feature flag is being toggled and which tenants or cohorts are affected.',
     risk: 'amber',
   },
+  oauth_scope_grant: {
+    defaultMinLength: 20,
+    helper:
+      'Explain why the OAuth scope list for this client is being changed. Include the business justification and which scopes are being added or removed.',
+    risk: 'amber',
+  },
 };
+
+/**
+ * Default minimum reason length for an action — the single source of truth
+ * shared with callers that need it (e.g. to drive `useAuditReasonValid`
+ * before the component is mounted). Avoids re-hardcoding per-action lengths
+ * at call sites where they would silently drift from `ACTION_META`.
+ */
+export function auditReasonMinLength(action: AuditReasonAction): number {
+  return ACTION_META[action].defaultMinLength;
+}
 
 // ---------------------------------------------------------------------------
 // Validation hook

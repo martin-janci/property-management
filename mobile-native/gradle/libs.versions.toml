@@ -12,7 +12,7 @@ ksp = "2.3.21-2.0.4"
 # Compose
 composeBom = "2026.05.01"
 activityCompose = "1.13.0"
-lifecycleRuntimeCompose = "2.8.7"
+lifecycleRuntimeCompose = "2.10.0"
 navigationCompose = "2.9.8"
 
 # Kotlin Libraries
@@ -58,7 +58,7 @@ kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.7.0" }
 
 # Location
-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version = "21.0.1" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version = "21.3.0" }
 
 # DataStore
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.2.1" }

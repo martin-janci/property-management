@@ -111,6 +111,12 @@ export interface LeaseWithDetails extends Lease {
     email: string;
     phone?: string;
   };
+  /** Manager/landlord responsible for this lease; present when the API populates it. */
+  manager?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   amendments: LeaseAmendment[];
   upcomingPayments: LeasePayment[];
   reminders: LeaseReminder[];

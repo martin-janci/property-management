@@ -26,23 +26,14 @@ function getAuthHeaders(): HeadersInit {
 }
 
 /**
- * Fetch the given URL, automatically attaching the bearer token from the
- * registered token provider, and parsing the JSON response.
- *
- * Throws `Error` (with the server-provided `message` if any) on non-2xx
- * responses. Returns `undefined as unknown as T` for 204.
- *
- * When the server responds `401 { error: "mfa_required" }` and a handler has
- * been registered via `setMfaChallengeHandler`, the MFA modal is shown and
- * the request is retried once on success.
- *
- * The `_alreadyRetried` parameter is internal — it prevents unbounded modal
- * loops if the server keeps returning 401 after a successful MFA round-trip.
+ * Internal retry-aware fetch implementation. The `alreadyRetried` flag prevents
+ * unbounded modal loops if the server keeps returning 401 after a successful
+ * MFA round-trip. Kept private so it does not leak onto the public surface.
  */
-export async function authenticatedFetchJson<T>(
+async function fetchJsonInner<T>(
   url: string,
-  init?: RequestInit,
-  _alreadyRetried = false
+  init: RequestInit | undefined,
+  alreadyRetried: boolean
 ): Promise<T> {
   const response = await fetch(url, {
     ...init,
@@ -60,10 +51,10 @@ export async function authenticatedFetchJson<T>(
       message?: string;
     };
 
-    if (response.status === 401 && err?.error === 'mfa_required' && !_alreadyRetried) {
+    if (response.status === 401 && err?.error === 'mfa_required' && !alreadyRetried) {
       const ok = await requestMfaChallenge();
       if (ok) {
-        return authenticatedFetchJson<T>(url, init, true);
+        return fetchJsonInner<T>(url, init, true);
       }
     }
 
@@ -71,4 +62,19 @@ export async function authenticatedFetchJson<T>(
   }
   if (response.status === 204) return undefined as unknown as T;
   return response.json() as Promise<T>;
+}
+
+/**
+ * Fetch the given URL, automatically attaching the bearer token from the
+ * registered token provider, and parsing the JSON response.
+ *
+ * Throws `Error` (with the server-provided `message` if any) on non-2xx
+ * responses. Returns `undefined as unknown as T` for 204.
+ *
+ * When the server responds `401 { error: "mfa_required" }` and a handler has
+ * been registered via `setMfaChallengeHandler`, the MFA modal is shown and
+ * the request is retried once on success.
+ */
+export async function authenticatedFetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  return fetchJsonInner<T>(url, init, false);
 }

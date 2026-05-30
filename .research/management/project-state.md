@@ -1,48 +1,43 @@
 # PPT Project State
 
-_Generated: 2026-05-28 — daily PM rotation (Scrum Master + pm-data). Coverage `scan_kind=upkeep`; last deep scan 2026-05-23. Rotating-epic re-check this run: epic-80 (coverage_cursor idx 5 → 6/epic-81)._
+_Generated: 2026-05-29 — daily PM rotation (Scrum Master + pm-integration). Coverage `scan_kind=upkeep`; last deep scan 2026-05-23. Rotating-epic re-check this run: epic-81 (coverage_cursor idx 6 → 7/epic-82)._
 
 ## Executive summary
 
-- **5 PRs merged this window (#635–#638, #642).** All from-merged-review / gap delivery: **#635** admin-web Support Data page (10b-5 frontend surface), **#636** 7 document-folder integration tests (CLOSES issue #580), **#637** HelpSidebar a11y (focus-trap, dialog role, tooltips) across 11 admin-web pages + tests, **#638** mobile EAS iOS CI config (removed submit.staging, guarded updates.url), **#642** auth.rs + sso.rs cookie-Path reconciliation + runbook **with inline tests**.
-- **Story coverage advanced to 27 done / 21 partial / 1 not-started (49 total)** — up from 23 done. Four stories carried fresh `done` evidence: 7a-2 (folder web slice now tested), 10b-5 (support-data UI), 10b-7 (contextual-help UI), and 79-2's cookie-Path security leg. 2 of 13 epics fully done (epic-8a, epic-9).
-- **#642 closed the #617 cookie-Path regression risk** — the last security blocker on 79-2 Authentication Flow; only the gap-79-2-auth-callback-e2e verification remains before 79-2 promotes done.
-- **9 open PRs**, all draft, none reviewed yet: #597, #632, #633, #639, #640, #641, #643, #644, #645.
-- **Issue #580 CLOSED** (resolved by #636). Follow-up close-rate improved this window: 5 queue items resolved against the from-merged-review backlog.
-- **pm-data read (rotating role today):** the new Support Data page (#635) is the only data/analytics surface that moved. It exposes cross-tenant tenant diagnostics (user counts, active sessions, fault-status summary) with no per-view usage tracking, and a FaultStatusCount metric that overlaps owner_analytics / portfolio_performance fault KPIs — a metric-divergence + PII-access-traceability concern.
+- **11 PRs merged this window (#717–#730), plus late-merges below the prior #709 cursor (#597/#657/#659/#685/#695/#706).** The application-code slice was small: **#718** iOS gesture-mask + sheet-env (LocationManager) fixes + SSO CSRF tests (closes #618/#625/#578); **#719** gap-84-2 e-signature signerParties (manager/landlord) + cs/de i18n — resolves all 6 PR#513 follow-ups; **#720** gap-10b-3 admin Platform Health MFA-interception test coverage; **#724** gap-10a-4 OAuth scope picker + scope-grant audit trail. The bulk of activity was research/dispatcher infrastructure (#717/#721/#722/#726/#727/#729/#730) and Dependabot.
+- **Story coverage: 27 done / 22 partial / 0 not-started (49 total).** 84-2 e-signature email moved not-started → partial (#719). 2 of 13 epics fully done (epic-8a, epic-9); epic-10b is effectively complete in coverage (7/7 done) though sprint-status.yaml is stale.
+- **New security finding this run (rotating Rust review, api-core):** a high-confidence cross-tenant IDOR cluster in the Epic-64 LLM-document handlers (`ai.rs` publish/list/get) — `publish_description` is a state-mutating IDOR (publish another tenant's listing description by UUID). Promoted to `plans/security-llm-doc-idor.md`. Distinct from in-flight PR #725 (maintenance/chat-session/sentiment IDOR).
+- **11 open PRs, none stalled (oldest 1 day).** #725 (ai-maintenance IDOR fix) sits at verdict=changes; #662 (reports cross-tenant IDOR, closes #646/#647) is unreviewed; gap-82 mobile drafts (#639/#641/#705) and #723 (MFA recovery backend) await review. Dependabot #666 bumps **sqlx 0.8→0.9** (a workspace-wide DB-layer major bump — flagged as integration risk).
+- **5 follow-up/from-merged-review issues CLOSED this window** (#578/#581/#618/#625/#629); no new untriaged issues.
 
 ## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
 | Epic | Tracked status | Real status (from coverage upkeep) |
 |---|---|---|
-| 6 — Announcements & Communication | in-progress | 6-1/6-5/6-6 done; 6-2/6-3/6-4 web UI still `partial` (drafts) |
-| 7A — Basic Document Management | in-progress | 7a-3/7a-5 done; 7a-2 folder web slice now tested (#636) but mobile slice open; 7a-1/7a-4 partial |
-| 8A — Basic Notification Preferences | done | 8a-1/8a-2 done; 8a-3 WS half done, mobile-push leg open |
-| 9 — TOTP MFA | done | 9-1 done |
-| 10A — OAuth Provider Foundation | in-progress | backend + admin/user-grants UI done; integration/security test gap remains |
-| 10B — Platform Administration | in-progress | 10b-5 + 10b-7 frontend surfaces shipped (#635/#637); 10b-4/6 still UI-light |
-| 80 — Dispute Resolution | partial | 80-1/80-3 done; 80-2 filing-flow AC verify still open (epic-80 re-check this run — no change) |
-| 81 — Reports | in-progress | editor + executions table landed; **blocked by authz follow-ups #614/#624 + backend pause/resume/download routes** |
+| 6 — Announcements & Communication | in-progress | 6-1/6-5/6-6 done; 6-2/6-3/6-4 web UI partial (drafts) |
+| 7A — Basic Document Management | in-progress | 7a-3/7a-5 done; 7a-2 folder web tested, mobile slice open; 7a-1/7a-4 partial |
+| 8A — Basic Notification Preferences | done | 8a-1/8a-2 done; 8a-3 WS leg confirmed (#597), mobile-push leg open → partial |
+| 10A — OAuth Provider | in-progress | 10a-1/10a-2/10a-3 done; scope picker UI shipped (#724); revoked-token bypass (#481) still gates production |
+| 10B — Platform Admin | ready-for-dev (STALE) | 10b-1..10b-7 all done in coverage (#695/#706/#720); **sprint-status.yaml needs sync** |
+| 81 — Reports | in-progress | 81-1/81-2 partial; #643 closed RBAC #614 + tenant-scope #624; remaining: cron_expression column (#616) + exec-history download/retry e2e |
+| 82 — SwiftUI Reality Portal | in-progress | all 5 stories partial; #688 wired listing/favorites, #718 iOS fixes; drafts #639/#641/#705 in flight; no reality-mobile screen-maps |
+| 84 — Advanced Features | in-progress | 84-1/84-3/84-4/84-5 done; 84-2 e-signature now partial (#719) |
 
-## What's next (top 5)
+## What's next (top actions)
 
-1. **[high · pm-security/pm-backend]** Close report-schedule authz holes #614 (missing RBAC) + #624 (missing tenant/org scope) — cross-tenant IDOR class; add cross-tenant regression test. Blocks Epic 81 promotion.
-2. **[high · pm-backend]** Implement/confirm POST `/api/v1/documents/upload` + 81 backend pause/resume + executions-download routes — 7a-1 / 81-1 / 81-2 not promotable until they land.
-3. **[high · pm-qa]** Schedule gap-79-2-auth-callback-e2e — cookie-Path reconciled by #642 (with tests); e2e is the last gap before 79-2 promotes done.
-4. **[medium · pm-data]** Define Support Data analytics/audit events + reconcile the FaultStatusCount metric definition with owner/portfolio fault KPIs.
-5. **[medium · pm-scrum-master]** Slot remaining from-merged-review follow-ups (fix-569/573/574/581/583) into the dispatcher buffer with explicit owners; confirm close-rate now matches ingest.
-
-See `roadmap.md` for the full ranked plan and `action-list.json`/`action-list.md` for the tracker view.
+1. **[high] Review + merge #662 (reports cross-tenant IDOR, closes #646/#647)** — owner: pm-security — unblocks Epic 81 authz promotion.
+2. **[high] Land `plans/security-llm-doc-idor.md`** — owner: pm-security/pm-backend — new state-mutating cross-tenant IDOR on the LLM-document publish/list/get handlers.
+3. **[high] Resolve #725 verdict=changes (ai-maintenance/session/sentiment IDOR + missing test)** — owner: pm-security — closes the maintenance IDOR vector.
+4. **[high] Audit sqlx 0.9 (PR #666) before merge** — owner: pm-backend — workspace-wide query!/migrate breakage risk; freeze from auto-merge.
+5. **[medium] Sync sprint-status.yaml to coverage reality (10b done, 8a-3 WS done)** — owner: pm-scrum-master.
 
 ## Blockers
 
-- **Reports authz (#614 + #624)** — `update_schedule` cross-tenant + missing-RBAC; Epic 81 cannot promote. Owner: pm-backend.
-- **7a-1 / 81 backend endpoints** — upload + pause/resume/executions-download routes still to confirm; UI/tests outrun the backend. Owner: pm-backend.
-- **Mobile lag** — 10 of 22 partial/not-started candidates are mobile (7a-2 folder, 7a-4 preview, 8a-3 push, epic-82 SwiftUI). Owner: pm-frontend.
+- **Epic 81 — Reports promotion:** cron_expression column still missing (#616 / backlog `bug-report-schedule-update-no-sql`); 81-1/81-2 stay partial. (RBAC #614 + tenant-scope #624 now closed by #643.)
+- **OAuth production readiness (Epic 10A):** refresh-token revocation bypass (#481, high) and JWT-in-WS-logs (#480, high) remain open; gate any external OAuth exposure.
+- **Mobile coverage lag:** 10 of 22 partial stories are mobile; gap-82 drafts unreviewed.
 
 ## Role focus today
 
-Role focus today: pm-scrum-master, pm-data.
-
-- **pm-scrum-master:** 5 PRs shipped (#635–#638, #642); four stories advanced to done evidence; issue #580 closed; #617 cookie-Path regression resolved by #642; follow-up close-rate improved (5 queue items resolved).
-- **pm-data:** only data surface this window is the #635 Support Data admin page — flags missing support-access usage tracking, a fault-status metric that must be unified with owner/portfolio KPIs, and a PII-access retention/traceability gap on the session/activity diagnostics.
+- **Role focus today:** Scrum Master + pm-integration.
+- **pm-integration read:** integration surface carries three open reliability defects — Airbnb at-least-once webhook duplicates SYNC_EXTERNAL jobs, the Redis push-fanout queue is never drained (silent drop), and the marketplace install/OAuth UI is still stubbed — against active OAuth-provider work and a sqlx 0.9 major bump that touches every repository. Added the sqlx-0.9 audit + e-signature webhook idempotency guard as tracked actions; flagged the four integration risks.

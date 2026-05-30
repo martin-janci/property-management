@@ -17,9 +17,19 @@ set -euo pipefail
 COVERAGE="${COVERAGE:-.research/management/coverage.json}"
 ACTION_LIST="${ACTION_LIST:-.research/management/action-list.json}"
 ASSIGN="${ASSIGN:-.research/management/assignments.json}"
+ARCHIVE="${ARCHIVE:-.research/management/assignments-archive.json}"
 ENFORCE="${GOAL_CHECK_ENFORCE:-0}"
 EMIT_JSON=0
 [ "${1:-}" = "--json" ] && EMIT_JSON=1
+
+# Buffer bounds — SINGLE SOURCE OF TRUTH, shared with dispatcher Phase 2.6.
+# GC3 checks claimable ∈ [FLOOR, CEIL]; Phase 2.6 refills toward TARGET and
+# drains anything above CEIL. Override via env to keep the two in lockstep
+# (the dispatcher exports the same three before reading coverage). Changing a
+# bound here must be mirrored in dispatcher-prompt.md Phase 2.6, never forked.
+BUFFER_FLOOR="${BUFFER_FLOOR:-18}"   # below this = starving → Tier-1 refill
+BUFFER_TARGET="${BUFFER_TARGET:-36}" # refill brings claimable up to this
+BUFFER_CEIL="${BUFFER_CEIL:-60}"     # above this = overflow → Phase 2.6 drains
 
 RESULTS='[]'           # accumulates {check,passed,observed,expected,hard}
 HARD_FAIL=0
@@ -48,26 +58,38 @@ for f in "$COVERAGE" "$ACTION_LIST" "$ASSIGN"; do
 done
 
 # --- GC1: coverage referential integrity (record-only) ---
-# (a) every gap-* action-list item maps to a real coverage story
-#     (a story id is a prefix of the gap-id with the leading "gap-" stripped);
-# (b) no `done` story retains an open gap-* task.
-GC1_ORPHANS=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile cov "$COVERAGE" '
-  ($cov[0].stories | map(.id)) as $sids
-  | [ $al[0].items[]
-      | select(.id | startswith("gap-"))
-      | (.id | ltrimstr("gap-")) as $rest
-      | select([ $sids[] | . as $sid | select($rest | startswith($sid)) ] | length == 0)
-      | .id ] | length')
-GC1_DONE_OPEN=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile cov "$COVERAGE" '
-  ($cov[0].stories | map(select(.status=="done") | .id)) as $done
+# Match on the <epic>-<story> NUMERIC STEM, never the full slug. Coverage story
+# ids and action-list gap ids carry DIFFERENT descriptive slugs for the same
+# story (cov "10b-3-platform-health-monitoring" vs gap "gap-10b-3-admin-health-ui"),
+# so the old full-slug prefix match false-flagged ~95 live items as orphans.
+# The stem (e.g. "10b-3", "8a-3", "7a-1") is the stable join key.
+#
+# (a) orphans: a coverage-keyed gap item (id matches gap-<num>-<num>…) whose
+#     stem maps to NO coverage story. Ad-hoc gaps (e.g. gap-security-*) are not
+#     coverage-keyed and are exempt. A true orphan means coverage is missing
+#     that story — author it (relink), do not prune live work.
+# (b) leak: an OPEN gap item whose EXACT task_id is already merged/done in the
+#     archive — shipped-but-never-closed. This replaces the old story-level
+#     "done story has open gap" check, which false-alarmed on legitimate open
+#     follow-ups under a done story (tests, retries, v2). The per-task archive
+#     signal is precise and is the same leak as finding reclaim-of-already-merged-task-id.
+GC1_STEM='capture("^(?<s>[0-9]+[a-z]?-[0-9]+)").s'
+GC1_ORPHANS=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile cov "$COVERAGE" "
+  (\$cov[0].stories | map(.id | $GC1_STEM) | unique) as \$cstems
+  | [ \$al[0].items[]
+      | select(.id | test(\"^gap-[0-9]+[a-z]?-[0-9]+\"))
+      | ((.id | ltrimstr(\"gap-\")) | $GC1_STEM) as \$g
+      | select((\$cstems | index(\$g)) == null)
+      | .id ] | length")
+GC1_LEAK=$(jq -n --slurpfile al "$ACTION_LIST" --slurpfile arc "$ARCHIVE" '
+  ($arc[0].assignments | map(select(.status=="merged" or .status=="done") | .task_id)) as $term
   | [ $al[0].items[]
       | select(.status=="open" and (.id | startswith("gap-")))
-      | (.id | ltrimstr("gap-")) as $rest
-      | select([ $done[] | . as $sid | select($rest | startswith($sid)) ] | length > 0)
-      | .id ] | length')
-GC1_PASS=$([ "$GC1_ORPHANS" = "0" ] && [ "$GC1_DONE_OPEN" = "0" ] && echo true || echo false)
+      | .id as $id | select($term | index($id))
+      | $id ] | length')
+GC1_PASS=$([ "$GC1_ORPHANS" = "0" ] && [ "$GC1_LEAK" = "0" ] && echo true || echo false)
 record "GC1-referential-integrity" "$GC1_PASS" \
-  "orphans=$GC1_ORPHANS done_with_open_gap=$GC1_DONE_OPEN" "orphans=0 done_with_open_gap=0" false
+  "orphans=$GC1_ORPHANS archive_terminal_leak=$GC1_LEAK" "orphans=0 archive_terminal_leak=0" false
 
 # --- GC2: coverage progress — done-story count is monotonic non-decreasing
 # vs the previously-committed coverage.json (HEAD). This is the HARD-FAIL
@@ -87,8 +109,10 @@ fi
 
 # --- GC3: buffer bounds. open_claimable = open action-list items not already
 # in active assignments, minus dep-blocked (a depends_on entry not pointing at
-# a merged/done assignment). Healthy band [18, 60]; below 18 = starving,
-# above 60 = overflow (the 102/36 explosion). Record-only here.
+# a merged/done assignment). Healthy band [BUFFER_FLOOR, BUFFER_CEIL]; below
+# FLOOR = starving, above CEIL = overflow (the 102/36 explosion). Bounds are
+# the shared constants above so the Phase 2.6 refill/drain and this check can
+# never disagree. Record-only here.
 GC3_OPEN=$(jq --slurpfile a "$ASSIGN" '
   [.items[] | select(.status=="open")
             | .id as $id
@@ -103,9 +127,10 @@ GC3_BLOCKED=$(jq --slurpfile a "$ASSIGN" '
                              | (($a[0].assignments | map(select(.task_id==$dep)) | .[0].status // "missing")
                                 | IN("merged","done") | not)))] | length' "$ACTION_LIST")
 GC3_CLAIMABLE=$((GC3_OPEN - GC3_BLOCKED))
-GC3_PASS=$([ "$GC3_CLAIMABLE" -ge 18 ] && [ "$GC3_CLAIMABLE" -le 60 ] && echo true || echo false)
+GC3_PASS=$([ "$GC3_CLAIMABLE" -ge "$BUFFER_FLOOR" ] && [ "$GC3_CLAIMABLE" -le "$BUFFER_CEIL" ] && echo true || echo false)
 record "GC3-buffer-bounds" "$GC3_PASS" \
-  "claimable=$GC3_CLAIMABLE (open=$GC3_OPEN dep_blocked=$GC3_BLOCKED)" "18<=claimable<=60" false
+  "claimable=$GC3_CLAIMABLE (open=$GC3_OPEN dep_blocked=$GC3_BLOCKED)" \
+  "$BUFFER_FLOOR<=claimable<=$BUFFER_CEIL" false
 
 # --- emit + exit ---
 if [ "$EMIT_JSON" = "1" ]; then echo "$RESULTS"; fi

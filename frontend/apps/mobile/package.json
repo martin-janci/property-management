@@ -26,16 +26,16 @@
   "dependencies": {
     "@ppt/api-client": "workspace:*",
     "@ppt/shared": "workspace:*",
-    "@react-native-async-storage/async-storage": "3.0.3",
+    "@react-native-async-storage/async-storage": "3.1.0",
     "@react-native-community/netinfo": "11.5.2",
-    "@tanstack/react-query": "^5.100.11",
+    "@tanstack/react-query": "^5.100.14",
     "expo": "~55.0.25",
     "expo-clipboard": "^56.0.3",
-    "expo-constants": "~55.0.16",
+    "expo-constants": "~56.0.16",
     "expo-device": "~55.0.16",
     "expo-document-picker": "~13.1.6",
     "expo-file-system": "~55.0.19",
-    "expo-image-picker": "~55.0.20",
+    "expo-image-picker": "~56.0.14",
     "expo-local-authentication": "~55.0.13",
     "expo-localization": "^55.0.13",
     "expo-location": "~55.1.10",
@@ -49,8 +49,9 @@
     "react-native": "0.85.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "@babel/plugin-transform-flow-strip-types": "^7.25.0",
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-flow-strip-types": "^7.29.7",
+    "@expo/config-plugins": "~55.0.10",
     "@expo/metro-config": "~55.0.22",
     "@react-native/jest-preset": "^0.85.0",
     "@testing-library/react-native": "^13.3.3",
@@ -63,5 +64,5 @@
     "react-test-renderer": "^19.2.6",
     "typescript": "^5.3.0"
   },
-  "version": "0.2.997"
+  "version": "0.2.999"
 }

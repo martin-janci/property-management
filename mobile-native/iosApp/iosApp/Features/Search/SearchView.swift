@@ -63,9 +63,17 @@ struct SearchView: View {
             }
         }
         .sheet(isPresented: $showFilters) {
+            // SwiftUI's `.sheet` creates a new view-hierarchy context that
+            // does NOT inherit `@Observable` environment values injected
+            // above the presenter. Without this `.environment(locationManager)`
+            // re-injection the FilterSheet's `@Environment(LocationManager.self)`
+            // would resolve to a default-initialised LocationManager (or crash
+            // on older iOS), so the "Near Me" toggle inside the sheet would
+            // never call `requestLocation()` on the shared instance (closes #625).
             FilterSheet(filters: $filters) {
                 Task { await performSearch() }
             }
+            .environment(locationManager)
         }
         .confirmationDialog(String(localized: "sort_by"), isPresented: $showSortPicker, titleVisibility: .visible) {
             ForEach(SortOption.allCases, id: \.self) { option in
@@ -303,7 +311,7 @@ struct SearchView: View {
     private func buildKMPFilters() -> ListingSearchFilters? {
         guard filters.hasActiveFilters else { return nil }
 
-        // Map Swift ListingTypeFilter to KMP ListingType
+        // Map Swift ListingKind to KMP ListingType
         var listingType: ListingType? = nil
         if let swiftType = filters.listingType {
             switch swiftType {

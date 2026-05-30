@@ -18,11 +18,12 @@ jobs:
   self-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: dispatcher schema + invariant self-test
         run: bash .research/dispatcher-self-test.sh
-      - name: goal-check (observe-only)
-        continue-on-error: true
+      - name: goal-check (enforcing)
+        env:
+          GOAL_CHECK_ENFORCE: "1"
         run: |
           chmod +x .research/goal-check.sh
           ./.research/goal-check.sh

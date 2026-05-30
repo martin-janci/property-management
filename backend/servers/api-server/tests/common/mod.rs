@@ -57,39 +57,27 @@ impl TestApp {
         use api_server::services::{EmailService, JwtService};
         use api_server::state::AppState;
 
-        // The `AuthUser` extractor reads `JWT_SECRET` from the process
-        // environment to validate bearer tokens. CI doesn't set this env
-        // var (see `.github/workflows/backend.yml`), so we point it at the
-        // same secret the test `JwtService` uses below — otherwise any
-        // request that carries a Bearer token would surface as 500 instead
-        // of the expected 401/403.
+        // Tests need two env vars set before `AppState::new` runs:
+        //
+        // - `JWT_SECRET` — the `AuthUser` extractor reads it to validate
+        //   bearer tokens. Without it, any request carrying a Bearer would
+        //   surface as 500 instead of the expected 401/403.
+        // - `RUST_ENV=development` — `TotpService::new` (called inside
+        //   `AppState::new`) panics when `TOTP_ENCRYPTION_KEY` is absent
+        //   unless we're in development mode.
+        //
+        // CI sets `RUST_ENV` via the workflow env block but not `JWT_SECRET`;
+        // local `cargo test` typically has neither. We seed both here so
+        // every test binary works in both environments without callers
+        // remembering to export them.
         //
         // `set_var` is not thread-safe on glibc when called concurrently
-        // with `getenv`, so we only call it once per process via `Once`.
-        // Every TestApp uses the same default `TestConfig::jwt_secret`,
-        // so this is enough for all tests in the binary to observe a
-        // consistent value.
-        static JWT_SECRET_ONCE: std::sync::Once = std::sync::Once::new();
-        JWT_SECRET_ONCE.call_once(|| {
+        // with `getenv`, so we gate both writes behind a single `Once`.
+        static TEST_ENV_ONCE: std::sync::Once = std::sync::Once::new();
+        TEST_ENV_ONCE.call_once(|| {
             if std::env::var("JWT_SECRET").is_err() {
                 std::env::set_var("JWT_SECRET", &config.jwt_secret);
             }
-            // TotpService::new() panics without TOTP_ENCRYPTION_KEY unless
-            // RUST_ENV=development. CI does not set either, so force
-            // development mode here to avoid spurious panics in all tests
-            // that create a TestApp.
-            if std::env::var("RUST_ENV").is_err() {
-                std::env::set_var("RUST_ENV", "development");
-            }
-        });
-
-        // `TotpService::new` (called inside `AppState::new`) panics when
-        // `TOTP_ENCRYPTION_KEY` is absent unless `RUST_ENV=development`.
-        // CI sets this via the workflow env block; local runs do not.
-        // Guard it once here so all tests that create a TestApp survive in
-        // both environments without requiring callers to remember to set it.
-        static RUST_ENV_ONCE: std::sync::Once = std::sync::Once::new();
-        RUST_ENV_ONCE.call_once(|| {
             if std::env::var("RUST_ENV").is_err() {
                 std::env::set_var("RUST_ENV", "development");
             }
