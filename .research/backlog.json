@@ -178,23 +178,25 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #611",
         "issue #616",
-        "PR #643"
+        "PR #643",
+        "PR #815"
       ],
       "evidence": [
         "backend/crates/db/src/repositories/report_schedule.rs:299 \u2014 update_schedule carries a `TODO: UPDATE report_schedules SET cron_expression = COALESCE(...)` doc-comment describing the SQL it should run, but the body instead stores the cron string in `current.time` because the dedicated cron_expression column does not exist yet",
         "ties to open issue #616 (migration number comment wrong; cron_expression column missing from schema; no sqlx prepare --check) \u2014 surfaced by post-merge review of PR #611",
         "real fix is a SQLx migration adding report_schedules.cron_expression + rewriting update_schedule to the documented UPDATE; until then cron edits round-trip through the overloaded `time` field",
-        "2026-05-28: PR #643 (RBAC/cross-tenant fix) restructured update_schedule (now report_schedule.rs:479, org-scoped `WHERE id=$1 AND organization_id=$2`) and DELETED the TODO doc-comment, but the cron bug PERSISTS \u2014 line 504 still does `SET time = COALESCE($3, time)` with $3 bound to cron_expression (line 519); no dedicated cron_expression column exists. A grep-based evidence-gone check would now FALSE-POSITIVE (the TODO marker is gone) \u2014 do not auto-resolve; the real fix is still a SQLx migration adding report_schedules.cron_expression."
+        "2026-05-28: PR #643 (RBAC/cross-tenant fix) restructured update_schedule (now report_schedule.rs:479, org-scoped `WHERE id=$1 AND organization_id=$2`) and DELETED the TODO doc-comment, but the cron bug PERSISTS \u2014 line 504 still does `SET time = COALESCE($3, time)` with $3 bound to cron_expression (line 519); no dedicated cron_expression column exists. A grep-based evidence-gone check would now FALSE-POSITIVE (the TODO marker is gone) \u2014 do not auto-resolve; the real fix is still a SQLx migration adding report_schedules.cron_expression.",
+        "resolved: PR #815 merged 2026-05-30 \u2014 adds migration 00163_report_schedules_add_cron_expression.sql; update_schedule now does `SET cron_expression = COALESCE($3, cron_expression)` at report_schedule.rs:511 with the dedicated column. The overloaded `time` workaround is gone; closes #616."
       ],
       "files": [
         "backend/crates/db/src/repositories/report_schedule.rs"
       ],
       "created_at": "2026-05-27",
-      "updated_at": "2026-05-28",
+      "updated_at": "2026-05-30",
       "plan": null
     },
     {
@@ -453,17 +455,19 @@
       "confidence": "high",
       "sources": [
         "PR #538",
-        "webhook.rs:1028"
+        "webhook.rs:1028",
+        "PR #841"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/integrations/webhook.rs:1028 \u2014 TODO acknowledges Airbnb delivers webhooks at-least-once; a rapid sequence of events for the same listing enqueues duplicate SYNC_EXTERNAL background jobs",
-        "no dedup today: the handler inserts a CreateBackgroundJob unconditionally; fix needs an idempotent worker-level upsert or a check for an already-queued SYNC_EXTERNAL job for (org_id, connection_id) before insert"
+        "no dedup today: the handler inserts a CreateBackgroundJob unconditionally; fix needs an idempotent worker-level upsert or a check for an already-queued SYNC_EXTERNAL job for (org_id, connection_id) before insert",
+        "[partial] PR #841 (closes #711) merged 2026-05-30 \u2014 adds airbnb_webhook_events dedup ledger (migration 00169) that suppresses Airbnb at-least-once retries by event_id at webhook.rs:1014-1052. Residual: the TODO at webhook.rs:1073 about distinct-event-rapid-succession SYNC_EXTERNAL dedup is still present; the duplicate-job concern for non-replay distinct events remains. Stays open until worker-level/job-level dedup lands."
       ],
       "files": [
         "backend/servers/api-server/src/routes/integrations/webhook.rs"
       ],
       "created_at": "2026-05-26",
-      "updated_at": "2026-05-26",
+      "updated_at": "2026-05-30",
       "plan": null
     },
     {
@@ -1631,6 +1635,190 @@
       ],
       "created_at": "2026-05-24",
       "updated_at": "2026-05-24",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-839-ppt",
+      "title": "Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #839"
+      ],
+      "evidence": [
+        "PR #839 (fix(ppt-web): localize evidence-upload partial-fail toast + pass list via router state) touched frontend/apps/ppt-web/src/App.tsx (FileDisputePageRoute internal logic) without updating any docs/screens/ppt/*.md screen doc",
+        "heuristic caveat: this PR changes internal handler logic (i18n string + router state threading), not route topology \u2014 the docs/screens drift signal is best-effort and may not require a doc update; review whether docs/screens/ppt/file-dispute.md (or equivalent) needs a refreshed `agent log`"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-836",
+      "title": "Issue #836 (no labels, OPEN): Code review: Epic 2B-C \u2014 Mobile push & device registration (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#836"
+      ],
+      "evidence": [
+        "new GitHub issue #836 (Code review: Epic 2B-C \u2014 Mobile push & device registration (origin/dev)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-845",
+      "title": "Issue #845 (no labels, OPEN): Code review: Epic 14 \u2014 IoT alerts, correlations, thresholds (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#845"
+      ],
+      "evidence": [
+        "new GitHub issue #845 (Code review: Epic 14 \u2014 IoT alerts, correlations, thresholds (origin/dev)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-846",
+      "title": "Issue #846 (no labels, OPEN): Code review: Epics 12+65 \u2014 Meters & Energy/ESG (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#846"
+      ],
+      "evidence": [
+        "new GitHub issue #846 (Code review: Epics 12+65 \u2014 Meters & Energy/ESG (origin/dev)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-847",
+      "title": "Issue #847 (no labels, OPEN): Code review: Reality-server \u2014 Inquiries IDOR (Epics 16\u201319) (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#847"
+      ],
+      "evidence": [
+        "new GitHub issue #847 (Code review: Reality-server \u2014 Inquiries IDOR (Epics 16\u201319) (origin/dev)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-848",
+      "title": "Issue #848 (no labels, OPEN): Code review: Epics 78+134 \u2014 Vendor portal stubs & Predictive maintenance gaps (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#848"
+      ],
+      "evidence": [
+        "new GitHub issue #848 (Code review: Epics 78+134 \u2014 Vendor portal stubs & Predictive maintenance gaps (origin/dev)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-849",
+      "title": "Issue #849 (no labels, OPEN): Code review: Epic 10B+143 \u2014 Admin impersonation, Help, Board meetings auth (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#849"
+      ],
+      "evidence": [
+        "new GitHub issue #849 (Code review: Epic 10B+143 \u2014 Admin impersonation, Help, Board meetings auth (origin/dev)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-850",
+      "title": "Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 \u2014 Multi-currency, Data residency, Violations (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#850"
+      ],
+      "evidence": [
+        "new GitHub issue #850 (Code review: Epics 61+146+42 \u2014 Multi-currency, Data residency, Violations (origin/dev)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-851",
+      "title": "Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 \u2014 Listings/syndication & Developer API stubs (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#851"
+      ],
+      "evidence": [
+        "new GitHub issue #851 (Code review: Epics 15+105+69 \u2014 Listings/syndication & Developer API stubs (origin/dev)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-859",
+      "title": "Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#859"
+      ],
+      "evidence": [
+        "new GitHub issue #859 (sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500)) opened without labels \u2014 fired untriaged-issue signal this run"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-30",
       "plan": null
     }
   ]

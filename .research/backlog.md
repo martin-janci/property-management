@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-05-30 03:05 UTC by routine</sub>
+<sub>Last regenerated: 2026-05-30 20:43 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -19,7 +19,9 @@ picks from here.
 | 3 | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | security | code-review api-core 2026-05-23, ai.rs:3002, PR #461 | 2026-05-25 | done |
 | 3 | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | security | issue #439, signatures.rs:628, integrations.rs:2743, PR #450 | 2026-05-25 | done |
 | 3 | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | security | code-review api-core 2026-05-25, ai.rs:1133, equipment.rs:144 | 2026-05-25 | done |
-| 2 | ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column) | bug | PR #611, issue #616, PR #643 | 2026-05-28 | open |
+| 2 | ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column) | bug | PR #611, issue #616, PR #643, PR #815 | 2026-05-30 | done |
+| 2 | Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs | bug | PR #538, webhook.rs:1028, PR #841 | 2026-05-30 | open |
+| 2 | Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update | test-gap | PR #839 | 2026-05-30 | open |
 | 2 | Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI | bug | code-review reality-web 2026-05-28, rotating-expert-review | 2026-05-28 | open |
 | 2 | Reduce App.tsx route-aggregator coupling (top churn hotspot, merge-conflict risk) | refactor | PR #474, PR #475, PR #489, PR #511, PR #547, PR #549, PR #555 | 2026-05-27 | open |
 | 2 | Screen-map drift: report execution-history route (PR #547) added without a ppt screen doc | test-gap | PR #547, frontend/apps/ppt-web/src/routes/lazyRoutes.tsx, PR #623 | 2026-05-27 | done |
@@ -30,7 +32,6 @@ picks from here.
 | 2 | ppt-web status/auth components hardcode English in an otherwise i18n'd app | refactor | code-review ppt-web-ui 2026-05-24, rotating-expert-review, PR #549 | 2026-05-26 | open |
 | 2 | announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work) | refactor | git log origin/dev since 2026-05-24, PR #504, PR #505, PR #548 | 2026-05-26 | open |
 | 2 | Dispute state machine (PR #506) shipped with no tests + no org predicate on update_status | test-gap | PR #506, issue #520, PR #514, PR #548 | 2026-05-26 | done |
-| 2 | Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs | bug | PR #538, webhook.rs:1028 | 2026-05-26 | open |
 | 2 | PushFanoutWorker BLPOP queue-drain deferred — Redis path is a logging no-op | dx | PR #515, push_fanout.rs:621 | 2026-05-26 | open |
 | 2 | integrations.rs churn-hot — 12,977 lines over 14d, candidate for module split | refactor | git log origin/main since 2026-05-06, git log origin/dev since 2026-05-20, PR #456 | 2026-05-25 | done |
 | 2 | organizations.rs churn-hot — 12,060 lines over 14d (multitenancy + admin) | refactor | git log origin/main since 2026-05-06, git log origin/dev since 2026-05-20, PR #456 | 2026-05-25 | done |
@@ -79,6 +80,15 @@ picks from here.
 | 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings | triage | #789 | 2026-05-30 | open |
 | 1 | Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware | triage | #790 | 2026-05-30 | open |
 | 1 | Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves | triage | #791 | 2026-05-30 | open |
+| 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | triage | #836 | 2026-05-30 | open |
+| 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | triage | #845 | 2026-05-30 | open |
+| 1 | Issue #846 (no labels, OPEN): Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev) | triage | #846 | 2026-05-30 | open |
+| 1 | Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev) | triage | #847 | 2026-05-30 | open |
+| 1 | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev) | triage | #848 | 2026-05-30 | open |
+| 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | triage | #849 | 2026-05-30 | open |
+| 1 | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev) | triage | #850 | 2026-05-30 | open |
+| 1 | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev) | triage | #851 | 2026-05-30 | open |
+| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500) | triage | #859 | 2026-05-30 | open |
 | 1 | Reality-web ComparisonUrlHandler hardcodes English loading/error strings | refactor | code-review reality-web 2026-05-28, rotating-expert-review | 2026-05-28 | open |
 | 1 | Reality-web listing generateMetadata can throw during SSR on malformed 200 body | bug | code-review reality-web 2026-05-28, rotating-expert-review | 2026-05-28 | open |
 | 1 | Mediation reference number uppercases full UUID (DSP-<uuid>) instead of a short code | refactor | PR #555, code-review 2026-05-27 | 2026-05-27 | open |
