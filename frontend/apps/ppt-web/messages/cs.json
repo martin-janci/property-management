@@ -233,7 +233,7 @@
     "multipleRespondentsMsg": "Zaznamenán bude pouze první odpůrce.",
     "addEvidence": "Přidat důkaz",
     "filedWithEvidenceErrors": "Spor podán (některé soubory selhaly)",
-    "evidenceUploadErrorsMsg": "Jeden nebo více souborů s důkazy se nepodařilo nahrát. Zkuste to znovu ze stránky podrobností sporu.",
+    "evidenceUploadErrorsMsg": "{{count}} souborů s důkazy se nepodařilo nahrát. Zkuste to znovu ze stránky podrobností sporu.",
     "mediation": {
       "title": "Mediační prostor",
       "backToDispute": "← Zpět na spor",

@@ -233,7 +233,7 @@
     "multipleRespondentsMsg": "Csak az első alperes kerül rögzítésre.",
     "addEvidence": "Bizonyíték hozzáadása",
     "filedWithEvidenceErrors": "Vita benyújtva (egyes fájlok sikertelenek)",
-    "evidenceUploadErrorsMsg": "Egy vagy több bizonyítékfájlt nem sikerült feltölteni. Próbálja meg újra a vita részletoldaláról.",
+    "evidenceUploadErrorsMsg": "{{count}} bizonyítékfájlt nem sikerült feltölteni. Próbálja meg újra a vita részletoldaláról.",
     "mediation": {
       "title": "Mediációs munkaterület",
       "backToDispute": "← Vissza a vitához",

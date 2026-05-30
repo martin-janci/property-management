@@ -233,7 +233,7 @@
     "multipleRespondentsMsg": "Nur der erste Beklagte wird erfasst.",
     "addEvidence": "Beweis hinzufügen",
     "filedWithEvidenceErrors": "Streit eingereicht (einige Dateien fehlgeschlagen)",
-    "evidenceUploadErrorsMsg": "Eine oder mehrere Beweisdateien konnten nicht hochgeladen werden. Bitte erneut von der Detailseite des Streits versuchen.",
+    "evidenceUploadErrorsMsg": "{{count}} Beweisdatei(en) konnten nicht hochgeladen werden. Bitte erneut von der Detailseite des Streits versuchen.",
     "mediation": {
       "title": "Mediations-Arbeitsbereich",
       "backToDispute": "← Zurück zur Streitigkeit",
