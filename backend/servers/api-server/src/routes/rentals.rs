@@ -404,26 +404,30 @@ pub async fn airbnb_callback(
             )
         })?;
 
-    // Get Airbnb OAuth configuration from environment
-    let client_id = std::env::var("AIRBNB_CLIENT_ID").map_err(|_| {
+    // Issue #711: Airbnb OAuth credentials live on AppState (loaded once at
+    // boot). Missing values still surface as 500 NOT_CONFIGURED, but the
+    // per-request `std::env::var` round-trip is gone.
+    let client_id = state.airbnb_config.client_id.clone();
+    if client_id.is_empty() {
         tracing::error!("AIRBNB_CLIENT_ID not configured");
-        (
+        return Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             "Airbnb OAuth not configured".to_string(),
-        )
-    })?;
-
-    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").map_err(|_| {
+        ));
+    }
+    let client_secret = state.airbnb_config.client_secret.clone();
+    if client_secret.is_empty() {
         tracing::error!("AIRBNB_CLIENT_SECRET not configured");
-        (
+        return Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             "Airbnb OAuth not configured".to_string(),
-        )
-    })?;
-
-    let redirect_uri = std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_else(|_| {
+        ));
+    }
+    let redirect_uri = if state.airbnb_config.redirect_uri.is_empty() {
         "https://ppt.three-two-bit.com/api/v1/rentals/oauth/airbnb/callback".to_string()
-    });
+    } else {
+        state.airbnb_config.redirect_uri.clone()
+    };
 
     // Exchange code for tokens
     let airbnb_config = AirbnbOAuthConfig {

@@ -940,8 +940,11 @@ pub async fn handle_airbnb_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // 1. Load the shared secret.
-    let secret = std::env::var("AIRBNB_WEBHOOK_SECRET").unwrap_or_default();
+    // 1. Load the shared secret from the cached AppState config (issue #711).
+    //    The env var is read once at server startup; per-request env reads
+    //    were a minor perf concern and made misconfiguration only visible
+    //    once a real delivery arrived.
+    let secret = state.airbnb_config.webhook_secret.as_str();
     if secret.is_empty() {
         tracing::error!("AIRBNB_WEBHOOK_SECRET is not configured");
         return Err((
@@ -969,7 +972,7 @@ pub async fn handle_airbnb_webhook(
         )
     })?;
 
-    if !AirbnbClient::verify_webhook_signature(signature, body_str, &secret) {
+    if !AirbnbClient::verify_webhook_signature(signature, body_str, secret) {
         tracing::warn!("Airbnb webhook signature verification failed");
         return Err((
             StatusCode::UNAUTHORIZED,
@@ -989,22 +992,64 @@ pub async fn handle_airbnb_webhook(
         )
     })?;
 
-    // 4. Best-effort deduplication via Airbnb event_id.
+    // 4. Persistent deduplication via Airbnb event_id (issue #711).
     //
-    // Airbnb guarantees at-least-once delivery, so duplicate events are possible.
-    // The canonical fix is a persistent `airbnb_webhook_events` table with a
-    // UNIQUE constraint on `event_id`; until that migration lands we log the
-    // event_id so that duplicate deliveries are visible in the trace and the
-    // ReservationCancelled branch below guards against double-cancellation.
+    // Airbnb guarantees at-least-once delivery. Without persistent dedup,
+    // duplicate ReservationCreated/Updated deliveries enqueue racing
+    // SYNC_EXTERNAL jobs, and ReservationCancelled deliveries hammer the
+    // booking-status guard. Migration 00169 created
+    // `airbnb_webhook_events(event_id PRIMARY KEY, event_type, received_at)`;
+    // we attempt to insert the event_id and bail out with 200 on conflict.
     //
-    // TODO(gap-83-1): add `airbnb_webhook_events(event_id TEXT PRIMARY KEY, …)`
-    // migration, insert here with ON CONFLICT DO NOTHING, and return 200 early
-    // on conflict to fully suppress duplicate processing.
-    if let Some(ref eid) = event.event_id {
+    // If `event_id` is absent we cannot dedup; fall through to processing
+    // as before — Airbnb sends event_id on first-class events, and lower-
+    // priority types (MessageReceived / ReviewReceived) are not the
+    // high-stakes paths.
+    if let Some(ref event_id) = event.event_id {
+        let event_type_label = format!("{:?}", event.event_type);
+        let insert = sqlx::query(
+            "INSERT INTO airbnb_webhook_events (event_id, event_type) \
+             VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING",
+        )
+        .bind(event_id)
+        .bind(&event_type_label)
+        .execute(&state.db)
+        .await;
+
+        match insert {
+            Ok(result) if result.rows_affected() == 0 => {
+                tracing::info!(
+                    event_id = %event_id,
+                    event_type = %event_type_label,
+                    "Airbnb webhook: duplicate delivery suppressed by dedup ledger"
+                );
+                return Ok(StatusCode::OK);
+            }
+            Ok(_) => {
+                tracing::debug!(
+                    event_id = %event_id,
+                    event_type = %event_type_label,
+                    "Airbnb webhook: event_id recorded in dedup ledger"
+                );
+            }
+            Err(e) => {
+                // Best-effort: if the ledger insert fails (DB blip, table
+                // not yet migrated on a stale env, etc.) we degrade to the
+                // pre-#711 behaviour and process the event. Failing closed
+                // here would let a transient DB issue silently drop real
+                // reservation updates, which is worse than a rare double-
+                // processing (downstream handlers are idempotent upserts).
+                tracing::warn!(
+                    error = %e,
+                    event_id = %event_id,
+                    "Airbnb webhook: dedup ledger insert failed, processing anyway"
+                );
+            }
+        }
+    } else {
         tracing::debug!(
-            event_id = %eid,
             event_type = ?event.event_type,
-            "Airbnb webhook: received event_id for deduplication tracking"
+            "Airbnb webhook: event without event_id, dedup skipped"
         );
     }
 
