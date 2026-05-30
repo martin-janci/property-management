@@ -6,25 +6,45 @@
 //!   - #646  pause_schedule and resume_schedule IDOR (no org scope in WHERE)
 //!   - #647  list_executions / get_execution / get_execution_download_url /
 //!            retry_execution IDOR (no org scope)
+//!   - #693  The original cross-tenant tests below sent only `X-Tenant-ID`
+//!          (no Bearer JWT), so `AuthUser`/`RlsConnection` returned 401 at the
+//!          outer gate and the `AND organization_id = $caller_org_id` clause in
+//!          `pause`, `resume`, `get_by_id_scoped`, `get_execution_scoped`, and
+//!          `retry_execution_scoped` was never exercised. The companion
+//!          `*_authenticated` tests below send a real Bearer JWT from a
+//!          manager/resident in `org_b` targeting an `org_a` resource, asserting
+//!          the org-scoped WHERE clause produces a 404 — proving the DB-layer
+//!          isolation fires, not the auth gate.
+//!
+//! # Audit-matrix note
+//!
+//! The PR #660 audit matrix listed six sibling handlers: `update_schedule`,
+//! `pause`, `resume`, `list_executions`, `get_execution`,
+//! `get_execution_download_url`, `retry_execution`. There is **no**
+//! `delete_schedule` handler in `routes/reports.rs` (the only `delete_schedule`
+//! handlers in the codebase live in `routes/work_orders.rs` and
+//! `routes/government_portal.rs`, which are unrelated clusters). Finding 2 of
+//! #693 is therefore resolved as "no audit-matrix comment to update" — no
+//! phantom entry exists in this file or in `routes/reports.rs`.
 //!
 //! # What these tests verify
 //!
 //! Each mutating or data-fetching handler in the schedule/execution cluster
 //! must:
-//! 1. Require the caller to be authenticated (401 for missing auth).
-//! 2. Require at least manager-tier role for mutating operations (403).
-//! 3. Prevent cross-tenant IDOR — a principal in Org B cannot read or mutate
-//!    resources belonging to Org A, even when they know the resource UUID.
+//! 1. Require the caller to be authenticated (401 for missing auth) — the
+//!    `*_without_auth_is_rejected` tests prove the outer JWT gate works.
+//! 2. Require at least manager-tier role for mutating operations (403) —
+//!    covered by `report_schedule_rbac_tests.rs`.
+//! 3. Prevent cross-tenant IDOR even with a valid Bearer JWT — the
+//!    `*_cross_tenant_authenticated_*` tests prove the DB-layer org scope
+//!    fires by asserting a strict 404 from a real authenticated request.
 //!
-//! # TestApp wiring caveat
+//! # Why both unauth and authenticated tests
 //!
-//! `TestApp` mounts the router without `host_tenant_middleware`, so there is no
-//! `ResolvedTenant` extension. `ValidatedTenantExtractor` therefore looks for a
-//! `X-Tenant-ID` header (UUID string) to identify the tenant. Without a Bearer
-//! JWT the `AuthUser`/`RlsConnection` extractor returns 401 before the RBAC or
-//! IDOR check fires. The tests assert a generic 4xx "rejected" outcome: the
-//! security contract is "the operation must not be applied", which holds whether
-//! the rejection is 401 (auth gate) or 404 (tenant-scoped WHERE in production).
+//! The unauth tests cover the auth gate (legitimate outer-gate coverage). The
+//! authenticated companions cover the org-scoped WHERE clause (the real fix
+//! in #624/#646/#647). Both must keep passing for the security contract to
+//! hold end-to-end.
 
 #[allow(dead_code)]
 mod common;
@@ -36,7 +56,7 @@ use axum::{
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::TestApp;
+use common::{create_authenticated_user, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Seed helpers (shared with report_schedule_rbac_tests if/when merged)
@@ -141,6 +161,30 @@ fn tenant_req(method: Method, uri: &str, org_id: Uuid) -> Request<Body> {
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::empty())
         .unwrap()
+}
+
+/// Build an authenticated request: Bearer JWT + `X-Tenant-ID` of the caller's
+/// own org. The handler reaches the repository, and the org-scoped WHERE
+/// clause must filter out resources belonging to other orgs.
+fn auth_req(method: Method, uri: &str, caller_org_id: Uuid, access_token: &str) -> Request<Body> {
+    Request::builder()
+        .method(method)
+        .uri(uri)
+        .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", caller_org_id.to_string())
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::empty())
+        .unwrap()
+}
+
+/// Look up a user id by email — `create_authenticated_user` registers via
+/// `POST /api/v1/auth/register` so we read back the id to attach a membership.
+async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(email)
+        .fetch_one(pool)
+        .await
+        .expect("fetch user id by email")
 }
 
 /// Assert the response is a 4xx rejection (not a success).
@@ -498,5 +542,456 @@ async fn retry_execution_cross_tenant_is_rejected(pool: PgPool) {
     assert_eq!(
         status, "failed",
         "#647 regression: cross-tenant retry must not reset org A's execution to 'pending'"
+    );
+}
+
+// ===========================================================================
+// Authenticated cross-tenant companions (#693)
+// ===========================================================================
+//
+// These tests send a REAL Bearer JWT from a user authenticated in `org_b` and
+// target a resource in `org_a`. The auth gate passes, the tenant extractor
+// passes, the RBAC check (when present) passes — the request reaches the
+// repository and the org-scoped WHERE clause must filter the row out, yielding
+// a strict `404 NOT_FOUND` rather than the `4xx`-anywhere outcome of the
+// unauth tests above.
+//
+// Issue #693 noted that the original tests only sent `X-Tenant-ID` (no JWT),
+// so `AuthUser`/`RlsConnection` returned 401 at the outer gate and the
+// `AND organization_id = $caller_org_id` clause in the repository was never
+// actually exercised. The strict `assert_eq!(..., StatusCode::NOT_FOUND)`
+// below would fail if a future regression dropped that clause and the
+// handler started reading/mutating cross-tenant rows.
+
+// ---------------------------------------------------------------------------
+// pause_schedule — authenticated cross-tenant (#693 / #646)
+// ---------------------------------------------------------------------------
+
+/// Authenticated Manager in `org_b` calls `PUT .../pause` on a schedule
+/// owned by `org_a`. The handler reaches `report_schedule_repo.pause`, the
+/// `UPDATE ... WHERE id = $1 AND organization_id = $caller_org_id` finds no
+/// row, and the handler maps `AppError::NotFound` to `404 SCHEDULE_NOT_FOUND`.
+/// The Org A schedule must remain active.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn pause_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "pause-auth-a").await;
+    let schedule_in_a = seed_schedule(&pool, org_a).await;
+
+    let org_b = seed_org(&pool, "pause-auth-b").await;
+    let attacker = TestUser::new();
+    let (access_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "manager").await;
+
+    let req = auth_req(
+        Method::PUT,
+        &format!("/api/v1/reports/schedules/{}/pause", schedule_in_a),
+        org_b,
+        &access_token,
+    );
+    let response = app.execute(req).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::NOT_FOUND,
+        "#693/#646: authenticated cross-tenant pause must hit the org-scoped \
+         WHERE and return 404, got {} body={}",
+        response.status,
+        response.text(),
+    );
+
+    let body = response.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "SCHEDULE_NOT_FOUND",
+        "#693/#646: 404 must carry SCHEDULE_NOT_FOUND, body={}",
+        body
+    );
+
+    // Org A's schedule must still be active (the UPDATE found no row).
+    let is_active: bool =
+        sqlx::query_scalar("SELECT is_active FROM report_schedules WHERE id = $1")
+            .bind(schedule_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch schedule is_active");
+    assert!(
+        is_active,
+        "#693/#646 regression: authenticated cross-tenant pause must not \
+         deactivate org A's schedule"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// resume_schedule — authenticated cross-tenant (#693 / #646)
+// ---------------------------------------------------------------------------
+
+/// Authenticated Manager in `org_b` calls `PUT .../resume` on a paused
+/// schedule owned by `org_a`. Must hit the org-scoped WHERE and return 404.
+/// Org A's schedule must remain paused.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn resume_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "resume-auth-a").await;
+    let schedule_in_a = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO report_schedules
+            (report_id, organization_id, name, frequency, time, timezone, format, recipients, is_active, status)
+        VALUES
+            (gen_random_uuid(), $1, 'Paused Org A Schedule (auth)', 'weekly', '09:00', 'UTC', 'pdf',
+             '[]', false, 'paused')
+        RETURNING id
+        "#,
+    )
+    .bind(org_a)
+    .fetch_one(&pool)
+    .await
+    .expect("seed paused schedule for org_a (auth)");
+
+    let org_b = seed_org(&pool, "resume-auth-b").await;
+    let attacker = TestUser::new();
+    let (access_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "manager").await;
+
+    let req = auth_req(
+        Method::PUT,
+        &format!("/api/v1/reports/schedules/{}/resume", schedule_in_a),
+        org_b,
+        &access_token,
+    );
+    let response = app.execute(req).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::NOT_FOUND,
+        "#693/#646: authenticated cross-tenant resume must hit org-scoped \
+         WHERE and return 404, got {} body={}",
+        response.status,
+        response.text(),
+    );
+
+    let body = response.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "SCHEDULE_NOT_FOUND",
+        "#693/#646: 404 must carry SCHEDULE_NOT_FOUND, body={}",
+        body
+    );
+
+    let is_active: bool =
+        sqlx::query_scalar("SELECT is_active FROM report_schedules WHERE id = $1")
+            .bind(schedule_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch schedule is_active");
+    assert!(
+        !is_active,
+        "#693/#646 regression: authenticated cross-tenant resume must not \
+         reactivate org A's paused schedule"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// list_schedule_executions — authenticated cross-tenant (#693 / #647)
+// ---------------------------------------------------------------------------
+
+/// Authenticated Manager in `org_b` calls `GET .../schedules/{id_in_a}/executions`.
+/// The handler calls `get_by_id_scoped(id, org_b)`, finds no row (the schedule
+/// lives in `org_a`), and returns 404 `SCHEDULE_NOT_FOUND` before any
+/// executions are listed.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_executions_cross_tenant_authenticated_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "list-exec-auth-a").await;
+    let schedule_in_a = seed_schedule(&pool, org_a).await;
+    seed_execution(&pool, schedule_in_a, "completed").await;
+
+    let org_b = seed_org(&pool, "list-exec-auth-b").await;
+    let attacker = TestUser::new();
+    let (access_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "manager").await;
+
+    let req = auth_req(
+        Method::GET,
+        &format!("/api/v1/reports/schedules/{}/executions", schedule_in_a),
+        org_b,
+        &access_token,
+    );
+    let response = app.execute(req).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::NOT_FOUND,
+        "#693/#647: authenticated cross-tenant list_executions must return \
+         404 from get_by_id_scoped, got {} body={}",
+        response.status,
+        response.text(),
+    );
+
+    let body = response.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "SCHEDULE_NOT_FOUND",
+        "#693/#647: 404 must carry SCHEDULE_NOT_FOUND, body={}",
+        body
+    );
+}
+
+// ---------------------------------------------------------------------------
+// get_execution — authenticated cross-tenant (#693 / #647)
+// ---------------------------------------------------------------------------
+
+/// Authenticated Resident in `org_b` calls `GET /reports/executions/{id_in_a}`.
+/// (Read endpoints have no manager-tier RBAC.) The handler calls
+/// `get_execution_scoped(id, org_b)`, which joins through
+/// `report_schedules.organization_id`, finds no row, and returns 404
+/// `EXECUTION_NOT_FOUND`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "get-exec-auth-a").await;
+    let schedule_in_a = seed_schedule(&pool, org_a).await;
+    let execution_in_a = seed_execution(&pool, schedule_in_a, "completed").await;
+
+    let org_b = seed_org(&pool, "get-exec-auth-b").await;
+    let attacker = TestUser::new();
+    let (access_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "Resident").await;
+
+    let req = auth_req(
+        Method::GET,
+        &format!("/api/v1/reports/executions/{}", execution_in_a),
+        org_b,
+        &access_token,
+    );
+    let response = app.execute(req).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::NOT_FOUND,
+        "#693/#647: authenticated cross-tenant get_execution must return 404 \
+         from get_execution_scoped, got {} body={}",
+        response.status,
+        response.text(),
+    );
+
+    let body = response.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "EXECUTION_NOT_FOUND",
+        "#693/#647: 404 must carry EXECUTION_NOT_FOUND, body={}",
+        body
+    );
+}
+
+// ---------------------------------------------------------------------------
+// get_execution_download_url — authenticated cross-tenant (#693 / #647)
+// ---------------------------------------------------------------------------
+
+/// Authenticated Resident in `org_b` calls
+/// `GET /reports/executions/{id_in_a}/download`. The handler calls
+/// `get_execution_scoped(id, org_b)` before generating any URL, finds no row,
+/// and returns 404 `EXECUTION_NOT_FOUND` — no download URL is leaked.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_execution_download_url_cross_tenant_authenticated_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "dl-url-auth-a").await;
+    let schedule_in_a = seed_schedule(&pool, org_a).await;
+    let execution_in_a = seed_execution(&pool, schedule_in_a, "completed").await;
+
+    let org_b = seed_org(&pool, "dl-url-auth-b").await;
+    let attacker = TestUser::new();
+    let (access_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "Resident").await;
+
+    let req = auth_req(
+        Method::GET,
+        &format!("/api/v1/reports/executions/{}/download", execution_in_a),
+        org_b,
+        &access_token,
+    );
+    let response = app.execute(req).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::NOT_FOUND,
+        "#693/#647: authenticated cross-tenant download_url must return 404 \
+         from get_execution_scoped, got {} body={}",
+        response.status,
+        response.text(),
+    );
+
+    let body = response.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "EXECUTION_NOT_FOUND",
+        "#693/#647: 404 must carry EXECUTION_NOT_FOUND, body={}",
+        body
+    );
+}
+
+// ---------------------------------------------------------------------------
+// retry_execution — authenticated cross-tenant (#693 / #647)
+// ---------------------------------------------------------------------------
+
+/// Authenticated Manager in `org_b` calls `POST .../executions/{id_in_a}/retry`
+/// where the execution is in `failed` state. The RBAC check passes
+/// (`is_manager()` is true), the handler calls `retry_execution_scoped(id, org_b)`
+/// which verifies the parent schedule is in `org_b`, finds no row, returns
+/// `AppError::NotFound` → `404 EXECUTION_NOT_FOUND`. The execution must
+/// remain in `failed` state (not reset to `pending`).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn retry_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "retry-auth-a").await;
+    let schedule_in_a = seed_schedule(&pool, org_a).await;
+    let execution_in_a = seed_execution(&pool, schedule_in_a, "failed").await;
+
+    let org_b = seed_org(&pool, "retry-auth-b").await;
+    let attacker = TestUser::new();
+    let (access_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "manager").await;
+
+    let req = auth_req(
+        Method::POST,
+        &format!("/api/v1/reports/executions/{}/retry", execution_in_a),
+        org_b,
+        &access_token,
+    );
+    let response = app.execute(req).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::NOT_FOUND,
+        "#693/#647: authenticated cross-tenant retry must return 404 from \
+         retry_execution_scoped, got {} body={}",
+        response.status,
+        response.text(),
+    );
+
+    let body = response.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "EXECUTION_NOT_FOUND",
+        "#693/#647: 404 must carry EXECUTION_NOT_FOUND, body={}",
+        body
+    );
+
+    let status: String = sqlx::query_scalar("SELECT status FROM report_executions WHERE id = $1")
+        .bind(execution_in_a)
+        .fetch_one(&pool)
+        .await
+        .expect("fetch execution status");
+    assert_eq!(
+        status, "failed",
+        "#693/#647 regression: authenticated cross-tenant retry must not reset \
+         org A's execution to 'pending'"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// update_schedule — authenticated cross-tenant (#693 / #624)
+// ---------------------------------------------------------------------------
+//
+// NOTE: An equivalent authenticated cross-tenant test for `update_schedule`
+// also lives in `report_schedule_rbac_tests.rs` as
+// `update_schedule_from_other_org_is_rejected` (added in PR #811 / closes #696).
+// Issue #693 explicitly lists `update_schedule` in the set of seven sibling
+// handlers to cover, so we keep a sibling-scope test here too — same shape,
+// new fixtures — to document the cluster's full IDOR surface in one file.
+
+/// Authenticated Manager in `org_b` calls `PUT /reports/schedules/{id_in_a}`.
+/// The handler calls `report_schedule_repo.update_schedule(id, org_b, ...)`,
+/// whose UPDATE WHERE includes `AND organization_id = $caller_org_id`, finds
+/// no row, and returns `AppError::NotFound` → `404 SCHEDULE_NOT_FOUND`.
+/// Org A's schedule recipients must be unchanged.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn update_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
+    use serde_json::json;
+
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "upd-auth-a").await;
+    let schedule_in_a = seed_schedule(&pool, org_a).await;
+
+    let org_b = seed_org(&pool, "upd-auth-b").await;
+    let attacker = TestUser::new();
+    let (access_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "manager").await;
+
+    let req = Request::builder()
+        .method(Method::PUT)
+        .uri(format!("/api/v1/reports/schedules/{}", schedule_in_a))
+        .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+        .header("X-Tenant-ID", org_b.to_string())
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({ "recipients": ["attacker@evil.test"] }).to_string(),
+        ))
+        .unwrap();
+    let response = app.execute(req).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::NOT_FOUND,
+        "#693/#624: authenticated cross-tenant update_schedule must return 404 \
+         from the org-scoped UPDATE WHERE, got {} body={}",
+        response.status,
+        response.text(),
+    );
+
+    let body = response.json_value();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
+    assert_eq!(
+        code, "SCHEDULE_NOT_FOUND",
+        "#693/#624: 404 must carry SCHEDULE_NOT_FOUND, body={}",
+        body
+    );
+
+    // Org A's schedule recipients must be unchanged.
+    let recipients_json: serde_json::Value =
+        sqlx::query_scalar("SELECT recipients FROM report_schedules WHERE id = $1")
+            .bind(schedule_in_a)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch schedule recipients");
+    assert_eq!(
+        recipients_json,
+        json!(["owner@example.com"]),
+        "#693/#624 regression: cross-tenant update must not change org A's recipients"
     );
 }
