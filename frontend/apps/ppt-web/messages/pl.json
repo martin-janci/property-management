@@ -233,7 +233,7 @@
     "multipleRespondentsMsg": "Tylko pierwszy pozwany zostanie zarejestrowany.",
     "addEvidence": "Dodaj dowód",
     "filedWithEvidenceErrors": "Spór zgłoszony (niektóre pliki nie powiodły się)",
-    "evidenceUploadErrorsMsg": "Nie udało się przesłać jednego lub więcej plików dowodowych. Spróbuj ponownie ze strony szczegółów sporu.",
+    "evidenceUploadErrorsMsg": "Nie udało się przesłać {{count}} plików dowodowych. Spróbuj ponownie ze strony szczegółów sporu.",
     "mediation": {
       "title": "Przestrzeń mediacyjna",
       "backToDispute": "← Wróć do sporu",

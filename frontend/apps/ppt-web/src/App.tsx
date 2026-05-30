@@ -885,24 +885,22 @@ function FileDisputePageRoute() {
       // We call the raw API function (not the hook) because the hook must be
       // keyed to a disputeId at render time and we only know the id after step 1.
       const validFiles = payload.evidence.filter((e) => e.status !== 'error');
-      let evidenceErrors = 0;
+      const failedEvidence: typeof validFiles = [];
       for (const item of validFiles) {
         try {
           await apiUploadEvidence(created.id, item.file, item.description || item.file.name);
         } catch {
-          evidenceErrors++;
+          failedEvidence.push(item);
         }
       }
+      const evidenceErrors = failedEvidence.length;
 
       // Step 3 — toast + navigate to the new dispute detail
       if (evidenceErrors > 0) {
         showToast({
           type: 'warning',
           title: t('disputes.filedWithEvidenceErrors', 'Dispute filed (some files failed)'),
-          message: t(
-            'disputes.evidenceUploadErrorsMsg',
-            `${evidenceErrors} file(s) could not be uploaded. Retry from the dispute detail page.`
-          ),
+          message: t('disputes.evidenceUploadErrorsMsg', { count: evidenceErrors }),
         });
       } else {
         showToast({
@@ -911,7 +909,12 @@ function FileDisputePageRoute() {
           message: t('disputes.submittedMsg', 'Your dispute has been submitted for review.'),
         });
       }
-      navigate(`/disputes/${created.id}`);
+      // TODO(#627): consume failedEvidence on DisputeDetailPage to surface a retry
+      // prompt once evidence-retry UI lands. For now we just thread it through
+      // router state so the detail page can pick it up when ready.
+      navigate(`/disputes/${created.id}`, {
+        state: evidenceErrors > 0 ? { failedEvidence } : undefined,
+      });
     } catch (error) {
       showToast({
         type: 'error',
