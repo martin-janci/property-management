@@ -98,6 +98,20 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      # Redis service for the WebSocket pub/sub fanout integration test
+      # (issue #681). The test is marked #[ignore] because it needs a live
+      # Redis; the dedicated step below opts it in via --include-ignored
+      # with REDIS_URL pointing here. Default `cargo test --workspace`
+      # stays fast and ignored-test-skipping for the rest of the run.
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v6
@@ -128,6 +142,23 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           RUST_ENV: development
         run: cargo test --workspace
+
+      # WS pub/sub fanout — closes issue #681. The test
+      # `ws_pubsub_fanout_delivers_to_correct_subscriber` in
+      # api-server/tests/ws_integration_tests.rs is marked `#[ignore]`
+      # because it requires a real Redis to exercise the actual pub/sub
+      # delivery path (the core value of the WebSocket push feature; the
+      # other 9 tests in that file only cover JWT + HTTP-upgrade
+      # mechanics). The Redis service container above provides the live
+      # instance; `--include-ignored` opts it in without un-ignoring it
+      # in source — local runs without REDIS_URL still skip it.
+      - name: Run ignored WS+Redis integration tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+          RUST_ENV: development
+        run: cargo test -p api-server --test ws_integration_tests -- --include-ignored
 
   build:
     runs-on: ubuntu-latest
