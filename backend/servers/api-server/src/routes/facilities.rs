@@ -1173,7 +1173,7 @@ pub async fn list_my_bookings(
 )]
 pub async fn get_booking(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     let booking = state
@@ -1193,6 +1193,21 @@ pub async fn get_booking(
                 Json(ErrorResponse::new("NOT_FOUND", "Booking not found")),
             )
         })?;
+
+    // Ownership check: a booking is readable only by the user who made it.
+    // Without this any authenticated user could read any booking by UUID
+    // (closes #852). Mirrors the owner gate in `update_booking` /
+    // `cancel_booking`; managers use `list_facility_bookings` (org-scoped)
+    // to see bookings on their facilities.
+    if booking.user_id != auth.user_id {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_AUTHORIZED",
+                "You can only view your own bookings",
+            )),
+        ));
+    }
 
     Ok(Json(BookingResponse::from(booking)))
 }
