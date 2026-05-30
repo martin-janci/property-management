@@ -1719,35 +1719,43 @@ won't see it in *their* transitions set either. The sweep formulation is
 idempotent and self-healing — every run cleans up any orphans left by
 prior runs at zero extra cost.
 
+The move is delegated to `.research/archive-reconcile.sh --apply`. The script
+is the single source of truth for sweep semantics (sibling of
+`.research/gc1-reconcile.sh`); it can also be invoked outside a dispatcher
+run — see the **Merge-time reconcile** note below.
+
 ```bash
-# Build the move set from CURRENT active file state (sweep), not from
-# this run's transitions. Terminal = status in {merged, failed, done}.
-MOVE_IDS_JSON=$(jq '[.assignments[]
-  | select(.status=="merged" or .status=="failed" or .status=="done")
-  | .task_id]' .research/management/assignments.json)
-
-# Append to archive AND upsert by task_id. Concurrent runs that each
-# re-archive the same id used to produce duplicate rows inside the
-# archive (T4 FAIL: gap-82-4-*-impl + 3 others present twice). The
-# upsert makes the write idempotent regardless of run overlap; group_by
-# preserves order within a group so `map(last)` keeps the freshest row
-# (latest merged_at / last_updated).
-jq --argjson ids "$MOVE_IDS_JSON" --slurpfile active .research/management/assignments.json '
-  .assignments = (
-    (.assignments + [ $active[0].assignments[] | select(.task_id as $t | $ids | index($t)) ])
-    | group_by(.task_id)
-    | map(last)
-  )
-  | .archived_at = (now | todate)
-' .research/management/assignments-archive.json > /tmp/archive.new
-
-jq --argjson ids "$MOVE_IDS_JSON" '
-  .assignments |= map(select(.task_id as $t | $ids | index($t) | not))
-' .research/management/assignments.json > /tmp/active.new
-
-mv /tmp/archive.new .research/management/assignments-archive.json
-mv /tmp/active.new  .research/management/assignments.json
+bash .research/archive-reconcile.sh --apply
 ```
+
+The script does the equivalent of:
+
+- Build the move set from current active file state (sweep — `status ∈
+  {merged, failed, done}`).
+- Append matching rows to `assignments-archive.json` and upsert by
+  `task_id` (concurrent runs that each re-archive the same id used to
+  produce duplicate archive rows — T4 FAIL: gap-82-4-*-impl + 3 others
+  present twice; `group_by | map(last)` is the dedupe).
+- Drop those rows from `assignments.json`.
+- Stamp `archived_at = now` on the archive.
+- T17 guard: refuse to write if combined active+archive count would
+  change (move, not copy).
+
+**Merge-time reconcile (issue #759).** Phase 6 only runs inside a
+dispatcher run, so a stacked dispatcher PR that merges `origin/dev` into
+its branch will pull dev's newer terminal rows for ids the branch still
+has as `review` — the CI self-test then trips T19 before the next
+dispatcher run gets a chance to sweep (observed on PR #734: two leaked
+rows, `gap-82-5-ios-keychain-push-v2` and `gap-82-3-search-enhancements-fix`).
+After any `git merge origin/dev` on a branch that carries
+`.research/management/assignments.json`, run:
+
+```bash
+bash .research/archive-reconcile.sh           # dry-run; lists any leaks
+bash .research/archive-reconcile.sh --apply   # move + commit alongside the merge
+```
+
+The script is idempotent and a no-op on a clean state.
 
 The Phase 7 summary's `Merged-now` / `Failed (this run)` counters are still
 derived from the in-memory transitions set — those are this-run-shaped
