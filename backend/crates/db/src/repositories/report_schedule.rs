@@ -2,7 +2,8 @@
 //!
 //! Real SQLx implementation backed by the `report_schedules` and
 //! `report_executions` tables added in migration
-//! `00159_create_report_schedules_executions.sql`.
+//! `00162_create_report_schedules_executions.sql`. The `cron_expression`
+//! column is added by `00163_report_schedules_add_cron_expression.sql`.
 
 use crate::models::report_schedule::{
     report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
@@ -39,7 +40,8 @@ impl ReportScheduleRepository {
             SELECT id, report_id, organization_id, name, frequency,
                    day_of_week, day_of_month, time, timezone, format,
                    recipients, is_active, status,
-                   last_run_at, next_run_at, created_at, updated_at
+                   last_run_at, next_run_at, created_at, updated_at,
+                   cron_expression
             FROM report_schedules
             WHERE id = $1
             "#,
@@ -109,7 +111,8 @@ impl ReportScheduleRepository {
             RETURNING id, report_id, organization_id, name, frequency,
                       day_of_week, day_of_month, time, timezone, format,
                       recipients, is_active, status,
-                      last_run_at, next_run_at, created_at, updated_at
+                      last_run_at, next_run_at, created_at, updated_at,
+                      cron_expression
             "#,
         )
         .bind(report_schedule_status::PAUSED)
@@ -148,7 +151,8 @@ impl ReportScheduleRepository {
             RETURNING id, report_id, organization_id, name, frequency,
                       day_of_week, day_of_month, time, timezone, format,
                       recipients, is_active, status,
-                      last_run_at, next_run_at, created_at, updated_at
+                      last_run_at, next_run_at, created_at, updated_at,
+                      cron_expression
             "#,
         )
         .bind(report_schedule_status::ACTIVE)
@@ -467,7 +471,10 @@ impl ReportScheduleRepository {
 
     /// Update a schedule's cron expression, recipients, and/or enabled flag (gap-81-1).
     ///
-    /// All parameters are optional; only non-`None` values are applied.
+    /// All parameters are optional; only non-`None` values are applied. The
+    /// cron expression is persisted to the dedicated `cron_expression` column
+    /// added by migration `00163_report_schedules_add_cron_expression.sql`
+    /// (NOT the legacy `time` HH:MM column).
     ///
     /// # Cross-tenant safety (closes #624)
     ///
@@ -501,17 +508,18 @@ impl ReportScheduleRepository {
         let row = sqlx::query_as::<_, ReportScheduleRow>(
             r#"
             UPDATE report_schedules
-            SET time       = COALESCE($3, time),
-                recipients = COALESCE($4, recipients),
-                is_active  = COALESCE($5, is_active),
-                status     = COALESCE($6, status),
-                updated_at = NOW()
+            SET cron_expression = COALESCE($3, cron_expression),
+                recipients      = COALESCE($4, recipients),
+                is_active       = COALESCE($5, is_active),
+                status          = COALESCE($6, status),
+                updated_at      = NOW()
             WHERE id              = $1
               AND organization_id = $2
             RETURNING id, report_id, organization_id, name, frequency,
                       day_of_week, day_of_month, time, timezone, format,
                       recipients, is_active, status,
-                      last_run_at, next_run_at, created_at, updated_at
+                      last_run_at, next_run_at, created_at, updated_at,
+                      cron_expression
             "#,
         )
         .bind(id)
