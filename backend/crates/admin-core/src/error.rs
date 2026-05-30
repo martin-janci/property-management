@@ -24,7 +24,7 @@ pub enum AdminError {
 
     /// Authenticated platform principal, but does not hold the requested
     /// capability (or the grant has expired / been revoked).
-    #[error("forbidden: missing capability {0:?}")]
+    #[error("forbidden: missing capability {0}")]
     MissingCapability(crate::Capability),
 
     /// Authenticated platform principal, but has never enrolled in MFA.
