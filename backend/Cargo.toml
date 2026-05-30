@@ -127,3 +127,13 @@ which = "8.0"
 strip = "symbols"
 lto = "thin"
 codegen-units = 1
+
+# `cargo test --workspace` statically links one large binary per test file.
+# With full debuginfo (the default) these balloon the runner's root disk and
+# the CI `test` job intermittently dies mid-link with SIGTERM (exit 143) — see
+# the "Free disk space" note in .github/workflows/backend.yml. Dropping
+# debuginfo from the test profile shrinks those binaries dramatically and
+# removes the disk-pressure flakiness without affecting test behaviour. Stack
+# traces still carry function names; only line-level debug info is omitted.
+[profile.test]
+debug = false
