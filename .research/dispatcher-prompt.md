@@ -300,7 +300,33 @@ TTL steals are visible per-run in the commit log.
 
 ## Phase 1 — Read state + preflight
 
-1. `git fetch origin && git checkout dev && git pull --ff-only`
+1. **Sync to origin/dev (finding `stale-local-base-wastes-cycle`).** A plain
+   `git pull --ff-only` FAILS when local `dev` has diverged (subagent
+   contamination, a prior run's partial commit). A stale base then makes every
+   timing-sensitive phase read a pool that doesn't reflect the archive's merged
+   state — re-claiming already-merged ids — and forces a mid-run reset+re-run
+   (recorded across 4 runs). So fetch first, and when local `dev` is behind OR
+   has diverged from `origin/dev`, hard-reset to the remote BEFORE any gate runs:
+
+   ```bash
+   git fetch origin --quiet
+   git checkout dev 2>/dev/null || git checkout -B dev origin/dev
+   AHEAD=$(git rev-list --count origin/dev..HEAD 2>/dev/null || echo 0)
+   BEHIND=$(git rev-list --count HEAD..origin/dev 2>/dev/null || echo 0)
+   if [ "${AHEAD:-0}" -gt 0 ]; then
+     # Local carries commits NOT on origin. The dispatcher never leaves work on
+     # local dev (it commits via Phase 6 onto a fresh base), so AHEAD>0 is
+     # contamination, not progress — discard it. origin/dev is the only truth.
+     echo "preflight: local dev ahead=$AHEAD behind=$BEHIND (diverged) — hard-reset to origin/dev"
+     git reset --hard origin/dev
+   elif [ "${BEHIND:-0}" -gt 0 ]; then
+     echo "preflight: local dev behind=$BEHIND — fast-forward"
+     git pull --ff-only
+   fi
+   ```
+
+   The first pass now runs against current base, eliminating the
+   reset-and-re-run cycle `stale-local-base-wastes-cycle` recorded.
 2. **Recent-run skip-gate** (NEW — issue #1, prevents the `assignments.json` rebase-race
    observed on 2026-05-27 when two cron runs ~1h apart both wrote `assignments.generated`):
 
@@ -418,9 +444,13 @@ TTL steals are visible per-run in the commit log.
    ```bash
    bash .claude/skills/ppt-pr-followup/scripts/ensure-labels.sh \
      martin-janci/property-management
+   # awaiting-macos-build (finding ios-swiftui-prs-blocked-on-macos-build-gate) —
+   # idempotent; Phase 5.5 tags macos-build-gated PRs with it.
+   gh label create awaiting-macos-build --repo martin-janci/property-management \
+     --color FBCA04 --description "Approved PR blocked on a macOS-only build the dispatcher cannot run" 2>/dev/null || true
    ```
 
-   This creates `needs-human-review` once and is a no-op thereafter.
+   This creates `needs-human-review` + `awaiting-macos-build` once and is a no-op thereafter.
 
 ---
 
@@ -679,8 +709,16 @@ The Phase 6 commit message MUST surface both counts:
 
 ```
 chore(research): dispatcher <date> — C claimed, R reviewed, M merge-attempts,
-X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased
+X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased, DS dup-skipped
 ```
+
+**Recompute the trailer AFTER Phase 5.5 (finding `metrics-trailer-undercounts-skips`).**
+The subject is written at Phase 6 (post-merge), not at claim time, so `X`/`M`
+reflect this run's actual merges. `DS` is the dup-skip count (sum of the three
+Phase 3 cross-PR dedup guards) — it was previously recorded in the Phase 7 body
+but omitted from the subject, so trend reads off the commit log undercounted run
+activity. Every Phase 7 structured counter that has a subject token MUST agree
+with its Phase 7 line.
 
 ---
 
@@ -1474,6 +1512,7 @@ Each blocker now has a dedicated path.
 | `ci-unknown` | `statusCheckRollup` is empty/null (0 checks reported) | Re-trigger CI via `gh workflow run` (best-effort) and SKIP this cycle. Log under `Phase 7 → CI-retriggered:`. After 2 cycles with still-zero checks, escalate to human-review label and SKIP further attempts (genuine repo config issue, not a transient blip). |
 | `dirty` | `mergeable == "CONFLICTING"` | Route to **Phase 5.6 auto-rebase** (see below). |
 | `draft-ready` | `isDraft == true` AND review approved AND CI green | Pass through; `ppt-pr-merge` Step 1 auto-promotes draft → ready when the approval + green-CI gates pass. Letting drafts through is the whole point of the auto-promote path; pre-filtering re-introduces the stall (observed: 0 merge attempts in a run where every approved PR was draft). |
+| `macos-build-gated` | PR head touches iOS/Swift paths (`mobile-native/**/iosApp/**`, `**/*.swift`, `**/*.xcodeproj/**`) AND a required check needs a macOS build that no runner provides (CI shows the macOS/xcodebuild check `EXPECTED`/missing, never `SUCCESS`) | **Expected terminal-for-dispatcher state, NOT a transient block.** Tag the PR `awaiting-macos-build` (idempotent), SKIP, and surface in Phase 7 under `Awaiting-macOS-build:` — a distinct digest, NOT the `Approved+human-gated` or merge-failure buckets. The dispatcher can never clear this (no macOS runner), so do not retry and do not let it inflate the unmergeable-pool metric. (finding `ios-swiftui-prs-blocked-on-macos-build-gate`) |
 | `needs-human-review` | Label `needs-human-review` present | SKIP; surface in Phase 7 under `Approved+human-gated:`. Do NOT keep retrying — humans add this label specifically to stop the dispatcher. |
 | `ready` | None of the above | Proceed with merge spawn. |
 
@@ -1791,9 +1830,61 @@ if ! bash .research/dispatcher-self-test.sh >/tmp/dispatcher-self-test.log 2>&1;
   echo "  DISPATCHER_SELF_TEST_GATE=0 — continuing despite self-test FAIL." >&2
 fi
 
-git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merge-attempts, X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased'
-git push origin dev   # if another run committed since our pull: rebase + retry once;
-                      # if still conflicts, log and bail — next run will re-evaluate state
+git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merge-attempts, X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased, DS dup-skipped'
+INTENDED_TREE=$(git rev-parse HEAD^{tree})   # the state tree we MUST land (rebase-ours guard)
+
+# --- Push method (finding `git-push-blocked-by-proxy`) ---
+# PRIMARY push path is the GitHub API (mcp__github__push_files), NOT `git push`:
+# the local proxy HTTP-403s direct push in this environment, so `git push` burns a
+# full retry/backoff loop before failing EVERY run (recurred R8). Default to MCP;
+# fall back to git push only when the MCP tool is unavailable. `PUSH_METHOD=git`
+# forces the legacy path for environments where direct push works.
+if [ "${PUSH_METHOD:-mcp}" = "mcp" ]; then
+  : # land the Phase 6 file delta via mcp__github__push_files onto dev (one commit).
+    # A GITHUB_TOKEN/API push does not re-trigger version-bump on its own, which also
+    # caps the rapid-bump churn (finding subagent-race-on-dev-push).
+else
+  # --- git push fallback, with rebase-ours conflict discipline ---
+  git fetch origin dev --quiet
+  if ! git push origin dev 2>/tmp/push.err; then
+    # Origin moved since our pull → rebase our state commit onto it.
+    # CONFLICT-RESOLUTION OWNERSHIP (finding `rebase-ours-takes-upstream-discards-state`):
+    # in a REBASE, `--ours` is the UPSTREAM side (origin/dev) and `--theirs` is OUR
+    # commit — the INVERSE of a merge. For files the dispatcher OWNS, ALWAYS keep
+    # OUR side → `git checkout --theirs <file>`. Using `--ours` silently keeps
+    # upstream and discards the dispatcher's state write; the next push then reports
+    # "Everything up-to-date" with the work gone. Owned paths: everything under
+    # `.research/management/**` plus `VERSION`.
+    if ! git rebase origin/dev 2>/tmp/rebase.err; then
+      for f in $(git diff --name-only --diff-filter=U); do
+        case "$f" in
+          .research/management/*|VERSION) git checkout --theirs -- "$f" && git add "$f" ;;
+          *) echo "PHASE 6 ABORT: real (non-owned) conflict in $f — git rebase --abort; bail." >&2
+             git rebase --abort; exit 0 ;;
+        esac
+      done
+      git rebase --continue 2>>/tmp/rebase.err || { git rebase --abort; exit 0; }
+    fi
+    PUSH_OUT=$(git push origin dev 2>&1 || true)
+    echo "$PUSH_OUT"
+    # No-op-push detector (finding `rebase-ours-takes-upstream-discards-state`):
+    # "Everything up-to-date" right after we committed owned-state changes is the
+    # tell that the resolution dropped our delta. Do NOT exit 0 as success.
+    if printf '%s' "$PUSH_OUT" | grep -qi 'Everything up-to-date'; then
+      echo "PHASE 6 ABORT: push was a no-op after a state commit — owned-state delta lost in rebase. Recover from reflog ($INTENDED_TREE) and re-push; not marking this run successful." >&2
+      exit 0
+    fi
+  fi
+fi
+
+# Post-push verification (defence-in-depth): confirm the landed origin/dev tree
+# carries our owned-state changes; if not, surface loudly rather than silently pass.
+git fetch origin dev --quiet
+if git diff --quiet "$INTENDED_TREE" origin/dev -- .research/management/ 2>/dev/null; then
+  : # owned-state delta present on origin/dev — OK
+else
+  echo "PHASE 6 WARN: origin/dev .research/management/ differs from the intended tree — verify the state landed (rebase-ours / concurrent-run check)." >&2
+fi
 ```
 
 ---
@@ -1832,6 +1923,8 @@ In review (PR open):      <M>
 Merge attempts (this run):[PR#<n> merged=<true|false|queued> <note>, …]
 CI-stuck escalations:     [PR#<n> task=<id> waited=<h>, …]                (gap 4; [] if none)
 Approved+CI-pending:      [PR#<n> task=<id> attempted=<iso8601> wait=<h>, …]  (gap 4; [] if none)
+Approved+human-gated:     [PR#<n> task=<id>, …]                     (Phase 5.5 needs-human-review SKIP; [] if none)
+Awaiting-macOS-build:     [PR#<n> task=<id>, …]                     (Phase 5.5 macos-build-gated; structural — no macOS runner; NOT a merge failure; [] if none)
 Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; [] if none)
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
