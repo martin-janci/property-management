@@ -37,6 +37,23 @@ use serde_json::Value as JsonValue;
 use sqlx::{Error as SqlxError, Executor, FromRow, Postgres};
 use uuid::Uuid;
 
+/// Explicit column projection for decoding a `faults` row into [`Fault`] (issue #859).
+///
+/// Under sqlx 0.9, decoding a Postgres ENUM column straight into a Rust `String`
+/// field fails at runtime ("mismatched types ... Rust type `String` not compatible
+/// with SQL type `<enum>`"). The five enum columns (`category`, `priority`,
+/// `status`, `ai_category`, `ai_priority`) are therefore cast to `text` here so
+/// that every `SELECT`/`RETURNING` that decodes into `Fault` succeeds. Any query
+/// that decoded these enums via `SELECT *` / `RETURNING *` must use this list
+/// instead. The column order/set must stay in sync with the `Fault` struct.
+const FAULT_COLUMNS: &str = "id, organization_id, building_id, unit_id, reporter_id, \
+title, description, location_description, \
+category::text AS category, priority::text AS priority, status::text AS status, \
+ai_category::text AS ai_category, ai_priority::text AS ai_priority, \
+ai_confidence, ai_processed_at, assigned_to, assigned_at, triaged_by, triaged_at, \
+resolved_at, resolved_by, resolution_notes, confirmed_at, confirmed_by, rating, feedback, \
+scheduled_date, estimated_completion, idempotency_key, created_at, updated_at";
+
 /// Row struct for fault with details query.
 #[derive(Debug, FromRow)]
 struct FaultDetailsRow {
@@ -129,7 +146,7 @@ impl FaultRepository {
     {
         let priority = data.priority.as_deref().unwrap_or("medium");
 
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO faults (
                 organization_id, building_id, unit_id, reporter_id,
@@ -137,9 +154,9 @@ impl FaultRepository {
                 category, priority, idempotency_key
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(data.organization_id)
         .bind(data.building_id)
         .bind(data.unit_id)
@@ -179,11 +196,11 @@ impl FaultRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT * FROM faults WHERE id = $1
-            "#,
-        )
+            SELECT {FAULT_COLUMNS} FROM faults WHERE id = $1
+            "#
+        )))
         .bind(id)
         .fetch_optional(executor)
         .await?;
@@ -294,7 +311,7 @@ impl FaultRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE faults
             SET
@@ -304,9 +321,9 @@ impl FaultRepository {
                 category = COALESCE($5, category),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(&data.title)
         .bind(&data.description)
@@ -330,7 +347,7 @@ impl FaultRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE faults
             SET
@@ -339,9 +356,9 @@ impl FaultRepository {
                 estimated_completion = COALESCE($4, estimated_completion),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(&data.status)
         .bind(data.scheduled_date)
@@ -422,11 +439,11 @@ impl FaultRepository {
 
     /// Find fault by idempotency key.
     pub async fn find_by_idempotency_key(&self, key: &str) -> Result<Option<Fault>, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT * FROM faults WHERE idempotency_key = $1
-            "#,
-        )
+            SELECT {FAULT_COLUMNS} FROM faults WHERE idempotency_key = $1
+            "#
+        )))
         .bind(key)
         .fetch_optional(&self.pool)
         .await?;
@@ -674,7 +691,7 @@ impl FaultRepository {
         triaged_by: Uuid,
         data: TriageFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE faults
             SET
@@ -687,9 +704,9 @@ impl FaultRepository {
                 status = 'triaged',
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(&data.priority)
         .bind(&data.category)
@@ -721,7 +738,7 @@ impl FaultRepository {
         assigned_by: Uuid,
         data: AssignFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE faults
             SET
@@ -729,9 +746,9 @@ impl FaultRepository {
                 assigned_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(data.assigned_to)
         .fetch_one(&self.pool)
@@ -783,7 +800,7 @@ impl FaultRepository {
         resolved_by: Uuid,
         data: ResolveFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE faults
             SET
@@ -793,9 +810,9 @@ impl FaultRepository {
                 resolution_notes = $3,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(resolved_by)
         .bind(&data.resolution_notes)
@@ -825,7 +842,7 @@ impl FaultRepository {
         confirmed_by: Uuid,
         data: ConfirmFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE faults
             SET
@@ -836,9 +853,9 @@ impl FaultRepository {
                 feedback = $4,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(confirmed_by)
         .bind(data.rating)
@@ -869,7 +886,7 @@ impl FaultRepository {
         reopened_by: Uuid,
         data: ReopenFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE faults
             SET
@@ -878,9 +895,9 @@ impl FaultRepository {
                 confirmed_by = NULL,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .fetch_one(&self.pool)
         .await?;
@@ -913,7 +930,7 @@ impl FaultRepository {
         priority: Option<&str>,
         confidence: f64,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(
+        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE faults
             SET
@@ -923,9 +940,9 @@ impl FaultRepository {
                 ai_processed_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FAULT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(category)
         .bind(priority)

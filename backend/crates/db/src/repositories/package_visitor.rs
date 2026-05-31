@@ -13,6 +13,39 @@ use chrono::{DateTime, Duration, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
+// #859: explicit column list for `Package`, casting the `carrier` and `status`
+// Postgres ENUMs to text so sqlx can decode them into the `String` fields.
+const PACKAGE_COLUMNS: &str = "id, tenant_id, building_id, unit_id, resident_id, tracking_number, \
+     carrier::text AS carrier, carrier_name, description, status::text AS status, expected_date, \
+     received_at, received_by, notified_at, picked_up_at, picked_up_by, storage_location, \
+     photo_url, notes, created_at, updated_at";
+
+// #859: alias-qualified (`p.`) column list for `Package`, casting the `carrier`
+// and `status` ENUMs to text. Used in joined queries selecting `p.*`.
+const PACKAGE_COLUMNS_P: &str = "p.id, p.tenant_id, p.building_id, p.unit_id, p.resident_id, \
+     p.tracking_number, p.carrier::text AS carrier, p.carrier_name, p.description, \
+     p.status::text AS status, p.expected_date, p.received_at, p.received_by, p.notified_at, \
+     p.picked_up_at, p.picked_up_by, p.storage_location, p.photo_url, p.notes, p.created_at, \
+     p.updated_at";
+
+// #859: explicit column list for `Visitor`, casting the `purpose` and `status`
+// Postgres ENUMs to text so sqlx can decode them into the `String` fields.
+const VISITOR_COLUMNS: &str = "id, tenant_id, building_id, unit_id, host_id, visitor_name, \
+     visitor_email, visitor_phone, company_name, purpose::text AS purpose, purpose_notes, \
+     access_code, access_code_expires_at, expected_arrival, expected_departure, \
+     status::text AS status, checked_in_at, checked_in_by, checked_out_at, checked_out_by, \
+     notification_sent_at, notification_method, vehicle_license_plate, notes, created_at, \
+     updated_at";
+
+// #859: alias-qualified (`v.`) column list for `Visitor`, casting the `purpose`
+// and `status` ENUMs to text. Used in joined queries selecting `v.*`.
+const VISITOR_COLUMNS_V: &str = "v.id, v.tenant_id, v.building_id, v.unit_id, v.host_id, \
+     v.visitor_name, v.visitor_email, v.visitor_phone, v.company_name, v.purpose::text AS purpose, \
+     v.purpose_notes, v.access_code, v.access_code_expires_at, v.expected_arrival, \
+     v.expected_departure, v.status::text AS status, v.checked_in_at, v.checked_in_by, \
+     v.checked_out_at, v.checked_out_by, v.notification_sent_at, v.notification_method, \
+     v.vehicle_license_plate, v.notes, v.created_at, v.updated_at";
+
 /// Repository for package and visitor management operations.
 #[derive(Clone)]
 pub struct PackageVisitorRepository {
@@ -44,16 +77,16 @@ impl PackageVisitorRepository {
                 .fetch_one(&self.pool)
                 .await?;
 
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO packages (
                 tenant_id, building_id, unit_id, resident_id, tracking_number,
                 carrier, carrier_name, description, expected_date, notes
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
-            "#,
-        )
+            RETURNING {PACKAGE_COLUMNS}
+            "#
+        )))
         .bind(tenant_id)
         .bind(building_id)
         .bind(data.unit_id)
@@ -74,11 +107,13 @@ impl PackageVisitorRepository {
         tenant_id: Uuid,
         id: Uuid,
     ) -> Result<Option<Package>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM packages WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "SELECT {PACKAGE_COLUMNS} FROM packages WHERE id = $1 AND tenant_id = $2"
+        )))
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Gets a package with all details.
@@ -87,10 +122,10 @@ impl PackageVisitorRepository {
         tenant_id: Uuid,
         id: Uuid,
     ) -> Result<Option<PackageWithDetails>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             SELECT
-                p.*,
+                {PACKAGE_COLUMNS_P},
                 u.unit_number,
                 b.name as building_name,
                 usr.display_name as resident_name,
@@ -101,8 +136,8 @@ impl PackageVisitorRepository {
             LEFT JOIN users usr ON p.resident_id = usr.id
             LEFT JOIN users recv ON p.received_by = recv.id
             WHERE p.id = $1 AND p.tenant_id = $2
-            "#,
-        )
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .fetch_optional(&self.pool)
@@ -127,8 +162,8 @@ impl PackageVisitorRepository {
                 p.resident_id,
                 usr.display_name as resident_name,
                 p.tracking_number,
-                p.carrier,
-                p.status,
+                p.carrier::text AS carrier,
+                p.status::text AS status,
                 p.expected_date,
                 p.received_at,
                 p.created_at
@@ -194,7 +229,7 @@ impl PackageVisitorRepository {
         id: Uuid,
         data: UpdatePackage,
     ) -> Result<Option<Package>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE packages SET
                 tracking_number = COALESCE($3, tracking_number),
@@ -206,9 +241,9 @@ impl PackageVisitorRepository {
                 notes = COALESCE($9, notes),
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2
-            RETURNING *
-            "#,
-        )
+            RETURNING {PACKAGE_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .bind(&data.tracking_number)
@@ -230,7 +265,7 @@ impl PackageVisitorRepository {
         staff_id: Uuid,
         data: ReceivePackage,
     ) -> Result<Option<Package>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE packages SET
                 status = $3,
@@ -241,9 +276,9 @@ impl PackageVisitorRepository {
                 notes = COALESCE($7, notes),
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2 AND status = 'expected'
-            RETURNING *
-            "#,
-        )
+            RETURNING {PACKAGE_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .bind(package_status::RECEIVED)
@@ -264,7 +299,7 @@ impl PackageVisitorRepository {
         data: PickupPackage,
     ) -> Result<Option<Package>, sqlx::Error> {
         let picked_up_by = data.picked_up_by.unwrap_or(resident_id);
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE packages SET
                 status = $3,
@@ -273,9 +308,9 @@ impl PackageVisitorRepository {
                 notes = COALESCE($5, notes),
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2 AND status IN ('received', 'notified')
-            RETURNING *
-            "#,
-        )
+            RETURNING {PACKAGE_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .bind(package_status::PICKED_UP)
@@ -431,7 +466,7 @@ impl PackageVisitorRepository {
             .await?;
         let expires_at = Utc::now() + Duration::hours(settings.default_code_validity_hours as i64);
 
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO visitors (
                 tenant_id, building_id, unit_id, host_id, visitor_name,
@@ -440,9 +475,9 @@ impl PackageVisitorRepository {
                 vehicle_license_plate, notes
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-            RETURNING *
-            "#,
-        )
+            RETURNING {VISITOR_COLUMNS}
+            "#
+        )))
         .bind(tenant_id)
         .bind(building_id)
         .bind(data.unit_id)
@@ -469,11 +504,13 @@ impl PackageVisitorRepository {
         tenant_id: Uuid,
         id: Uuid,
     ) -> Result<Option<Visitor>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM visitors WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "SELECT {VISITOR_COLUMNS} FROM visitors WHERE id = $1 AND tenant_id = $2"
+        )))
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Gets a visitor with all details.
@@ -482,10 +519,10 @@ impl PackageVisitorRepository {
         tenant_id: Uuid,
         id: Uuid,
     ) -> Result<Option<VisitorWithDetails>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             SELECT
-                v.*,
+                {VISITOR_COLUMNS_V},
                 u.unit_number,
                 b.name as building_name,
                 h.display_name as host_name,
@@ -496,8 +533,8 @@ impl PackageVisitorRepository {
             LEFT JOIN users h ON v.host_id = h.id
             LEFT JOIN users ci ON v.checked_in_by = ci.id
             WHERE v.id = $1 AND v.tenant_id = $2
-            "#,
-        )
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .fetch_optional(&self.pool)
@@ -534,9 +571,9 @@ impl PackageVisitorRepository {
                 v.host_id,
                 h.display_name as host_name,
                 v.visitor_name,
-                v.purpose,
+                v.purpose::text AS purpose,
                 v.expected_arrival,
-                v.status,
+                v.status::text AS status,
                 v.access_code,
                 v.created_at
             FROM visitors v
@@ -609,7 +646,7 @@ impl PackageVisitorRepository {
         id: Uuid,
         data: UpdateVisitor,
     ) -> Result<Option<Visitor>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE visitors SET
                 visitor_name = COALESCE($3, visitor_name),
@@ -624,9 +661,9 @@ impl PackageVisitorRepository {
                 notes = COALESCE($12, notes),
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2 AND status = 'pending'
-            RETURNING *
-            "#,
-        )
+            RETURNING {VISITOR_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .bind(&data.visitor_name)
@@ -651,7 +688,7 @@ impl PackageVisitorRepository {
         staff_id: Uuid,
         _data: CheckInVisitor,
     ) -> Result<Option<Visitor>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE visitors SET
                 status = $3,
@@ -659,9 +696,9 @@ impl PackageVisitorRepository {
                 checked_in_by = $4,
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2 AND status = 'pending'
-            RETURNING *
-            "#,
-        )
+            RETURNING {VISITOR_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .bind(visitor_status::CHECKED_IN)
@@ -678,7 +715,7 @@ impl PackageVisitorRepository {
         staff_id: Uuid,
         _data: CheckOutVisitor,
     ) -> Result<Option<Visitor>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE visitors SET
                 status = $3,
@@ -686,9 +723,9 @@ impl PackageVisitorRepository {
                 checked_out_by = $4,
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2 AND status = 'checked_in'
-            RETURNING *
-            "#,
-        )
+            RETURNING {VISITOR_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .bind(visitor_status::CHECKED_OUT)
@@ -703,15 +740,15 @@ impl PackageVisitorRepository {
         tenant_id: Uuid,
         id: Uuid,
     ) -> Result<Option<Visitor>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE visitors SET
                 status = $3,
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2 AND status = 'pending'
-            RETURNING *
-            "#,
-        )
+            RETURNING {VISITOR_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(tenant_id)
         .bind(visitor_status::CANCELLED)
@@ -735,9 +772,9 @@ impl PackageVisitorRepository {
                 v.host_id,
                 h.display_name as host_name,
                 v.visitor_name,
-                v.purpose,
+                v.purpose::text AS purpose,
                 v.expected_arrival,
-                v.status,
+                v.status::text AS status,
                 v.access_code,
                 v.created_at
             FROM visitors v

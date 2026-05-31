@@ -8,6 +8,14 @@ use crate::DbPool;
 use sqlx::Error as SqlxError;
 use uuid::Uuid;
 
+/// Explicit column list for `PersonMonth` rows.
+///
+/// #859: sqlx 0.9 cannot decode a Postgres ENUM column into a Rust `String`,
+/// so the `source` (`person_month_source`) enum is cast to text. The rest map
+/// 1:1 to the struct fields. Used instead of `SELECT *` / `RETURNING *`.
+const PERSON_MONTH_COLUMNS: &str = "id, unit_id, year, month, count, source::text AS source, \
+     notes, created_at, updated_at, created_by, updated_by";
+
 /// Repository for person month operations.
 #[derive(Clone)]
 pub struct PersonMonthRepository {
@@ -26,8 +34,7 @@ impl PersonMonthRepository {
         data: CreatePersonMonth,
         user_id: Uuid,
     ) -> Result<PersonMonth, SqlxError> {
-        let entry = sqlx::query_as::<_, PersonMonth>(
-            r#"
+        let entry = sqlx::query_as::<_, PersonMonth>(sqlx::AssertSqlSafe(format!(r#"
             INSERT INTO person_months (unit_id, year, month, count, source, notes, created_by, updated_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
             ON CONFLICT (unit_id, year, month)
@@ -37,9 +44,8 @@ impl PersonMonthRepository {
                 notes = EXCLUDED.notes,
                 updated_by = EXCLUDED.updated_by,
                 updated_at = NOW()
-            RETURNING *
-            "#,
-        )
+            RETURNING {PERSON_MONTH_COLUMNS}
+            "#)))
         .bind(data.unit_id)
         .bind(data.year)
         .bind(data.month)
@@ -55,11 +61,12 @@ impl PersonMonthRepository {
 
     /// Find person month by ID.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<PersonMonth>, SqlxError> {
-        let entry =
-            sqlx::query_as::<_, PersonMonth>(r#"SELECT * FROM person_months WHERE id = $1"#)
-                .bind(id)
-                .fetch_optional(&self.pool)
-                .await?;
+        let entry = sqlx::query_as::<_, PersonMonth>(sqlx::AssertSqlSafe(format!(
+            r#"SELECT {PERSON_MONTH_COLUMNS} FROM person_months WHERE id = $1"#
+        )))
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(entry)
     }
@@ -71,12 +78,12 @@ impl PersonMonthRepository {
         year: i32,
         month: i32,
     ) -> Result<Option<PersonMonth>, SqlxError> {
-        let entry = sqlx::query_as::<_, PersonMonth>(
+        let entry = sqlx::query_as::<_, PersonMonth>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT * FROM person_months
+            SELECT {PERSON_MONTH_COLUMNS} FROM person_months
             WHERE unit_id = $1 AND year = $2 AND month = $3
-            "#,
-        )
+            "#
+        )))
         .bind(unit_id)
         .bind(year)
         .bind(month)
@@ -92,13 +99,13 @@ impl PersonMonthRepository {
         unit_id: Uuid,
         year: i32,
     ) -> Result<Vec<PersonMonth>, SqlxError> {
-        let entries = sqlx::query_as::<_, PersonMonth>(
+        let entries = sqlx::query_as::<_, PersonMonth>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT * FROM person_months
+            SELECT {PERSON_MONTH_COLUMNS} FROM person_months
             WHERE unit_id = $1 AND year = $2
             ORDER BY month
-            "#,
-        )
+            "#
+        )))
         .bind(unit_id)
         .bind(year)
         .fetch_all(&self.pool)
@@ -148,6 +155,7 @@ impl PersonMonthRepository {
         year: i32,
         month: i32,
     ) -> Result<Vec<PersonMonthWithUnit>, SqlxError> {
+        // #859: cast the `source` enum to text so sqlx 0.9 can decode it as String.
         let entries = sqlx::query_as::<_, PersonMonthWithUnit>(
             r#"
             SELECT
@@ -157,7 +165,7 @@ impl PersonMonthRepository {
                 pm.year,
                 pm.month,
                 pm.count,
-                pm.source
+                pm.source::text AS source
             FROM person_months pm
             INNER JOIN units u ON u.id = pm.unit_id
             WHERE u.building_id = $1 AND pm.year = $2 AND pm.month = $3
@@ -240,7 +248,7 @@ impl PersonMonthRepository {
         data: UpdatePersonMonth,
         user_id: Uuid,
     ) -> Result<Option<PersonMonth>, SqlxError> {
-        let entry = sqlx::query_as::<_, PersonMonth>(
+        let entry = sqlx::query_as::<_, PersonMonth>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE person_months
             SET
@@ -250,9 +258,9 @@ impl PersonMonthRepository {
                 updated_by = $5,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {PERSON_MONTH_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(data.count)
         .bind(&data.source)

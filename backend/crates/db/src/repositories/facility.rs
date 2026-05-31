@@ -9,6 +9,30 @@ use chrono::{DateTime, Utc};
 use sqlx::Error as SqlxError;
 use uuid::Uuid;
 
+// SECURITY/CORRECTNESS (#859): under sqlx 0.9 a Postgres enum column can no
+// longer be decoded straight into a Rust `String` field — it fails at runtime
+// with a 500. The SELECT readers in this module were fixed to cast the enum to
+// text, but the `RETURNING *` clauses on the create/update/approve/reject/cancel
+// mutations were missed: `*` returns the raw `facility_type` / `status` enum
+// columns, so every facility/booking mutation that returns its row still 500s.
+// These projections cast the enum column to text and are used in those
+// `RETURNING` clauses (and mirror the column lists the SELECT readers use).
+
+/// `RETURNING` projection for [`Facility`] mutations — casts the `facility_type`
+/// enum to text so sqlx 0.9 decodes it into `Facility.facility_type: String`.
+const FACILITY_RETURNING: &str = "id, building_id, name, facility_type::text AS facility_type, \
+     description, location, capacity, is_bookable, requires_approval, max_booking_hours, \
+     max_advance_days, min_advance_hours, available_from, available_to, available_days, rules, \
+     hourly_fee, deposit_amount, is_active, photos, amenities, created_at, updated_at";
+
+/// `RETURNING` projection for [`FacilityBooking`] mutations — casts the `status`
+/// `booking_status` enum to text so sqlx 0.9 decodes it into
+/// `FacilityBooking.status: String`.
+const FACILITY_BOOKING_RETURNING: &str =
+    "id, facility_id, user_id, unit_id, start_time, end_time, status::text AS status, purpose, \
+     attendees, notes, approved_by, approved_at, rejected_by, rejected_at, rejection_reason, \
+     cancelled_at, cancellation_reason, total_fee, deposit_paid, created_at, updated_at";
+
 /// Repository for facility operations.
 #[derive(Clone)]
 pub struct FacilityRepository {
@@ -25,7 +49,7 @@ impl FacilityRepository {
 
     /// Create a new facility.
     pub async fn create(&self, data: CreateFacility) -> Result<Facility, SqlxError> {
-        let facility = sqlx::query_as::<_, Facility>(
+        let facility = sqlx::query_as::<_, Facility>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO facilities (
                 building_id, name, facility_type, description, location,
@@ -34,9 +58,9 @@ impl FacilityRepository {
                 available_days, rules, hourly_fee, deposit_amount
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-            RETURNING *
-            "#,
-        )
+            RETURNING {FACILITY_RETURNING}
+            "#
+        )))
         .bind(data.building_id)
         .bind(&data.name)
         .bind(&data.facility_type)
@@ -135,7 +159,7 @@ impl FacilityRepository {
         id: Uuid,
         data: UpdateFacility,
     ) -> Result<Option<Facility>, SqlxError> {
-        let facility = sqlx::query_as::<_, Facility>(
+        let facility = sqlx::query_as::<_, Facility>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE facilities
             SET
@@ -159,9 +183,9 @@ impl FacilityRepository {
                 amenities = COALESCE($19, amenities),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FACILITY_RETURNING}
+            "#
+        )))
         .bind(id)
         .bind(&data.name)
         .bind(&data.description)
@@ -212,16 +236,16 @@ impl FacilityRepository {
             _ => "approved",
         };
 
-        let booking = sqlx::query_as::<_, FacilityBooking>(
+        let booking = sqlx::query_as::<_, FacilityBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO facility_bookings (
                 facility_id, user_id, unit_id, start_time, end_time,
                 status, purpose, attendees, notes
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING *
-            "#,
-        )
+            RETURNING {FACILITY_BOOKING_RETURNING}
+            "#
+        )))
         .bind(data.facility_id)
         .bind(user_id)
         .bind(data.unit_id)
@@ -352,7 +376,7 @@ impl FacilityRepository {
         id: Uuid,
         data: UpdateFacilityBooking,
     ) -> Result<Option<FacilityBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, FacilityBooking>(
+        let booking = sqlx::query_as::<_, FacilityBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE facility_bookings
             SET
@@ -363,9 +387,9 @@ impl FacilityRepository {
                 notes = COALESCE($6, notes),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {FACILITY_BOOKING_RETURNING}
+            "#
+        )))
         .bind(id)
         .bind(data.start_time)
         .bind(data.end_time)
@@ -384,14 +408,14 @@ impl FacilityRepository {
         id: Uuid,
         approved_by: Uuid,
     ) -> Result<Option<FacilityBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, FacilityBooking>(
+        let booking = sqlx::query_as::<_, FacilityBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE facility_bookings
             SET status = 'approved', approved_by = $2, approved_at = NOW(), updated_at = NOW()
             WHERE id = $1 AND status = 'pending'
-            RETURNING *
-            "#,
-        )
+            RETURNING {FACILITY_BOOKING_RETURNING}
+            "#
+        )))
         .bind(id)
         .bind(approved_by)
         .fetch_optional(&self.pool)
@@ -407,15 +431,15 @@ impl FacilityRepository {
         rejected_by: Uuid,
         reason: &str,
     ) -> Result<Option<FacilityBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, FacilityBooking>(
+        let booking = sqlx::query_as::<_, FacilityBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE facility_bookings
             SET status = 'rejected', rejected_by = $2, rejected_at = NOW(),
                 rejection_reason = $3, updated_at = NOW()
             WHERE id = $1 AND status = 'pending'
-            RETURNING *
-            "#,
-        )
+            RETURNING {FACILITY_BOOKING_RETURNING}
+            "#
+        )))
         .bind(id)
         .bind(rejected_by)
         .bind(reason)
@@ -431,15 +455,15 @@ impl FacilityRepository {
         id: Uuid,
         reason: Option<&str>,
     ) -> Result<Option<FacilityBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, FacilityBooking>(
+        let booking = sqlx::query_as::<_, FacilityBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE facility_bookings
             SET status = 'cancelled', cancelled_at = NOW(),
                 cancellation_reason = $2, updated_at = NOW()
             WHERE id = $1 AND status IN ('pending', 'approved')
-            RETURNING *
-            "#,
-        )
+            RETURNING {FACILITY_BOOKING_RETURNING}
+            "#
+        )))
         .bind(id)
         .bind(reason)
         .fetch_optional(&self.pool)

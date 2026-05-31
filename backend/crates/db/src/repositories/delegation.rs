@@ -8,6 +8,15 @@ use chrono::Utc;
 use sqlx::Error as SqlxError;
 use uuid::Uuid;
 
+/// Explicit column list for `Delegation` rows.
+///
+/// #859: sqlx 0.9 cannot decode a Postgres ENUM column into a Rust `String`,
+/// so the `status` (`delegation_status`) enum is cast to text. The rest map
+/// 1:1 to the struct fields. Used instead of `SELECT *` / `RETURNING *`.
+const DELEGATION_COLUMNS: &str = "id, owner_user_id, delegate_user_id, unit_id, scopes, \
+     status::text AS status, start_date, end_date, invitation_token, invitation_sent_at, \
+     accepted_at, declined_at, revoked_at, revoked_reason, created_at, updated_at";
+
 /// Repository for delegation operations.
 #[derive(Clone)]
 pub struct DelegationRepository {
@@ -29,16 +38,16 @@ impl DelegationRepository {
         let start_date = data.start_date.unwrap_or_else(|| Utc::now().date_naive());
         let invitation_token = generate_token();
 
-        let delegation = sqlx::query_as::<_, Delegation>(
+        let delegation = sqlx::query_as::<_, Delegation>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO delegations (
                 owner_user_id, delegate_user_id, unit_id, scopes,
                 status, start_date, end_date, invitation_token, invitation_sent_at
             )
             VALUES ($1, $2, $3, $4::text[], 'pending', $5, $6, $7, NOW())
-            RETURNING *
-            "#,
-        )
+            RETURNING {DELEGATION_COLUMNS}
+            "#
+        )))
         .bind(owner_user_id)
         .bind(data.delegate_user_id)
         .bind(data.unit_id)
@@ -58,23 +67,24 @@ impl DelegationRepository {
 
     /// Find delegation by ID.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Delegation>, SqlxError> {
-        let delegation =
-            sqlx::query_as::<_, Delegation>(r#"SELECT * FROM delegations WHERE id = $1"#)
-                .bind(id)
-                .fetch_optional(&self.pool)
-                .await?;
+        let delegation = sqlx::query_as::<_, Delegation>(sqlx::AssertSqlSafe(format!(
+            r#"SELECT {DELEGATION_COLUMNS} FROM delegations WHERE id = $1"#
+        )))
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(delegation)
     }
 
     /// Find delegation by invitation token.
     pub async fn find_by_token(&self, token: &str) -> Result<Option<Delegation>, SqlxError> {
-        let delegation = sqlx::query_as::<_, Delegation>(
+        let delegation = sqlx::query_as::<_, Delegation>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT * FROM delegations
+            SELECT {DELEGATION_COLUMNS} FROM delegations
             WHERE invitation_token = $1 AND status = 'pending'
-            "#,
-        )
+            "#
+        )))
         .bind(token)
         .fetch_optional(&self.pool)
         .await?;
@@ -87,9 +97,10 @@ impl DelegationRepository {
         &self,
         owner_user_id: Uuid,
     ) -> Result<Vec<DelegationSummary>, SqlxError> {
+        // #859: cast the `status` enum to text so sqlx 0.9 can decode it as String.
         let delegations = sqlx::query_as::<_, DelegationSummary>(
             r#"
-            SELECT id, owner_user_id, delegate_user_id, unit_id, scopes, status
+            SELECT id, owner_user_id, delegate_user_id, unit_id, scopes, status::text AS status
             FROM delegations
             WHERE owner_user_id = $1
             ORDER BY created_at DESC
@@ -107,9 +118,10 @@ impl DelegationRepository {
         &self,
         delegate_user_id: Uuid,
     ) -> Result<Vec<DelegationSummary>, SqlxError> {
+        // #859: cast the `status` enum to text so sqlx 0.9 can decode it as String.
         let delegations = sqlx::query_as::<_, DelegationSummary>(
             r#"
-            SELECT id, owner_user_id, delegate_user_id, unit_id, scopes, status
+            SELECT id, owner_user_id, delegate_user_id, unit_id, scopes, status::text AS status
             FROM delegations
             WHERE delegate_user_id = $1
             ORDER BY created_at DESC
@@ -127,16 +139,16 @@ impl DelegationRepository {
         &self,
         delegate_user_id: Uuid,
     ) -> Result<Vec<Delegation>, SqlxError> {
-        let delegations = sqlx::query_as::<_, Delegation>(
+        let delegations = sqlx::query_as::<_, Delegation>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT * FROM delegations
+            SELECT {DELEGATION_COLUMNS} FROM delegations
             WHERE delegate_user_id = $1
               AND status = 'active'
               AND start_date <= CURRENT_DATE
               AND (end_date IS NULL OR end_date >= CURRENT_DATE)
             ORDER BY created_at DESC
-            "#,
-        )
+            "#
+        )))
         .bind(delegate_user_id)
         .fetch_all(&self.pool)
         .await?;
@@ -150,14 +162,14 @@ impl DelegationRepository {
         id: Uuid,
         delegate_user_id: Uuid,
     ) -> Result<Option<Delegation>, SqlxError> {
-        let delegation = sqlx::query_as::<_, Delegation>(
+        let delegation = sqlx::query_as::<_, Delegation>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE delegations
             SET status = 'active', accepted_at = NOW(), invitation_token = NULL, updated_at = NOW()
             WHERE id = $1 AND delegate_user_id = $2 AND status = 'pending'
-            RETURNING *
-            "#,
-        )
+            RETURNING {DELEGATION_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(delegate_user_id)
         .fetch_optional(&self.pool)
@@ -177,14 +189,12 @@ impl DelegationRepository {
         id: Uuid,
         delegate_user_id: Uuid,
     ) -> Result<Option<Delegation>, SqlxError> {
-        let delegation = sqlx::query_as::<_, Delegation>(
-            r#"
+        let delegation = sqlx::query_as::<_, Delegation>(sqlx::AssertSqlSafe(format!(r#"
             UPDATE delegations
             SET status = 'declined', declined_at = NOW(), invitation_token = NULL, updated_at = NOW()
             WHERE id = $1 AND delegate_user_id = $2 AND status = 'pending'
-            RETURNING *
-            "#,
-        )
+            RETURNING {DELEGATION_COLUMNS}
+            "#)))
         .bind(id)
         .bind(delegate_user_id)
         .fetch_optional(&self.pool)
@@ -205,14 +215,14 @@ impl DelegationRepository {
         owner_user_id: Uuid,
         reason: Option<&str>,
     ) -> Result<Option<Delegation>, SqlxError> {
-        let delegation = sqlx::query_as::<_, Delegation>(
+        let delegation = sqlx::query_as::<_, Delegation>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE delegations
             SET status = 'revoked', revoked_at = NOW(), revoked_reason = $3, updated_at = NOW()
             WHERE id = $1 AND owner_user_id = $2 AND status IN ('pending', 'active')
-            RETURNING *
-            "#,
-        )
+            RETURNING {DELEGATION_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(owner_user_id)
         .bind(reason)
@@ -239,7 +249,7 @@ impl DelegationRepository {
         owner_user_id: Uuid,
         data: UpdateDelegation,
     ) -> Result<Option<Delegation>, SqlxError> {
-        let delegation = sqlx::query_as::<_, Delegation>(
+        let delegation = sqlx::query_as::<_, Delegation>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE delegations
             SET
@@ -247,9 +257,9 @@ impl DelegationRepository {
                 end_date = COALESCE($4, end_date),
                 updated_at = NOW()
             WHERE id = $1 AND owner_user_id = $2 AND status IN ('pending', 'active')
-            RETURNING *
-            "#,
-        )
+            RETURNING {DELEGATION_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(owner_user_id)
         .bind(&data.scopes)
