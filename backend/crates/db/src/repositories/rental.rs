@@ -163,6 +163,29 @@ impl RentalRepository {
         Ok(conn)
     }
 
+    /// Find connection by ID scoped to an organization.
+    ///
+    /// SECURITY (#887 / #804): callers acting on behalf of an authenticated
+    /// tenant MUST use this instead of [`find_connection_by_id`] so a caller
+    /// from org B cannot read org A's connection (and its OAuth tokens).
+    /// Returns `None` when the connection does not exist OR belongs to a
+    /// different organization (the handler maps `None` → 404).
+    pub async fn find_connection_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            r#"SELECT * FROM rental_platform_connections WHERE id = $1 AND organization_id = $2"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(conn)
+    }
+
     /// Find connection by unit and platform.
     pub async fn find_connection_by_unit_platform(
         &self,
@@ -208,6 +231,45 @@ impl RentalRepository {
         .bind(data.sync_interval_minutes)
         .bind(data.block_other_platforms)
         .fetch_one(&self.pool)
+        .await?;
+
+        Ok(conn)
+    }
+
+    /// Update connection scoped to an organization.
+    ///
+    /// SECURITY (#887 / #804): the `AND organization_id = $8` guard prevents a
+    /// tenant from mutating another org's connection. Returns `None` when no
+    /// row matched (missing or cross-org) so the handler can return 404.
+    pub async fn update_connection_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+        data: UpdatePlatformConnection,
+    ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            r#"
+            UPDATE rental_platform_connections SET
+                external_property_id = COALESCE($2, external_property_id),
+                external_listing_url = COALESCE($3, external_listing_url),
+                is_active = COALESCE($4, is_active),
+                sync_calendar = COALESCE($5, sync_calendar),
+                sync_interval_minutes = COALESCE($6, sync_interval_minutes),
+                block_other_platforms = COALESCE($7, block_other_platforms),
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $8
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(&data.external_property_id)
+        .bind(&data.external_listing_url)
+        .bind(data.is_active)
+        .bind(data.sync_calendar)
+        .bind(data.sync_interval_minutes)
+        .bind(data.block_other_platforms)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(conn)
@@ -307,6 +369,76 @@ impl RentalRepository {
             .await?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    /// Delete connection scoped to an organization.
+    ///
+    /// SECURITY (#887 / #804): the `AND organization_id = $2` guard prevents a
+    /// tenant from deleting another org's connection.
+    pub async fn delete_connection_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            r#"DELETE FROM rental_platform_connections WHERE id = $1 AND organization_id = $2"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// Get connection statuses for a unit scoped to an organization.
+    ///
+    /// SECURITY (#887 / #804): adds `AND organization_id = $2` so a caller
+    /// cannot enumerate another org's unit connections by guessing a unit UUID.
+    pub async fn get_connections_for_unit_in_org(
+        &self,
+        org_id: Uuid,
+        unit_id: Uuid,
+    ) -> Result<Vec<ConnectionStatus>, SqlxError> {
+        let connections = sqlx::query_as::<_, (Uuid, String, bool, bool, Option<chrono::DateTime<Utc>>, Option<String>, Option<String>)>(
+            r#"
+            SELECT id, platform::text, access_token IS NOT NULL, is_active, last_sync_at, sync_error, external_listing_url
+            FROM rental_platform_connections
+            WHERE unit_id = $1 AND organization_id = $2
+            ORDER BY platform
+            "#,
+        )
+        .bind(unit_id)
+        .bind(org_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let statuses = connections
+            .into_iter()
+            .map(
+                |(
+                    id,
+                    platform,
+                    is_connected,
+                    is_active,
+                    last_sync_at,
+                    sync_error,
+                    external_listing_url,
+                )| {
+                    ConnectionStatus {
+                        id,
+                        platform,
+                        is_connected,
+                        is_active,
+                        last_sync_at,
+                        sync_error,
+                        external_listing_url,
+                    }
+                },
+            )
+            .collect();
+
+        Ok(statuses)
     }
 
     /// Get connections for organization.
@@ -476,6 +608,25 @@ impl RentalRepository {
         Ok(booking)
     }
 
+    /// Find booking by ID scoped to an organization.
+    ///
+    /// SECURITY (#804): prevents reading another org's booking PII by UUID.
+    pub async fn find_booking_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<Option<RentalBooking>, SqlxError> {
+        let booking = sqlx::query_as::<_, RentalBooking>(
+            r#"SELECT * FROM rental_bookings WHERE id = $1 AND organization_id = $2"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(booking)
+    }
+
     /// Find booking by external ID.
     pub async fn find_booking_by_external_id(
         &self,
@@ -555,6 +706,73 @@ impl RentalRepository {
         Ok(booking)
     }
 
+    /// Update booking scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $14` guard prevents a tenant
+    /// from mutating another org's booking. Returns `None` when no row matched.
+    pub async fn update_booking_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+        data: UpdateBooking,
+    ) -> Result<Option<RentalBooking>, SqlxError> {
+        let booking = sqlx::query_as::<_, RentalBooking>(
+            r#"
+            UPDATE rental_bookings SET
+                guest_name = COALESCE($2, guest_name),
+                guest_email = COALESCE($3, guest_email),
+                guest_phone = COALESCE($4, guest_phone),
+                guest_count = COALESCE($5, guest_count),
+                check_in = COALESCE($6, check_in),
+                check_out = COALESCE($7, check_out),
+                check_in_time = COALESCE($8, check_in_time),
+                check_out_time = COALESCE($9, check_out_time),
+                total_amount = COALESCE($10, total_amount),
+                currency = COALESCE($11, currency),
+                guest_notes = COALESCE($12, guest_notes),
+                internal_notes = COALESCE($13, internal_notes),
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $14
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(&data.guest_name)
+        .bind(&data.guest_email)
+        .bind(&data.guest_phone)
+        .bind(data.guest_count)
+        .bind(data.check_in)
+        .bind(data.check_out)
+        .bind(data.check_in_time)
+        .bind(data.check_out_time)
+        .bind(data.total_amount)
+        .bind(&data.currency)
+        .bind(&data.guest_notes)
+        .bind(&data.internal_notes)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        // Only touch the calendar block if the booking belonged to this org.
+        if booking.is_some() && (data.check_in.is_some() || data.check_out.is_some()) {
+            sqlx::query(
+                r#"
+                UPDATE rental_calendar_blocks SET
+                    block_start = COALESCE($2, block_start),
+                    block_end = COALESCE($3, block_end)
+                WHERE booking_id = $1
+                "#,
+            )
+            .bind(id)
+            .bind(data.check_in)
+            .bind(data.check_out)
+            .execute(&self.pool)
+            .await?;
+        }
+
+        Ok(booking)
+    }
+
     /// Update booking status.
     pub async fn update_booking_status(
         &self,
@@ -580,6 +798,45 @@ impl RentalRepository {
 
         // Remove calendar block if cancelled
         if data.status == booking_status::CANCELLED {
+            sqlx::query(r#"DELETE FROM rental_calendar_blocks WHERE booking_id = $1"#)
+                .bind(id)
+                .execute(&self.pool)
+                .await?;
+        }
+
+        Ok(booking)
+    }
+
+    /// Update booking status scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $4` guard prevents a tenant
+    /// from changing another org's booking status. Returns `None` if no match.
+    pub async fn update_booking_status_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+        data: UpdateBookingStatus,
+    ) -> Result<Option<RentalBooking>, SqlxError> {
+        let booking = sqlx::query_as::<_, RentalBooking>(
+            r#"
+            UPDATE rental_bookings SET
+                status = $2,
+                cancelled_at = CASE WHEN $2 = 'cancelled' THEN NOW() ELSE cancelled_at END,
+                cancellation_reason = COALESCE($3, cancellation_reason),
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $4
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(&data.status)
+        .bind(&data.cancellation_reason)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        // Remove calendar block if cancelled (only when the booking was ours).
+        if booking.is_some() && data.status == booking_status::CANCELLED {
             sqlx::query(r#"DELETE FROM rental_calendar_blocks WHERE booking_id = $1"#)
                 .bind(id)
                 .execute(&self.pool)
@@ -823,6 +1080,54 @@ impl RentalRepository {
         Ok(result.rows_affected() > 0)
     }
 
+    /// Delete calendar block scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $2` guard prevents a tenant
+    /// from deleting another org's calendar block.
+    pub async fn delete_calendar_block_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            r#"DELETE FROM rental_calendar_blocks WHERE id = $1 AND organization_id = $2 AND booking_id IS NULL"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// Verify a unit belongs to an organization.
+    ///
+    /// SECURITY (#804): used by unit-scoped read endpoints (calendar,
+    /// availability) so a caller cannot probe another org's unit by UUID.
+    pub async fn unit_belongs_to_org(
+        &self,
+        org_id: Uuid,
+        unit_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        // `units` has no `organization_id` column — org is reached through
+        // `buildings.organization_id` (see migration 00116 / 00140 RLS notes).
+        let (exists,): (bool,) = sqlx::query_as(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM units u
+                JOIN buildings b ON b.id = u.building_id
+                WHERE u.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(unit_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(exists)
+    }
+
     /// Get calendar events for unit in date range.
     pub async fn get_calendar_events(
         &self,
@@ -997,6 +1302,25 @@ impl RentalRepository {
         Ok(guest)
     }
 
+    /// Find guest by ID scoped to an organization.
+    ///
+    /// SECURITY (#804): prevents reading another org's guest PII by UUID.
+    pub async fn find_guest_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<Option<RentalGuest>, SqlxError> {
+        let guest = sqlx::query_as::<_, RentalGuest>(
+            r#"SELECT * FROM rental_guests WHERE id = $1 AND organization_id = $2"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(guest)
+    }
+
     /// Update guest.
     pub async fn update_guest(
         &self,
@@ -1048,6 +1372,63 @@ impl RentalRepository {
         Ok(guest)
     }
 
+    /// Update guest scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $17` guard prevents a tenant
+    /// from mutating another org's guest. Returns `None` when no row matched.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn update_guest_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+        data: UpdateGuest,
+    ) -> Result<Option<RentalGuest>, SqlxError> {
+        let guest = sqlx::query_as::<_, RentalGuest>(
+            r#"
+            UPDATE rental_guests SET
+                first_name = COALESCE($2, first_name),
+                last_name = COALESCE($3, last_name),
+                date_of_birth = COALESCE($4, date_of_birth),
+                nationality = COALESCE($5, nationality),
+                id_type = COALESCE($6, id_type),
+                id_number = COALESCE($7, id_number),
+                id_issuing_country = COALESCE($8, id_issuing_country),
+                id_expiry_date = COALESCE($9, id_expiry_date),
+                id_document_url = COALESCE($10, id_document_url),
+                email = COALESCE($11, email),
+                phone = COALESCE($12, phone),
+                address_street = COALESCE($13, address_street),
+                address_city = COALESCE($14, address_city),
+                address_postal_code = COALESCE($15, address_postal_code),
+                address_country = COALESCE($16, address_country),
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $17
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(&data.first_name)
+        .bind(&data.last_name)
+        .bind(data.date_of_birth)
+        .bind(&data.nationality)
+        .bind(&data.id_type)
+        .bind(&data.id_number)
+        .bind(&data.id_issuing_country)
+        .bind(data.id_expiry_date)
+        .bind(&data.id_document_url)
+        .bind(&data.email)
+        .bind(&data.phone)
+        .bind(&data.address_street)
+        .bind(&data.address_city)
+        .bind(&data.address_postal_code)
+        .bind(&data.address_country)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(guest)
+    }
+
     /// Register guest (mark as registered).
     pub async fn register_guest(&self, id: Uuid) -> Result<RentalGuest, SqlxError> {
         let guest = sqlx::query_as::<_, RentalGuest>(
@@ -1063,6 +1444,34 @@ impl RentalRepository {
         .bind(id)
         .bind(guest_status::REGISTERED)
         .fetch_one(&self.pool)
+        .await?;
+
+        Ok(guest)
+    }
+
+    /// Register guest scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $3` guard prevents a tenant
+    /// from registering another org's guest. Returns `None` when no row matched.
+    pub async fn register_guest_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<Option<RentalGuest>, SqlxError> {
+        let guest = sqlx::query_as::<_, RentalGuest>(
+            r#"
+            UPDATE rental_guests SET
+                status = $2,
+                registered_at = NOW(),
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $3
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(guest_status::REGISTERED)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(guest)
@@ -1111,6 +1520,49 @@ impl RentalRepository {
             guests,
             registration_complete,
         }))
+    }
+
+    /// Get booking with guests scoped to an organization.
+    ///
+    /// SECURITY (#804): resolves the booking via the org-scoped lookup so a
+    /// caller cannot read another org's booking + guest PII by UUID.
+    pub async fn get_booking_with_guests_for_org(
+        &self,
+        org_id: Uuid,
+        booking_id: Uuid,
+    ) -> Result<Option<BookingWithGuests>, SqlxError> {
+        let booking = match self.find_booking_for_org(org_id, booking_id).await? {
+            Some(b) => b,
+            None => return Ok(None),
+        };
+
+        let guests = self.get_guests_for_booking(booking_id).await?;
+
+        let registration_complete = !guests.is_empty()
+            && guests.iter().all(|g| {
+                g.status == guest_status::REGISTERED || g.status == guest_status::REPORTED
+            });
+
+        Ok(Some(BookingWithGuests {
+            booking,
+            guests,
+            registration_complete,
+        }))
+    }
+
+    /// Delete guest scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $2` guard prevents a tenant
+    /// from deleting another org's guest.
+    pub async fn delete_guest_for_org(&self, org_id: Uuid, id: Uuid) -> Result<bool, SqlxError> {
+        let result =
+            sqlx::query(r#"DELETE FROM rental_guests WHERE id = $1 AND organization_id = $2"#)
+                .bind(id)
+                .bind(org_id)
+                .execute(&self.pool)
+                .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     /// Delete guest.
@@ -1275,6 +1727,79 @@ impl RentalRepository {
         .bind(id)
         .fetch_optional(&self.pool)
         .await?;
+
+        Ok(report)
+    }
+
+    /// Find report by ID scoped to an organization.
+    ///
+    /// SECURITY (#804): prevents reading another org's authority report by UUID.
+    pub async fn find_report_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<Option<RentalGuestReport>, SqlxError> {
+        let report = sqlx::query_as::<_, RentalGuestReport>(
+            r#"SELECT * FROM rental_guest_reports WHERE id = $1 AND organization_id = $2"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(report)
+    }
+
+    /// Submit report scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $4` guard prevents a tenant
+    /// from submitting another org's report. Returns `None` when no row matched.
+    pub async fn submit_report_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<Option<RentalGuestReport>, SqlxError> {
+        let report = sqlx::query_as::<_, RentalGuestReport>(
+            r#"
+            UPDATE rental_guest_reports SET
+                status = $2,
+                submitted_at = NOW(),
+                submitted_by = $3,
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $4
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(report_status::SUBMITTED)
+        .bind(user_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        // Mark guests as reported only when the report belonged to this org.
+        if report.is_some() {
+            sqlx::query(
+                r#"
+                UPDATE rental_guests SET
+                    status = 'reported',
+                    reported_at = NOW()
+                WHERE booking_id IN (
+                    SELECT b.id FROM rental_bookings b
+                    JOIN units u ON u.id = b.unit_id
+                    JOIN rental_guest_reports r ON r.building_id = u.building_id
+                    WHERE r.id = $1
+                        AND b.check_in >= r.period_start
+                        AND b.check_out <= r.period_end
+                )
+                AND status = 'registered'
+                "#,
+            )
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        }
 
         Ok(report)
     }
@@ -1464,6 +1989,77 @@ impl RentalRepository {
         .await?;
 
         Ok(feeds)
+    }
+
+    /// Get iCal feeds for a unit scoped to an organization.
+    ///
+    /// SECURITY (#804): adds `AND organization_id = $2` so a caller cannot
+    /// enumerate another org's feeds by guessing a unit UUID.
+    pub async fn get_ical_feeds_for_unit_in_org(
+        &self,
+        org_id: Uuid,
+        unit_id: Uuid,
+    ) -> Result<Vec<ICalFeed>, SqlxError> {
+        let feeds = sqlx::query_as::<_, ICalFeed>(
+            r#"SELECT * FROM rental_ical_feeds WHERE unit_id = $1 AND organization_id = $2 ORDER BY feed_name"#,
+        )
+        .bind(unit_id)
+        .bind(org_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(feeds)
+    }
+
+    /// Update iCal feed scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $5` guard prevents a tenant
+    /// from mutating another org's feed. Returns `None` when no row matched.
+    pub async fn update_ical_feed_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+        data: UpdateICalFeed,
+    ) -> Result<Option<ICalFeed>, SqlxError> {
+        let feed = sqlx::query_as::<_, ICalFeed>(
+            r#"
+            UPDATE rental_ical_feeds SET
+                feed_name = COALESCE($2, feed_name),
+                import_url = COALESCE($3, import_url),
+                is_active = COALESCE($4, is_active),
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $5
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(&data.feed_name)
+        .bind(&data.import_url)
+        .bind(data.is_active)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(feed)
+    }
+
+    /// Delete iCal feed scoped to an organization.
+    ///
+    /// SECURITY (#804): the `AND organization_id = $2` guard prevents a tenant
+    /// from deleting another org's feed.
+    pub async fn delete_ical_feed_for_org(
+        &self,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result =
+            sqlx::query(r#"DELETE FROM rental_ical_feeds WHERE id = $1 AND organization_id = $2"#)
+                .bind(id)
+                .bind(org_id)
+                .execute(&self.pool)
+                .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     /// Update iCal feed.
