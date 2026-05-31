@@ -6,7 +6,7 @@ use api_core::extractors::AuthUser;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -23,6 +23,168 @@ use utoipa::IntoParams;
 use uuid::Uuid;
 
 use crate::state::AppState;
+
+// ============================================
+// Tenant-isolation helpers (issue #827)
+// ============================================
+//
+// Every emergency handler used to trust a client-supplied `organization_id`
+// (query param or JSON body) and pass it straight to the repository, so any
+// authenticated user could read or mutate another org's protocols, incidents,
+// broadcasts, contacts and drills simply by supplying the victim org's UUID.
+//
+// The fix mirrors the `verify_org_access` idiom in `routes/vendors.rs` (#825)
+// and `routes/financial.rs` (#802): the client-supplied org is never trusted on
+// its own; it is only accepted once the authenticated principal is confirmed to
+// be an active member of it. Cross-tenant callers get `403 FORBIDDEN` on the
+// org-keyed paths. The repository's by-id queries are already keyed on
+// `(id, organization_id)`, so once the org is verified a foreign UUID resolves
+// to `None` → `404`, leaving "missing" and "forbidden" indistinguishable.
+
+/// Membership check that maps DB errors to a `500` response but returns a plain
+/// bool for the membership outcome, letting the caller pick 403 vs 404.
+async fn is_org_member(state: &AppState, user_id: Uuid, org_id: Uuid) -> Result<bool, Response> {
+    state
+        .org_member_repo
+        .is_member(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+                .into_response()
+        })
+}
+
+/// Verify the authenticated user is an active member of `org_id`. Returns a
+/// ready-to-send `403` response on mismatch, so callers can simply
+/// `if let Err(resp) = verify_org_access(..).await { return resp; }`.
+async fn verify_org_access(state: &AppState, user_id: Uuid, org_id: Uuid) -> Result<(), Response> {
+    if !is_org_member(state, user_id, org_id).await? {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        )
+            .into_response());
+    }
+    Ok(())
+}
+
+/// Verify the authenticated user has at least manager-level authority in
+/// `org_id`. Used to gate mass-notification / incident-creation actions
+/// (broadcast + incident create — issue #827). Membership is checked first
+/// (403 for non-members), then role: org_admin / manager and the
+/// platform-level admin roles pass; ordinary residents/owners get `403`.
+async fn verify_org_manager(state: &AppState, user_id: Uuid, org_id: Uuid) -> Result<(), Response> {
+    verify_org_access(state, user_id, org_id).await?;
+
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to load org role");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+                .into_response()
+        })?;
+
+    let is_manager = matches!(
+        role_type.as_deref().map(str::to_lowercase).as_deref(),
+        Some("super_admin" | "superadmin" | "platform_admin" | "platformadmin")
+            | Some("org_admin" | "orgadmin")
+            | Some("manager")
+    );
+
+    if !is_manager {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role required for this action",
+            )),
+        )
+            .into_response());
+    }
+    Ok(())
+}
+
+/// Verify the caller is a member of `org_id` AND that `incident_id` belongs to
+/// it. Used for the incident sub-resources (attachments / updates) whose repo
+/// methods key only on `incident_id` and therefore cannot self-scope. Returns
+/// `404` when the incident does not exist in the caller's org so a foreign
+/// incident UUID is indistinguishable from a missing one.
+async fn verify_incident_in_org(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+    incident_id: Uuid,
+) -> Result<(), Response> {
+    verify_org_access(state, user_id, org_id).await?;
+
+    let found = state
+        .emergency_repo
+        .find_incident_by_id(org_id, incident_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to load incident");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+                .into_response()
+        })?;
+
+    if found.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Incident not found")),
+        )
+            .into_response());
+    }
+    Ok(())
+}
+
+/// Verify the caller is a member of `org_id` AND that `broadcast_id` belongs to
+/// it. Used for the broadcast sub-resources (acknowledge / acknowledgments)
+/// whose repo methods key only on `broadcast_id`. `404` on cross-tenant.
+async fn verify_broadcast_in_org(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+    broadcast_id: Uuid,
+) -> Result<(), Response> {
+    verify_org_access(state, user_id, org_id).await?;
+
+    let found = state
+        .emergency_repo
+        .find_broadcast_by_id(org_id, broadcast_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to load broadcast");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+                .into_response()
+        })?;
+
+    if found.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Broadcast not found")),
+        )
+            .into_response());
+    }
+    Ok(())
+}
 
 // ============================================
 // Query Parameter Types
@@ -262,6 +424,9 @@ async fn create_protocol(
     auth: AuthUser,
     Json(req): Json<CreateProtocolRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .create_protocol(req.organization_id, auth.user_id, req.data)
@@ -281,9 +446,12 @@ async fn create_protocol(
 
 async fn list_protocols(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<ProtocolListQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .list_protocols(query.organization_id, EmergencyProtocolQuery::from(&query))
@@ -303,10 +471,13 @@ async fn list_protocols(
 
 async fn get_protocol(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .find_protocol_by_id(query.organization_id, id)
@@ -339,10 +510,13 @@ pub struct UpdateProtocolRequest {
 
 async fn update_protocol(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProtocolRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .update_protocol(req.organization_id, id, req.data)
@@ -367,10 +541,13 @@ async fn update_protocol(
 
 async fn delete_protocol(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .delete_protocol(query.organization_id, id)
@@ -399,9 +576,12 @@ async fn delete_protocol(
 
 async fn create_contact(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Json(req): Json<CreateContactRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .create_contact(req.organization_id, req.data)
@@ -421,9 +601,12 @@ async fn create_contact(
 
 async fn list_contacts(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<ContactListQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .list_contacts(query.organization_id, EmergencyContactQuery::from(&query))
@@ -443,10 +626,13 @@ async fn list_contacts(
 
 async fn get_contact(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .find_contact_by_id(query.organization_id, id)
@@ -479,10 +665,13 @@ pub struct UpdateContactRequest {
 
 async fn update_contact(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateContactRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .update_contact(req.organization_id, id, req.data)
@@ -507,10 +696,13 @@ async fn update_contact(
 
 async fn delete_contact(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .delete_contact(query.organization_id, id)
@@ -542,6 +734,9 @@ async fn create_incident(
     auth: AuthUser,
     Json(req): Json<CreateIncidentRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_manager(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .create_incident(req.organization_id, auth.user_id, req.data)
@@ -561,9 +756,12 @@ async fn create_incident(
 
 async fn list_incidents(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<IncidentListQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .list_incidents(query.organization_id, EmergencyIncidentQuery::from(&query))
@@ -583,9 +781,12 @@ async fn list_incidents(
 
 async fn get_active_incidents(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .get_active_incidents(query.organization_id)
@@ -605,10 +806,13 @@ async fn get_active_incidents(
 
 async fn get_incident(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .find_incident_by_id(query.organization_id, id)
@@ -641,10 +845,13 @@ pub struct UpdateIncidentRequest {
 
 async fn update_incident(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateIncidentRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .update_incident(req.organization_id, id, req.data)
@@ -669,10 +876,13 @@ async fn update_incident(
 
 async fn acknowledge_incident(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_manager(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .acknowledge_incident(query.organization_id, id)
@@ -710,6 +920,9 @@ async fn resolve_incident(
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveIncidentRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .resolve_incident(req.organization_id, id, auth.user_id, &req.resolution)
@@ -734,10 +947,13 @@ async fn resolve_incident(
 
 async fn close_incident(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .close_incident(query.organization_id, id)
@@ -767,8 +983,13 @@ async fn add_incident_attachment(
     State(state): State<AppState>,
     auth: AuthUser,
     Path(id): Path<Uuid>,
+    Query(query): Query<OrgQuery>,
     Json(data): Json<AddIncidentAttachment>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_incident_in_org(&state, auth.user_id, query.organization_id, id).await
+    {
+        return resp;
+    }
     match state
         .emergency_repo
         .add_incident_attachment(id, auth.user_id, data)
@@ -788,9 +1009,14 @@ async fn add_incident_attachment(
 
 async fn list_incident_attachments(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
+    Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_incident_in_org(&state, auth.user_id, query.organization_id, id).await
+    {
+        return resp;
+    }
     match state.emergency_repo.list_incident_attachments(id).await {
         Ok(attachments) => Json(attachments).into_response(),
         Err(e) => {
@@ -808,8 +1034,13 @@ async fn add_incident_update(
     State(state): State<AppState>,
     auth: AuthUser,
     Path(id): Path<Uuid>,
+    Query(query): Query<OrgQuery>,
     Json(data): Json<CreateIncidentUpdate>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_incident_in_org(&state, auth.user_id, query.organization_id, id).await
+    {
+        return resp;
+    }
     match state
         .emergency_repo
         .add_incident_update(id, auth.user_id, data)
@@ -829,9 +1060,14 @@ async fn add_incident_update(
 
 async fn list_incident_updates(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
+    Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_incident_in_org(&state, auth.user_id, query.organization_id, id).await
+    {
+        return resp;
+    }
     match state.emergency_repo.list_incident_updates(id).await {
         Ok(updates) => Json(updates).into_response(),
         Err(e) => {
@@ -854,6 +1090,9 @@ async fn create_broadcast(
     auth: AuthUser,
     Json(req): Json<CreateBroadcastRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_manager(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .create_broadcast(req.organization_id, auth.user_id, req.data)
@@ -873,9 +1112,12 @@ async fn create_broadcast(
 
 async fn list_broadcasts(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<BroadcastListQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .list_broadcasts(query.organization_id, EmergencyBroadcastQuery::from(&query))
@@ -895,10 +1137,13 @@ async fn list_broadcasts(
 
 async fn get_broadcast(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .find_broadcast_by_id(query.organization_id, id)
@@ -923,10 +1168,13 @@ async fn get_broadcast(
 
 async fn deactivate_broadcast(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_manager(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .deactivate_broadcast(query.organization_id, id)
@@ -953,8 +1201,14 @@ async fn acknowledge_broadcast(
     State(state): State<AppState>,
     auth: AuthUser,
     Path(id): Path<Uuid>,
+    Query(query): Query<OrgQuery>,
     Json(data): Json<AcknowledgeBroadcast>,
 ) -> impl IntoResponse {
+    if let Err(resp) =
+        verify_broadcast_in_org(&state, auth.user_id, query.organization_id, id).await
+    {
+        return resp;
+    }
     match state
         .emergency_repo
         .acknowledge_broadcast(id, auth.user_id, data)
@@ -974,9 +1228,15 @@ async fn acknowledge_broadcast(
 
 async fn list_broadcast_acknowledgments(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
+    Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) =
+        verify_broadcast_in_org(&state, auth.user_id, query.organization_id, id).await
+    {
+        return resp;
+    }
     match state
         .emergency_repo
         .list_broadcast_acknowledgments(id)
@@ -1003,6 +1263,9 @@ async fn create_drill(
     auth: AuthUser,
     Json(req): Json<CreateDrillRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .create_drill(req.organization_id, auth.user_id, req.data)
@@ -1022,9 +1285,12 @@ async fn create_drill(
 
 async fn list_drills(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<DrillListQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .list_drills(query.organization_id, EmergencyDrillQuery::from(&query))
@@ -1050,9 +1316,12 @@ struct UpcomingDrillsQuery {
 
 async fn get_upcoming_drills(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<UpcomingDrillsQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     let days = query.days.unwrap_or(30);
     match state
         .emergency_repo
@@ -1073,10 +1342,13 @@ async fn get_upcoming_drills(
 
 async fn get_drill(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .find_drill_by_id(query.organization_id, id)
@@ -1109,10 +1381,13 @@ pub struct UpdateDrillRequest {
 
 async fn update_drill(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDrillRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .update_drill(req.organization_id, id, req.data)
@@ -1137,10 +1412,13 @@ async fn update_drill(
 
 async fn start_drill(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .start_drill(query.organization_id, id)
@@ -1176,10 +1454,13 @@ pub struct CompleteDrillRequest {
 
 async fn complete_drill(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<CompleteDrillRequest>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, req.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .complete_drill(req.organization_id, id, req.data)
@@ -1207,10 +1488,13 @@ async fn complete_drill(
 
 async fn cancel_drill(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .cancel_drill(query.organization_id, id)
@@ -1238,10 +1522,13 @@ async fn cancel_drill(
 
 async fn delete_drill(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .delete_drill(query.organization_id, id)
@@ -1273,9 +1560,12 @@ async fn delete_drill(
 
 async fn get_statistics(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .get_statistics(query.organization_id)
@@ -1295,9 +1585,12 @@ async fn get_statistics(
 
 async fn get_incidents_by_type(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .get_incident_summary_by_type(query.organization_id)
@@ -1317,9 +1610,12 @@ async fn get_incidents_by_type(
 
 async fn get_incidents_by_severity(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> impl IntoResponse {
+    if let Err(resp) = verify_org_access(&state, auth.user_id, query.organization_id).await {
+        return resp;
+    }
     match state
         .emergency_repo
         .get_incident_summary_by_severity(query.organization_id)
