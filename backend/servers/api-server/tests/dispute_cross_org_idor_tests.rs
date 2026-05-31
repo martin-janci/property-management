@@ -34,6 +34,8 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use db::repositories::DisputeRepository;
+
 use common::TestApp;
 
 // ---------------------------------------------------------------------------
@@ -260,4 +262,128 @@ async fn update_mediation_notes_cross_org_claim_rejected(pool: PgPool) {
     let resp = app.execute(req).await;
 
     assert_rejected(resp.status, "PATCH /mediation-notes cross-org X-Tenant-ID");
+}
+
+// ---------------------------------------------------------------------------
+// Repository-layer contract tests (issue #760 / #834)
+//
+// The HTTP tests above prove cross-org mutations never reach the row, but the
+// TestApp harness cannot mint a JWT carrying `tenant_id` for the happy path.
+// These repo tests pin the org-scope contract directly — including the
+// positive (owning org reads its dispute) case the task requires.
+// ---------------------------------------------------------------------------
+
+/// Seed a dispute carrying mediation_notes; returns its id.
+async fn seed_dispute_with_notes(pool: &PgPool, org_id: Uuid, filed_by: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO disputes (
+            organization_id, reference_number, category, title, description,
+            status, priority, filed_by, mediation_notes
+        )
+        VALUES ($1, $2, 'noise', 'Notes dispute', 'Has confidential notes',
+                'under_review', 'medium', $3, 'CONFIDENTIAL mediation notes')
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(format!("DISP-NOTES-{}", Uuid::new_v4()))
+    .bind(filed_by)
+    .fetch_one(pool)
+    .await
+    .expect("seed dispute with notes")
+}
+
+// R1 — find_by_id_with_details_for_org: owner reads, foreign org gets None.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn find_by_id_for_org_is_scoped_to_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "repo-find-a").await;
+    let org_b = seed_org(&pool, "repo-find-b").await;
+    let user_a = seed_user(&pool, "repo-find-a@dispute-idor.test").await;
+    let dispute_a = seed_dispute(&pool, org_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+
+    // The owning org reads its dispute (positive case).
+    let own = repo
+        .find_by_id_with_details_for_org(dispute_a, org_a)
+        .await
+        .expect("find with right org");
+    assert!(own.is_some(), "org A must read its own dispute by id");
+    assert_eq!(own.unwrap().dispute.id, dispute_a);
+
+    // A foreign org gets nothing (closed IDOR → handler returns 404).
+    let cross = repo
+        .find_by_id_with_details_for_org(dispute_a, org_b)
+        .await
+        .expect("find with wrong org");
+    assert!(cross.is_none(), "org B must not read org A's dispute by id");
+}
+
+// R2 — withdraw: owner withdraws, foreign org is NotFound and the row stands.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn withdraw_is_scoped_to_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "repo-wd-a").await;
+    let org_b = seed_org(&pool, "repo-wd-b").await;
+    let user_a = seed_user(&pool, "repo-wd-a@dispute-idor.test").await;
+    let dispute_a = seed_dispute(&pool, org_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+
+    // A foreign org cannot withdraw — NotFound, and the status is unchanged.
+    let cross = repo.withdraw(dispute_a, org_b, user_a).await;
+    assert!(
+        matches!(cross, Err(::common::errors::AppError::NotFound(_))),
+        "org B withdraw must fail with NotFound, got {cross:?}"
+    );
+    assert_eq!(
+        dispute_status(&pool, dispute_a).await,
+        "under_review",
+        "cross-org withdraw must not mutate the row"
+    );
+
+    // The owning org withdraws successfully (positive case).
+    repo.withdraw(dispute_a, org_a, user_a)
+        .await
+        .expect("org A withdraws its own dispute");
+    assert_eq!(
+        dispute_status(&pool, dispute_a).await,
+        "withdrawn",
+        "org A withdraw must set status=withdrawn"
+    );
+}
+
+// R3 — mediation_notes are present in the row for the owning org. The HTTP
+// confidentiality gate (manager/mediator only) is applied in the handler; this
+// pins that the data exists and is org-scoped so the gate has something to
+// redact.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mediation_notes_present_for_owning_org(pool: PgPool) {
+    let org_a = seed_org(&pool, "repo-notes-a").await;
+    let org_b = seed_org(&pool, "repo-notes-b").await;
+    let user_a = seed_user(&pool, "repo-notes-a@dispute-idor.test").await;
+    let dispute_a = seed_dispute_with_notes(&pool, org_a, user_a).await;
+
+    let repo = DisputeRepository::new(pool.clone());
+
+    let own = repo
+        .find_by_id_with_details_for_org(dispute_a, org_a)
+        .await
+        .expect("find with right org")
+        .expect("dispute exists for owner");
+    assert_eq!(
+        own.dispute.mediation_notes.as_deref(),
+        Some("CONFIDENTIAL mediation notes"),
+        "owning org must see mediation_notes at the repo layer"
+    );
+
+    // Foreign org cannot reach the dispute at all.
+    let cross = repo
+        .find_by_id_with_details_for_org(dispute_a, org_b)
+        .await
+        .expect("find with wrong org");
+    assert!(
+        cross.is_none(),
+        "org B must not read org A's dispute (and thus never its notes)"
+    );
 }

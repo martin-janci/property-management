@@ -355,14 +355,29 @@ async fn get_statistics(
 }
 
 /// Get a specific dispute by ID.
+///
+/// Issue #760 / #834:
+///   * The lookup is scoped to the caller's JWT tenant, so a dispute owned by
+///     another org returns 404 (no cross-tenant IDOR).
+///   * `mediation_notes` is confidential — it is only returned to a
+///     manager/admin or the assigned mediator. For every other party it is
+///     redacted to `None`, even though they may read the rest of the dispute.
 async fn get_dispute(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DisputeWithDetails>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    // Derive the org from the verified JWT so the read cannot cross tenants.
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
+
+    let mut details = state
         .dispute_repo
-        .find_by_id_with_details(id)
+        .find_by_id_with_details_for_org(id, organization_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get dispute: {:?}", e);
@@ -371,13 +386,42 @@ async fn get_dispute(
                 Json(ErrorResponse::new("DB_ERROR", "Failed to get dispute")),
             )
         })?
-        .map(Json)
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Dispute not found")),
             )
-        })
+        })?;
+
+    // Confidentiality gate for mediation_notes: visible to managers/admins and
+    // the assigned mediator only. Writes are already restricted in
+    // `update_mediation_notes`; without this read gate the notes leaked to any
+    // org member that could read the dispute.
+    let is_manager = user
+        .role
+        .as_ref()
+        .is_some_and(|r| r.is_manager() || r.is_admin());
+
+    if !is_manager && details.dispute.mediation_notes.is_some() {
+        let is_mediator = state
+            .dispute_repo
+            .find_party_by_user(id, user.user_id)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to verify mediator access: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Failed to get dispute")),
+                )
+            })?
+            .is_some_and(|p| p.role == db::models::disputes::party_role::MEDIATOR);
+
+        if !is_mediator {
+            details.dispute.mediation_notes = None;
+        }
+    }
+
+    Ok(Json(details))
 }
 
 /// Update dispute status — enforces the state machine.
@@ -626,23 +670,39 @@ async fn update_mediation_notes(
 }
 
 /// Withdraw a dispute.
+///
+/// Issue #760 / #834: the withdraw is scoped to the caller's JWT tenant, so a
+/// dispute owned by another org returns 404 and is never mutated.
 async fn withdraw_dispute(
     State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
+
+    match state
         .dispute_repo
-        .withdraw(id, user.user_id)
+        .withdraw(id, organization_id, user.user_id)
         .await
-        .map(|_| StatusCode::NO_CONTENT)
-        .map_err(|e| {
+    {
+        Ok(()) => Ok(StatusCode::NO_CONTENT),
+        Err(common::errors::AppError::NotFound(_)) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Dispute not found")),
+        )),
+        Err(e) => {
             tracing::error!("Failed to withdraw dispute: {:?}", e);
-            (
+            Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to withdraw dispute")),
-            )
-        })
+            ))
+        }
+    }
 }
 
 /// List parties for a dispute.
