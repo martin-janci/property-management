@@ -191,6 +191,99 @@ impl FaultRepository {
         Ok(fault)
     }
 
+    /// Return whether fault `id` belongs to `organization_id` (issue #796).
+    ///
+    /// Several by-id fault handlers authenticate the caller with
+    /// `RequestPrincipal` but reach the database through the non-RLS pool
+    /// methods below (`assign`, `resolve`, `confirm`, `reopen`, timeline and
+    /// attachment reads/writes). Those queries carry no `organization_id`
+    /// predicate, so org B could read or mutate org A's fault by guessing its
+    /// UUID (cross-tenant IDOR). This method threads the caller's resolved
+    /// tenant into the `WHERE` clause and is the authorization guard
+    /// (`require_fault_in_tenant`) in front of every such handler. A
+    /// foreign-org (or missing) id returns `false`, which the handler maps to
+    /// `404` so existence is not probeable. Mirrors the `_for_org` /
+    /// `_belongs_to_org` repository idiom introduced for the AI/LLM routes
+    /// (#766/#816). Uses `EXISTS` rather than `SELECT *` so the guard never
+    /// decodes the fault's enum columns (`fault_category` etc.) — it only needs
+    /// to prove ownership.
+    pub async fn fault_belongs_to_org(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let exists: bool = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM faults
+                WHERE id = $1 AND organization_id = $2
+            )
+            "#,
+        )
+        .bind(id)
+        .bind(organization_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(exists)
+    }
+
+    /// Return whether `building_id` belongs to `organization_id` (issue #796).
+    ///
+    /// `create_fault` accepts a client-supplied `building_id`/`unit_id`. The
+    /// RLS `WITH CHECK` on `faults` only validates the *new row's*
+    /// `organization_id`, not that the referenced building belongs to that
+    /// org — so without this gate a caller could file a fault against another
+    /// tenant's building. The handler rejects the create with `404` when this
+    /// returns `false`.
+    pub async fn building_belongs_to_org(
+        &self,
+        building_id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let exists: bool = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM buildings
+                WHERE id = $1 AND organization_id = $2
+            )
+            "#,
+        )
+        .bind(building_id)
+        .bind(organization_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(exists)
+    }
+
+    /// Return whether `unit_id` sits in `building_id` (issue #796).
+    ///
+    /// Paired with [`building_belongs_to_org`] this transitively proves the
+    /// unit belongs to the caller's tenant *and* sits in the building named on
+    /// the same request, rejecting a fault that references a unit from a
+    /// different building.
+    pub async fn unit_in_building(
+        &self,
+        unit_id: Uuid,
+        building_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let exists: bool = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM units
+                WHERE id = $1 AND building_id = $2
+            )
+            "#,
+        )
+        .bind(unit_id)
+        .bind(building_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(exists)
+    }
+
     /// Update fault details with RLS context (reporter can edit before triage).
     pub async fn update_rls<'e, E>(
         &self,
@@ -919,6 +1012,28 @@ impl FaultRepository {
             .await?;
 
         Ok(())
+    }
+
+    /// Delete an attachment **scoped to its fault** (issue #796).
+    ///
+    /// The HTTP route is `/{fault_id}/attachments/{attachment_id}`. Scoping the
+    /// delete to `fault_id` (already authorized against the caller's tenant by
+    /// `load_fault_for_tenant`) ensures an attachment can only be removed
+    /// through the fault that owns it — a foreign `attachment_id` paired with
+    /// an owned `fault_id` deletes nothing. Returns `true` when a row was
+    /// deleted, which the handler maps to `204` vs `404`.
+    pub async fn delete_attachment_for_fault(
+        &self,
+        attachment_id: Uuid,
+        fault_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query("DELETE FROM fault_attachments WHERE id = $1 AND fault_id = $2")
+            .bind(attachment_id)
+            .bind(fault_id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     // ========================================================================

@@ -31,6 +31,20 @@ use uuid::Uuid;
 // forge tenancy. That helper has been deleted; every handler now goes
 // through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
 //
+// SECURITY (issue #796): authenticating the caller is not enough. The fault
+// table has RLS, so handlers that reach the DB through `RlsConnection`
+// (`create_rls`, `find_by_id_rls`, `update_rls`, `update_status_rls`) are
+// org-isolated by the `faults_tenant_isolation` policy. But several by-id
+// handlers reached the DB through the *non-RLS* pool methods (`assign`,
+// `resolve`, `confirm`, `reopen`, timeline and attachment reads/writes), which
+// carry no `organization_id` predicate — so org B could read or mutate org A's
+// fault by guessing its UUID (cross-tenant IDOR), and two attachment handlers
+// had no auth extractor at all. Every such handler now authorizes the fault
+// against the caller's resolved tenant via `require_fault_in_tenant` before
+// touching the resource. `create_fault` additionally validates that the
+// client-supplied `building_id`/`unit_id` belong to that tenant (the RLS
+// `WITH CHECK` only validates the new row's own `organization_id`).
+//
 // TODO(security): the `is_manager` branches below previously trusted the
 // client-supplied role. They have been replaced with `false` (least
 // privilege) and need a real role lookup against the `memberships` table —
@@ -50,6 +64,101 @@ fn require_tenant_id(
             )),
         )
     })
+}
+
+/// Authorize a fault by id against the caller's resolved tenant (issue #796).
+///
+/// This is the IDOR guard for every fault by-id handler that does *not* go
+/// through `RlsConnection`. It threads `tenant_id` (the principal's
+/// `effective_org`) into the SQL `WHERE` clause via
+/// [`FaultRepository::fault_belongs_to_org`]. A fault that does not exist *or*
+/// belongs to a different tenant is collapsed to a single `404` so existence
+/// cannot be probed across tenants.
+async fn require_fault_in_tenant(
+    state: &AppState,
+    tenant_id: Uuid,
+    fault_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let belongs = state
+        .fault_repo
+        .fault_belongs_to_org(fault_id, tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to authorize fault for tenant");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to load fault")),
+            )
+        })?;
+
+    if !belongs {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Fault not found")),
+        ));
+    }
+
+    Ok(())
+}
+
+/// Validate that a client-supplied `building_id` (and optional `unit_id`)
+/// belong to the caller's tenant before a fault is created against them
+/// (issue #796).
+///
+/// Returns `404` (not `403`) for a foreign/unknown building or unit so a
+/// caller cannot enumerate another tenant's buildings or units through the
+/// fault-create endpoint.
+async fn require_building_and_unit_in_tenant(
+    state: &AppState,
+    tenant_id: Uuid,
+    building_id: Uuid,
+    unit_id: Option<Uuid>,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let building_ok = state
+        .fault_repo
+        .building_belongs_to_org(building_id, tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to verify building access");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to verify building access",
+                )),
+            )
+        })?;
+    if !building_ok {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+        ));
+    }
+
+    if let Some(unit_id) = unit_id {
+        let unit_ok = state
+            .fault_repo
+            .unit_in_building(unit_id, building_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Failed to verify unit access");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to verify unit access",
+                    )),
+                )
+            })?;
+        if !unit_ok {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Unit not found")),
+            ));
+        }
+    }
+
+    Ok(())
 }
 
 // ============================================================================
@@ -290,6 +399,13 @@ async fn create_fault(
 ) -> Result<(StatusCode, Json<CreateFaultResponse>), (StatusCode, Json<ErrorResponse>)> {
     let tenant_id = require_tenant_id(&principal)?;
 
+    // SECURITY (issue #796): the building/unit are client-supplied. RLS only
+    // guarantees the new fault row carries this tenant's `organization_id`; it
+    // does NOT verify the referenced building belongs to the tenant. Validate
+    // both before insert so a caller cannot file a fault against another
+    // tenant's building/unit.
+    require_building_and_unit_in_tenant(&state, tenant_id, req.building_id, req.unit_id).await?;
+
     let data = CreateFault {
         organization_id: tenant_id,
         building_id: req.building_id,
@@ -441,6 +557,9 @@ async fn get_fault(
     Path(id): Path<Uuid>,
 ) -> Result<Json<FaultDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): `find_by_id_with_details` is a non-RLS pool query
+    // with no org predicate — guard cross-tenant reads first.
+    require_fault_in_tenant(&state, tenant_id, id).await?;
     // P0-07: real role lookup. Previously this was hardcoded `false` as a
     // least-privilege placeholder, which silently disabled every
     // manager-only branch (timeline visibility, internal notes, status
@@ -675,7 +794,10 @@ async fn assign_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<AssignFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): `assign` is a non-RLS mutation by id — authorize
+    // the fault against the caller's tenant first.
+    require_fault_in_tenant(&state, tenant_id, id).await?;
 
     let data = AssignFault {
         assigned_to: req.assigned_to,
@@ -801,7 +923,9 @@ async fn resolve_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): non-RLS mutation by id — authorize first.
+    require_fault_in_tenant(&state, tenant_id, id).await?;
 
     let data = ResolveFault {
         resolution_notes: req.resolution_notes,
@@ -849,7 +973,9 @@ async fn confirm_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<ConfirmFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): non-RLS mutation by id — authorize first.
+    require_fault_in_tenant(&state, tenant_id, id).await?;
 
     let data = ConfirmFault {
         rating: req.rating,
@@ -897,7 +1023,9 @@ async fn reopen_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<ReopenFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): non-RLS mutation by id — authorize first.
+    require_fault_in_tenant(&state, tenant_id, id).await?;
 
     let data = ReopenFault { reason: req.reason };
 
@@ -940,6 +1068,10 @@ async fn list_comments(
     Path(id): Path<Uuid>,
 ) -> Result<Json<TimelineResponse>, (StatusCode, Json<ErrorResponse>)> {
     let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): `list_timeline` is a non-RLS read by fault id —
+    // authorize the fault against the caller's tenant before exposing its
+    // timeline (comments / work notes).
+    require_fault_in_tenant(&state, tenant_id, id).await?;
     // P0-07: real role lookup (see get_fault above).
     let is_manager = MembershipRepository::new(state.db.clone())
         .is_manager_in_org(principal.user_id, tenant_id)
@@ -981,7 +1113,9 @@ async fn add_comment(
     Path(id): Path<Uuid>,
     Json(req): Json<AddCommentRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): non-RLS write by fault id — authorize first.
+    require_fault_in_tenant(&state, tenant_id, id).await?;
 
     let data = AddFaultComment {
         note: req.note,
@@ -1026,7 +1160,9 @@ async fn add_work_note(
     Path(id): Path<Uuid>,
     Json(req): Json<AddWorkNoteRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): non-RLS write by fault id — authorize first.
+    require_fault_in_tenant(&state, tenant_id, id).await?;
 
     let data = AddWorkNote { note: req.note };
 
@@ -1062,8 +1198,15 @@ async fn add_work_note(
 )]
 async fn list_attachments(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AttachmentsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (issue #796): this handler previously took no auth extractor at
+    // all — anyone could enumerate a fault's attachments by guessing its UUID.
+    // Require a verified principal and authorize the fault against its tenant.
+    let tenant_id = require_tenant_id(&principal)?;
+    require_fault_in_tenant(&state, tenant_id, id).await?;
+
     match state.fault_repo.list_attachments(id).await {
         Ok(attachments) => Ok(Json(AttachmentsResponse { attachments })),
         Err(e) => {
@@ -1099,7 +1242,10 @@ async fn add_attachment(
     Path(id): Path<Uuid>,
     Json(req): Json<AddAttachmentRequest>,
 ) -> Result<(StatusCode, Json<FaultAttachment>), (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY (issue #796): non-RLS write keyed by fault id — authorize first
+    // so a caller cannot attach files to another tenant's fault.
+    require_fault_in_tenant(&state, tenant_id, id).await?;
 
     let data = CreateFaultAttachment {
         fault_id: id,
@@ -1145,20 +1291,39 @@ async fn add_attachment(
 )]
 async fn delete_attachment(
     State(state): State<AppState>,
-    Path((_id, attachment_id)): Path<(Uuid, Uuid)>,
+    principal: RequestPrincipal,
+    Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.fault_repo.delete_attachment(attachment_id).await {
-        Ok(_) => Ok(StatusCode::NO_CONTENT),
-        Err(e) => {
+    // SECURITY (issue #796): this handler previously took no auth extractor and
+    // deleted by `attachment_id` alone — any caller could delete any fault's
+    // attachment by guessing UUIDs. Require a verified principal, authorize the
+    // owning fault against the tenant, then delete scoped to that fault so a
+    // foreign `attachment_id` cannot ride in on an owned fault id.
+    let tenant_id = require_tenant_id(&principal)?;
+    require_fault_in_tenant(&state, tenant_id, id).await?;
+
+    let deleted = state
+        .fault_repo
+        .delete_attachment_for_fault(attachment_id, id)
+        .await
+        .map_err(|e| {
             tracing::error!("Failed to delete attachment: {}", e);
-            Err((
+            (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "INTERNAL_ERROR",
                     "Failed to delete attachment",
                 )),
-            ))
-        }
+            )
+        })?;
+
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Attachment not found")),
+        ))
     }
 }
 
