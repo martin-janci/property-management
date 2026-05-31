@@ -311,10 +311,11 @@ pub use rental::{
     BookingWithGuests, BookingsResponse, CalendarBlock, CalendarEvent, CheckInReminder,
     ConnectionStatus, CreateBooking, CreateCalendarBlock, CreateGuest, CreateICalFeed,
     CreatePlatformConnection, GenerateReport, GuestSummary, ICalFeed, ICalFeedSummary,
-    NationalityStats, OAuthCallback, PlatformConnectionSummary, PlatformSyncStatus, RegisterGuest,
-    RentalBooking, RentalGuest, RentalGuestReport, RentalPlatformConnection, RentalStatistics,
-    ReportPreview, ReportSummary, SubmitReport, UnitAvailability, UpdateBooking,
-    UpdateBookingStatus, UpdateGuest, UpdateICalFeed, UpdatePlatformConnection,
+    NationalityStats, OAuthCallback, PlatformConnectionDetail, PlatformConnectionSummary,
+    PlatformSyncStatus, RegisterGuest, RentalBooking, RentalGuest, RentalGuestReport,
+    RentalPlatformConnection, RentalStatistics, ReportPreview, ReportSummary, SubmitReport,
+    UnitAvailability, UpdateBooking, UpdateBookingStatus, UpdateGuest, UpdateICalFeed,
+    UpdatePlatformConnection,
 };
 
 // Epic 19: Lease Management & Tenant Screening
