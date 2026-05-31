@@ -61,8 +61,19 @@ impl SignatureRequestRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        // Also update the document's signature status
-        sqlx::query(
+        // Also update the document's signature status. `documents` is under
+        // FORCE ROW LEVEL SECURITY (#754), so this write must run with the
+        // document's org context set on the connection (this method is given
+        // the organization_id directly).
+        let mut conn = self.pool.acquire().await?;
+        crate::tenant_context::set_request_context(
+            &mut *conn,
+            Some(organization_id),
+            Some(created_by),
+            false,
+        )
+        .await?;
+        let update_result = sqlx::query(
             r#"
             UPDATE documents
             SET signature_status = 'pending', signature_request_id = $1
@@ -71,8 +82,10 @@ impl SignatureRequestRepository {
         )
         .bind(record.id)
         .bind(document_id)
-        .execute(&self.pool)
-        .await?;
+        .execute(&mut *conn)
+        .await;
+        let _ = crate::tenant_context::clear_request_context(&mut *conn).await;
+        update_result?;
 
         Ok(record)
     }
@@ -272,11 +285,25 @@ impl SignatureRequestRepository {
             SignatureRequestStatus::Pending => "pending",
         };
 
-        sqlx::query("UPDATE documents SET signature_status = $1 WHERE signature_request_id = $2")
-            .bind(doc_status)
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+        // `documents` is under FORCE ROW LEVEL SECURITY (#754): set the
+        // request's org context on a dedicated connection for this write.
+        let mut conn = self.pool.acquire().await?;
+        crate::tenant_context::set_request_context(
+            &mut *conn,
+            Some(record.organization_id),
+            None,
+            false,
+        )
+        .await?;
+        let doc_update = sqlx::query(
+            "UPDATE documents SET signature_status = $1 WHERE signature_request_id = $2",
+        )
+        .bind(doc_status)
+        .bind(id)
+        .execute(&mut *conn)
+        .await;
+        let _ = crate::tenant_context::clear_request_context(&mut *conn).await;
+        doc_update?;
 
         Ok(record)
     }
@@ -302,13 +329,24 @@ impl SignatureRequestRepository {
         .await?
         .ok_or_else(|| SqlxError::RowNotFound)?;
 
-        // Update document signature status
-        sqlx::query(
+        // Update document signature status. `documents` is under FORCE ROW
+        // LEVEL SECURITY (#754): set the request's org context for this write.
+        let mut conn = self.pool.acquire().await?;
+        crate::tenant_context::set_request_context(
+            &mut *conn,
+            Some(record.organization_id),
+            None,
+            false,
+        )
+        .await?;
+        let doc_update = sqlx::query(
             "UPDATE documents SET signature_status = 'none', signature_request_id = NULL WHERE signature_request_id = $1",
         )
         .bind(id)
-        .execute(&self.pool)
-        .await?;
+        .execute(&mut *conn)
+        .await;
+        let _ = crate::tenant_context::clear_request_context(&mut *conn).await;
+        doc_update?;
 
         Ok(record)
     }
@@ -442,8 +480,13 @@ impl SignatureRequestRepository {
         .execute(&self.pool)
         .await?;
 
-        // Also update documents
-        sqlx::query(
+        // Also update documents. This is a cross-org background sweep (the
+        // scheduler runs it with no tenant context), and `documents` is under
+        // FORCE ROW LEVEL SECURITY (#754). Run it with super-admin context so
+        // the maintenance write spans all orgs as intended.
+        let mut conn = self.pool.acquire().await?;
+        crate::tenant_context::set_request_context(&mut *conn, None, None, true).await?;
+        let doc_update = sqlx::query(
             r#"
             UPDATE documents
             SET signature_status = 'none', signature_request_id = NULL
@@ -452,8 +495,10 @@ impl SignatureRequestRepository {
             )
             "#,
         )
-        .execute(&self.pool)
-        .await?;
+        .execute(&mut *conn)
+        .await;
+        let _ = crate::tenant_context::clear_request_context(&mut *conn).await;
+        doc_update?;
 
         Ok(result.rows_affected() as i64)
     }
