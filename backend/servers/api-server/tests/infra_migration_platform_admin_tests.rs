@@ -73,7 +73,12 @@ fn infrastructure_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::POST,
             format!("{base}/feature-flags"),
-            Some(r#"{"key":"x","name":"x","description":"x","enabled":true}"#),
+            // Well-formed body so the request reaches the platform-admin gate
+            // (an invalid body would 422 at extraction, masking whether the
+            // 403 authz check actually fires).
+            Some(
+                r#"{"key":"x","name":"x","description":"x","enabled":true,"default_value":true,"value_type":"Boolean","environment":"dev"}"#,
+            ),
         ),
         (Method::GET, format!("{base}/jobs"), None),
         (Method::GET, format!("{base}/health/detailed"), None),
@@ -93,7 +98,10 @@ fn migration_cases() -> Vec<(Method, String, Option<&'static str>)> {
         (
             Method::POST,
             format!("{base}/export"),
-            Some(r#"{"categories":[],"privacy_options":{}}"#),
+            // Omit privacy_options so its `#[serde(default)]` applies; a literal
+            // `{}` would force serde to require its non-default bool fields and
+            // 422 before the platform-admin gate is reached.
+            Some(r#"{"categories":["buildings"]}"#),
         ),
         (Method::GET, format!("{base}/export/history"), None),
     ]
