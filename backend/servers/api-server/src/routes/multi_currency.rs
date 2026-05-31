@@ -226,12 +226,19 @@ async fn create_property_currency_config(
 /// Get property currency configuration
 async fn get_property_currency_config(
     State(s): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(building_id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let org_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::bad_request("Tenant context required")),
+        )
+    })?;
+
     match s
         .multi_currency_repo
-        .get_property_currency_config(building_id)
+        .get_property_currency_config(building_id, org_id)
         .await
     {
         Ok(Some(config)) => Ok(Json(to_json_value(config)?)),
