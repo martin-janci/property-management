@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use super::{
     install::{AirbnbCallbackResponse, OAuthCallbackQuery},
-    sync::OrgIdPath,
+    sync::{verify_org_access, OrgIdPath},
 };
 use crate::state::AppState;
 use common::errors::ErrorResponse;
@@ -103,6 +103,12 @@ pub async fn airbnb_oauth_callback(
             )),
         ));
     }
+
+    // Issue #765: prevent cross-org IDOR — the embedded-state org match above
+    // is not an authorization check (the `state` value is client-visible and
+    // forgeable). Require the authenticated caller to actually be a member of
+    // the organization before binding Airbnb tokens to it.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     // Issue #711: pull Airbnb OAuth credentials from the AppState-cached
     // config rather than re-reading the env on every callback.
