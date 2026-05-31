@@ -179,6 +179,7 @@ async fn create_board_member(
 /// Get a board member by ID.
 async fn get_board_member(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMember>> {
     let member = state
@@ -194,6 +195,7 @@ async fn get_board_member(
 /// Update a board member.
 async fn update_board_member(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateBoardMember>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMember>> {
@@ -209,6 +211,7 @@ async fn update_board_member(
 /// Delete a board member.
 async fn delete_board_member(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     state
@@ -223,6 +226,7 @@ async fn delete_board_member(
 /// Get board member attendance history.
 async fn get_member_attendance(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::AttendanceHistory>> {
     let history = state
@@ -274,6 +278,7 @@ async fn create_meeting(
 /// Get a meeting by ID.
 async fn get_meeting(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingDetail>> {
     let detail = state
@@ -289,6 +294,7 @@ async fn get_meeting(
 /// Update a meeting.
 async fn update_meeting(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateBoardMeeting>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
@@ -304,6 +310,7 @@ async fn update_meeting(
 /// Delete a meeting.
 async fn delete_meeting(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     state
@@ -318,6 +325,7 @@ async fn delete_meeting(
 /// Start a meeting.
 async fn start_meeting(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
     let meeting = state
@@ -332,6 +340,7 @@ async fn start_meeting(
 /// End a meeting.
 async fn end_meeting(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
     let meeting = state
@@ -346,6 +355,7 @@ async fn end_meeting(
 /// Cancel a meeting.
 async fn cancel_meeting(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
     let meeting = state
@@ -364,6 +374,7 @@ async fn cancel_meeting(
 /// List agenda items for a meeting.
 async fn list_agenda_items(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingAgendaItem>>> {
     let items = state
@@ -395,6 +406,7 @@ async fn add_agenda_item(
 /// Get an agenda item.
 async fn get_agenda_item(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
     let item = state
@@ -410,6 +422,7 @@ async fn get_agenda_item(
 /// Update an agenda item.
 async fn update_agenda_item(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateAgendaItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
@@ -430,6 +443,7 @@ struct CompleteAgendaItemRequest {
 
 async fn complete_agenda_item(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<CompleteAgendaItemRequest>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
@@ -445,6 +459,7 @@ async fn complete_agenda_item(
 /// Delete an agenda item.
 async fn delete_agenda_item(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     state
@@ -463,6 +478,7 @@ async fn delete_agenda_item(
 /// List motions for a meeting.
 async fn list_meeting_motions(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingMotion>>> {
     let motions = state
@@ -510,6 +526,7 @@ async fn create_motion(
 /// Get a motion by ID.
 async fn get_motion(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MotionDetail>> {
     let detail = state
@@ -525,6 +542,7 @@ async fn get_motion(
 /// Update a motion.
 async fn update_motion(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateMotion>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
@@ -555,6 +573,7 @@ async fn second_motion(
 /// Start voting on a motion.
 async fn start_motion_voting(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
     let motion = state
@@ -569,6 +588,7 @@ async fn start_motion_voting(
 /// End voting on a motion.
 async fn end_motion_voting(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
     let motion = state
@@ -583,6 +603,7 @@ async fn end_motion_voting(
 /// Cast a vote on a motion.
 async fn cast_vote(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(motion_id): Path<Uuid>,
     Json(mut input): Json<CastVote>,
 ) -> ApiResult<Json<db::models::board_meetings::MotionVote>> {
@@ -602,6 +623,7 @@ async fn cast_vote(
 /// Delete a motion.
 async fn delete_motion(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     state
@@ -620,6 +642,7 @@ async fn delete_motion(
 /// List attendance for a meeting.
 async fn list_attendance(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingAttendance>>> {
     let attendance = state
@@ -661,6 +684,7 @@ async fn record_attendance(
 /// Get minutes for a meeting.
 async fn get_minutes(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
     let minutes = state
@@ -693,6 +717,7 @@ async fn create_minutes(
 /// Update minutes.
 async fn update_minutes(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateMinutes>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
@@ -733,6 +758,7 @@ async fn approve_minutes(
 /// List action items for a meeting.
 async fn list_meeting_action_items(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingActionItem>>> {
     let items = state
@@ -780,6 +806,7 @@ async fn create_action_item(
 /// Get an action item.
 async fn get_action_item(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
     let item = state
@@ -795,6 +822,7 @@ async fn get_action_item(
 /// Update an action item.
 async fn update_action_item(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateActionItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
@@ -815,6 +843,7 @@ struct CompleteActionItemRequest {
 
 async fn complete_action_item(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<CompleteActionItemRequest>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
@@ -830,6 +859,7 @@ async fn complete_action_item(
 /// Delete an action item.
 async fn delete_action_item(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     state
@@ -848,6 +878,7 @@ async fn delete_action_item(
 /// List documents for a meeting.
 async fn list_documents(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingDocument>>> {
     let docs = state
@@ -879,6 +910,7 @@ async fn upload_document(
 /// Delete a document.
 async fn delete_document(
     State(state): State<AppState>,
+    _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     state
