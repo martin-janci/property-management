@@ -351,6 +351,22 @@ async fn add_maintenance_photo(
     Path(log_id): Path<Uuid>,
     Json(req): Json<AddPhotoRequest>,
 ) -> impl IntoResponse {
+    let org_id = match get_org_id(&auth) {
+        Ok(id) => id,
+        Err(e) => return e.into_response(),
+    };
+
+    // Only allow attaching photos to a maintenance log the caller's org owns.
+    match s
+        .predictive_maintenance_repo
+        .get_maintenance_log(log_id, org_id)
+        .await
+    {
+        Ok(Some(_)) => {}
+        Ok(None) => return StatusCode::NOT_FOUND.into_response(),
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
+
     match s
         .predictive_maintenance_repo
         .add_maintenance_photo(
@@ -372,12 +388,30 @@ async fn add_maintenance_photo(
 /// List photos for maintenance log.
 async fn list_maintenance_photos(
     State(s): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(log_id): Path<Uuid>,
 ) -> impl IntoResponse {
+    let org_id = match get_org_id(&auth) {
+        Ok(id) => id,
+        Err(e) => return e.into_response(),
+    };
+
+    // Confirm the parent maintenance log belongs to the caller's org before
+    // returning any photos. A foreign-org log_id surfaces as 404, never a
+    // cross-tenant read (IDOR #848).
     match s
         .predictive_maintenance_repo
-        .list_maintenance_photos(log_id)
+        .get_maintenance_log(log_id, org_id)
+        .await
+    {
+        Ok(Some(_)) => {}
+        Ok(None) => return StatusCode::NOT_FOUND.into_response(),
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
+
+    match s
+        .predictive_maintenance_repo
+        .list_maintenance_photos(log_id, org_id)
         .await
     {
         Ok(photos) => Json(photos).into_response(),
