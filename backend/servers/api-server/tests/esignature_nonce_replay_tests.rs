@@ -63,7 +63,7 @@ async fn seed_signature_request(pool: &PgPool) -> Uuid {
         r#"INSERT INTO documents
              (organization_id, title, category, file_key, file_name,
               mime_type, size_bytes, access_scope, created_by)
-           VALUES ($1, 'E673 Doc', 'contract', 'k', 'f.pdf',
+           VALUES ($1, 'E673 Doc', 'contracts', 'k', 'f.pdf',
                    'application/pdf', 1, 'organization', $2)
            RETURNING id"#,
     )
