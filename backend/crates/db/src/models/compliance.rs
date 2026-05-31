@@ -266,8 +266,6 @@ pub struct EnhancedDueDiligence {
     pub expected_transaction_patterns: Option<String>,
     /// Documents requested (JSON array of document types)
     pub documents_requested: Option<serde_json::Value>,
-    /// Documents received (JSON array of document IDs)
-    pub documents_received: Option<serde_json::Value>,
     /// Compliance notes (immutable once added)
     pub compliance_notes: Option<serde_json::Value>,
     /// When EDD was initiated
