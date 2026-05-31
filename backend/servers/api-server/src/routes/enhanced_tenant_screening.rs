@@ -126,12 +126,16 @@ async fn get_risk_model(
     auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
-    match s.enhanced_tenant_screening_repo.get_risk_model(id).await {
+    match s
+        .enhanced_tenant_screening_repo
+        .get_risk_model(org_id, id)
+        .await
+    {
         Ok(Some(model)) => Json(model).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND, "Risk model not found").into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
@@ -225,14 +229,14 @@ async fn get_provider_config(
     auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
     match s
         .enhanced_tenant_screening_repo
-        .get_provider_config(id)
+        .get_provider_config(org_id, id)
         .await
     {
         Ok(Some(config)) => Json(config).into_response(),
@@ -328,14 +332,14 @@ async fn get_ai_result(
     auth: AuthUser,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
     match s
         .enhanced_tenant_screening_repo
-        .get_ai_result_by_screening(screening_id)
+        .get_ai_result_by_screening(org_id, screening_id)
         .await
     {
         Ok(Some(result)) => Json(result).into_response(),
@@ -350,15 +354,15 @@ async fn get_risk_factors(
     auth: AuthUser,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
-    // First get the AI result to get its ID
+    // First get the (org-scoped) AI result to get its ID
     match s
         .enhanced_tenant_screening_repo
-        .get_ai_result_by_screening(screening_id)
+        .get_ai_result_by_screening(org_id, screening_id)
         .await
     {
         Ok(Some(ai_result)) => {
@@ -382,14 +386,14 @@ async fn get_complete_screening_data(
     auth: AuthUser,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
     match s
         .enhanced_tenant_screening_repo
-        .get_complete_screening_data(screening_id)
+        .get_complete_screening_data(org_id, screening_id)
         .await
     {
         Ok(data) => Json(data).into_response(),
@@ -412,7 +416,7 @@ async fn run_ai_scoring(
     let model = if let Some(model_id) = req.model_id {
         match s
             .enhanced_tenant_screening_repo
-            .get_risk_model(model_id)
+            .get_risk_model(org_id, model_id)
             .await
         {
             Ok(Some(m)) => m,
@@ -442,19 +446,19 @@ async fn run_ai_scoring(
     // Get credit, background, and eviction results to compute component scores
     let credit = s
         .enhanced_tenant_screening_repo
-        .get_credit_result_by_screening(req.screening_id)
+        .get_credit_result_by_screening(org_id, req.screening_id)
         .await
         .ok()
         .flatten();
     let background = s
         .enhanced_tenant_screening_repo
-        .get_background_result_by_screening(req.screening_id)
+        .get_background_result_by_screening(org_id, req.screening_id)
         .await
         .ok()
         .flatten();
     let eviction = s
         .enhanced_tenant_screening_repo
-        .get_eviction_result_by_screening(req.screening_id)
+        .get_eviction_result_by_screening(org_id, req.screening_id)
         .await
         .ok()
         .flatten();
@@ -515,14 +519,14 @@ async fn get_credit_result(
     auth: AuthUser,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
     match s
         .enhanced_tenant_screening_repo
-        .get_credit_result_by_screening(screening_id)
+        .get_credit_result_by_screening(org_id, screening_id)
         .await
     {
         Ok(Some(result)) => Json(result).into_response(),
@@ -562,14 +566,14 @@ async fn get_background_result(
     auth: AuthUser,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
     match s
         .enhanced_tenant_screening_repo
-        .get_background_result_by_screening(screening_id)
+        .get_background_result_by_screening(org_id, screening_id)
         .await
     {
         Ok(Some(result)) => Json(result).into_response(),
@@ -609,14 +613,14 @@ async fn get_eviction_result(
     auth: AuthUser,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
     match s
         .enhanced_tenant_screening_repo
-        .get_eviction_result_by_screening(screening_id)
+        .get_eviction_result_by_screening(org_id, screening_id)
         .await
     {
         Ok(Some(result)) => Json(result).into_response(),
@@ -726,14 +730,14 @@ async fn get_reports(
     auth: AuthUser,
     Path(screening_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let _ = match get_org_id(&auth) {
+    let org_id = match get_org_id(&auth) {
         Ok(id) => id,
         Err(e) => return e.into_response(),
     };
 
     match s
         .enhanced_tenant_screening_repo
-        .get_reports_by_screening(screening_id)
+        .get_reports_by_screening(org_id, screening_id)
         .await
     {
         Ok(reports) => Json(reports).into_response(),

@@ -140,9 +140,17 @@ impl DisputeRepository {
         Ok(disputes)
     }
 
-    pub async fn find_by_id_with_details(
+    /// Fetch a dispute with details, scoped to the caller's organization.
+    ///
+    /// Issue #760 / #834 (cross-tenant IDOR): the previous
+    /// `find_by_id_with_details` looked the dispute up by primary key alone,
+    /// relying on RLS that the management API pool does not enforce. The
+    /// `organization_id = $2` predicate closes the leak — a caller targeting a
+    /// dispute in another org gets `None` (surfaced as 404), never the row.
+    pub async fn find_by_id_with_details_for_org(
         &self,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<DisputeWithDetails>, AppError> {
         // Get dispute
         let dispute = sqlx::query_as::<_, Dispute>(
@@ -152,10 +160,11 @@ impl DisputeRepository {
                    assigned_to, resolved_at, resolution_notes, mediation_notes,
                    created_at, updated_at
             FROM disputes
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -450,12 +459,26 @@ impl DisputeRepository {
         Ok(dispute)
     }
 
-    pub async fn withdraw(&self, id: Uuid, user_id: Uuid) -> Result<(), AppError> {
-        sqlx::query("UPDATE disputes SET status = 'withdrawn' WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+    /// Withdraw a dispute, scoped to the caller's organization.
+    ///
+    /// Issue #760 / #834: the UPDATE is gated by `organization_id = $2` so a
+    /// caller from another org cannot withdraw a foreign dispute by guessing
+    /// its UUID. Returns `NotFound` when no row in the caller's org matches —
+    /// the handler maps this to 404 so the response is not a cross-tenant
+    /// existence oracle.
+    pub async fn withdraw(&self, id: Uuid, org_id: Uuid, user_id: Uuid) -> Result<(), AppError> {
+        let result = sqlx::query(
+            "UPDATE disputes SET status = 'withdrawn' WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        if result.rows_affected() == 0 {
+            return Err(AppError::NotFound("Dispute not found".to_string()));
+        }
 
         self.record_activity(
             id,
