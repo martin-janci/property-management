@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-30T14:31:04Z",
+  "generated": "2026-05-31T00:11:45Z",
   "assignments": [
     {
       "task_id": "gap-82-4-swiftui-listing-detail",
@@ -21,7 +21,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-05-28T20:11:09Z"
+      "merge_attempted_at": "2026-05-28T20:11:09Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "gap-9-2-mfa-recovery-codes-backend",
@@ -43,7 +45,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-security-fix-ai-maintenance-idor",
@@ -65,14 +69,16 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 2,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "fix-issue-673-esignature-nonce-replay-v2",
       "branch": "auto-impl/fix-issue-673-esignature-nonce-replay-v2",
       "status": "review",
       "claimed_at": "2026-05-29T07:13:33Z",
-      "last_updated": "2026-05-30T14:31:04Z",
+      "last_updated": "2026-05-31T00:11:45Z",
       "status_changed_at": "2026-05-29T07:13:33Z",
       "pr_number": 745,
       "pr_url": "https://github.com/martin-janci/property-management/pull/745",
@@ -94,13 +100,13 @@
     {
       "task_id": "gap-10b-7-help-backend-v2",
       "branch": "auto-impl/gap-10b-7-help-backend-v2",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-05-30T11:23:54Z",
-      "last_updated": "2026-05-30T14:31:04Z",
-      "status_changed_at": "2026-05-30T13:26:20Z",
+      "last_updated": "2026-05-31T00:11:45Z",
+      "status_changed_at": "2026-05-31T00:11:45Z",
       "pr_number": 844,
       "pr_url": "https://github.com/martin-janci/property-management/pull/844",
-      "merged_at": null,
+      "merged_at": "2026-05-30T20:22:10Z",
       "specialist": null,
       "implementer_summary": null,
       "reviewer_summary": "verdict=approve head_oid=c84f003d40c7fcde65c898e6477e4b510a53a991 note=migrator=db::MIGRATOR on all 15 sqlx::test attrs; CI test job success; assertions match handlers",
@@ -118,13 +124,13 @@
     {
       "task_id": "gap-81-1-schedule-cron-unit-tests",
       "branch": "auto-impl/gap-81-1-schedule-cron-unit-tests",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-05-30T13:26:20Z",
-      "last_updated": "2026-05-30T14:31:04Z",
-      "status_changed_at": "2026-05-30T14:31:04Z",
+      "last_updated": "2026-05-31T00:11:45Z",
+      "status_changed_at": "2026-05-31T00:11:45Z",
       "pr_number": 853,
       "pr_url": "https://github.com/martin-janci/property-management/pull/853",
-      "merged_at": null,
+      "merged_at": "2026-05-30T20:22:16Z",
       "specialist": "rust-backend",
       "implementer_summary": null,
       "reviewer_summary": "verdict=approve head_oid=e90b3bc1bbf6ba5a68ed016b10766547060d0a3b note=all 13 test-only assertions verified vs real validate_cron_expression; CI green except test jobs still running",
@@ -135,17 +141,19 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-data-support-data-retention-privacy",
       "branch": "auto-impl/pm-data-support-data-retention-privacy",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-05-30T14:31:04Z",
-      "last_updated": "2026-05-30T14:31:04Z",
-      "status_changed_at": "2026-05-30T14:31:04Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-31T00:11:45Z",
+      "status_changed_at": "2026-05-31T00:11:45Z",
+      "pr_number": 854,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/854",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
@@ -157,7 +165,33 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "pm-tech-lead-sqlx-migration-ci-gate",
+      "branch": "auto-impl/pm-tech-lead-sqlx-migration-ci-gate",
+      "status": "in-progress",
+      "claimed_at": "2026-05-31T00:11:45Z",
+      "last_updated": "2026-05-31T00:11:45Z",
+      "status_changed_at": "2026-05-31T00:11:45Z",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null
     }
   ]
 }
