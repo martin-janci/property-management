@@ -294,6 +294,19 @@ impl VendorRepository {
         Ok(result.rows_affected() > 0)
     }
 
+    /// Resolve the `vendor_id` that owns `contact_id`, if any. Used by the
+    /// route layer to derive the owning org for tenant-isolation checks
+    /// (issue #825) before deleting a contact.
+    pub async fn find_contact_vendor_id(
+        &self,
+        contact_id: Uuid,
+    ) -> Result<Option<Uuid>, sqlx::Error> {
+        sqlx::query_scalar("SELECT vendor_id FROM vendor_contacts WHERE id = $1")
+            .bind(contact_id)
+            .fetch_optional(&self.pool)
+            .await
+    }
+
     // ==================== Vendor Contracts ====================
 
     /// Create a contract.

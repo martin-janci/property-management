@@ -22,6 +22,160 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
+/// Verify the authenticated user is a member of `org_id`.
+///
+/// This is the tenant-isolation gate for the org-keyed vendor routes
+/// (list / create / statistics — issue #825). The client-supplied
+/// `organization_id` (query param or JSON body) is never trusted on its own;
+/// it is only accepted once confirmed to belong to the authenticated
+/// principal. Cross-tenant callers receive `403 FORBIDDEN`.
+///
+/// Mirrors the `verify_org_access` idiom in `routes/financial.rs` (#802) and
+/// `routes/integrations/sync.rs`.
+async fn verify_org_access(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if !is_member_or_not_found(state, user_id, org_id).await? {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+/// Membership check that maps DB errors to a 500 but returns a plain bool for
+/// the membership outcome, letting the caller choose 403 vs 404 semantics.
+async fn is_member_or_not_found(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<bool, (StatusCode, Json<ErrorResponse>)> {
+    state
+        .org_member_repo
+        .is_member(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })
+}
+
+/// Resolve the vendor by id and verify the authenticated user belongs to its
+/// owning org. Returns `404` when the vendor does not exist OR the user is not
+/// a member (so cross-tenant probing cannot distinguish "missing" from
+/// "forbidden"). Mirrors `verify_account_access` in `routes/financial.rs`.
+async fn verify_vendor_access(
+    state: &AppState,
+    user_id: Uuid,
+    vendor_id: Uuid,
+) -> Result<Vendor, (StatusCode, Json<ErrorResponse>)> {
+    let vendor = state
+        .vendor_repo
+        .find_by_id(vendor_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load vendor: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to load vendor")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Vendor not found")),
+            )
+        })?;
+
+    if !is_member_or_not_found(state, user_id, vendor.organization_id).await? {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Vendor not found")),
+        ));
+    }
+
+    Ok(vendor)
+}
+
+/// Resolve the contract by id and verify org membership. `404` on missing or
+/// cross-tenant.
+async fn verify_contract_access(
+    state: &AppState,
+    user_id: Uuid,
+    contract_id: Uuid,
+) -> Result<VendorContract, (StatusCode, Json<ErrorResponse>)> {
+    let contract = state
+        .vendor_repo
+        .find_contract_by_id(contract_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load contract: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to load contract")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Contract not found")),
+            )
+        })?;
+
+    if !is_member_or_not_found(state, user_id, contract.organization_id).await? {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Contract not found")),
+        ));
+    }
+
+    Ok(contract)
+}
+
+/// Resolve the invoice by id and verify org membership. `404` on missing or
+/// cross-tenant.
+async fn verify_invoice_access(
+    state: &AppState,
+    user_id: Uuid,
+    invoice_id: Uuid,
+) -> Result<VendorInvoice, (StatusCode, Json<ErrorResponse>)> {
+    let invoice = state
+        .vendor_repo
+        .find_invoice_by_id(invoice_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to load invoice")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+            )
+        })?;
+
+    if !is_member_or_not_found(state, user_id, invoice.organization_id).await? {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+        ));
+    }
+
+    Ok(invoice)
+}
+
 /// Create vendors router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -218,9 +372,10 @@ pub struct PaginationQuery {
 
 async fn create_vendor(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Json(payload): Json<CreateVendorRequest>,
 ) -> Result<(StatusCode, Json<Vendor>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, payload.organization_id).await?;
     state
         .vendor_repo
         .create(payload.organization_id, payload.data)
@@ -237,9 +392,10 @@ async fn create_vendor(
 
 async fn list_vendors(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListVendorsQuery>,
 ) -> Result<Json<Vec<Vendor>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .vendor_repo
         .list(query.organization_id, (&query).into())
@@ -256,9 +412,10 @@ async fn list_vendors(
 
 async fn list_vendors_with_details(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListVendorsQuery>,
 ) -> Result<Json<Vec<VendorWithDetails>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .vendor_repo
         .list_with_details(query.organization_id, (&query).into())
@@ -275,9 +432,10 @@ async fn list_vendors_with_details(
 
 async fn get_statistics(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<VendorStatistics>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .vendor_repo
         .get_statistics(query.organization_id)
@@ -294,35 +452,20 @@ async fn get_statistics(
 
 async fn get_vendor(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vendor>, (StatusCode, Json<ErrorResponse>)> {
-    state
-        .vendor_repo
-        .find_by_id(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get vendor: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to get vendor")),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Vendor not found")),
-            )
-        })
+    let vendor = verify_vendor_access(&state, user.user_id, id).await?;
+    Ok(Json(vendor))
 }
 
 async fn update_vendor(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVendor>,
 ) -> Result<Json<Vendor>, (StatusCode, Json<ErrorResponse>)> {
+    verify_vendor_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .update(id, data)
@@ -339,9 +482,10 @@ async fn update_vendor(
 
 async fn delete_vendor(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    verify_vendor_access(&state, user.user_id, id).await?;
     let deleted = state.vendor_repo.delete(id).await.map_err(|e| {
         tracing::error!("Failed to delete vendor: {:?}", e);
         (
@@ -362,10 +506,11 @@ async fn delete_vendor(
 
 async fn set_preferred(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<PreferredRequest>,
 ) -> Result<Json<Vendor>, (StatusCode, Json<ErrorResponse>)> {
+    verify_vendor_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .set_preferred(id, data.is_preferred)
@@ -384,10 +529,11 @@ async fn set_preferred(
 
 async fn add_contact(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateVendorContact>,
 ) -> Result<(StatusCode, Json<VendorContact>), (StatusCode, Json<ErrorResponse>)> {
+    verify_vendor_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .add_contact(id, data)
@@ -404,9 +550,10 @@ async fn add_contact(
 
 async fn list_contacts(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<VendorContact>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_vendor_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .list_contacts(id)
@@ -423,9 +570,30 @@ async fn list_contacts(
 
 async fn delete_contact(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(contact_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // Resolve the owning vendor and verify tenant membership before deleting,
+    // so a foreign caller cannot delete another org's contact by id (#825).
+    let vendor_id = state
+        .vendor_repo
+        .find_contact_vendor_id(contact_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to resolve contact: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to resolve contact")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Contact not found")),
+            )
+        })?;
+    verify_vendor_access(&state, user.user_id, vendor_id).await?;
+
     let deleted = state
         .vendor_repo
         .delete_contact(contact_id)
@@ -456,6 +624,7 @@ async fn add_rating(
     Path(id): Path<Uuid>,
     Json(data): Json<CreateVendorRating>,
 ) -> Result<(StatusCode, Json<VendorRating>), (StatusCode, Json<ErrorResponse>)> {
+    verify_vendor_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .add_rating(id, user.user_id, data)
@@ -472,10 +641,11 @@ async fn add_rating(
 
 async fn list_ratings(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<VendorRating>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_vendor_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .list_ratings(id, query.limit.unwrap_or(50), query.offset.unwrap_or(0))
@@ -494,9 +664,10 @@ async fn list_ratings(
 
 async fn create_contract(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Json(payload): Json<CreateContractRequest>,
 ) -> Result<(StatusCode, Json<VendorContract>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, payload.organization_id).await?;
     state
         .vendor_repo
         .create_contract(payload.organization_id, payload.data)
@@ -513,9 +684,10 @@ async fn create_contract(
 
 async fn list_contracts(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListContractsQuery>,
 ) -> Result<Json<Vec<VendorContract>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .vendor_repo
         .list_contracts(query.organization_id, (&query).into())
@@ -532,9 +704,10 @@ async fn list_contracts(
 
 async fn get_expiring_contracts(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ExpiringQuery>,
 ) -> Result<Json<Vec<ExpiringContract>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .vendor_repo
         .get_expiring_contracts(query.organization_id, query.days.unwrap_or(30))
@@ -554,35 +727,20 @@ async fn get_expiring_contracts(
 
 async fn get_contract(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VendorContract>, (StatusCode, Json<ErrorResponse>)> {
-    state
-        .vendor_repo
-        .find_contract_by_id(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get contract: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to get contract")),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Contract not found")),
-            )
-        })
+    let contract = verify_contract_access(&state, user.user_id, id).await?;
+    Ok(Json(contract))
 }
 
 async fn update_contract(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVendorContract>,
 ) -> Result<Json<VendorContract>, (StatusCode, Json<ErrorResponse>)> {
+    verify_contract_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .update_contract(id, data)
@@ -599,9 +757,10 @@ async fn update_contract(
 
 async fn delete_contract(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    verify_contract_access(&state, user.user_id, id).await?;
     let deleted = state.vendor_repo.delete_contract(id).await.map_err(|e| {
         tracing::error!("Failed to delete contract: {:?}", e);
         (
@@ -627,6 +786,7 @@ async fn create_invoice(
     user: AuthUser,
     Json(payload): Json<CreateInvoiceRequest>,
 ) -> Result<(StatusCode, Json<VendorInvoice>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, payload.organization_id).await?;
     state
         .vendor_repo
         .create_invoice(payload.organization_id, user.user_id, payload.data)
@@ -643,9 +803,10 @@ async fn create_invoice(
 
 async fn list_invoices(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListInvoicesQuery>,
 ) -> Result<Json<Vec<VendorInvoice>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .vendor_repo
         .list_invoices(query.organization_id, (&query).into())
@@ -662,9 +823,10 @@ async fn list_invoices(
 
 async fn get_overdue_invoices(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<Vec<VendorInvoice>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .vendor_repo
         .get_overdue_invoices(query.organization_id)
@@ -684,9 +846,10 @@ async fn get_overdue_invoices(
 
 async fn get_invoice_summary(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<InvoiceSummaryQuery>,
 ) -> Result<Json<Vec<InvoiceSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .vendor_repo
         .get_invoice_summary(query.organization_id, query.start_date, query.end_date)
@@ -706,35 +869,20 @@ async fn get_invoice_summary(
 
 async fn get_invoice(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
-    state
-        .vendor_repo
-        .find_invoice_by_id(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get invoice: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to get invoice")),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
-            )
-        })
+    let invoice = verify_invoice_access(&state, user.user_id, id).await?;
+    Ok(Json(invoice))
 }
 
 async fn update_invoice(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateVendorInvoice>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
+    verify_invoice_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .update_invoice(id, data)
@@ -751,9 +899,10 @@ async fn update_invoice(
 
 async fn delete_invoice(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    verify_invoice_access(&state, user.user_id, id).await?;
     let deleted = state.vendor_repo.delete_invoice(id).await.map_err(|e| {
         tracing::error!("Failed to delete invoice: {:?}", e);
         (
@@ -777,6 +926,7 @@ async fn approve_invoice(
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
+    verify_invoice_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .approve_invoice(id, user.user_id)
@@ -797,6 +947,7 @@ async fn reject_invoice(
     Path(id): Path<Uuid>,
     Json(data): Json<RejectRequest>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
+    verify_invoice_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .reject_invoice(id, user.user_id, &data.reason)
@@ -813,10 +964,11 @@ async fn reject_invoice(
 
 async fn record_payment(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<RecordPaymentRequest>,
 ) -> Result<Json<VendorInvoice>, (StatusCode, Json<ErrorResponse>)> {
+    verify_invoice_access(&state, user.user_id, id).await?;
     state
         .vendor_repo
         .record_payment(
