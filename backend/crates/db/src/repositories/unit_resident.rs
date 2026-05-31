@@ -8,6 +8,12 @@ use chrono::NaiveDate;
 use sqlx::Error as SqlxError;
 use uuid::Uuid;
 
+// #859: explicit column list for `UnitResident`, casting the `resident_type`
+// Postgres ENUM to text so sqlx can decode it into the `String` field.
+const UNIT_RESIDENT_COLUMNS: &str = "id, unit_id, user_id, resident_type::text AS resident_type, \
+     is_primary, start_date, end_date, receives_notifications, receives_mail, notes, \
+     created_at, updated_at, created_by";
+
 /// Repository for unit resident operations.
 #[derive(Clone)]
 pub struct UnitResidentRepository {
@@ -30,16 +36,16 @@ impl UnitResidentRepository {
             .start_date
             .unwrap_or_else(|| chrono::Utc::now().date_naive());
 
-        let resident = sqlx::query_as::<_, UnitResident>(
+        let resident = sqlx::query_as::<_, UnitResident>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO unit_residents (
                 unit_id, user_id, resident_type, is_primary,
                 start_date, receives_notifications, receives_mail, notes, created_by
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING *
-            "#,
-        )
+            RETURNING {UNIT_RESIDENT_COLUMNS}
+            "#
+        )))
         .bind(data.unit_id)
         .bind(data.user_id)
         .bind(&data.resident_type)
@@ -57,11 +63,12 @@ impl UnitResidentRepository {
 
     /// Find resident by ID.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<UnitResident>, SqlxError> {
-        let resident =
-            sqlx::query_as::<_, UnitResident>(r#"SELECT * FROM unit_residents WHERE id = $1"#)
-                .bind(id)
-                .fetch_optional(&self.pool)
-                .await?;
+        let resident = sqlx::query_as::<_, UnitResident>(sqlx::AssertSqlSafe(format!(
+            "SELECT {UNIT_RESIDENT_COLUMNS} FROM unit_residents WHERE id = $1"
+        )))
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(resident)
     }
@@ -79,7 +86,7 @@ impl UnitResidentRepository {
                 ur.user_id,
                 u.name as user_name,
                 u.email as user_email,
-                ur.resident_type,
+                ur.resident_type::text AS resident_type,
                 ur.is_primary,
                 ur.start_date,
                 ur.end_date
@@ -110,7 +117,7 @@ impl UnitResidentRepository {
                 ur.user_id,
                 u.name as user_name,
                 u.email as user_email,
-                ur.resident_type,
+                ur.resident_type::text AS resident_type,
                 ur.is_primary,
                 ur.start_date,
                 ur.end_date
@@ -132,7 +139,7 @@ impl UnitResidentRepository {
         let residents = sqlx::query_as::<_, UnitResidentSummary>(
             r#"
             SELECT
-                id, unit_id, user_id, resident_type, is_primary,
+                id, unit_id, user_id, resident_type::text AS resident_type, is_primary,
                 (end_date IS NULL) as is_active
             FROM unit_residents
             WHERE user_id = $1
@@ -153,7 +160,7 @@ impl UnitResidentRepository {
         id: Uuid,
         data: UpdateUnitResident,
     ) -> Result<Option<UnitResident>, SqlxError> {
-        let resident = sqlx::query_as::<_, UnitResident>(
+        let resident = sqlx::query_as::<_, UnitResident>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE unit_residents
             SET
@@ -165,9 +172,9 @@ impl UnitResidentRepository {
                 notes = COALESCE($7, notes),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {UNIT_RESIDENT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(&data.resident_type)
         .bind(data.is_primary)
@@ -187,14 +194,14 @@ impl UnitResidentRepository {
         id: Uuid,
         end_date: NaiveDate,
     ) -> Result<Option<UnitResident>, SqlxError> {
-        let resident = sqlx::query_as::<_, UnitResident>(
+        let resident = sqlx::query_as::<_, UnitResident>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE unit_residents
             SET end_date = $2, updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {UNIT_RESIDENT_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(end_date)
         .fetch_optional(&self.pool)

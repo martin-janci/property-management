@@ -115,9 +115,27 @@ pub struct AuthorizeQuery {
 )]
 pub async fn authorize_get(
     State(state): State<AppState>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Query(params): Query<AuthorizeQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<OAuthError>)> {
+    // SECURITY (issue #820): this endpoint advertises `bearer_auth` and a 401
+    // in its OpenAPI, but the handler took `_headers` and never authenticated
+    // the caller — the consent page (client name, requested scopes, redirect
+    // URI) was served to any anonymous client. Require a valid access token
+    // up front, exactly as `authorize_post` does, before doing any work.
+    let token = extract_bearer_token(&headers).map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(OAuthError::access_denied("Authentication required")),
+        )
+    })?;
+    validate_access_token(&state, &token).map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(OAuthError::access_denied("Invalid or expired token")),
+        )
+    })?;
+
     // Validate response_type
     if params.response_type != "code" {
         return Err((

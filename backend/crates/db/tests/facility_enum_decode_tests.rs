@@ -9,6 +9,7 @@
 //! These tests actually SELECT rows through the repository, so they fail on
 //! `main` (decode error) and pass once the casts are in place.
 
+use db::models::facility::UpdateFacility;
 use db::repositories::FacilityRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -177,4 +178,121 @@ async fn booking_read_paths_decode_booking_status_enum(pool: PgPool) {
         .expect("find_pending_bookings must decode booking_status enum (#859)");
     assert_eq!(pending.len(), 1);
     assert_eq!(pending[0].status, "pending");
+}
+
+// ---------------------------------------------------------------------------
+// Mutation RETURNING paths (issue #859).
+//
+// The SELECT readers above were fixed, but the update/approve/reject/cancel
+// mutations returned their row via `RETURNING *`, which re-exposes the raw
+// `facility_type` / `status` enum columns and so still 500'd on decode. These
+// tests drive those RETURNING paths and assert the enum surfaces as the
+// expected `String`; they fail (ColumnDecode) on the pre-fix `RETURNING *`.
+//
+// Scope note: `create` / `create_booking` are intentionally NOT exercised here.
+// Those INSERTs *bind* a `String` into the enum column (`$n` of type text),
+// which sqlx 0.9 also rejects ("column is of type <enum> but expression is of
+// type text", SQLSTATE 42804) — that is the encode side of the same strictness
+// and a separate fix. The RETURNING decode regressions #859 reports are covered
+// by the update/approve/reject/cancel paths below, whose seed rows are created
+// via literal-enum SQL (which Postgres coerces, unlike a bound param).
+//
+// The Decimal fee fields are set on every seeded row: the model decodes them via
+// `#[sqlx(try_from = "Decimal")]`, which rejects SQL NULL — an unrelated quirk
+// (see the booking-read test above) that would otherwise mask the enum cast.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn facility_update_decodes_facility_type_enum(pool: PgPool) {
+    let (_building_id, facility_id, _user_id) = seed(&pool).await;
+    let repo = FacilityRepository::new(pool.clone());
+
+    // update() returns its row via RETURNING — the `facility_type` enum must
+    // decode. The seeded facility already has its Decimal fee fields set.
+    let updated = repo
+        .update(
+            facility_id,
+            UpdateFacility {
+                name: Some("Gym 2".to_string()),
+                description: None,
+                location: None,
+                capacity: None,
+                is_bookable: None,
+                requires_approval: None,
+                max_booking_hours: None,
+                max_advance_days: None,
+                min_advance_hours: None,
+                available_from: None,
+                available_to: None,
+                available_days: None,
+                rules: None,
+                hourly_fee: None,
+                deposit_amount: None,
+                is_active: None,
+                photos: None,
+                amenities: None,
+            },
+        )
+        .await
+        .expect("update RETURNING must decode facility_type enum (#859)")
+        .expect("facility row exists");
+    assert_eq!(updated.name, "Gym 2");
+    assert_eq!(updated.facility_type, "gym");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn booking_transitions_decode_status_enum(pool: PgPool) {
+    let (_building_id, facility_id, user_id) = seed(&pool).await;
+    let repo = FacilityRepository::new(pool.clone());
+
+    // Seed a 'pending' booking with total_fee set (the booking is created via
+    // SQL, not `create_booking`, to keep the total_fee `try_from` NULL quirk out
+    // of this enum-decode test). `nth` offsets the time window so successive
+    // bookings don't collide on the reasonable-duration / time checks.
+    async fn seed_pending(pool: &PgPool, facility_id: Uuid, user_id: Uuid, nth: i64) -> Uuid {
+        let start = chrono::Utc::now() + chrono::Duration::days(nth + 1);
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO facility_bookings
+                (facility_id, user_id, start_time, end_time, status, total_fee)
+            VALUES ($1, $2, $3, $4, 'pending', 0.00)
+            RETURNING id
+            "#,
+        )
+        .bind(facility_id)
+        .bind(user_id)
+        .bind(start)
+        .bind(start + chrono::Duration::hours(2))
+        .fetch_one(pool)
+        .await
+        .expect("seed pending booking")
+    }
+
+    let approved = repo
+        .approve_booking(seed_pending(&pool, facility_id, user_id, 0).await, user_id)
+        .await
+        .expect("approve_booking RETURNING must decode status enum (#859)")
+        .expect("booking was pending");
+    assert_eq!(approved.status, "approved");
+
+    let rejected = repo
+        .reject_booking(
+            seed_pending(&pool, facility_id, user_id, 1).await,
+            user_id,
+            "no capacity",
+        )
+        .await
+        .expect("reject_booking RETURNING must decode status enum (#859)")
+        .expect("booking was pending");
+    assert_eq!(rejected.status, "rejected");
+
+    let cancelled = repo
+        .cancel_booking(
+            seed_pending(&pool, facility_id, user_id, 2).await,
+            Some("changed plans"),
+        )
+        .await
+        .expect("cancel_booking RETURNING must decode status enum (#859)")
+        .expect("booking exists");
+    assert_eq!(cancelled.status, "cancelled");
 }
