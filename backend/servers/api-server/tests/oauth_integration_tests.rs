@@ -386,6 +386,44 @@ mod pkce_flow {
         assert_eq!(body["error"], "invalid_request");
     }
 
+    /// Regression for #823 / #756: PKCE is REQUIRED for the authorization-code
+    /// flow for ALL clients, including confidential ones. A confidential client
+    /// that omits `code_challenge` at the authorize stage must be rejected with
+    /// `invalid_request` — previously the server only enforced PKCE for public
+    /// clients, letting confidential clients skip it entirely.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_confidential_client_requires_pkce(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, _client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        // Consent WITHOUT a code_challenge — must be rejected now that PKCE is
+        // mandatory for the authorization_code flow regardless of client type.
+        let consent_form = form_body(&[
+            ("client_id", &client_id),
+            ("redirect_uri", &redirect_uri),
+            ("scope", "profile"),
+            // no code_challenge / code_challenge_method
+            ("consent", "approve"),
+        ]);
+        let resp = app
+            .execute(form_request_with_auth(
+                "/api/v1/oauth/authorize",
+                &consent_form,
+                &access_token,
+            ))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::BAD_REQUEST,
+            "confidential client without PKCE must be rejected. body={}",
+            resp.text()
+        );
+        let body = resp.json_value();
+        assert_eq!(body["error"], "invalid_request");
+    }
+
     /// PKCE `plain` challenge method must be rejected at the token endpoint —
     /// only S256 is accepted (OAuth 2.1 §4.1.1 / RFC 7636 §4.2).
     ///

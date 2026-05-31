@@ -321,10 +321,13 @@ impl OAuthService {
             .await?
             .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
 
-        // PKCE is required for public (non-confidential) clients per RFC 7636 / OAuth 2.1
-        if !client.is_confidential && code_challenge.is_none() {
+        // PKCE is REQUIRED for the authorization-code flow for ALL clients
+        // (OAuth 2.1 §4.1.1, RFC 7636). Previously only public clients were
+        // forced to supply a challenge, which let confidential clients skip
+        // PKCE entirely. Closes #823 / #756.
+        if code_challenge.is_none() {
             return Err(OAuthServiceError::InvalidRequest(
-                "PKCE code_challenge required for public clients".to_string(),
+                "PKCE code_challenge is required for the authorization_code flow".to_string(),
             ));
         }
 
@@ -435,20 +438,25 @@ impl OAuthService {
             return Err(OAuthServiceError::InvalidGrant);
         }
 
-        // Validate PKCE if code challenge was provided
-        if let Some(ref challenge) = auth_code.code_challenge {
-            let verifier = request
-                .code_verifier
-                .as_ref()
-                .ok_or_else(|| OAuthServiceError::InvalidCodeVerifier)?;
+        // PKCE is REQUIRED for every authorization_code exchange (#823 / #756).
+        // The authorize stage now rejects requests without a code_challenge, so
+        // a stored code lacking one is anomalous — treat it as invalid_grant
+        // (defense in depth) rather than silently skipping verification.
+        let challenge = auth_code
+            .code_challenge
+            .as_ref()
+            .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
+        let verifier = request
+            .code_verifier
+            .as_ref()
+            .ok_or_else(|| OAuthServiceError::InvalidCodeVerifier)?;
 
-            if !self.verify_pkce(
-                verifier,
-                challenge,
-                auth_code.code_challenge_method.as_deref(),
-            ) {
-                return Err(OAuthServiceError::InvalidCodeVerifier);
-            }
+        if !self.verify_pkce(
+            verifier,
+            challenge,
+            auth_code.code_challenge_method.as_deref(),
+        ) {
+            return Err(OAuthServiceError::InvalidCodeVerifier);
         }
 
         // Get client for rotation settings and principal_kind enforcement (Phase 6 C17)

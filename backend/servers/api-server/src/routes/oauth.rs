@@ -106,11 +106,13 @@ pub struct AuthorizeQuery {
         ("code_challenge" = Option<String>, Query, description = "PKCE code challenge"),
         ("code_challenge_method" = Option<String>, Query, description = "PKCE method (S256)")
     ),
-    security(("bearer_auth" = [])),
+    // No `security` annotation: this endpoint intentionally returns pre-login
+    // consent-page metadata without a bearer token, so the handler has no auth
+    // extractor. The spec is aligned to that reality (#823 P1) — previously it
+    // advertised `bearer_auth` + a 401 response the handler never returns.
     responses(
         (status = 200, description = "Consent page data", body = ConsentPageData),
-        (status = 400, description = "Invalid request", body = OAuthError),
-        (status = 401, description = "Not authenticated", body = ErrorResponse)
+        (status = 400, description = "Invalid request", body = OAuthError)
     )
 )]
 pub async fn authorize_get(
