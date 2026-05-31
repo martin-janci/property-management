@@ -107,12 +107,22 @@ impl PredictiveMaintenanceRepository {
         let sort_by = query.sort_by.unwrap_or_else(|| "name".to_string());
         let sort_order = query.sort_order.unwrap_or_else(|| "asc".to_string());
 
-        // Build dynamic ORDER BY
-        let order_clause = match sort_by.as_str() {
-            "health_score" => format!("health_score {}", sort_order),
-            "next_predicted_failure" => format!("next_predicted_failure {}", sort_order),
-            _ => format!("name {}", sort_order),
+        // Build dynamic ORDER BY from an ALLOWLIST of column + direction.
+        // Both the sort column and the sort direction are mapped through a
+        // `match` to fixed string literals — never interpolated from the raw
+        // request value — so a malicious `sort_by`/`sort_order` (e.g.
+        // `id; DROP TABLE ...` or `(SELECT ...)`) can never reach the SQL text.
+        // Anything outside the allowlist falls back to the default.
+        let sort_column = match sort_by.as_str() {
+            "health_score" => "health_score",
+            "next_predicted_failure" => "next_predicted_failure",
+            _ => "name",
         };
+        let sort_direction = match sort_order.to_ascii_lowercase().as_str() {
+            "desc" => "DESC",
+            _ => "ASC",
+        };
+        let order_clause = format!("{sort_column} {sort_direction}");
 
         let sql = format!(
             r#"
@@ -462,19 +472,30 @@ impl PredictiveMaintenanceRepository {
         Ok(photo)
     }
 
-    /// List photos for maintenance log.
+    /// List photos for a maintenance log, scoped to the caller's organization.
+    ///
+    /// `maintenance_log_photos` has no `organization_id` column, so org
+    /// ownership is enforced by joining through the parent `maintenance_logs`
+    /// row (which is org-scoped). A `log_id` belonging to another org yields
+    /// zero rows — the handler must surface that as a 404, never a
+    /// cross-tenant read (IDOR #848).
     pub async fn list_maintenance_photos(
         &self,
         log_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Vec<MaintenanceLogPhoto>, AppError> {
         let photos = sqlx::query_as::<_, MaintenanceLogPhoto>(
             r#"
-            SELECT * FROM maintenance_log_photos
-            WHERE maintenance_log_id = $1
-            ORDER BY created_at
+            SELECT p.*
+            FROM maintenance_log_photos p
+            JOIN maintenance_logs ml ON ml.id = p.maintenance_log_id
+            WHERE p.maintenance_log_id = $1
+              AND ml.organization_id = $2
+            ORDER BY p.created_at
             "#,
         )
         .bind(log_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
