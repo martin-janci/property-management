@@ -794,14 +794,22 @@ async fn provide_feedback(
     let mut feedback = req;
     feedback.message_id = message_id;
 
-    // SECURITY: feedback author is derived from the verified principal, never
-    // from the request body.
+    // SECURITY (issue #766 / #816): feedback author AND the owning tenant are
+    // both derived from the verified principal, never from the request body or
+    // the path. The repo only writes when the target message's session belongs
+    // to the caller's org — otherwise a caller in org B could attach feedback
+    // to (and poison the training signal for) org A's chat messages.
+    let org_id = require_tenant_id(&principal)?;
     match state
         .ai_chat_repo
-        .add_feedback(principal.user_id, feedback)
+        .add_feedback_for_org(principal.user_id, org_id, feedback)
         .await
     {
-        Ok(fb) => Ok((StatusCode::CREATED, Json(serde_json::json!(fb)))),
+        Ok(Some(fb)) => Ok((StatusCode::CREATED, Json(serde_json::json!(fb)))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Message not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to add feedback: {}", e);
             Err((
@@ -2151,6 +2159,34 @@ async fn generate_lease(
     let tenant_id = require_tenant_id(&principal)?;
     let start_time = Instant::now();
 
+    // SECURITY (issue #766 / #816): the lease is generated for a specific
+    // `unit_id`. Validate that the unit belongs to the caller's tenant BEFORE
+    // creating the generation request or burning any LLM tokens — otherwise a
+    // caller could generate a lease (and have it cost-attributed to their org)
+    // against another tenant's unit, leaking the unit's identity/context.
+    let unit_ok = state
+        .llm_document_repo
+        .unit_belongs_to_org(req.unit_id, tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to validate unit ownership: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to validate unit",
+                )),
+            )
+        })?;
+    if !unit_ok {
+        // 404 (not 403) mirrors the rest of this module: do not confirm the
+        // existence of another tenant's unit to a caller who cannot see it.
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Unit not found")),
+        ));
+    }
+
     // Check feature flag for document generation
     let doc_gen_enabled = std::env::var("LLM_DOCUMENT_GENERATION")
         .unwrap_or_else(|_| "true".to_string())
@@ -2378,10 +2414,18 @@ async fn list_lease_templates(
 
 async fn get_lease_template(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.find_prompt_template(id).await {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's prompt template by guessing its id.
+    // System templates (org_id NULL) remain readable by everyone.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_prompt_template_for_org(id, org_id)
+        .await
+    {
         Ok(Some(template)) => Ok(Json(serde_json::json!(template))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -2642,10 +2686,17 @@ async fn list_listing_descriptions(
 
 async fn publish_description(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.publish_description(id).await {
+    // SECURITY (issue #766 / #816): scope the mutate to the caller's org so a
+    // tenant cannot publish another org's generated listing description.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .publish_description_for_org(id, org_id)
+        .await
+    {
         Ok(Some(desc)) => Ok(Json(serde_json::json!(desc))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -2869,10 +2920,17 @@ async fn batch_enhance_photos(
 
 async fn get_photo_enhancement(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.find_photo_enhancement(id).await {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's photo enhancement by guessing its id.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_photo_enhancement_for_org(id, org_id)
+        .await
+    {
         Ok(Some(enhancement)) => Ok(Json(serde_json::json!(enhancement))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -3211,10 +3269,18 @@ async fn list_generation_requests(
 
 async fn get_generation_request(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.find_generation_request(id).await {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's generation request (prompts, results,
+    // cost data) by guessing its id.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_generation_request_for_org(id, org_id)
+        .await
+    {
         Ok(Some(request)) => Ok(Json(serde_json::json!(request))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,

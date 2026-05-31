@@ -226,6 +226,47 @@ impl AiChatRepository {
         .await
     }
 
+    /// Record AI training feedback for a message — tenant-scoped (issue
+    /// #766 / #816).
+    ///
+    /// `user_id` and `org_id` both originate from the verified request
+    /// principal. The `INSERT ... SELECT ... WHERE EXISTS` only writes when
+    /// the target message's parent session belongs to the caller's org, so a
+    /// caller in org B cannot attach feedback to a message in org A's chat
+    /// session (an IDOR write + training-data-poisoning vector). Returns
+    /// `Ok(None)` when the message does not exist or belongs to another org.
+    pub async fn add_feedback_for_org(
+        &self,
+        user_id: Uuid,
+        org_id: Uuid,
+        data: ProvideFeedback,
+    ) -> Result<Option<AiTrainingFeedback>, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+            INSERT INTO ai_training_feedback (message_id, user_id, rating, helpful, feedback_text)
+            SELECT $1, $2, $3, $4, $5
+            WHERE EXISTS (
+                SELECT 1 FROM ai_chat_messages m
+                JOIN ai_chat_sessions s ON s.id = m.session_id
+                WHERE m.id = $1 AND s.organization_id = $6
+            )
+            ON CONFLICT (message_id, user_id) DO UPDATE SET
+                rating = EXCLUDED.rating,
+                helpful = EXCLUDED.helpful,
+                feedback_text = EXCLUDED.feedback_text
+            RETURNING *
+            "#,
+        )
+        .bind(data.message_id)
+        .bind(user_id)
+        .bind(data.rating)
+        .bind(data.helpful)
+        .bind(data.feedback_text)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
     /// Get escalated messages for review.
     pub async fn list_escalated_messages(
         &self,
