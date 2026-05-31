@@ -2,6 +2,8 @@
  * Document API client (Epic 39).
  */
 
+import { getToken } from '../auth';
+import { authenticatedFetchJson } from '../lib/fetch';
 import type {
   ClassificationFeedback,
   ClassificationHistoryEntry,
@@ -26,21 +28,19 @@ import type {
 
 const API_BASE = '/api/v1/documents';
 
+/**
+ * All document requests go through the shared authenticated transport
+ * (`authenticatedFetchJson`) so they:
+ *   - carry the `Authorization: Bearer …` header from the registered token
+ *     provider — document routes are auth-protected and previously 401'd
+ *     because this local transport never set the header (#751),
+ *   - handle `204 No Content` uniformly (e.g. `deleteFolder`,
+ *     `revokeDocumentShare`) without trying to `JSON.parse` an empty body,
+ *   - share the same 401/MFA-retry and error-normalisation behaviour as the
+ *     rest of the client.
+ */
 async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
-
-  return response.json();
+  return authenticatedFetchJson<T>(url, options);
 }
 
 // Document CRUD
@@ -139,8 +139,11 @@ export async function updateFolder(
   });
 }
 
-export async function deleteFolder(id: string, cascade = false): Promise<{ message: string }> {
-  return fetchApi(`${API_BASE}/folders/${id}?cascade=${cascade}`, {
+// Backend `delete_folder` returns 204 No Content — the shared transport
+// resolves to `undefined`, so the return type is `void` (was `{ message }`,
+// which would have rejected on the empty 204 body, #751).
+export async function deleteFolder(id: string, cascade = false): Promise<void> {
+  await fetchApi(`${API_BASE}/folders/${id}?cascade=${cascade}`, {
     method: 'DELETE',
   });
 }
@@ -284,17 +287,13 @@ export async function uploadDocument(
 
     xhr.open('POST', `${API_BASE}/upload`);
 
-    // Attach Authorization header if an access token is available
-    try {
-      const token =
-        typeof window !== 'undefined' && window.localStorage
-          ? window.localStorage.getItem('token')
-          : null;
-      if (token) {
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      }
-    } catch {
-      // If accessing storage fails, proceed without auth header
+    // Attach the bearer token from the registered token provider — the same
+    // source the rest of the client uses. (Previously read the wrong
+    // localStorage key `'token'` directly, so uploads went out unauthenticated
+    // and 401'd, #751.)
+    const token = getToken();
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     }
 
     xhr.send(formData);
