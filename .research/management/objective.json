@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "pm-tech",
-  "selected_at": "2026-05-31T00:08:17Z",
+  "epic_prefix": "gap-6",
+  "selected_at": "2026-05-31T12:06:41Z",
   "last_action": "repick",
-  "reason": "prior target 'pm-data' exhausted; closest-to-done is 'pm-tech' (open=4 claimable=1)",
+  "reason": "prior target 'pm-tech' exhausted; closest-to-done is 'gap-6' (open=1 claimable=1)",
   "stats_at_selection": {
-    "open": 4,
+    "open": 1,
     "claimable": 1
   }
 }
