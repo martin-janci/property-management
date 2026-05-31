@@ -71,6 +71,17 @@ fn form_request_with_auth(uri: &str, body: &str, token: &str) -> Request<Body> {
         .unwrap()
 }
 
+/// GET with Bearer auth. The authorize consent endpoint requires the caller to
+/// be authenticated (issue #820), so the GET must carry the access token.
+fn get_request_with_auth(uri: &str, token: &str) -> Request<Body> {
+    Request::builder()
+        .method(Method::GET)
+        .uri(uri)
+        .header(header::AUTHORIZATION, format!("Bearer {}", token))
+        .body(Body::empty())
+        .unwrap()
+}
+
 /// Seed a confidential OAuth client directly in the DB.
 ///
 /// Returns `(client_id, client_secret, redirect_uri)`.
@@ -172,11 +183,7 @@ mod pkce_flow {
             urlencoding::encode(state_param),
             urlencoding::encode(&challenge),
         );
-        let get_req = Request::builder()
-            .method(Method::GET)
-            .uri(&authorize_get_uri)
-            .body(Body::empty())
-            .unwrap();
+        let get_req = get_request_with_auth(&authorize_get_uri, &access_token);
         let get_resp = app.execute(get_req).await;
         assert_eq!(
             get_resp.status,
@@ -363,6 +370,8 @@ mod pkce_flow {
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_public_client_requires_pkce(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
         let (client_id, redirect_uri) = seed_public_client(&pool).await;
 
         let uri = format!(
@@ -370,11 +379,8 @@ mod pkce_flow {
             urlencoding::encode(&client_id),
             urlencoding::encode(&redirect_uri),
         );
-        let req = Request::builder()
-            .method(Method::GET)
-            .uri(&uri)
-            .body(Body::empty())
-            .unwrap();
+        // Authenticated (issue #820) so the request reaches PKCE validation.
+        let req = get_request_with_auth(&uri, &access_token);
         let resp = app.execute(req).await;
         assert_eq!(
             resp.status,
@@ -384,6 +390,35 @@ mod pkce_flow {
         );
         let body = resp.json_value();
         assert_eq!(body["error"], "invalid_request");
+    }
+
+    /// Regression (issue #820): the authorize consent GET advertises bearer
+    /// auth + a 401 in its OpenAPI but previously took no auth extractor, so it
+    /// served the consent page (client name, scopes, redirect URI) to any
+    /// anonymous caller. An unauthenticated GET must now be rejected with 401.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_authorize_get_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let (client_id, redirect_uri) = seed_public_client(&pool).await;
+        let (_verifier, challenge) = pkce_pair();
+        let uri = format!(
+            "/api/v1/oauth/authorize?response_type=code&client_id={}&redirect_uri={}&scope=profile&code_challenge={}&code_challenge_method=S256",
+            urlencoding::encode(&client_id),
+            urlencoding::encode(&redirect_uri),
+            urlencoding::encode(&challenge),
+        );
+        let req = Request::builder()
+            .method(Method::GET)
+            .uri(&uri)
+            .body(Body::empty())
+            .unwrap();
+        let resp = app.execute(req).await;
+        assert_eq!(
+            resp.status,
+            StatusCode::UNAUTHORIZED,
+            "unauthenticated authorize GET must be rejected. body={}",
+            resp.text()
+        );
     }
 
     /// PKCE `plain` challenge method must be rejected at the token endpoint —
