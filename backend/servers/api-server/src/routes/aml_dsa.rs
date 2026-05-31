@@ -299,9 +299,14 @@ async fn get_aml_assessment(
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let assessment = state
         .edd_repo
-        .get_aml_assessment(id)
+        .get_aml_assessment(id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get AML assessment: {}", e);
@@ -604,9 +609,14 @@ async fn get_edd_record(
 ) -> Result<Json<EddRecordResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let edd = state
         .edd_repo
-        .get_edd(id)
+        .get_edd(id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get EDD: {}", e);
@@ -704,10 +714,15 @@ async fn upload_edd_document(
 ) -> Result<Json<EddDocumentResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    // Verify the EDD record exists
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    // Verify the EDD record exists and belongs to the caller's organization
     let _edd = state
         .edd_repo
-        .get_edd(edd_id)
+        .get_edd(edd_id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get EDD: {}", e);
@@ -771,10 +786,15 @@ async fn verify_edd_document(
 ) -> Result<Json<EddDocumentResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    // Verify the EDD record exists
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    // Verify the EDD record exists and belongs to the caller's organization
     let _edd = state
         .edd_repo
-        .get_edd(edd_id)
+        .get_edd(edd_id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get EDD: {}", e);
@@ -842,6 +862,28 @@ async fn add_edd_note(
 ) -> Result<Json<ComplianceNoteResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    // Verify the EDD record exists and belongs to the caller's organization
+    state
+        .edd_repo
+        .get_edd(edd_id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get EDD: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to verify EDD record".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            format!("EDD record {} not found", edd_id),
+        ))?;
+
     // Get user name for the note
     let user_info = state
         .user_repo
@@ -890,6 +932,28 @@ async fn complete_edd(
     Path(edd_id): Path<Uuid>,
 ) -> Result<Json<EddRecordResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
+
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    // Verify the EDD record exists and belongs to the caller's organization
+    state
+        .edd_repo
+        .get_edd(edd_id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get EDD: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to verify EDD record".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            format!("EDD record {} not found", edd_id),
+        ))?;
 
     let edd = state
         .edd_repo

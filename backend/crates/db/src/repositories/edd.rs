@@ -228,15 +228,24 @@ impl EddRepository {
         Ok(assessment)
     }
 
-    /// Get AML assessment by ID.
+    /// Get AML assessment by ID, scoped to the caller's organization.
+    ///
+    /// The `org_id` filter is a defense-in-depth tenant-isolation guard: these
+    /// handlers run on the raw pool (RLS GUCs are not set), so the
+    /// `aml_risk_assessments_tenant_isolation` RLS policy cannot protect a
+    /// global-id lookup. Scoping by `organization_id` here ensures a compliance
+    /// officer in one org cannot read another org's assessment by guessing the
+    /// UUID (cross-org IDOR — see issue #897).
     pub async fn get_aml_assessment(
         &self,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<AmlRiskAssessment>, SqlxError> {
         let assessment = sqlx::query_as::<_, AmlRiskAssessment>(
-            r#"SELECT * FROM aml_risk_assessments WHERE id = $1"#,
+            r#"SELECT * FROM aml_risk_assessments WHERE id = $1 AND organization_id = $2"#,
         )
         .bind(id)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await?;
 
@@ -405,13 +414,25 @@ impl EddRepository {
         Ok(edd)
     }
 
-    /// Get EDD record by ID.
-    pub async fn get_edd(&self, id: Uuid) -> Result<Option<EnhancedDueDiligence>, SqlxError> {
-        let edd =
-            sqlx::query_as::<_, EnhancedDueDiligence>(r#"SELECT * FROM edd_records WHERE id = $1"#)
-                .bind(id)
-                .fetch_optional(&self.pool)
-                .await?;
+    /// Get EDD record by ID, scoped to the caller's organization.
+    ///
+    /// Like [`get_aml_assessment`](Self::get_aml_assessment), this enforces
+    /// tenant isolation at the query level because the AML/DSA handlers run on
+    /// the raw pool without RLS GUCs. Every EDD sub-resource handler
+    /// (documents, notes, completion) gates on this lookup, so scoping it here
+    /// closes the whole EDD subtree against cross-org access (issue #897).
+    pub async fn get_edd(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<EnhancedDueDiligence>, SqlxError> {
+        let edd = sqlx::query_as::<_, EnhancedDueDiligence>(
+            r#"SELECT * FROM edd_records WHERE id = $1 AND organization_id = $2"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(edd)
     }
