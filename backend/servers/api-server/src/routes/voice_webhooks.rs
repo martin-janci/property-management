@@ -266,8 +266,12 @@ async fn google_actions_webhook(
 
 /// Exchange OAuth authorization code for tokens.
 ///
-/// This endpoint is called after the user completes account linking
-/// on the voice assistant platform.
+/// This endpoint completes account linking: it is invoked by the
+/// authenticated Property Management user (from the voice account-linking
+/// flow), **not** by the voice platform itself. It therefore requires a
+/// valid PM access token (`AuthUser`) and binds the resulting voice device
+/// to that user's identity and organization — never to random UUIDs
+/// (security fix #890).
 #[utoipa::path(
     post,
     path = "/api/v1/webhooks/voice/oauth/exchange",
@@ -275,17 +279,43 @@ async fn google_actions_webhook(
     responses(
         (status = 200, description = "Token exchange successful", body = VoiceOAuthExchangeResponse),
         (status = 400, description = "Invalid authorization code"),
+        (status = 401, description = "Unauthorized - missing or invalid PM access token"),
+        (status = 403, description = "Forbidden - no active organization context"),
         (status = 500, description = "Token exchange failed"),
     ),
+    security(("bearer_auth" = [])),
     tag = "Voice OAuth"
 )]
 async fn oauth_token_exchange(
     State(state): State<AppState>,
+    auth: api_core::AuthUser,
     Json(request): Json<VoiceOAuthExchangeRequest>,
 ) -> Result<Json<VoiceOAuthExchangeResponse>, (StatusCode, Json<ErrorResponse>)> {
     use integrations::{VoiceOAuthManager, VoicePlatform};
 
-    tracing::info!("OAuth token exchange for platform: {}", request.platform);
+    // Bind the linking to the authenticated PM user + their active org.
+    // Without an org context we cannot create a tenant-scoped voice device.
+    let user_id = auth.user_id;
+    let org_id = auth.tenant_id.ok_or_else(|| {
+        tracing::warn!(
+            user_id = %auth.user_id,
+            "Voice OAuth exchange rejected: no active organization context"
+        );
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NO_ORGANIZATION_CONTEXT",
+                "An active organization context is required to link a voice device",
+            )),
+        )
+    })?;
+
+    tracing::info!(
+        user_id = %user_id,
+        org_id = %org_id,
+        platform = %request.platform,
+        "OAuth token exchange for voice device linking"
+    );
 
     // Validate platform
     if request.platform != voice_platform::ALEXA
@@ -351,10 +381,12 @@ async fn oauth_token_exchange(
             .map(|rt| encrypt_if_available(crypto.as_ref(), rt));
 
         (access_encrypted, refresh_encrypted, tokens.expires_at)
-    } else {
-        // Platform not configured - use simulated tokens for development
+    } else if cfg!(debug_assertions) {
+        // Platform not configured - use simulated tokens for development only.
+        // Gated behind `debug_assertions` (security fix #890): release builds
+        // must never mint fake voice tokens.
         tracing::warn!(
-            "Voice OAuth not configured for platform {}, using simulated tokens",
+            "Voice OAuth not configured for platform {}, using simulated tokens (debug build)",
             request.platform
         );
         let simulated_access = format!("voice_access_{}_{}", request.platform, Uuid::new_v4());
@@ -364,13 +396,22 @@ async fn oauth_token_exchange(
             Some(encrypt_if_available(crypto.as_ref(), &simulated_refresh)),
             Some(Utc::now() + Duration::hours(1)),
         )
+    } else {
+        tracing::error!(
+            "Voice OAuth not configured for platform {} in a release build",
+            request.platform
+        );
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "OAUTH_NOT_CONFIGURED",
+                "Voice OAuth is not configured for this platform",
+            )),
+        ));
     };
 
-    // For this webhook endpoint, we don't have tenant context
-    // The user_id and org_id should be extracted from the OAuth token claims
-    // For now, use placeholder values (in production, validate JWT/token)
-    let user_id = Uuid::new_v4();
-    let org_id = Uuid::new_v4();
+    // Device is bound to the authenticated PM user and their organization
+    // (derived above from the verified access token — never random UUIDs).
     let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
 
     // Create the voice device with tokens
