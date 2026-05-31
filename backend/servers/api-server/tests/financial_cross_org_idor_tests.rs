@@ -23,7 +23,7 @@
 #[allow(dead_code)]
 mod common;
 
-use axum::http::{Method, StatusCode};
+use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -255,10 +255,4 @@ async fn list_accounts_for_own_org_succeeds(pool: PgPool) {
         accounts.as_array().map(|a| !a.is_empty()).unwrap_or(false),
         "expected at least one account for the owning org, got {accounts}"
     );
-}
-
-// Silence the unused-Method import on toolchains that tree-shake differently.
-#[allow(dead_code)]
-fn _method_marker() -> Method {
-    Method::GET
 }

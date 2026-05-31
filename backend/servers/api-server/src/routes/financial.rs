@@ -29,6 +29,103 @@ const DEFAULT_LIST_LIMIT: i64 = 50;
 /// Maximum page size
 const MAX_LIST_LIMIT: i64 = 100;
 
+/// Verify the authenticated user is a member of `org_id`.
+///
+/// This is the tenant-isolation gate for every financial route (issue #802).
+/// The client-supplied `organization_id` (in a query param, request body, or
+/// derived from a fetched resource) is never trusted on its own — it is only
+/// accepted once it is confirmed to belong to the authenticated principal.
+/// Cross-tenant callers receive `403 FORBIDDEN`.
+///
+/// Mirrors the `verify_org_access` idiom used by the integrations routes
+/// (`routes/integrations/sync.rs`).
+async fn verify_org_access(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let is_member = state
+        .org_member_repo
+        .is_member(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+
+    if !is_member {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
+
+    Ok(())
+}
+
+/// Resolve the organization that owns `account_id` and verify the
+/// authenticated user belongs to it. Returns `404` when the account does not
+/// exist or the user is not a member (so cross-tenant probing cannot
+/// distinguish "missing" from "forbidden").
+async fn verify_account_access(
+    state: &AppState,
+    user_id: Uuid,
+    account_id: Uuid,
+) -> Result<db::models::FinancialAccount, (StatusCode, Json<ErrorResponse>)> {
+    let account = state
+        .financial_repo
+        .get_account(account_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load account: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to load account")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Account not found")),
+            )
+        })?;
+
+    if !is_member_or_not_found(state, user_id, account.organization_id).await? {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Account not found")),
+        ));
+    }
+
+    Ok(account)
+}
+
+/// Membership check that maps DB errors to a 500 but returns a plain bool for
+/// the membership outcome, letting the caller choose 403 vs 404 semantics.
+async fn is_member_or_not_found(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<bool, (StatusCode, Json<ErrorResponse>)> {
+    state
+        .org_member_repo
+        .is_member(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })
+}
+
 /// Create financial router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -89,6 +186,19 @@ pub struct ListTransactionsQuery {
     pub offset: i64,
 }
 
+/// Unit payments query parameters (org membership is verified).
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct UnitPaymentsQuery {
+    /// Organization that owns the unit (membership is verified)
+    pub organization_id: Uuid,
+    /// Page limit
+    #[serde(default = "default_limit")]
+    pub limit: i64,
+    /// Page offset
+    #[serde(default)]
+    pub offset: i64,
+}
+
 /// List invoices query parameters.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListInvoicesQuery {
@@ -109,6 +219,8 @@ pub struct ListInvoicesQuery {
 /// List fee schedules query parameters.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListFeeSchedulesQuery {
+    /// Organization that owns the building (membership is verified)
+    pub organization_id: Uuid,
     /// Building to list for
     pub building_id: Uuid,
     /// Only active schedules
@@ -119,6 +231,8 @@ pub struct ListFeeSchedulesQuery {
 /// Assign unit fee request.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AssignUnitFeeRequest {
+    /// Organization that owns the unit (membership is verified)
+    pub organization_id: Uuid,
     /// Fee schedule to assign
     pub fee_schedule_id: Uuid,
     /// Override the standard amount
@@ -132,6 +246,8 @@ pub struct AssignUnitFeeRequest {
 /// Unit fees query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct UnitFeesQuery {
+    /// Organization that owns the unit (membership is verified)
+    pub organization_id: Uuid,
     /// As of date for active fees
     pub as_of: Option<NaiveDate>,
 }
@@ -209,8 +325,10 @@ fn default_true() -> bool {
 
 async fn create_account(
     State(state): State<AppState>,
+    auth: AuthUser,
     Json(payload): Json<CreateAccountRequest>,
 ) -> Result<(StatusCode, Json<db::models::FinancialAccount>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
     state
         .financial_repo
         .create_account(payload.organization_id, payload.data)
@@ -227,8 +345,10 @@ async fn create_account(
 
 async fn list_accounts(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<ListAccountsQuery>,
 ) -> Result<Json<Vec<db::models::FinancialAccount>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     state
         .financial_repo
         .list_accounts(query.organization_id, query.building_id)
@@ -245,8 +365,10 @@ async fn list_accounts(
 
 async fn get_account(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::FinancialAccountResponse>, (StatusCode, Json<ErrorResponse>)> {
+    verify_account_access(&state, auth.user_id, id).await?;
     match state
         .financial_repo
         .get_account_with_transactions(id, 20)
@@ -269,9 +391,11 @@ async fn get_account(
 
 async fn list_transactions(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<ListTransactionsQuery>,
 ) -> Result<Json<Vec<db::models::AccountTransaction>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_account_access(&state, auth.user_id, id).await?;
     let limit = query.limit.min(MAX_LIST_LIMIT);
     state
         .financial_repo
@@ -296,6 +420,7 @@ async fn create_transaction(
     Path(id): Path<Uuid>,
     Json(mut payload): Json<CreateTransaction>,
 ) -> Result<(StatusCode, Json<db::models::AccountTransaction>), (StatusCode, Json<ErrorResponse>)> {
+    verify_account_access(&state, auth.user_id, id).await?;
     payload.account_id = id;
 
     state
@@ -317,10 +442,19 @@ async fn create_transaction(
 
 async fn get_unit_ledger(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(unit_id): Path<Uuid>,
 ) -> Result<Json<db::models::FinancialAccountResponse>, (StatusCode, Json<ErrorResponse>)> {
     match state.financial_repo.get_unit_ledger(unit_id).await {
         Ok(Some(account)) => {
+            // The ledger account carries the owning org; verify membership
+            // before returning any data (treat non-members as 404).
+            if !is_member_or_not_found(&state, auth.user_id, account.organization_id).await? {
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Unit ledger not found")),
+                ));
+            }
             match state
                 .financial_repo
                 .get_account_with_transactions(account.id, 20)
@@ -351,11 +485,13 @@ async fn get_unit_ledger(
 
 async fn create_fee_schedule(
     State(state): State<AppState>,
+    auth: AuthUser,
     Json(payload): Json<CreateFeeScheduleRequest>,
 ) -> Result<(StatusCode, Json<db::models::FeeSchedule>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
     state
         .financial_repo
-        .create_fee_schedule(payload.organization_id, payload.user_id, payload.data)
+        .create_fee_schedule(payload.organization_id, auth.user_id, payload.data)
         .await
         .map(|schedule| (StatusCode::CREATED, Json(schedule)))
         .map_err(|e| {
@@ -372,13 +508,14 @@ async fn create_fee_schedule(
 
 async fn list_fee_schedules(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<ListFeeSchedulesQuery>,
 ) -> Result<Json<Vec<db::models::FeeSchedule>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    let schedules = state
         .financial_repo
         .list_fee_schedules(query.building_id, query.active_only)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to list fee schedules: {:?}", e);
             (
@@ -388,15 +525,30 @@ async fn list_fee_schedules(
                     "Failed to list fee schedules",
                 )),
             )
-        })
+        })?;
+    // Defense-in-depth: only return schedules belonging to the verified org.
+    let scoped = schedules
+        .into_iter()
+        .filter(|s| s.organization_id == query.organization_id)
+        .collect::<Vec<_>>();
+    Ok(Json(scoped))
 }
 
 async fn get_fee_schedule(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::FeeSchedule>, (StatusCode, Json<ErrorResponse>)> {
     match state.financial_repo.get_fee_schedule(id).await {
-        Ok(Some(schedule)) => Ok(Json(schedule)),
+        Ok(Some(schedule)) => {
+            if !is_member_or_not_found(&state, auth.user_id, schedule.organization_id).await? {
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Fee schedule not found")),
+                ));
+            }
+            Ok(Json(schedule))
+        }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Fee schedule not found")),
@@ -413,9 +565,11 @@ async fn get_fee_schedule(
 
 async fn get_unit_fees(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(unit_id): Path<Uuid>,
     Query(query): Query<UnitFeesQuery>,
 ) -> Result<Json<Vec<db::models::UnitFee>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     let as_of = query
         .as_of
         .unwrap_or_else(|| chrono::Utc::now().date_naive());
@@ -435,9 +589,11 @@ async fn get_unit_fees(
 
 async fn assign_unit_fee(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(unit_id): Path<Uuid>,
     Json(payload): Json<AssignUnitFeeRequest>,
 ) -> Result<(StatusCode, Json<db::models::UnitFee>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
     state
         .financial_repo
         .assign_unit_fee(
@@ -462,11 +618,13 @@ async fn assign_unit_fee(
 
 async fn create_invoice(
     State(state): State<AppState>,
+    auth: AuthUser,
     Json(payload): Json<CreateInvoiceRequest>,
 ) -> Result<(StatusCode, Json<db::models::InvoiceResponse>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
     state
         .financial_repo
-        .create_invoice(payload.organization_id, payload.user_id, payload.data)
+        .create_invoice(payload.organization_id, auth.user_id, payload.data)
         .await
         .map(|invoice| (StatusCode::CREATED, Json(invoice)))
         .map_err(|e| {
@@ -480,8 +638,10 @@ async fn create_invoice(
 
 async fn list_invoices(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<ListInvoicesQuery>,
 ) -> Result<Json<db::models::ListInvoicesResponse>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     let limit = query.limit.min(MAX_LIST_LIMIT);
     let result = if let Some(unit_id) = query.unit_id {
         state
@@ -495,21 +655,39 @@ async fn list_invoices(
             .await
     };
 
-    result.map(Json).map_err(|e| {
+    let mut response = result.map_err(|e| {
         tracing::error!("Failed to list invoices: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::new("DB_ERROR", "Failed to list invoices")),
         )
-    })
+    })?;
+    // The unit-scoped query is not org-bound at the DB layer; filter the
+    // result to the verified org so a foreign unit_id cannot leak invoices.
+    response
+        .invoices
+        .retain(|inv| inv.organization_id == query.organization_id);
+    response.total = response.invoices.len() as i64;
+    Ok(Json(response))
 }
 
 async fn get_invoice(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::InvoiceResponse>, (StatusCode, Json<ErrorResponse>)> {
     match state.financial_repo.get_invoice_with_details(id).await {
-        Ok(Some(invoice)) => Ok(Json(invoice)),
+        Ok(Some(invoice)) => {
+            if !is_member_or_not_found(&state, auth.user_id, invoice.invoice.organization_id)
+                .await?
+            {
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+                ));
+            }
+            Ok(Json(invoice))
+        }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
@@ -526,8 +704,33 @@ async fn get_invoice(
 
 async fn send_invoice(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::Invoice>, (StatusCode, Json<ErrorResponse>)> {
+    // Verify ownership before mutating: load the invoice, check membership.
+    match state.financial_repo.get_invoice(id).await {
+        Ok(Some(existing)) => {
+            if !is_member_or_not_found(&state, auth.user_id, existing.organization_id).await? {
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+                ));
+            }
+        }
+        Ok(None) => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to load invoice: {:?}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to send invoice")),
+            ));
+        }
+    }
     match state.financial_repo.mark_invoice_sent(id).await {
         Ok(Some(invoice)) => Ok(Json(invoice)),
         Ok(None) => Err((
@@ -546,33 +749,42 @@ async fn send_invoice(
 
 async fn list_unit_invoices(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(unit_id): Path<Uuid>,
     Query(query): Query<ListInvoicesQuery>,
 ) -> Result<Json<db::models::ListInvoicesResponse>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     let limit = query.limit.min(MAX_LIST_LIMIT);
-    state
+    let mut response = state
         .financial_repo
         .list_invoices_for_unit(unit_id, query.status, limit, query.offset)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to list unit invoices: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to list invoices")),
             )
-        })
+        })?;
+    // Filter to the verified org: a foreign unit_id must not leak invoices.
+    response
+        .invoices
+        .retain(|inv| inv.organization_id == query.organization_id);
+    response.total = response.invoices.len() as i64;
+    Ok(Json(response))
 }
 
 // ==================== Payment Handlers ====================
 
 async fn record_payment(
     State(state): State<AppState>,
+    auth: AuthUser,
     Json(payload): Json<RecordPaymentRequest>,
 ) -> Result<(StatusCode, Json<db::models::PaymentResponse>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
     state
         .financial_repo
-        .record_payment(payload.organization_id, payload.user_id, payload.data)
+        .record_payment(payload.organization_id, auth.user_id, payload.data)
         .await
         .map(|payment| (StatusCode::CREATED, Json(payment)))
         .map_err(|e| {
@@ -586,10 +798,21 @@ async fn record_payment(
 
 async fn get_payment(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<db::models::PaymentResponse>, (StatusCode, Json<ErrorResponse>)> {
     match state.financial_repo.get_payment_with_allocations(id).await {
-        Ok(Some(payment)) => Ok(Json(payment)),
+        Ok(Some(payment)) => {
+            if !is_member_or_not_found(&state, auth.user_id, payment.payment.organization_id)
+                .await?
+            {
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Payment not found")),
+                ));
+            }
+            Ok(Json(payment))
+        }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Payment not found")),
@@ -606,30 +829,39 @@ async fn get_payment(
 
 async fn list_unit_payments(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(unit_id): Path<Uuid>,
-    Query(query): Query<ListTransactionsQuery>,
+    Query(query): Query<UnitPaymentsQuery>,
 ) -> Result<Json<Vec<db::models::Payment>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     let limit = query.limit.min(MAX_LIST_LIMIT);
-    state
+    let payments = state
         .financial_repo
         .list_payments_for_unit(unit_id, limit, query.offset)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to list payments: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to list payments")),
             )
-        })
+        })?;
+    // Filter to the verified org: a foreign unit_id must not leak payments.
+    let scoped = payments
+        .into_iter()
+        .filter(|p| p.organization_id == query.organization_id)
+        .collect::<Vec<_>>();
+    Ok(Json(scoped))
 }
 
 // ==================== Reminder/Late Fee Handlers ====================
 
 async fn get_reminder_schedules(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<Vec<db::models::ReminderSchedule>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     state
         .financial_repo
         .get_reminder_schedules(query.organization_id)
@@ -649,8 +881,10 @@ async fn get_reminder_schedules(
 
 async fn get_late_fee_config(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<db::models::LateFeeConfig>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     match state
         .financial_repo
         .get_late_fee_config(query.organization_id)
@@ -676,8 +910,10 @@ async fn get_late_fee_config(
 
 async fn get_overdue_invoices(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<Vec<db::models::Invoice>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     state
         .financial_repo
         .get_overdue_invoices(query.organization_id)
@@ -699,8 +935,10 @@ async fn get_overdue_invoices(
 
 async fn get_ar_aging_report(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<ARReportQuery>,
 ) -> Result<Json<db::models::AccountsReceivableReport>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
     state
         .financial_repo
         .get_ar_aging_report(query.organization_id, query.building_id)
