@@ -18,7 +18,7 @@ use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use super::sync::{OrgIdPath, ResourceIdPath};
+use super::sync::{verify_org_access, OrgIdPath, ResourceIdPath};
 use common::errors::ErrorResponse;
 
 const MAX_BATCH_SIZE: usize = 500;
@@ -359,6 +359,9 @@ pub async fn get_airbnb_status(
         "Getting Airbnb status"
     );
 
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
     let rental_repo = &state.rental_repo;
 
     let (connected_count, listings_count, last_sync_at, sync_error) = rental_repo
@@ -432,6 +435,9 @@ pub async fn connect_airbnb(
         "Initiating Airbnb OAuth connection"
     );
 
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
     // Issue #711: AppState carries Airbnb credentials loaded once at startup.
     let client_id = state.airbnb_config.client_id.clone();
     let client_secret = state.airbnb_config.client_secret.clone();
@@ -489,6 +495,9 @@ pub async fn sync_airbnb(
         org_id = %path.org_id,
         "Syncing Airbnb"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -612,6 +621,9 @@ pub async fn disconnect_airbnb(
         "Disconnecting Airbnb"
     );
 
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
     let rental_repo = &state.rental_repo;
 
     let connection = rental_repo
@@ -693,6 +705,9 @@ pub async fn get_booking_status(
         "Getting Booking.com status"
     );
 
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
     let rental_repo = &state.rental_repo;
 
     let connection = rental_repo
@@ -756,6 +771,9 @@ pub async fn connect_booking(
         hotel_id = %request.hotel_id,
         "Connecting to Booking.com"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -838,6 +856,9 @@ pub async fn sync_booking(
         org_id = %path.org_id,
         "Syncing Booking.com"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1046,6 +1067,9 @@ pub async fn disconnect_booking(
         org_id = %path.org_id,
         "Disconnecting Booking.com"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1447,7 +1471,7 @@ pub async fn push_booking_rates(
     tag = "Integrations - Portals"
 )]
 pub async fn list_portal_connections(
-    State(_state): State<crate::state::AppState>,
+    State(state): State<crate::state::AppState>,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<PortalConnectionResponse>>, (StatusCode, Json<ErrorResponse>)> {
@@ -1456,6 +1480,9 @@ pub async fn list_portal_connections(
         org_id = %path.org_id,
         "Listing portal connections"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     Ok(Json(Vec::new()))
 }
@@ -1476,7 +1503,7 @@ pub async fn list_portal_connections(
     tag = "Integrations - Portals"
 )]
 pub async fn create_portal_connection(
-    State(_state): State<crate::state::AppState>,
+    State(state): State<crate::state::AppState>,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<CreatePortalConnectionRequest>,
@@ -1487,6 +1514,9 @@ pub async fn create_portal_connection(
         portal_type = %request.portal_type,
         "Creating portal connection"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let portal_type = PortalType::from_str(&request.portal_type).ok_or_else(|| {
         (
@@ -1587,7 +1617,7 @@ pub async fn delete_portal_connection(
     tag = "Integrations - Portals"
 )]
 pub async fn list_portal_inquiries(
-    State(_state): State<crate::state::AppState>,
+    State(state): State<crate::state::AppState>,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Query(_query): Query<PortalInquiryQuery>,
@@ -1597,6 +1627,9 @@ pub async fn list_portal_inquiries(
         org_id = %path.org_id,
         "Listing portal inquiries"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     Ok(Json(Vec::new()))
 }
