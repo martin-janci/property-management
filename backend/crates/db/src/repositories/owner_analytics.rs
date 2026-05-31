@@ -19,13 +19,76 @@ impl OwnerAnalyticsRepository {
         Self { pool }
     }
 
+    // ======================== Tenant-isolation guards ========================
+
+    /// Verify that `unit_id` belongs to a building owned by `org_id`.
+    /// Returns `AppError::NotFound` when the unit is absent or in another org —
+    /// callers surface this as a 404 so cross-tenant probing cannot distinguish
+    /// "wrong org" from "does not exist".
+    async fn assert_unit_in_org(&self, unit_id: Uuid, org_id: Uuid) -> Result<(), AppError> {
+        let exists: bool = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM units u
+                JOIN buildings b ON b.id = u.building_id
+                WHERE u.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(unit_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        if exists {
+            Ok(())
+        } else {
+            Err(AppError::NotFound("Unit not found".to_string()))
+        }
+    }
+
+    /// Verify that `valuation_id` belongs to a unit in a building owned by `org_id`.
+    async fn assert_valuation_in_org(
+        &self,
+        valuation_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<(), AppError> {
+        let exists: bool = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM property_valuations pv
+                JOIN units u ON u.id = pv.unit_id
+                JOIN buildings b ON b.id = u.building_id
+                WHERE pv.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(valuation_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        if exists {
+            Ok(())
+        } else {
+            Err(AppError::NotFound("Valuation not found".to_string()))
+        }
+    }
+
     // ======================== Property Valuations (Story 74.1) ========================
 
     pub async fn create_valuation(
         &self,
-        _org_id: Uuid,
+        org_id: Uuid,
         req: CreatePropertyValuation,
     ) -> Result<PropertyValuation, AppError> {
+        // Enforce tenant isolation: the unit must belong to the caller's org.
+        self.assert_unit_in_org(req.unit_id, org_id).await?;
+
         // Calculate low and high values (±5%)
         let value_low = req.estimated_value * Decimal::new(95, 2);
         let value_high = req.estimated_value * Decimal::new(105, 2);
@@ -63,19 +126,23 @@ impl OwnerAnalyticsRepository {
     pub async fn get_latest_valuation(
         &self,
         unit_id: Uuid,
-        _org_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<PropertyValuation>, AppError> {
         let valuation = sqlx::query_as::<_, PropertyValuation>(
             r#"
-            SELECT id, unit_id, valuation_date, value_low, value_high, estimated_value,
-                   valuation_method, confidence_score, notes, created_at
-            FROM property_valuations
-            WHERE unit_id = $1
-            ORDER BY valuation_date DESC
+            SELECT pv.id, pv.unit_id, pv.valuation_date, pv.value_low, pv.value_high,
+                   pv.estimated_value, pv.valuation_method, pv.confidence_score, pv.notes,
+                   pv.created_at
+            FROM property_valuations pv
+            JOIN units u ON u.id = pv.unit_id
+            JOIN buildings b ON b.id = u.building_id
+            WHERE pv.unit_id = $1 AND b.organization_id = $2
+            ORDER BY pv.valuation_date DESC
             LIMIT 1
             "#,
         )
         .bind(unit_id)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -86,17 +153,21 @@ impl OwnerAnalyticsRepository {
     pub async fn get_valuation_with_comparables(
         &self,
         valuation_id: Uuid,
-        _org_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<PropertyValuationWithComparables>, AppError> {
         let valuation = sqlx::query_as::<_, PropertyValuation>(
             r#"
-            SELECT id, unit_id, valuation_date, value_low, value_high, estimated_value,
-                   valuation_method, confidence_score, notes, created_at
-            FROM property_valuations
-            WHERE id = $1
+            SELECT pv.id, pv.unit_id, pv.valuation_date, pv.value_low, pv.value_high,
+                   pv.estimated_value, pv.valuation_method, pv.confidence_score, pv.notes,
+                   pv.created_at
+            FROM property_valuations pv
+            JOIN units u ON u.id = pv.unit_id
+            JOIN buildings b ON b.id = u.building_id
+            WHERE pv.id = $1 AND b.organization_id = $2
             "#,
         )
         .bind(valuation_id)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -129,8 +200,12 @@ impl OwnerAnalyticsRepository {
     pub async fn add_comparable(
         &self,
         valuation_id: Uuid,
+        org_id: Uuid,
         req: AddComparableProperty,
     ) -> Result<ComparableProperty, AppError> {
+        // Enforce tenant isolation: the valuation must belong to the caller's org.
+        self.assert_valuation_in_org(valuation_id, org_id).await?;
+
         let comparable = sqlx::query_as::<_, ComparableProperty>(
             r#"
             INSERT INTO comparable_properties (valuation_id, address, sale_price, size_sqm,
@@ -157,20 +232,24 @@ impl OwnerAnalyticsRepository {
 
     pub async fn get_value_history(
         &self,
+        org_id: Uuid,
         q: ValueHistoryQuery,
     ) -> Result<Vec<PropertyValueHistory>, AppError> {
         let limit = q.limit.unwrap_or(12) as i64;
 
         let history = sqlx::query_as::<_, PropertyValueHistory>(
             r#"
-            SELECT id, unit_id, value, recorded_at
-            FROM property_value_history
-            WHERE unit_id = $1
-            ORDER BY recorded_at DESC
-            LIMIT $2
+            SELECT pvh.id, pvh.unit_id, pvh.value, pvh.recorded_at
+            FROM property_value_history pvh
+            JOIN units u ON u.id = pvh.unit_id
+            JOIN buildings b ON b.id = u.building_id
+            WHERE pvh.unit_id = $1 AND b.organization_id = $2
+            ORDER BY pvh.recorded_at DESC
+            LIMIT $3
             "#,
         )
         .bind(q.unit_id)
+        .bind(org_id)
         .bind(limit)
         .fetch_all(&self.pool)
         .await
@@ -182,13 +261,13 @@ impl OwnerAnalyticsRepository {
     pub async fn get_value_trend(
         &self,
         unit_id: Uuid,
-        _org_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<ValueTrendAnalysis>, AppError> {
         let query = ValueHistoryQuery {
             unit_id,
             limit: Some(12),
         };
-        let history = self.get_value_history(query).await?;
+        let history = self.get_value_history(org_id, query).await?;
 
         if history.is_empty() {
             return Ok(None);
@@ -218,9 +297,12 @@ impl OwnerAnalyticsRepository {
 
     pub async fn calculate_roi(
         &self,
-        _org_id: Uuid,
+        org_id: Uuid,
         req: CalculateROIRequest,
     ) -> Result<PropertyROI, AppError> {
+        // Enforce tenant isolation: the unit must belong to the caller's org.
+        self.assert_unit_in_org(req.unit_id, org_id).await?;
+
         // Get total income for the period
         let total_income: Decimal = sqlx::query_scalar(
             r#"
@@ -281,10 +363,13 @@ impl OwnerAnalyticsRepository {
     pub async fn get_cash_flow_breakdown(
         &self,
         unit_id: Uuid,
-        _org_id: Uuid,
+        org_id: Uuid,
         from: chrono::NaiveDate,
         to: chrono::NaiveDate,
     ) -> Result<CashFlowBreakdown, AppError> {
+        // Enforce tenant isolation: the unit must belong to the caller's org.
+        self.assert_unit_in_org(unit_id, org_id).await?;
+
         // Get rental income
         let rental_income: Decimal = sqlx::query_scalar(
             r#"
@@ -468,7 +553,7 @@ impl OwnerAnalyticsRepository {
 
     pub async fn compare_properties(
         &self,
-        _org_id: Uuid,
+        org_id: Uuid,
         req: PortfolioComparisonRequest,
     ) -> Result<ComparisonMetrics, AppError> {
         let mut properties = Vec::new();
@@ -478,6 +563,10 @@ impl OwnerAnalyticsRepository {
         let mut highest_value = Decimal::MIN;
 
         for &unit_id in &req.unit_ids {
+            // Enforce tenant isolation: every requested unit must belong to the
+            // caller's org, otherwise a caller could probe cross-tenant values.
+            self.assert_unit_in_org(unit_id, org_id).await?;
+
             // Get valuation
             let valuation = sqlx::query_scalar::<_, Decimal>(
                 r#"
@@ -632,16 +721,20 @@ impl OwnerAnalyticsRepository {
     pub async fn submit_expense_for_approval(
         &self,
         submitted_by: Uuid,
-        _org_id: Uuid,
+        org_id: Uuid,
         req: SubmitExpenseForApproval,
     ) -> Result<ExpenseApprovalResponse, AppError> {
-        // Check for auto-approval rules
+        // Enforce tenant isolation: the unit must belong to the caller's org.
+        self.assert_unit_in_org(req.unit_id, org_id).await?;
+
+        // Check for auto-approval rules (scoped to this org).
         let matching_rule = sqlx::query_as::<_, ExpenseAutoApprovalRule>(
             r#"
             SELECT id, organization_id, owner_id, unit_id, max_amount_per_expense,
                    max_monthly_total, allowed_categories, is_active, created_at, updated_at
             FROM expense_auto_approval_rules
             WHERE (unit_id = $1 OR unit_id IS NULL)
+              AND organization_id = $4
               AND is_active = true
               AND max_amount_per_expense >= $2
               AND $3 = ANY(allowed_categories)
@@ -652,6 +745,7 @@ impl OwnerAnalyticsRepository {
         .bind(req.unit_id)
         .bind(req.amount)
         .bind(&req.category)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -716,20 +810,27 @@ impl OwnerAnalyticsRepository {
 
     pub async fn list_expense_requests(
         &self,
-        _org_id: Uuid,
+        org_id: Uuid,
         q: ExpenseRequestsQuery,
     ) -> Result<ListExpenseRequestsResponse, AppError> {
         let limit = q.limit.unwrap_or(50) as i64;
         let offset = q.offset.unwrap_or(0) as i64;
 
+        // Scope every expense request to units in buildings owned by `org_id`,
+        // so a caller cannot read another tenant's expense history (or probe by
+        // passing a foreign unit_id as `property_id`).
         let requests = sqlx::query_as::<_, ExpenseApprovalRequest>(
             r#"
-            SELECT id, unit_id, submitted_by, amount, category, description, status,
-                   auto_approval_rule_id, reviewed_by, review_notes, created_at, updated_at
-            FROM expense_approval_requests
-            WHERE ($1::uuid IS NULL OR unit_id = $1)
-              AND ($2::text IS NULL OR status = $2)
-            ORDER BY created_at DESC
+            SELECT ear.id, ear.unit_id, ear.submitted_by, ear.amount, ear.category,
+                   ear.description, ear.status, ear.auto_approval_rule_id, ear.reviewed_by,
+                   ear.review_notes, ear.created_at, ear.updated_at
+            FROM expense_approval_requests ear
+            JOIN units u ON u.id = ear.unit_id
+            JOIN buildings b ON b.id = u.building_id
+            WHERE b.organization_id = $5
+              AND ($1::uuid IS NULL OR ear.unit_id = $1)
+              AND ($2::text IS NULL OR ear.status = $2)
+            ORDER BY ear.created_at DESC
             LIMIT $3 OFFSET $4
             "#,
         )
@@ -737,6 +838,7 @@ impl OwnerAnalyticsRepository {
         .bind(&q.status)
         .bind(limit)
         .bind(offset)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -744,13 +846,17 @@ impl OwnerAnalyticsRepository {
         let total: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*)
-            FROM expense_approval_requests
-            WHERE ($1::uuid IS NULL OR unit_id = $1)
-              AND ($2::text IS NULL OR status = $2)
+            FROM expense_approval_requests ear
+            JOIN units u ON u.id = ear.unit_id
+            JOIN buildings b ON b.id = u.building_id
+            WHERE b.organization_id = $3
+              AND ($1::uuid IS NULL OR ear.unit_id = $1)
+              AND ($2::text IS NULL OR ear.status = $2)
             "#,
         )
         .bind(q.property_id)
         .bind(&q.status)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -762,6 +868,7 @@ impl OwnerAnalyticsRepository {
         &self,
         id: Uuid,
         reviewed_by: Uuid,
+        org_id: Uuid,
         req: ReviewExpenseRequest,
     ) -> Result<ExpenseApprovalRequest, AppError> {
         let status = match req.decision {
@@ -770,23 +877,32 @@ impl OwnerAnalyticsRepository {
             ExpenseApprovalDecision::NeedsInfo => "needs_info",
         };
 
+        // Scope the UPDATE to expense requests whose unit lives in a building
+        // owned by `org_id`. A reviewer in another tenant therefore cannot
+        // approve/reject this org's expenses (the row simply won't match).
         let expense = sqlx::query_as::<_, ExpenseApprovalRequest>(
             r#"
-            UPDATE expense_approval_requests
+            UPDATE expense_approval_requests ear
             SET status = $2, reviewed_by = $3, review_notes = $4
-            WHERE id = $1
-            RETURNING id, unit_id, submitted_by, amount, category, description, status,
-                      auto_approval_rule_id, reviewed_by, review_notes, created_at, updated_at
+            FROM units u, buildings b
+            WHERE ear.id = $1
+              AND u.id = ear.unit_id
+              AND b.id = u.building_id
+              AND b.organization_id = $5
+            RETURNING ear.id, ear.unit_id, ear.submitted_by, ear.amount, ear.category,
+                      ear.description, ear.status, ear.auto_approval_rule_id, ear.reviewed_by,
+                      ear.review_notes, ear.created_at, ear.updated_at
             "#,
         )
         .bind(id)
         .bind(status)
         .bind(reviewed_by)
         .bind(&req.notes)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-        Ok(expense)
+        expense.ok_or_else(|| AppError::NotFound("Expense request not found".to_string()))
     }
 }

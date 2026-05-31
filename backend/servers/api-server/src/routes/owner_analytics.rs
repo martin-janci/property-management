@@ -136,15 +136,18 @@ async fn get_unit_valuation(
 
 async fn create_valuation(
     State(s): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(_uid): Path<Uuid>,
     Json(r): Json<CreateValuationRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    match s
-        .owner_analytics_repo
-        .create_valuation(r.organization_id, r.data)
-        .await
-    {
+    // Derive the org from the authenticated session, never trust the body.
+    let org = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::bad_request("Tenant context required")),
+        )
+    })?;
+    match s.owner_analytics_repo.create_valuation(org, r.data).await {
         Ok(v) => Ok(Json(to_json_value(v)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
@@ -183,11 +186,17 @@ async fn get_valuation_with_comparables(
 
 async fn add_comparable(
     State(s): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(vid): Path<Uuid>,
     Json(r): Json<AddComparableProperty>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    match s.owner_analytics_repo.add_comparable(vid, r).await {
+    let org = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::bad_request("Tenant context required")),
+        )
+    })?;
+    match s.owner_analytics_repo.add_comparable(vid, org, r).await {
         Ok(c) => Ok(Json(to_json_value(c)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
@@ -198,16 +207,25 @@ async fn add_comparable(
 
 async fn get_value_history(
     State(s): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(uid): Path<Uuid>,
     Query(p): Query<ValueHistoryParams>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let org = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::bad_request("Tenant context required")),
+        )
+    })?;
     match s
         .owner_analytics_repo
-        .get_value_history(ValueHistoryQuery {
-            unit_id: uid,
-            limit: p.limit,
-        })
+        .get_value_history(
+            org,
+            ValueHistoryQuery {
+                unit_id: uid,
+                limit: p.limit,
+            },
+        )
         .await
     {
         Ok(h) => Ok(Json(to_json_value(h)?)),
@@ -244,15 +262,17 @@ async fn get_value_trend(
 
 async fn calculate_roi(
     State(s): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(_uid): Path<Uuid>,
     Json(r): Json<CalculateROIWithOrg>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    match s
-        .owner_analytics_repo
-        .calculate_roi(r.organization_id, r.data)
-        .await
-    {
+    let org = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::bad_request("Tenant context required")),
+        )
+    })?;
+    match s.owner_analytics_repo.calculate_roi(org, r.data).await {
         Ok(roi) => Ok(Json(to_json_value(roi)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
@@ -380,9 +400,15 @@ async fn create_auto_approval_rule(
     user: AuthUser,
     Json(r): Json<CreateRuleRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let org = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::bad_request("Tenant context required")),
+        )
+    })?;
     match s
         .owner_analytics_repo
-        .create_auto_approval_rule(user.user_id, r.organization_id, r.data)
+        .create_auto_approval_rule(user.user_id, org, r.data)
         .await
     {
         Ok(rule) => Ok(Json(to_json_value(rule)?)),
@@ -435,9 +461,15 @@ async fn submit_expense(
     user: AuthUser,
     Json(r): Json<SubmitExpenseRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let org = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::bad_request("Tenant context required")),
+        )
+    })?;
     match s
         .owner_analytics_repo
-        .submit_expense_for_approval(user.user_id, r.organization_id, r.data)
+        .submit_expense_for_approval(user.user_id, org, r.data)
         .await
     {
         Ok(resp) => Ok(Json(to_json_value(resp)?)),
@@ -474,9 +506,15 @@ async fn review_expense(
     Path(id): Path<Uuid>,
     Json(r): Json<ReviewExpenseRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let org = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::bad_request("Tenant context required")),
+        )
+    })?;
     match s
         .owner_analytics_repo
-        .review_expense(id, user.user_id, r)
+        .review_expense(id, user.user_id, org, r)
         .await
     {
         Ok(e) => Ok(Json(to_json_value(e)?)),
