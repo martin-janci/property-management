@@ -27,6 +27,35 @@ fn get_org_id(auth: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)
     ))
 }
 
+/// Verify the portfolio exists and belongs to the caller's organization before
+/// touching its properties. `get_portfolio` already filters by
+/// `organization_id`, so a portfolio owned by another tenant resolves to
+/// `None`, which we map to 404 (so cross-tenant probing cannot distinguish
+/// "missing" from "forbidden"). The portfolio-property repo methods key only
+/// on `portfolio_id`/`property_id`, so without this gate any authenticated
+/// user could enumerate another org's portfolio properties (IDOR).
+async fn verify_portfolio_org(state: &AppState, portfolio_id: Uuid, org_id: Uuid) -> ApiResult<()> {
+    let portfolio = state
+        .investor_portal_repo
+        .get_portfolio(portfolio_id, org_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::internal_error(&e.to_string())),
+            )
+        })?;
+
+    if portfolio.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::not_found("Portfolio not found")),
+        ));
+    }
+
+    Ok(())
+}
+
 pub fn router() -> Router<AppState> {
     Router::new()
         // Investor profiles
@@ -387,9 +416,12 @@ async fn list_investor_portfolios(
 
 async fn list_portfolio_properties(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(portfolio_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::investor_portal::InvestorPortfolioProperty>>> {
+    let org_id = get_org_id(&auth)?;
+    verify_portfolio_org(&state, portfolio_id, org_id).await?;
+
     state
         .investor_portal_repo
         .list_portfolio_properties(portfolio_id)
@@ -405,10 +437,13 @@ async fn list_portfolio_properties(
 
 async fn add_portfolio_property(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(portfolio_id): Path<Uuid>,
     Json(data): Json<CreateInvestorPortfolioProperty>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorPortfolioProperty>> {
+    let org_id = get_org_id(&auth)?;
+    verify_portfolio_org(&state, portfolio_id, org_id).await?;
+
     state
         .investor_portal_repo
         .add_portfolio_property(portfolio_id, &data)
@@ -424,10 +459,13 @@ async fn add_portfolio_property(
 
 async fn update_portfolio_property(
     State(state): State<AppState>,
-    _auth: AuthUser,
-    Path((_portfolio_id, property_id)): Path<(Uuid, Uuid)>,
+    auth: AuthUser,
+    Path((portfolio_id, property_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<UpdateInvestorPortfolioProperty>,
 ) -> ApiResult<Json<db::models::investor_portal::InvestorPortfolioProperty>> {
+    let org_id = get_org_id(&auth)?;
+    verify_portfolio_org(&state, portfolio_id, org_id).await?;
+
     state
         .investor_portal_repo
         .update_portfolio_property(property_id, &data)
@@ -447,9 +485,12 @@ async fn update_portfolio_property(
 
 async fn remove_portfolio_property(
     State(state): State<AppState>,
-    _auth: AuthUser,
-    Path((_portfolio_id, property_id)): Path<(Uuid, Uuid)>,
+    auth: AuthUser,
+    Path((portfolio_id, property_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    let org_id = get_org_id(&auth)?;
+    verify_portfolio_org(&state, portfolio_id, org_id).await?;
+
     let deleted = state
         .investor_portal_repo
         .remove_portfolio_property(property_id)

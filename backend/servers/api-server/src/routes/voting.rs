@@ -284,10 +284,12 @@ async fn get_vote(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<VoteWithDetails>, (StatusCode, Json<ErrorResponse>)> {
-    // Note: find_by_id_with_details doesn't have an RLS version yet
+    // Scope the lookup to the caller's tenant so a vote belonging to another
+    // organization resolves to `None` (mapped to 404 below) instead of leaking
+    // cross-tenant data.
     let vote = state
         .vote_repo
-        .find_by_id_with_details(id)
+        .find_by_id_with_details_for_org(id, rls.tenant_id())
         .await
         .map_err(|e| {
             (
