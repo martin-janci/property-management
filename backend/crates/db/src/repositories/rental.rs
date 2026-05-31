@@ -116,6 +116,119 @@ impl RentalRepository {
     }
 
     // ========================================================================
+    // Tenant-isolation guards (issue #804)
+    // ========================================================================
+    //
+    // SECURITY: the rental HTTP handlers address resources by id/unit_id, and
+    // several read-by-id endpoints had no auth extractor at all (leaking OAuth
+    // tokens and guest PII to anonymous callers), while the mutation endpoints
+    // authenticated the caller but never checked the resource's owning org.
+    // Every rental table carries `organization_id`, so these `EXISTS` guards let
+    // a handler confirm a resource belongs to the caller's tenant before reading
+    // or mutating it. A foreign/unknown id returns `false`, which the handler
+    // maps to `404` so existence is not probeable across tenants. Mirrors the
+    // `_belongs_to_org` idiom used by the fault / work-order / meter routes.
+
+    /// Whether `unit_id` belongs to `org_id` (via its building).
+    pub async fn unit_belongs_to_org(
+        &self,
+        unit_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM units u
+                JOIN buildings b ON b.id = u.building_id
+                WHERE u.id = $1 AND b.organization_id = $2
+            )
+            "#,
+        )
+        .bind(unit_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether platform connection `id` belongs to `org_id`.
+    pub async fn connection_belongs_to_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"SELECT EXISTS(SELECT 1 FROM rental_platform_connections WHERE id = $1 AND organization_id = $2)"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether booking `id` belongs to `org_id`.
+    pub async fn booking_belongs_to_org(&self, id: Uuid, org_id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"SELECT EXISTS(SELECT 1 FROM rental_bookings WHERE id = $1 AND organization_id = $2)"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether guest `id` belongs to `org_id`.
+    pub async fn guest_belongs_to_org(&self, id: Uuid, org_id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"SELECT EXISTS(SELECT 1 FROM rental_guests WHERE id = $1 AND organization_id = $2)"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether guest report `id` belongs to `org_id`.
+    pub async fn report_belongs_to_org(&self, id: Uuid, org_id: Uuid) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"SELECT EXISTS(SELECT 1 FROM rental_guest_reports WHERE id = $1 AND organization_id = $2)"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether iCal feed `id` belongs to `org_id`.
+    pub async fn ical_feed_belongs_to_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"SELECT EXISTS(SELECT 1 FROM rental_ical_feeds WHERE id = $1 AND organization_id = $2)"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Whether calendar block `id` belongs to `org_id`.
+    pub async fn calendar_block_belongs_to_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        sqlx::query_scalar(
+            r#"SELECT EXISTS(SELECT 1 FROM rental_calendar_blocks WHERE id = $1 AND organization_id = $2)"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    // ========================================================================
     // Platform Connections (Story 18.1)
     // ========================================================================
 

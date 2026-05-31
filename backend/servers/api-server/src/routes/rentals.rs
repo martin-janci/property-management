@@ -71,6 +71,161 @@ pub fn router() -> Router<AppState> {
 }
 
 // ============================================
+// Tenant-isolation guards (issue #804)
+// ============================================
+//
+// SECURITY: the by-id read endpoints below previously took NO auth extractor
+// (anonymous callers could exfiltrate OAuth tokens / guest PII by guessing a
+// UUID), and the mutation endpoints extracted the tenant but discarded it
+// (`_tenant`), so org B could read or mutate org A's rental data (cross-tenant
+// IDOR). Each guard below confirms the addressed resource belongs to the
+// caller's resolved tenant before the handler touches it; a foreign/unknown id
+// is collapsed to `404` so existence is not probeable. Mirrors the
+// `_belongs_to_org` idiom used by the fault / work-order / meter routes.
+
+type RouteError = (axum::http::StatusCode, String);
+
+fn authz_error(resource: &str, e: impl std::fmt::Display) -> RouteError {
+    (
+        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        format!("Failed to authorize {resource}: {e}"),
+    )
+}
+
+fn not_found(resource: &str) -> RouteError {
+    (
+        axum::http::StatusCode::NOT_FOUND,
+        format!("{resource} not found"),
+    )
+}
+
+/// Guard: `unit_id` must belong to the caller's tenant (via its building).
+async fn require_unit_in_tenant(
+    state: &AppState,
+    org_id: Uuid,
+    unit_id: Uuid,
+) -> Result<(), RouteError> {
+    if state
+        .rental_repo
+        .unit_belongs_to_org(unit_id, org_id)
+        .await
+        .map_err(|e| authz_error("unit", e))?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Unit"))
+    }
+}
+
+/// Guard: platform connection `id` must belong to the caller's tenant.
+async fn require_connection_in_tenant(
+    state: &AppState,
+    org_id: Uuid,
+    id: Uuid,
+) -> Result<(), RouteError> {
+    if state
+        .rental_repo
+        .connection_belongs_to_org(id, org_id)
+        .await
+        .map_err(|e| authz_error("connection", e))?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Connection"))
+    }
+}
+
+/// Guard: booking `id` must belong to the caller's tenant.
+async fn require_booking_in_tenant(
+    state: &AppState,
+    org_id: Uuid,
+    id: Uuid,
+) -> Result<(), RouteError> {
+    if state
+        .rental_repo
+        .booking_belongs_to_org(id, org_id)
+        .await
+        .map_err(|e| authz_error("booking", e))?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Booking"))
+    }
+}
+
+/// Guard: guest `id` must belong to the caller's tenant.
+async fn require_guest_in_tenant(
+    state: &AppState,
+    org_id: Uuid,
+    id: Uuid,
+) -> Result<(), RouteError> {
+    if state
+        .rental_repo
+        .guest_belongs_to_org(id, org_id)
+        .await
+        .map_err(|e| authz_error("guest", e))?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Guest"))
+    }
+}
+
+/// Guard: guest report `id` must belong to the caller's tenant.
+async fn require_report_in_tenant(
+    state: &AppState,
+    org_id: Uuid,
+    id: Uuid,
+) -> Result<(), RouteError> {
+    if state
+        .rental_repo
+        .report_belongs_to_org(id, org_id)
+        .await
+        .map_err(|e| authz_error("report", e))?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Report"))
+    }
+}
+
+/// Guard: iCal feed `id` must belong to the caller's tenant.
+async fn require_ical_feed_in_tenant(
+    state: &AppState,
+    org_id: Uuid,
+    id: Uuid,
+) -> Result<(), RouteError> {
+    if state
+        .rental_repo
+        .ical_feed_belongs_to_org(id, org_id)
+        .await
+        .map_err(|e| authz_error("feed", e))?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Feed"))
+    }
+}
+
+/// Guard: calendar block `id` must belong to the caller's tenant.
+async fn require_calendar_block_in_tenant(
+    state: &AppState,
+    org_id: Uuid,
+    id: Uuid,
+) -> Result<(), RouteError> {
+    if state
+        .rental_repo
+        .calendar_block_belongs_to_org(id, org_id)
+        .await
+        .map_err(|e| authz_error("block", e))?
+    {
+        Ok(())
+    } else {
+        Err(not_found("Block"))
+    }
+}
+
+// ============================================
 // Statistics & Dashboard
 // ============================================
 
@@ -179,6 +334,9 @@ pub async fn create_connection(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreatePlatformConnection>,
 ) -> Result<Json<RentalPlatformConnection>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): the unit_id is client-supplied — verify it belongs
+    // to the caller's tenant so a connection can't be attached to another org's unit.
+    require_unit_in_tenant(&state, tenant.tenant_id, data.unit_id).await?;
     let connection = state
         .rental_repo
         .create_connection(tenant.tenant_id, data)
@@ -206,8 +364,15 @@ pub async fn create_connection(
 )]
 pub async fn get_connection(
     State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalPlatformConnection>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): this handler took no auth extractor — any anonymous
+    // caller could read a connection (incl. stored OAuth tokens) by guessing its
+    // UUID. Require a tenant, authorize the connection against it, and strip the
+    // OAuth credentials from the response (data minimization).
+    require_connection_in_tenant(&state, tenant.tenant_id, id).await?;
+
     let connection = state
         .rental_repo
         .find_connection_by_id(id)
@@ -220,7 +385,13 @@ pub async fn get_connection(
         })?;
 
     match connection {
-        Some(c) => Ok(Json(c)),
+        Some(mut c) => {
+            // Never return stored OAuth credentials over the API.
+            c.access_token = None;
+            c.refresh_token = None;
+            c.token_expires_at = None;
+            Ok(Json(c))
+        }
         None => Err((
             axum::http::StatusCode::NOT_FOUND,
             "Connection not found".to_string(),
@@ -243,10 +414,12 @@ pub async fn get_connection(
 )]
 pub async fn update_connection(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePlatformConnection>,
 ) -> Result<Json<RentalPlatformConnection>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the connection belongs to the caller's tenant.
+    require_connection_in_tenant(&state, tenant.tenant_id, id).await?;
     let connection = state
         .rental_repo
         .update_connection(id, data)
@@ -275,9 +448,11 @@ pub async fn update_connection(
 )]
 pub async fn delete_connection(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the connection belongs to the caller's tenant.
+    require_connection_in_tenant(&state, tenant.tenant_id, id).await?;
     let deleted = state.rental_repo.delete_connection(id).await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -308,9 +483,11 @@ pub async fn delete_connection(
 )]
 pub async fn get_unit_connections(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(unit_id): Path<Uuid>,
 ) -> Result<Json<Vec<ConnectionStatus>>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the unit belongs to the caller's tenant.
+    require_unit_in_tenant(&state, tenant.tenant_id, unit_id).await?;
     let connections = state
         .rental_repo
         .get_connections_for_unit(unit_id)
@@ -696,6 +873,9 @@ pub async fn create_booking(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateBooking>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): the unit_id is client-supplied — verify it belongs
+    // to the caller's tenant before booking against it.
+    require_unit_in_tenant(&state, tenant.tenant_id, data.unit_id).await?;
     // Check availability first
     let available = state
         .rental_repo
@@ -742,8 +922,12 @@ pub async fn create_booking(
 )]
 pub async fn get_booking(
     State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): this handler took no auth extractor — booking
+    // records (guest names, contact, financials) leaked to anonymous callers.
+    require_booking_in_tenant(&state, tenant.tenant_id, id).await?;
     let booking = state
         .rental_repo
         .find_booking_by_id(id)
@@ -779,10 +963,12 @@ pub async fn get_booking(
 )]
 pub async fn update_booking(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateBooking>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the booking belongs to the caller's tenant.
+    require_booking_in_tenant(&state, tenant.tenant_id, id).await?;
     let booking = state
         .rental_repo
         .update_booking(id, data)
@@ -812,10 +998,12 @@ pub async fn update_booking(
 )]
 pub async fn update_booking_status(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateBookingStatus>,
 ) -> Result<Json<RentalBooking>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the booking belongs to the caller's tenant.
+    require_booking_in_tenant(&state, tenant.tenant_id, id).await?;
     let booking = state
         .rental_repo
         .update_booking_status(id, data)
@@ -843,8 +1031,12 @@ pub async fn update_booking_status(
 )]
 pub async fn get_booking_with_guests(
     State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<BookingWithGuests>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): this handler took no auth extractor — booking +
+    // guest PII leaked to anonymous callers.
+    require_booking_in_tenant(&state, tenant.tenant_id, id).await?;
     let result = state
         .rental_repo
         .get_booking_with_guests(id)
@@ -893,10 +1085,12 @@ pub struct CalendarQuery {
 )]
 pub async fn get_calendar(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(unit_id): Path<Uuid>,
     Query(query): Query<CalendarQuery>,
 ) -> Result<Json<Vec<CalendarEvent>>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the unit belongs to the caller's tenant.
+    require_unit_in_tenant(&state, tenant.tenant_id, unit_id).await?;
     let events = state
         .rental_repo
         .get_calendar_events(unit_id, query.start_date, query.end_date)
@@ -943,10 +1137,12 @@ pub struct AvailabilityResponse {
 )]
 pub async fn check_availability(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(unit_id): Path<Uuid>,
     Query(query): Query<AvailabilityQuery>,
 ) -> Result<Json<AvailabilityResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the unit belongs to the caller's tenant.
+    require_unit_in_tenant(&state, tenant.tenant_id, unit_id).await?;
     let available = state
         .rental_repo
         .check_availability(unit_id, query.start_date, query.end_date)
@@ -981,6 +1177,8 @@ pub async fn create_calendar_block(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateCalendarBlock>,
 ) -> Result<Json<CalendarBlock>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the client-supplied unit_id belongs to the tenant.
+    require_unit_in_tenant(&state, tenant.tenant_id, data.unit_id).await?;
     let block = state
         .rental_repo
         .create_calendar_block(tenant.tenant_id, data)
@@ -1009,9 +1207,11 @@ pub async fn create_calendar_block(
 )]
 pub async fn delete_calendar_block(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the block belongs to the caller's tenant.
+    require_calendar_block_in_tenant(&state, tenant.tenant_id, id).await?;
     let deleted = state
         .rental_repo
         .delete_calendar_block(id)
@@ -1081,8 +1281,12 @@ pub async fn create_guest(
 )]
 pub async fn get_guest(
     State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): this handler took no auth extractor — guest PII
+    // (name, document numbers, contact) leaked to anonymous callers.
+    require_guest_in_tenant(&state, tenant.tenant_id, id).await?;
     let guest = state.rental_repo.find_guest_by_id(id).await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -1114,10 +1318,12 @@ pub async fn get_guest(
 )]
 pub async fn update_guest(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateGuest>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the guest belongs to the caller's tenant.
+    require_guest_in_tenant(&state, tenant.tenant_id, id).await?;
     let guest = state
         .rental_repo
         .update_guest(id, data)
@@ -1146,9 +1352,11 @@ pub async fn update_guest(
 )]
 pub async fn delete_guest(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the guest belongs to the caller's tenant.
+    require_guest_in_tenant(&state, tenant.tenant_id, id).await?;
     let deleted = state.rental_repo.delete_guest(id).await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -1180,9 +1388,11 @@ pub async fn delete_guest(
 )]
 pub async fn register_guest(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuest>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the guest belongs to the caller's tenant.
+    require_guest_in_tenant(&state, tenant.tenant_id, id).await?;
     let guest = state.rental_repo.register_guest(id).await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -1369,8 +1579,12 @@ pub async fn create_report(
 )]
 pub async fn get_report(
     State(state): State<AppState>,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuestReport>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): this handler took no auth extractor — authority
+    // guest reports leaked to anonymous callers.
+    require_report_in_tenant(&state, tenant.tenant_id, id).await?;
     let report = state.rental_repo.find_report_by_id(id).await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -1404,6 +1618,8 @@ pub async fn submit_report(
     TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RentalGuestReport>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the report belongs to the caller's tenant.
+    require_report_in_tenant(&state, tenant.tenant_id, id).await?;
     let report = state
         .rental_repo
         .submit_report(id, tenant.user_id)
@@ -1438,6 +1654,8 @@ pub async fn create_ical_feed(
     TenantExtractor(tenant): TenantExtractor,
     Json(data): Json<CreateICalFeed>,
 ) -> Result<Json<ICalFeed>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the client-supplied unit_id belongs to the tenant.
+    require_unit_in_tenant(&state, tenant.tenant_id, data.unit_id).await?;
     let feed = state
         .rental_repo
         .create_ical_feed(tenant.tenant_id, data)
@@ -1467,10 +1685,12 @@ pub async fn create_ical_feed(
 )]
 pub async fn update_ical_feed(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateICalFeed>,
 ) -> Result<Json<ICalFeed>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the feed belongs to the caller's tenant.
+    require_ical_feed_in_tenant(&state, tenant.tenant_id, id).await?;
     let feed = state
         .rental_repo
         .update_ical_feed(id, data)
@@ -1499,9 +1719,11 @@ pub async fn update_ical_feed(
 )]
 pub async fn delete_ical_feed(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the feed belongs to the caller's tenant.
+    require_ical_feed_in_tenant(&state, tenant.tenant_id, id).await?;
     let deleted = state.rental_repo.delete_ical_feed(id).await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -1532,9 +1754,11 @@ pub async fn delete_ical_feed(
 )]
 pub async fn get_unit_ical_feeds(
     State(state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    TenantExtractor(tenant): TenantExtractor,
     Path(unit_id): Path<Uuid>,
 ) -> Result<Json<Vec<ICalFeed>>, (axum::http::StatusCode, String)> {
+    // SECURITY (issue #804): verify the unit belongs to the caller's tenant.
+    require_unit_in_tenant(&state, tenant.tenant_id, unit_id).await?;
     let feeds = state
         .rental_repo
         .get_ical_feeds_for_unit(unit_id)
