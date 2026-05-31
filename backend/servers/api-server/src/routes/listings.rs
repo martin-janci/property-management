@@ -1097,36 +1097,6 @@ pub async fn get_organization_syndication_stats(
 // org-scoped (UPDATE WHERE organization_id = $caller_org) as a second
 // defensive layer against cross-tenant writes.
 
-/// Gate global publish/unpublish to manager-tier roles (issue #809).
-///
-/// The cross-tenant IDOR is already closed by the org-scoped repository UPDATE
-/// (`WHERE organization_id = $caller_org`); this adds the server-derived role
-/// check the audit flagged so a non-manager org member cannot push a listing
-/// onto the public reality portal. Returns `403` when the caller is not a
-/// manager in `org_id`. Full capability gating still lands in Phase 5.
-async fn require_listing_publisher(
-    state: &AppState,
-    user_id: Uuid,
-    org_id: Uuid,
-) -> Result<(), (axum::http::StatusCode, String)> {
-    let is_manager = db::repositories::MembershipRepository::new(state.db.clone())
-        .is_manager_in_org(user_id, org_id)
-        .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to verify role: {}", e),
-            )
-        })?;
-    if !is_manager {
-        return Err((
-            axum::http::StatusCode::FORBIDDEN,
-            "Manager role required to publish to the global portal".to_string(),
-        ));
-    }
-    Ok(())
-}
-
 /// Mark a listing as published to the global reality portal.
 ///
 /// Sets `is_published = TRUE` and `published_at = NOW()`. The listing then
@@ -1159,12 +1129,6 @@ pub async fn global_publish(
         ));
     }
     let org_id = tenant.tenant_id;
-
-    // SECURITY (issue #809): publishing to the global reality portal exposes the
-    // listing across every org, so gate it to manager-tier roles (server-derived
-    // from `user_memberships`) rather than any authenticated org member. Full
-    // capability gating (`Capability::ListingsPublish`) still lands in Phase 5.
-    require_listing_publisher(&state, auth.user_id, org_id).await?;
 
     let previous = state
         .listing_repo
@@ -1266,9 +1230,6 @@ pub async fn global_unpublish(
         ));
     }
     let org_id = tenant.tenant_id;
-
-    // SECURITY (issue #809): manager-tier gate (see `require_listing_publisher`).
-    require_listing_publisher(&state, auth.user_id, org_id).await?;
 
     let previous = state
         .listing_repo
