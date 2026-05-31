@@ -113,19 +113,27 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         .collect()
 }
 
-/// Create the application router with all routes.
+/// Build the application route table — the SINGLE source of truth for every
+/// HTTP route the api-server exposes.
 ///
-/// This function is exposed for integration testing. The production binary's
-/// `serve` entry point in `main.rs` builds an equivalent router with the same
-/// extension layering (see [`attach_admin_extensions`]).
-pub fn create_router(state: AppState) -> Router {
-    // Phase 5 — Admin dependency wiring. Built via [`build_admin_extensions`]
-    // so `main.rs::serve` and this test-side router stay in sync; an extension
-    // chain divergence between them previously meant 500s on every `/admin/*`
-    // call in production while tests passed.
-    let admin_ext = build_admin_extensions(state.db.clone());
-
-    let router = Router::new()
+/// Returns a state-less [`Router<AppState>`] with no middleware and no admin
+/// extensions layered. Both [`create_router`] (integration tests) and the
+/// production binary's `main()` build their router from THIS function, so the
+/// two can never silently diverge again (issue #867). Before this refactor,
+/// `main.rs` hand-maintained its own parallel chain of `.nest(...)` calls;
+/// PR #836 had to retro-fit five routers (`push-tokens`, `mfa/recovery-codes`,
+/// `pricing`, `property-valuations`, `data-residency`) that existed only in
+/// the test-side router and were therefore unreachable in production.
+///
+/// Production-only surface — the Prometheus `/metrics` endpoint, Swagger UI,
+/// and the Phase-3 host-routing endpoints (`/tenant-config`,
+/// `/admin/tenants/{org_id}/...`, `/internal/caddy-ask`) — is intentionally
+/// NOT included here. Those depend on production-only state (the metrics
+/// registry, the live host-tenant middleware) and are layered onto the shared
+/// table by `main.rs`. They are covered by their own focused tests
+/// (`tenant_config_tests.rs`, `caddy_ask_tests.rs`).
+pub fn route_table() -> Router<AppState> {
+    Router::new()
         // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
         .route("/health", get(routes::health::liveness))
         // Readiness — deep dep check (DB + Redis). Operator dashboards.
@@ -312,17 +320,33 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/vendor-portal", routes::vendor_portal::router())
         // Registry routes
         .nest("/api/v1/registry", routes::registry::router())
+        // Multi-Currency routes (Epic 145)
+        .nest("/api/v1/multi-currency", routes::multi_currency::router())
         // Voice Webhooks routes
         .nest(
             "/api/v1/webhooks/voice",
             routes::voice_webhooks::voice_webhook_router(),
         )
+        // Portal Webhooks routes (Epic 105)
+        .nest(
+            "/api/v1/webhooks/portals",
+            routes::portal_webhooks::router(),
+        )
+        // Feature Packages routes (Epic 108)
+        .nest(
+            "/api/v1/feature-packages",
+            routes::feature_packages::router(),
+        )
         // Features routes (Epic 109)
         .nest("/api/v1/features", routes::features::router())
         // Outages routes (UC-12)
         .nest("/api/v1/outages", routes::outages::router())
-        // Market Pricing routes (Epic 132)
+        // Market Pricing routes (Epic 132). Mounted under both `/pricing` (the
+        // canonical path) and the `/market-pricing` alias that the production
+        // binary historically exposed; keeping both preserves backwards-compat
+        // for clients on either path while the route table is unified (#867).
         .nest("/api/v1/pricing", routes::market_pricing::router())
+        .nest("/api/v1/market-pricing", routes::market_pricing::router())
         // Lease Abstraction routes (Epic 133)
         .nest(
             "/api/v1/lease-abstraction",
@@ -345,9 +369,17 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/building-certifications",
             routes::building_certifications::router(),
         )
-        // Property Valuation routes (Epic 138)
+        // Property Valuation routes (Epic 138). Mounted under both the plural
+        // `/property-valuations` (the canonical path) and the singular
+        // `/property-valuation` alias the production binary historically
+        // exposed; keeping both preserves backwards-compat while the route
+        // table is unified (#867).
         .nest(
             "/api/v1/property-valuations",
+            routes::property_valuation::router(),
+        )
+        .nest(
+            "/api/v1/property-valuation",
             routes::property_valuation::router(),
         )
         // Investor Portal routes (Epic 139)
@@ -363,14 +395,38 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/violations", routes::violations::router())
         // Board Meetings routes (Epic 143)
         .nest("/api/v1/board-meetings", routes::board_meetings::router())
+        // Portfolio Performance routes (Epic 144)
+        .nest(
+            "/api/v1/portfolio-performance",
+            routes::portfolio_performance::router(),
+        )
+        // API Ecosystem Expansion routes (Epic 150)
+        .nest("/api/v1/ecosystem", routes::api_ecosystem::router())
         // Data Residency routes (Epic 146)
-        .nest("/api/v1/data-residency", routes::data_residency::router());
+        .nest("/api/v1/data-residency", routes::data_residency::router())
+}
+
+/// Create the application router with all routes.
+///
+/// This function is exposed for integration testing. It builds on the shared
+/// [`route_table`] (the single source of truth for the route set — see #867),
+/// then layers the admin-core extensions, tracing, a development CORS policy,
+/// and the application state. The production binary in `main.rs` builds from
+/// the same [`route_table`] but layers production-only middleware (env-driven
+/// CORS, the host-tenant resolution layer, a global body cap) and
+/// production-only routes (`/metrics`, Swagger UI, Phase-3 host routing).
+pub fn create_router(state: AppState) -> Router {
+    // Phase 5 — Admin dependency wiring. Built via [`build_admin_extensions`]
+    // so `main.rs::serve` and this test-side router stay in sync; an extension
+    // chain divergence between them previously meant 500s on every `/admin/*`
+    // call in production while tests passed.
+    let admin_ext = build_admin_extensions(state.db.clone());
 
     // Phase 5 — admin dependency injection. Layered before TraceLayer so every
     // nested route inherits these extensions. Production binary applies the
     // same chain from `main.rs::serve` via `attach_admin_extensions` so the
     // two paths cannot drift.
-    attach_admin_extensions(router, &admin_ext)
+    attach_admin_extensions(route_table(), &admin_ext)
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration

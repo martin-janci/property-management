@@ -11,7 +11,7 @@
 // Allow dead code for stub implementations during development
 #![allow(dead_code)]
 
-use axum::{extract::DefaultBodyLimit, http, routing::get, Router};
+use axum::{extract::DefaultBodyLimit, http, routing::get};
 use http::HeaderValue;
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
@@ -19,10 +19,15 @@ use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-mod observability;
-mod routes;
-mod services;
-mod state;
+// The binary shares the `api_server` library crate's modules instead of
+// compiling its own copies. This is the same single-source-of-truth principle
+// the router unification (#867) applies to the route table: a binary-local
+// `mod routes;` would be a second compilation of the route handlers that could
+// drift from the library the integration tests exercise. Pull everything from
+// `api_server::` so the binary and the tests share one set of types — in
+// particular ONE `AppState`, so `api_server::route_table()` (a
+// `Router<api_server::state::AppState>`) accepts the state built here.
+use api_server::{observability, routes, services, state};
 
 use db::repositories::AnnouncementRepository;
 use services::{
@@ -33,7 +38,7 @@ use state::AppState;
 // Phase 5 — admin extension wiring helpers (B7). Both `main.rs` (production
 // binary) and `lib.rs::create_router` (tests) build the same admin-core
 // dependency chain via these helpers so they cannot drift.
-use api_server::{attach_admin_extensions, build_admin_extensions};
+use api_server::{attach_admin_extensions, build_admin_extensions, route_table};
 
 /// Default CORS allowed origins for api-server.
 /// Includes development origins and production domains.
@@ -459,280 +464,30 @@ async fn main() -> anyhow::Result<()> {
     // because `RequireCapability` could not find `AdminDeps` in extensions.
     let admin_ext = build_admin_extensions(db_pool.clone());
 
-    // Build router
-    let app = Router::new()
-        // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
-        .route("/health", get(routes::health::liveness))
-        // Readiness — deep dep check (DB + Redis). Operator dashboards.
-        .route("/readiness", get(routes::health::readiness))
-        // Prometheus metrics endpoint (Epic 95.4)
+    // Build router.
+    //
+    // The application route table is sourced from the SINGLE source of truth,
+    // `api_server::route_table()` (issue #867). The production binary used to
+    // hand-maintain a parallel chain of `.nest(...)` calls here, which drifted
+    // from `lib.rs::create_router` (used by the integration tests): PR #836 had
+    // to retro-fit five routers that existed only in the test-side router and
+    // were therefore unreachable in production. Building both routers from the
+    // same `route_table()` makes that class of divergence impossible — a route
+    // added to `route_table()` is reachable in production AND exercised by the
+    // tests, and the guard test `route_table_is_single_source_of_truth` fails
+    // the build if `main.rs` ever reverts to hand-listing API routes.
+    //
+    // Only production-only surface is added on top here:
+    //   - `/metrics`            — needs the production observability registry.
+    //   - Swagger UI            — dev/ops doc endpoint.
+    //   - Phase-3 host routing  — `/tenant-config`, `/admin/tenants/...`,
+    //                             `/internal/caddy-ask`; these depend on the
+    //                             live host-tenant middleware and are covered
+    //                             by their own focused tests
+    //                             (`tenant_config_tests.rs`, `caddy_ask_tests.rs`).
+    let app = route_table()
+        // Prometheus metrics endpoint (Epic 95.4) — production-only.
         .route("/metrics", get(metrics_endpoint))
-        // Auth routes
-        .nest("/api/v1/auth", routes::auth::router())
-        // Admin routes
-        .nest("/api/v1/admin", routes::admin::router())
-        // Phase 5.5: tenant lifecycle (export / purge / restore) — platform-admin only.
-        .nest("/api/v1/admin", routes::admin_tenant_lifecycle::router())
-        // Organizations routes
-        .nest("/api/v1/organizations", routes::organizations::router())
-        // Buildings routes
-        .nest("/api/v1/buildings", routes::buildings::router())
-        // Delegations routes (Epic 3, Story 3.4)
-        .nest("/api/v1/delegations", routes::delegations::router())
-        // Facilities routes (Epic 3, Story 3.7)
-        .nest("/api/v1", routes::facilities::router())
-        // Faults routes
-        .nest("/api/v1/faults", routes::faults::router())
-        // Voting routes
-        .nest("/api/v1/voting", routes::voting::router())
-        // Announcements routes (Epic 6)
-        .nest("/api/v1/announcements", routes::announcements::router())
-        // Documents routes (Epic 7A)
-        .nest("/api/v1/documents", routes::documents::router())
-        // Public shared document routes (no auth required)
-        .merge(routes::documents::public_router())
-        // Templates routes (Epic 7B)
-        .nest("/api/v1/templates", routes::templates::router())
-        // E-Signature routes (Epic 7B, Story 7B.3)
-        .nest("/api/v1/signature-requests", routes::signatures::router())
-        // Messaging routes (Epic 6, Story 6.5)
-        .nest("/api/v1/messages", routes::messaging::router())
-        // Neighbor routes (Epic 6, Story 6.6)
-        .nest("/api/v1", routes::neighbors::router())
-        // Notification preferences routes (Epic 8A)
-        .nest(
-            "/api/v1/users/me/notification-preferences",
-            routes::notification_preferences::router(),
-        )
-        // WebSocket realtime notification sync (Epic 8A, Story 8A.3)
-        .nest(
-            "/api/v1/users/me/notifications",
-            routes::ws_notifications::router(),
-        )
-        // Granular notification preferences routes (Epic 8B)
-        .nest(
-            "/api/v1/users/me/notification-preferences/granular",
-            routes::granular_notifications::router(),
-        )
-        // Critical notifications routes (Epic 8A, Story 8A.2)
-        .nest(
-            "/api/v1/organizations/{org_id}/critical-notifications",
-            routes::critical_notifications::router(),
-        )
-        // MFA routes (Epic 9, Story 9.1)
-        .nest("/api/v1/auth/mfa", routes::mfa::router())
-        // OAuth 2.0 routes (Epic 10A)
-        .nest("/api/v1/oauth", routes::oauth::router())
-        .nest("/api/v1/admin/oauth", routes::oauth::admin_router())
-        // Platform Admin routes (Epic 10B)
-        .nest("/api/v1/platform-admin", routes::platform_admin::router())
-        // Public feature flags (Epic 10B.2)
-        .nest(
-            "/api/v1/feature-flags",
-            routes::platform_admin::public_feature_flags_router(),
-        )
-        // Public system announcements (Epic 10B.4)
-        .nest(
-            "/api/v1/system-announcements",
-            routes::platform_admin::public_announcements_router(),
-        )
-        // Public maintenance (Epic 10B.4)
-        .nest(
-            "/api/v1/maintenance",
-            routes::platform_admin::public_maintenance_router(),
-        )
-        // Onboarding routes (Epic 10B.6)
-        .nest("/api/v1/onboarding", routes::onboarding::router())
-        // Help routes (Epic 10B.7)
-        .nest("/api/v1/help", routes::help::router())
-        // GDPR routes (Epic 9, Stories 9.3-9.5)
-        .nest("/api/v1/gdpr", routes::gdpr::router())
-        // Compliance routes (Epic 9, Story 9.7)
-        .nest("/api/v1/compliance", routes::compliance::router())
-        // Rentals routes
-        .nest("/api/v1/rentals", routes::rentals::router())
-        // Listings routes (management side)
-        .nest("/api/v1/listings", routes::listings::router())
-        // Integration routes
-        .nest("/api/v1/integrations", routes::integrations::router())
-        // Routes that were registered in `lib.rs::create_router` (so tests
-        // passed) but were missing from this production binary, making them
-        // unreachable in prod (closes #836; also fixes MFA recovery codes,
-        // pricing, property valuations and data residency). Keep in sync with
-        // `lib.rs`.
-        .nest(
-            "/api/v1/users/me/push-tokens",
-            routes::push_tokens::router(),
-        )
-        .nest(
-            "/api/v1/users/me/mfa/recovery-codes",
-            routes::mfa::recovery_codes_router(),
-        )
-        .nest("/api/v1/pricing", routes::market_pricing::router())
-        .nest(
-            "/api/v1/property-valuations",
-            routes::property_valuation::router(),
-        )
-        .nest("/api/v1/data-residency", routes::data_residency::router())
-        // Financial routes (Epic 11)
-        .nest("/api/v1/financial", routes::financial::router())
-        // Meters routes (Epic 12)
-        .nest("/api/v1/meters", routes::meters::router())
-        // AI routes (Epic 13)
-        .nest("/api/v1/ai/chat", routes::ai::ai_chat_router())
-        .nest("/api/v1/ai/sentiment", routes::ai::sentiment_router())
-        .nest("/api/v1/ai/equipment", routes::ai::equipment_router())
-        .nest("/api/v1/ai/workflows", routes::ai::workflow_router())
-        // AI LLM routes (Epic 64)
-        .nest("/api/v1/ai/llm", routes::ai::llm_router())
-        // IoT routes (Epic 14)
-        .nest("/api/v1/iot/sensors", routes::iot::sensor_router())
-        // Agency routes (Epic 17)
-        .nest("/api/v1/agencies", routes::agencies::router())
-        // Lease routes (Epic 19)
-        .nest("/api/v1/leases", routes::leases::router())
-        // Work Orders routes (Epic 20)
-        .nest("/api/v1/work-orders", routes::work_orders::router())
-        // Vendor routes (Epic 21)
-        .nest("/api/v1/vendors", routes::vendors::router())
-        // Insurance routes (Epic 22)
-        .nest("/api/v1/insurance", routes::insurance::router())
-        // Emergency routes (Epic 23)
-        .nest("/api/v1/emergency", routes::emergency::router())
-        // Budget routes (Epic 24)
-        .nest("/api/v1/budgets", routes::budgets::router())
-        // Legal routes (Epic 25)
-        .nest("/api/v1/legal", routes::legal::router())
-        // Subscription routes (Epic 26)
-        .nest("/api/v1/subscriptions", routes::subscriptions::router())
-        .nest(
-            "/api/v1/admin/subscriptions",
-            routes::subscriptions::admin_router(),
-        )
-        // Government Portal routes (Epic 30)
-        .nest(
-            "/api/v1/government-portal",
-            routes::government_portal::router(),
-        )
-        // Community routes (Epic 37)
-        .nest("/api/v1/community", routes::community::router())
-        // Automation routes (Epic 38)
-        .nest("/api/v1/automation", routes::automation::router())
-        // Forms routes (Epic 54)
-        .nest("/api/v1/forms", routes::forms::router())
-        // Reports routes (Epic 55)
-        .nest("/api/v1/reports", routes::reports::router())
-        // Package routes (Epic 58)
-        .nest(
-            "/api/v1/packages",
-            routes::package_visitor::packages_router(),
-        )
-        // Visitor routes (Epic 58)
-        .nest(
-            "/api/v1/visitors",
-            routes::package_visitor::visitors_router(),
-        )
-        // News routes (Epic 59)
-        .nest("/api/v1/news", routes::news_articles::router())
-        // Energy routes (Epic 65)
-        .nest("/api/v1/energy", routes::energy::router())
-        // Regional Compliance routes (Epic 72)
-        .nest(
-            "/api/v1/regional-compliance",
-            routes::regional_compliance::router(),
-        )
-        // Migration routes (Epic 66)
-        .nest("/api/v1/migration", routes::migration::router())
-        // AML/DSA Compliance routes (Epic 67)
-        .nest("/api/v1/aml-dsa", routes::aml_dsa::router())
-        // Marketplace routes (Epic 68)
-        .nest("/api/v1/marketplace", routes::marketplace::router())
-        // Public API / Developer routes (Epic 69)
-        .nest("/api/v1/developer", routes::public_api::router())
-        // Competitive Features routes (Epic 70)
-        .nest("/api/v1/competitive", routes::competitive::router())
-        // Infrastructure routes (Epic 71)
-        .nest("/api/v1/infrastructure", routes::infrastructure::router())
-        // Operations routes (Epic 73)
-        .nest("/api/v1/operations", routes::operations::router())
-        // Owner Analytics routes (Epic 74)
-        .nest("/api/v1/owner-analytics", routes::owner_analytics::router())
-        // Dispute Resolution routes (Epic 77)
-        .nest("/api/v1/disputes", routes::disputes::router())
-        // Vendor Portal routes (Epic 78)
-        .nest("/api/v1/vendor-portal", routes::vendor_portal::router())
-        // Registry routes (Epic 64)
-        .nest("/api/v1/registry", routes::registry::router())
-        // Multi-Currency routes (Epic 145)
-        .nest("/api/v1/multi-currency", routes::multi_currency::router())
-        // Voice Webhooks routes (Epic 93)
-        .nest(
-            "/api/v1/webhooks/voice",
-            routes::voice_webhooks::voice_webhook_router(),
-        )
-        // Portal Webhooks routes (Epic 105)
-        .nest(
-            "/api/v1/webhooks/portals",
-            routes::portal_webhooks::router(),
-        )
-        // Feature Packages routes (Epic 108)
-        .nest(
-            "/api/v1/feature-packages",
-            routes::feature_packages::router(),
-        )
-        // Features routes (Epic 109)
-        .nest("/api/v1/features", routes::features::router())
-        // Outages routes (UC-12)
-        .nest("/api/v1/outages", routes::outages::router())
-        // Market Pricing routes (Epic 132)
-        .nest("/api/v1/market-pricing", routes::market_pricing::router())
-        // Lease Abstraction routes (Epic 133)
-        .nest(
-            "/api/v1/lease-abstraction",
-            routes::lease_abstraction::router(),
-        )
-        // Predictive Maintenance routes (Epic 134)
-        .nest(
-            "/api/v1/predictive-maintenance",
-            routes::predictive_maintenance::router(),
-        )
-        // Enhanced Tenant Screening routes (Epic 135)
-        .nest(
-            "/api/v1/tenant-screening",
-            routes::enhanced_tenant_screening::router(),
-        )
-        // ESG Reporting routes (Epic 136)
-        .nest("/api/v1/esg", routes::esg_reporting::router())
-        // Building Certifications routes (Epic 137)
-        .nest(
-            "/api/v1/building-certifications",
-            routes::building_certifications::router(),
-        )
-        // Property Valuation routes (Epic 138)
-        .nest(
-            "/api/v1/property-valuation",
-            routes::property_valuation::router(),
-        )
-        // Investor Portal routes (Epic 139)
-        .nest("/api/v1/investor-portal", routes::investor_portal::router())
-        // Portfolio Analytics routes (Epic 140)
-        .nest(
-            "/api/v1/portfolio-analytics",
-            routes::portfolio_analytics::router(),
-        )
-        // Reserve Funds routes (Epic 141)
-        .nest("/api/v1/reserve-funds", routes::reserve_funds::router())
-        // Violations routes (Epic 142)
-        .nest("/api/v1/violations", routes::violations::router())
-        // Board Meetings routes (Epic 143)
-        .nest("/api/v1/board-meetings", routes::board_meetings::router())
-        // Portfolio Performance routes (Epic 144)
-        .nest(
-            "/api/v1/portfolio-performance",
-            routes::portfolio_performance::router(),
-        )
-        // API Ecosystem Expansion routes (Epic 150)
-        .nest("/api/v1/ecosystem", routes::api_ecosystem::router())
         // Phase 3: per-host tenant config (read by reality-web at request
         // time). Mounted at the root because reality-web hits the same host
         // Caddy serves the app on, and the path must match exactly.
