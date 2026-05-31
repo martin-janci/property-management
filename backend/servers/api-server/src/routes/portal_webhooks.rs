@@ -121,6 +121,51 @@ fn get_portal_webhook_secret(portal: &str) -> Option<String> {
     std::env::var(&env_key).ok()
 }
 
+/// Verify a portal webhook, failing **closed**.
+///
+/// Security (#833): the webhook receivers used to skip signature verification
+/// whenever the `<PORTAL>_WEBHOOK_SECRET` env var was unset — accepting any
+/// unverified, attacker-forged payload. This helper inverts that contract:
+///
+/// - If the secret is **not** configured, the webhook is **rejected** with
+///   `401 WEBHOOK_NOT_CONFIGURED` and a clear error is logged. We never accept
+///   an unverified webhook.
+/// - If the secret **is** configured, the HMAC-SHA256 signature in
+///   `signature_header` must be present and valid (constant-time compare via
+///   `Mac::verify_slice`); otherwise the webhook is rejected with
+///   `401 INVALID_SIGNATURE`.
+fn require_portal_webhook_verification(
+    portal: &str,
+    headers: &HeaderMap,
+    body: &Bytes,
+    signature_header: &str,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let Some(secret) = get_portal_webhook_secret(portal) else {
+        tracing::error!(
+            portal = %portal,
+            "Rejecting webhook: no {}_WEBHOOK_SECRET configured — refusing to accept unverified webhook",
+            portal.to_uppercase().replace('-', "_"),
+        );
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "WEBHOOK_NOT_CONFIGURED",
+                "Webhook signature verification is not configured for this portal",
+            )),
+        ));
+    };
+
+    if let Err(e) = verify_webhook_signature(headers, body, &secret, signature_header) {
+        tracing::warn!(portal = %portal, error = %e, "Webhook signature verification failed");
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
+        ));
+    }
+
+    Ok(())
+}
+
 // ============================================================================
 // Reality Portal Webhooks
 // ============================================================================
@@ -142,16 +187,8 @@ async fn reality_portal_views_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify signature if secret is configured
-    if let Some(secret) = get_portal_webhook_secret("reality_portal") {
-        if let Err(e) = verify_webhook_signature(&headers, &body, &secret, "X-Webhook-Signature") {
-            tracing::warn!(portal = "reality_portal", error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification("reality_portal", &headers, &body, "X-Webhook-Signature")?;
 
     // Parse the request
     let webhook: PortalViewWebhook = serde_json::from_slice(&body).map_err(|e| {
@@ -182,16 +219,8 @@ async fn reality_portal_inquiry_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify signature if secret is configured
-    if let Some(secret) = get_portal_webhook_secret("reality_portal") {
-        if let Err(e) = verify_webhook_signature(&headers, &body, &secret, "X-Webhook-Signature") {
-            tracing::warn!(portal = "reality_portal", error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification("reality_portal", &headers, &body, "X-Webhook-Signature")?;
 
     // Parse the request
     let webhook: PortalInquiryWebhook = serde_json::from_slice(&body).map_err(|e| {
@@ -226,15 +255,8 @@ async fn sreality_views_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if let Some(secret) = get_portal_webhook_secret("sreality") {
-        if let Err(e) = verify_webhook_signature(&headers, &body, &secret, "X-SReality-Signature") {
-            tracing::warn!(portal = "sreality", error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification("sreality", &headers, &body, "X-SReality-Signature")?;
 
     let webhook: PortalViewWebhook = serde_json::from_slice(&body).map_err(|e| {
         (
@@ -263,15 +285,8 @@ async fn sreality_inquiry_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if let Some(secret) = get_portal_webhook_secret("sreality") {
-        if let Err(e) = verify_webhook_signature(&headers, &body, &secret, "X-SReality-Signature") {
-            tracing::warn!(portal = "sreality", error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification("sreality", &headers, &body, "X-SReality-Signature")?;
 
     let webhook: PortalInquiryWebhook = serde_json::from_slice(&body).map_err(|e| {
         (
@@ -304,15 +319,8 @@ async fn bezrealitky_views_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if let Some(secret) = get_portal_webhook_secret("bezrealitky") {
-        if let Err(e) = verify_webhook_signature(&headers, &body, &secret, "X-BR-Signature") {
-            tracing::warn!(portal = "bezrealitky", error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification("bezrealitky", &headers, &body, "X-BR-Signature")?;
 
     let webhook: PortalViewWebhook = serde_json::from_slice(&body).map_err(|e| {
         (
@@ -341,15 +349,8 @@ async fn bezrealitky_inquiry_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if let Some(secret) = get_portal_webhook_secret("bezrealitky") {
-        if let Err(e) = verify_webhook_signature(&headers, &body, &secret, "X-BR-Signature") {
-            tracing::warn!(portal = "bezrealitky", error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification("bezrealitky", &headers, &body, "X-BR-Signature")?;
 
     let webhook: PortalInquiryWebhook = serde_json::from_slice(&body).map_err(|e| {
         (
@@ -382,17 +383,13 @@ async fn nehnutelnosti_views_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if let Some(secret) = get_portal_webhook_secret("nehnutelnosti") {
-        if let Err(e) =
-            verify_webhook_signature(&headers, &body, &secret, "X-Nehnutelnosti-Signature")
-        {
-            tracing::warn!(portal = "nehnutelnosti", error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification(
+        "nehnutelnosti",
+        &headers,
+        &body,
+        "X-Nehnutelnosti-Signature",
+    )?;
 
     let webhook: PortalViewWebhook = serde_json::from_slice(&body).map_err(|e| {
         (
@@ -421,17 +418,13 @@ async fn nehnutelnosti_inquiry_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<WebhookAckResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if let Some(secret) = get_portal_webhook_secret("nehnutelnosti") {
-        if let Err(e) =
-            verify_webhook_signature(&headers, &body, &secret, "X-Nehnutelnosti-Signature")
-        {
-            tracing::warn!(portal = "nehnutelnosti", error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification(
+        "nehnutelnosti",
+        &headers,
+        &body,
+        "X-Nehnutelnosti-Signature",
+    )?;
 
     let webhook: PortalInquiryWebhook = serde_json::from_slice(&body).map_err(|e| {
         (
@@ -485,16 +478,8 @@ async fn generic_portal_webhook(
         ));
     }
 
-    // Verify signature if secret is configured
-    if let Some(secret) = get_portal_webhook_secret(&portal) {
-        if let Err(e) = verify_webhook_signature(&headers, &body, &secret, "X-Webhook-Signature") {
-            tracing::warn!(portal = %portal, error = %e, "Webhook signature verification failed");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("INVALID_SIGNATURE", &e)),
-            ));
-        }
-    }
+    // Verify signature — fails closed if no secret is configured (#833).
+    require_portal_webhook_verification(&portal, &headers, &body, "X-Webhook-Signature")?;
 
     // Parse the generic event
     let event: GenericPortalEvent = serde_json::from_slice(&body).map_err(|e| {
@@ -743,4 +728,109 @@ async fn process_inquiry_webhook(
         message: None,
         acknowledged_at: Utc::now(),
     }))
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    //! Regression for #833: portal webhook signature verification must fail
+    //! **closed**.
+    //!
+    //! On `main`/`dev` the receivers skipped verification entirely whenever the
+    //! `<PORTAL>_WEBHOOK_SECRET` env var was unset, accepting any forged
+    //! payload. These tests pin the inverted contract directly at the security
+    //! gate (`require_portal_webhook_verification`), which runs before body
+    //! parsing and any DB access — so no pool/AppState is needed.
+
+    use super::*;
+
+    // `std::env::{set_var, remove_var}` are not safe to interleave with
+    // `getenv` on glibc, and the unit tests in this binary run concurrently.
+    // Serialize every test that touches the env behind one mutex.
+    static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    const SIG_HEADER: &str = "X-Webhook-Signature";
+
+    /// Compute the `sha256=<base64>` signature header value the verifier expects.
+    fn sign(secret: &str, body: &[u8]) -> String {
+        let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).unwrap();
+        mac.update(body);
+        format!("sha256={}", BASE64.encode(mac.finalize().into_bytes()))
+    }
+
+    fn env_key(portal: &str) -> String {
+        format!("{}_WEBHOOK_SECRET", portal.to_uppercase().replace('-', "_"))
+    }
+
+    #[test]
+    fn rejects_when_no_secret_configured() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let portal = "reality_portal";
+        std::env::remove_var(env_key(portal));
+
+        let body = Bytes::from_static(b"{\"external_id\":\"x\"}");
+        let headers = HeaderMap::new();
+
+        let res = require_portal_webhook_verification(portal, &headers, &body, SIG_HEADER);
+
+        let (status, _) = res.expect_err("unconfigured secret must REJECT, not accept");
+        assert_eq!(
+            status,
+            StatusCode::UNAUTHORIZED,
+            "missing secret must fail closed with 401"
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_signature_when_secret_set() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let portal = "sreality";
+        std::env::set_var(env_key(portal), "super-secret-key");
+
+        let body = Bytes::from_static(b"{\"external_id\":\"x\"}");
+        let mut headers = HeaderMap::new();
+        headers.insert(SIG_HEADER, "sha256=AAAA".parse().unwrap());
+
+        let res = require_portal_webhook_verification(portal, &headers, &body, SIG_HEADER);
+        std::env::remove_var(env_key(portal));
+
+        let (status, _) = res.expect_err("invalid signature must REJECT");
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn rejects_missing_signature_header_when_secret_set() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let portal = "bezrealitky";
+        std::env::set_var(env_key(portal), "super-secret-key");
+
+        let body = Bytes::from_static(b"{\"external_id\":\"x\"}");
+        let headers = HeaderMap::new(); // no signature header at all
+
+        let res = require_portal_webhook_verification(portal, &headers, &body, SIG_HEADER);
+        std::env::remove_var(env_key(portal));
+
+        let (status, _) = res.expect_err("missing signature header must REJECT");
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn accepts_valid_signature_when_secret_set() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let portal = "nehnutelnosti";
+        let secret = "super-secret-key";
+        std::env::set_var(env_key(portal), secret);
+
+        let body = Bytes::from_static(b"{\"external_id\":\"x\",\"views_count\":3}");
+        let mut headers = HeaderMap::new();
+        headers.insert(SIG_HEADER, sign(secret, &body).parse().unwrap());
+
+        let res = require_portal_webhook_verification(portal, &headers, &body, SIG_HEADER);
+        std::env::remove_var(env_key(portal));
+
+        assert!(res.is_ok(), "a correctly-signed webhook must be accepted");
+    }
 }
