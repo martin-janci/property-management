@@ -46,6 +46,133 @@ pub mod rating_dimensions {
 /// Number of rating dimensions (deprecated - use rating_dimensions::COUNT).
 const RATING_DIMENSIONS_COUNT: f64 = rating_dimensions::COUNT;
 
+/// Verify the authenticated user belongs to `org_id` before serving
+/// organization-scoped marketplace data (RFQs, quotes, reviews).
+///
+/// Mirrors the `verify_org_access` idiom in `routes/financial.rs`. Returns
+/// `404` (not `403`) on a non-member so cross-tenant probing cannot
+/// distinguish "missing" from "forbidden". RFQ/quote/review lookups in this
+/// module otherwise key on the object id alone, which lets a member of org A
+/// read or mutate org B's records (cross-org IDOR).
+async fn verify_org_access(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let is_member = state
+        .org_member_repo
+        .is_member(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+
+    if !is_member {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Resource not found")),
+        ));
+    }
+
+    Ok(())
+}
+
+/// Load a quote by id and verify the caller is the provider that submitted it.
+///
+/// Quotes are mutated only by their submitting provider. The repo
+/// update/withdraw methods key on the quote id alone, so without this gate any
+/// provider could edit or withdraw another provider's quote (IDOR). Returns
+/// 404 when the quote is missing or owned by a different provider.
+async fn verify_quote_owner(
+    state: &AppState,
+    user_id: Uuid,
+    quote_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let quote = state
+        .marketplace_repo
+        .find_quote_by_id(quote_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to load quote");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Quote {} not found", quote_id),
+                )),
+            )
+        })?;
+
+    let provider = state
+        .marketplace_repo
+        .find_profile_by_user_id(user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+
+    match provider {
+        Some(p) if p.id == quote.provider_id => Ok(()),
+        _ => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                format!("Quote {} not found", quote_id),
+            )),
+        )),
+    }
+}
+
+/// Load an RFQ by id and verify the caller belongs to its organization.
+///
+/// Returns 404 when the RFQ is missing or owned by another tenant. Used by the
+/// RFQ mutation/quote routes (`update`/`delete`/`award`/`cancel`/quote
+/// listings) whose repo methods key on the RFQ id alone.
+async fn load_rfq_for_org(
+    state: &AppState,
+    user_id: Uuid,
+    rfq_id: Uuid,
+) -> Result<RequestForQuote, (StatusCode, Json<ErrorResponse>)> {
+    let rfq = state
+        .marketplace_repo
+        .find_rfq_by_id(rfq_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to load RFQ");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("RFQ {} not found", rfq_id),
+                )),
+            )
+        })?;
+
+    verify_org_access(state, user_id, rfq.organization_id).await?;
+
+    Ok(rfq)
+}
+
 /// Create marketplace router with all sub-routes.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -543,6 +670,8 @@ async fn create_rfq(
     user: AuthUser,
     Json(payload): Json<CreateRfqRequest>,
 ) -> Result<(StatusCode, Json<RequestForQuote>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, payload.organization_id).await?;
+
     let rfq = state
         .marketplace_repo
         .create_rfq(payload.organization_id, user.user_id, payload.data)
@@ -568,9 +697,11 @@ async fn create_rfq(
 /// List RFQs for an organization.
 async fn list_rfqs(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListRfqsQuery>,
 ) -> Result<Json<Vec<RequestForQuote>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
+
     let rfq_query: RfqQuery = (&query).into();
 
     let rfqs = state
@@ -591,7 +722,7 @@ async fn list_rfqs(
 /// Get a specific RFQ.
 async fn get_rfq(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
     let rfq = state
@@ -615,16 +746,20 @@ async fn get_rfq(
             )
         })?;
 
+    verify_org_access(&state, user.user_id, rfq.organization_id).await?;
+
     Ok(Json(rfq))
 }
 
 /// Update an RFQ.
 async fn update_rfq(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateRequestForQuote>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
+    load_rfq_for_org(&state, user.user_id, id).await?;
+
     let rfq = state
         .marketplace_repo
         .update_rfq(id, data)
@@ -652,9 +787,11 @@ async fn update_rfq(
 /// Delete an RFQ.
 async fn delete_rfq(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    load_rfq_for_org(&state, user.user_id, id).await?;
+
     let deleted = state.marketplace_repo.delete_rfq(id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to delete RFQ");
         (
@@ -679,9 +816,11 @@ async fn delete_rfq(
 /// List quotes for an RFQ.
 async fn list_rfq_quotes(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ProviderQuote>>, (StatusCode, Json<ErrorResponse>)> {
+    load_rfq_for_org(&state, user.user_id, id).await?;
+
     let quotes = state
         .marketplace_repo
         .list_rfq_quotes(id)
@@ -700,9 +839,11 @@ async fn list_rfq_quotes(
 /// Compare quotes for an RFQ side-by-side.
 async fn compare_quotes(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<QuoteComparisonView>, (StatusCode, Json<ErrorResponse>)> {
+    load_rfq_for_org(&state, user.user_id, id).await?;
+
     let comparison = state
         .marketplace_repo
         .get_quote_comparison(id)
@@ -734,6 +875,8 @@ async fn award_quote(
     Path(id): Path<Uuid>,
     Json(data): Json<AwardQuoteRequest>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
+    load_rfq_for_org(&state, user.user_id, id).await?;
+
     let rfq = state
         .marketplace_repo
         .award_rfq(id, data.quote_id)
@@ -771,6 +914,8 @@ async fn cancel_rfq(
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
+    load_rfq_for_org(&state, user.user_id, id).await?;
+
     let rfq = state
         .marketplace_repo
         .cancel_rfq(id)
@@ -897,7 +1042,7 @@ async fn list_my_quotes(
 /// Get a specific quote.
 async fn get_quote(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ProviderQuote>, (StatusCode, Json<ErrorResponse>)> {
     let quote = state
@@ -921,16 +1066,22 @@ async fn get_quote(
             )
         })?;
 
+    // A quote belongs to the org that owns its RFQ — gate on RFQ membership so
+    // a member of another tenant cannot read it by id.
+    load_rfq_for_org(&state, user.user_id, quote.rfq_id).await?;
+
     Ok(Json(quote))
 }
 
 /// Update a quote (before submission or while still editable).
 async fn update_quote(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateProviderQuote>,
 ) -> Result<Json<ProviderQuote>, (StatusCode, Json<ErrorResponse>)> {
+    verify_quote_owner(&state, user.user_id, id).await?;
+
     let quote = state
         .marketplace_repo
         .update_quote(id, data)
@@ -958,9 +1109,11 @@ async fn update_quote(
 /// Withdraw a submitted quote.
 async fn withdraw_quote(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    verify_quote_owner(&state, user.user_id, id).await?;
+
     let withdrawn = state
         .marketplace_repo
         .withdraw_quote(id)
@@ -1508,7 +1661,7 @@ async fn list_reviews(
 /// Get a specific review.
 async fn get_review(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ProviderReview>, (StatusCode, Json<ErrorResponse>)> {
     let review = state
@@ -1531,6 +1684,8 @@ async fn get_review(
                 )),
             )
         })?;
+
+    verify_org_access(&state, user.user_id, review.organization_id).await?;
 
     Ok(Json(review))
 }
@@ -1668,6 +1823,31 @@ async fn moderate_review(
     Path(id): Path<Uuid>,
     Json(data): Json<ModerateReviewRequest>,
 ) -> Result<Json<ProviderReview>, (StatusCode, Json<ErrorResponse>)> {
+    // A review is moderated by a manager of the org that owns it. Load it first
+    // and verify membership so a member of another tenant cannot moderate it.
+    let existing = state
+        .marketplace_repo
+        .find_review_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to load review for moderation");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Review {} not found", id),
+                )),
+            )
+        })?;
+
+    verify_org_access(&state, user.user_id, existing.organization_id).await?;
+
     let review = state
         .marketplace_repo
         .moderate_review(id, user.user_id, &data.status, data.moderation_notes)
