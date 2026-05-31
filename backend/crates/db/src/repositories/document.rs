@@ -576,7 +576,14 @@ impl DocumentRepository {
     {
         sqlx::query_as::<_, Document>(
             r#"
-            SELECT * FROM documents
+            SELECT
+                id, organization_id, folder_id, title, description,
+                category::text AS category, file_key, file_name, mime_type,
+                size_bytes, access_scope::text AS access_scope,
+                access_target_ids, access_roles, created_by, created_at,
+                updated_at, deleted_at, version_number, parent_document_id,
+                is_current_version, template_id, generation_metadata
+            FROM documents
             WHERE id = $1 AND deleted_at IS NULL
             "#,
         )
@@ -1221,7 +1228,10 @@ impl DocumentRepository {
                 share_token, password_hash, expires_at
             )
             VALUES ($1, $2::document_share_type, $3, $4, $5, $6, $7, $8)
-            RETURNING *
+            RETURNING
+                id, document_id, share_type::text AS share_type, target_id,
+                target_role, shared_by, share_token, password_hash, expires_at,
+                revoked_at, created_at
             "#,
         )
         .bind(data.document_id)
@@ -1247,7 +1257,11 @@ impl DocumentRepository {
     {
         sqlx::query_as::<_, DocumentShare>(
             r#"
-            SELECT * FROM document_shares
+            SELECT
+                id, document_id, share_type::text AS share_type, target_id,
+                target_role, shared_by, share_token, password_hash, expires_at,
+                revoked_at, created_at
+            FROM document_shares
             WHERE id = $1 AND revoked_at IS NULL
             "#,
         )
@@ -1267,7 +1281,11 @@ impl DocumentRepository {
     {
         sqlx::query_as::<_, DocumentShare>(
             r#"
-            SELECT * FROM document_shares
+            SELECT
+                id, document_id, share_type::text AS share_type, target_id,
+                target_role, shared_by, share_token, password_hash, expires_at,
+                revoked_at, created_at
+            FROM document_shares
             WHERE share_token = $1
               AND revoked_at IS NULL
               AND (expires_at IS NULL OR expires_at > NOW())
