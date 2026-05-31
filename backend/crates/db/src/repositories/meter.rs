@@ -929,6 +929,20 @@ impl MeterRepository {
     }
 
     /// Resolve missing reading alert.
+    /// Get a single missing-reading alert by id (used for tenant-ownership
+    /// checks before resolving it).
+    pub async fn get_missing_alert(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<MissingReadingAlert>, SqlxError> {
+        sqlx::query_as::<_, MissingReadingAlert>(
+            "SELECT * FROM missing_reading_alerts WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
     pub async fn resolve_missing_alert(
         &self,
         id: Uuid,
