@@ -175,8 +175,22 @@ impl RentalRepository {
         org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
+        // `platform` is the `rental_platform` enum; the model decodes it as
+        // `String`, so it must be cast with `platform::text` (a bare `SELECT *`
+        // panics with "mismatched types … not compatible with SQL type
+        // rental_platform"). All other columns map 1:1 to the model fields.
         let conn = sqlx::query_as::<_, RentalPlatformConnection>(
-            r#"SELECT * FROM rental_platform_connections WHERE id = $1 AND organization_id = $2"#,
+            r#"
+            SELECT
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
+            FROM rental_platform_connections
+            WHERE id = $1 AND organization_id = $2
+            "#,
         )
         .bind(id)
         .bind(org_id)
@@ -258,7 +272,13 @@ impl RentalRepository {
                 block_other_platforms = COALESCE($7, block_other_platforms),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $8
-            RETURNING *
+            RETURNING
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
             "#,
         )
         .bind(id)
