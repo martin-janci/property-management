@@ -62,10 +62,22 @@ impl FacilityRepository {
 
     /// Find facility by ID.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Facility>, SqlxError> {
-        let facility = sqlx::query_as::<_, Facility>(r#"SELECT * FROM facilities WHERE id = $1"#)
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await?;
+        // `facility_type` is the `facility_type` Postgres enum; sqlx 0.9 refuses
+        // to decode an enum column straight into a Rust `String`, so cast it to
+        // text. (The `Facility` model keeps `facility_type: String`.) Columns are
+        // listed explicitly because `SELECT *` cannot override one column's type.
+        // See issue #859.
+        let facility = sqlx::query_as::<_, Facility>(
+            r#"SELECT id, building_id, name, facility_type::text AS facility_type,
+                      description, location, capacity, is_bookable, requires_approval,
+                      max_booking_hours, max_advance_days, min_advance_hours,
+                      available_from, available_to, available_days, rules, hourly_fee,
+                      deposit_amount, is_active, photos, amenities, created_at, updated_at
+               FROM facilities WHERE id = $1"#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(facility)
     }
@@ -75,9 +87,12 @@ impl FacilityRepository {
         &self,
         building_id: Uuid,
     ) -> Result<Vec<FacilitySummary>, SqlxError> {
+        // `facility_type` is a Postgres enum; cast to text so sqlx 0.9 can decode
+        // it into the `FacilitySummary.facility_type: String` field. See #859.
         let facilities = sqlx::query_as::<_, FacilitySummary>(
             r#"
-            SELECT id, building_id, name, facility_type, is_bookable, is_active
+            SELECT id, building_id, name, facility_type::text AS facility_type,
+                   is_bookable, is_active
             FROM facilities
             WHERE building_id = $1
             ORDER BY name
@@ -92,9 +107,17 @@ impl FacilityRepository {
 
     /// Find active bookable facilities for a building.
     pub async fn find_bookable(&self, building_id: Uuid) -> Result<Vec<Facility>, SqlxError> {
+        // `facility_type` is a Postgres enum; cast to text for sqlx 0.9 decode
+        // into `Facility.facility_type: String`. Explicit column list because
+        // `SELECT *` cannot override one column's type. See #859.
         let facilities = sqlx::query_as::<_, Facility>(
             r#"
-            SELECT * FROM facilities
+            SELECT id, building_id, name, facility_type::text AS facility_type,
+                   description, location, capacity, is_bookable, requires_approval,
+                   max_booking_hours, max_advance_days, min_advance_hours,
+                   available_from, available_to, available_days, rules, hourly_fee,
+                   deposit_amount, is_active, photos, amenities, created_at, updated_at
+            FROM facilities
             WHERE building_id = $1 AND is_active AND is_bookable
             ORDER BY name
             "#,
@@ -243,9 +266,16 @@ impl FacilityRepository {
         from: DateTime<Utc>,
         to: DateTime<Utc>,
     ) -> Result<Vec<FacilityBooking>, SqlxError> {
+        // `status` is the `booking_status` Postgres enum; cast to text so sqlx
+        // 0.9 can decode it into `FacilityBooking.status: String`. See #859.
         let bookings = sqlx::query_as::<_, FacilityBooking>(
             r#"
-            SELECT * FROM facility_bookings
+            SELECT id, facility_id, user_id, unit_id, start_time, end_time,
+                   status::text AS status, purpose, attendees, notes,
+                   approved_by, approved_at, rejected_by, rejected_at,
+                   rejection_reason, cancelled_at, cancellation_reason,
+                   total_fee, deposit_paid, created_at, updated_at
+            FROM facility_bookings
             WHERE facility_id = $1
               AND start_time < $3
               AND end_time > $2
@@ -267,9 +297,16 @@ impl FacilityRepository {
         &self,
         user_id: Uuid,
     ) -> Result<Vec<FacilityBooking>, SqlxError> {
+        // `status` is the `booking_status` Postgres enum; cast to text for sqlx
+        // 0.9 decode into `FacilityBooking.status: String`. See #859.
         let bookings = sqlx::query_as::<_, FacilityBooking>(
             r#"
-            SELECT * FROM facility_bookings
+            SELECT id, facility_id, user_id, unit_id, start_time, end_time,
+                   status::text AS status, purpose, attendees, notes,
+                   approved_by, approved_at, rejected_by, rejected_at,
+                   rejection_reason, cancelled_at, cancellation_reason,
+                   total_fee, deposit_paid, created_at, updated_at
+            FROM facility_bookings
             WHERE user_id = $1
             ORDER BY start_time DESC
             "#,
@@ -286,9 +323,17 @@ impl FacilityRepository {
         &self,
         building_id: Uuid,
     ) -> Result<Vec<FacilityBooking>, SqlxError> {
+        // `status` is the `booking_status` Postgres enum; cast to text for sqlx
+        // 0.9 decode into `FacilityBooking.status: String`. See #859.
         let bookings = sqlx::query_as::<_, FacilityBooking>(
             r#"
-            SELECT fb.* FROM facility_bookings fb
+            SELECT fb.id, fb.facility_id, fb.user_id, fb.unit_id, fb.start_time,
+                   fb.end_time, fb.status::text AS status, fb.purpose, fb.attendees,
+                   fb.notes, fb.approved_by, fb.approved_at, fb.rejected_by,
+                   fb.rejected_at, fb.rejection_reason, fb.cancelled_at,
+                   fb.cancellation_reason, fb.total_fee, fb.deposit_paid,
+                   fb.created_at, fb.updated_at
+            FROM facility_bookings fb
             INNER JOIN facilities f ON f.id = fb.facility_id
             WHERE f.building_id = $1 AND fb.status = 'pending'
             ORDER BY fb.created_at

@@ -9,7 +9,6 @@
 //! These tests actually SELECT rows through the repository, so they fail on
 //! `main` (decode error) and pass once the casts are in place.
 
-use db::models::facility::CreateFacilityBooking;
 use db::repositories::FacilityRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -62,10 +61,13 @@ async fn seed(pool: &PgPool) -> (Uuid, Uuid, Uuid) {
     .await
     .expect("seed user");
 
+    // hourly_fee / deposit_amount are set because the `Facility` model decodes
+    // them via `#[sqlx(try_from = "Decimal")]`, which rejects SQL NULL even for
+    // an `Option<Decimal>` field — unrelated to the enum-decode fix under test.
     let facility_id = sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO facilities (building_id, name, facility_type, is_bookable, is_active)
-        VALUES ($1, 'Gym', 'gym', TRUE, TRUE)
+        INSERT INTO facilities (building_id, name, facility_type, is_bookable, is_active, hourly_fee, deposit_amount)
+        VALUES ($1, 'Gym', 'gym', TRUE, TRUE, 10.00, 50.00)
         RETURNING id
         "#,
     )
@@ -124,33 +126,34 @@ async fn booking_read_paths_decode_booking_status_enum(pool: PgPool) {
     let (building_id, facility_id, user_id) = seed(&pool).await;
     let repo = FacilityRepository::new(pool.clone());
 
-    // create_booking uses RETURNING * but binds a text literal for status, so it
-    // works on main; the *read* paths below are the regression surface.
+    // Seed a 'pending' booking directly. (We avoid `create_booking` here because
+    // its `RETURNING *` decode of the `total_fee` `#[sqlx(try_from = Decimal)]`
+    // field rejects SQL NULL — an unrelated model quirk — so we set total_fee.)
     let start = chrono::Utc::now() + chrono::Duration::hours(1);
     let end = start + chrono::Duration::hours(2);
-    let booking = repo
-        .create_booking(
-            user_id,
-            CreateFacilityBooking {
-                facility_id,
-                unit_id: None,
-                start_time: start,
-                end_time: end,
-                purpose: Some("test".to_string()),
-                attendees: Some(1),
-                notes: None,
-            },
-        )
-        .await
-        .expect("create booking");
+    let booking_id = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO facility_bookings
+            (facility_id, user_id, start_time, end_time, status, total_fee)
+        VALUES ($1, $2, $3, $4, 'pending', 0.00)
+        RETURNING id
+        "#,
+    )
+    .bind(facility_id)
+    .bind(user_id)
+    .bind(start)
+    .bind(end)
+    .fetch_one(&pool)
+    .await
+    .expect("seed booking");
 
     // find_booking_by_id (fixed in #858) + the three #859 read paths.
     let by_id = repo
-        .find_booking_by_id(booking.id)
+        .find_booking_by_id(booking_id)
         .await
         .expect("find_booking_by_id must decode booking_status enum")
         .expect("row exists");
-    assert!(!by_id.status.is_empty());
+    assert_eq!(by_id.status, "pending");
 
     let by_facility = repo
         .find_bookings_by_facility(
@@ -172,7 +175,6 @@ async fn booking_read_paths_decode_booking_status_enum(pool: PgPool) {
         .find_pending_bookings(building_id)
         .await
         .expect("find_pending_bookings must decode booking_status enum (#859)");
-    // A facility requiring no approval auto-approves, so pending may be empty;
-    // the point is the SELECT itself must not error on the enum decode.
-    let _ = pending;
+    assert_eq!(pending.len(), 1);
+    assert_eq!(pending[0].status, "pending");
 }
