@@ -21,11 +21,40 @@
 //! still succeeds.
 //!
 //! These tests exercise the HTTP surface end-to-end with real HS256 JWTs.
+//!
+//! Per-request org/tenant context wiring (the reason the first cut of these
+//! tests passed *trivially* — the same-org positive cases 500/400'd for lack of
+//! context, so the cross-org cases were "rejected" only because *every* request
+//! was rejected):
+//!
+//!   * `marketplace::get_rfq` reads `AuthUser` and calls
+//!     `verify_org_access(user.user_id, rfq.organization_id)` — i.e. it derives
+//!     the org from the *fetched row* and checks `organization_members`
+//!     membership. No per-request tenant header is needed; the bearer JWT's
+//!     `sub` plus a seeded membership is enough. Cross-org rejection is a real
+//!     `is_member == false` test.
+//!   * `voting::get_vote` takes an `RlsConnection`, whose
+//!     `ValidatedTenantExtractor` resolves the tenant from the `X-Tenant-ID`
+//!     header (no `host_tenant_middleware` is mounted under `TestApp`, so the
+//!     `ResolvedTenant` extension is absent and the header is the only source).
+//!     We set `X-Tenant-ID: <org>` so the extractor resolves + membership-checks
+//!     the caller's org.
+//!   * `investor_portal::list_portfolio_properties` reads `AuthUser.tenant_id`
+//!     (the JWT `tenant_id` claim) and gates on `verify_portfolio_org`. The JWT
+//!     must therefore carry the `tenant_id` claim — note `JwtService` emits the
+//!     claim as `org_id`, which does NOT deserialize into
+//!     `api_core::extractors::auth::Claims::tenant_id`; that mismatch is exactly
+//!     why the original `mint_token` left `auth.tenant_id == None` and the
+//!     handler returned `400 "No organization context"`. We mint the token here
+//!     with the `tenant_id` claim directly (same approach as
+//!     `reserve_funds_cross_org_idor_tests`).
 
 #[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;
+use jsonwebtoken::{encode, EncodingKey, Header};
+use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -155,15 +184,43 @@ async fn seed_portfolio(pool: &PgPool, org_id: Uuid) -> Uuid {
     .expect("seed portfolio")
 }
 
-/// Mint a real HS256 access token for `user_id`, optionally scoped to `org_id`
-/// (sets the JWT `org_id` claim, which the tenant extractor uses to resolve the
-/// caller's tenant when no host tenant is present).
+/// Claims shape that matches `api_core::extractors::auth::Claims`. We mint with
+/// this (rather than `JwtService`, which serializes the org as `org_id`) so the
+/// `tenant_id` claim deserializes into `AuthUser.tenant_id` for the
+/// `investor_portal` handlers.
+#[derive(Serialize)]
+struct TestClaims {
+    sub: Uuid,
+    exp: i64,
+    iat: i64,
+    token_type: String,
+    tenant_id: Option<Uuid>,
+    role: Option<String>,
+    email: String,
+    name: String,
+}
+
+/// Mint an HS256 access token for `user_id`, scoped to `org_id` via the JWT
+/// `tenant_id` claim, signed with the same secret `TestApp` configures.
 fn mint_token(user_id: Uuid, email: &str, org_id: Option<Uuid>) -> String {
-    use api_server::services::JwtService;
-    let config = TestConfig::default();
-    let jwt = JwtService::new(&config.jwt_secret).expect("jwt service");
-    jwt.generate_access_token(user_id, email, "MVI User", org_id, None)
-        .expect("mint access token")
+    let now = chrono::Utc::now().timestamp();
+    let claims = TestClaims {
+        sub: user_id,
+        exp: now + 3600,
+        iat: now,
+        token_type: "access".to_string(),
+        tenant_id: org_id,
+        role: Some("manager".to_string()),
+        email: email.to_string(),
+        name: "MVI User".to_string(),
+    };
+    let secret = TestConfig::default().jwt_secret;
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .expect("encode test JWT")
 }
 
 fn assert_not_ok(status: StatusCode, ctx: &str) {
@@ -237,9 +294,20 @@ async fn get_vote_from_other_org_is_rejected(pool: PgPool) {
     let building_a = seed_building(&pool, org_a, "VoteA").await;
     let vote_a = seed_vote(&pool, org_a, building_a, user_a).await;
 
+    // Org B's caller authenticates as org B (X-Tenant-ID = org_b, where they
+    // are a member) but targets org A's vote. The org-scoped lookup finds no
+    // row under org B → 404. (Without the header the request would 400 at the
+    // tenant extractor, masking whether the IDOR scope actually works.)
     let token_b = mint_token(user_b, "vote-b@mvi-idor.test", Some(org_b));
     let uri = format!("/api/v1/voting/{vote_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_b.to_string())
+                .build(),
+        )
+        .await;
 
     assert_not_ok(resp.status, "get_vote cross-tenant");
 }
@@ -253,9 +321,18 @@ async fn get_vote_for_own_org_succeeds(pool: PgPool) {
     let building_a = seed_building(&pool, org_a, "VoteOwnA").await;
     let vote_a = seed_vote(&pool, org_a, building_a, user_a).await;
 
+    // Org A's caller authenticates as org A (X-Tenant-ID = org_a) and reads its
+    // own vote → 200.
     let token_a = mint_token(user_a, "vote-own-a@mvi-idor.test", Some(org_a));
     let uri = format!("/api/v1/voting/{vote_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_a).build()).await;
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_a)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
 
     assert_eq!(
         resp.status,
