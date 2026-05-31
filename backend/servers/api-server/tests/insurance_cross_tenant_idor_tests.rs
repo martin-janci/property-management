@@ -45,10 +45,8 @@ mod common;
 use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::{
     body::Body,
-    extract::Request,
-    http::{header, Method, StatusCode},
+    http::{header, Method, Request, StatusCode},
     middleware::Next,
-    response::Response,
 };
 use chrono::NaiveDate;
 use db::models::{
@@ -453,7 +451,7 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 async fn tenant_resolved_app(pool: PgPool, org_id: Uuid) -> (TestApp, axum::Router) {
     let app = TestApp::new(pool).await;
     let router = app.router.clone().layer(axum::middleware::from_fn(
-        move |mut req: Request, next: Next| async move {
+        move |mut req: Request<Body>, next: Next| async move {
             req.extensions_mut().insert(ResolvedTenant {
                 organization_id: org_id,
                 source: TenantSource::Subdomain,
