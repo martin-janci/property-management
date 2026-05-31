@@ -114,12 +114,16 @@ async fn create_rule(
 
 async fn get_rule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .get_rule(rule_id)
+        .get_rule_for_org(rule_id, org_id)
         .await
         .map_err(|e| internal_error(&format!("Failed to get rule: {}", e)))?
         .ok_or_else(|| not_found_error("Rule not found"))
@@ -208,12 +212,16 @@ async fn create_violation(
 
 async fn get_violation(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(violation_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .get_violation(violation_id)
+        .get_violation_for_org(violation_id, org_id)
         .await
         .map_err(|e| internal_error(&format!("Failed to get violation: {}", e)))?
         .ok_or_else(|| not_found_error("Violation not found"))
@@ -343,12 +351,16 @@ async fn create_action(
 
 async fn get_action(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .get_enforcement_action(action_id)
+        .get_enforcement_action_for_org(action_id, org_id)
         .await
         .map_err(|e| internal_error(&format!("Failed to get action: {}", e)))?
         .ok_or_else(|| not_found_error("Action not found"))
@@ -462,12 +474,16 @@ async fn create_appeal(
 
 async fn get_appeal(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(appeal_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .get_appeal(appeal_id)
+        .get_appeal_for_org(appeal_id, org_id)
         .await
         .map_err(|e| internal_error(&format!("Failed to get appeal: {}", e)))?
         .ok_or_else(|| not_found_error("Appeal not found"))

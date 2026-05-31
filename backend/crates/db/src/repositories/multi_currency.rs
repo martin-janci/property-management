@@ -205,10 +205,11 @@ impl MultiCurrencyRepository {
         Ok(config)
     }
 
-    /// Get property currency configuration
+    /// Get property currency configuration scoped to an organization.
     pub async fn get_property_currency_config(
         &self,
         building_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<PropertyCurrencyConfig>, AppError> {
         let config = sqlx::query_as::<_, PropertyCurrencyConfig>(
             r#"
@@ -217,10 +218,11 @@ impl MultiCurrencyRepository {
                    requires_local_reporting, local_accounting_format,
                    created_at, updated_at
             FROM property_currency_config
-            WHERE building_id = $1
+            WHERE building_id = $1 AND organization_id = $2
             "#,
         )
         .bind(building_id)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
