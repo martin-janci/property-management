@@ -108,20 +108,24 @@ async fn documents_force_rls_blocks_cross_tenant_read(pool: PgPool) {
     // --- Create a NOSUPERUSER NOBYPASSRLS role so FORCE actually binds. ---
     // Random suffix keeps the role name unique across parallel test DBs.
     let role = format!("ppt_rls_test_{}", Uuid::new_v4().simple());
-    sqlx::query(&format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"))
-        .execute(&pool)
-        .await
-        .expect("create role");
-    sqlx::query(&format!("GRANT SELECT ON documents TO \"{role}\""))
-        .execute(&pool)
-        .await
-        .expect("grant select on documents");
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"
+    )))
+    .execute(&pool)
+    .await
+    .expect("create role");
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "GRANT SELECT ON documents TO \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .expect("grant select on documents");
     // The policy calls helper functions (get_current_org_id, is_super_admin,
     // get_current_org_not_deleted); the role must be able to EXECUTE them.
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         "GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin(), \
          get_current_org_not_deleted() TO \"{role}\""
-    ))
+    )))
     .execute(&pool)
     .await
     .expect("grant execute on rls helpers");
@@ -140,7 +144,7 @@ async fn documents_force_rls_blocks_cross_tenant_read(pool: PgPool) {
             .execute(&mut *conn)
             .await
             .expect("set org-A context");
-        sqlx::query(&format!("SET ROLE \"{role}\""))
+        sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
             .execute(&mut *conn)
             .await
             .expect("set role");
@@ -190,12 +194,16 @@ async fn documents_force_rls_blocks_cross_tenant_read(pool: PgPool) {
 
     // --- Cleanup the test role. ---
     set_ctx(&pool, None, None, true).await;
-    sqlx::query(&format!("REVOKE ALL ON documents FROM \"{role}\""))
-        .execute(&pool)
-        .await
-        .ok();
-    sqlx::query(&format!("DROP ROLE IF EXISTS \"{role}\""))
-        .execute(&pool)
-        .await
-        .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "REVOKE ALL ON documents FROM \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "DROP ROLE IF EXISTS \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .ok();
 }
