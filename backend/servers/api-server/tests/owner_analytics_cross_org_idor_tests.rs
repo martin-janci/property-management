@@ -23,6 +23,8 @@
 mod common;
 
 use axum::http::StatusCode;
+use jsonwebtoken::{encode, EncodingKey, Header};
+use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -118,13 +120,44 @@ async fn seed_valuation(pool: &PgPool, unit_id: Uuid) -> Uuid {
     .expect("seed valuation")
 }
 
-/// Mint a real HS256 access token whose `org_id` claim becomes `AuthUser.tenant_id`.
+/// Claims shape matching `api_core::extractors::auth::Claims`. We mint with this
+/// rather than `JwtService` — which serializes the org as the `org_id` claim —
+/// so the `tenant_id` claim populates `AuthUser.tenant_id`. Without it the
+/// owner-analytics handlers see no tenant context (400 "Tenant context
+/// required") and the same-org success case wrongly fails.
+#[derive(Serialize)]
+struct TestClaims {
+    sub: Uuid,
+    exp: i64,
+    iat: i64,
+    token_type: String,
+    tenant_id: Option<Uuid>,
+    role: Option<String>,
+    email: String,
+    name: String,
+}
+
+/// Mint an HS256 access token for `user_id`, scoped to `org_id` via the JWT
+/// `tenant_id` claim, signed with the same secret `TestApp` configures.
 fn mint_token(user_id: Uuid, email: &str, org_id: Uuid) -> String {
-    use api_server::services::JwtService;
-    let config = TestConfig::default();
-    let jwt = JwtService::new(&config.jwt_secret).expect("jwt service");
-    jwt.generate_access_token(user_id, email, "OwnerIDOR User", Some(org_id), None)
-        .expect("mint access token")
+    let now = chrono::Utc::now().timestamp();
+    let claims = TestClaims {
+        sub: user_id,
+        exp: now + 3600,
+        iat: now,
+        token_type: "access".to_string(),
+        tenant_id: Some(org_id),
+        role: Some("manager".to_string()),
+        email: email.to_string(),
+        name: "OwnerIDOR User".to_string(),
+    };
+    let secret = TestConfig::default().jwt_secret;
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .expect("encode test JWT")
 }
 
 // ---------------------------------------------------------------------------
