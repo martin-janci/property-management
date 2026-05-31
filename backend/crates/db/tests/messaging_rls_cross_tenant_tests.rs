@@ -136,36 +136,37 @@ async fn set_ctx(
 /// `role_name` must be unique per test — roles are cluster-global, so parallel
 /// `sqlx::test` cases would otherwise collide on `CREATE ROLE`.
 async fn switch_to_rls_role(conn: &mut PoolConnection<Postgres>, role_name: &str) {
-    // Idempotent create (no native CREATE ROLE IF NOT EXISTS).
-    let setup_sql = format!(
-        r#"
-        DO $$
-        BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{role_name}') THEN
-                CREATE ROLE "{role_name}" NOSUPERUSER NOBYPASSRLS;
-            END IF;
-        END $$;
-        GRANT USAGE ON SCHEMA public TO "{role_name}";
-        -- Mirror the CI `rls_test_runner` grants: SELECT on every table so
-        -- the policies' helper subqueries (get_current_org_not_deleted ->
-        -- organizations; messages policy -> message_threads) can run under
-        -- this role, plus EXECUTE on the context-setter functions.
-        GRANT SELECT ON ALL TABLES IN SCHEMA public TO "{role_name}";
-        GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO "{role_name}";
-        "#
-    );
+    // Each statement must be sent on its own: sqlx's `query(...).execute()` uses
+    // the extended (prepared) protocol, which rejects multiple commands in one
+    // string ("cannot insert multiple commands into a prepared statement").
+    //
+    // Idempotent create (no native CREATE ROLE IF NOT EXISTS), then mirror the
+    // CI `rls_test_runner` grants: SELECT on every table so the policies' helper
+    // subqueries (messages policy -> message_threads) can run under this role,
+    // plus EXECUTE on the context-setter functions.
+    //
     // `role_name` is a hard-coded per-test constant (no external input), so the
     // dynamic SQL is safe — assert it for sqlx 0.9's SqlSafeStr guard.
-    sqlx::query(sqlx::AssertSqlSafe(setup_sql))
-        .execute(&mut **conn)
-        .await
-        .expect("create + grant rls role");
-
-    let set_role_sql = format!(r#"SET ROLE "{role_name}""#);
-    sqlx::query(sqlx::AssertSqlSafe(set_role_sql))
-        .execute(&mut **conn)
-        .await
-        .expect("set role to non-superuser");
+    let statements = [
+        format!(
+            r#"DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{role_name}') THEN
+                    CREATE ROLE "{role_name}" NOSUPERUSER NOBYPASSRLS;
+                END IF;
+            END $$"#
+        ),
+        format!(r#"GRANT USAGE ON SCHEMA public TO "{role_name}""#),
+        format!(r#"GRANT SELECT ON ALL TABLES IN SCHEMA public TO "{role_name}""#),
+        format!(r#"GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO "{role_name}""#),
+        format!(r#"SET ROLE "{role_name}""#),
+    ];
+    for stmt in statements {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&mut **conn)
+            .await
+            .expect("create + grant + set rls role");
+    }
 }
 
 async fn count_visible_threads(conn: &mut PoolConnection<Postgres>, thread_id: Uuid) -> i64 {
