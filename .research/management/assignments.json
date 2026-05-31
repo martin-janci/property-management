@@ -172,12 +172,12 @@
     {
       "task_id": "pm-tech-lead-sqlx-migration-ci-gate",
       "branch": "auto-impl/pm-tech-lead-sqlx-migration-ci-gate",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-05-31T00:11:45Z",
-      "last_updated": "2026-05-31T00:11:45Z",
-      "status_changed_at": "2026-05-31T00:11:45Z",
+      "last_updated": "2026-05-31T00:30:00Z",
+      "status_changed_at": "2026-05-31T00:30:00Z",
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -186,11 +186,11 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "devops",
+      "implementer_summary": "pr=868 status=done specialist=devops scope_drift=false code_reuse_warn=none note=added sqlx-migrations PR gate to backend.yml (migration-run + prepare --check); SQLx is 0.9 not 0.8 and no .sqlx cache exists (runtime queries) so prepare --check is forward-looking no-op, migration-run gate is live; sqlx-cli pinned 0.9.0",
       "reviewer_summary": null,
-      "pr_number": null,
-      "pr_url": null,
+      "pr_number": 868,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/868",
       "merged_at": null
     }
   ]
