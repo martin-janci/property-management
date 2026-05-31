@@ -3,12 +3,13 @@
 
 use crate::services::SyndicationService;
 use crate::state::AppState;
-use api_core::extractors::{AuthUser, RlsConnection, TenantExtractor};
+use api_core::extractors::{RlsConnection, TenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
+use common::TenantRole;
 use db::models::{
     listing_status, property_type as prop_type, AuditAction, CreateAuditLog, CreateListing,
     CreateListingFromUnit, CreateListingPhoto, CreateSyndication, Listing, ListingListQuery,
@@ -1088,9 +1089,13 @@ pub async fn get_organization_syndication_stats(
 // and 00136). They are deliberately separate from `/{id}/publish` (which
 // queues external-portal syndication jobs — Epic 105).
 //
-// Auth: stub gate — `AuthUser` extractor + an org-id ownership check via the
-// repository (UPDATE WHERE organization_id = $caller_org). Real capability
-// gating (`Capability::ListingsPublish`) lands in Phase 5.
+// Auth (closes #851, #809): these handlers use the same `TenantExtractor`
+// every other listings handler uses (consistent org/role extraction from the
+// JWT), and gate the global-publish action behind manager role — publishing a
+// listing to the cross-org global portal is a management action, not something
+// any org member (e.g. a resident) may do. The repository UPDATE remains
+// org-scoped (UPDATE WHERE organization_id = $caller_org) as a second
+// defensive layer against cross-tenant writes.
 
 /// Gate global publish/unpublish to manager-tier roles (issue #809).
 ///
@@ -1135,24 +1140,25 @@ async fn require_listing_publisher(
     responses(
         (status = 200, description = "Listing published to global portal", body = Listing),
         (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Listing belongs to another organization"),
+        (status = 403, description = "Manager role required, or listing belongs to another organization"),
         (status = 404, description = "Listing not found")
     )
 )]
 pub async fn global_publish(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
-    // Stub auth gate (Phase 5 replaces this with capability-based authz):
-    // the user must be authenticated AND must have a tenant in their token.
-    // The repository UPDATE is org-scoped (WHERE organization_id = $org), so
-    // an attempt to publish another org's listing returns Ok(None) → 404,
-    // not 200. We rely on that as the second defensive layer.
-    let org_id = auth.tenant_id.ok_or((
-        axum::http::StatusCode::FORBIDDEN,
-        "No tenant context".to_string(),
-    ))?;
+    // Authz (closes #809): publishing to the cross-org global portal is a
+    // manager action. `has_role` is hierarchical, so OrgAdmin / PlatformAdmin /
+    // SuperAdmin (all above Manager) also pass.
+    if !tenant.has_role(TenantRole::Manager) {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            "Manager role required to publish listings to the global portal".to_string(),
+        ));
+    }
+    let org_id = tenant.tenant_id;
 
     // SECURITY (issue #809): publishing to the global reality portal exposes the
     // listing across every org, so gate it to manager-tier roles (server-derived
@@ -1195,7 +1201,7 @@ pub async fn global_publish(
     let audit_result = state
         .audit_log_repo
         .create(CreateAuditLog {
-            user_id: Some(auth.user_id),
+            user_id: Some(tenant.user_id),
             action: AuditAction::ResourceUpdated,
             resource_type: Some("listing".to_string()),
             resource_id: Some(id),
@@ -1242,19 +1248,24 @@ pub async fn global_publish(
     responses(
         (status = 200, description = "Listing withdrawn from global portal", body = Listing),
         (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Listing belongs to another organization"),
+        (status = 403, description = "Manager role required, or listing belongs to another organization"),
         (status = 404, description = "Listing not found")
     )
 )]
 pub async fn global_unpublish(
     State(state): State<AppState>,
-    auth: AuthUser,
+    TenantExtractor(tenant): TenantExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
-    let org_id = auth.tenant_id.ok_or((
-        axum::http::StatusCode::FORBIDDEN,
-        "No tenant context".to_string(),
-    ))?;
+    // Authz (closes #809): withdrawing from the global portal is the inverse
+    // management action and is gated identically to `global_publish`.
+    if !tenant.has_role(TenantRole::Manager) {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            "Manager role required to withdraw listings from the global portal".to_string(),
+        ));
+    }
+    let org_id = tenant.tenant_id;
 
     // SECURITY (issue #809): manager-tier gate (see `require_listing_publisher`).
     require_listing_publisher(&state, auth.user_id, org_id).await?;
@@ -1292,7 +1303,7 @@ pub async fn global_unpublish(
     let audit_result = state
         .audit_log_repo
         .create(CreateAuditLog {
-            user_id: Some(auth.user_id),
+            user_id: Some(tenant.user_id),
             action: AuditAction::ResourceUpdated,
             resource_type: Some("listing".to_string()),
             resource_id: Some(id),

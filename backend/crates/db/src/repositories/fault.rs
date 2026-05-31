@@ -37,23 +37,6 @@ use serde_json::Value as JsonValue;
 use sqlx::{Error as SqlxError, Executor, FromRow, Postgres};
 use uuid::Uuid;
 
-/// Explicit column projection for decoding a `faults` row into [`Fault`] (issue #859).
-///
-/// Under sqlx 0.9, decoding a Postgres ENUM column straight into a Rust `String`
-/// field fails at runtime ("mismatched types ... Rust type `String` not compatible
-/// with SQL type `<enum>`"). The five enum columns (`category`, `priority`,
-/// `status`, `ai_category`, `ai_priority`) are therefore cast to `text` here so
-/// that every `SELECT`/`RETURNING` that decodes into `Fault` succeeds. Any query
-/// that decoded these enums via `SELECT *` / `RETURNING *` must use this list
-/// instead. The column order/set must stay in sync with the `Fault` struct.
-const FAULT_COLUMNS: &str = "id, organization_id, building_id, unit_id, reporter_id, \
-title, description, location_description, \
-category::text AS category, priority::text AS priority, status::text AS status, \
-ai_category::text AS ai_category, ai_priority::text AS ai_priority, \
-ai_confidence, ai_processed_at, assigned_to, assigned_at, triaged_by, triaged_at, \
-resolved_at, resolved_by, resolution_notes, confirmed_at, confirmed_by, rating, feedback, \
-scheduled_date, estimated_completion, idempotency_key, created_at, updated_at";
-
 /// Row struct for fault with details query.
 #[derive(Debug, FromRow)]
 struct FaultDetailsRow {
@@ -146,7 +129,7 @@ impl FaultRepository {
     {
         let priority = data.priority.as_deref().unwrap_or("medium");
 
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             INSERT INTO faults (
                 organization_id, building_id, unit_id, reporter_id,
@@ -154,9 +137,9 @@ impl FaultRepository {
                 category, priority, idempotency_key
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(data.organization_id)
         .bind(data.building_id)
         .bind(data.unit_id)
@@ -196,11 +179,11 @@ impl FaultRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
-            SELECT {FAULT_COLUMNS} FROM faults WHERE id = $1
-            "#
-        )))
+            SELECT * FROM faults WHERE id = $1
+            "#,
+        )
         .bind(id)
         .fetch_optional(executor)
         .await?;
@@ -208,97 +191,50 @@ impl FaultRepository {
         Ok(fault)
     }
 
-    /// Return whether fault `id` belongs to `organization_id` (issue #796).
+    /// Find a fault by ID, scoped to a specific organization.
     ///
-    /// Several by-id fault handlers authenticate the caller with
-    /// `RequestPrincipal` but reach the database through the non-RLS pool
-    /// methods below (`assign`, `resolve`, `confirm`, `reopen`, timeline and
-    /// attachment reads/writes). Those queries carry no `organization_id`
-    /// predicate, so org B could read or mutate org A's fault by guessing its
-    /// UUID (cross-tenant IDOR). This method threads the caller's resolved
-    /// tenant into the `WHERE` clause and is the authorization guard
-    /// (`require_fault_in_tenant`) in front of every such handler. A
-    /// foreign-org (or missing) id returns `false`, which the handler maps to
-    /// `404` so existence is not probeable. Mirrors the `_for_org` /
-    /// `_belongs_to_org` repository idiom introduced for the AI/LLM routes
-    /// (#766/#816). Uses `EXISTS` rather than `SELECT *` so the guard never
-    /// decodes the fault's enum columns (`fault_category` etc.) — it only needs
-    /// to prove ownership.
-    pub async fn fault_belongs_to_org(
+    /// SECURITY (#770): explicitly threads `organization_id` into the WHERE
+    /// clause so a caller in org B cannot read/act on org A's fault by
+    /// enumerating its UUID. Returns `None` (→ 404) for a cross-tenant id.
+    /// Use this for the legacy pool-based mutate-by-id handlers
+    /// (assign/resolve/confirm/reopen, comments, attachments) that do NOT
+    /// run under an `RlsConnection` and therefore are not protected by the
+    /// `faults_tenant_isolation` RLS policy.
+    pub async fn find_by_id_for_org(
         &self,
         id: Uuid,
-        organization_id: Uuid,
-    ) -> Result<bool, SqlxError> {
-        let exists: bool = sqlx::query_scalar(
+        org_id: Uuid,
+    ) -> Result<Option<Fault>, SqlxError> {
+        // The enum columns (category/priority/status) are cast to text so the
+        // row decodes into the `String`-typed `Fault` model regardless of
+        // whether the connection has the PG enum types registered (matches the
+        // `::text` idiom used by the statistics queries below).
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
-            SELECT EXISTS(
-                SELECT 1 FROM faults
-                WHERE id = $1 AND organization_id = $2
-            )
+            SELECT
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
+            FROM faults
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
-        .bind(organization_id)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
         .await?;
 
-        Ok(exists)
-    }
-
-    /// Return whether `building_id` belongs to `organization_id` (issue #796).
-    ///
-    /// `create_fault` accepts a client-supplied `building_id`/`unit_id`. The
-    /// RLS `WITH CHECK` on `faults` only validates the *new row's*
-    /// `organization_id`, not that the referenced building belongs to that
-    /// org — so without this gate a caller could file a fault against another
-    /// tenant's building. The handler rejects the create with `404` when this
-    /// returns `false`.
-    pub async fn building_belongs_to_org(
-        &self,
-        building_id: Uuid,
-        organization_id: Uuid,
-    ) -> Result<bool, SqlxError> {
-        let exists: bool = sqlx::query_scalar(
-            r#"
-            SELECT EXISTS(
-                SELECT 1 FROM buildings
-                WHERE id = $1 AND organization_id = $2
-            )
-            "#,
-        )
-        .bind(building_id)
-        .bind(organization_id)
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(exists)
-    }
-
-    /// Return whether `unit_id` sits in `building_id` (issue #796).
-    ///
-    /// Paired with [`building_belongs_to_org`] this transitively proves the
-    /// unit belongs to the caller's tenant *and* sits in the building named on
-    /// the same request, rejecting a fault that references a unit from a
-    /// different building.
-    pub async fn unit_in_building(
-        &self,
-        unit_id: Uuid,
-        building_id: Uuid,
-    ) -> Result<bool, SqlxError> {
-        let exists: bool = sqlx::query_scalar(
-            r#"
-            SELECT EXISTS(
-                SELECT 1 FROM units
-                WHERE id = $1 AND building_id = $2
-            )
-            "#,
-        )
-        .bind(unit_id)
-        .bind(building_id)
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(exists)
+        Ok(fault)
     }
 
     /// Update fault details with RLS context (reporter can edit before triage).
@@ -311,7 +247,7 @@ impl FaultRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             UPDATE faults
             SET
@@ -321,9 +257,9 @@ impl FaultRepository {
                 category = COALESCE($5, category),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(id)
         .bind(&data.title)
         .bind(&data.description)
@@ -347,7 +283,7 @@ impl FaultRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             UPDATE faults
             SET
@@ -356,9 +292,9 @@ impl FaultRepository {
                 estimated_completion = COALESCE($4, estimated_completion),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(id)
         .bind(&data.status)
         .bind(data.scheduled_date)
@@ -439,11 +375,11 @@ impl FaultRepository {
 
     /// Find fault by idempotency key.
     pub async fn find_by_idempotency_key(&self, key: &str) -> Result<Option<Fault>, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
-            SELECT {FAULT_COLUMNS} FROM faults WHERE idempotency_key = $1
-            "#
-        )))
+            SELECT * FROM faults WHERE idempotency_key = $1
+            "#,
+        )
         .bind(key)
         .fetch_optional(&self.pool)
         .await?;
@@ -460,8 +396,10 @@ impl FaultRepository {
             r#"
             SELECT
                 f.id, f.organization_id, f.building_id, f.unit_id, f.reporter_id,
-                f.title, f.description, f.location_description, f.category, f.priority, f.status,
-                f.ai_category, f.ai_priority, f.ai_confidence, f.ai_processed_at,
+                f.title, f.description, f.location_description,
+                f.category::text AS category, f.priority::text AS priority, f.status::text AS status,
+                f.ai_category::text AS ai_category, f.ai_priority::text AS ai_priority,
+                f.ai_confidence, f.ai_processed_at,
                 f.assigned_to, f.assigned_at, f.triaged_by, f.triaged_at,
                 f.resolved_at, f.resolved_by, f.resolution_notes,
                 f.confirmed_at, f.confirmed_by, f.rating, f.feedback,
@@ -487,52 +425,105 @@ impl FaultRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|row| {
-            let fault = Fault {
-                id: row.id,
-                organization_id: row.organization_id,
-                building_id: row.building_id,
-                unit_id: row.unit_id,
-                reporter_id: row.reporter_id,
-                title: row.title,
-                description: row.description,
-                location_description: row.location_description,
-                category: row.category,
-                priority: row.priority,
-                status: row.status,
-                ai_category: row.ai_category,
-                ai_priority: row.ai_priority,
-                ai_confidence: row.ai_confidence,
-                ai_processed_at: row.ai_processed_at,
-                assigned_to: row.assigned_to,
-                assigned_at: row.assigned_at,
-                triaged_by: row.triaged_by,
-                triaged_at: row.triaged_at,
-                resolved_at: row.resolved_at,
-                resolved_by: row.resolved_by,
-                resolution_notes: row.resolution_notes,
-                confirmed_at: row.confirmed_at,
-                confirmed_by: row.confirmed_by,
-                rating: row.rating,
-                feedback: row.feedback,
-                scheduled_date: row.scheduled_date,
-                estimated_completion: row.estimated_completion,
-                idempotency_key: row.idempotency_key,
-                created_at: row.created_at,
-                updated_at: row.updated_at,
-            };
-            FaultWithDetails {
-                fault,
-                reporter_name: row.reporter_name,
-                reporter_email: row.reporter_email,
-                building_name: row.building_name,
-                building_address: row.building_address,
-                unit_designation: row.unit_designation,
-                assigned_to_name: row.assigned_to_name,
-                attachment_count: row.attachment_count,
-                comment_count: row.comment_count,
-            }
-        }))
+        Ok(result.map(Self::details_row_to_model))
+    }
+
+    /// Find fault with full details, scoped to a specific organization.
+    ///
+    /// SECURITY (#770): the `get_fault` handler runs WITHOUT an
+    /// `RlsConnection`, so the unscoped `find_by_id_with_details` leaked any
+    /// org's fault (and its reporter PII / timeline / attachment counts) to a
+    /// caller who guessed the UUID — a cross-tenant IDOR. This variant adds an
+    /// explicit `f.organization_id = $2` predicate so a cross-tenant id
+    /// resolves to `None` (→ 404).
+    pub async fn find_by_id_with_details_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<FaultWithDetails>, SqlxError> {
+        let result = sqlx::query_as::<_, FaultDetailsRow>(
+            r#"
+            SELECT
+                f.id, f.organization_id, f.building_id, f.unit_id, f.reporter_id,
+                f.title, f.description, f.location_description,
+                f.category::text AS category, f.priority::text AS priority, f.status::text AS status,
+                f.ai_category::text AS ai_category, f.ai_priority::text AS ai_priority,
+                f.ai_confidence, f.ai_processed_at,
+                f.assigned_to, f.assigned_at, f.triaged_by, f.triaged_at,
+                f.resolved_at, f.resolved_by, f.resolution_notes,
+                f.confirmed_at, f.confirmed_by, f.rating, f.feedback,
+                f.scheduled_date, f.estimated_completion, f.idempotency_key,
+                f.created_at, f.updated_at,
+                u.name as reporter_name,
+                u.email as reporter_email,
+                COALESCE(b.name, b.street) as building_name,
+                b.street || ', ' || b.city as building_address,
+                un.designation as unit_designation,
+                au.name as assigned_to_name,
+                (SELECT COUNT(*) FROM fault_attachments WHERE fault_id = f.id) as attachment_count,
+                (SELECT COUNT(*) FROM fault_timeline WHERE fault_id = f.id AND action = 'comment') as comment_count
+            FROM faults f
+            JOIN users u ON f.reporter_id = u.id
+            JOIN buildings b ON f.building_id = b.id
+            LEFT JOIN units un ON f.unit_id = un.id
+            LEFT JOIN users au ON f.assigned_to = au.id
+            WHERE f.id = $1 AND f.organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.map(Self::details_row_to_model))
+    }
+
+    /// Map a raw [`FaultDetailsRow`] into the public [`FaultWithDetails`] model.
+    fn details_row_to_model(row: FaultDetailsRow) -> FaultWithDetails {
+        let fault = Fault {
+            id: row.id,
+            organization_id: row.organization_id,
+            building_id: row.building_id,
+            unit_id: row.unit_id,
+            reporter_id: row.reporter_id,
+            title: row.title,
+            description: row.description,
+            location_description: row.location_description,
+            category: row.category,
+            priority: row.priority,
+            status: row.status,
+            ai_category: row.ai_category,
+            ai_priority: row.ai_priority,
+            ai_confidence: row.ai_confidence,
+            ai_processed_at: row.ai_processed_at,
+            assigned_to: row.assigned_to,
+            assigned_at: row.assigned_at,
+            triaged_by: row.triaged_by,
+            triaged_at: row.triaged_at,
+            resolved_at: row.resolved_at,
+            resolved_by: row.resolved_by,
+            resolution_notes: row.resolution_notes,
+            confirmed_at: row.confirmed_at,
+            confirmed_by: row.confirmed_by,
+            rating: row.rating,
+            feedback: row.feedback,
+            scheduled_date: row.scheduled_date,
+            estimated_completion: row.estimated_completion,
+            idempotency_key: row.idempotency_key,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+        };
+        FaultWithDetails {
+            fault,
+            reporter_name: row.reporter_name,
+            reporter_email: row.reporter_email,
+            building_name: row.building_name,
+            building_address: row.building_address,
+            unit_designation: row.unit_designation,
+            assigned_to_name: row.assigned_to_name,
+            attachment_count: row.attachment_count,
+            comment_count: row.comment_count,
+        }
     }
 
     /// List faults with filters (Story 4.3).
@@ -691,7 +682,7 @@ impl FaultRepository {
         triaged_by: Uuid,
         data: TriageFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             UPDATE faults
             SET
@@ -704,9 +695,9 @@ impl FaultRepository {
                 status = 'triaged',
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(id)
         .bind(&data.priority)
         .bind(&data.category)
@@ -738,7 +729,7 @@ impl FaultRepository {
         assigned_by: Uuid,
         data: AssignFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             UPDATE faults
             SET
@@ -746,9 +737,9 @@ impl FaultRepository {
                 assigned_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(id)
         .bind(data.assigned_to)
         .fetch_one(&self.pool)
@@ -800,7 +791,7 @@ impl FaultRepository {
         resolved_by: Uuid,
         data: ResolveFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             UPDATE faults
             SET
@@ -810,9 +801,9 @@ impl FaultRepository {
                 resolution_notes = $3,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(id)
         .bind(resolved_by)
         .bind(&data.resolution_notes)
@@ -842,7 +833,7 @@ impl FaultRepository {
         confirmed_by: Uuid,
         data: ConfirmFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             UPDATE faults
             SET
@@ -853,9 +844,9 @@ impl FaultRepository {
                 feedback = $4,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(id)
         .bind(confirmed_by)
         .bind(data.rating)
@@ -886,7 +877,7 @@ impl FaultRepository {
         reopened_by: Uuid,
         data: ReopenFault,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             UPDATE faults
             SET
@@ -895,9 +886,9 @@ impl FaultRepository {
                 confirmed_by = NULL,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(id)
         .fetch_one(&self.pool)
         .await?;
@@ -930,7 +921,7 @@ impl FaultRepository {
         priority: Option<&str>,
         confidence: f64,
     ) -> Result<Fault, SqlxError> {
-        let fault = sqlx::query_as::<_, Fault>(sqlx::AssertSqlSafe(format!(
+        let fault = sqlx::query_as::<_, Fault>(
             r#"
             UPDATE faults
             SET
@@ -940,9 +931,9 @@ impl FaultRepository {
                 ai_processed_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {FAULT_COLUMNS}
-            "#
-        )))
+            RETURNING *
+            "#,
+        )
         .bind(id)
         .bind(category)
         .bind(priority)
@@ -1029,28 +1020,6 @@ impl FaultRepository {
             .await?;
 
         Ok(())
-    }
-
-    /// Delete an attachment **scoped to its fault** (issue #796).
-    ///
-    /// The HTTP route is `/{fault_id}/attachments/{attachment_id}`. Scoping the
-    /// delete to `fault_id` (already authorized against the caller's tenant by
-    /// `load_fault_for_tenant`) ensures an attachment can only be removed
-    /// through the fault that owns it — a foreign `attachment_id` paired with
-    /// an owned `fault_id` deletes nothing. Returns `true` when a row was
-    /// deleted, which the handler maps to `204` vs `404`.
-    pub async fn delete_attachment_for_fault(
-        &self,
-        attachment_id: Uuid,
-        fault_id: Uuid,
-    ) -> Result<bool, SqlxError> {
-        let result = sqlx::query("DELETE FROM fault_attachments WHERE id = $1 AND fault_id = $2")
-            .bind(attachment_id)
-            .bind(fault_id)
-            .execute(&self.pool)
-            .await?;
-
-        Ok(result.rows_affected() > 0)
     }
 
     // ========================================================================

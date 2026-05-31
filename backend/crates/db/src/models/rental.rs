@@ -189,6 +189,62 @@ pub struct ConnectionStatus {
     pub external_listing_url: Option<String>,
 }
 
+/// Platform connection detail (token-free).
+///
+/// SECURITY (#887 / #804): the GET `/connections/{id}` endpoint must never
+/// serialize `access_token` / `refresh_token`. This DTO mirrors
+/// [`RentalPlatformConnection`] minus the OAuth secret fields and exposes a
+/// boolean `is_connected` derived from token presence instead. Build it via
+/// `PlatformConnectionDetail::from(connection)`.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PlatformConnectionDetail {
+    pub id: Uuid,
+    pub organization_id: Uuid,
+    pub unit_id: Uuid,
+    pub platform: String,
+
+    /// True when an access token is stored (without exposing the token itself).
+    pub is_connected: bool,
+    pub token_expires_at: Option<DateTime<Utc>>,
+
+    pub external_property_id: Option<String>,
+    pub external_listing_url: Option<String>,
+
+    pub is_active: bool,
+    pub last_sync_at: Option<DateTime<Utc>>,
+    pub sync_error: Option<String>,
+
+    pub sync_calendar: bool,
+    pub sync_interval_minutes: i32,
+    pub block_other_platforms: bool,
+
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<RentalPlatformConnection> for PlatformConnectionDetail {
+    fn from(c: RentalPlatformConnection) -> Self {
+        Self {
+            id: c.id,
+            organization_id: c.organization_id,
+            unit_id: c.unit_id,
+            platform: c.platform,
+            is_connected: c.access_token.is_some(),
+            token_expires_at: c.token_expires_at,
+            external_property_id: c.external_property_id,
+            external_listing_url: c.external_listing_url,
+            is_active: c.is_active,
+            last_sync_at: c.last_sync_at,
+            sync_error: c.sync_error,
+            sync_calendar: c.sync_calendar,
+            sync_interval_minutes: c.sync_interval_minutes,
+            block_other_platforms: c.block_other_platforms,
+            created_at: c.created_at,
+            updated_at: c.updated_at,
+        }
+    }
+}
+
 /// Platform connection summary.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct PlatformConnectionSummary {

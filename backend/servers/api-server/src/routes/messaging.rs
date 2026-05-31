@@ -26,6 +26,11 @@ use uuid::Uuid;
 /// Maximum allowed message content length (characters).
 const MAX_MESSAGE_LENGTH: usize = 10_000;
 
+/// Maximum length of the message preview embedded in the realtime WebSocket
+/// event (characters). Keeps the pub/sub payload small; full content is
+/// fetched via the thread endpoint.
+const MESSAGE_PREVIEW_LEN: usize = 120;
+
 // ============================================================================
 // Response Types
 // ============================================================================
@@ -311,22 +316,32 @@ async fn start_thread(
             ));
         }
 
-        repo.create_message_rls(
-            &mut **rls.conn(),
-            CreateMessage {
-                thread_id: thread.id,
-                sender_id: user_id,
-                content,
-            },
-        )
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to send initial message: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+        let initial = repo
+            .create_message_rls(
+                &mut **rls.conn(),
+                CreateMessage {
+                    thread_id: thread.id,
+                    sender_id: user_id,
+                    content,
+                },
             )
-        })?;
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to send initial message: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+                )
+            })?;
+
+        // Realtime fanout: notify the recipient's WebSocket channel (Epic 2B / 8A.3).
+        dispatch_new_message_event(
+            state.pubsub_service.as_ref(),
+            body.recipient_id,
+            &initial,
+            user_id,
+        )
+        .await;
     }
 
     // Get messages and other participant info
@@ -617,6 +632,15 @@ async fn send_message(
         })?;
 
     rls.release().await;
+
+    // Realtime fanout: notify the recipient's WebSocket channel (Epic 2B / 8A.3).
+    dispatch_new_message_event(
+        state.pubsub_service.as_ref(),
+        other_user_id,
+        &message,
+        user_id,
+    )
+    .await;
 
     Ok(Json(SendMessageResponse {
         message: "Message sent successfully".to_string(),
@@ -940,4 +964,98 @@ async fn get_other_participant(
         last_name,
         email,
     })
+}
+
+/// Build the realtime WebSocket event payload for a newly-sent direct message.
+///
+/// The payload mirrors the shape consumed by the `notifications:{user_id}`
+/// WebSocket channel (see `routes/ws_notifications.rs`). It carries enough
+/// for a client to badge/refresh the conversation without leaking the full
+/// message body — the preview is truncated to `MESSAGE_PREVIEW_LEN` chars.
+fn new_message_event_payload(message: &Message, sender_id: Uuid) -> serde_json::Value {
+    let preview: String = message.content.chars().take(MESSAGE_PREVIEW_LEN).collect();
+    serde_json::json!({
+        "message_id": message.id,
+        "thread_id": message.thread_id,
+        "sender_id": sender_id,
+        "preview": preview,
+    })
+}
+
+/// Publish a `message.created` realtime event to the recipient's WebSocket
+/// notification channel (Epic 2B / Story 8A.3 fanout pattern).
+///
+/// Best-effort: the message has already been persisted, so a pub/sub failure
+/// is logged and swallowed rather than failing the request. No-op when Redis
+/// pub/sub is not configured (local dev without Redis).
+async fn dispatch_new_message_event(
+    pubsub: Option<&integrations::PubSubService>,
+    recipient_id: Uuid,
+    message: &Message,
+    sender_id: Uuid,
+) {
+    let Some(pubsub) = pubsub else {
+        return;
+    };
+    let channel = format!("notifications:{recipient_id}");
+    let msg = integrations::PubSubMessage::new(
+        &channel,
+        "message.created",
+        new_message_event_payload(message, sender_id),
+    );
+    if let Err(e) = pubsub.publish(&channel, msg).await {
+        // Non-fatal: the message is already persisted; realtime fanout is
+        // best-effort and the recipient will still see it on next fetch.
+        tracing::warn!(
+            recipient_id = %recipient_id,
+            channel = %channel,
+            error = %e,
+            "[messaging] Failed to publish message.created to WebSocket channel (non-fatal)"
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    fn sample_message(content: &str) -> Message {
+        let now = Utc::now();
+        Message {
+            id: Uuid::new_v4(),
+            thread_id: Uuid::new_v4(),
+            sender_id: Uuid::new_v4(),
+            content: content.to_string(),
+            read_at: None,
+            deleted_at: None,
+            deleted_by: None,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    #[test]
+    fn event_payload_carries_ids_and_sender() {
+        let msg = sample_message("hello there");
+        let sender = Uuid::new_v4();
+        let payload = new_message_event_payload(&msg, sender);
+
+        assert_eq!(payload["message_id"], serde_json::json!(msg.id));
+        assert_eq!(payload["thread_id"], serde_json::json!(msg.thread_id));
+        assert_eq!(payload["sender_id"], serde_json::json!(sender));
+        assert_eq!(payload["preview"], serde_json::json!("hello there"));
+    }
+
+    #[test]
+    fn event_payload_truncates_long_content_to_preview_len() {
+        let long = "x".repeat(MESSAGE_PREVIEW_LEN + 500);
+        let msg = sample_message(&long);
+        let payload = new_message_event_payload(&msg, Uuid::new_v4());
+
+        let preview = payload["preview"].as_str().expect("preview is a string");
+        assert_eq!(preview.chars().count(), MESSAGE_PREVIEW_LEN);
+        // Must not leak the full body over the wire.
+        assert!(preview.len() < long.len());
+    }
 }
