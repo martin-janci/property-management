@@ -88,10 +88,16 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan",
-      "depends_on": []
+      "source": "gap-scan | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 451,
+        "merged_at": "2026-05-24T10:13:04Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "pm-security-resolve-435-followups",
@@ -121,10 +127,16 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 462,
+        "merged_at": "2026-05-24T15:20:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-79-1-announcements-page-wiring",
@@ -132,10 +144,16 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 466,
+        "merged_at": "2026-05-24T15:35:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10a-1-oauth-tests",
@@ -143,10 +161,16 @@
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 470,
+        "merged_at": "2026-05-25T00:45:13Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-3-admin-health-ui",
@@ -154,10 +178,16 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 471,
+        "merged_at": "2026-05-24T20:51:57Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-5-support-data-impl",
@@ -236,10 +266,16 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 477,
+        "merged_at": "2026-05-25T04:51:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-80-3-mediation-verify",
@@ -247,10 +283,16 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 478,
+        "merged_at": "2026-05-25T04:51:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-81-1-schedule-e2e-verify",
@@ -258,10 +300,16 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 488,
+        "merged_at": "2026-05-25T05:16:36Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-81-2-execution-history-verify",
@@ -269,10 +317,16 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 489,
+        "merged_at": "2026-05-25T06:18:23Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-8a-3-mobile-push",
@@ -327,10 +381,16 @@
       "owner_role": "pm-backend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 502,
+        "merged_at": "2026-05-25T12:30:53Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-82-1-swiftui-audit",
@@ -338,10 +398,16 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 501,
+        "merged_at": "2026-05-25T12:34:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-82-2-deep-linking",
@@ -371,10 +437,16 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 540,
+        "merged_at": "2026-05-27T13:23:57Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-82-5-ios-push-keychain",
@@ -382,7 +454,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
       "depends_on": []
@@ -393,10 +465,16 @@
       "owner_role": "pm-backend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 538,
+        "merged_at": "2026-05-26T12:04:23Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-83-2-booking-ota",
@@ -404,10 +482,16 @@
       "owner_role": "pm-backend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "source": "gap-scan 2026-05-24 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 544,
+        "merged_at": "2026-05-26T10:49:51Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-4-sysannounce-admin-impl",
@@ -485,10 +569,16 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 505,
+        "merged_at": "2026-05-25T20:17:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-6-4-pinned-announcements-api",
@@ -496,10 +586,16 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 504,
+        "merged_at": "2026-05-25T17:13:13Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-6-4-pinned-announcements-ui",
@@ -507,12 +603,18 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-6-4-pinned-announcements-api",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-6-4-pinned-announcements-api"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 511,
+        "merged_at": "2026-05-25T19:15:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-7a-2-folder-ui",
@@ -520,12 +622,18 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-7a-2-folder-api",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-7a-2-folder-api"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 556,
+        "merged_at": "2026-05-27T10:19:54Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-7a-4-document-preview-ui",
@@ -533,12 +641,18 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-7a-4-document-download-api",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-7a-4-document-download-api"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 557,
+        "merged_at": "2026-05-27T12:04:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-8a-3-push-fanout-delivery",
@@ -546,12 +660,18 @@
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "gap-8a-3-mobile-push must be merged first",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-8a-3-mobile-push"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 515,
+        "merged_at": "2026-05-26T12:45:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-6-onboarding-tour-api",
@@ -572,10 +692,16 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 541,
+        "merged_at": "2026-05-26T13:05:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-80-2-dispute-filing-api",
@@ -583,10 +709,16 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 506,
+        "merged_at": "2026-05-25T18:01:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-80-2-dispute-filing-ui",
@@ -594,12 +726,18 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-80-2-dispute-filing-api",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-80-2-dispute-filing-api"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 530,
+        "merged_at": "2026-05-27T14:57:36Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-80-3-mediation-api",
@@ -607,12 +745,18 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "gap-80-2-dispute-filing-api",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-80-2-dispute-filing-api"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 514,
+        "merged_at": "2026-05-26T08:31:37Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-81-1-report-schedule-edit-api",
@@ -620,10 +764,16 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 531,
+        "merged_at": "2026-05-27T14:03:53Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-81-2-report-execution-history-api",
@@ -642,12 +792,18 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-82-2-deep-linking",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-82-2-deep-linking"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 533,
+        "merged_at": "2026-05-27T23:28:25Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-82-4-swiftui-listing-detail",
@@ -668,12 +824,18 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-82-4-swiftui-listing-detail",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-82-4-swiftui-listing-detail"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 686,
+        "merged_at": "2026-05-28T13:37:14Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-83-1-airbnb-integration-backend",
@@ -681,10 +843,16 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 538,
+        "merged_at": "2026-05-26T13:00:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-83-2-booking-integration-backend",
@@ -692,10 +860,16 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 534,
+        "merged_at": "2026-05-26T12:05:51Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-84-2-esignature-email-ui",
@@ -718,12 +892,18 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-85-1-rn-env-config",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-85-1-rn-env-config"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 536,
+        "merged_at": "2026-05-27T14:12:46Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-85-2-build-config-ios",
@@ -731,12 +911,18 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-85-1-rn-env-config",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
+      "source": "gap-scan 2026-05-25 | gc1-reconcile 2026-05-31T18:08:44Z",
       "depends_on": [
         "gap-85-1-rn-env-config"
-      ]
+      ],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 535,
+        "merged_at": "2026-05-27T11:33:59Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-82-6-kmp-android-home",
@@ -830,9 +1016,15 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
-      "source": "gap-scan 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "gap-scan 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 564,
+        "merged_at": "2026-05-27T10:32:41Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-79-2-login-flow-impl-v2",
@@ -840,9 +1032,15 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
-      "source": "gap-scan 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "gap-scan 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 568,
+        "merged_at": "2026-05-27T13:12:04Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-3-health-ui-mfa-fix",
@@ -862,9 +1060,15 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "pm-analysis 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 566,
+        "merged_at": "2026-05-27T16:15:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-85-2-android-ci-fix",
@@ -882,9 +1086,15 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "pm-analysis 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 639,
+        "merged_at": "2026-05-29T13:15:38Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-80-2-dispute-form-fixes",
@@ -902,9 +1112,15 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "pm-analysis 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 531,
+        "merged_at": "2026-05-27T14:05:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-5-support-data-api-retry",
@@ -912,9 +1128,15 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "gap-scan 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "gap-scan 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 608,
+        "merged_at": "2026-05-27T16:16:34Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-81-2-exec-history-api-retry",
@@ -922,9 +1144,15 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "gap-scan 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "gap-scan 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 611,
+        "merged_at": "2026-05-27T13:37:28Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "pm-qa-upload-integration-tests",
@@ -962,9 +1190,15 @@
       "owner_role": "pm-security",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "pm-analysis 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 612,
+        "merged_at": "2026-05-27T13:37:53Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-8a-3-ws-integration-tests",
@@ -972,9 +1206,15 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "pm-analysis 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 650,
+        "merged_at": "2026-05-28T08:13:49Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-82-4-swiftui-listing-detail-impl",
@@ -1006,10 +1246,16 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "gap-scan 2026-05-27",
+      "status": "done",
+      "source": "gap-scan 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
       "note": "scheduled for next sprint; unblocks story 79-2 promotion — cookie-Path security blocker resolved by PR #642 (merged 2026-05-28); e2e is the only remaining gap before 79-2 promotes partial->done",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 609,
+        "merged_at": "2026-05-27T13:18:03Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-7a-1-upload-backend-tests",
@@ -1017,9 +1263,15 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
-      "source": "gap-scan 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "gap-scan 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 610,
+        "merged_at": "2026-05-27T16:29:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-6-onboarding-api-retry",
@@ -1027,9 +1279,15 @@
       "owner_role": "pm-backend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
-      "source": "gap-scan 2026-05-27",
-      "depends_on": []
+      "status": "done",
+      "source": "gap-scan 2026-05-27 | gc1-reconcile 2026-05-31T18:08:44Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 695,
+        "merged_at": "2026-05-28T15:28:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-7-help-backend-retry",
@@ -1047,7 +1305,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "source": "gap-scan 2026-05-27",
       "depends_on": []
     },
@@ -1057,7 +1315,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "gap-82-6-kmp-android-home-retry",
-      "status": "open",
+      "status": "deferred",
       "source": "gap-scan 2026-05-27",
       "depends_on": [
         "gap-82-6-kmp-android-home-retry"
@@ -1069,7 +1327,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "gap-10b-7-help-backend-retry",
-      "status": "open",
+      "status": "deferred",
       "source": "gap-scan 2026-05-27",
       "depends_on": [
         "gap-10b-7-help-backend-retry"
@@ -1081,7 +1339,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "source": "gap-scan 2026-05-27",
       "depends_on": []
     },
@@ -1091,7 +1349,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "source": "gap-scan 2026-05-27",
       "depends_on": []
     },
@@ -1101,7 +1359,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "source": "pm-analysis 2026-05-27",
       "depends_on": []
     },
@@ -1111,7 +1369,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "source": "pm-analysis 2026-05-27",
       "depends_on": []
     },
@@ -1169,7 +1427,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "deadline": null,
       "source": "post-merge-review 2026-05-27",
       "depends_on": []
@@ -1180,7 +1438,7 @@
       "owner_role": "pm-devops",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "deadline": null,
       "source": "post-merge-review 2026-05-27",
       "depends_on": []
@@ -1330,7 +1588,7 @@
       "action": "Implement announcement creation & targeting backend: POST /announcements handler, targeting filters (building/org), scheduling, and DB migration for announcements table with org-scoped RLS.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-tier1-2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1363,7 +1621,7 @@
       "action": "Implement organization management dashboard backend: GET /admin/organizations (list with stats), GET/PUT /admin/organizations/{id} (details/settings), tenant-scoped admin operations.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-tier1-2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1374,7 +1632,7 @@
       "action": "Implement feature flag management: GET/PUT /admin/feature-flags/{key}, per-org overrides, flag evaluation helpers used by api-server handlers. Add LaunchDarkly-style rollout percentages.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-tier1-2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1385,7 +1643,7 @@
       "action": "Implement error handling and toast notification system in ppt-web: global error boundary, toast context with auto-dismiss, wire to TanStack Query error callbacks and mutation error paths.",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-tier1-2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1396,7 +1654,7 @@
       "action": "Implement WebSocket real-time integration in ppt-web: useWebSocket hook connecting to /ws endpoint, reconnect-backoff, dispatch to notification/fault event handlers, token-refresh on expiry.",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-tier1-2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1407,7 +1665,7 @@
       "action": "Wire disputes API into ppt-web: GET /disputes, GET /disputes/{id}, file dispute flow using generated @ppt/api-client dispute endpoints, add DisputeListPage and DisputeDetailPage routes.",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-tier1-2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1418,7 +1676,7 @@
       "action": "Implement real estate portal webhook delivery: POST /webhooks/portal/{event} receiver, signature verification, event normalization to reality-server listing schema, retry queue with exponential backoff.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-tier1-2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1429,7 +1687,7 @@
       "action": "Implement S3 presigned URL generation endpoint: GET /documents/{id}/download returns short-lived (15min) presigned URL; wire MinIO client in S3Config, add presigned_url_ttl config knob.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-tier1-2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1473,11 +1731,17 @@
       "action": "Implement system announcements handler bodies in platform_admin.rs — 2 prior attempts timed out; use Mode: cloud-ok, implement CRUD handlers with SQLx queries against schedule_maintenance table (10b-4 System Announcements)",
       "owner_role": "pm-backend",
       "priority": "high",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-05-31T18:08:44Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 706,
+        "merged_at": "2026-05-28T15:05:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-10b-5-support-data-backend-v2",
@@ -1517,11 +1781,17 @@
       "action": "Retry PushNotificationManager + Keychain token storage in iOS Reality Portal — PR #539 was closed without merge; implement in new branch, ensure draft PR stays open until macOS reviewer confirms (82-5 Inquiries and Account)",
       "owner_role": "pm-frontend",
       "priority": "high",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-05-31T18:08:44Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 705,
+        "merged_at": "2026-05-28T15:12:00Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-83-1-airbnb-integration-ui",
@@ -1554,11 +1824,17 @@
       "action": "Fix 6 blocking issues from PR #513 reviewer: remove LeaseSignatureStatus dup (use api-client), fix onSuccess hardcoding pending, add landlord/manager to signerParties, focus-trap in modal (WCAG 2.1), role=alert on error div, wrap SignatureStatusBadge labels in t()",
       "owner_role": "pm-frontend",
       "priority": "high",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-05-31T18:08:44Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 719,
+        "merged_at": "2026-05-28T20:18:43Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-80-3-mediation-sessions-backend",
@@ -1712,11 +1988,17 @@
       "action": "Add OAuth scope management to admin-web OAuth clients page: scope picker with checkboxes for all defined scopes, scope description tooltips, enforce scope-grant audit trail; wire to existing OAuth admin API",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-05-31T18:08:44Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 724,
+        "merged_at": "2026-05-28T20:16:49Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-80-1-dispute-api-integration-tests",
@@ -1734,7 +2016,7 @@
       "action": "Wire InquiriesScreen and AccountScreen in KMP Android Compose UI: inquiry list with reply thread, account settings form, notification preference toggles; wire to reality-server inquiry and user endpoints",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-refill 2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1778,7 +2060,7 @@
       "action": "Refine KMP Android HomeScreen listing cards: add SwipeRefresh pull-to-refresh, skeleton loading placeholders (Shimmer), property card tap navigation to ListingDetailScreen; improve Coil image loading with crossfade",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "deferred",
       "source": "coverage-refill 2026-05-28",
       "deadline": null,
       "dependency": "none",
@@ -1789,11 +2071,17 @@
       "action": "Fix MFA interceptor bypass in admin-web health page: replace bespoke inline fetchJson() with @ppt/api-client fetchJson so 401 mfa_required triggers MFA modal; also create missing platform/health screen-map (PR #471 reviewer issues)",
       "owner_role": "pm-frontend",
       "priority": "high",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-05-31T18:08:44Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 720,
+        "merged_at": "2026-05-28T20:13:12Z",
+        "at": "2026-05-31T18:08:44Z"
+      }
     },
     {
       "id": "gap-6-5-direct-messaging-backend-completion",
