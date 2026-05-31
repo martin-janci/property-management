@@ -378,6 +378,22 @@ impl OAuthService {
         code_challenge: Option<String>,
         code_challenge_method: Option<String>,
     ) -> Result<String, OAuthServiceError> {
+        // PKCE is REQUIRED for the authorization-code flow for ALL clients
+        // (OAuth 2.1 §4.1.1, RFC 7636). This is the code-issuing path the
+        // consent POST (`authorize_post`) calls directly, so the presence
+        // check must live here — `validate_authorize_request` only guards the
+        // GET consent-metadata path and is never invoked when the code is
+        // minted. Without this, confidential clients (and any caller that
+        // skips the GET stage) could obtain a code with no challenge stored,
+        // defeating PKCE entirely. The method (S256 vs plain) is intentionally
+        // NOT validated here — that is deferred to `/token` (`verify_pkce`),
+        // matching test_pkce_plain_method_rejected. Closes #823 / #756.
+        if code_challenge.is_none() {
+            return Err(OAuthServiceError::InvalidRequest(
+                "PKCE code_challenge is required for the authorization_code flow".to_string(),
+            ));
+        }
+
         // Generate authorization code
         let code = self.generate_secure_token();
         let code_hash = self.hash_token(&code);
