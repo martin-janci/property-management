@@ -32,19 +32,96 @@ const ANNOUNCEMENTS_BASE = '/api/v1/announcements';
 
 const fetchJson = authenticatedFetchJson;
 
-function buildAnnouncementQuery(params?: ListAnnouncementsParams): string {
+/**
+ * Default page size used when a caller passes `page` but no explicit
+ * `pageSize`, so `page`→`offset` translation has a stable basis.
+ */
+const DEFAULT_PAGE_SIZE = 10;
+
+/**
+ * Build the announcement list query string against the *backend* contract.
+ *
+ * The backend (`ListAnnouncementsQuery`) expects `limit` / `offset` /
+ * `target_type` / `from_date` / `to_date` (snake_case, limit/offset paging),
+ * not the UI-friendly `page` / `pageSize` / `targetType` / `fromDate` /
+ * `toDate` we expose on `ListAnnouncementsParams`. Previously these were sent
+ * verbatim, so the server ignored every filter and paging param (#751).
+ */
+export function buildAnnouncementQuery(params?: ListAnnouncementsParams): string {
   if (!params) return '';
   const sp = new URLSearchParams();
-  if (params.page) sp.set('page', params.page.toString());
-  if (params.pageSize) sp.set('pageSize', params.pageSize.toString());
+  const pageSize = params.pageSize ?? (params.page ? DEFAULT_PAGE_SIZE : undefined);
+  if (pageSize !== undefined) sp.set('limit', pageSize.toString());
+  if (params.page && pageSize !== undefined) {
+    // 1-based page → 0-based offset
+    const offset = (Math.max(1, params.page) - 1) * pageSize;
+    sp.set('offset', offset.toString());
+  }
   if (params.status) sp.set('status', params.status);
-  if (params.targetType) sp.set('targetType', params.targetType);
-  if (params.authorId) sp.set('authorId', params.authorId);
+  if (params.targetType) sp.set('target_type', params.targetType);
+  if (params.authorId) sp.set('author_id', params.authorId);
   if (params.pinned !== undefined) sp.set('pinned', params.pinned.toString());
-  if (params.fromDate) sp.set('fromDate', params.fromDate);
-  if (params.toDate) sp.set('toDate', params.toDate);
+  if (params.fromDate) sp.set('from_date', params.fromDate);
+  if (params.toDate) sp.set('to_date', params.toDate);
   const q = sp.toString();
   return q ? `?${q}` : '';
+}
+
+/**
+ * Raw backend list response shape (`AnnouncementListResponse`): announcements
+ * are serialized snake_case (no `serde(rename_all = "camelCase")` on
+ * `AnnouncementSummary`) and pagination is `{ count, total }` — not the
+ * `{ items, page, pageSize, totalPages }` the UI consumes. We normalize here
+ * so callers keep getting `PaginatedResponse<AnnouncementSummary>` (#751).
+ */
+interface BackendAnnouncementSummary {
+  id: string;
+  title: string;
+  status: AnnouncementSummary['status'];
+  target_type: AnnouncementSummary['targetType'];
+  published_at?: string | null;
+  pinned: boolean;
+  comments_enabled: boolean;
+  acknowledgment_required: boolean;
+}
+
+export interface BackendAnnouncementListResponse {
+  announcements: BackendAnnouncementSummary[];
+  count: number;
+  total: number;
+}
+
+function mapSummary(s: BackendAnnouncementSummary): AnnouncementSummary {
+  return {
+    id: s.id,
+    title: s.title,
+    status: s.status,
+    targetType: s.target_type,
+    publishedAt: s.published_at ?? undefined,
+    pinned: s.pinned,
+    commentsEnabled: s.comments_enabled,
+    acknowledgmentRequired: s.acknowledgment_required,
+  };
+}
+
+/**
+ * Normalize a raw backend list response into the UI's `PaginatedResponse`.
+ * `page` / `pageSize` echo the request params (the backend reports neither);
+ * `totalPages` is derived from `total` and the effective page size.
+ */
+export function toPaginatedResponse(
+  raw: BackendAnnouncementListResponse,
+  params?: ListAnnouncementsParams
+): PaginatedResponse<AnnouncementSummary> {
+  const pageSize = params?.pageSize ?? DEFAULT_PAGE_SIZE;
+  const page = params?.page ?? 1;
+  return {
+    items: (raw.announcements ?? []).map(mapSummary),
+    total: raw.total ?? 0,
+    page,
+    pageSize,
+    totalPages: pageSize > 0 ? Math.ceil((raw.total ?? 0) / pageSize) : 0,
+  };
 }
 
 // Query keys factory for cache management
@@ -348,10 +425,12 @@ export type AnnouncementHooks = ReturnType<typeof createAnnouncementHooks>;
 export function useAnnouncements(params?: ListAnnouncementsParams) {
   return useQuery<PaginatedResponse<AnnouncementSummary>>({
     queryKey: announcementKeys.list(params),
-    queryFn: () =>
-      fetchJson<PaginatedResponse<AnnouncementSummary>>(
+    queryFn: async () => {
+      const raw = await fetchJson<BackendAnnouncementListResponse>(
         `${ANNOUNCEMENTS_BASE}${buildAnnouncementQuery(params)}`
-      ),
+      );
+      return toPaginatedResponse(raw, params);
+    },
   });
 }
 
@@ -366,10 +445,12 @@ export function usePinnedAnnouncements() {
   const params: ListAnnouncementsParams = { pinned: true, status: 'published', pageSize: 20 };
   return useQuery<PaginatedResponse<AnnouncementSummary>>({
     queryKey: announcementKeys.list(params),
-    queryFn: () =>
-      fetchJson<PaginatedResponse<AnnouncementSummary>>(
+    queryFn: async () => {
+      const raw = await fetchJson<BackendAnnouncementListResponse>(
         `${ANNOUNCEMENTS_BASE}${buildAnnouncementQuery(params)}`
-      ),
+      );
+      return toPaginatedResponse(raw, params);
+    },
     staleTime: 5 * 60 * 1000,
   });
 }

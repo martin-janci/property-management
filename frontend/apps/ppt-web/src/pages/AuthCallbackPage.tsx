@@ -58,7 +58,7 @@ export function AuthCallbackPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { loginWithSsoCode, isAuthenticated } = useAuth();
+  const { loginWithSsoCode, isAuthenticated, isLoading } = useAuth();
 
   const [status, setStatus] = useState<CallbackStatus>('pending');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -66,10 +66,18 @@ export function AuthCallbackPage() {
   // Guard against double-invocation in React StrictMode.
   const exchangeStarted = useRef(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only run; loginWithSsoCode/navigate are stable; searchParams changes every render
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loginWithSsoCode/navigate are stable; searchParams changes every render; we deliberately re-run when isLoading flips false so the exchange waits for hydration
   useEffect(() => {
-    // If already authenticated (e.g. browser back after successful SSO),
-    // just redirect without re-exchanging.
+    // Wait for AuthProvider to finish hydrating stored session state (#751).
+    // Running before hydration completes risks treating an already-authenticated
+    // user as a fresh callback (isAuthenticated still false) and, after the
+    // one-shot state-nonce check below clears the nonce, surfacing a spurious
+    // "state mismatch" error instead of just redirecting.
+    if (isLoading) return;
+
+    // If already authenticated (e.g. browser back after successful SSO,
+    // or a valid stored session restored during hydration), just redirect
+    // without re-exchanging.
     if (isAuthenticated) {
       const returnUrl = getAndClearReturnUrl();
       navigate(returnUrl || '/dashboard', { replace: true });
@@ -140,7 +148,7 @@ export function AuthCallbackPage() {
     };
 
     exchange();
-  }, []);
+  }, [isLoading, isAuthenticated]);
 
   // ── Pending state ─────────────────────────────────────────────────────────
   if (status === 'pending') {
