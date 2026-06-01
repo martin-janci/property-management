@@ -813,10 +813,32 @@ pub async fn get_client(
 )]
 pub async fn update_client(
     _cap: RequireCapability,
+    principal: api_core::extractors::principal::RequestPrincipal,
     State(state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(data): Json<UpdateOAuthClient>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    // Snapshot the pre-update client so the audit row can record the scope
+    // delta (old -> new), the security-relevant part of a privileged change.
+    let before = state.oauth_repo.find_client_by_id(id).await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to load OAuth client before update");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to load client",
+            )),
+        )
+    })?;
+    let old_scopes: Option<Vec<String>> = before.as_ref().map(|c| c.scopes.0.clone());
+
+    // The operator reason is audit-trail-only — never persisted to the
+    // oauth_clients row — so capture it before handing `data` to the service.
+    let reason = data.reason.as_ref().and_then(|r| {
+        let trimmed = r.trim();
+        (!trimmed.is_empty()).then(|| trimmed.to_string())
+    });
+
     let client = state
         .oauth_service
         .update_client(id, data)
@@ -830,7 +852,50 @@ pub async fn update_client(
         })?;
 
     match client {
-        Some(c) => Ok(Json(c)),
+        Some(c) => {
+            // Audit log — privileged mutation. Use the trusted server-side
+            // principal, capture the scope delta, and persist the operator
+            // reason supplied by the admin-web UI. Previously this handler
+            // wrote no audit row at all (findings #768 / #800).
+            let new_scopes = c.scopes.clone();
+            let scopes_changed = old_scopes
+                .as_ref()
+                .map(|old| {
+                    let mut a = old.clone();
+                    let mut b = new_scopes.clone();
+                    a.sort();
+                    b.sort();
+                    a != b
+                })
+                .unwrap_or(false);
+            let user_id: Option<Uuid> = Some(principal.user_id);
+            if let Err(e) = state
+                .audit_log_repo
+                .create(CreateAuditLog {
+                    user_id,
+                    action: AuditAction::OAuthClientUpdate,
+                    resource_type: Some("oauth_client".to_string()),
+                    resource_id: Some(id),
+                    org_id: None,
+                    details: Some(serde_json::json!({
+                        "client_id": c.client_id,
+                        "name": c.name,
+                        "scopes": new_scopes,
+                        "scopes_changed": scopes_changed,
+                        "reason": reason,
+                    })),
+                    old_values: old_scopes.map(|s| serde_json::json!({ "scopes": s })),
+                    new_values: Some(serde_json::json!({ "scopes": new_scopes })),
+                    ip_address: None,
+                    user_agent: None,
+                })
+                .await
+            {
+                tracing::warn!(error = %e, "Failed to create audit log for OAuth client update");
+            }
+
+            Ok(Json(c))
+        }
         None => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("CLIENT_NOT_FOUND", "Client not found")),

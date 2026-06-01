@@ -2401,3 +2401,183 @@ mod provider_security {
         );
     }
 }
+
+// ─── module: admin_client_audit ─────────────────────────────────────────────
+//
+// Findings #768 / #800: privileged OAuth-client mutations on the admin surface
+// must be audited. `update_client` (PATCH /api/v1/admin/oauth/clients/{id})
+// previously wrote NO audit_log row at all and silently dropped the operator
+// `reason` the admin-web UI requires for scope edits. These tests pin the
+// regression: an `oauth_client_update` row is written, and the supplied
+// `reason` is persisted into its `details`.
+#[cfg(test)]
+mod admin_client_audit {
+    use super::*;
+    use api_server::services::JwtService;
+
+    const TEST_JWT_SECRET: &str =
+        "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+
+    /// Seed a platform-principal user. Returns the new user id.
+    async fn seed_platform_user(pool: &PgPool, email: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+            VALUES ($1, 'h', 'OAuth Admin Test', 'active', NOW(), 'platform')
+            RETURNING id
+            "#,
+        )
+        .bind(email)
+        .fetch_one(pool)
+        .await
+        .expect("seed platform user")
+    }
+
+    /// Mark the user as MFA-enrolled (the capability gate's step 2.5 wall).
+    async fn enroll_mfa(pool: &PgPool, user_id: Uuid) {
+        sqlx::query(
+            r#"
+            INSERT INTO user_2fa (user_id, secret, enabled, enabled_at, backup_codes, backup_codes_remaining)
+            VALUES ($1, 'unused-secret', true, NOW(), '[]'::jsonb, 0)
+            ON CONFLICT (user_id) DO UPDATE SET enabled = true, enabled_at = NOW()
+            "#,
+        )
+        .bind(user_id)
+        .execute(pool)
+        .await
+        .expect("enroll mfa");
+    }
+
+    /// Grant `oauth_client_write` to the user with `mfa_required = false` so
+    /// the capability extractor's recent-MFA recency check is skipped (we are
+    /// not exercising MFA here — only the audit behaviour of update_client).
+    async fn grant_oauth_client_write(pool: &PgPool, user_id: Uuid, granted_by: Uuid) {
+        sqlx::query(
+            r#"
+            INSERT INTO capability_grants
+                (user_id, capability, granted_by, expires_at, mfa_required, note)
+            VALUES ($1, 'oauth_client_write', $2, NULL, false, 'ci-audit-test')
+            "#,
+        )
+        .bind(user_id)
+        .bind(granted_by)
+        .execute(pool)
+        .await
+        .expect("grant oauth_client_write");
+    }
+
+    /// Look up the internal UUID of a seeded client by its `client_id`.
+    async fn client_uuid(pool: &PgPool, client_id: &str) -> Uuid {
+        sqlx::query_scalar::<_, Uuid>("SELECT id FROM oauth_clients WHERE client_id = $1")
+            .bind(client_id)
+            .fetch_one(pool)
+            .await
+            .expect("client uuid")
+    }
+
+    /// Mint a platform-kind bearer JWT validated by `TestApp`'s JWT secret.
+    fn mint_platform_token(user_id: Uuid, email: &str) -> String {
+        let svc = JwtService::new(TEST_JWT_SECRET).expect("jwt service");
+        svc.generate_access_token_with_kind(
+            user_id,
+            email,
+            "OAuth Admin Test",
+            None,
+            None,
+            Some("platform".to_string()),
+        )
+        .expect("mint token")
+    }
+
+    /// Build a PATCH request (the test RequestBuilder has no `patch` helper).
+    fn patch_request(uri: &str, token: &str, body: serde_json::Value) -> Request<Body> {
+        Request::builder()
+            .method(Method::PATCH)
+            .uri(uri)
+            .header(header::AUTHORIZATION, format!("Bearer {token}"))
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body.to_string()))
+            .unwrap()
+    }
+
+    /// Updating a client's scopes via the admin route must write exactly one
+    /// `oauth_client_update` audit row, attributed to the acting operator,
+    /// with the supplied `reason` persisted in `details.reason`.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    #[ignore = "requires postgres + migrations"]
+    async fn update_client_scope_change_writes_audit_with_reason(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+
+        let admin = seed_platform_user(&pool, "oauth-audit-admin@test.local").await;
+        let granter = seed_platform_user(&pool, "oauth-audit-granter@test.local").await;
+        enroll_mfa(&pool, admin).await;
+        grant_oauth_client_write(&pool, admin, granter).await;
+        let token = mint_platform_token(admin, "oauth-audit-admin@test.local");
+
+        let (client_id, _secret, _redirect) = seed_confidential_client(&pool).await;
+        let id = client_uuid(&pool, &client_id).await;
+
+        let before = count_audit_rows(&pool, admin, "oauth_client_update").await;
+
+        let reason = "Granting calendar scope per ticket OPS-4821";
+        let req = patch_request(
+            &format!("/api/v1/admin/oauth/clients/{id}"),
+            &token,
+            serde_json::json!({
+                "name": "CI Conf (renamed)",
+                "scopes": ["profile", "email", "openid"],
+                "reason": reason,
+            }),
+        );
+        let resp = app.execute(req).await;
+        assert_eq!(
+            resp.status,
+            StatusCode::OK,
+            "update_client must succeed for a granted platform principal (got {}): {}",
+            resp.status,
+            resp.text()
+        );
+
+        // Exactly one audit row was added for this action.
+        let after = count_audit_rows(&pool, admin, "oauth_client_update").await;
+        assert_eq!(
+            after,
+            before + 1,
+            "exactly one oauth_client_update audit row must be written on update_client"
+        );
+
+        // The supplied reason is persisted into the audit row's details, and
+        // the scope change is recorded.
+        let row: (serde_json::Value, Option<Uuid>) = sqlx::query_as(
+            r#"
+            SELECT details, resource_id
+            FROM audit_logs
+            WHERE user_id = $1 AND action::text = 'oauth_client_update'
+            ORDER BY created_at DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(admin)
+        .fetch_one(&pool)
+        .await
+        .expect("fetch audit row");
+
+        assert_eq!(
+            row.0.get("reason").and_then(|v| v.as_str()),
+            Some(reason),
+            "audit details.reason must persist the operator reason, got {}",
+            row.0
+        );
+        assert_eq!(
+            row.0.get("scopes_changed").and_then(|v| v.as_bool()),
+            Some(true),
+            "audit must flag scopes_changed=true, got {}",
+            row.0
+        );
+        assert_eq!(
+            row.1,
+            Some(id),
+            "audit resource_id must reference the updated client UUID"
+        );
+    }
+}
