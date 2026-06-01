@@ -399,6 +399,22 @@ impl SessionService {
 }
 
 /// SSO token service for mobile deep-link flow.
+///
+/// ## Durability (issue #820, P1 — deliberate follow-up)
+///
+/// Tokens live in an in-process `Mutex<HashMap>`, so they are **not durable
+/// across reality-server instances**. The mobile deep-link flow therefore
+/// requires the `/sso/mobile/token` mint and the `/sso/mobile/validate`
+/// redeem to hit the same instance (sticky routing). Migrating to a shared
+/// store (Redis) is tracked as a follow-up; reality-server has no Redis
+/// dependency today, so adding one is out of scope for the #820 security
+/// review. The security properties below hold regardless of durability:
+///
+/// - **One-time use:** `validate_and_consume_token` removes the entry before
+///   returning it, so a token can be redeemed at most once.
+/// - **Short TTL:** tokens are minted with a 5-minute lifetime and rejected
+///   past `expires_at`.
+/// - **Unforgeable:** the token value is a random v4 UUID.
 #[derive(Clone)]
 pub struct SsoTokenService {
     // Short-lived tokens for mobile SSO
@@ -431,9 +447,18 @@ impl SsoTokenService {
         duration: chrono::Duration,
     ) -> Result<String, anyhow::Error> {
         let token = uuid::Uuid::new_v4().to_string();
-        let expires_at = chrono::Utc::now() + duration;
+        let now = chrono::Utc::now();
+        let expires_at = now + duration;
 
-        self.tokens.lock().await.insert(
+        let mut tokens = self.tokens.lock().await;
+        // Amortized eviction (issue #820): tokens that are minted but never
+        // redeemed (abandoned deep-links, replay probes) would otherwise
+        // accumulate in the map forever, since `validate_and_consume_token`
+        // only removes a token when it is actually presented. Sweep expired
+        // entries on every mint so the map stays bounded by the number of
+        // *live* (<= 5-minute-old) tokens rather than total tokens ever issued.
+        tokens.retain(|_, t| t.expires_at >= now);
+        tokens.insert(
             token.clone(),
             MobileSsoToken {
                 user_info: user_info.clone(),
@@ -459,6 +484,15 @@ impl SsoTokenService {
         }
 
         Ok(sso_token.user_info)
+    }
+
+    /// Number of tokens currently held (live + not-yet-swept expired).
+    ///
+    /// Test/observability helper — lets callers assert the store does not grow
+    /// unboundedly across mints (issue #820 eviction regression test).
+    #[cfg(test)]
+    pub(crate) async fn len(&self) -> usize {
+        self.tokens.lock().await.len()
     }
 }
 
@@ -931,5 +965,82 @@ impl Clone for OAuthTokens {
             token_type: self.token_type.clone(),
             expires_in: self.expires_in,
         }
+    }
+}
+
+// ==================== Mobile SSO token store tests (issue #820) ====================
+
+#[cfg(test)]
+mod sso_token_service_tests {
+    use super::SsoTokenService;
+    use crate::routes::sso::SsoUserInfo;
+
+    fn user(id: &str) -> SsoUserInfo {
+        SsoUserInfo {
+            user_id: id.to_string(),
+            email: format!("{id}@example.com"),
+            name: format!("User {id}"),
+            avatar_url: None,
+        }
+    }
+
+    /// A freshly minted token validates exactly once, then is gone.
+    #[tokio::test]
+    async fn mobile_token_is_one_time_use() {
+        let svc = SsoTokenService::new();
+        let token = svc
+            .create_mobile_token(&user("u1"), chrono::Duration::minutes(5))
+            .await
+            .expect("mint");
+
+        let first = svc.validate_and_consume_token(&token).await;
+        assert!(first.is_ok(), "first redemption should succeed");
+        assert_eq!(first.unwrap().user_id, "u1");
+
+        let second = svc.validate_and_consume_token(&token).await;
+        assert!(
+            second.is_err(),
+            "second redemption of the same token must be rejected"
+        );
+    }
+
+    /// An expired token is rejected on redemption (short-TTL enforcement).
+    #[tokio::test]
+    async fn mobile_token_expired_is_rejected() {
+        let svc = SsoTokenService::new();
+        // Mint already-expired (negative duration).
+        let token = svc
+            .create_mobile_token(&user("u2"), chrono::Duration::seconds(-1))
+            .await
+            .expect("mint");
+
+        let result = svc.validate_and_consume_token(&token).await;
+        assert!(result.is_err(), "expired token must be rejected");
+    }
+
+    /// Regression (issue #820): minting new tokens must sweep expired,
+    /// never-redeemed tokens so the in-memory map cannot grow unboundedly.
+    #[tokio::test]
+    async fn mobile_token_mint_evicts_expired_entries() {
+        let svc = SsoTokenService::new();
+
+        // Insert 5 already-expired tokens that are never redeemed.
+        for i in 0..5 {
+            svc.create_mobile_token(&user(&format!("old{i}")), chrono::Duration::seconds(-1))
+                .await
+                .expect("mint expired");
+        }
+        // Each subsequent mint runs the sweep first, so after a single live
+        // mint the only surviving entry is the live one — the 5 expired,
+        // abandoned tokens are evicted rather than leaked.
+        svc.create_mobile_token(&user("live"), chrono::Duration::minutes(5))
+            .await
+            .expect("mint live");
+
+        assert_eq!(
+            svc.len().await,
+            1,
+            "expired, never-redeemed tokens must be swept on mint"
+        );
     }
 }
