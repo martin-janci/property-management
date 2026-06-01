@@ -495,6 +495,12 @@ pub struct RevokeTokenRequest {
     pub token: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_type_hint: Option<String>,
+    /// Client ID for authentication (RFC 7009 §2.1; alternative to Basic auth).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_id: Option<String>,
+    /// Client secret for authentication (alternative to Basic auth).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_secret: Option<String>,
 }
 
 /// OAuth error response.
