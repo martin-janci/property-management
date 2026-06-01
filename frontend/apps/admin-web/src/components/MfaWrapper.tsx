@@ -6,9 +6,15 @@
  * from ppt-web's MfaWrapper — uses `useAdminAuth().token` for the bearer
  * instead of ppt-web's `AuthContext.getAccessToken`.
  *
- * Endpoint: POST /api/v1/auth/mfa/verify (api-server). On 200 the user is
- * freshly MFA-verified for RECENT_MFA_WINDOW (15 min) and the api-client
- * retries the original mutation transparently.
+ * Endpoint: POST /api/v1/admin/mfa/verify (api-server). This is the TOTP
+ * *step-up* endpoint for already-enrolled platform principals — it inserts a
+ * `two_factor_auth_verifications` row so the RECENT_MFA_WINDOW (15 min)
+ * recency gate opens, and the api-client retries the original mutation
+ * transparently.
+ *
+ * NOTE: do NOT point this at `/api/v1/auth/mfa/verify` — that endpoint is the
+ * setup-completion flow (enables MFA, issues recovery codes, 409s if already
+ * enrolled) and never opens the recency window. Pointing here was issue #764.
  */
 
 import { MfaChallengeProvider } from '@ppt/admin-ui';
@@ -43,7 +49,7 @@ export function MfaWrapper({ children }: { children: ReactNode }) {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers.Authorization = `Bearer ${token}`;
         try {
-          const response = await fetch('/api/v1/auth/mfa/verify', {
+          const response = await fetch('/api/v1/admin/mfa/verify', {
             method: 'POST',
             headers,
             body: JSON.stringify({ code }),

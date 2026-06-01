@@ -25,10 +25,22 @@ struct SendInquiryView: View {
     @State private var errorMessage: String?
     @State private var didSend = false
 
-    private var inquiryRepository: InquiryRepository {
-        DependencyContainer.shared.makeAuthenticatedInquiryRepository(
+    // Cached repository — a computed `var` would re-run
+    // `makeAuthenticatedInquiryRepository` (allocating a new repository) on
+    // every `body` re-evaluation and every async access, so `loadInquiry` and
+    // `send` could end up using different instances. Lazily initialized once in
+    // `.onAppear` and reused thereafter. See issue #698 finding 3.
+    @State private var inquiryRepository: InquiryRepository?
+
+    private func resolveRepository() -> InquiryRepository {
+        if let repo = inquiryRepository {
+            return repo
+        }
+        let repo = DependencyContainer.shared.makeAuthenticatedInquiryRepository(
             sessionToken: authManager.getSessionToken()
         )
+        inquiryRepository = repo
+        return repo
     }
 
     private var isFormValid: Bool {
@@ -38,81 +50,84 @@ struct SendInquiryView: View {
         !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    // NOTE: this view is navigated to via the `.newInquiry(listingId)` route
+    // from `MainTabView`, which already runs inside the app's root navigation
+    // hierarchy. It must NOT wrap its content in its own `NavigationStack` — a
+    // nested stack duplicates the back button, drops the inline title, and can
+    // ignore `.navigationBarTitleDisplayMode(.inline)`. See issue #698 finding 1.
     var body: some View {
-        NavigationStack {
-            Form {
-                // Contact details section
-                Section(String(localized: "section_contact_details")) {
-                    TextField(String(localized: "label_name_required"), text: $name)
-                        .textContentType(.name)
-                        .autocorrectionDisabled()
+        Form {
+            // Contact details section
+            Section(String(localized: "section_contact_details")) {
+                TextField(String(localized: "label_name_required"), text: $name)
+                    .textContentType(.name)
+                    .autocorrectionDisabled()
 
-                    TextField(String(localized: "label_email_required"), text: $email)
-                        .textContentType(.emailAddress)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                TextField(String(localized: "label_email_required"), text: $email)
+                    .textContentType(.emailAddress)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
 
-                    TextField(String(localized: "label_phone_optional"), text: $phone)
-                        .textContentType(.telephoneNumber)
-                        .keyboardType(.phonePad)
-                }
+                TextField(String(localized: "label_phone_optional"), text: $phone)
+                    .textContentType(.telephoneNumber)
+                    .keyboardType(.phonePad)
+            }
 
-                // Message section
-                Section(String(localized: "section_your_message")) {
-                    TextField(String(localized: "inquiry_message_placeholder"), text: $message, axis: .vertical)
-                        .lineLimit(4...8)
-                        .frame(minHeight: 80, alignment: .topLeading)
-                }
+            // Message section
+            Section(String(localized: "section_your_message")) {
+                TextField(String(localized: "inquiry_message_placeholder"), text: $message, axis: .vertical)
+                    .lineLimit(4...8)
+                    .frame(minHeight: 80, alignment: .topLeading)
+            }
 
-                // Error feedback
-                if let errorMessage {
-                    Section {
-                        Label(errorMessage, systemImage: "exclamationmark.circle.fill")
-                            .foregroundStyle(.red)
-                            .font(.callout)
-                    }
-                }
-
-                // Submit button
+            // Error feedback
+            if let errorMessage {
                 Section {
-                    Button {
-                        Task { await send() }
-                    } label: {
-                        HStack {
-                            Spacer()
-                            if isSending {
-                                ProgressView()
-                            } else {
-                                Text(String(localized: "send_inquiry"))
-                                    .fontWeight(.semibold)
-                            }
-                            Spacer()
+                    Label(errorMessage, systemImage: "exclamationmark.circle.fill")
+                        .foregroundStyle(.red)
+                        .font(.callout)
+                }
+            }
+
+            // Submit button
+            Section {
+                Button {
+                    Task { await send() }
+                } label: {
+                    HStack {
+                        Spacer()
+                        if isSending {
+                            ProgressView()
+                        } else {
+                            Text(String(localized: "send_inquiry"))
+                                .fontWeight(.semibold)
                         }
-                    }
-                    .disabled(!isFormValid || isSending)
-                }
-            }
-            .navigationTitle(String(localized: "send_inquiry"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "cancel")) {
-                        dismiss()
+                        Spacer()
                     }
                 }
+                .disabled(!isFormValid || isSending)
             }
-            .alert(String(localized: "inquiry_sent"), isPresented: $didSend) {
-                Button(String(localized: "ok")) {
+        }
+        .navigationTitle(String(localized: "send_inquiry"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(String(localized: "cancel")) {
                     dismiss()
-                    coordinator.selectedTab = .inquiries
                 }
-            } message: {
-                Text(String(localized: "inquiry_sent_confirmation"))
             }
-            .onAppear {
-                prefillFromAuthManager()
+        }
+        .alert(String(localized: "inquiry_sent"), isPresented: $didSend) {
+            Button(String(localized: "ok")) {
+                dismiss()
+                coordinator.selectedTab = .inquiries
             }
+        } message: {
+            Text(String(localized: "inquiry_sent_confirmation"))
+        }
+        .onAppear {
+            prefillFromAuthManager()
         }
     }
 
@@ -143,7 +158,7 @@ struct SendInquiryView: View {
             phone: trimmedPhone.isEmpty ? nil : trimmedPhone
         )
 
-        let result = await inquiryRepository.createInquiry(request: request)
+        let result = await resolveRepository().createInquiry(request: request)
 
         if result.getOrNull() != nil {
             didSend = true
