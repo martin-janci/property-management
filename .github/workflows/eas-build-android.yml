@@ -101,6 +101,28 @@ jobs:
         working-directory: frontend/apps/mobile
         run: pnpm typecheck
 
+      # issue #767 (#6) — fail fast before invoking EAS when the required
+      # repo/org secrets are absent. Without this the build proceeds to
+      # `eas build` and fails deep in the EAS pipeline with an opaque auth
+      # error. Note: the real production API_BASE_URL / WS_BASE_URL live in the
+      # EAS *project* secret store (not GitHub secrets) — they cannot be
+      # verified here, so this only guards the GitHub-level prerequisites.
+      - name: Verify required EAS secrets
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+        run: |
+          missing=""
+          [ -z "$EXPO_TOKEN" ] && missing="$missing EXPO_TOKEN"
+          [ -z "$EXPO_PROJECT_ID" ] && missing="$missing EXPO_PROJECT_ID"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required GitHub secret(s):$missing"
+            echo "Set them under repo/org Settings → Secrets and variables → Actions."
+            echo "See the header of this workflow for the one-time setup checklist."
+            exit 1
+          fi
+          echo "Required EAS secrets present."
+
       - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
