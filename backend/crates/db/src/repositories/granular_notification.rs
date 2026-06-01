@@ -533,6 +533,62 @@ impl GranularNotificationRepository {
         Ok(row.get(0))
     }
 
+    /// Add a notification to a group on behalf of `user_id`, setting that
+    /// user's RLS context for the write.
+    ///
+    /// `notification_groups` / `grouped_notifications` are RLS-protected with a
+    /// `user_id = app.current_user_id` policy. A service-role caller (e.g. the
+    /// Epic 2B notification pipeline fanning out to many recipients) has no
+    /// per-request user context set, so the plain `add_notification_to_group`
+    /// would be blocked by the policy's `WITH CHECK` in production. This variant
+    /// wraps the call in a transaction and sets `app.current_user_id` to the
+    /// recipient (transaction-local via `set_config(..., is_local => true)`),
+    /// so the insert is authorised and the setting cannot leak onto a pooled
+    /// connection after commit.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn add_notification_to_group_for_user(
+        &self,
+        user_id: Uuid,
+        entity_type: &str,
+        entity_id: Uuid,
+        group_title: &str,
+        event_type: &str,
+        title: &str,
+        body: Option<&str>,
+        data: Option<serde_json::Value>,
+        actor_id: Option<Uuid>,
+        actor_name: Option<&str>,
+    ) -> Result<Uuid, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        // Transaction-local: scoped to this tx, auto-reset on commit/rollback.
+        sqlx::query("SELECT set_config('app.current_user_id', $1, true)")
+            .bind(user_id.to_string())
+            .execute(&mut *tx)
+            .await?;
+
+        let row = sqlx::query(
+            r#"
+            SELECT add_notification_to_group($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            "#,
+        )
+        .bind(user_id)
+        .bind(entity_type)
+        .bind(entity_id)
+        .bind(group_title)
+        .bind(event_type)
+        .bind(title)
+        .bind(body)
+        .bind(&data)
+        .bind(actor_id)
+        .bind(actor_name)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(row.get(0))
+    }
+
     /// Get grouped notifications for a user.
     pub async fn get_grouped_notifications(
         &self,

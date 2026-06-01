@@ -44,7 +44,7 @@ use uuid::Uuid;
 use common::notifications::{
     pipeline::{DeliveryRecord, DeliveryStatus, PipelineResult, RoutingDecision},
     EmailTransport, InAppTransport, Notification, NotificationChannel, NotificationError,
-    PushTransport, TransportResult,
+    NotificationPriority, PushTransport, TransportResult,
 };
 
 use super::email::EmailService;
@@ -214,8 +214,13 @@ impl InAppTransport for DbInAppAdapter {
         let entity_type = notification.category.as_str().to_string();
         let event_type = format!("{}.notification", entity_type);
 
+        // Use the context-setting variant: the pipeline runs on the service
+        // pool with no per-request user context, but the notification tables
+        // are RLS-gated on `user_id = app.current_user_id`. This sets the
+        // recipient's context for the write so the mandatory in-app record is
+        // actually persisted in production (not just in owner-role tests).
         self.granular_repo
-            .add_notification_to_group(
+            .add_notification_to_group_for_user(
                 user_id,
                 &entity_type,
                 eid,
@@ -484,11 +489,37 @@ impl NotificationPipeline {
         let requested: &[NotificationChannel] =
             channels.unwrap_or_else(|| &self.config.default_channels);
 
-        // Apply preference routing (2b-2)
-        let routing = self
-            .preference_router
-            .resolve(user_id, notification, requested)
-            .await?;
+        // Routing (2b-2) with two overrides driven by Epic 2B requirements:
+        //
+        // 1. URGENCY BYPASS — `Urgent` (critical/urgent) notifications bypass
+        //    user preferences entirely. Safety-critical alerts (emergencies,
+        //    critical notifications) must reach the recipient regardless of
+        //    opt-outs, so every requested channel is force-enabled.
+        //
+        // 2. MANDATORY IN-APP — for all other priorities we honour preferences
+        //    for email/push, but the in-app channel is never skipped: every
+        //    recipient gets a durable stored notification (the DB record) even
+        //    if they muted in-app, so nothing is silently dropped. Users still
+        //    control read state; they just can't lose the record.
+        let routing = if matches!(notification.priority, NotificationPriority::Urgent) {
+            RoutingDecision::all_enabled(requested)
+        } else {
+            let mut routing = self
+                .preference_router
+                .resolve(user_id, notification, requested)
+                .await?;
+            if requested.contains(&NotificationChannel::InApp)
+                && !routing
+                    .enabled_channels
+                    .contains(&NotificationChannel::InApp)
+            {
+                routing
+                    .skipped_channels
+                    .retain(|c| *c != NotificationChannel::InApp);
+                routing.enabled_channels.push(NotificationChannel::InApp);
+            }
+            routing
+        };
 
         let mut result = PipelineResult::default();
 
