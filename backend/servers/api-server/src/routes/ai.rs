@@ -3053,7 +3053,10 @@ async fn exchange_voice_oauth_tokens(
     ),
     (StatusCode, Json<ErrorResponse>),
 > {
-    use integrations::{encrypt_if_available, IntegrationCrypto, VoiceOAuthManager, VoicePlatform};
+    use integrations::{
+        encrypt_optional_required, encrypt_required, IntegrationCrypto, VoiceOAuthManager,
+        VoicePlatform,
+    };
 
     // Parse the platform
     let voice_platform: VoicePlatform = platform.parse().map_err(|_| {
@@ -3106,13 +3109,40 @@ async fn exchange_voice_oauth_tokens(
             )
         })?;
 
-    // Encrypt tokens for storage
+    // Encrypt tokens for storage. Issue #765: encryption is MANDATORY — fail
+    // closed if INTEGRATION_ENCRYPTION_KEY is unset rather than persisting voice
+    // OAuth tokens in plaintext.
     let crypto = IntegrationCrypto::try_from_env();
-    let access_encrypted = encrypt_if_available(crypto.as_ref(), &tokens.access_token);
-    let refresh_encrypted = tokens
-        .refresh_token
-        .as_ref()
-        .map(|rt| encrypt_if_available(crypto.as_ref(), rt));
+    let access_encrypted =
+        encrypt_required(crypto.as_ref(), &tokens.access_token).map_err(|e| {
+            tracing::error!(
+                "Refusing to store voice OAuth token without encryption: {}",
+                e
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "ENCRYPTION_REQUIRED",
+                    "Integration token encryption is not configured",
+                )),
+            )
+        })?;
+    let refresh_encrypted =
+        encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref()).map_err(
+            |e| {
+                tracing::error!(
+                    "Refusing to store voice OAuth token without encryption: {}",
+                    e
+                );
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "ENCRYPTION_REQUIRED",
+                        "Integration token encryption is not configured",
+                    )),
+                )
+            },
+        )?;
 
     tracing::info!(
         "Successfully exchanged OAuth tokens for voice platform {}",

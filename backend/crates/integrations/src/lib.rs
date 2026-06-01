@@ -79,7 +79,8 @@ pub use accounting::{
 
 // Encryption utilities for sensitive integration data
 pub use crypto::{
-    decrypt_if_available, encrypt_if_available, CryptoError, IntegrationCrypto, ENCRYPTION_KEY_ENV,
+    decrypt_if_available, encrypt_if_available, encrypt_optional_required, encrypt_required,
+    CryptoError, IntegrationCrypto, ENCRYPTION_KEY_ENV,
 };
 
 // Story 96.1: OAuth Token Management

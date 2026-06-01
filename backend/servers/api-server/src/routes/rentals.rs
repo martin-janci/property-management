@@ -393,7 +393,10 @@ pub async fn airbnb_callback(
     State(state): State<AppState>,
     Query(params): Query<OAuthCallbackQuery>,
 ) -> Result<axum::response::Redirect, (axum::http::StatusCode, String)> {
-    use integrations::{encrypt_if_available, AirbnbClient, AirbnbOAuthConfig, IntegrationCrypto};
+    use integrations::{
+        encrypt_optional_required, encrypt_required, AirbnbClient, AirbnbOAuthConfig,
+        IntegrationCrypto,
+    };
 
     // Check for OAuth error
     if let Some(error) = params.error {
@@ -494,13 +497,28 @@ pub async fn airbnb_callback(
         )
     })?;
 
-    // Encrypt tokens for storage
+    // Encrypt tokens for storage. Issue #765: encryption is MANDATORY — fail
+    // closed if INTEGRATION_ENCRYPTION_KEY is unset rather than storing tokens
+    // in plaintext.
     let crypto = IntegrationCrypto::try_from_env();
-    let access_encrypted = encrypt_if_available(crypto.as_ref(), &tokens.access_token);
-    let refresh_encrypted = tokens
-        .refresh_token
-        .as_ref()
-        .map(|rt| encrypt_if_available(crypto.as_ref(), rt));
+    let access_encrypted =
+        encrypt_required(crypto.as_ref(), &tokens.access_token).map_err(|e| {
+            tracing::error!("Refusing to store Airbnb token without encryption: {}", e);
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Integration token encryption is not configured".to_string(),
+            )
+        })?;
+    let refresh_encrypted =
+        encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref()).map_err(
+            |e| {
+                tracing::error!("Refusing to store Airbnb token without encryption: {}", e);
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    "Integration token encryption is not configured".to_string(),
+                )
+            },
+        )?;
 
     // Update connection with tokens and mark as connected
     state
@@ -540,9 +558,7 @@ pub async fn booking_callback(
     State(state): State<AppState>,
     Query(params): Query<OAuthCallbackQuery>,
 ) -> Result<axum::response::Redirect, (axum::http::StatusCode, String)> {
-    use integrations::{
-        encrypt_if_available, BookingClient, BookingCredentials, IntegrationCrypto,
-    };
+    use integrations::{encrypt_required, BookingClient, BookingCredentials, IntegrationCrypto};
 
     // Check for OAuth error
     if let Some(error) = params.error {
@@ -645,9 +661,20 @@ pub async fn booking_callback(
         ));
     }
 
-    // Encrypt authorization code for storage
+    // Encrypt authorization code for storage. Issue #765: encryption is
+    // MANDATORY for persisted Booking.com credentials — fail closed if
+    // INTEGRATION_ENCRYPTION_KEY is unset.
     let crypto = IntegrationCrypto::try_from_env();
-    let code_encrypted = encrypt_if_available(crypto.as_ref(), &code);
+    let code_encrypted = encrypt_required(crypto.as_ref(), &code).map_err(|e| {
+        tracing::error!(
+            "Refusing to store Booking.com credentials without encryption: {}",
+            e
+        );
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "Integration credential encryption is not configured".to_string(),
+        )
+    })?;
 
     // Update connection with credentials and mark as connected
     state

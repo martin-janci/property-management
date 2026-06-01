@@ -189,10 +189,56 @@ impl IntegrationCrypto {
     }
 }
 
+/// Encrypt a value, failing closed if encryption is not available.
+///
+/// Unlike [`encrypt_if_available`], this NEVER returns plaintext. It is the
+/// required path for persisting secrets (OAuth/access/refresh tokens, platform
+/// credentials): if `INTEGRATION_ENCRYPTION_KEY` is unset (`crypto` is `None`)
+/// or the encryption operation itself fails, an error is returned so the caller
+/// can refuse to store the secret rather than leaking it in plaintext.
+///
+/// On success the value carries the same "enc:" prefix used by
+/// [`encrypt_if_available`], so [`decrypt_if_available`] reads both transparently.
+///
+/// # Errors
+/// - [`CryptoError::KeyNotConfigured`] when `crypto` is `None`.
+/// - Propagates the underlying [`CryptoError`] when encryption fails.
+pub fn encrypt_required(
+    crypto: Option<&IntegrationCrypto>,
+    plaintext: &str,
+) -> Result<String, CryptoError> {
+    match crypto {
+        Some(c) => Ok(format!("{}{}", ENCRYPTED_PREFIX, c.encrypt(plaintext)?)),
+        None => Err(CryptoError::KeyNotConfigured(format!(
+            "{} must be set to store integration secrets; refusing to persist in plaintext",
+            ENCRYPTION_KEY_ENV
+        ))),
+    }
+}
+
+/// Encrypt an optional value, failing closed if encryption is not available.
+///
+/// Returns `Ok(None)` when the input is `None`. When the input is `Some`, the
+/// fail-closed semantics of [`encrypt_required`] apply.
+pub fn encrypt_optional_required(
+    crypto: Option<&IntegrationCrypto>,
+    plaintext: Option<&str>,
+) -> Result<Option<String>, CryptoError> {
+    match plaintext {
+        Some(text) => Ok(Some(encrypt_required(crypto, text)?)),
+        None => Ok(None),
+    }
+}
+
 /// Encrypt a value if crypto is available, otherwise return plaintext.
 ///
 /// Adds "enc:" prefix to encrypted values to distinguish them from plaintext.
 /// This allows graceful degradation in development environments and safe migration.
+///
+/// # Security
+/// This helper deliberately degrades to plaintext when no key is configured and
+/// MUST NOT be used for persisting secrets such as OAuth tokens or platform
+/// credentials — use [`encrypt_required`] for those so the write fails closed.
 pub fn encrypt_if_available(crypto: Option<&IntegrationCrypto>, plaintext: &str) -> String {
     match crypto {
         Some(c) => match c.encrypt(plaintext) {
@@ -332,6 +378,53 @@ mod tests {
 
         // Decryption should fail authentication
         assert!(crypto.decrypt(&tampered).is_err());
+    }
+
+    #[test]
+    fn test_encrypt_required_fails_closed_without_key() {
+        // Issue #765: a missing encryption key must NOT silently fall back to
+        // plaintext when persisting secrets.
+        let result = encrypt_required(None, "super_secret_token");
+        assert!(matches!(result, Err(CryptoError::KeyNotConfigured(_))));
+    }
+
+    #[test]
+    fn test_encrypt_required_encrypts_with_key() {
+        let crypto = test_crypto();
+        let plaintext = "oauth_access_token";
+
+        let encrypted = encrypt_required(Some(&crypto), plaintext).unwrap();
+        // Never equal to plaintext, and carries the enc: prefix.
+        assert_ne!(encrypted, plaintext);
+        assert!(encrypted.starts_with(ENCRYPTED_PREFIX));
+
+        // decrypt_if_available reads it back transparently.
+        let decrypted = decrypt_if_available(Some(&crypto), &encrypted);
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn test_encrypt_optional_required_semantics() {
+        let crypto = test_crypto();
+
+        // None stays None even without a key.
+        assert!(encrypt_optional_required(None, None).unwrap().is_none());
+        assert!(encrypt_optional_required(Some(&crypto), None)
+            .unwrap()
+            .is_none());
+
+        // Some without a key fails closed.
+        assert!(matches!(
+            encrypt_optional_required(None, Some("refresh")),
+            Err(CryptoError::KeyNotConfigured(_))
+        ));
+
+        // Some with a key encrypts.
+        let encrypted = encrypt_optional_required(Some(&crypto), Some("refresh"))
+            .unwrap()
+            .unwrap();
+        assert!(encrypted.starts_with(ENCRYPTED_PREFIX));
+        assert_eq!(decrypt_if_available(Some(&crypto), &encrypted), "refresh");
     }
 
     #[test]

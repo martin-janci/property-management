@@ -11,8 +11,9 @@ use axum::{
 };
 use db::models::infrastructure::{job_type, queue, CreateBackgroundJob};
 use integrations::{
-    AirbnbClient, AirbnbOAuthConfig, AvailabilityUpdate, BookingClient, BookingCredentials,
-    IntegrationCrypto, PortalType, PropertyMapping, RateUpdate, RoomTypeMapping,
+    encrypt_optional_required, encrypt_required, AirbnbClient, AirbnbOAuthConfig,
+    AvailabilityUpdate, BookingClient, BookingCredentials, IntegrationCrypto, PortalType,
+    PropertyMapping, RateUpdate, RoomTypeMapping,
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
@@ -461,7 +462,10 @@ pub async fn connect_airbnb(
         redirect_uri,
     });
 
-    let oauth_state = format!("{}:{}", path.org_id, uuid::Uuid::new_v4());
+    // Issue #765: generate a server-bound, single-use OAuth state tied to the
+    // initiating org + user (persisted in Redis with a short TTL when available)
+    // instead of a stateless, forgeable `{org_id}:{uuid}` string.
+    let oauth_state = super::oauth_state::issue(&state, path.org_id, auth.user_id).await;
     tracing::debug!(oauth_state = %oauth_state, "Generated OAuth state parameter");
 
     let auth_url = client.generate_auth_url(&oauth_state);
@@ -1827,43 +1831,34 @@ pub async fn direct_connect_airbnb(
 
     let listings_count = listings.len() as i32;
 
-    // Optionally encrypt tokens before storage.
-    let (stored_access, stored_refresh) = match IntegrationCrypto::try_from_env() {
-        Some(crypto) => {
-            let encrypted_access = crypto.encrypt(&request.access_token).map_err(|e| {
-                tracing::error!(error = %e, "Failed to encrypt Airbnb access token");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "CRYPTO_ERROR",
-                        "Failed to encrypt token",
-                    )),
-                )
-            })?;
-            let encrypted_refresh = request
-                .refresh_token
-                .as_deref()
-                .map(|rt| crypto.encrypt(rt))
-                .transpose()
-                .map_err(|e| {
-                    tracing::error!(error = %e, "Failed to encrypt Airbnb refresh token");
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new(
-                            "CRYPTO_ERROR",
-                            "Failed to encrypt refresh token",
-                        )),
-                    )
-                })?;
-            (encrypted_access, encrypted_refresh)
-        }
-        None => {
-            tracing::warn!(
-                "INTEGRATION_ENCRYPTION_KEY is not set; Airbnb tokens will be stored in plaintext"
-            );
-            (request.access_token.clone(), request.refresh_token.clone())
-        }
-    };
+    // Encrypt tokens before storage. Issue #765: encryption is MANDATORY for
+    // persisted secrets — if INTEGRATION_ENCRYPTION_KEY is unset we fail closed
+    // rather than storing tokens in plaintext.
+    let crypto = IntegrationCrypto::try_from_env();
+    let stored_access = encrypt_required(crypto.as_ref(), &request.access_token).map_err(|e| {
+        tracing::error!(error = %e, "Refusing to store Airbnb access token without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration token encryption is not configured",
+            )),
+        )
+    })?;
+    let stored_refresh = encrypt_optional_required(
+        crypto.as_ref(),
+        request.refresh_token.as_deref(),
+    )
+    .map_err(|e| {
+        tracing::error!(error = %e, "Refusing to store Airbnb refresh token without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration token encryption is not configured",
+            )),
+        )
+    })?;
 
     let connection = state
         .rental_repo
