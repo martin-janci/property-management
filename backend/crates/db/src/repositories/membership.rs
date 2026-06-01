@@ -141,6 +141,25 @@ impl MembershipRepository {
         .await
     }
 
+    /// All active member user ids for an organization (de-duplicated across
+    /// roles). Used by Epic 2B fan-out (e.g. critical-notification broadcast)
+    /// to resolve every recipient in an org. Mirrors `list_for_user`'s
+    /// bare-pool access pattern.
+    pub async fn list_active_member_ids(&self, org_id: Uuid) -> Result<Vec<Uuid>, SqlxError> {
+        let rows: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT DISTINCT user_id FROM user_memberships
+            WHERE organization_id = $1
+              AND revoked_at IS NULL
+              AND (expires_at IS NULL OR expires_at > NOW())
+            "#,
+        )
+        .bind(org_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows.into_iter().map(|(id,)| id).collect())
+    }
+
     /// Returns `true` iff the user has at least one active membership in the
     /// given org. This is the hot-path query used by `RequestPrincipal` on
     /// every request.

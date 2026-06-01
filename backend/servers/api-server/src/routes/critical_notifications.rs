@@ -97,6 +97,58 @@ pub async fn create_notification(
         "Critical notification created"
     );
 
+    // Epic 2B: actually dispatch the critical notification to every active org
+    // member. Critical notifications are `Urgent`, so the pipeline bypasses
+    // per-user preferences (these alerts must reach everyone) while still
+    // writing the mandatory in-app DB record per recipient. Dispatch failures
+    // are logged but never fail the create — the acknowledgement-tracking row
+    // (the source of truth for the dashboard) has already been persisted.
+    match db::repositories::MembershipRepository::new(state.db.clone())
+        .list_active_member_ids(tenant_id)
+        .await
+    {
+        Ok(recipients) if !recipients.is_empty() => {
+            let payload = common::notifications::Notification::new(
+                uuid::Uuid::nil(),
+                common::notifications::NotificationCategory::Announcements,
+                notification.title.clone(),
+                notification.message.clone(),
+            )
+            .with_priority(common::notifications::NotificationPriority::Urgent)
+            .with_data(serde_json::json!({
+                "critical_notification_id": notification.id,
+                "organization_id": tenant_id,
+            }));
+
+            let (sent, skipped, failed) = state
+                .notification_pipeline
+                .broadcast(&recipients, &payload, Some(notification.id))
+                .await;
+            tracing::info!(
+                notification_id = %notification.id,
+                recipients = recipients.len(),
+                channels_sent = sent,
+                channels_skipped = skipped,
+                channels_failed = failed,
+                "Critical notification dispatched via pipeline (urgency bypass)"
+            );
+        }
+        Ok(_) => {
+            tracing::warn!(
+                notification_id = %notification.id,
+                org_id = %tenant_id,
+                "Critical notification created but org has no active members to notify"
+            );
+        }
+        Err(e) => {
+            tracing::error!(
+                notification_id = %notification.id,
+                error = %e,
+                "Failed to resolve recipients for critical notification dispatch"
+            );
+        }
+    }
+
     Ok((
         StatusCode::CREATED,
         Json(CreateCriticalNotificationResponse {
