@@ -85,14 +85,24 @@ async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
 }
 
 /// Seed a listing owned by `org_id` and return its id.
+///
+/// NOTE: `size_sqm`, `latitude`, and `longitude` MUST be seeded non-null. The
+/// `db::Listing` model decodes them with `#[sqlx(try_from = "rust_decimal::Decimal")]`,
+/// which decodes the column as a non-nullable `Decimal` BEFORE the `Option`
+/// wrapper applies — so a NULL column makes `find_by_id_and_org` fail with
+/// "unexpected null" (a 500), not the expected 501. The cross-org test never
+/// hits this decode path (its `WHERE organization_id = $2` filters the row out
+/// entirely → clean `None` → 404), which is why only the same-org case tripped.
 async fn seed_listing(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO listings
             (organization_id, created_by, transaction_type, title,
-             property_type, street, city, postal_code, price)
+             property_type, street, city, postal_code, price,
+             size_sqm, latitude, longitude)
         VALUES ($1, $2, 'sale', 'Competitive listing',
-                'apartment', 'Test Street 1', 'Bratislava', '81101', 195000.00)
+                'apartment', 'Test Street 1', 'Bratislava', '81101', 195000.00,
+                72.50, 48.148598, 17.107748)
         RETURNING id
         "#,
     )
