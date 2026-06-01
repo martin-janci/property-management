@@ -10,13 +10,89 @@
  */
 
 /**
- * WebSocket message format as defined in story spec.
+ * Canonical server path for the realtime notification WebSocket.
+ *
+ * The api-server mounts the handler at
+ * `/api/v1/users/me/notifications/ws` (see
+ * `backend/servers/api-server/src/lib.rs` nest + `ws_notifications::router`).
+ * The client must connect to this exact path — a bare `/ws` does not exist
+ * and yields a 404 on upgrade (#775, #819).
+ */
+export const WS_NOTIFICATIONS_PATH = '/api/v1/users/me/notifications/ws';
+
+/**
+ * WebSocket message format used internally by the client.
+ *
+ * The server speaks the canonical `{ event, payload }` envelope (see
+ * `WsEvent` in `ws_notifications.rs`). {@link parseServerMessage} normalises
+ * that envelope into this shape, mapping the server's `event` field onto
+ * `type` so subscribers can key off the real event names
+ * (`notification.created`, `preference.updated`, …).
  */
 export interface WebSocketMessage {
   type: string;
   payload: unknown;
   timestamp: string;
   requestId?: string;
+}
+
+/**
+ * Wire envelope emitted by the api-server WebSocket handler.
+ * Mirrors `WsEvent` (`{ event, payload }`) in `ws_notifications.rs`.
+ */
+export interface ServerWsEnvelope {
+  event: string;
+  payload: unknown;
+}
+
+/**
+ * Normalise one decoded server frame into the client's internal
+ * {@link WebSocketMessage} shape.
+ *
+ * Returns `null` for frames that are not a recognised event envelope (e.g. a
+ * bare `pong` heartbeat or malformed JSON) so callers can short-circuit.
+ *
+ * The server emits `{ event, payload }`; we map `event` -> `type` and supply a
+ * client-side receive `timestamp` (the server envelope carries none) so gap
+ * detection keeps working.
+ */
+export function parseServerMessage(raw: unknown): WebSocketMessage | null {
+  if (typeof raw !== 'object' || raw === null) {
+    return null;
+  }
+
+  const obj = raw as Record<string, unknown>;
+
+  // Canonical server envelope: { event, payload }.
+  if (typeof obj.event === 'string') {
+    return {
+      type: obj.event,
+      payload: obj.payload ?? null,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Build the full WebSocket connection URL: base origin + canonical path +
+ * `?token=<jwt>` query param.
+ *
+ * Browsers cannot set an `Authorization` header on a WebSocket handshake, so
+ * the api-server reads the JWT from the `token` query parameter (see
+ * `WsQuery` in `ws_notifications.rs`). The `base` may be a bare origin
+ * (`ws://localhost:8080`) or already include the path — in either case we
+ * normalise to the canonical path and attach the token.
+ */
+export function buildWebSocketUrl(base: string, token: string): string {
+  // `URL` needs an absolute base; ws/wss are valid absolute schemes.
+  const url = new URL(base);
+  // Force the canonical path regardless of what the base carried, so a
+  // legacy `/ws` (or empty) path is corrected to the mounted handler.
+  url.pathname = WS_NOTIFICATIONS_PATH;
+  url.searchParams.set('token', token);
+  return url.toString();
 }
 
 /**
@@ -111,26 +187,30 @@ export interface WebSocketServiceConfig {
 }
 
 /**
- * Compute the default WebSocket URL.
+ * Compute the default WebSocket base origin (scheme + host, no path).
  *
- * In dev we keep the explicit cleartext `ws://localhost:8080/ws` so the
- * local Vite stack works without TLS. In production we never default to
- * cleartext: we derive `wss://${location.host}/ws` so the WS scheme
- * tracks the page scheme and the deploy host. Callers can still override
- * via the `url` config option or the `VITE_WS_URL` env variable.
+ * The canonical handler path ({@link WS_NOTIFICATIONS_PATH}) and `?token=`
+ * query param are appended by {@link buildWebSocketUrl} at connect time, so
+ * this only needs to resolve the origin.
+ *
+ * In dev we keep the explicit cleartext `ws://localhost:8080` so the local
+ * Vite stack works without TLS. In production we never default to cleartext:
+ * we derive `wss://${location.host}` so the WS scheme tracks the page scheme
+ * and the deploy host. Callers can still override via the `url` config option
+ * or the `VITE_WS_URL` env variable.
  */
 function defaultWebSocketUrl(): string {
   if (import.meta.env.DEV) {
-    return 'ws://localhost:8080/ws';
+    return 'ws://localhost:8080';
   }
 
   // SSR / non-browser safety net — should not happen for ppt-web (SPA),
   // but keeps the function total.
   if (typeof window === 'undefined' || !window.location) {
-    return 'wss://localhost/ws';
+    return 'wss://localhost';
   }
 
-  return `wss://${window.location.host}/ws`;
+  return `wss://${window.location.host}`;
 }
 
 /**
@@ -222,23 +302,16 @@ export class WebSocketService {
     this.shouldReconnect = true;
     this.clearReconnectTimeout();
 
-    // P0-11: pass the JWT through the WebSocket subprotocol header,
-    // not as a query parameter. The URL form (?token=...) ended up in
-    // browser history, reverse-proxy access logs, DevTools network
-    // tabs, and any SIEM that ships logs upstream — every one of
-    // those is a token-exfiltration surface. The subprotocol value
-    // is sent in `Sec-WebSocket-Protocol` and never logged by
-    // standard HTTP middleware.
-    //
-    // Wire format: two subprotocols, `bearer.<JWT>` for the auth
-    // payload and a `ppt.v1` discriminator so the server can negotiate
-    // future protocol versions. The server's WebSocketUpgrade handler
-    // must accept one of these subprotocols in its response — without
-    // that echo, browsers reject the handshake.
+    // Auth transport: the api-server reads the JWT from the `token` query
+    // parameter (see `WsQuery` in `ws_notifications.rs`). Browsers cannot set
+    // an `Authorization` header on a WS handshake, so the query param is the
+    // contract the server validates. We still offer the `ppt.v1` subprotocol
+    // because the server echoes it (Issue #438) to complete the handshake and
+    // to leave room for future protocol-version negotiation.
     this.setConnectionState('connecting');
 
     try {
-      this.socket = new WebSocket(this.url, [`bearer.${token}`, 'ppt.v1']);
+      this.socket = new WebSocket(buildWebSocketUrl(this.url, token), ['ppt.v1']);
       this.setupSocketHandlers();
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to create WebSocket');
@@ -367,13 +440,22 @@ export class WebSocketService {
     try {
       const data = JSON.parse(event.data as string);
 
-      // Handle pong response
-      if (data.type === 'pong') {
+      // Handle pong response. The client emits `{ type: 'ping' }` and the
+      // server may echo `{ type: 'pong' }`; either heartbeat reply is matched
+      // here before the canonical-envelope path below.
+      if (data && typeof data === 'object' && data.type === 'pong') {
         this.handlePong();
         return;
       }
 
-      const message = data as WebSocketMessage;
+      // Server speaks the canonical `{ event, payload }` envelope. Normalise
+      // it into the internal message shape (event -> type) so subscribers can
+      // key off real event names (`notification.created`, `preference.updated`).
+      const message = parseServerMessage(data);
+      if (!message) {
+        // Not a recognised event envelope (e.g. a stray heartbeat frame).
+        return;
+      }
 
       // Track last event timestamp
       if (message.timestamp) {
