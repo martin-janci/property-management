@@ -14,31 +14,31 @@
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────────┐
 │                        PROPERTY MANAGEMENT                          │
-├─────────────────────────────────────────────────────────────────────┤
+├────────────────────────────────────────────────────────┤
 │  ppt-web (React SPA)     │  mobile (React Native)                  │
 │  - Manager dashboard     │  - Android: three.two.bit.ppt.management│
 │  - Building management   │  - iOS: three.two.bit.ppt.management    │
 │  - Faults, Voting, etc   │                                         │
-├─────────────────────────────────────────────────────────────────────┤
+├────────────────────────────────────────────────────────┤
 │                         api-server (Rust)                           │
 │  Port 8080 │ Management API │ OAuth Provider                        │
-└─────────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────┘
                                   │
                            Shared Database
                                   │
-┌─────────────────────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────────┐
 │                         reality-server (Rust)                       │
 │  Port 8081 │ Public listings │ SSO Consumer                        │
-├─────────────────────────────────────────────────────────────────────┤
+├────────────────────────────────────────────────────────┤
 │  reality-web (Next.js SSR)   │  mobile-native (KMP)                │
 │  - Public listings           │  - Android: three.two.bit.ppt.reality│
 │  - Search, filters           │  - iOS: three.two.bit.ppt.reality   │
 │  - i18n (sk, cs, de, en)     │                                     │
-├─────────────────────────────────────────────────────────────────────┤
+├────────────────────────────────────────────────────────┤
 │                          REALITY PORTAL                             │
-└─────────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────┘
 ```
 
 ## Platform Matrix
@@ -58,7 +58,7 @@
 | Language | Rust (edition 2021, `rust-version = 1.75`) |
 | Async runtime | Tokio 1.35 |
 | Web framework | Axum 0.8 + axum-extra 0.12, Tower 0.5 / tower-http 0.6 |
-| Database | PostgreSQL 16+ (RLS), SQLx 0.8 |
+| Database | PostgreSQL 16+ (RLS), SQLx 0.9 |
 | Cache | Redis 1.2 (sessions, pub/sub) |
 | Auth | `jsonwebtoken` 9.2 + `argon2` 0.5 (token TTLs in `docs/api/README.md`) |
 | API | OpenAPI via `utoipa` 5 (+ `utoipa-swagger-ui` 9), WebSocket |
@@ -240,22 +240,22 @@ git push origin dev
 ### Workflow Summary
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌───────────────────────────────────────────────────────┐
 │  1. Branch from dev: feature/epic-{N}-{description}         │
-├─────────────────────────────────────────────────────────────┤
+├───────────────────────────────────────────────────────┤
 │  2. Implement Story {N}.1 → Commit                          │
 │  3. Implement Story {N}.2 → Commit                          │
 │  4. Implement Story {N}.{M} → Commit                        │
 │     ... repeat for all stories ...                          │
-├─────────────────────────────────────────────────────────────┤
+├───────────────────────────────────────────────────────┤
 │  5. Run /bmad:bmm:workflows:code-review                     │
 │  6. Fix issues → Commit fixes                               │
-├─────────────────────────────────────────────────────────────┤
+├───────────────────────────────────────────────────────┤
 │  7. Push branch and open PR against `dev`                   │
 │  8. Merge into `dev` after approval                         │
-├─────────────────────────────────────────────────────────────┤
-│  9. At release time: PR `dev` → `main`, tag, publish        │
-└─────────────────────────────────────────────────────────────┘
+├───────────────────────────────────────────────────────┤
+│  9. At release time: PR `dev` → `main`, tag, publish         │
+└───────────────────────────────────────────────────────┘
 ```
 
 ## Versioning
