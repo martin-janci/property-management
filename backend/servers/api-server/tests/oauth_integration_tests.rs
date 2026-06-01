@@ -588,6 +588,89 @@ mod consent_revoke {
         assert_eq!(body["error"], "access_denied");
     }
 
+    /// Regression (issue #756): the consent POST must re-validate the requested
+    /// scopes against the client's registered grant before issuing a code.
+    /// The public client is seeded with `["profile"]` only, so a consent POST
+    /// asking for a scope outside that grant must be rejected with
+    /// `invalid_scope` (400) and must NOT issue an authorization code. A request
+    /// for the valid subset (`profile`) must still succeed.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_consent_post_rejects_scope_outside_client_grant(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, redirect_uri) = seed_public_client(&pool).await;
+        let (_verifier, challenge) = pkce_pair();
+
+        // `email` is NOT in the public client's `["profile"]` grant.
+        let escalation_form = form_body(&[
+            ("client_id", &client_id),
+            ("redirect_uri", &redirect_uri),
+            ("scope", "profile email"),
+            ("code_challenge", &challenge),
+            ("code_challenge_method", "S256"),
+            ("consent", "approve"),
+        ]);
+        let resp = app
+            .execute(form_request_with_auth(
+                "/api/v1/oauth/authorize",
+                &escalation_form,
+                &access_token,
+            ))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::BAD_REQUEST,
+            "requesting a scope outside the client grant must be rejected. body={}",
+            resp.text()
+        );
+        let body = resp.json_value();
+        assert_eq!(body["error"], "invalid_scope");
+
+        // No authorization code may have been persisted for this client.
+        let code_count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM oauth_authorization_codes WHERE client_id = $1",
+        )
+        .bind(&client_id)
+        .fetch_one(&pool)
+        .await
+        .expect("count auth codes");
+        assert_eq!(
+            code_count, 0,
+            "no authorization code must be issued when a scope is rejected"
+        );
+
+        // The valid subset (exactly the client's grant) must still succeed.
+        let valid_form = form_body(&[
+            ("client_id", &client_id),
+            ("redirect_uri", &redirect_uri),
+            ("scope", "profile"),
+            ("code_challenge", &challenge),
+            ("code_challenge_method", "S256"),
+            ("consent", "approve"),
+        ]);
+        let ok_resp = app
+            .execute(form_request_with_auth(
+                "/api/v1/oauth/authorize",
+                &valid_form,
+                &access_token,
+            ))
+            .await;
+        assert_eq!(
+            ok_resp.status,
+            StatusCode::OK,
+            "a consent POST for the valid scope subset must still succeed. body={}",
+            ok_resp.text()
+        );
+        assert!(
+            !ok_resp.json_value()["code"]
+                .as_str()
+                .unwrap_or("")
+                .is_empty(),
+            "a non-empty authorization code must be returned for the valid subset"
+        );
+    }
+
     /// After granting, the user can list their grants and then revoke the grant.
     /// After revocation the grant must no longer appear.
     #[sqlx::test(migrator = "db::MIGRATOR")]
