@@ -1844,10 +1844,10 @@
     },
     {
       "id": "gap-80-3-mediation-sessions-backend",
-      "action": "Implement mediation session scheduling backend: POST /api/v1/disputes/{id}/sessions, GET sessions list, PUT session update (reschedule/cancel); SQLx migration for dispute_sessions table with calendar invite email",
+      "action": "[ALREADY-SHIPPED Epic 77.2 mediation_sessions] Implement mediation session scheduling backend: POST /api/v1/disputes/{id}/sessions, GET sessions list, PUT session update (reschedule/cancel); SQLx migration for dispute_sessions table with calendar invite email",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "coverage-refill 2026-05-28",
       "deadline": null,
       "dependency": "none",
