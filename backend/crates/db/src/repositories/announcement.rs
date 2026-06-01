@@ -326,6 +326,11 @@ impl AnnouncementRepository {
         let limit = limit.unwrap_or(50).min(100);
         let offset = offset.unwrap_or(0);
 
+        // Issue #920: published announcements are visible to a user only when
+        // the announcement's targeting includes them. `target_type = 'all'` is
+        // org-wide; otherwise match the RLS-context user
+        // (`app.current_user_id`) against their building / unit residencies and
+        // org role. Keep this predicate in sync with `count_published_rls`.
         let announcements = sqlx::query_as::<_, AnnouncementSummary>(
             r#"
             SELECT
@@ -333,6 +338,30 @@ impl AnnouncementRepository {
                 published_at, pinned, comments_enabled, acknowledgment_required
             FROM announcements
             WHERE organization_id = $1 AND status = 'published'
+              AND (
+                target_type = 'all'
+                OR (target_type = 'building' AND EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    JOIN units u ON u.id = ur.unit_id
+                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND ur.end_date IS NULL
+                      AND u.building_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+                OR (target_type = 'units' AND EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND ur.end_date IS NULL
+                      AND ur.unit_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+                OR (target_type = 'roles' AND EXISTS (
+                    SELECT 1 FROM user_memberships m
+                    WHERE m.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND m.organization_id = $1
+                      AND m.revoked_at IS NULL
+                      AND (m.expires_at IS NULL OR m.expires_at > NOW())
+                      AND m.role IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+              )
             ORDER BY pinned DESC, published_at DESC
             LIMIT $2 OFFSET $3
             "#,
@@ -427,8 +456,38 @@ impl AnnouncementRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // Issue #920: count only announcements the RLS-context user is targeted
+        // by. Keep this predicate in sync with `list_published_rls`.
         let count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM announcements WHERE organization_id = $1 AND status = 'published'",
+            r#"
+            SELECT COUNT(*)
+            FROM announcements
+            WHERE organization_id = $1 AND status = 'published'
+              AND (
+                target_type = 'all'
+                OR (target_type = 'building' AND EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    JOIN units u ON u.id = ur.unit_id
+                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND ur.end_date IS NULL
+                      AND u.building_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+                OR (target_type = 'units' AND EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND ur.end_date IS NULL
+                      AND ur.unit_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+                OR (target_type = 'roles' AND EXISTS (
+                    SELECT 1 FROM user_memberships m
+                    WHERE m.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND m.organization_id = $1
+                      AND m.revoked_at IS NULL
+                      AND (m.expires_at IS NULL OR m.expires_at > NOW())
+                      AND m.role IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+              )
+            "#,
         )
         .bind(org_id)
         .fetch_one(executor)
