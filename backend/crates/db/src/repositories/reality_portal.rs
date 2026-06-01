@@ -744,6 +744,54 @@ impl RealityPortalRepository {
         .await
     }
 
+    /// Get inquiries submitted by a buyer (the authenticated `user_id` that
+    /// created them). This is the buyer-axis counterpart to
+    /// [`get_realtor_inquiries`](Self::get_realtor_inquiries): the realtor view
+    /// scopes on `realtor_id`, the buyer view scopes on `user_id`.
+    pub async fn get_buyer_inquiries(
+        &self,
+        user_id: Uuid,
+        status: Option<String>,
+        limit: i32,
+        offset: i32,
+    ) -> Result<Vec<ListingInquiry>, SqlxError> {
+        sqlx::query_as::<_, ListingInquiry>(
+            r#"
+            SELECT * FROM listing_inquiries
+            WHERE user_id = $1 AND ($2::text IS NULL OR status = $2)
+            ORDER BY created_at DESC
+            LIMIT $3 OFFSET $4
+            "#,
+        )
+        .bind(user_id)
+        .bind(&status)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Count inquiries submitted by a buyer (matching the same filter as
+    /// [`get_buyer_inquiries`](Self::get_buyer_inquiries)). Exposes the true
+    /// `total` to paginated routes instead of the current page's `len()`
+    /// (the bug fixed for the realtor axis in PR #919).
+    pub async fn count_buyer_inquiries(
+        &self,
+        user_id: Uuid,
+        status: Option<String>,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM listing_inquiries
+            WHERE user_id = $1 AND ($2::text IS NULL OR status = $2)
+            "#,
+        )
+        .bind(user_id)
+        .bind(&status)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Get a single inquiry by id, scoped to the owning realtor.
     ///
     /// Single-row query — replaces the previous list-then-filter pattern in
