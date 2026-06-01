@@ -39,21 +39,23 @@
         "code-review api-core 2026-05-29",
         "ai.rs:2620",
         "ai.rs:2599",
-        "ai.rs:2847"
+        "ai.rs:2847",
+        "PR #879"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/ai.rs:2620 — publish_description binds `_principal: RequestPrincipal` but discards it, calling llm_document_repo.publish_description(id) with only the path id; wired POST /api/v1/ai/llm/listing/descriptions/{id}/publish in llm_router() (mounted lib.rs:231 + main.rs:568)",
         "backend/crates/db/src/repositories/llm_document.rs:397 — `UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *` has no org/owner/tenant predicate; any authenticated user can publish (make public) another tenant's generated listing description by enumerating the UUID — state-mutating cross-tenant IDOR",
         "ai.rs:2599 list_listing_descriptions discards _principal; repo SQL `SELECT * FROM generated_listing_descriptions WHERE listing_id = $1` (llm_document.rs:358) is tenant-blind — cross-tenant read (GET /api/v1/ai/llm/listing/descriptions/{listing_id})",
         "ai.rs:2847 get_photo_enhancement discards _principal; repo SQL `SELECT * FROM photo_enhancements WHERE id = $1` (llm_document.rs:977) is tenant-blind — cross-tenant read",
-        "distinct from in-flight PR #725 (maintenance/chat-session/sentiment IDOR) and the done equipment/voice-device IDOR clusters; sibling handlers in ai.rs correctly call require_tenant_id — these Epic 64 LLM-document handlers do not. Found by rotating expert review (Rust, api-core), full call path traced and code-verified this run"
+        "distinct from in-flight PR #725 (maintenance/chat-session/sentiment IDOR) and the done equipment/voice-device IDOR clusters; sibling handlers in ai.rs correctly call require_tenant_id — these Epic 64 LLM-document handlers do not. Found by rotating expert review (Rust, api-core), full call path traced and code-verified this run",
+        "[partial] PR #879 (fix(security): scope AI/LLM read-by-id paths to authenticated tenant, closes #766, #816) fixed publish_description (now calls publish_description_for_org with require_tenant_id) and get_photo_enhancement (now calls find_photo_enhancement_for_org). However list_listing_descriptions at routes/ai.rs:2666-2685 still discards _principal and calls llm_document_repo.list_listing_descriptions(listing_id) with no org predicate — the cross-tenant read remains. Item stays `ready` against the existing plan; plan body should be tightened to scope just the residual handler."
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai.rs",
         "backend/crates/db/src/repositories/llm_document.rs"
       ],
       "created_at": "2026-05-29",
-      "updated_at": "2026-05-29",
+      "updated_at": "2026-06-01",
       "plan": "plans/security-llm-doc-idor.md"
     },
     {
@@ -173,6 +175,139 @@
       "plan": "plans/_archive/security-equipment-idor.md"
     },
     {
+      "id": "test-gap-router-set-parity-tests",
+      "title": "api-server main.rs vs lib.rs::create_router diverge silently (5 routes unreachable in prod, no test asserts parity)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #866",
+        "issue #867",
+        "issue #836",
+        "PR #870"
+      ],
+      "evidence": [
+        "PR #866 (closes #836) registered 5 routers (push-tokens, mfa/recovery-codes, pricing, property-valuations, data-residency) that were present in lib.rs::create_router (so TestApp / integration tests passed) but missing from backend/servers/api-server/src/main.rs (so unreachable in production binary)",
+        "PR #866 adds no test that asserts main.rs and lib.rs::create_router expose the same route set — the divergence will recur the next time a route is added on only one of the two sides",
+        "follow-up issue #867 (OPEN, tech-debt) filed by the PR author proposes either (a) main() builds from lib.rs::create_router(state) and layers production-only middleware on top, or (b) extract a shared fn app_router(state) -> Router, plus a test asserting parity",
+        "hotfix-no-test pattern: PR title is `fix(api-server)`, changed files include only main.rs with no *test* file in the diff",
+        "resolved: PR #870 (Tech debt #867: build api-server production router from a single route_table()) introduces api_server::route_table() as the single source of truth used by both lib.rs::create_router and main.rs, and adds backend/servers/api-server/tests/router_single_source_tests.rs — 3 DB-free guard tests (main_builds_from_route_table, main_does_not_hand_list_api_routes, route_table_contains_the_previously_diverged_routers) asserting the parity invariant. Closes #867."
+      ],
+      "files": [
+        "backend/servers/api-server/src/main.rs",
+        "backend/servers/api-server/src/lib.rs"
+      ],
+      "created_at": "2026-05-31",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-922-ppt",
+      "title": "Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #922"
+      ],
+      "evidence": [
+        "PR #922 (fix: address dev-review rounds 1-5 findings, #788) modified frontend/apps/ppt-web/src/App.tsx without a docs/screens/ppt/*.md update — drift signal on ppt product"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-874-portal-webhooks",
+      "title": "Portal webhook fail-closed fix (PR #874) shipped without a regression test for unverified-signature rejection",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #874"
+      ],
+      "evidence": [
+        "fix(security): fail closed on unverified portal webhooks (closes #833) — 1 file changed (backend/servers/api-server/src/routes/portal_webhooks.rs), no *test* file in diff"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/portal_webhooks.rs"
+      ],
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-918-mobile-dev-review",
+      "title": "Mobile dev-review batch (PR #918, 5 files under frontend/apps/mobile/src) shipped without a regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #918"
+      ],
+      "evidence": [
+        "fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, 3 screens), no *test* file in diff"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/App.tsx",
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx"
+      ],
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-921-sso-consumer",
+      "title": "Reality-server SSO consumer review fix (PR #921, closes #820) shipped without a regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #921"
+      ],
+      "evidence": [
+        "fix(security): SSO consumer review findings (closes #820) — 1 file changed (backend/servers/reality-server/src/state.rs), no *test* file in diff"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/state.rs"
+      ],
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-923-branch-protection-rebase",
+      "title": "CI branch-protection + auto-rebase workflow change (PR #923) shipped without an integration test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #923"
+      ],
+      "evidence": [
+        "fix(ci): don't weaken branch protection; rebase lockfiles from base (closes #771) — 2 .yml files (.github/workflows/auto-rebase-stale-drafts.yml, branch-protection-setup.yml), no *test* file in diff (CI-config-only, test would be CI-integration)"
+      ],
+      "files": [
+        ".github/workflows/auto-rebase-stale-drafts.yml",
+        ".github/workflows/branch-protection-setup.yml"
+      ],
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
       "id": "bug-report-schedule-update-no-sql",
       "title": "ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column)",
       "vector": "bug",
@@ -196,6 +331,52 @@
         "backend/crates/db/src/repositories/report_schedule.rs"
       ],
       "created_at": "2026-05-27",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "bug-webhook-airbnb-dup-sync-jobs",
+      "title": "Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "confidence": "high",
+      "sources": [
+        "PR #538",
+        "webhook.rs:1028",
+        "PR #841"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:1028 — TODO acknowledges Airbnb delivers webhooks at-least-once; a rapid sequence of events for the same listing enqueues duplicate SYNC_EXTERNAL background jobs",
+        "no dedup today: the handler inserts a CreateBackgroundJob unconditionally; fix needs an idempotent worker-level upsert or a check for an already-queued SYNC_EXTERNAL job for (org_id, connection_id) before insert",
+        "[partial] PR #841 (closes #711) merged 2026-05-30 — adds airbnb_webhook_events dedup ledger (migration 00169) that suppresses Airbnb at-least-once retries by event_id at webhook.rs:1014-1052. Residual: the TODO at webhook.rs:1073 about distinct-event-rapid-succession SYNC_EXTERNAL dedup is still present; the duplicate-job concern for non-replay distinct events remains. Stays open until worker-level/job-level dedup lands."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-839-ppt",
+      "title": "Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #839"
+      ],
+      "evidence": [
+        "PR #839 (fix(ppt-web): localize evidence-upload partial-fail toast + pass list via router state) touched frontend/apps/ppt-web/src/App.tsx (FileDisputePageRoute internal logic) without updating any docs/screens/ppt/*.md screen doc",
+        "heuristic caveat: this PR changes internal handler logic (i18n string + router state threading), not route topology — the docs/screens drift signal is best-effort and may not require a doc update; review whether docs/screens/ppt/file-dispute.md (or equivalent) needs a refreshed `agent log`"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-05-30",
       "updated_at": "2026-05-30",
       "plan": null
     },
@@ -444,30 +625,6 @@
       ],
       "created_at": "2026-05-26",
       "updated_at": "2026-05-26",
-      "plan": null
-    },
-    {
-      "id": "bug-webhook-airbnb-dup-sync-jobs",
-      "title": "Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
-      "vector": "bug",
-      "score": 2,
-      "status": "open",
-      "confidence": "high",
-      "sources": [
-        "PR #538",
-        "webhook.rs:1028",
-        "PR #841"
-      ],
-      "evidence": [
-        "backend/servers/api-server/src/routes/integrations/webhook.rs:1028 — TODO acknowledges Airbnb delivers webhooks at-least-once; a rapid sequence of events for the same listing enqueues duplicate SYNC_EXTERNAL background jobs",
-        "no dedup today: the handler inserts a CreateBackgroundJob unconditionally; fix needs an idempotent worker-level upsert or a check for an already-queued SYNC_EXTERNAL job for (org_id, connection_id) before insert",
-        "[partial] PR #841 (closes #711) merged 2026-05-30 — adds airbnb_webhook_events dedup ledger (migration 00169) that suppresses Airbnb at-least-once retries by event_id at webhook.rs:1014-1052. Residual: the TODO at webhook.rs:1073 about distinct-event-rapid-succession SYNC_EXTERNAL dedup is still present; the duplicate-job concern for non-replay distinct events remains. Stays open until worker-level/job-level dedup lands."
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/integrations/webhook.rs"
-      ],
-      "created_at": "2026-05-26",
-      "updated_at": "2026-05-30",
       "plan": null
     },
     {
@@ -850,6 +1007,617 @@
       "plan": null
     },
     {
+      "id": "triage-issue-750",
+      "title": "Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#750",
+        "PR #922"
+      ],
+      "evidence": [
+        "Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings",
+        "resolved: GitHub issue #750 CLOSED on/before 2026-06-01; PR #922 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-753",
+      "title": "Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#753"
+      ],
+      "evidence": [
+        "Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication",
+        "resolved: GitHub issue #753 CLOSED on/before 2026-06-01 (closed by merged PR in the 2026-05-31..06-01 security sprint; PR mapping not pinned in routine)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-754",
+      "title": "Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#754",
+        "PR #914"
+      ],
+      "evidence": [
+        "Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management",
+        "resolved: GitHub issue #754 CLOSED on/before 2026-06-01; PR #914 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-757",
+      "title": "Issue #757 (no labels, OPEN): Current dev review: Epic 10B Platform Administration",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#757"
+      ],
+      "evidence": [
+        "Issue #757 (no labels, OPEN): Current dev review: Epic 10B Platform Administration",
+        "resolved: GitHub issue #757 CLOSED on/before 2026-06-01 (closed by merged PR in the 2026-05-31..06-01 security sprint; PR mapping not pinned in routine)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-760",
+      "title": "Issue #760 (no labels, OPEN): Current dev review: Epic 79 Disputes & Mediation",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#760",
+        "PR #915"
+      ],
+      "evidence": [
+        "Issue #760 (no labels, OPEN): Current dev review: Epic 79 Disputes & Mediation",
+        "resolved: GitHub issue #760 CLOSED on/before 2026-06-01; PR #915 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-762",
+      "title": "Issue #762 (no labels, OPEN): Current dev review: Reports & Schedules",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#762"
+      ],
+      "evidence": [
+        "Issue #762 (no labels, OPEN): Current dev review: Reports & Schedules",
+        "resolved: GitHub issue #762 CLOSED on/before 2026-06-01 (closed by merged PR in the 2026-05-31..06-01 security sprint; PR mapping not pinned in routine)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-766",
+      "title": "Issue #766 (no labels, OPEN): Current dev review: AI & LLM routes",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#766",
+        "PR #879"
+      ],
+      "evidence": [
+        "Issue #766 (no labels, OPEN): Current dev review: AI & LLM routes",
+        "resolved: GitHub issue #766 CLOSED on/before 2026-06-01; PR #879 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-770",
+      "title": "Issue #770 (no labels, OPEN): Current dev review: Faults & triage",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#770",
+        "PR #902"
+      ],
+      "evidence": [
+        "Issue #770 (no labels, OPEN): Current dev review: Faults & triage",
+        "resolved: GitHub issue #770 CLOSED on/before 2026-06-01; PR #902 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-771",
+      "title": "Issue #771 (no labels, OPEN): Current dev review: Research dispatcher & CI automation",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#771",
+        "PR #923"
+      ],
+      "evidence": [
+        "Issue #771 (no labels, OPEN): Current dev review: Research dispatcher & CI automation",
+        "resolved: GitHub issue #771 CLOSED on/before 2026-06-01; PR #923 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-772",
+      "title": "Issue #772 (no labels, OPEN): Current dev review: Auth core (delta confirmation)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#772"
+      ],
+      "evidence": [
+        "Issue #772 (no labels, OPEN): Current dev review: Auth core (delta confirmation)",
+        "resolved: GitHub issue #772 CLOSED on/before 2026-06-01 (closed by merged PR in the 2026-05-31..06-01 security sprint; PR mapping not pinned in routine)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-773",
+      "title": "Issue #773 (no labels, OPEN): Current dev review: Leases & rental",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#773"
+      ],
+      "evidence": [
+        "Issue #773 (no labels, OPEN): Current dev review: Leases & rental",
+        "resolved: GitHub issue #773 CLOSED on/before 2026-06-01 (closed by merged PR in the 2026-05-31..06-01 security sprint; PR mapping not pinned in routine)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-774",
+      "title": "Issue #774 (no labels, OPEN): Current dev review: Reality server (broad)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#774",
+        "PR #919"
+      ],
+      "evidence": [
+        "Issue #774 (no labels, OPEN): Current dev review: Reality server (broad)",
+        "resolved: GitHub issue #774 CLOSED on/before 2026-06-01; PR #919 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-775",
+      "title": "Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#775",
+        "PR #926"
+      ],
+      "evidence": [
+        "Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime",
+        "resolved: GitHub issue #775 CLOSED on/before 2026-06-01; PR #926 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-776",
+      "title": "Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#776"
+      ],
+      "evidence": [
+        "Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log",
+        "resolved: GitHub issue #776 CLOSED on/before 2026-06-01 (closed by merged PR in the 2026-05-31..06-01 security sprint; PR mapping not pinned in routine)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-777",
+      "title": "Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#777"
+      ],
+      "evidence": [
+        "Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR",
+        "resolved: GitHub issue #777 CLOSED on/before 2026-06-01 (closed by merged PR in the 2026-05-31..06-01 security sprint; PR mapping not pinned in routine)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-778",
+      "title": "Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonation",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#778",
+        "PR #882"
+      ],
+      "evidence": [
+        "Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonation",
+        "resolved: GitHub issue #778 CLOSED on/before 2026-06-01; PR #882 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-788",
+      "title": "Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#788",
+        "PR #922"
+      ],
+      "evidence": [
+        "Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces",
+        "resolved: GitHub issue #788 CLOSED on/before 2026-06-01; PR #922 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-790",
+      "title": "Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#790",
+        "PR #913"
+      ],
+      "evidence": [
+        "Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware",
+        "resolved: GitHub issue #790 CLOSED on/before 2026-06-01; PR #913 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-791",
+      "title": "Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#791",
+        "PR #924"
+      ],
+      "evidence": [
+        "Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves",
+        "resolved: GitHub issue #791 CLOSED on/before 2026-06-01; PR #924 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-846",
+      "title": "Issue #846 (no labels, OPEN): Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#846",
+        "PR #880"
+      ],
+      "evidence": [
+        "new GitHub issue #846 (Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: GitHub issue #846 CLOSED on/before 2026-06-01; PR #880 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-847",
+      "title": "Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#847"
+      ],
+      "evidence": [
+        "new GitHub issue #847 (Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: GitHub issue #847 CLOSED on/before 2026-06-01 (closed by merged PR in the 2026-05-31..06-01 security sprint; PR mapping not pinned in routine)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-848",
+      "title": "Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#848",
+        "PR #913"
+      ],
+      "evidence": [
+        "new GitHub issue #848 (Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: GitHub issue #848 CLOSED on/before 2026-06-01; PR #913 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-850",
+      "title": "Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#850",
+        "PR #883"
+      ],
+      "evidence": [
+        "new GitHub issue #850 (Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: GitHub issue #850 CLOSED on/before 2026-06-01; PR #883 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-851",
+      "title": "Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#851",
+        "PR #904"
+      ],
+      "evidence": [
+        "new GitHub issue #851 (Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: GitHub issue #851 CLOSED on/before 2026-06-01; PR #904 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-859",
+      "title": "Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#859",
+        "PR #871"
+      ],
+      "evidence": [
+        "new GitHub issue #859 (sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: GitHub issue #859 CLOSED on/before 2026-06-01; PR #871 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-867",
+      "title": "Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#867",
+        "PR #870"
+      ],
+      "evidence": [
+        "new GitHub issue #867 (Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently) opened without labels — fired untriaged-issue signal this run",
+        "see related backlog row test-gap-router-set-parity-tests (vector=test-gap, score=2) for the implementer-facing version of this signal",
+        "resolved: GitHub issue #867 CLOSED on/before 2026-06-01; PR #870 addressed it (see merged-PR list)."
+      ],
+      "files": [],
+      "created_at": "2026-05-31",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "security-pkce-oauth-authcode-pr-908-closed",
+      "title": "PR #908 (fix(security): require PKCE on OAuth authorization-code flow, closes #823) was closed unmerged — verify whether PKCE enforcement still pending",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #908"
+      ],
+      "evidence": [
+        "fix(security): require PKCE on OAuth authorization-code flow (closes #823) — closed without merge on 2026-06-01. Per dispatcher, likely superseded or rolled back; underlying issue #823 (PKCE enforcement) may still be open"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth_provider.rs"
+      ],
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-920",
+      "title": "Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#920"
+      ],
+      "evidence": [
+        "new GitHub issue #920 (OPEN, no labels): Announcement targeting not enforced on read (intra-org disclosure) — security-relevant, awaits triage label"
+      ],
+      "files": [],
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-836",
+      "title": "Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#836",
+        "PR #866"
+      ],
+      "evidence": [
+        "new GitHub issue #836 (Code review: Epic 2B-C — Mobile push & device registration (origin/dev)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: PR #866 merged 2026-05-31 — fix(api-server): register 5 routers missing from the production binary (closes #836)"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-31",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-845",
+      "title": "Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#845",
+        "PR #862"
+      ],
+      "evidence": [
+        "new GitHub issue #845 (Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: PR #862 merged 2026-05-30 — fix(security): require auth on all IoT sensor endpoints (closes #817, #824, #845)"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-31",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-849",
+      "title": "Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#849",
+        "PR #869"
+      ],
+      "evidence": [
+        "new GitHub issue #849 (Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev)) opened without labels — fired untriaged-issue signal this run",
+        "resolved: PR #869 merged 2026-05-31 — fix(security): require auth on board-meeting endpoints (closes #849)"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-05-31",
+      "plan": null
+    },
+    {
       "id": "triage-issue-749",
       "title": "Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting",
       "vector": "triage",
@@ -861,24 +1629,6 @@
       ],
       "evidence": [
         "Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-750",
-      "title": "Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#750"
-      ],
-      "evidence": [
-        "Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings"
       ],
       "files": [],
       "created_at": "2026-05-30",
@@ -922,42 +1672,6 @@
       "plan": null
     },
     {
-      "id": "triage-issue-753",
-      "title": "Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#753"
-      ],
-      "evidence": [
-        "Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-754",
-      "title": "Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#754"
-      ],
-      "evidence": [
-        "Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
       "id": "triage-issue-755",
       "title": "Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences",
       "vector": "triage",
@@ -994,42 +1708,6 @@
       "plan": null
     },
     {
-      "id": "triage-issue-757",
-      "title": "Issue #757 (no labels, OPEN): Current dev review: Epic 10B Platform Administration",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#757"
-      ],
-      "evidence": [
-        "Issue #757 (no labels, OPEN): Current dev review: Epic 10B Platform Administration"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-760",
-      "title": "Issue #760 (no labels, OPEN): Current dev review: Epic 79 Disputes & Mediation",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#760"
-      ],
-      "evidence": [
-        "Issue #760 (no labels, OPEN): Current dev review: Epic 79 Disputes & Mediation"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
       "id": "triage-issue-761",
       "title": "Issue #761 (no labels, OPEN): Current dev review: Epic 84 E-Signature & Leases",
       "vector": "triage",
@@ -1041,24 +1719,6 @@
       ],
       "evidence": [
         "Issue #761 (no labels, OPEN): Current dev review: Epic 84 E-Signature & Leases"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-762",
-      "title": "Issue #762 (no labels, OPEN): Current dev review: Reports & Schedules",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#762"
-      ],
-      "evidence": [
-        "Issue #762 (no labels, OPEN): Current dev review: Reports & Schedules"
       ],
       "files": [],
       "created_at": "2026-05-30",
@@ -1120,24 +1780,6 @@
       "plan": null
     },
     {
-      "id": "triage-issue-766",
-      "title": "Issue #766 (no labels, OPEN): Current dev review: AI & LLM routes",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#766"
-      ],
-      "evidence": [
-        "Issue #766 (no labels, OPEN): Current dev review: AI & LLM routes"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
       "id": "triage-issue-767",
       "title": "Issue #767 (no labels, OPEN): Current dev review: Mobile RN Property Management app",
       "vector": "triage",
@@ -1192,168 +1834,6 @@
       "plan": null
     },
     {
-      "id": "triage-issue-770",
-      "title": "Issue #770 (no labels, OPEN): Current dev review: Faults & triage",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#770"
-      ],
-      "evidence": [
-        "Issue #770 (no labels, OPEN): Current dev review: Faults & triage"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-771",
-      "title": "Issue #771 (no labels, OPEN): Current dev review: Research dispatcher & CI automation",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#771"
-      ],
-      "evidence": [
-        "Issue #771 (no labels, OPEN): Current dev review: Research dispatcher & CI automation"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-772",
-      "title": "Issue #772 (no labels, OPEN): Current dev review: Auth core (delta confirmation)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#772"
-      ],
-      "evidence": [
-        "Issue #772 (no labels, OPEN): Current dev review: Auth core (delta confirmation)"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-773",
-      "title": "Issue #773 (no labels, OPEN): Current dev review: Leases & rental",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#773"
-      ],
-      "evidence": [
-        "Issue #773 (no labels, OPEN): Current dev review: Leases & rental"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-774",
-      "title": "Issue #774 (no labels, OPEN): Current dev review: Reality server (broad)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#774"
-      ],
-      "evidence": [
-        "Issue #774 (no labels, OPEN): Current dev review: Reality server (broad)"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-775",
-      "title": "Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#775"
-      ],
-      "evidence": [
-        "Issue #775 (no labels, OPEN): Current dev review: WebSocket realtime"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-776",
-      "title": "Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#776"
-      ],
-      "evidence": [
-        "Issue #776 (no labels, OPEN): Current dev review: Equipment & audit log"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-777",
-      "title": "Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#777"
-      ],
-      "evidence": [
-        "Issue #777 (no labels, OPEN): Current dev review: Compliance & GDPR"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-778",
-      "title": "Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonation",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#778"
-      ],
-      "evidence": [
-        "Issue #778 (no labels, OPEN): Current dev review: Marketplace, voting, investor portal, impersonation"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
       "id": "triage-issue-779",
       "title": "Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot)",
       "vector": "triage",
@@ -1372,24 +1852,6 @@
       "plan": null
     },
     {
-      "id": "triage-issue-788",
-      "title": "Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#788"
-      ],
-      "evidence": [
-        "Issue #788 (no labels, OPEN): Dev review rounds 1-5: mobile-native + ppt-web surfaces"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
       "id": "triage-issue-789",
       "title": "Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings",
       "vector": "triage",
@@ -1401,42 +1863,6 @@
       ],
       "evidence": [
         "Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-790",
-      "title": "Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#790"
-      ],
-      "evidence": [
-        "Issue #790 (no labels, OPEN): Dev review rounds 11-15: vendor, predictive, reality-web, middleware"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-791",
-      "title": "Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#791"
-      ],
-      "evidence": [
-        "Issue #791 (no labels, OPEN): Dev review rounds 16-20: push, e-sign, portal, webhooks, reserves"
       ],
       "files": [],
       "created_at": "2026-05-30",
@@ -1635,241 +2061,6 @@
       ],
       "created_at": "2026-05-24",
       "updated_at": "2026-05-24",
-      "plan": null
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-839-ppt",
-      "title": "Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update",
-      "vector": "test-gap",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
-      "sources": [
-        "PR #839"
-      ],
-      "evidence": [
-        "PR #839 (fix(ppt-web): localize evidence-upload partial-fail toast + pass list via router state) touched frontend/apps/ppt-web/src/App.tsx (FileDisputePageRoute internal logic) without updating any docs/screens/ppt/*.md screen doc",
-        "heuristic caveat: this PR changes internal handler logic (i18n string + router state threading), not route topology — the docs/screens drift signal is best-effort and may not require a doc update; review whether docs/screens/ppt/file-dispute.md (or equivalent) needs a refreshed `agent log`"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/App.tsx",
-        "docs/screens/ppt/"
-      ],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-836",
-      "title": "Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "done",
-      "sources": [
-        "#836",
-        "PR #866"
-      ],
-      "evidence": [
-        "new GitHub issue #836 (Code review: Epic 2B-C — Mobile push & device registration (origin/dev)) opened without labels — fired untriaged-issue signal this run",
-        "resolved: PR #866 merged 2026-05-31 — fix(api-server): register 5 routers missing from the production binary (closes #836)"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-31",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-845",
-      "title": "Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "done",
-      "sources": [
-        "#845",
-        "PR #862"
-      ],
-      "evidence": [
-        "new GitHub issue #845 (Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev)) opened without labels — fired untriaged-issue signal this run",
-        "resolved: PR #862 merged 2026-05-30 — fix(security): require auth on all IoT sensor endpoints (closes #817, #824, #845)"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-31",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-846",
-      "title": "Issue #846 (no labels, OPEN): Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#846"
-      ],
-      "evidence": [
-        "new GitHub issue #846 (Code review: Epics 12+65 — Meters & Energy/ESG (origin/dev)) opened without labels — fired untriaged-issue signal this run"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-847",
-      "title": "Issue #847 (no labels, OPEN): Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#847"
-      ],
-      "evidence": [
-        "new GitHub issue #847 (Code review: Reality-server — Inquiries IDOR (Epics 16–19) (origin/dev)) opened without labels — fired untriaged-issue signal this run"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-848",
-      "title": "Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#848"
-      ],
-      "evidence": [
-        "new GitHub issue #848 (Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev)) opened without labels — fired untriaged-issue signal this run"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-849",
-      "title": "Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "done",
-      "sources": [
-        "#849",
-        "PR #869"
-      ],
-      "evidence": [
-        "new GitHub issue #849 (Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev)) opened without labels — fired untriaged-issue signal this run",
-        "resolved: PR #869 merged 2026-05-31 — fix(security): require auth on board-meeting endpoints (closes #849)"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-31",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-850",
-      "title": "Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#850"
-      ],
-      "evidence": [
-        "new GitHub issue #850 (Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev)) opened without labels — fired untriaged-issue signal this run"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-851",
-      "title": "Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#851"
-      ],
-      "evidence": [
-        "new GitHub issue #851 (Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev)) opened without labels — fired untriaged-issue signal this run"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-859",
-      "title": "Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#859"
-      ],
-      "evidence": [
-        "new GitHub issue #859 (sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500)) opened without labels — fired untriaged-issue signal this run"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "test-gap-router-set-parity-tests",
-      "title": "api-server main.rs vs lib.rs::create_router diverge silently (5 routes unreachable in prod, no test asserts parity)",
-      "vector": "test-gap",
-      "confidence": "high",
-      "score": 2,
-      "status": "open",
-      "sources": [
-        "PR #866",
-        "issue #867",
-        "issue #836"
-      ],
-      "evidence": [
-        "PR #866 (closes #836) registered 5 routers (push-tokens, mfa/recovery-codes, pricing, property-valuations, data-residency) that were present in lib.rs::create_router (so TestApp / integration tests passed) but missing from backend/servers/api-server/src/main.rs (so unreachable in production binary)",
-        "PR #866 adds no test that asserts main.rs and lib.rs::create_router expose the same route set — the divergence will recur the next time a route is added on only one of the two sides",
-        "follow-up issue #867 (OPEN, tech-debt) filed by the PR author proposes either (a) main() builds from lib.rs::create_router(state) and layers production-only middleware on top, or (b) extract a shared fn app_router(state) -> Router, plus a test asserting parity",
-        "hotfix-no-test pattern: PR title is `fix(api-server)`, changed files include only main.rs with no *test* file in the diff"
-      ],
-      "files": [
-        "backend/servers/api-server/src/main.rs",
-        "backend/servers/api-server/src/lib.rs"
-      ],
-      "created_at": "2026-05-31",
-      "updated_at": "2026-05-31",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-867",
-      "title": "Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#867"
-      ],
-      "evidence": [
-        "new GitHub issue #867 (Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently) opened without labels — fired untriaged-issue signal this run",
-        "see related backlog row test-gap-router-set-parity-tests (vector=test-gap, score=2) for the implementer-facing version of this signal"
-      ],
-      "files": [],
-      "created_at": "2026-05-31",
-      "updated_at": "2026-05-31",
       "plan": null
     }
   ]
