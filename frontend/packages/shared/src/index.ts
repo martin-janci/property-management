@@ -39,6 +39,7 @@ export {
   // Roles
   ROLES,
   type Role,
+  sanitizeReturnUrl,
   // Session
   setReturnUrl,
   setSsoState,
@@ -106,6 +107,8 @@ export {
   // Composite
   combineValidators,
   getPasswordStrength,
+  // Image URL allowlist
+  isSafeImageUrl,
   isValidCompanyId,
   // Email
   isValidEmail,

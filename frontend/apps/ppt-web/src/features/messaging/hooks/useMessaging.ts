@@ -34,17 +34,22 @@ import type {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
-function getMessagingApi() {
+// NOTE: `createMessagingApi` / `createNeighborsApi` bake the
+// `Authorization: Bearer <token>` header into the returned client at
+// construction time. Callers must re-create the client whenever the token
+// rotates (the `useMemo` deps below are keyed on the token), otherwise a stale
+// Bearer token is sent for the rest of the component's lifetime.
+function getMessagingApi(accessToken: string | undefined) {
   return createMessagingApi({
     baseUrl: API_BASE_URL,
-    accessToken: getToken() ?? undefined,
+    accessToken,
   });
 }
 
-function getNeighborsApi() {
+function getNeighborsApi(accessToken: string | undefined) {
   return createNeighborsApi({
     baseUrl: API_BASE_URL,
-    accessToken: getToken() ?? undefined,
+    accessToken,
   });
 }
 
@@ -141,7 +146,8 @@ export function mapApiThreadDetailToUi(detail: ThreadDetailResponse): ThreadWith
  * Returns TanStack Query hooks for the messaging API.
  */
 export function useMessagingApi() {
-  const api = useMemo(() => getMessagingApi(), []);
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getMessagingApi(token), [token]);
   return useMemo(() => createMessagingHooks(api), [api]);
 }
 
@@ -214,7 +220,8 @@ export function useMessageRecipients(buildingId?: string): {
   recipients: RecipientOption[];
   isLoading: boolean;
 } {
-  const api = useMemo(() => getNeighborsApi(), []);
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getNeighborsApi(token), [token]);
   const hooks = useMemo(() => createNeighborHooks(api), [api]);
   const { data, isLoading } = hooks.useNeighbors(buildingId ?? '', !!buildingId);
 
