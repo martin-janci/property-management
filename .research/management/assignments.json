@@ -1,12 +1,12 @@
 {
-  "generated": "2026-06-01T20:45:07Z",
+  "generated": "2026-06-01T22:13:24Z",
   "assignments": [
     {
       "task_id": "pm-integration-sqlx-0-9-upgrade-audit",
       "branch": "auto-impl/pm-integration-sqlx-0-9-upgrade-audit",
       "status": "review",
       "claimed_at": "2026-06-01T08:11:00Z",
-      "last_updated": "2026-06-01T20:14:08Z",
+      "last_updated": "2026-06-01T22:13:24Z",
       "status_changed_at": "2026-06-01T08:47:00Z",
       "pr_number": 932,
       "pr_url": "https://github.com/martin-janci/property-management/pull/932",
@@ -20,7 +20,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
@@ -30,7 +30,7 @@
       "branch": "auto-impl/gap-80-1-dispute-api-integration-tests",
       "status": "review",
       "claimed_at": "2026-06-01T20:16:42Z",
-      "last_updated": "2026-06-01T20:44:59Z",
+      "last_updated": "2026-06-01T22:13:24Z",
       "status_changed_at": "2026-06-01T20:44:59Z",
       "pr_number": 946,
       "pr_url": "https://github.com/martin-janci/property-management/pull/946",
@@ -45,7 +45,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-01T22:13:24Z"
     }
   ]
 }
