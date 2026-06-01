@@ -33,6 +33,36 @@ pub enum RecordNonceError {
     Database(#[from] SqlxError),
 }
 
+/// Read-only lifecycle state of a `(envelope_id, nonce)` pair, used by the
+/// `/sign` GET render-context handler to decide whether to show a signing
+/// form. Consumption itself goes through [`ESignatureNonceRepository::consume_nonce`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NonceState {
+    /// No row for this pair — the nonce was never issued for this envelope
+    /// (forged or for a different envelope). Map to 404/401.
+    NotIssued,
+    /// Issued (row exists, `consumed_at IS NULL`) and not yet spent — a
+    /// `/sign` POST may consume it.
+    Pending,
+    /// Already consumed (`consumed_at` set) — a replay. Map to 409 CONFLICT.
+    Consumed,
+}
+
+/// Result of an atomic single-use consume attempt via
+/// [`ESignatureNonceRepository::consume_nonce`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConsumeOutcome {
+    /// This call flipped `consumed_at` NULL -> NOW(); the signer may proceed.
+    Consumed,
+    /// The nonce was issued but a prior call already consumed it — replay.
+    /// Map to 409 CONFLICT.
+    AlreadyConsumed,
+    /// No row for this `(envelope_id, nonce)` pair — never issued. Map to
+    /// 401/404 (an unsigned/forged nonce that nonetheless passed HMAC would
+    /// be extraordinary, but we fail closed).
+    NotIssued,
+}
+
 impl ESignatureNonceRepository {
     /// Construct a new repository against the given pool.
     pub fn new(pool: PgPool) -> Self {
@@ -66,6 +96,76 @@ impl ESignatureNonceRepository {
                 Err(RecordNonceError::Replay)
             }
             Err(e) => Err(RecordNonceError::Database(e)),
+        }
+    }
+
+    /// Read the lifecycle state of a `(envelope_id, nonce)` pair WITHOUT
+    /// mutating it. Used by the `/sign` GET render-context handler so it can
+    /// distinguish "show the signing form" (Pending) from "already signed"
+    /// (Consumed) and "unknown link" (NotIssued).
+    pub async fn nonce_state(
+        &self,
+        envelope_id: Uuid,
+        nonce: Uuid,
+    ) -> Result<NonceState, SqlxError> {
+        // `consumed_at` is nullable; the outer Option is "row present?", the
+        // inner is "consumed?". A `::text` cast is unnecessary here — the
+        // column is a plain TIMESTAMPTZ, decoded directly.
+        let row: Option<(Option<chrono::DateTime<chrono::Utc>>,)> = sqlx::query_as(
+            r#"
+            SELECT consumed_at FROM e_signature_nonces
+            WHERE envelope_id = $1 AND nonce = $2
+            LIMIT 1
+            "#,
+        )
+        .bind(envelope_id)
+        .bind(nonce)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(match row {
+            None => NonceState::NotIssued,
+            Some((None,)) => NonceState::Pending,
+            Some((Some(_),)) => NonceState::Consumed,
+        })
+    }
+
+    /// Atomically consume an issued nonce (single-use).
+    ///
+    /// Flips `consumed_at` from `NULL` to `NOW()` in a single statement, so
+    /// two concurrent `/sign` POSTs racing on the same link cannot both win:
+    /// exactly one `UPDATE ... WHERE consumed_at IS NULL` matches a row, the
+    /// other matches zero. The loser, and every later replay, is reported as
+    /// [`ConsumeOutcome::AlreadyConsumed`] (→ 409). A pair that was never
+    /// issued is [`ConsumeOutcome::NotIssued`] (→ 401/404).
+    pub async fn consume_nonce(
+        &self,
+        envelope_id: Uuid,
+        nonce: Uuid,
+    ) -> Result<ConsumeOutcome, SqlxError> {
+        let consumed: Option<(Uuid,)> = sqlx::query_as(
+            r#"
+            UPDATE e_signature_nonces
+            SET consumed_at = NOW()
+            WHERE envelope_id = $1 AND nonce = $2 AND consumed_at IS NULL
+            RETURNING id
+            "#,
+        )
+        .bind(envelope_id)
+        .bind(nonce)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        if consumed.is_some() {
+            return Ok(ConsumeOutcome::Consumed);
+        }
+
+        // Zero rows updated: either the pair was never issued, or it was
+        // already consumed by a prior call. Distinguish for the caller.
+        if self.nonce_exists(envelope_id, nonce).await? {
+            Ok(ConsumeOutcome::AlreadyConsumed)
+        } else {
+            Ok(ConsumeOutcome::NotIssued)
         }
     }
 
