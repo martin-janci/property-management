@@ -785,24 +785,48 @@ impl IntegrationRepository {
 
     /// Update e-signature workflow status by external envelope ID.
     ///
-    /// Used by webhook handlers to update workflow status based on external provider events.
+    /// Used by webhook handlers to update workflow status based on external
+    /// provider events.
+    ///
+    /// **Terminal-state idempotency:** once a workflow has reached a terminal
+    /// status (`completed`, `voided`, `declined`) the update is a safe no-op.
+    /// Providers (DocuSign / Adobe Sign / HelloSign) may re-deliver webhook
+    /// events, and a re-delivery must never overwrite a terminal outcome. The
+    /// guard lives in the `WHERE` clause so the skip is atomic and free of
+    /// read-modify-write races; the function still returns the current row (if
+    /// the envelope exists) so callers can observe the unchanged terminal
+    /// state, and returns `None` only when no workflow matches the envelope ID.
     pub async fn update_esignature_workflow_by_external_id(
         &self,
         external_envelope_id: &str,
         status: &str,
     ) -> Result<Option<ESignatureWorkflow>, SqlxError> {
+        let terminal: Vec<String> = esignature_status::TERMINAL
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+
         sqlx::query_as::<_, ESignatureWorkflow>(
             r#"
-            UPDATE esignature_workflows SET
-                status = $2,
-                completed_at = CASE WHEN $2 IN ('completed', 'voided', 'expired', 'declined') THEN NOW() ELSE completed_at END,
-                updated_at = NOW()
+            WITH updated AS (
+                UPDATE esignature_workflows SET
+                    status = $2,
+                    completed_at = CASE WHEN $2 IN ('completed', 'voided', 'expired', 'declined') THEN NOW() ELSE completed_at END,
+                    updated_at = NOW()
+                WHERE external_envelope_id = $1
+                  AND status <> ALL($3)
+                RETURNING *
+            )
+            SELECT * FROM updated
+            UNION ALL
+            SELECT * FROM esignature_workflows
             WHERE external_envelope_id = $1
-            RETURNING *
+              AND NOT EXISTS (SELECT 1 FROM updated)
             "#,
         )
         .bind(external_envelope_id)
         .bind(status)
+        .bind(terminal)
         .fetch_optional(&self.pool)
         .await
     }
@@ -1785,5 +1809,174 @@ impl IntegrationRepository {
         .unwrap_or(0);
 
         Ok((calendar_count, video_count))
+    }
+}
+
+#[cfg(test)]
+mod esignature_webhook_idempotency_tests {
+    //! Terminal-state idempotency guard for e-signature webhooks.
+    //!
+    //! Providers (DocuSign / Adobe Sign / HelloSign) may re-deliver webhook
+    //! events. Once a workflow is in a terminal status (`completed`,
+    //! `voided`, `declined`), a re-delivered event MUST NOT overwrite that
+    //! terminal state. `update_esignature_workflow_by_external_id` enforces
+    //! this with a `status <> ALL($terminal)` guard in its `WHERE` clause.
+    //!
+    //! These tests require a live database and are therefore tagged
+    //! `#[ignore]`; run them with:
+    //!
+    //! ```bash
+    //! cargo test -p db -- --ignored --test-threads=1
+    //! ```
+    use super::*;
+    use sqlx::postgres::PgPoolOptions;
+    use std::time::Duration;
+
+    async fn test_pool() -> DbPool {
+        let url = std::env::var("TEST_DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/ppt_test".to_string());
+        PgPoolOptions::new()
+            .max_connections(1)
+            .acquire_timeout(Duration::from_secs(5))
+            .connect(&url)
+            .await
+            .expect("test db pool")
+    }
+
+    /// Seed a minimal organization + user + document + workflow, returning the
+    /// workflow id. The workflow is created directly in the requested terminal
+    /// or non-terminal `status` with the given `external_envelope_id`.
+    async fn seed_workflow(pool: &DbPool, external_id: &str, status: &str) -> Uuid {
+        let org_id: Uuid = sqlx::query_scalar(
+            "INSERT INTO organizations (name, slug) VALUES ('Idem Test Org', $1) RETURNING id",
+        )
+        .bind(format!("idem-test-{external_id}"))
+        .fetch_one(pool)
+        .await
+        .expect("seed org");
+
+        let user_id: Uuid = sqlx::query_scalar(
+            r#"INSERT INTO users (email, password_hash, name, status, email_verified_at)
+               VALUES ($1, 'test_hash', 'Idem Tester', 'active', NOW()) RETURNING id"#,
+        )
+        .bind(format!("idem-{external_id}@test.sk"))
+        .fetch_one(pool)
+        .await
+        .expect("seed user");
+
+        let document_id: Uuid = sqlx::query_scalar(
+            r#"INSERT INTO documents
+                 (organization_id, title, file_key, file_name, mime_type, size_bytes, created_by)
+               VALUES ($1, 'Idem Doc', 'idem/idem.pdf', 'idem.pdf', 'application/pdf', 1024, $2)
+               RETURNING id"#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .fetch_one(pool)
+        .await
+        .expect("seed document");
+
+        sqlx::query_scalar(
+            r#"INSERT INTO esignature_workflows
+                 (organization_id, document_id, provider, external_envelope_id, title, status, created_by)
+               VALUES ($1, $2, 'docusign', $3, 'Idem Workflow', $4, $5)
+               RETURNING id"#,
+        )
+        .bind(org_id)
+        .bind(document_id)
+        .bind(external_id)
+        .bind(status)
+        .bind(user_id)
+        .fetch_one(pool)
+        .await
+        .expect("seed workflow")
+    }
+
+    async fn cleanup(pool: &DbPool, external_id: &str) {
+        sqlx::query("DELETE FROM esignature_workflows WHERE external_envelope_id = $1")
+            .bind(external_id)
+            .execute(pool)
+            .await
+            .ok();
+        sqlx::query("DELETE FROM documents WHERE title = 'Idem Doc'")
+            .execute(pool)
+            .await
+            .ok();
+        sqlx::query("DELETE FROM users WHERE email = $1")
+            .bind(format!("idem-{external_id}@test.sk"))
+            .execute(pool)
+            .await
+            .ok();
+        sqlx::query("DELETE FROM organizations WHERE slug = $1")
+            .bind(format!("idem-test-{external_id}"))
+            .execute(pool)
+            .await
+            .ok();
+    }
+
+    /// A re-delivered webhook event for an already-terminal workflow MUST NOT
+    /// mutate its status (idempotency guard).
+    #[tokio::test]
+    #[ignore]
+    async fn redelivered_event_does_not_overwrite_terminal_state() {
+        let pool = test_pool().await;
+        let external_id = "idem-terminal-001";
+        cleanup(&pool, external_id).await;
+
+        let workflow_id = seed_workflow(&pool, external_id, esignature_status::COMPLETED).await;
+        let repo = IntegrationRepository::new(pool.clone());
+
+        // Provider re-delivers, this time trying to move the workflow to
+        // `voided`. The guard must keep it `completed`.
+        let returned = repo
+            .update_esignature_workflow_by_external_id(external_id, esignature_status::VOIDED)
+            .await
+            .expect("repo call failed");
+
+        assert!(
+            returned.is_some(),
+            "function should still return the (unchanged) current row"
+        );
+        assert_eq!(
+            returned.unwrap().status,
+            esignature_status::COMPLETED,
+            "terminal status must NOT be overwritten by a re-delivered webhook"
+        );
+
+        // Re-read straight from the DB to be sure nothing was persisted.
+        let persisted: String =
+            sqlx::query_scalar("SELECT status FROM esignature_workflows WHERE id = $1")
+                .bind(workflow_id)
+                .fetch_one(&pool)
+                .await
+                .expect("re-read workflow");
+        assert_eq!(persisted, esignature_status::COMPLETED);
+
+        cleanup(&pool, external_id).await;
+    }
+
+    /// A non-terminal workflow is still updated normally (guard is scoped).
+    #[tokio::test]
+    #[ignore]
+    async fn non_terminal_workflow_is_updated() {
+        let pool = test_pool().await;
+        let external_id = "idem-nonterminal-001";
+        cleanup(&pool, external_id).await;
+
+        seed_workflow(&pool, external_id, esignature_status::SENT).await;
+        let repo = IntegrationRepository::new(pool.clone());
+
+        let returned = repo
+            .update_esignature_workflow_by_external_id(external_id, esignature_status::COMPLETED)
+            .await
+            .expect("repo call failed");
+
+        assert_eq!(
+            returned.expect("row returned").status,
+            esignature_status::COMPLETED,
+            "non-terminal workflow should transition normally"
+        );
+
+        cleanup(&pool, external_id).await;
     }
 }
