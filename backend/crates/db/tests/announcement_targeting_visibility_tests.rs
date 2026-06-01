@@ -126,7 +126,12 @@ async fn insert_published_ann(
 }
 
 /// Run `list_published_rls` as `user` (RLS context set) and return the ids.
-async fn visible_ids(pool: &PgPool, repo: &AnnouncementRepository, org: Uuid, user: Uuid) -> Vec<Uuid> {
+async fn visible_ids(
+    pool: &PgPool,
+    repo: &AnnouncementRepository,
+    org: Uuid,
+    user: Uuid,
+) -> Vec<Uuid> {
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, Some(org), Some(user), false).await;
     repo.list_published_rls(&mut *conn, org, None, None)
@@ -208,7 +213,10 @@ async fn published_feed_is_filtered_by_targeting(pool: PgPool) {
 
     // resident_a: 'all' + building A + unit A1, but NOT the manager-role one.
     let a = visible_ids(&pool, &repo, org, resident_a).await;
-    assert!(a.contains(&ann_all), "resident_a must see the 'all' announcement");
+    assert!(
+        a.contains(&ann_all),
+        "resident_a must see the 'all' announcement"
+    );
     assert!(a.contains(&ann_building_a), "resident_a is in building A");
     assert!(a.contains(&ann_unit_a1), "resident_a is in unit A1");
     assert!(
@@ -232,7 +240,10 @@ async fn published_feed_is_filtered_by_targeting(pool: PgPool) {
     // (verifies there is NO manager bypass on this feed).
     let m = visible_ids(&pool, &repo, org, manager).await;
     assert!(m.contains(&ann_all));
-    assert!(m.contains(&ann_role_manager), "manager role matches the role target");
+    assert!(
+        m.contains(&ann_role_manager),
+        "manager role matches the role target"
+    );
     assert!(
         !m.contains(&ann_building_a) && !m.contains(&ann_unit_a1),
         "manager has no residency — building/unit targeted announcements stay hidden (no bypass)"
