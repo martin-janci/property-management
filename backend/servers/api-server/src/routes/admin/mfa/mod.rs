@@ -7,16 +7,19 @@
 //! Endpoints:
 //!   * `POST /admin/mfa/enroll/start`   — generate TOTP secret, return QR URI
 //!   * `POST /admin/mfa/enroll/verify`  — confirm code, activate, issue recovery codes
+//!   * `POST /admin/mfa/verify`         — TOTP step-up for enrolled users (opens recency window)
 //!   * `POST /admin/mfa/recovery/use`   — consume a recovery code (lockout fallback)
 //!   * `POST /admin/mfa/disable`        — clear enrollment (requires fresh MFA or recovery code)
 
 mod disable;
 mod enroll;
 mod recovery;
+mod verify;
 
 pub use disable::disable_mfa;
 pub use enroll::{start_enroll, verify_enroll};
 pub use recovery::use_recovery;
+pub use verify::verify_step_up;
 
 use axum::{routing::post, Router};
 
@@ -27,6 +30,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/enroll/start", post(start_enroll))
         .route("/enroll/verify", post(verify_enroll))
+        .route("/verify", post(verify_step_up))
         .route("/recovery/use", post(use_recovery))
         .route("/disable", post(disable_mfa))
 }
