@@ -106,11 +106,24 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+          # Persist the FULL current protection object so the apply step can
+          # round-trip it. We must never blindly PUT a hardcoded payload — that
+          # would silently revert any stronger setting (strict mode, extra
+          # required approvals, code-owner reviews, push restrictions) that the
+          # rule already has. The apply step rebuilds the payload FROM this.
+          {
+            echo "protection_json<<PROTECTION_EOF"
+            echo "$PROTECTION"
+            echo "PROTECTION_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Apply required status check
         env:
           GH_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
           REPO: ${{ github.repository }}
           EXISTING_CHECKS: ${{ steps.current.outputs.existing_checks }}
+          PROTECTION_JSON: ${{ steps.current.outputs.protection_json }}
+          PROTECTION_EXISTS: ${{ steps.current.outputs.protection_exists }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
@@ -147,40 +160,107 @@ jobs:
             exit 0
           fi
 
-          # Build JSON payload for PATCH /repos/{owner}/{repo}/branches/{branch}/protection
-          # We send the full protection config because GitHub's API replaces the entire
-          # required_status_checks object on every PATCH.  Fields we don't explicitly set
-          # revert to defaults — so we must preserve the existing rule settings.
-          PAYLOAD=$(python3 -c "
-          import json, sys
+          # Build JSON payload for PUT /repos/{owner}/{repo}/branches/{branch}/protection
+          #
+          # SAFETY: GitHub's PUT replaces the ENTIRE protection object — any field
+          # we omit (or send weaker) is overwritten. So we must NOT ship a fixed
+          # payload. Instead we round-trip: start from the CURRENT protection that
+          # the previous step fetched, then *only add/strengthen*:
+          #   - add the new required status check to the existing contexts,
+          #   - force strict=true (never downgrade an existing strict=true),
+          #   - PRESERVE existing restrictions, PR-review rules, enforce_admins,
+          #     linear-history, conversation-resolution, etc. exactly as-is.
+          # If no protection existed yet, fall back to a safe baseline (strict=true,
+          # 1 approval, enforce_admins, no push restrictions).
+          PAYLOAD=$(PROTECTION_JSON="$PROTECTION_JSON" \
+            PROTECTION_EXISTS="$PROTECTION_EXISTS" \
+            MERGED="$MERGED" python3 -c "
+          import json, os
 
-          merged_raw = '''$MERGED'''
-          checks = [c.strip() for c in merged_raw.strip().splitlines() if c.strip()]
+          checks = [c.strip() for c in os.environ['MERGED'].strip().splitlines() if c.strip()]
+          exists = os.environ.get('PROTECTION_EXISTS') == 'true'
 
-          # Minimal branch protection payload. If the branch already had a more
-          # restrictive rule, the existing settings are already applied and this
-          # call only adds the new required check.  The other fields below match
-          # the GitHub API defaults / safe baselines:
-          #   enforce_admins=true  — admins must also pass required checks
-          #   required_pull_request_reviews — require at least one approval
-          #   restrictions=null    — no push restrictions (managed elsewhere)
-          payload = {
-              'required_status_checks': {
-                  'strict': False,
-                  'checks': [{'context': c, 'app_id': -1} for c in checks],
-              },
-              'enforce_admins': True,
-              'required_pull_request_reviews': {
+          cur = {}
+          if exists:
+              raw = os.environ.get('PROTECTION_JSON', '').strip()
+              try:
+                  cur = json.loads(raw) if raw else {}
+              except json.JSONDecodeError:
+                  cur = {}
+
+          # --- required_status_checks: keep current strict (force to true), set checks ---
+          cur_rsc = cur.get('required_status_checks') or {}
+          # Never weaken strict: always require branches to be up to date before
+          # merge (strict=true). If the rule already had strict=true this is a
+          # no-op; if it was false we strengthen it. We never set strict=false.
+          rsc = {
+              'strict': True,
+              'checks': [{'context': c, 'app_id': -1} for c in checks],
+          }
+
+          # --- required_pull_request_reviews: preserve existing, else safe baseline ---
+          cur_prr = cur.get('required_pull_request_reviews')
+          if cur_prr:
+              prr = {
+                  'dismiss_stale_reviews': bool(cur_prr.get('dismiss_stale_reviews', False)),
+                  'require_code_owner_reviews': bool(cur_prr.get('require_code_owner_reviews', False)),
+                  'required_approving_review_count': int(cur_prr.get('required_approving_review_count', 1)),
+              }
+              # Preserve scoped review dismissal / bypass allowances if present.
+              if 'require_last_push_approval' in cur_prr:
+                  prr['require_last_push_approval'] = bool(cur_prr['require_last_push_approval'])
+          else:
+              prr = {
                   'dismiss_stale_reviews': False,
                   'require_code_owner_reviews': False,
                   'required_approving_review_count': 1,
-              },
-              'restrictions': None,
+              }
+
+          # --- enforce_admins: preserve, default to true ---
+          cur_ea = cur.get('enforce_admins')
+          if isinstance(cur_ea, dict):
+              enforce_admins = bool(cur_ea.get('enabled', True))
+          elif isinstance(cur_ea, bool):
+              enforce_admins = cur_ea
+          else:
+              enforce_admins = True
+
+          # --- restrictions: PRESERVE existing push restrictions, never null them ---
+          cur_restr = cur.get('restrictions')
+          if cur_restr:
+              restrictions = {
+                  'users': [u['login'] for u in cur_restr.get('users', [])],
+                  'teams': [t['slug'] for t in cur_restr.get('teams', [])],
+                  'apps': [a['slug'] for a in cur_restr.get('apps', [])],
+              }
+          else:
+              restrictions = None
+
+          payload = {
+              'required_status_checks': rsc,
+              'enforce_admins': enforce_admins,
+              'required_pull_request_reviews': prr,
+              'restrictions': restrictions,
           }
+
+          # Preserve other boolean toggles only when the current rule has them on,
+          # so we never accidentally relax them.
+          for key in ('required_linear_history', 'allow_force_pushes',
+                      'allow_deletions', 'required_conversation_resolution',
+                      'block_creations', 'lock_branch'):
+              val = cur.get(key)
+              if isinstance(val, dict):
+                  val = val.get('enabled')
+              if val is not None:
+                  payload[key] = bool(val)
+
           print(json.dumps(payload))
           ")
 
-          echo "Sending PATCH to branch protection API..."
+          echo "Payload to be sent (round-tripped from current protection):"
+          echo "$PAYLOAD" | python3 -m json.tool --no-ensure-ascii 2>/dev/null || echo "$PAYLOAD"
+
+          echo "Sending PUT to branch protection API..."
           gh api -X PUT "repos/$REPO/branches/dev/protection" \
             --input - <<< "$PAYLOAD"
 
