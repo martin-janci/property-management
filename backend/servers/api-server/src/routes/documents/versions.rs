@@ -338,11 +338,11 @@ async fn restore_version(
         Ok(Some(_)) => {}
     }
 
-    // TODO: Migrate restore_version to RLS pattern
-    #[allow(deprecated)]
+    // RLS-scoped restore: runs on the request's org-scoped connection so it
+    // stays correct under FORCE ROW LEVEL SECURITY on `documents` (#754).
     match state
         .document_repo
-        .restore_version(id, version_id, user_id)
+        .restore_version_rls(rls.conn(), id, version_id, user_id)
         .await
     {
         Ok(new_version) => {

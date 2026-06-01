@@ -1035,6 +1035,36 @@ impl DocumentRepository {
         self.find_by_id_rls(&self.pool, id).await
     }
 
+    /// Find a document by ID for the public share-token path.
+    ///
+    /// The public share endpoints (`/api/v1/documents/shared/{token}`) are
+    /// unauthenticated: the share token itself is the authorization grant, and
+    /// no `app.current_org_id` is available. Under `FORCE ROW LEVEL SECURITY`
+    /// on `documents` (#754) a plain pool query would be filtered to zero rows,
+    /// so this helper acquires a dedicated connection, sets super-admin RLS
+    /// context for the single lookup, then clears it before returning the
+    /// connection to the pool. Callers MUST have already validated the share
+    /// token (and any password) before calling this.
+    pub async fn find_by_id_for_share(&self, id: Uuid) -> Result<Option<Document>, SqlxError> {
+        let mut conn = self.pool.acquire().await?;
+
+        // Authorize via the validated share token, not org context.
+        crate::tenant_context::set_request_context(&mut *conn, None, None, true).await?;
+
+        let result = self.find_by_id_rls(&mut *conn, id).await;
+
+        // Always clear context before the connection returns to the pool to
+        // prevent super-admin context bleeding into a later request.
+        if let Err(e) = crate::tenant_context::clear_request_context(&mut *conn).await {
+            tracing::error!(
+                error = %e,
+                "SECURITY: failed to clear RLS context after share-document lookup"
+            );
+        }
+
+        result
+    }
+
     /// Find document by ID with details.
     ///
     /// **Deprecated**: Use `find_by_id_with_details_rls` with an RLS-enabled connection instead.
@@ -1950,6 +1980,50 @@ impl DocumentRepository {
         self.create_version(document_id, create_version_data).await
     }
 
+    /// Restore a previous version to become the current version, using an
+    /// RLS-enabled connection.
+    ///
+    /// This is the RLS-aware counterpart of [`Self::restore_version`]. All
+    /// reads/writes run on the supplied connection (which carries the caller's
+    /// `app.current_org_id`), so it stays correct under
+    /// `FORCE ROW LEVEL SECURITY` on `documents` (issue #754). The connection is
+    /// borrowed mutably because the operation spans multiple queries.
+    pub async fn restore_version_rls(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        document_id: Uuid,
+        version_id: Uuid,
+        restored_by: Uuid,
+    ) -> Result<Document, SqlxError> {
+        // Get the version to restore (org-scoped via RLS).
+        let version_to_restore = self
+            .find_by_id_rls(&mut *conn, version_id)
+            .await?
+            .ok_or(SqlxError::RowNotFound)?;
+
+        // Verify it belongs to the same document chain (org-scoped via RLS).
+        let original_doc = self
+            .find_by_id_rls(&mut *conn, document_id)
+            .await?
+            .ok_or(SqlxError::RowNotFound)?;
+
+        if version_to_restore.root_document_id() != original_doc.root_document_id() {
+            return Err(SqlxError::RowNotFound);
+        }
+
+        // Create a new version based on the old version's content.
+        let create_version_data = CreateDocumentVersion {
+            file_key: version_to_restore.file_key,
+            file_name: version_to_restore.file_name,
+            mime_type: version_to_restore.mime_type,
+            size_bytes: version_to_restore.size_bytes,
+            created_by: restored_by,
+        };
+
+        self.create_version_rls(&mut *conn, document_id, create_version_data)
+            .await
+    }
+
     /// Get the current (latest) version of a document.
     ///
     /// **Deprecated**: Use `get_current_version_rls` with an RLS-enabled connection instead.
@@ -2004,6 +2078,30 @@ impl DocumentRepository {
             .bind(document_id)
             .bind(priority.unwrap_or(5))
             .fetch_one(&self.pool)
+            .await?;
+
+        Ok(row.get("queue_id"))
+    }
+
+    /// Queue a document for OCR processing on an RLS-enabled connection.
+    ///
+    /// RLS-aware counterpart of [`Self::queue_for_ocr`]. The underlying
+    /// `queue_document_for_ocr` function reads `documents`, which is under
+    /// FORCE ROW LEVEL SECURITY (#754), so it must run on the caller's
+    /// org-scoped connection.
+    pub async fn queue_for_ocr_rls<'e, E>(
+        &self,
+        executor: E,
+        document_id: Uuid,
+        priority: Option<i32>,
+    ) -> Result<Option<Uuid>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let row = sqlx::query(r#"SELECT queue_document_for_ocr($1, $2) as queue_id"#)
+            .bind(document_id)
+            .bind(priority.unwrap_or(5))
+            .fetch_one(executor)
             .await?;
 
         Ok(row.get("queue_id"))
@@ -2104,6 +2202,32 @@ impl DocumentRepository {
         &self,
         request: DocumentSearchRequest,
     ) -> Result<DocumentSearchResponse, SqlxError> {
+        // `documents` is under FORCE ROW LEVEL SECURITY (#754). This legacy
+        // entrypoint acquires a connection and sets the request's org context
+        // so the search stays correct, then delegates to the RLS variant.
+        let mut conn = self.pool.acquire().await?;
+        crate::tenant_context::set_request_context(
+            &mut *conn,
+            Some(request.organization_id),
+            None,
+            false,
+        )
+        .await?;
+        let result = self.full_text_search_rls(&mut conn, request).await;
+        let _ = crate::tenant_context::clear_request_context(&mut *conn).await;
+        result
+    }
+
+    /// Full-text search across documents on an RLS-enabled connection.
+    ///
+    /// RLS-aware counterpart of [`Self::full_text_search`]. Runs both the
+    /// result and count queries on the supplied org-scoped connection, so it
+    /// stays correct under FORCE ROW LEVEL SECURITY on `documents` (#754).
+    pub async fn full_text_search_rls(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        request: DocumentSearchRequest,
+    ) -> Result<DocumentSearchResponse, SqlxError> {
         let limit = request.limit.unwrap_or(20).min(100);
         let offset = request.offset.unwrap_or(0);
 
@@ -2149,7 +2273,7 @@ impl DocumentRepository {
         .bind(limit)
         .bind(&request.query)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         // Get total count
@@ -2168,7 +2292,7 @@ impl DocumentRepository {
         .bind(&ts_query)
         .bind(request.folder_id)
         .bind(&request.category)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let total: i64 = count_row.get("count");
@@ -2590,6 +2714,32 @@ impl DocumentRepository {
         )
         .bind(document_id)
         .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(row.and_then(|(text,)| text))
+    }
+
+    /// Get extracted text for a document on an RLS-enabled connection (Epic 92).
+    ///
+    /// RLS-aware counterpart of [`Self::get_extracted_text`]. `documents` is
+    /// under FORCE ROW LEVEL SECURITY (#754), so the read must run on the
+    /// caller's org-scoped connection.
+    pub async fn get_extracted_text_rls<'e, E>(
+        &self,
+        executor: E,
+        document_id: Uuid,
+    ) -> Result<Option<String>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let row: Option<(Option<String>,)> = sqlx::query_as(
+            r#"
+            SELECT extracted_text FROM documents
+            WHERE id = $1 AND deleted_at IS NULL
+            "#,
+        )
+        .bind(document_id)
+        .fetch_optional(executor)
         .await?;
 
         Ok(row.and_then(|(text,)| text))

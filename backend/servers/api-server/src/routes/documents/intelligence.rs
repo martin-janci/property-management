@@ -97,8 +97,12 @@ async fn reprocess_ocr(
         ));
     }
 
-    // Queue for OCR
-    match state.document_repo.queue_for_ocr(id, Some(1)).await {
+    // Queue for OCR (RLS-scoped: documents is under FORCE RLS, #754)
+    match state
+        .document_repo
+        .queue_for_ocr_rls(&mut **rls.conn(), id, Some(1))
+        .await
+    {
         Ok(queue_id) => {
             rls.release().await;
             Ok(Json(OcrReprocessResponse {
@@ -170,7 +174,11 @@ async fn search_documents(
         offset: req.offset,
     };
 
-    match state.document_repo.full_text_search(search_request).await {
+    match state
+        .document_repo
+        .full_text_search_rls(rls.conn(), search_request)
+        .await
+    {
         Ok(response) => {
             rls.release().await;
             Ok(Json(response))
@@ -658,8 +666,13 @@ async fn ai_summarize_document(
         ));
     }
 
-    // Get document content (extracted text)
-    let content = match state.document_repo.get_extracted_text(id).await {
+    // Get document content (extracted text). RLS-scoped: documents is under
+    // FORCE RLS (#754).
+    let content = match state
+        .document_repo
+        .get_extracted_text_rls(&mut **rls.conn(), id)
+        .await
+    {
         Ok(Some(text)) if !text.trim().is_empty() => text,
         Ok(_) => {
             return Err((
