@@ -129,6 +129,22 @@ async fn documents_force_rls_blocks_cross_tenant_read(pool: PgPool) {
     .execute(&pool)
     .await
     .expect("grant execute on rls helpers");
+    // `get_current_org_not_deleted()` is SECURITY INVOKER (the default — it is
+    // declared `LANGUAGE plpgsql STABLE` with no `SECURITY DEFINER`; see
+    // migration 00140). Its body runs `SELECT 1 FROM organizations` with the
+    // CALLER's privileges, so the bound role must be able to read
+    // `organizations` or the policy's soft-delete guard raises
+    // `permission denied for table organizations` and the caller can no longer
+    // see even its OWN org's rows. `organizations` has no RLS of its own, so a
+    // plain table-level SELECT grant is sufficient and does not weaken the
+    // cross-tenant `documents` check (that is enforced by the `documents`
+    // policy's `organization_id = get_current_org_id()` leg).
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "GRANT SELECT ON organizations TO \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .expect("grant select on organizations (read by SECURITY INVOKER soft-delete helper)");
 
     // --- All role-bound work runs on ONE dedicated connection. `SET ROLE`
     //     and the org-context GUC are session state, so they must not be
@@ -196,6 +212,12 @@ async fn documents_force_rls_blocks_cross_tenant_read(pool: PgPool) {
     set_ctx(&pool, None, None, true).await;
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "REVOKE ALL ON documents FROM \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "REVOKE ALL ON organizations FROM \"{role}\""
     )))
     .execute(&pool)
     .await
