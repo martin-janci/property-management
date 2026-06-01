@@ -6,6 +6,7 @@
 #
 # Updates:
 # - backend/Cargo.toml (workspace.package.version)
+# - backend/Cargo.lock (first-party workspace member versions)
 # - frontend/package.json
 # - frontend/apps/*/package.json
 # - frontend/packages/*/package.json
@@ -106,6 +107,27 @@ if [[ -f "$CARGO_TOML" ]]; then
     echo -e "  ${GREEN}✓${NC} Updated $CARGO_TOML"
 fi
 
+# Sync first-party workspace member versions in Cargo.lock so the lock stays
+# consistent with Cargo.toml (otherwise `cargo build --locked` / CI fails on a
+# dirty tree). Only the [[package]] entries whose `name` matches a workspace
+# member are touched — third-party crates are left alone.
+CARGO_LOCK="$ROOT_DIR/backend/Cargo.lock"
+if [[ -f "$CARGO_LOCK" && -f "$CARGO_TOML" ]]; then
+    # Derive crate names from the workspace member paths (basename of each member).
+    MEMBERS=$(sed -n '/^\[workspace\]/,/^\]/p' "$CARGO_TOML" \
+        | grep -oE '"[^"]+"' | tr -d '"' | xargs -n1 basename 2>/dev/null)
+    if [[ -n "$MEMBERS" ]]; then
+        MEMBERS="$MEMBERS" VERSION="$VERSION" awk '
+            BEGIN { split(ENVIRON["MEMBERS"], a, /[[:space:]]+/); for (i in a) member[a[i]] = 1 }
+            /^name = "/ { cur = $0; gsub(/^name = "|"$/, "", cur); is_member = (cur in member) }
+            is_member && /^version = "/ { print "version = \"" ENVIRON["VERSION"] "\""; next }
+            { print }
+        ' "$CARGO_LOCK" > "$CARGO_LOCK.tmp"
+        mv "$CARGO_LOCK.tmp" "$CARGO_LOCK"
+        echo -e "  ${GREEN}✓${NC} Updated $CARGO_LOCK (workspace members)"
+    fi
+fi
+
 # ==================== Frontend (TypeScript) ====================
 echo "Updating frontend packages..."
 update_package_json "$ROOT_DIR/frontend/package.json"
@@ -166,6 +188,7 @@ echo "  Patch:        $PATCH"
 echo ""
 echo "Files updated:"
 echo "  - backend/Cargo.toml (workspace version)"
+echo "  - backend/Cargo.lock (workspace member versions)"
 echo "  - frontend/**/package.json"
 echo "  - mobile-native/gradle.properties"
 echo "  - docs/api/typespec/main.tsp (API version)"

@@ -83,6 +83,16 @@ echo -e "${GREEN}  KMP framework built.${NC}"
 # --- Step 2: xcodebuild ---
 echo -e "${BLUE}[2/3] Running xcodebuild (${CONFIG})...${NC}"
 
+# The Xcode project is generated, not committed. Fail fast with a clear message
+# instead of letting xcodebuild emit a cryptic error (previously masked by
+# `|| true`, which let CI go green on a build that never produced an artifact).
+if [ ! -d "$IOS_DIR/iosApp.xcodeproj" ]; then
+    echo -e "${RED}ERROR: Xcode project not found at $IOS_DIR/iosApp.xcodeproj${NC}" >&2
+    echo "  The iosApp.xcodeproj is generated and is not committed to the repo." >&2
+    echo "  Generate it (e.g. via the KMP/Xcode project setup) before running this script." >&2
+    exit 1
+fi
+
 XCODEBUILD_ARGS=(
     -project "$IOS_DIR/iosApp.xcodeproj"
     -scheme "$SCHEME"
@@ -98,9 +108,12 @@ fi
 
 if [ "$ARCHIVE" = "true" ]; then
     # Staging + Production: produce .xcarchive then export IPA
+    # `set -o pipefail` (set above) makes the pipeline fail if xcodebuild fails,
+    # even though it is piped through xcpretty. Do NOT add `|| true` here — it
+    # would mask build failures and let CI go green on a broken iOS build.
     xcodebuild archive \
         "${XCODEBUILD_ARGS[@]}" \
-        -archivePath "$ARCHIVE_PATH" | xcpretty --color || true
+        -archivePath "$ARCHIVE_PATH" | xcpretty --color
 
     echo -e "${BLUE}[3/3] Exporting IPA...${NC}"
     EXPORT_OPTIONS_PLIST="$OUT_DIR/ExportOptions.plist"
@@ -124,7 +137,7 @@ PLIST
     xcodebuild -exportArchive \
         -archivePath "$ARCHIVE_PATH" \
         -exportPath "$OUT_DIR" \
-        -exportOptionsPlist "$EXPORT_OPTIONS_PLIST" | xcpretty --color || true
+        -exportOptionsPlist "$EXPORT_OPTIONS_PLIST" | xcpretty --color
 
     if ls "$OUT_DIR"/*.ipa 1>/dev/null 2>&1; then
         mv "$OUT_DIR"/*.ipa "$IPA_PATH" 2>/dev/null || true
@@ -136,7 +149,7 @@ else
     # Development: build only (simulator or device)
     xcodebuild build \
         "${XCODEBUILD_ARGS[@]}" \
-        -derivedDataPath "$OUT_DIR/DerivedData" | xcpretty --color || true
+        -derivedDataPath "$OUT_DIR/DerivedData" | xcpretty --color
     echo -e "${GREEN}  Build output: $OUT_DIR/DerivedData${NC}"
 fi
 
