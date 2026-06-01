@@ -1119,6 +1119,18 @@ impl EnergyRepository {
     }
 
     /// Resolve a benchmark alert.
+    /// Get a single benchmark alert by id (used for tenant-ownership checks
+    /// before resolving it).
+    pub async fn get_benchmark_alert(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<BenchmarkAlert>, sqlx::Error> {
+        sqlx::query_as("SELECT * FROM benchmark_alerts WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+    }
+
     pub async fn resolve_benchmark_alert(
         &self,
         id: Uuid,

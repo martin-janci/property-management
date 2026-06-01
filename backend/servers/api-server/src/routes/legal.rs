@@ -249,6 +249,18 @@ pub struct PaginationQuery {
     pub offset: Option<i32>,
 }
 
+/// Resolve the caller's organization from the authenticated JWT `tenant_id`
+/// claim. Used to org-scope by-id reads/mutations so a foreign-org resource
+/// id surfaces as 404 rather than a cross-tenant leak (IDOR, #829).
+fn org_context(user: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::forbidden("No organization context")),
+        )
+    })
+}
+
 // ==================== Legal Document Endpoints ====================
 
 async fn create_document(
@@ -310,12 +322,13 @@ async fn list_documents_summary(
 
 async fn get_document(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<LegalDocument>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .find_document_by_id(id)
+        .find_document_by_id(id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get legal document: {:?}", e);
@@ -335,36 +348,48 @@ async fn get_document(
 
 async fn update_document(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateLegalDocument>,
 ) -> Result<Json<LegalDocument>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .update_document(id, data)
+        .update_document(id, org_id, data)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to update legal document: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+            )
         })
 }
 
 async fn delete_document(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted = state.legal_repo.delete_document(id).await.map_err(|e| {
-        tracing::error!("Failed to delete legal document: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-        )
-    })?;
+    let org_id = org_context(&user)?;
+    let deleted = state
+        .legal_repo
+        .delete_document(id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete legal document: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -384,47 +409,62 @@ async fn add_version(
     Path(id): Path<Uuid>,
     Json(data): Json<CreateLegalDocumentVersion>,
 ) -> Result<(StatusCode, Json<LegalDocumentVersion>), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .add_document_version(id, user.user_id, data)
+        .add_document_version(id, org_id, user.user_id, data)
         .await
-        .map(|v| (StatusCode::CREATED, Json(v)))
         .map_err(|e| {
             tracing::error!("Failed to add document version: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
+        })?
+        .map(|v| (StatusCode::CREATED, Json(v)))
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+            )
         })
 }
 
 async fn list_versions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<LegalDocumentVersion>>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .list_document_versions(id)
+        .list_document_versions(id, org_id)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to list document versions: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+            )
         })
 }
 
 async fn get_version(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((id, version)): Path<(Uuid, i32)>,
 ) -> Result<Json<LegalDocumentVersion>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .get_document_version(id, version)
+        .get_document_version(id, org_id, version)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get document version: {:?}", e);
@@ -522,12 +562,13 @@ async fn get_compliance_statistics(
 
 async fn get_requirement(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ComplianceRequirement>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .find_requirement_by_id(id)
+        .find_requirement_by_id(id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get compliance requirement: {:?}", e);
@@ -547,36 +588,48 @@ async fn get_requirement(
 
 async fn update_requirement(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateComplianceRequirement>,
 ) -> Result<Json<ComplianceRequirement>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .update_requirement(id, data)
+        .update_requirement(id, org_id, data)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to update compliance requirement: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Requirement not found")),
+            )
         })
 }
 
 async fn delete_requirement(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted = state.legal_repo.delete_requirement(id).await.map_err(|e| {
-        tracing::error!("Failed to delete compliance requirement: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-        )
-    })?;
+    let org_id = org_context(&user)?;
+    let deleted = state
+        .legal_repo
+        .delete_requirement(id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete compliance requirement: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -596,35 +649,49 @@ async fn create_verification(
     Path(id): Path<Uuid>,
     Json(data): Json<CreateComplianceVerification>,
 ) -> Result<(StatusCode, Json<ComplianceVerification>), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .create_verification(id, user.user_id, data)
+        .create_verification(id, org_id, user.user_id, data)
         .await
-        .map(|v| (StatusCode::CREATED, Json(v)))
         .map_err(|e| {
             tracing::error!("Failed to create compliance verification: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
+        })?
+        .map(|v| (StatusCode::CREATED, Json(v)))
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Requirement not found")),
+            )
         })
 }
 
 async fn list_verifications(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ComplianceVerification>>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .list_verifications(id)
+        .list_verifications(id, org_id)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to list compliance verifications: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Requirement not found")),
             )
         })
 }
@@ -709,12 +776,13 @@ async fn get_notice_statistics(
 
 async fn get_notice(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<LegalNotice>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .find_notice_by_id(id)
+        .find_notice_by_id(id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get legal notice: {:?}", e);
@@ -734,36 +802,48 @@ async fn get_notice(
 
 async fn update_notice(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateLegalNotice>,
 ) -> Result<Json<LegalNotice>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .update_notice(id, data)
+        .update_notice(id, org_id, data)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to update legal notice: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Notice not found")),
+            )
         })
 }
 
 async fn delete_notice(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted = state.legal_repo.delete_notice(id).await.map_err(|e| {
-        tracing::error!("Failed to delete legal notice: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-        )
-    })?;
+    let org_id = org_context(&user)?;
+    let deleted = state
+        .legal_repo
+        .delete_notice(id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete legal notice: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -777,19 +857,26 @@ async fn delete_notice(
 
 async fn send_notice(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<LegalNotice>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .send_notice(id)
+        .send_notice(id, org_id)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to send legal notice: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Notice not found")),
             )
         })
 }
@@ -798,39 +885,56 @@ async fn send_notice(
 
 async fn list_recipients(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<LegalNoticeRecipient>>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .list_notice_recipients(id)
+        .list_notice_recipients(id, org_id)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to list notice recipients: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Notice not found")),
+            )
         })
 }
 
 async fn acknowledge_notice(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((notice_id, recipient_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<AcknowledgeNotice>,
 ) -> Result<Json<LegalNoticeRecipient>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .acknowledge_notice(notice_id, recipient_id, data)
+        .acknowledge_notice(notice_id, recipient_id, org_id, data)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to acknowledge notice: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Notice or recipient not found",
+                )),
             )
         })
 }
@@ -877,12 +981,13 @@ async fn list_templates(
 
 async fn get_template(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ComplianceTemplate>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .find_template_by_id(id)
+        .find_template_by_id(id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get compliance template: {:?}", e);
@@ -902,36 +1007,51 @@ async fn get_template(
 
 async fn update_template(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateComplianceTemplate>,
 ) -> Result<Json<ComplianceTemplate>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .update_template(id, data)
+        .update_template(id, org_id, data)
         .await
-        .map(Json)
         .map_err(|e| {
             tracing::error!("Failed to update compliance template: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", e.to_string())),
             )
+        })?
+        .map(Json)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Template not found (or is system template)",
+                )),
+            )
         })
 }
 
 async fn delete_template(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted = state.legal_repo.delete_template(id).await.map_err(|e| {
-        tracing::error!("Failed to delete compliance template: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-        )
-    })?;
+    let org_id = org_context(&user)?;
+    let deleted = state
+        .legal_repo
+        .delete_template(id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete compliance template: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -948,12 +1068,13 @@ async fn delete_template(
 
 async fn apply_template(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Json(payload): Json<ApplyTemplateRequest>,
 ) -> Result<(StatusCode, Json<Vec<ComplianceRequirement>>), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = org_context(&user)?;
     state
         .legal_repo
-        .apply_template(payload.organization_id, payload.data)
+        .apply_template(org_id, payload.data)
         .await
         .map(|r| (StatusCode::CREATED, Json(r)))
         .map_err(|e| {

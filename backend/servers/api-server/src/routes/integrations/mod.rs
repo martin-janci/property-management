@@ -11,6 +11,7 @@
 pub mod booking_channel;
 pub mod install;
 pub mod oauth;
+pub mod oauth_state;
 pub mod sync;
 pub mod webhook;
 

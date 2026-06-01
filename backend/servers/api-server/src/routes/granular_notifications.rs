@@ -527,6 +527,18 @@ pub async fn update_role_defaults(
     Path(role): Path<String>,
     Json(request): Json<UpdateRoleDefaultsRequest>,
 ) -> Result<Json<RoleNotificationDefaults>, (StatusCode, Json<ErrorResponse>)> {
+    // Changing org-wide role notification defaults is a manager action
+    // (closes #808). Without this any member could rewrite org defaults.
+    if !tenant.role.is_manager() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to change role notification defaults",
+            )),
+        ));
+    }
+
     let organization_id = tenant.tenant_id;
     let created_by = auth.user_id;
 
@@ -589,6 +601,18 @@ pub async fn delete_role_defaults(
     tenant: TenantExtractor,
     Path(role): Path<String>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // Deleting org-wide role notification defaults is a manager action
+    // (closes #808).
+    if !tenant.role.is_manager() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to delete role notification defaults",
+            )),
+        ));
+    }
+
     let organization_id = tenant.tenant_id;
 
     state

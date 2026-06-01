@@ -4,6 +4,7 @@
  * Client functions for reports, schedules, analytics, and trends.
  */
 
+import type { FaultCategoryCount, FaultPriorityCount, FaultStatusCount } from '../faults/types';
 import type {
   AnalyticsParams,
   AnalyticsSummary,
@@ -340,14 +341,20 @@ export interface MonthlyAverage {
   average: number;
 }
 
-/** Fault statistics summary. */
+/**
+ * Fault statistics summary used in the reports endpoint.
+ *
+ * Uses the shared count types from the faults module so that status/
+ * category/priority buckets are defined once and reused across both the
+ * manager dashboard (`/api/v1/faults/statistics`) and the reports endpoint.
+ */
 export interface FaultStatisticsSummary {
   total_count: number;
   open_count: number;
   closed_count: number;
-  by_status: Array<{ status: string; count: number }>;
-  by_category: Array<{ category: string; count: number }>;
-  by_priority: Array<{ priority: string; count: number }>;
+  by_status: FaultStatusCount[];
+  by_category: FaultCategoryCount[];
+  by_priority: FaultPriorityCount[];
   average_resolution_time_hours: number | null;
   average_rating: number | null;
 }

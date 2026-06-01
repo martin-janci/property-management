@@ -43,6 +43,25 @@ fn generate_secure_secret(prefix: &str) -> String {
     format!("{}_{}", prefix, hex::encode(bytes))
 }
 
+/// Uniform "not implemented" error for developer-portal endpoints whose
+/// persistence layer does not exist yet (closes #851).
+///
+/// These handlers previously diverged: some fabricated a success response
+/// (e.g. `create_api_key` minted a real-looking secret, `revoke_api_key`
+/// returned `204` without revoking anything), while others returned `404`.
+/// That advertised live behavior the server can't honor. Until the developer
+/// account / API-key repository lands, every such endpoint returns `501` so
+/// callers get an honest, uniform signal instead of a misleading 2xx/404.
+fn not_implemented(feature: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_IMPLEMENTED,
+        Json(ErrorResponse::new(
+            "NOT_IMPLEMENTED",
+            format!("{feature} is not implemented yet"),
+        )),
+    )
+}
+
 /// Create public API / developer portal router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -143,29 +162,12 @@ pub struct SuspendDeveloperRequest {
 )]
 async fn create_developer_account(
     State(_state): State<AppState>,
-    user: AuthUser,
-    Json(payload): Json<CreateDeveloperAccount>,
+    _user: AuthUser,
+    Json(_payload): Json<CreateDeveloperAccount>,
 ) -> Result<(StatusCode, Json<DeveloperAccount>), (StatusCode, Json<ErrorResponse>)> {
-    // Implementation would create developer account
-    let account = DeveloperAccount {
-        id: Uuid::new_v4(),
-        user_id: user.user_id,
-        organization_id: user.tenant_id,
-        company_name: payload.company_name,
-        website: payload.website,
-        description: payload.description,
-        contact_email: payload.contact_email,
-        contact_name: payload.contact_name,
-        tier: "free".to_string(),
-        is_verified: Some(false),
-        is_active: Some(true),
-        metadata: payload.metadata,
-        created_at: Some(Utc::now()),
-        updated_at: Some(Utc::now()),
-        verified_at: None,
-    };
-
-    Ok((StatusCode::CREATED, Json(account)))
+    // No developer-account persistence exists yet; previously this fabricated
+    // a CREATED account that was never stored (closes #851).
+    Err(not_implemented("Developer account creation"))
 }
 
 /// Get current user's developer account.
@@ -183,14 +185,7 @@ async fn get_my_developer_account(
     State(_state): State<AppState>,
     _user: AuthUser,
 ) -> Result<Json<DeveloperAccount>, (StatusCode, Json<ErrorResponse>)> {
-    // Implementation would fetch developer account
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            "Developer account not found. Please create one first.",
-        )),
-    ))
+    Err(not_implemented("Developer account lookup"))
 }
 
 /// Update current user's developer account.
@@ -199,13 +194,7 @@ async fn update_my_developer_account(
     _user: AuthUser,
     Json(_payload): Json<UpdateDeveloperAccount>,
 ) -> Result<Json<DeveloperAccount>, (StatusCode, Json<ErrorResponse>)> {
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            "Developer account not found",
-        )),
-    ))
+    Err(not_implemented("Developer account update"))
 }
 
 /// Get usage summary for current developer.
@@ -213,13 +202,7 @@ async fn get_my_usage_summary(
     State(_state): State<AppState>,
     _user: AuthUser,
 ) -> Result<Json<DeveloperUsageSummary>, (StatusCode, Json<ErrorResponse>)> {
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            "Developer account not found",
-        )),
-    ))
+    Err(not_implemented("Developer usage summary"))
 }
 
 // ==================== API Key Endpoints (Story 69.1) ====================
@@ -241,7 +224,7 @@ async fn create_api_key(
     _user: AuthUser,
     Json(payload): Json<CreateApiKey>,
 ) -> Result<(StatusCode, Json<CreateApiKeyResponse>), (StatusCode, Json<ErrorResponse>)> {
-    // Validate scopes
+    // Validate scopes up front so obviously-bad requests still get a 400.
     for scope in &payload.scopes {
         if !db::models::api_key_scope::ALL.contains(&scope.as_str()) {
             return Err((
@@ -254,21 +237,11 @@ async fn create_api_key(
         }
     }
 
-    // Generate API key with prefix for identification
-    let key_prefix = format!("ppt_{}", &Uuid::new_v4().to_string()[..8]);
-    let secret = generate_secure_secret(&key_prefix);
-
-    let response = CreateApiKeyResponse {
-        id: Uuid::new_v4(),
-        name: payload.name,
-        key_prefix: key_prefix.clone(),
-        secret: secret.clone(),
-        scopes: payload.scopes,
-        expires_at: payload.expires_at,
-        created_at: Utc::now(),
-    };
-
-    Ok((StatusCode::CREATED, Json(response)))
+    // Previously this minted a real-looking, cryptographically-secure secret
+    // and returned 201 — but the key was never persisted, so it could never
+    // authenticate anything. Returning the fake secret was misleading and a
+    // latent security footgun. Fail honestly until persistence exists (#851).
+    Err(not_implemented("API key creation"))
 }
 
 /// List all API keys for current developer.
@@ -287,7 +260,7 @@ async fn list_api_keys(
     _user: AuthUser,
     Query(_query): Query<ApiKeyQuery>,
 ) -> Result<Json<Vec<ApiKeyDisplay>>, (StatusCode, Json<ErrorResponse>)> {
-    Ok(Json(vec![]))
+    Err(not_implemented("API key listing"))
 }
 
 /// Get API key details.
@@ -296,10 +269,7 @@ async fn get_api_key(
     _user: AuthUser,
     Path(_id): Path<Uuid>,
 ) -> Result<Json<ApiKeyDisplay>, (StatusCode, Json<ErrorResponse>)> {
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new("NOT_FOUND", "API key not found")),
-    ))
+    Err(not_implemented("API key lookup"))
 }
 
 /// Update an API key.
@@ -309,10 +279,7 @@ async fn update_api_key(
     Path(_id): Path<Uuid>,
     Json(_payload): Json<UpdateApiKey>,
 ) -> Result<Json<ApiKeyDisplay>, (StatusCode, Json<ErrorResponse>)> {
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new("NOT_FOUND", "API key not found")),
-    ))
+    Err(not_implemented("API key update"))
 }
 
 /// Revoke an API key.
@@ -334,8 +301,9 @@ async fn revoke_api_key(
     _user: AuthUser,
     Path(_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // Implementation would revoke the key
-    Ok(StatusCode::NO_CONTENT)
+    // Previously returned 204 without revoking anything — a silent no-op that
+    // told the caller a key was revoked when nothing happened (closes #851).
+    Err(not_implemented("API key revocation"))
 }
 
 /// Rotate an API key (create new, expire old).
@@ -357,11 +325,7 @@ async fn rotate_api_key(
     _user: AuthUser,
     Path(_id): Path<Uuid>,
 ) -> Result<Json<RotateApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Implementation would rotate the key
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new("NOT_FOUND", "API key not found")),
-    ))
+    Err(not_implemented("API key rotation"))
 }
 
 /// Get usage statistics for an API key.
@@ -371,7 +335,7 @@ async fn get_api_key_usage(
     Path(_id): Path<Uuid>,
     Query(_query): Query<DateRangeQuery>,
 ) -> Result<Json<Vec<ApiKeyUsageStats>>, (StatusCode, Json<ErrorResponse>)> {
-    Ok(Json(vec![]))
+    Err(not_implemented("API key usage statistics"))
 }
 
 // ==================== API Documentation Endpoints (Story 69.2) ====================

@@ -303,4 +303,16 @@ extension Notification.Name {
     static let pushNotificationManagerRequestsRegistration = Notification.Name(
         "three.two.bit.ppt.reality.PushNotificationManagerRequestsRegistration"
     )
+
+    /// Posted by `AppDelegate` when APNs delivers a device token. `userInfo`
+    /// carries the raw token under the `"deviceToken"` key (`Data`).
+    static let pushNotificationManagerDidRegister = Notification.Name(
+        "three.two.bit.ppt.reality.PushNotificationManagerDidRegister"
+    )
+
+    /// Posted by `AppDelegate` when APNs registration fails. `userInfo` carries
+    /// the failure under the `"error"` key (`Error`).
+    static let pushNotificationManagerDidFailToRegister = Notification.Name(
+        "three.two.bit.ppt.reality.PushNotificationManagerDidFailToRegister"
+    )
 }

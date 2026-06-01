@@ -196,9 +196,9 @@ fn build_limiter(rpm: u32) -> RateLimiter<NotKeyed, InMemoryState, DefaultClock>
 /// and the tenant set is bounded by the platform).
 pub fn meter_request(org_id: Uuid, response_bytes: u64) {
     let org_label = org_id.to_string();
-    metrics::increment_counter!("requests_total", "org_id" => org_label.clone());
+    metrics::counter!("requests_total", "org_id" => org_label.clone()).increment(1);
     if response_bytes > 0 {
-        metrics::counter!("request_bytes_total", response_bytes, "org_id" => org_label);
+        metrics::counter!("request_bytes_total", "org_id" => org_label).increment(response_bytes);
     }
 }
 

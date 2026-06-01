@@ -115,14 +115,65 @@ export interface AiSuggestion {
   priority?: FaultPriority;
 }
 
-/** Fault statistics */
+/**
+ * Per-status fault count, shared between the manager dashboard
+ * (`GET /api/v1/faults/statistics`) and the admin support-data
+ * endpoint (`GET /api/v1/platform-admin/support-data`).
+ *
+ * Mirrors the Rust `StatusCount` model in `db/src/models/fault.rs`.
+ */
+export interface FaultStatusCount {
+  status: string;
+  count: number;
+}
+
+/**
+ * Per-category fault count.
+ * Mirrors the Rust `CategoryCount` model in `db/src/models/fault.rs`.
+ */
+export interface FaultCategoryCount {
+  category: string;
+  count: number;
+}
+
+/**
+ * Per-priority fault count.
+ * Mirrors the Rust `PriorityCount` model in `db/src/models/fault.rs`.
+ */
+export interface FaultPriorityCount {
+  priority: string;
+  count: number;
+}
+
+/**
+ * Fault statistics returned by `GET /api/v1/faults/statistics`.
+ *
+ * Field names and shapes match the backend `FaultStatistics` struct
+ * (`db/src/models/fault.rs`).  The `by_status`, `by_category`, and
+ * `by_priority` fields are **arrays of count objects** (not Record maps)
+ * so that zero-count statuses are absent rather than present with a 0.
+ *
+ * Both the ppt-web manager dashboard and the admin-web support-data page
+ * derive their fault-status KPIs from these same buckets — changing the
+ * counting window here affects both surfaces equally.
+ */
 export interface FaultStatistics {
-  total: number;
-  by_status: Record<FaultStatus, number>;
-  by_category: Record<FaultCategory, number>;
-  by_priority: Record<FaultPriority, number>;
-  avg_resolution_time_hours?: number;
-  ai_accuracy?: number;
+  /** Total fault count across the queried scope. */
+  total_count: number;
+  /** Faults with any status other than `closed`. */
+  open_count: number;
+  /** Faults with status `closed`. */
+  closed_count: number;
+  /** Fault counts grouped by status, ordered by count descending. */
+  by_status: FaultStatusCount[];
+  /** Fault counts grouped by category, ordered by count descending. */
+  by_category: FaultCategoryCount[];
+  /** Fault counts grouped by priority, ordered by count descending. */
+  by_priority: FaultPriorityCount[];
+  /** Mean time from `created_at` to `resolved_at` in hours (null when no resolved faults). */
+  average_resolution_time_hours: number | null;
+  /** Mean resident rating (1–5) for resolved faults (null when no rated faults). */
+  average_rating: number | null;
 }
 
 /** Request to create a fault */

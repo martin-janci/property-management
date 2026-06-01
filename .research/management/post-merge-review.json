@@ -1,9 +1,253 @@
 {
-  "generated": "2026-05-27T14:30:00Z",
+  "generated": "2026-05-28T16:24:12Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-05-28T16:24:12Z",
+      "prs_scanned": 15,
+      "clean": [
+        634,
+        631,
+        584,
+        566,
+        558,
+        638,
+        637,
+        635
+      ],
+      "with_issues": [
+        {
+          "pr": 643,
+          "issue": 710,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "get_by_id/pause/resume still lack org-scoped WHERE (IDOR); regression tests accept any 4xx instead of exercising RBAC gate"
+        },
+        {
+          "pr": 538,
+          "issue": 711,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "no webhook dedup table (at-least-once delivery gap); env vars read at request time not startup; duplicate sync jobs under rapid webhook delivery"
+        },
+        {
+          "pr": 630,
+          "issue": 712,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "queryClient.clear() too aggressive (wipes non-user-scoped queries); no test for cache purge on logout"
+        },
+        {
+          "pr": 567,
+          "issue": 713,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "_alreadyRetried is a leaky public param on authenticatedFetchJson; admin/mfa-handler.ts shim has no @deprecated annotation"
+        },
+        {
+          "pr": 623,
+          "issue": 714,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "CronPicker cron validation and detectPreset round-trip have no tests; ambiguous preset detection for edge-case cron expressions"
+        },
+        {
+          "pr": 595,
+          "issue": 715,
+          "findings": 2,
+          "specialist": "pm-devops",
+          "note": "eas-cli devDep redundant alongside expo-github-action (adds ~80MB); --no-wait hides EAS build failures from CI"
+        },
+        {
+          "pr": 556,
+          "issue": 716,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "buildFolderCrumbs pure helper has no tests; verification ran with exit 2 masking potential type errors in +1810 LOC diff"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-05-28T14:42:00Z",
+      "prs_scanned": 10,
+      "clean": [
+        691
+      ],
+      "skipped": [
+        660,
+        687,
+        664,
+        663,
+        658,
+        656,
+        655,
+        653,
+        652,
+        650
+      ],
+      "with_issues": [
+        {
+          "pr": 643,
+          "issue": 696,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "tests only hit JWT gate (401) \u2014 RBAC extractor and cross-tenant WHERE clause never exercised; .sqlx cache likely stale after SQL stub replacement; seed helpers use sqlx::query not sqlx::query!"
+        },
+        {
+          "pr": 688,
+          "issue": 697,
+          "findings": 4,
+          "specialist": "kotlin-mp",
+          "note": "raw-string empty body (medium); priceChanged direction bug (low); missing isFavorite repo mock test (low); addFavorite dual-implementation fragility (low)"
+        },
+        {
+          "pr": 686,
+          "issue": 698,
+          "findings": 4,
+          "specialist": "ios-swiftui",
+          "note": "nested-NavigationStack; missing NSUserNotificationUsageDescription; unstable repo computed var; UserDefaults test pollution"
+        },
+        {
+          "pr": 654,
+          "issue": 699,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "ON_DELETE_CASCADE destroys immutable audit log; missing RLS; untyped props silently empty"
+        },
+        {
+          "pr": 690,
+          "issue": 700,
+          "findings": 1,
+          "specialist": "generic",
+          "note": "GC2 silently passes when HEAD baseline missing \u2014 shallow clone will defeat PR2 hard fail"
+        },
+        {
+          "pr": 640,
+          "issue": 701,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "T13 assertion accepts any 4xx (should be 413-only); T12 boundary untested near MAX_FILE_SIZE; T11b missing orphan-record DB check"
+        },
+        {
+          "pr": 689,
+          "issue": 702,
+          "findings": 6,
+          "specialist": "react-web",
+          "note": "double-fire mutation on last step; skip-step calls complete API; toast/overlay z-index tie at 1000; no RTL tests; missing screen-map for /platform/onboarding; dead label field in STATUS_STYLE"
+        },
+        {
+          "pr": 661,
+          "issue": 704,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "duplicate tests (2); weak assert on deactivated client; missing principal_kind refresh test; hardcoded JWT secret"
+        },
+        {
+          "pr": 633,
+          "issue": 703,
+          "findings": 5,
+          "specialist": "react-web",
+          "note": "dialog Escape/focus regression (medium); label-input unlabelled (medium); watch() perf pattern (low); missing dialog tests (low); screen-map not updated (low)"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-05-28T13:41:05Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "with_issues": [
+        {
+          "pr": 687,
+          "issue": 692,
+          "findings": 1,
+          "specialist": "generic",
+          "note": "admin-web missing from pm-frontend owner-areas.json \u2014 scope_drift=true on every future admin-web task"
+        },
+        {
+          "pr": 660,
+          "issue": 693,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "cross-tenant tests use no-JWT requests (hit auth gate, not DB org scope); delete_schedule listed in audit but endpoint does not exist"
+        }
+      ],
+      "skipped": [
+        664,
+        663,
+        658,
+        656,
+        655,
+        653,
+        652,
+        650,
+        649,
+        648,
+        645,
+        642,
+        636
+      ]
+    },
+    {
+      "run_at": "2026-05-28T11:19:16Z",
+      "prs_scanned": 15,
+      "clean": [
+        642,
+        648,
+        649,
+        652,
+        653,
+        655,
+        656,
+        663,
+        664
+      ],
+      "with_issues": [
+        {
+          "pr": 542,
+          "issue": 673,
+          "findings": 1,
+          "specialist": "pm-security",
+          "note": "e-sig nonce not persisted \u2014 replay still possible for full 7-day TTL; no tracking issue filed before PR merged"
+        },
+        {
+          "pr": 632,
+          "issue": 676,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "ppt_tenants localStorage not refreshed on token refresh \u2014 stale role persists after server-side membership removal"
+        },
+        {
+          "pr": 645,
+          "issue": 677,
+          "findings": 1,
+          "specialist": "pm-security",
+          "note": "audit-hash domain changed (PascalCase\u2192snake_case) without backfill \u2014 existing rows will fail verify_integrity"
+        },
+        {
+          "pr": 636,
+          "issue": 679,
+          "findings": 1,
+          "specialist": "pm-qa",
+          "note": "IDOR test uses unauthenticated request \u2014 doesn't exercise authenticated cross-org RLS path"
+        },
+        {
+          "pr": 650,
+          "issue": 681,
+          "findings": 1,
+          "specialist": "pm-qa",
+          "note": "Redis pub/sub fanout test is #[ignore] with no CI path \u2014 core WS delivery guarantee untested"
+        },
+        {
+          "pr": 658,
+          "issue": 683,
+          "findings": 1,
+          "specialist": "pm-devops",
+          "note": "branch-protection-setup.yml post-merge action may not have been run \u2014 security-gate-conclusion still advisory"
+        }
+      ]
+    },
     {
       "run_at": "2026-05-27T14:30:00Z",
       "prs_scanned": 12,
@@ -19,7 +263,7 @@
           "issue": 614,
           "findings": 3,
           "specialist": "rust-backend",
-          "note": "update_schedule bypasses RequireCapability; list_schedule_executions has no RBAC; cron stored in time column — schema debt"
+          "note": "update_schedule bypasses RequireCapability; list_schedule_executions has no RBAC; cron stored in time column \u2014 schema debt"
         },
         {
           "pr": 612,
@@ -61,14 +305,14 @@
           "issue": 620,
           "findings": 2,
           "specialist": "react-native",
-          "note": "production safety guard removed — placeholder URL ships silently; EXPO_PUBLIC_ prefix inconsistency"
+          "note": "production safety guard removed \u2014 placeholder URL ships silently; EXPO_PUBLIC_ prefix inconsistency"
         },
         {
           "pr": 606,
           "issue": 621,
           "findings": 1,
           "specialist": "react-web",
-          "note": "STATUS_OPTIONS recreated on every render — needs useMemo"
+          "note": "STATUS_OPTIONS recreated on every render \u2014 needs useMemo"
         }
       ]
     },
@@ -124,14 +368,14 @@
           "issue": 578,
           "findings": 4,
           "specialist": "ios-swiftui",
-          "note": "beginSsoFlow() never called from LoginView — CSRF nonce always nil, SSO login broken in production; placeholder allow-list hosts; missing CSRF/auth/allow-list tests; Base.xcconfig version fallback gap"
+          "note": "beginSsoFlow() never called from LoginView \u2014 CSRF nonce always nil, SSO login broken in production; placeholder allow-list hosts; missing CSRF/auth/allow-list tests; Base.xcconfig version fallback gap"
         },
         {
           "pr": 552,
           "issue": 575,
           "findings": 1,
           "specialist": "generic",
-          "note": "detect-test-file.sh missing Kotlin/KMP patterns — security-test-gate wrongly fails mobile-native *Test.kt PRs"
+          "note": "detect-test-file.sh missing Kotlin/KMP patterns \u2014 security-test-gate wrongly fails mobile-native *Test.kt PRs"
         },
         {
           "pr": 551,
@@ -188,7 +432,7 @@
           {
             "pr": 598,
             "issue": 576,
-            "note": "dispatcher verdict/note regex fix — verdict=changes loop restored"
+            "note": "dispatcher verdict/note regex fix \u2014 verdict=changes loop restored"
           },
           {
             "pr": 600,
@@ -203,7 +447,7 @@
           {
             "pr": 606,
             "issue": 570,
-            "note": "HistoryFilters i18n — hardcoded English strings replaced"
+            "note": "HistoryFilters i18n \u2014 hardcoded English strings replaced"
           },
           {
             "pr": 607,
@@ -219,8 +463,13 @@
         "pending_ci": [
           {
             "pr": 604,
-            "issues": [578, 582, 571, 574],
-            "note": "SSO beginSsoFlow + IDOR access_scope + scheduler fail-closed + FolderTree i18n — CI running"
+            "issues": [
+              578,
+              582,
+              571,
+              574
+            ],
+            "note": "SSO beginSsoFlow + IDOR access_scope + scheduler fail-closed + FolderTree i18n \u2014 CI running"
           }
         ],
         "added_to_action_list": [
@@ -238,45 +487,190 @@
     {
       "run_at": "2026-05-25T19:58:24Z",
       "prs_scanned": 15,
-      "clean": [502],
+      "clean": [
+        502
+      ],
       "with_issues": [
-        {"pr": 511, "issue": 516, "findings": 7, "specialist": "react-web", "note": "scope creep (Story 80-3 bundled), unused hook, silent no-op dispute handlers, non-null cast, useless queries on empty id, no tests, mobile response-shape fallback hides drift"},
-        {"pr": 510, "issue": 517, "findings": 6, "specialist": "generic", "note": "script-injection via inlined ${{ }}, redundant checkout, misleading case-glob comment, missed top-level __tests__/, required-check skipped-job pitfall, no self-test for gate"},
-        {"pr": 508, "issue": 519, "findings": 5, "specialist": "rust-backend", "note": "mark_inquiry_read in realtors.rs still IDOR-able + dead-code handler; legacy repo method should be retired; IG3 tests are #[ignore]d"},
-        {"pr": 506, "issue": 520, "findings": 5, "specialist": "rust-backend", "note": "tests claimed but never merged; cross-tenant authz gap (no org_id scope, no RequireCapability); stringly-typed FSM; minor perf and error-contract nits"},
-        {"pr": 504, "issue": 518, "findings": 5, "specialist": "rust-backend", "note": "TOCTOU on max-3 cap; index misses list_rls COALESCE ORDER BY; no tests; missing CONCURRENTLY; sort_index scope unclear"},
-        {"pr": 503, "issue": 521, "findings": 7, "specialist": "react-web", "note": "867 LoC single-file should split; missing react-hook-form+zod; no tests; hard-coded en strings; window.confirm; empty sitemapRefs; raw hex tokens"},
-        {"pr": 501, "issue": 524, "findings": 6, "specialist": "generic", "note": "invalid sitemapRefs (5 of 11), dangling reality-mobile related-screen IDs, /screens validate not run pre-merge"},
-        {"pr": 500, "issue": 522, "findings": 8, "specialist": "ios-swiftui", "note": "deep-link entry lacks auth gating + SSO state unvalidated; logout doesn't clear persisted nav state; universal-link host not allow-listed; listing trailing-garbage silently coerced; tests miss malicious URLs and post-crash restore"},
-        {"pr": 499, "issue": 523, "findings": 3, "specialist": "react-native", "note": "placeholder prod URL in .env.production; dual EXPO_PUBLIC_+extra env paths kept in sync by hand; android/ios scripts silently flipped from expo start to expo run"},
-        {"pr": 498, "issue": 525, "findings": 6, "specialist": "ios-swiftui", "note": "Info.plist hardcodes CFBundleIdentifier + version literals — per-env bundle suffix and VERSION-file sync silently broken; self-referential DEVELOPMENT_TEAM; no macOS CI smoke"},
-        {"pr": 497, "issue": 519, "findings": 1, "specialist": "rust-backend", "note": "sister handler routes/realtors.rs::mark_inquiry_read still IDOR-able on dev; #497 shape correct but migration incomplete — commented on existing #519 instead of duplicate"},
-        {"pr": 496, "issue": 526, "findings": 5, "specialist": "generic", "note": "massive scope creep — 22 files / 1088 LOC shipped for 15-LOC ADR doc task; stop-hook auto-commit bundled gap-85-1 (PR #499) + gap-85-2 (PR #498) WIP from parallel agents"},
-        {"pr": 495, "issue": 527, "findings": 11, "specialist": "rust-backend", "note": "hardcoded HMAC fallback secret; webhook secret fail-open + non-constant-time compare; no replay protection/key rotation; scheduler uses dev email service + non-RLS raw query + no per-signer idempotency; English-only templates; thin negative-path tests"},
-        {"pr": 494, "issue": 528, "findings": 5, "specialist": "rust-backend", "note": "lint coverage gaps (no-underscore/let-_ discards); no self-tests; allowlist UX; #[must_use] alternative; minor shebang/regex hygiene"}
+        {
+          "pr": 511,
+          "issue": 516,
+          "findings": 7,
+          "specialist": "react-web",
+          "note": "scope creep (Story 80-3 bundled), unused hook, silent no-op dispute handlers, non-null cast, useless queries on empty id, no tests, mobile response-shape fallback hides drift"
+        },
+        {
+          "pr": 510,
+          "issue": 517,
+          "findings": 6,
+          "specialist": "generic",
+          "note": "script-injection via inlined ${{ }}, redundant checkout, misleading case-glob comment, missed top-level __tests__/, required-check skipped-job pitfall, no self-test for gate"
+        },
+        {
+          "pr": 508,
+          "issue": 519,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "mark_inquiry_read in realtors.rs still IDOR-able + dead-code handler; legacy repo method should be retired; IG3 tests are #[ignore]d"
+        },
+        {
+          "pr": 506,
+          "issue": 520,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "tests claimed but never merged; cross-tenant authz gap (no org_id scope, no RequireCapability); stringly-typed FSM; minor perf and error-contract nits"
+        },
+        {
+          "pr": 504,
+          "issue": 518,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "TOCTOU on max-3 cap; index misses list_rls COALESCE ORDER BY; no tests; missing CONCURRENTLY; sort_index scope unclear"
+        },
+        {
+          "pr": 503,
+          "issue": 521,
+          "findings": 7,
+          "specialist": "react-web",
+          "note": "867 LoC single-file should split; missing react-hook-form+zod; no tests; hard-coded en strings; window.confirm; empty sitemapRefs; raw hex tokens"
+        },
+        {
+          "pr": 501,
+          "issue": 524,
+          "findings": 6,
+          "specialist": "generic",
+          "note": "invalid sitemapRefs (5 of 11), dangling reality-mobile related-screen IDs, /screens validate not run pre-merge"
+        },
+        {
+          "pr": 500,
+          "issue": 522,
+          "findings": 8,
+          "specialist": "ios-swiftui",
+          "note": "deep-link entry lacks auth gating + SSO state unvalidated; logout doesn't clear persisted nav state; universal-link host not allow-listed; listing trailing-garbage silently coerced; tests miss malicious URLs and post-crash restore"
+        },
+        {
+          "pr": 499,
+          "issue": 523,
+          "findings": 3,
+          "specialist": "react-native",
+          "note": "placeholder prod URL in .env.production; dual EXPO_PUBLIC_+extra env paths kept in sync by hand; android/ios scripts silently flipped from expo start to expo run"
+        },
+        {
+          "pr": 498,
+          "issue": 525,
+          "findings": 6,
+          "specialist": "ios-swiftui",
+          "note": "Info.plist hardcodes CFBundleIdentifier + version literals \u2014 per-env bundle suffix and VERSION-file sync silently broken; self-referential DEVELOPMENT_TEAM; no macOS CI smoke"
+        },
+        {
+          "pr": 497,
+          "issue": 519,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "sister handler routes/realtors.rs::mark_inquiry_read still IDOR-able on dev; #497 shape correct but migration incomplete \u2014 commented on existing #519 instead of duplicate"
+        },
+        {
+          "pr": 496,
+          "issue": 526,
+          "findings": 5,
+          "specialist": "generic",
+          "note": "massive scope creep \u2014 22 files / 1088 LOC shipped for 15-LOC ADR doc task; stop-hook auto-commit bundled gap-85-1 (PR #499) + gap-85-2 (PR #498) WIP from parallel agents"
+        },
+        {
+          "pr": 495,
+          "issue": 527,
+          "findings": 11,
+          "specialist": "rust-backend",
+          "note": "hardcoded HMAC fallback secret; webhook secret fail-open + non-constant-time compare; no replay protection/key rotation; scheduler uses dev email service + non-RLS raw query + no per-signer idempotency; English-only templates; thin negative-path tests"
+        },
+        {
+          "pr": 494,
+          "issue": 528,
+          "findings": 5,
+          "specialist": "rust-backend",
+          "note": "lint coverage gaps (no-underscore/let-_ discards); no self-tests; allowlist UX; #[must_use] alternative; minor shebang/regex hygiene"
+        }
       ]
     },
     {
       "run_at": "2026-05-25T02:12:20Z",
       "prs_scanned": 15,
-      "clean": [458, 464, 465, 468, 469, 471, 462],
+      "clean": [
+        458,
+        464,
+        465,
+        468,
+        469,
+        471,
+        462
+      ],
       "skipped": [],
       "with_issues": [
-        {"pr": 472, "issue": 480, "findings": 3, "specialist": "rust-backend", "note": "JWT in WS query param logged; token not re-validated after upgrade; ping/timeout loop broken"},
-        {"pr": 470, "issue": 481, "findings": 2, "specialist": "rust-backend", "note": "CRITICAL: AND revoked_at IS NULL removed from refresh-token lookup — revoked tokens reusable; no negative revocation test"},
-        {"pr": 459, "issue": 482, "findings": 3, "specialist": "react-web", "note": "tenants[0].role wrong for multi-tenant users; no ProtectedRoute tests; stale role in storage after refresh"},
-        {"pr": 461, "issue": 483, "findings": 2, "specialist": "rust-backend", "note": "no IDOR regression tests; list-commands discloses existence via 200-empty vs 404"},
-        {"pr": 463, "issue": 484, "findings": 3, "specialist": "rust-backend", "note": "dispatch_to_users is serial — N+1 latency for broadcast; FCM stub marks failed pushes as Sent"},
-        {"pr": 467, "issue": 485, "findings": 2, "specialist": "react-web", "note": "window.confirm for revoke (acknowledged tech-debt); no UUID validation on user-ID share input"},
-        {"pr": 466, "issue": 486, "findings": 2, "specialist": "react-web", "note": "getToken() bypasses axios interceptor (no silent refresh); inline IIFE + missing useCallback cause extra renders"},
-        {"pr": 473, "issue": 487, "findings": 2, "specialist": "rust-backend", "note": "no rate-limit tests for TOTP brute-force; mod common re-declared inside nested test module"}
+        {
+          "pr": 472,
+          "issue": 480,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "JWT in WS query param logged; token not re-validated after upgrade; ping/timeout loop broken"
+        },
+        {
+          "pr": 470,
+          "issue": 481,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "CRITICAL: AND revoked_at IS NULL removed from refresh-token lookup \u2014 revoked tokens reusable; no negative revocation test"
+        },
+        {
+          "pr": 459,
+          "issue": 482,
+          "findings": 3,
+          "specialist": "react-web",
+          "note": "tenants[0].role wrong for multi-tenant users; no ProtectedRoute tests; stale role in storage after refresh"
+        },
+        {
+          "pr": 461,
+          "issue": 483,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "no IDOR regression tests; list-commands discloses existence via 200-empty vs 404"
+        },
+        {
+          "pr": 463,
+          "issue": 484,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "dispatch_to_users is serial \u2014 N+1 latency for broadcast; FCM stub marks failed pushes as Sent"
+        },
+        {
+          "pr": 467,
+          "issue": 485,
+          "findings": 2,
+          "specialist": "react-web",
+          "note": "window.confirm for revoke (acknowledged tech-debt); no UUID validation on user-ID share input"
+        },
+        {
+          "pr": 466,
+          "issue": 486,
+          "findings": 2,
+          "specialist": "react-web",
+          "note": "getToken() bypasses axios interceptor (no silent refresh); inline IIFE + missing useCallback cause extra renders"
+        },
+        {
+          "pr": 473,
+          "issue": 487,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "no rate-limit tests for TOTP brute-force; mod common re-declared inside nested test module"
+        }
       ]
     },
     {
       "run_at": "2026-05-24T00:00:00Z",
       "prs_scanned": 2,
       "clean": [],
-      "skipped": [433, 435],
+      "skipped": [
+        433,
+        435
+      ],
       "with_issues": [],
       "trigger": "manual /ppt-review-merged invocation",
       "note": "all in-window PRs already labeled post-merge-reviewed; no-op"
@@ -285,14 +679,19 @@
       "run_at": "2026-05-24T00:00:00Z",
       "prs_scanned": 2,
       "clean": [],
-      "skipped": [433],
+      "skipped": [
+        433
+      ],
       "with_issues": [
         {
           "pr": 435,
           "issue": 439,
           "findings": 10,
           "specialist": "rust-backend",
-          "secondary_specialists": ["db-migration", "react-web"],
+          "secondary_specialists": [
+            "db-migration",
+            "react-web"
+          ],
           "note": "P1-05 SSRF still open; P1-04 Debug-format hash unstable; P1-01 ordering+swallowed audit; SERIALIZABLE no-retry; missing IG3 tests; SameSite=Strict gotcha; signatures.rs AppError convention",
           "duplicates_issue": 438,
           "trigger": "manual /ppt-review-merged invocation"
@@ -302,7 +701,9 @@
     {
       "run_at": "2026-05-23T00:00:00Z",
       "prs_scanned": 2,
-      "clean": [433],
+      "clean": [
+        433
+      ],
       "with_issues": [
         {
           "pr": 435,

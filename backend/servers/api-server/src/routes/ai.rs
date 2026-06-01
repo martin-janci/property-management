@@ -179,10 +179,15 @@ async fn list_sessions(
 
 async fn get_session(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.ai_chat_repo.find_session_by_id(session_id).await {
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .ai_chat_repo
+        .find_session_by_id(session_id, org_id)
+        .await
+    {
         Ok(Some(session)) => Ok(Json(serde_json::json!(session))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -203,10 +208,11 @@ async fn get_session(
 
 async fn delete_session(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.ai_chat_repo.delete_session(session_id).await {
+    let org_id = require_tenant_id(&principal)?;
+    match state.ai_chat_repo.delete_session(session_id, org_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,
@@ -227,14 +233,16 @@ async fn delete_session(
 
 async fn list_messages(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = require_tenant_id(&principal)?;
     match state
         .ai_chat_repo
         .list_session_messages(
             session_id,
+            org_id,
             query.limit.unwrap_or(100),
             query.offset.unwrap_or(0),
         )
@@ -286,10 +294,10 @@ async fn send_message(
     // principal on the platform host has no `effective_org` and is rejected.
     let tenant_id = require_tenant_id(&principal)?;
 
-    // Verify session exists
+    // Verify session exists and belongs to this tenant.
     let _session = state
         .ai_chat_repo
-        .find_session_by_id(session_id)
+        .find_session_by_id(session_id, tenant_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to find session: {}", e);
@@ -312,7 +320,7 @@ async fn send_message(
     // Story 97.1: Load more messages for context, will be truncated to fit token limits
     let history = state
         .ai_chat_repo
-        .list_session_messages(session_id, DEFAULT_HISTORY_LIMIT, 0)
+        .list_session_messages(session_id, tenant_id, DEFAULT_HISTORY_LIMIT, 0)
         .await
         .unwrap_or_default();
 
@@ -786,14 +794,22 @@ async fn provide_feedback(
     let mut feedback = req;
     feedback.message_id = message_id;
 
-    // SECURITY: feedback author is derived from the verified principal, never
-    // from the request body.
+    // SECURITY (issue #766 / #816): feedback author AND the owning tenant are
+    // both derived from the verified principal, never from the request body or
+    // the path. The repo only writes when the target message's session belongs
+    // to the caller's org — otherwise a caller in org B could attach feedback
+    // to (and poison the training signal for) org A's chat messages.
+    let org_id = require_tenant_id(&principal)?;
     match state
         .ai_chat_repo
-        .add_feedback(principal.user_id, feedback)
+        .add_feedback_for_org(principal.user_id, org_id, feedback)
         .await
     {
-        Ok(fb) => Ok((StatusCode::CREATED, Json(serde_json::json!(fb)))),
+        Ok(Some(fb)) => Ok((StatusCode::CREATED, Json(serde_json::json!(fb)))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Message not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to add feedback: {}", e);
             Err((
@@ -906,16 +922,18 @@ async fn acknowledge_alert(
     principal: RequestPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // require_tenant_id ensures the request is tenant-scoped; the alert's
-    // org-scoping is enforced by repository RLS.
-    let _ = require_tenant_id(&principal)?;
+    let org_id = require_tenant_id(&principal)?;
 
     match state
         .sentiment_repo
-        .acknowledge_alert(alert_id, principal.user_id)
+        .acknowledge_alert(alert_id, org_id, principal.user_id)
         .await
     {
         Ok(alert) => Ok(Json(serde_json::json!(alert))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Alert not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to acknowledge alert: {}", e);
             Err((
@@ -1283,14 +1301,27 @@ async fn acknowledge_prediction(
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgePredictionRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _ = require_tenant_id(&principal)?;
+    // SECURITY: tenant_id is derived from the verified JWT and passed to the
+    // repository so a caller in org B cannot acknowledge predictions belonging
+    // to org A. We return 404 for both "not found" and "wrong tenant" to
+    // prevent cross-tenant ID enumeration.
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .equipment_repo
-        .acknowledge_prediction(id, principal.user_id, req.action_taken.as_deref())
+        .acknowledge_prediction(
+            id,
+            tenant_id,
+            principal.user_id,
+            req.action_taken.as_deref(),
+        )
         .await
     {
         Ok(prediction) => Ok(Json(serde_json::json!(prediction))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Prediction not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to acknowledge: {}", e);
             Err((
@@ -2128,6 +2159,34 @@ async fn generate_lease(
     let tenant_id = require_tenant_id(&principal)?;
     let start_time = Instant::now();
 
+    // SECURITY (issue #766 / #816): the lease is generated for a specific
+    // `unit_id`. Validate that the unit belongs to the caller's tenant BEFORE
+    // creating the generation request or burning any LLM tokens — otherwise a
+    // caller could generate a lease (and have it cost-attributed to their org)
+    // against another tenant's unit, leaking the unit's identity/context.
+    let unit_ok = state
+        .llm_document_repo
+        .unit_belongs_to_org(req.unit_id, tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to validate unit ownership: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to validate unit",
+                )),
+            )
+        })?;
+    if !unit_ok {
+        // 404 (not 403) mirrors the rest of this module: do not confirm the
+        // existence of another tenant's unit to a caller who cannot see it.
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Unit not found")),
+        ));
+    }
+
     // Check feature flag for document generation
     let doc_gen_enabled = std::env::var("LLM_DOCUMENT_GENERATION")
         .unwrap_or_else(|_| "true".to_string())
@@ -2355,10 +2414,18 @@ async fn list_lease_templates(
 
 async fn get_lease_template(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.find_prompt_template(id).await {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's prompt template by guessing its id.
+    // System templates (org_id NULL) remain readable by everyone.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_prompt_template_for_org(id, org_id)
+        .await
+    {
         Ok(Some(template)) => Ok(Json(serde_json::json!(template))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -2619,10 +2686,17 @@ async fn list_listing_descriptions(
 
 async fn publish_description(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.publish_description(id).await {
+    // SECURITY (issue #766 / #816): scope the mutate to the caller's org so a
+    // tenant cannot publish another org's generated listing description.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .publish_description_for_org(id, org_id)
+        .await
+    {
         Ok(Some(desc)) => Ok(Json(serde_json::json!(desc))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -2846,10 +2920,17 @@ async fn batch_enhance_photos(
 
 async fn get_photo_enhancement(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.find_photo_enhancement(id).await {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's photo enhancement by guessing its id.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_photo_enhancement_for_org(id, org_id)
+        .await
+    {
         Ok(Some(enhancement)) => Ok(Json(serde_json::json!(enhancement))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -2972,7 +3053,10 @@ async fn exchange_voice_oauth_tokens(
     ),
     (StatusCode, Json<ErrorResponse>),
 > {
-    use integrations::{encrypt_if_available, IntegrationCrypto, VoiceOAuthManager, VoicePlatform};
+    use integrations::{
+        encrypt_optional_required, encrypt_required, IntegrationCrypto, VoiceOAuthManager,
+        VoicePlatform,
+    };
 
     // Parse the platform
     let voice_platform: VoicePlatform = platform.parse().map_err(|_| {
@@ -3025,13 +3109,40 @@ async fn exchange_voice_oauth_tokens(
             )
         })?;
 
-    // Encrypt tokens for storage
+    // Encrypt tokens for storage. Issue #765: encryption is MANDATORY — fail
+    // closed if INTEGRATION_ENCRYPTION_KEY is unset rather than persisting voice
+    // OAuth tokens in plaintext.
     let crypto = IntegrationCrypto::try_from_env();
-    let access_encrypted = encrypt_if_available(crypto.as_ref(), &tokens.access_token);
-    let refresh_encrypted = tokens
-        .refresh_token
-        .as_ref()
-        .map(|rt| encrypt_if_available(crypto.as_ref(), rt));
+    let access_encrypted =
+        encrypt_required(crypto.as_ref(), &tokens.access_token).map_err(|e| {
+            tracing::error!(
+                "Refusing to store voice OAuth token without encryption: {}",
+                e
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "ENCRYPTION_REQUIRED",
+                    "Integration token encryption is not configured",
+                )),
+            )
+        })?;
+    let refresh_encrypted =
+        encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref()).map_err(
+            |e| {
+                tracing::error!(
+                    "Refusing to store voice OAuth token without encryption: {}",
+                    e
+                );
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "ENCRYPTION_REQUIRED",
+                        "Integration token encryption is not configured",
+                    )),
+                )
+            },
+        )?;
 
     tracing::info!(
         "Successfully exchanged OAuth tokens for voice platform {}",
@@ -3188,10 +3299,18 @@ async fn list_generation_requests(
 
 async fn get_generation_request(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.find_generation_request(id).await {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's generation request (prompts, results,
+    // cost data) by guessing its id.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_generation_request_for_org(id, org_id)
+        .await
+    {
         Ok(Some(request)) => Ok(Json(serde_json::json!(request))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,

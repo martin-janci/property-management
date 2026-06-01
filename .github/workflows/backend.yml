@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.94.1
         with:
           components: rustfmt, clippy
 
@@ -98,12 +98,26 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      # Redis service for the WebSocket pub/sub fanout integration test
+      # (issue #681). The test is marked #[ignore] because it needs a live
+      # Redis; the dedicated step below opts it in via --include-ignored
+      # with REDIS_URL pointing here. Default `cargo test --workspace`
+      # stays fast and ignored-test-skipping for the rest of the run.
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -129,6 +143,23 @@ jobs:
           RUST_ENV: development
         run: cargo test --workspace
 
+      # WS pub/sub fanout — closes issue #681. The test
+      # `ws_pubsub_fanout_delivers_to_correct_subscriber` in
+      # api-server/tests/ws_integration_tests.rs is marked `#[ignore]`
+      # because it requires a real Redis to exercise the actual pub/sub
+      # delivery path (the core value of the WebSocket push feature; the
+      # other 9 tests in that file only cover JWT + HTTP-upgrade
+      # mechanics). The Redis service container above provides the live
+      # instance; `--include-ignored` opts it in without un-ignoring it
+      # in source — local runs without REDIS_URL still skip it.
+      - name: Run ignored WS+Redis integration tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+          RUST_ENV: development
+        run: cargo test -p api-server --test ws_integration_tests -- --include-ignored
+
   build:
     runs-on: ubuntu-latest
     needs: test
@@ -137,7 +168,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -194,7 +225,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -286,7 +317,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -363,6 +394,81 @@ jobs:
             --ignored --nocapture --test-threads=1 \
             --skip test_cross_tenant_org_isolation \
             --skip test_cross_tenant_role_isolation
+
+  # SQLx migration + offline-cache gate (pm-tech-lead-sqlx-migration-ci-gate):
+  #   (a) runs every migration against a FRESH Postgres so broken/ordering-
+  #       dependent migration SQL is caught before merge (same boot pattern
+  #       as rls-smoke-test / security-tests above), and
+  #   (b) verifies the `.sqlx` offline query cache is up to date via
+  #       `cargo sqlx prepare --check`, so a stale cache (or a newly added
+  #       compile-time `query!`/`query_as!` macro whose entry wasn't
+  #       committed) fails CI rather than breaking the SQLX_OFFLINE=true
+  #       `cargo check` / release build that other jobs rely on.
+  #
+  # NOTE: today the repo deliberately uses RUNTIME `sqlx::query()` /
+  # `query_as()` (not the compile-time macros) so crates build without a live
+  # DATABASE_URL — see the comments in crates/db/src/repositories/*.rs and the
+  # gap-83-1 TODO in rental.rs. With zero macro call-sites the `--check`
+  # currently passes as a no-op; this gate locks in the convention so the day
+  # someone converts a query to the macro form (gap-83-1) and forgets to run
+  # `cargo sqlx prepare`, the offline cache drift is caught here.
+  sqlx-migrations:
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.event_name == 'pull_request'
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ppt_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.94.1
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      # Pin sqlx-cli to the workspace's SQLx version (0.9, see
+      # backend/Cargo.toml [workspace.dependencies]) so the offline-cache
+      # format the CLI emits/checks matches what the macros expect.
+      - name: Install SQLx CLI
+        run: cargo install sqlx-cli --version 0.9.0 --no-default-features --features native-tls,postgres --locked
+
+      # (a) Apply every migration against a fresh database. Fails the PR if any
+      #     migration SQL is broken or order-dependent in a way that doesn't
+      #     replay cleanly. Mirrors the rls-smoke-test / security-tests jobs.
+      - name: Run database migrations
+        working-directory: backend/crates/db
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
+        run: sqlx database create && sqlx migrate run
+
+      # (b) Verify the committed `.sqlx` offline cache matches the queries in
+      #     the source. `--check` exits non-zero if `cargo sqlx prepare` would
+      #     change anything (stale or missing entry), so it never mutates the
+      #     tree — it only fails. Runs against the freshly migrated DB above so
+      #     compile-time-checked macros (if/when added) validate against the
+      #     real schema.
+      - name: Verify SQLx offline cache is up to date
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
+        run: cargo sqlx prepare --check --workspace
 
   cargo-deny:
     runs-on: ubuntu-latest

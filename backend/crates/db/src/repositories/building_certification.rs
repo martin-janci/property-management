@@ -159,7 +159,8 @@ impl BuildingCertificationRepository {
             param_count + 2
         ));
 
-        let mut q = sqlx::query_as::<_, BuildingCertification>(&query).bind(org_id);
+        let mut q =
+            sqlx::query_as::<_, BuildingCertification>(sqlx::AssertSqlSafe(query)).bind(org_id);
 
         if let Some(building_id) = filters.building_id {
             q = q.bind(building_id);

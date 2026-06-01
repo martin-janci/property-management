@@ -72,11 +72,19 @@ impl ViolationRepository {
     }
 
     /// Get a community rule by ID.
-    pub async fn get_rule(&self, rule_id: Uuid) -> Result<Option<CommunityRule>, sqlx::Error> {
-        sqlx::query_as::<_, CommunityRule>("SELECT * FROM community_rules WHERE id = $1")
-            .bind(rule_id)
-            .fetch_optional(&self.pool)
-            .await
+    /// Get a single community rule scoped to an organization (tenant-safe read).
+    pub async fn get_rule_for_org(
+        &self,
+        rule_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<CommunityRule>, sqlx::Error> {
+        sqlx::query_as::<_, CommunityRule>(
+            "SELECT * FROM community_rules WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(rule_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// List community rules for an organization.
@@ -99,13 +107,13 @@ impl ViolationRepository {
         query.push_str(" ORDER BY category, rule_code");
 
         if building_id.is_some() {
-            sqlx::query_as::<_, CommunityRule>(&query)
+            sqlx::query_as::<_, CommunityRule>(sqlx::AssertSqlSafe(query))
                 .bind(org_id)
                 .bind(building_id)
                 .fetch_all(&self.pool)
                 .await
         } else {
-            sqlx::query_as::<_, CommunityRule>(&query)
+            sqlx::query_as::<_, CommunityRule>(sqlx::AssertSqlSafe(query))
                 .bind(org_id)
                 .fetch_all(&self.pool)
                 .await
@@ -231,14 +239,19 @@ impl ViolationRepository {
     }
 
     /// Get a violation by ID.
-    pub async fn get_violation(
+    /// Get a single violation scoped to an organization (tenant-safe read).
+    pub async fn get_violation_for_org(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<Violation>, sqlx::Error> {
-        sqlx::query_as::<_, Violation>("SELECT * FROM violations WHERE id = $1")
-            .bind(violation_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as::<_, Violation>(
+            "SELECT * FROM violations WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(violation_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// List violations with filters.
@@ -477,14 +490,19 @@ impl ViolationRepository {
     }
 
     /// Get an enforcement action by ID.
-    pub async fn get_enforcement_action(
+    /// Get a single enforcement action scoped to an organization (tenant-safe read).
+    pub async fn get_enforcement_action_for_org(
         &self,
         action_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<EnforcementAction>, sqlx::Error> {
-        sqlx::query_as::<_, EnforcementAction>("SELECT * FROM enforcement_actions WHERE id = $1")
-            .bind(action_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as::<_, EnforcementAction>(
+            "SELECT * FROM enforcement_actions WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(action_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// List enforcement actions.
@@ -637,6 +655,21 @@ impl ViolationRepository {
             .bind(appeal_id)
             .fetch_optional(&self.pool)
             .await
+    }
+
+    /// Get a single appeal scoped to an organization (tenant-safe read).
+    pub async fn get_appeal_for_org(
+        &self,
+        appeal_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<ViolationAppeal>, sqlx::Error> {
+        sqlx::query_as::<_, ViolationAppeal>(
+            "SELECT * FROM violation_appeals WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(appeal_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// List appeals.

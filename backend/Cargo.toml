@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.927"
+version = "0.3.1"
 edition = "2021"
 rust-version = "1.75"
 license = "MIT"
@@ -41,7 +41,7 @@ utoipa-swagger-ui = { version = "9", features = ["axum"] }
 validator = { version = "0.20", features = ["derive"] }
 
 # Database
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
 rust_decimal = { version = "1.34", features = ["serde", "serde-str"] }
 rust_decimal_macros = "1.34"
 
@@ -81,11 +81,11 @@ opentelemetry = { version = "0.32", features = ["metrics", "trace"] }
 opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "0.32", features = ["grpc-tonic"] }
 tracing-opentelemetry = "0.33"
-metrics = "0.21"
+metrics = "0.24"
 metrics-exporter-prometheus = "0.12"
 
 # Error tracking (Epic 95)
-sentry = { version = "0.32", features = ["tracing", "tower", "tower-http"] }
+sentry = { version = "0.48", features = ["tracing", "tower", "tower-http"] }
 
 # AWS SDK for S3 (Epic 103)
 aws-config = { version = "1.1", features = ["behavior-version-latest"] }
@@ -127,3 +127,13 @@ which = "8.0"
 strip = "symbols"
 lto = "thin"
 codegen-units = 1
+
+# `cargo test --workspace` statically links one large binary per test file.
+# With full debuginfo (the default) these balloon the runner's root disk and
+# the CI `test` job intermittently dies mid-link with SIGTERM (exit 143) — see
+# the "Free disk space" note in .github/workflows/backend.yml. Dropping
+# debuginfo from the test profile shrinks those binaries dramatically and
+# removes the disk-pressure flakiness without affecting test behaviour. Stack
+# traces still carry function names; only line-level debug info is omitted.
+[profile.test]
+debug = false

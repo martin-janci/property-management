@@ -60,7 +60,9 @@ UC-45.2 — user's personal saved searches with alert notifications. Navigated t
 
 - Accessible from AccountView's navigation list; also navigable via deep link `realityportal://account/saved-searches`.
 - Alert toggle fires async KMP call and updates list in-place on success.
+- ⚠️ **Sitemap gap (#581):** the alert-toggle UI calls `PATCH /api/v1/saved-searches/{id}`, but no `saved_searches_update` (or `saved_searches_toggle_alert`) operationId exists in `@ppt/sitemap` yet — so it is intentionally omitted from `endpoints` above. Restore the endpoint here once the sitemap is extended.
 
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/SavedSearches/SavedSearchesView.swift (UC-45.2). Launch-from-saved-search gap noted.
+- 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.

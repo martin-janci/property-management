@@ -400,9 +400,15 @@ async fn access_shared_document(
         ));
     }
 
-    // Get document - public endpoint, no RLS context
-    #[allow(deprecated)]
-    let document = match state.document_repo.find_by_id(share.document_id).await {
+    // Get document via the share-token path. The validated token is the
+    // authorization grant; the lookup runs with super-admin RLS context on a
+    // dedicated connection so it stays correct under FORCE RLS on `documents`
+    // (#754).
+    let document = match state
+        .document_repo
+        .find_by_id_for_share(share.document_id)
+        .await
+    {
         Ok(Some(d)) => d,
         Ok(None) => {
             return Err((
@@ -527,9 +533,15 @@ async fn access_protected_share(
         ));
     }
 
-    // Get document - public endpoint, no RLS context
-    #[allow(deprecated)]
-    let document = match state.document_repo.find_by_id(share.document_id).await {
+    // Get document via the share-token path. The validated token is the
+    // authorization grant; the lookup runs with super-admin RLS context on a
+    // dedicated connection so it stays correct under FORCE RLS on `documents`
+    // (#754).
+    let document = match state
+        .document_repo
+        .find_by_id_for_share(share.document_id)
+        .await
+    {
         Ok(Some(d)) => d,
         Ok(None) => {
             return Err((

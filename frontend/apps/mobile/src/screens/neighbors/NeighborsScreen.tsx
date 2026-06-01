@@ -45,11 +45,12 @@ interface NeighborsResponse {
 
 interface BuildingItem {
   id: string;
-  name: string;
+  name?: string | null;
 }
 
+/** Response shape of `GET /api/v1/buildings` (`BuildingsListResponse`). */
 interface BuildingsPaginatedResponse {
-  items: BuildingItem[];
+  buildings: BuildingItem[];
   total: number;
 }
 
@@ -61,7 +62,7 @@ interface NeighborsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
-export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
+export function NeighborsScreen(_props: NeighborsScreenProps) {
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -71,8 +72,8 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
     '/api/v1/buildings'
   );
 
-  const buildingId = buildingsQuery.data?.items?.[0]?.id;
-  const buildingName = buildingsQuery.data?.items?.[0]?.name;
+  const buildingId = buildingsQuery.data?.buildings?.[0]?.id;
+  const buildingName = buildingsQuery.data?.buildings?.[0]?.name ?? undefined;
 
   // Fetch neighbors once we have a building id
   const neighborsQuery = useApiQuery<NeighborsResponse>(
@@ -174,12 +175,11 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
             </Text>
           </View>
         ) : (
+          // The list row shows the full neighbour record (name, unit, phone,
+          // email). There is no NeighborDetail screen, so the row is a static
+          // card rather than a dead navigation target.
           filtered.map((neighbor) => (
-            <Pressable
-              key={neighbor.user_id}
-              style={[s.card, styles.row]}
-              onPress={() => onNavigate?.('NeighborDetail', { neighborId: neighbor.user_id })}
-            >
+            <View key={neighbor.user_id} style={[s.card, styles.row]}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{initials(neighbor.display_name)}</Text>
               </View>
@@ -192,13 +192,9 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
                 {neighbor.phone && <Text style={styles.contact}>📞 {neighbor.phone}</Text>}
                 {neighbor.email && <Text style={styles.contact}>✉️ {neighbor.email}</Text>}
               </View>
-            </Pressable>
+            </View>
           ))
         )}
-
-        <Pressable style={s.primaryButton} onPress={() => onNavigate?.('InviteNeighbor')}>
-          <Text style={s.primaryButtonText}>Invite a neighbour</Text>
-        </Pressable>
 
         <View style={s.bottomSpacer} />
       </ScrollView>

@@ -11,6 +11,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::lease::RecordPayment;
 use db::models::{
     ApplicationListQuery, CreateAmendment, CreateApplication, CreateLease, CreateLeaseTemplate,
@@ -314,6 +315,21 @@ async fn review_application(
     Path(id): Path<Uuid>,
     Json(payload): Json<ReviewApplication>,
 ) -> Result<Json<db::models::TenantApplication>, (StatusCode, Json<ErrorResponse>)> {
+    // Reviewing (approving/rejecting) a tenant application is a manager action.
+    // Without this gate any authenticated member of the org — including a
+    // resident — could approve or reject applications (privilege escalation,
+    // closes #806). Managers and higher (incl. super-admins) pass.
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Only managers can review tenant applications",
+            )),
+        ));
+    }
+
     let result = state
         .lease_repo
         .review_application_rls(&mut **rls.conn(), id, auth.user_id, payload)

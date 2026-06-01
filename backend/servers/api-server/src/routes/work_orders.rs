@@ -63,6 +63,110 @@ pub fn router() -> Router<AppState> {
         .route("/cost-summary", get(get_cost_summary))
 }
 
+// ==================== Authorization Helpers ====================
+
+/// Verify the authenticated user is a member of the given organization.
+///
+/// Work-order routes accept the target `organization_id` from the client
+/// (request body / query string) or derive it from the resource being
+/// addressed by id. Either way the caller's membership must be checked
+/// against `organization_members` so org A cannot read or mutate org B's
+/// work orders (cross-tenant IDOR). Mirrors `integrations::sync::verify_org_access`.
+async fn verify_org_access(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let is_member = state
+        .org_member_repo
+        .is_member(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+
+    if !is_member {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
+
+    Ok(())
+}
+
+/// Load a work order by id and authorize the caller against its owning org.
+///
+/// Returns `404 NOT_FOUND` if the work order does not exist and `403 FORBIDDEN`
+/// if the caller is not a member of the organization that owns it. By-id
+/// handlers route through this so an org A caller can never read or address an
+/// org B work order. Mirrors the fetch-then-`verify_org_access` idiom in
+/// `integrations::sync`.
+async fn load_work_order_for_user(
+    state: &AppState,
+    user_id: Uuid,
+    work_order_id: Uuid,
+) -> Result<WorkOrder, (StatusCode, Json<ErrorResponse>)> {
+    let work_order = state
+        .work_order_repo
+        .find_by_id(work_order_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get work order: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to get work order")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Work order not found")),
+            )
+        })?;
+
+    verify_org_access(state, user_id, work_order.organization_id).await?;
+
+    Ok(work_order)
+}
+
+/// Load a maintenance schedule by id and authorize the caller against its
+/// owning org. Same contract as [`load_work_order_for_user`] for schedules.
+async fn load_schedule_for_user(
+    state: &AppState,
+    user_id: Uuid,
+    schedule_id: Uuid,
+) -> Result<MaintenanceSchedule, (StatusCode, Json<ErrorResponse>)> {
+    let schedule = state
+        .work_order_repo
+        .find_schedule_by_id(schedule_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get schedule: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to get schedule")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Schedule not found")),
+            )
+        })?;
+
+    verify_org_access(state, user_id, schedule.organization_id).await?;
+
+    Ok(schedule)
+}
+
 // ==================== Request/Response Types ====================
 
 /// Organization query parameter.
@@ -209,6 +313,7 @@ async fn create_work_order(
     user: AuthUser,
     Json(payload): Json<CreateWorkOrderRequest>,
 ) -> Result<(StatusCode, Json<WorkOrder>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, payload.organization_id).await?;
     state
         .work_order_repo
         .create_work_order(payload.organization_id, user.user_id, payload.data)
@@ -228,9 +333,10 @@ async fn create_work_order(
 
 async fn list_work_orders(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListWorkOrdersQuery>,
 ) -> Result<Json<Vec<WorkOrder>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .work_order_repo
         .list(query.organization_id, (&query).into())
@@ -247,9 +353,10 @@ async fn list_work_orders(
 
 async fn list_work_orders_with_details(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListWorkOrdersQuery>,
 ) -> Result<Json<Vec<WorkOrderWithDetails>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .work_order_repo
         .list_with_details(query.organization_id, (&query).into())
@@ -266,9 +373,10 @@ async fn list_work_orders_with_details(
 
 async fn get_statistics(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<WorkOrderStatistics>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .work_order_repo
         .get_statistics(query.organization_id)
@@ -291,9 +399,10 @@ pub struct OverdueQuery {
 
 async fn list_overdue(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<OverdueQuery>,
 ) -> Result<Json<Vec<WorkOrder>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .work_order_repo
         .list_overdue(query.organization_id, query.limit.unwrap_or(20))
@@ -310,27 +419,11 @@ async fn list_overdue(
 
 async fn get_work_order(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
-    state
-        .work_order_repo
-        .find_by_id(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get work order: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to get work order")),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Work order not found")),
-            )
-        })
+    let work_order = load_work_order_for_user(&state, user.user_id, id).await?;
+    Ok(Json(work_order))
 }
 
 async fn update_work_order(
@@ -339,6 +432,7 @@ async fn update_work_order(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateWorkOrder>,
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
+    load_work_order_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .update(id, user.user_id, data)
@@ -358,9 +452,10 @@ async fn update_work_order(
 
 async fn delete_work_order(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    load_work_order_for_user(&state, user.user_id, id).await?;
     let deleted = state.work_order_repo.delete(id).await.map_err(|e| {
         tracing::error!("Failed to delete work order: {:?}", e);
         (
@@ -388,6 +483,7 @@ async fn assign_work_order(
     Path(id): Path<Uuid>,
     Json(data): Json<AssignRequest>,
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
+    load_work_order_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .assign(id, user.user_id, data.assigned_to, data.vendor_id)
@@ -410,6 +506,7 @@ async fn start_work(
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
+    load_work_order_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .start_work(id, user.user_id)
@@ -430,6 +527,7 @@ async fn complete_work_order(
     Path(id): Path<Uuid>,
     Json(data): Json<CompleteRequest>,
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
+    load_work_order_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .complete(
@@ -458,6 +556,7 @@ async fn put_on_hold(
     Path(id): Path<Uuid>,
     Json(data): Json<HoldRequest>,
 ) -> Result<Json<WorkOrder>, (StatusCode, Json<ErrorResponse>)> {
+    load_work_order_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .put_on_hold(id, user.user_id, &data.reason)
@@ -478,6 +577,7 @@ async fn add_comment(
     Path(id): Path<Uuid>,
     Json(data): Json<AddWorkOrderUpdate>,
 ) -> Result<(StatusCode, Json<WorkOrderUpdate>), (StatusCode, Json<ErrorResponse>)> {
+    load_work_order_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .add_comment(id, user.user_id, data)
@@ -494,10 +594,11 @@ async fn add_comment(
 
 async fn list_comments(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<WorkOrderUpdate>>, (StatusCode, Json<ErrorResponse>)> {
+    load_work_order_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .list_updates(id, query.limit.unwrap_or(50), query.offset.unwrap_or(0))
@@ -519,6 +620,7 @@ async fn create_schedule(
     user: AuthUser,
     Json(payload): Json<CreateScheduleRequest>,
 ) -> Result<(StatusCode, Json<MaintenanceSchedule>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, payload.organization_id).await?;
     state
         .work_order_repo
         .create_schedule(payload.organization_id, user.user_id, payload.data)
@@ -535,9 +637,10 @@ async fn create_schedule(
 
 async fn list_schedules(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListSchedulesQuery>,
 ) -> Result<Json<Vec<MaintenanceSchedule>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .work_order_repo
         .list_schedules(query.organization_id, (&query).into())
@@ -554,9 +657,10 @@ async fn list_schedules(
 
 async fn get_upcoming_schedules(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<UpcomingQuery>,
 ) -> Result<Json<Vec<UpcomingSchedule>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .work_order_repo
         .get_upcoming_schedules(
@@ -577,9 +681,10 @@ async fn get_upcoming_schedules(
 
 async fn process_due_schedules(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<Vec<WorkOrder>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .work_order_repo
         .process_due_schedules(query.organization_id)
@@ -599,35 +704,20 @@ async fn process_due_schedules(
 
 async fn get_schedule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
-    state
-        .work_order_repo
-        .find_schedule_by_id(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get schedule: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to get schedule")),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Schedule not found")),
-            )
-        })
+    let schedule = load_schedule_for_user(&state, user.user_id, id).await?;
+    Ok(Json(schedule))
 }
 
 async fn update_schedule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateMaintenanceSchedule>,
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    load_schedule_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .update_schedule(id, data)
@@ -644,9 +734,10 @@ async fn update_schedule(
 
 async fn delete_schedule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    load_schedule_for_user(&state, user.user_id, id).await?;
     let deleted = state
         .work_order_repo
         .delete_schedule(id)
@@ -671,9 +762,10 @@ async fn delete_schedule(
 
 async fn activate_schedule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    load_schedule_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .set_schedule_active(id, true)
@@ -693,9 +785,10 @@ async fn activate_schedule(
 
 async fn deactivate_schedule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    load_schedule_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .set_schedule_active(id, false)
@@ -715,10 +808,11 @@ async fn deactivate_schedule(
 
 async fn skip_schedule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<SkipRequest>,
 ) -> Result<Json<MaintenanceSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    load_schedule_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .skip_schedule_execution(id, &data.reason)
@@ -735,10 +829,11 @@ async fn skip_schedule(
 
 async fn list_executions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<ScheduleExecution>>, (StatusCode, Json<ErrorResponse>)> {
+    load_schedule_for_user(&state, user.user_id, id).await?;
     state
         .work_order_repo
         .list_executions(id, query.limit.unwrap_or(50), query.offset.unwrap_or(0))
@@ -754,6 +849,16 @@ async fn list_executions(
 }
 
 // ==================== Service History (Story 20.4) ====================
+//
+// NOTE (#821 P2 — deferred): the two service-history endpoints below are keyed
+// by `equipment_id` / `building_id`, neither of which carries an
+// `organization_id` the handler can authorize against without a cross-resource
+// lookup (equipment/building → owning org). The work_order_repo exposes no
+// org-scoped variant for these queries, so closing the cross-tenant gap here
+// requires an org-scoped repo method (or threading the equipment/building repo
+// RLS lookup) — a separate slice tracked as the #821 P2 follow-up. The P1
+// IDOR on the work-order and schedule handlers (read/mutate by id, plus the
+// org-supplied create/list endpoints) is fixed above.
 
 async fn get_equipment_service_history(
     State(state): State<AppState>,
@@ -811,9 +916,10 @@ async fn get_building_service_history(
 
 async fn get_cost_summary(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<CostSummaryQuery>,
 ) -> Result<Json<Vec<MaintenanceCostSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, user.user_id, query.organization_id).await?;
     state
         .work_order_repo
         .get_cost_summary(query.organization_id, query.start_date, query.end_date)

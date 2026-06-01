@@ -115,8 +115,10 @@ pub fn sensor_router() -> Router<AppState> {
 )]
 async fn create_sensor(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Json(req): Json<CreateSensor>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.create(req).await {
         Ok(sensor) => Ok((StatusCode::CREATED, Json(serde_json::json!(sensor)))),
         Err(e) => {
@@ -166,8 +168,10 @@ async fn list_sensors(
 
 async fn get_sensor(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.find_by_id(id).await {
         Ok(Some(sensor)) => Ok(Json(serde_json::json!(sensor))),
         Ok(None) => Err((
@@ -186,9 +190,11 @@ async fn get_sensor(
 
 async fn update_sensor(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSensor>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.update(id, req).await {
         Ok(sensor) => Ok(Json(serde_json::json!(sensor))),
         Err(e) => {
@@ -206,8 +212,10 @@ async fn update_sensor(
 
 async fn delete_sensor(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.delete(id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
@@ -233,9 +241,11 @@ async fn delete_sensor(
 
 async fn list_readings(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Query(query): Query<ReadingQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.list_readings(id, query).await {
         Ok(readings) => Ok(Json(serde_json::json!({ "readings": readings }))),
         Err(e) => {
@@ -253,9 +263,11 @@ async fn list_readings(
 
 async fn add_reading(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorReading>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     req.sensor_id = id;
 
     match state.sensor_repo.create_reading(req).await {
@@ -275,9 +287,11 @@ async fn add_reading(
 
 async fn add_batch_readings(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<BatchSensorReadings>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state
         .sensor_repo
         .create_batch_readings(id, req.readings)
@@ -302,9 +316,11 @@ async fn add_batch_readings(
 
 async fn get_aggregated_readings(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Query(query): Query<ReadingQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     let aggregation = query
         .aggregation
         .clone()
@@ -339,8 +355,10 @@ async fn get_aggregated_readings(
 
 async fn list_thresholds(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.list_thresholds(id).await {
         Ok(thresholds) => Ok(Json(serde_json::json!({ "thresholds": thresholds }))),
         Err(e) => {
@@ -358,9 +376,11 @@ async fn list_thresholds(
 
 async fn create_threshold(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorThreshold>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     req.sensor_id = id;
 
     match state.sensor_repo.create_threshold(req).await {
@@ -380,9 +400,11 @@ async fn create_threshold(
 
 async fn update_threshold(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(threshold_id): Path<Uuid>,
     Json(req): Json<UpdateSensorThreshold>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.update_threshold(threshold_id, req).await {
         Ok(threshold) => Ok(Json(serde_json::json!(threshold))),
         Err(e) => {
@@ -400,8 +422,10 @@ async fn update_threshold(
 
 async fn delete_threshold(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(threshold_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.delete_threshold(threshold_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
@@ -482,9 +506,11 @@ pub struct ResolveAlertRequest {
 
 async fn resolve_alert(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(alert_id): Path<Uuid>,
     Json(req): Json<ResolveAlertRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     // Pass resolved_value as Option - NULL is valid when value wasn't captured
     match state
         .sensor_repo
@@ -511,8 +537,10 @@ async fn resolve_alert(
 
 async fn list_correlations(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.list_correlations_for_sensor(id).await {
         Ok(correlations) => Ok(Json(serde_json::json!({ "correlations": correlations }))),
         Err(e) => {
@@ -555,8 +583,10 @@ async fn create_correlation(
 
 async fn delete_correlation(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(correlation_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state.sensor_repo.delete_correlation(correlation_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
@@ -613,9 +643,11 @@ pub struct TemplateQuery {
 
 async fn apply_template(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ApplyTemplateRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let _tenant_id = require_tenant_id(&principal)?;
     match state
         .sensor_repo
         .apply_threshold_template(template_id, req.sensor_id)

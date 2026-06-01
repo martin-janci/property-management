@@ -21,6 +21,14 @@ class FavoritesRepository(
         sessionToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
     }
 
+    /**
+     * URL-encode a value before splicing it into a request path. Without this, an attacker- or
+     * caller-supplied id containing `/`, `?`, `#`, or `..` could smuggle extra path segments or
+     * query parameters into the request (path-injection). [encodeURLPathPart] percent-encodes
+     * everything that is not valid inside a single path segment.
+     */
+    private fun pathSegment(value: String): String = value.encodeURLPathPart()
+
     // --- Favorites ---
 
     /** Get user's favorite listings. */
@@ -40,13 +48,22 @@ class FavoritesRepository(
         }
     }
 
-    /** Add a listing to favorites. */
+    /**
+     * Add a listing to favorites.
+     *
+     * Endpoint: `POST /api/v1/favorites/{listing_id}` (listing ID is a path segment, not a body
+     * field — the server's `AddFavorite` body only carries an optional `notes` field).
+     */
     suspend fun addFavorite(listingId: String): Result<AddFavoriteResponse> {
         return try {
             val response =
-                client.post("$baseUrl/api/v1/favorites") {
+                client.post("$baseUrl/api/v1/favorites/${pathSegment(listingId)}") {
                     configureRequest()
-                    setBody(AddFavoriteRequest(listingId))
+                    // Empty typed body — server's `AddFavorite` is `{notes?: String}`; we omit it.
+                    // Using the @Serializable `AddFavoriteBody` keeps the call on the
+                    // ContentNegotiation pipeline instead of bypassing it with a raw "{}" string.
+                    contentType(ContentType.Application.Json)
+                    setBody(AddFavoriteBody)
                 }
 
             if (response.status.isSuccess()) {
@@ -67,7 +84,9 @@ class FavoritesRepository(
     suspend fun removeFavorite(listingId: String): Result<Unit> {
         return try {
             val response =
-                client.delete("$baseUrl/api/v1/favorites/$listingId") { configureRequest() }
+                client.delete("$baseUrl/api/v1/favorites/${pathSegment(listingId)}") {
+                    configureRequest()
+                }
 
             if (response.status.isSuccess()) {
                 Result.success(Unit)
@@ -83,20 +102,33 @@ class FavoritesRepository(
         }
     }
 
-    /** Check if a listing is favorited. */
+    /**
+     * Check if a listing is favorited.
+     *
+     * Endpoint: `GET /api/v1/favorites/{listing_id}/check`
+     *
+     * The server **always** returns HTTP 200 with body `{"is_favorited": bool}` — it does NOT
+     * return 404 for an un-favorited listing. We must parse the response body instead of treating
+     * any 2xx as `true`.
+     */
     suspend fun isFavorite(listingId: String): Result<Boolean> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/favorites/$listingId/check") { configureRequest() }
+                client.get("$baseUrl/api/v1/favorites/${pathSegment(listingId)}/check") {
+                    configureRequest()
+                }
 
-            if (response.status.isSuccess()) {
-                Result.success(true)
-            } else if (response.status == HttpStatusCode.NotFound) {
-                Result.success(false)
-            } else if (response.status == HttpStatusCode.Unauthorized) {
-                Result.success(false)
-            } else {
-                Result.failure(FavoritesException("Failed to check favorite: ${response.status}"))
+            when {
+                response.status.isSuccess() -> {
+                    val body: CheckFavoriteResponse = response.body()
+                    Result.success(body.isFavorited)
+                }
+                response.status == HttpStatusCode.Unauthorized ->
+                    Result.success(false) // unauthenticated → treat as not-favorited
+                else ->
+                    Result.failure(
+                        FavoritesException("Failed to check favorite: ${response.status}")
+                    )
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -152,7 +184,7 @@ class FavoritesRepository(
     ): Result<SavedSearch> {
         return try {
             val response =
-                client.patch("$baseUrl/api/v1/saved-searches/$searchId") {
+                client.patch("$baseUrl/api/v1/saved-searches/${pathSegment(searchId)}") {
                     configureRequest()
                     setBody(request)
                 }
@@ -177,7 +209,9 @@ class FavoritesRepository(
     suspend fun deleteSavedSearch(searchId: String): Result<Unit> {
         return try {
             val response =
-                client.delete("$baseUrl/api/v1/saved-searches/$searchId") { configureRequest() }
+                client.delete("$baseUrl/api/v1/saved-searches/${pathSegment(searchId)}") {
+                    configureRequest()
+                }
 
             if (response.status.isSuccess()) {
                 Result.success(Unit)

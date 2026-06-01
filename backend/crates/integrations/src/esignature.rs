@@ -673,6 +673,48 @@ mod tests {
         );
     }
 
+    /// Regression for #761: the URL builder must NEVER produce an unsigned
+    /// `/sign` link. The api-server handler previously fell back to an
+    /// unauthenticated `/sign?request_id=<id>&email=<email>` URL whenever
+    /// signing errored, defeating the signed-link integrity guarantee. The fix
+    /// makes the handler fail closed (skip the signer) on error. This test pins
+    /// the provider contract that every emitted URL carries a `?token=` HMAC
+    /// payload and never the unsigned `request_id`/`email` query shape, so any
+    /// future code path that re-introduces the unsigned fallback is caught.
+    #[test]
+    fn test_signing_url_is_never_unsigned() {
+        let provider = LightweightProvider::new(mk_config(SECRET, None));
+        let signed = provider
+            .build_signing_url("alice@example.com", "req-1", ORG_ID, "pending")
+            .expect("build url");
+
+        assert!(
+            signed.url.contains("/sign?token="),
+            "Every signing URL must be HMAC-signed (carry ?token=), got: {}",
+            signed.url
+        );
+        assert!(
+            !signed.url.contains("request_id="),
+            "Signing URL must never expose the unsigned request_id query param \
+             (the #761 fallback shape), got: {}",
+            signed.url
+        );
+        assert!(
+            !signed.url.contains("&email="),
+            "Signing URL must never expose the unsigned email query param \
+             (the #761 fallback shape), got: {}",
+            signed.url
+        );
+        // The token payload alone identifies the signer; the email/request id
+        // are inside the verified, tamper-evident token, not the query string.
+        let token_str = signed.url.split("token=").nth(1).expect("token present");
+        let verified = provider
+            .verify_token(token_str, Some(ORG_ID))
+            .expect("the only signer identity must come from a verifiable token");
+        assert_eq!(verified.signer_email, "alice@example.com");
+        assert_eq!(verified.request_id, "req-1");
+    }
+
     #[test]
     fn test_lightweight_provider_verify_token_roundtrip() {
         let provider = LightweightProvider::new(mk_config(SECRET, None));

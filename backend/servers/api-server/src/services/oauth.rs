@@ -375,6 +375,23 @@ impl OAuthService {
         code_challenge: Option<String>,
         code_challenge_method: Option<String>,
     ) -> Result<String, OAuthServiceError> {
+        // Re-validate the requested scopes against the client's registered grant
+        // before issuance. The consent POST path passes scopes straight from the
+        // submitted form, so without this gate a caller could request scopes the
+        // client was never authorized for (privilege escalation). Validating here
+        // covers every caller of `create_authorization_code`, not just the GET path.
+        let client = self
+            .repo
+            .find_active_client_by_client_id(client_id)
+            .await?
+            .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
+
+        for scope in scopes {
+            if !client.is_scope_allowed(scope) {
+                return Err(OAuthServiceError::InvalidScope(scope.clone()));
+            }
+        }
+
         // Generate authorization code
         let code = self.generate_secure_token();
         let code_hash = self.hash_token(&code);
@@ -428,9 +445,11 @@ impl OAuthService {
             .await?
             .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
 
-        // Validate redirect URI matches
+        // Validate redirect URI matches.
+        // RFC 6749 §5.2: redirect_uri mismatch at the token endpoint is invalid_grant,
+        // not invalid_request (invalid_request applies at the authorize stage only).
         if auth_code.redirect_uri != *redirect_uri {
-            return Err(OAuthServiceError::InvalidRedirectUri);
+            return Err(OAuthServiceError::InvalidGrant);
         }
 
         // Validate PKCE if code challenge was provided

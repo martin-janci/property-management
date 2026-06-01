@@ -172,13 +172,31 @@ Append to `.research/management/post-merge-review.json` (create if missing):
 Merge logic: keep all prior `runs`; the latest run goes at the head of the
 array. Cap to last 20 runs to keep the file small.
 
-## Step 5 — Update marker + push
+## Step 5 — Update marker + (conditionally) commit
+
+Always write the marker file:
 
 ```bash
 date -u +%Y-%m-%dT%H:%M:%SZ > .research/management/last-merged-review.txt
-git add .research/management/post-merge-review.json .research/management/last-merged-review.txt
-git commit -m "chore(research): post-merge review <date> — scanned N, opened M follow-ups"
-git push origin <base>     # only these two files direct-to-base
+```
+
+**Single-writer (finding `subagent-race-on-dev-push`).** When an orchestrator
+that owns the `.research/` commit spawned this skill (it sets
+`DISPATCHER_OWNED_COMMIT=1`), do NOT commit or push — leave both files in the
+working tree for the orchestrator's one Phase 6 commit. An independent push
+here is a separate `dev` push: it triggers a `research-land` replay +
+`version-bump`, and can race/empty the orchestrator's own commit.
+
+```bash
+if [ "${DISPATCHER_OWNED_COMMIT:-0}" = "1" ]; then
+  echo "DISPATCHER_OWNED_COMMIT=1 — wrote post-merge-review.json + last-merged-review.txt;" \
+       "deferring commit/push to the orchestrator's Phase 6."
+else
+  # Standalone invocation: this skill owns the commit.
+  git add .research/management/post-merge-review.json .research/management/last-merged-review.txt
+  git commit -m "chore(research): post-merge review <date> — scanned N, opened M follow-ups"
+  git push origin <base>     # only these two files direct-to-base
+fi
 ```
 
 ## Step 6 — Return summary

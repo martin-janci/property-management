@@ -12,6 +12,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::{
     Building, BuildingStatistics, BuildingSummary, CreateBuilding, CreateUnit, Unit, UnitOwnerInfo,
     UnitSummary, UnitWithOwners, UpdateBuilding, UpdateUnit,
@@ -474,6 +475,19 @@ pub async fn create_building(
         ));
     }
 
+    // Creating a building is a manager action (closes #799). RLS enforces org
+    // isolation but not role level, so gate explicitly.
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to create buildings",
+            )),
+        ));
+    }
+
     // Validate required fields
     if req.street.trim().is_empty() {
         rls.release().await;
@@ -609,6 +623,18 @@ pub async fn bulk_import_buildings(
     // organizations they belong to
 
     let user_id = rls.user_id();
+
+    // Bulk-importing buildings is a manager action (closes #799).
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to bulk-import buildings",
+            )),
+        ));
+    }
 
     // Validate bulk import size
     if req.buildings.is_empty() {
@@ -852,6 +878,18 @@ pub async fn archive_building(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
+    // Archiving a building is a manager action (closes #799).
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to archive buildings",
+            )),
+        ));
+    }
+
     // RLS policies automatically enforce tenant isolation and access control
     let building = state
         .building_repo

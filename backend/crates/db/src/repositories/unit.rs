@@ -166,7 +166,7 @@ impl UnitRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, Unit>(&query).bind(id);
+        let mut q = sqlx::query_as::<_, Unit>(sqlx::AssertSqlSafe(query)).bind(id);
 
         if let Some(entrance) = &data.entrance {
             q = q.bind(entrance);
@@ -303,7 +303,7 @@ impl UnitRepository {
             where_clause
         );
 
-        let mut data_q = sqlx::query_as::<_, UnitSummary>(&data_query)
+        let mut data_q = sqlx::query_as::<_, UnitSummary>(sqlx::AssertSqlSafe(data_query))
             .bind(building_id)
             .bind(limit)
             .bind(offset);
@@ -350,7 +350,8 @@ impl UnitRepository {
         // Get count first
         let count_query = format!("SELECT COUNT(*) FROM units WHERE {}", where_clause);
 
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query).bind(building_id);
+        let mut count_q =
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query)).bind(building_id);
         if let Some(ut) = unit_type_filter {
             count_q = count_q.bind(ut);
         }
@@ -388,7 +389,7 @@ impl UnitRepository {
             data_where_clause
         );
 
-        let mut data_q = sqlx::query_as::<_, UnitSummary>(&data_query)
+        let mut data_q = sqlx::query_as::<_, UnitSummary>(sqlx::AssertSqlSafe(data_query))
             .bind(building_id)
             .bind(limit)
             .bind(offset);
@@ -551,7 +552,7 @@ impl UnitRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, UnitOwner>(&query)
+        let mut q = sqlx::query_as::<_, UnitOwner>(sqlx::AssertSqlSafe(query))
             .bind(unit_id)
             .bind(user_id);
 
@@ -733,7 +734,8 @@ impl UnitRepository {
         let count_query = format!("SELECT COUNT(*) FROM units WHERE {}", where_clause);
 
         // Execute count query
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query).bind(building_id);
+        let mut count_q =
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query)).bind(building_id);
         if let Some(ut) = unit_type_filter {
             count_q = count_q.bind(ut);
         }
@@ -824,7 +826,7 @@ impl UnitRepository {
             updates.join(", ")
         );
 
-        let mut q = sqlx::query_as::<_, UnitOwner>(&query)
+        let mut q = sqlx::query_as::<_, UnitOwner>(sqlx::AssertSqlSafe(query))
             .bind(unit_id)
             .bind(user_id);
 

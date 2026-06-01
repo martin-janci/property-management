@@ -69,15 +69,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 8
 
@@ -100,6 +100,28 @@ jobs:
       - name: Typecheck mobile
         working-directory: frontend/apps/mobile
         run: pnpm typecheck
+
+      # issue #767 (#6) — fail fast before invoking EAS when the required
+      # repo/org secrets are absent. Without this the build proceeds to
+      # `eas build` and fails deep in the EAS pipeline with an opaque auth
+      # error. Note: the real production API_BASE_URL / WS_BASE_URL live in the
+      # EAS *project* secret store (not GitHub secrets) — they cannot be
+      # verified here, so this only guards the GitHub-level prerequisites.
+      - name: Verify required EAS secrets
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+        run: |
+          missing=""
+          [ -z "$EXPO_TOKEN" ] && missing="$missing EXPO_TOKEN"
+          [ -z "$EXPO_PROJECT_ID" ] && missing="$missing EXPO_PROJECT_ID"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required GitHub secret(s):$missing"
+            echo "Set them under repo/org Settings → Secrets and variables → Actions."
+            echo "See the header of this workflow for the one-time setup checklist."
+            exit 1
+          fi
+          echo "Required EAS secrets present."
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
@@ -127,6 +149,37 @@ jobs:
             --profile ${{ steps.profile.outputs.profile }} \
             --non-interactive \
             --no-wait
+
+      - name: Surface EAS build URL in job summary (issue #715)
+        # --no-wait above returns the moment the build is enqueued; the EAS
+        # job then runs minutes later on expo.dev with no feedback in
+        # GitHub Actions. Look up the just-enqueued build and write its URL
+        # to the step summary so the developer has a direct link instead of
+        # navigating expo.dev manually. Non-fatal — never block the build
+        # on the summary write.
+        if: always()
+        working-directory: frontend/apps/mobile
+        env:
+          EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+        run: |
+          set +e
+          build_json=$(eas build:list --platform android --limit 1 --non-interactive --json 2>/dev/null)
+          build_url=$(echo "$build_json" | jq -r '.[0].buildProfile as $bp | "\(.[0].id) [\(.[0].status)] profile=\($bp) → https://expo.dev/accounts/_/projects/_/builds/\(.[0].id)"' 2>/dev/null)
+          {
+            echo "## EAS Android build (profile=${{ steps.profile.outputs.profile }})"
+            if [ -n "$build_url" ] && [ "$build_url" != "null" ]; then
+              echo ""
+              echo "Latest build: $build_url"
+              echo ""
+              echo "Raw JSON:"
+              echo '```json'
+              echo "$build_json" | jq '.[0] | {id, status, platform, buildProfile, createdAt}'
+              echo '```'
+            else
+              echo ""
+              echo "Could not read build via \`eas build:list\` — check expo.dev directly."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Submit to Google Play
         # Only submit when: manual dispatch + submit=true + production profile

@@ -78,6 +78,7 @@ run "ppt-research-trigger" 10 'test -f .research/routine-prompt.md && grep -q "S
 run "ppt-next-plan"       10 'test -f .research/backlog.json && jq -e ".items" .research/backlog.json >/dev/null'
 run "ppt-project-management" 10 'test -f .claude/skills/ppt-project-management/SKILL.md && test -f .claude/agents/pm-scrum-master.md && test -d .research/management/roles && jq -e ".items" .research/management/action-list.json >/dev/null && jq -e ".items" .research/management/risks.json >/dev/null && jq -e ".stories" .research/management/coverage.json >/dev/null'
 run "ppt-implement"       10 'test -f .claude/skills/ppt-implement/SKILL.md && ls .claude/skills/ppt-implement/agents/*.md | wc -l | grep -qE "^9$" && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-implement'
+run "ppt-implement/goal-check" 30 'bash .claude/skills/ppt-implement/scripts/test-goal-check.sh >/dev/null'
 run "ppt-review-merged"   10 'test -f .claude/skills/ppt-review-merged/SKILL.md && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-review-merged'
 run "ppt-pr-merge"        10 'test -f .claude/skills/ppt-pr-merge/SKILL.md && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-pr-merge'
 run "ppt-dev-team"        10 'test -f .claude/skills/ppt-dev-team/SKILL.md && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-dev-team'
@@ -115,6 +116,8 @@ run "ppt-db-migrations"   10 'test -d backend/crates/db/migrations && test -d ba
 # wired up and — when pmctl is on PATH — that it at least responds to --help.
 # Live onyx / deploy ops are out of scope for a generic harness.
 run "ppt-deploy"          10 'test -f .claude/skills/ppt-deploy/SKILL.md && test -d .claude/skills/ppt-deploy/commands && test -d .claude/skills/ppt-deploy/references && { ! command -v pmctl >/dev/null 2>&1 || pmctl --help >/dev/null 2>&1; }'
+run "ppt-goal-gate"       10 'test -x .research/goal-check.sh && COVERAGE=.research/fixtures/goal-check/coverage.json ACTION_LIST=.research/fixtures/goal-check/action-list.json ASSIGN=.research/fixtures/goal-check/assignments.json ./.research/goal-check.sh --json | jq -e "length >= 3" >/dev/null'
+run "ppt-goal-gate/pick-target-epic" 15 'test -x .research/pick-target-epic.sh && bash .research/test-pick-target-epic.sh >/dev/null'
 
 echo
 echo "== summary =="

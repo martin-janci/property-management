@@ -20,6 +20,7 @@ import {
   hasRolePermission,
   isTokenExpired,
   ROLES,
+  sanitizeReturnUrl,
   setReturnUrl,
 } from '@ppt/shared';
 
@@ -291,6 +292,43 @@ describe('@ppt/shared - auth', () => {
 
     it('returns null when nothing was stored', () => {
       expect(getAndClearReturnUrl()).toBeNull();
+    });
+
+    it('drops off-origin / open-redirect URLs on write', () => {
+      setReturnUrl('https://evil.com/phish');
+      expect(getAndClearReturnUrl()).toBeNull();
+      setReturnUrl('//evil.com');
+      expect(getAndClearReturnUrl()).toBeNull();
+      setReturnUrl('javascript:alert(1)');
+      expect(getAndClearReturnUrl()).toBeNull();
+    });
+
+    it('sanitizes a tampered stored value on read', () => {
+      sessionStorage.setItem('auth_return_url', '//evil.com/path');
+      expect(getAndClearReturnUrl()).toBeNull();
+    });
+  });
+
+  describe('sanitizeReturnUrl', () => {
+    it('accepts same-origin rooted paths', () => {
+      expect(sanitizeReturnUrl('/dashboard')).toBe('/dashboard');
+      expect(sanitizeReturnUrl('/buildings/42?tab=faults')).toBe('/buildings/42?tab=faults');
+    });
+
+    it('rejects off-origin, protocol-relative, scheme, and relative URLs', () => {
+      expect(sanitizeReturnUrl('https://evil.com')).toBeNull();
+      expect(sanitizeReturnUrl('//evil.com')).toBeNull();
+      expect(sanitizeReturnUrl('/\\evil.com')).toBeNull();
+      expect(sanitizeReturnUrl('javascript:alert(1)')).toBeNull();
+      expect(sanitizeReturnUrl('dashboard')).toBeNull();
+      expect(sanitizeReturnUrl('')).toBeNull();
+      expect(sanitizeReturnUrl(null)).toBeNull();
+      expect(sanitizeReturnUrl(undefined)).toBeNull();
+    });
+
+    it('rejects control-character smuggling', () => {
+      expect(sanitizeReturnUrl('/\tevil')).toBeNull();
+      expect(sanitizeReturnUrl('/\nevil')).toBeNull();
     });
   });
 });

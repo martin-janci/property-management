@@ -72,7 +72,7 @@ impl PlatformAdminRepository {
         );
 
         // Execute count query
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
+        let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
         if let Some(status) = status_filter {
             count_q = count_q.bind(status);
         }
@@ -82,7 +82,7 @@ impl PlatformAdminRepository {
         let total = count_q.fetch_one(&self.pool).await?;
 
         // Execute data query
-        let mut data_q = sqlx::query_as::<_, OrganizationMetrics>(&data_query)
+        let mut data_q = sqlx::query_as::<_, OrganizationMetrics>(sqlx::AssertSqlSafe(data_query))
             .bind(limit)
             .bind(offset);
         if let Some(status) = status_filter {
@@ -319,7 +319,7 @@ impl PlatformAdminRepository {
         );
 
         // Execute count query with bound parameters
-        let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
+        let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
         if let Some(s) = status {
             count_q = count_q.bind(s);
         }
@@ -329,7 +329,7 @@ impl PlatformAdminRepository {
         let total = count_q.fetch_one(&self.pool).await?;
 
         // Execute data query with bound parameters
-        let mut data_q = sqlx::query_as::<_, SupportUserInfo>(&data_query)
+        let mut data_q = sqlx::query_as::<_, SupportUserInfo>(sqlx::AssertSqlSafe(data_query))
             .bind(limit)
             .bind(offset);
         if let Some(s) = status {
@@ -508,6 +508,8 @@ pub struct SupportActivityLog {
 /// across the entire platform (cross-tenant, bypasses RLS).
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 pub struct SupportData {
+    /// Total number of organisations (tenants) in the system, all statuses.
+    pub total_orgs: i64,
     /// Total number of users in the system.
     pub total_users: i64,
     /// Number of users with status `'active'`.
@@ -527,15 +529,34 @@ pub struct SupportData {
 impl PlatformAdminRepository {
     /// Get platform tenant diagnostics for the support-data endpoint.
     ///
-    /// Runs four focused cross-tenant queries:
-    ///   1. User counts grouped by `status`.
-    ///   2. Active session count (refresh tokens neither revoked nor expired).
-    ///   3. Total fault count.
-    ///   4. Fault counts per `status` enum value.
+    /// Runs five focused cross-tenant queries:
+    ///   1. Total organisation count.
+    ///   2. User counts grouped by `status`.
+    ///   3. Active session count (refresh tokens neither revoked nor expired).
+    ///   4. Total fault count.
+    ///   5. Fault counts per `status` enum value.
+    ///
+    /// All queries run inside a single `REPEATABLE READ` transaction so the
+    /// aggregate counters reflect a consistent snapshot — without this,
+    /// concurrent writes between queries can make `total_faults` disagree
+    /// with the sum of `fault_by_status`, or `active_sessions` lag behind
+    /// `total_users`. See issue #628.
     ///
     /// All queries bypass RLS — caller must hold `AuditRead` capability.
     pub async fn get_support_data(&self) -> Result<SupportData, SqlxError> {
-        // 1. User counts per status
+        let mut tx = self.pool.begin().await?;
+
+        // Pin all subsequent reads in this tx to a single MVCC snapshot.
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            .execute(&mut *tx)
+            .await?;
+
+        // 1. Total organisation count (all statuses)
+        let total_orgs: i64 = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM organizations")
+            .fetch_one(&mut *tx)
+            .await?;
+
+        // 2. User counts per status
         let user_rows = sqlx::query_as::<_, (String, i64)>(
             r#"
             SELECT status, COUNT(*) AS cnt
@@ -543,7 +564,7 @@ impl PlatformAdminRepository {
             GROUP BY status
             "#,
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *tx)
         .await?;
 
         let mut total_users: i64 = 0;
@@ -560,7 +581,7 @@ impl PlatformAdminRepository {
             }
         }
 
-        // 2. Active sessions — non-revoked, non-expired refresh tokens
+        // 3. Active sessions — non-revoked, non-expired refresh tokens
         let active_sessions: i64 = sqlx::query_scalar::<_, i64>(
             r#"
             SELECT COUNT(*)
@@ -568,15 +589,15 @@ impl PlatformAdminRepository {
             WHERE is_revoked = false AND expires_at > NOW()
             "#,
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
-        // 3. Total fault count
+        // 4. Total fault count
         let total_faults: i64 = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM faults")
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await?;
 
-        // 4. Fault counts per status
+        // 5. Fault counts per status
         let fault_rows = sqlx::query_as::<_, (String, i64)>(
             r#"
             SELECT status::text, COUNT(*) AS cnt
@@ -585,8 +606,10 @@ impl PlatformAdminRepository {
             ORDER BY cnt DESC
             "#,
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *tx)
         .await?;
+
+        tx.commit().await?;
 
         let fault_by_status = fault_rows
             .into_iter()
@@ -594,6 +617,7 @@ impl PlatformAdminRepository {
             .collect();
 
         Ok(SupportData {
+            total_orgs,
             total_users,
             active_users,
             pending_users,
@@ -602,6 +626,130 @@ impl PlatformAdminRepository {
             total_faults,
             fault_by_status,
         })
+    }
+}
+
+// ==================== Support Tooling Analytics Events (#635) ====================
+
+/// Identifies which support-tooling action was performed.
+///
+/// These three variants map 1-to-1 onto the `event_kind` CHECK constraint
+/// defined in migration 00163.  They are stored as snake_case strings so the
+/// DB column is human-readable without a lookup table.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, utoipa::ToSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum SupportToolingEventKind {
+    /// Admin opened / refreshed the Support Data overview page.
+    SupportDataViewed,
+    /// Admin ran a per-user lookup or free-text search.
+    SupportUserSearched,
+    /// Admin revoked all active sessions for a target user.
+    SupportSessionsRevoked,
+}
+
+impl SupportToolingEventKind {
+    /// Stable database string.  MUST match the `event_kind` CHECK in
+    /// migration 00163.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::SupportDataViewed => "support_data_viewed",
+            Self::SupportUserSearched => "support_user_searched",
+            Self::SupportSessionsRevoked => "support_sessions_revoked",
+        }
+    }
+}
+
+impl std::fmt::Display for SupportToolingEventKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// Props for `support_data_viewed`.
+///
+/// Captures the snapshot values visible to the admin at the time of the page
+/// visit so support-tooling usage can be correlated with the platform state
+/// that was shown.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportDataViewedProps {
+    /// Platform-wide tenant count (total organisations, all statuses).
+    pub tenant_count: i64,
+    /// Total fault count across all organisations at time of view.
+    pub fault_total: i64,
+}
+
+/// Props for `support_user_searched`.
+///
+/// Records search metadata so repeated lookups can be spotted in an audit
+/// query.  The raw query string is NOT stored — it commonly contains email
+/// addresses (PII); only the character count is persisted.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportUserSearchedProps {
+    /// Character count of the free-text query, or `None` for unfiltered listings.
+    /// The literal string is deliberately omitted to avoid storing PII (emails).
+    pub query_length: Option<i64>,
+    /// Status filter applied, if any.
+    pub status_filter: Option<String>,
+    /// Number of results returned.
+    pub result_count: i64,
+}
+
+/// Props for `support_sessions_revoked`.
+///
+/// Links the revocation to the targeted user so the event is meaningful
+/// without joining to other tables.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportSessionsRevokedProps {
+    /// The user whose sessions were revoked.
+    pub target_user_id: Uuid,
+    /// Number of sessions actually revoked in this operation.
+    pub revoked_count: i64,
+}
+
+/// A persisted row from `support_tooling_events`.
+///
+/// Returned by `log_support_tooling_event` so callers have the row id and
+/// timestamp for logging or structured spans.
+#[derive(Debug, Clone, sqlx::FromRow, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportToolingEventRow {
+    pub id: Uuid,
+    pub event_kind: String,
+    pub admin_user_id: Uuid,
+    pub props: serde_json::Value,
+    pub occurred_at: DateTime<Utc>,
+}
+
+impl PlatformAdminRepository {
+    /// Append a support-tooling analytics event to `support_tooling_events`.
+    ///
+    /// The method is deliberately fire-and-forget in production callers: a
+    /// failure to persist a tracking event must **not** fail the user-facing
+    /// response.  Callers are expected to log the error and continue.
+    ///
+    /// # Arguments
+    /// * `admin_user_id` — UUID of the platform admin who performed the action.
+    /// * `kind`          — Which of the three event kinds fired.
+    /// * `props`         — Structured payload serialised to JSONB.
+    pub async fn log_support_tooling_event(
+        &self,
+        admin_user_id: Uuid,
+        kind: SupportToolingEventKind,
+        props: serde_json::Value,
+    ) -> Result<SupportToolingEventRow, SqlxError> {
+        sqlx::query_as::<_, SupportToolingEventRow>(
+            r#"
+            INSERT INTO support_tooling_events (event_kind, admin_user_id, props)
+            VALUES ($1, $2, $3)
+            RETURNING id, event_kind, admin_user_id, props, occurred_at
+            "#,
+        )
+        .bind(kind.as_str())
+        .bind(admin_user_id)
+        .bind(props)
+        .fetch_one(&self.pool)
+        .await
     }
 }
 
@@ -621,5 +769,87 @@ mod tests {
 
         assert_eq!(stats.active_orgs, 10);
         assert_eq!(stats.suspended_orgs, 2);
+    }
+
+    // ==================== SupportToolingEventKind unit tests ====================
+
+    #[test]
+    fn event_kind_strings_are_stable_and_match_db_constraint() {
+        assert_eq!(
+            SupportToolingEventKind::SupportDataViewed.as_str(),
+            "support_data_viewed"
+        );
+        assert_eq!(
+            SupportToolingEventKind::SupportUserSearched.as_str(),
+            "support_user_searched"
+        );
+        assert_eq!(
+            SupportToolingEventKind::SupportSessionsRevoked.as_str(),
+            "support_sessions_revoked"
+        );
+    }
+
+    #[test]
+    fn event_kind_display_matches_as_str() {
+        for kind in [
+            SupportToolingEventKind::SupportDataViewed,
+            SupportToolingEventKind::SupportUserSearched,
+            SupportToolingEventKind::SupportSessionsRevoked,
+        ] {
+            assert_eq!(format!("{kind}"), kind.as_str());
+        }
+    }
+
+    #[test]
+    fn support_data_viewed_props_round_trips_json() {
+        let props = SupportDataViewedProps {
+            tenant_count: 42,
+            fault_total: 1234,
+        };
+        let json = serde_json::to_value(&props).expect("serialize");
+        assert_eq!(json["tenant_count"], 42);
+        assert_eq!(json["fault_total"], 1234);
+        let back: SupportDataViewedProps = serde_json::from_value(json).expect("deserialize");
+        assert_eq!(back.tenant_count, 42);
+        assert_eq!(back.fault_total, 1234);
+    }
+
+    #[test]
+    fn support_user_searched_props_round_trips_json() {
+        let props = SupportUserSearchedProps {
+            query_length: Some(17), // len("alice@example.com") — no PII stored
+            status_filter: Some("active".into()),
+            result_count: 3,
+        };
+        let json = serde_json::to_value(&props).expect("serialize");
+        assert_eq!(json["query_length"], 17);
+        assert_eq!(json["status_filter"], "active");
+        assert_eq!(json["result_count"], 3);
+    }
+
+    #[test]
+    fn support_sessions_revoked_props_round_trips_json() {
+        let target = Uuid::new_v4();
+        let props = SupportSessionsRevokedProps {
+            target_user_id: target,
+            revoked_count: 5,
+        };
+        let json = serde_json::to_value(&props).expect("serialize");
+        assert_eq!(json["target_user_id"].as_str().unwrap(), target.to_string());
+        assert_eq!(json["revoked_count"], 5);
+    }
+
+    #[test]
+    fn event_kind_serde_round_trip() {
+        let kinds = [
+            SupportToolingEventKind::SupportDataViewed,
+            SupportToolingEventKind::SupportUserSearched,
+            SupportToolingEventKind::SupportSessionsRevoked,
+        ];
+        for kind in kinds {
+            let json = serde_json::to_value(kind).expect("serialize");
+            let back: SupportToolingEventKind = serde_json::from_value(json).expect("deserialize");
+            assert_eq!(kind, back);
+        }
     }
 }

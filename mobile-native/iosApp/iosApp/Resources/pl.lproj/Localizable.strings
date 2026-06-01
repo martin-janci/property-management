@@ -97,6 +97,11 @@
 "inquiry_sent" = "Zapytanie wysłane";
 "inquiry_pending" = "Oczekujące";
 "inquiry_responded" = "Odpowiedziano";
+"inquiries_sign_in_description" = "Śledź swoje zapytania dotyczące nieruchomości i rozmowy z agentami.";
+"failed_to_load_inquiries" = "Nie udało się załadować zapytań";
+"inquiry_status_pending" = "Oczekujące";
+"inquiry_status_replied" = "Odpowiedziane";
+"inquiry_status_closed" = "Zamknięte";
 
 /* Account */
 "my_account" = "Moje konto";
@@ -255,8 +260,8 @@
 "filter_listing_type" = "Typ ogłoszenia";
 "filter_price_min" = "Min cena";
 "filter_price_max" = "Max cena";
-"filter_min_value" = "Min: %d";
-"filter_max_value" = "Max: %d";
+"filter_min_value" = "Od: %d";
+"filter_max_value" = "Do: %d";
 "filter_bathrooms" = "Łazienki";
 
 /* Account Screen - Additional */
@@ -282,6 +287,15 @@
 "phone" = "Telefon";
 "either" = "Dowolny";
 "send" = "Wyślij";
+
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Zapytanie";
+"inquiry_reply_placeholder" = "Napisz odpowiedź…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Dane kontaktowe";
+"inquiry_message_placeholder" = "Opisz swoje zainteresowanie tą nieruchomością…";
+"inquiry_sent_confirmation" = "Twoje zapytanie zostało wysłane. Odpowiedź otrzymasz na podany adres e-mail.";
 
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Witaj w Reality Portal";

@@ -191,6 +191,52 @@ impl FaultRepository {
         Ok(fault)
     }
 
+    /// Find a fault by ID, scoped to a specific organization.
+    ///
+    /// SECURITY (#770): explicitly threads `organization_id` into the WHERE
+    /// clause so a caller in org B cannot read/act on org A's fault by
+    /// enumerating its UUID. Returns `None` (→ 404) for a cross-tenant id.
+    /// Use this for the legacy pool-based mutate-by-id handlers
+    /// (assign/resolve/confirm/reopen, comments, attachments) that do NOT
+    /// run under an `RlsConnection` and therefore are not protected by the
+    /// `faults_tenant_isolation` RLS policy.
+    pub async fn find_by_id_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<Fault>, SqlxError> {
+        // The enum columns (category/priority/status) are cast to text so the
+        // row decodes into the `String`-typed `Fault` model regardless of
+        // whether the connection has the PG enum types registered (matches the
+        // `::text` idiom used by the statistics queries below).
+        let fault = sqlx::query_as::<_, Fault>(
+            r#"
+            SELECT
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
+            FROM faults
+            WHERE id = $1 AND organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(fault)
+    }
+
     /// Update fault details with RLS context (reporter can edit before triage).
     pub async fn update_rls<'e, E>(
         &self,
@@ -350,8 +396,10 @@ impl FaultRepository {
             r#"
             SELECT
                 f.id, f.organization_id, f.building_id, f.unit_id, f.reporter_id,
-                f.title, f.description, f.location_description, f.category, f.priority, f.status,
-                f.ai_category, f.ai_priority, f.ai_confidence, f.ai_processed_at,
+                f.title, f.description, f.location_description,
+                f.category::text AS category, f.priority::text AS priority, f.status::text AS status,
+                f.ai_category::text AS ai_category, f.ai_priority::text AS ai_priority,
+                f.ai_confidence, f.ai_processed_at,
                 f.assigned_to, f.assigned_at, f.triaged_by, f.triaged_at,
                 f.resolved_at, f.resolved_by, f.resolution_notes,
                 f.confirmed_at, f.confirmed_by, f.rating, f.feedback,
@@ -377,52 +425,105 @@ impl FaultRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|row| {
-            let fault = Fault {
-                id: row.id,
-                organization_id: row.organization_id,
-                building_id: row.building_id,
-                unit_id: row.unit_id,
-                reporter_id: row.reporter_id,
-                title: row.title,
-                description: row.description,
-                location_description: row.location_description,
-                category: row.category,
-                priority: row.priority,
-                status: row.status,
-                ai_category: row.ai_category,
-                ai_priority: row.ai_priority,
-                ai_confidence: row.ai_confidence,
-                ai_processed_at: row.ai_processed_at,
-                assigned_to: row.assigned_to,
-                assigned_at: row.assigned_at,
-                triaged_by: row.triaged_by,
-                triaged_at: row.triaged_at,
-                resolved_at: row.resolved_at,
-                resolved_by: row.resolved_by,
-                resolution_notes: row.resolution_notes,
-                confirmed_at: row.confirmed_at,
-                confirmed_by: row.confirmed_by,
-                rating: row.rating,
-                feedback: row.feedback,
-                scheduled_date: row.scheduled_date,
-                estimated_completion: row.estimated_completion,
-                idempotency_key: row.idempotency_key,
-                created_at: row.created_at,
-                updated_at: row.updated_at,
-            };
-            FaultWithDetails {
-                fault,
-                reporter_name: row.reporter_name,
-                reporter_email: row.reporter_email,
-                building_name: row.building_name,
-                building_address: row.building_address,
-                unit_designation: row.unit_designation,
-                assigned_to_name: row.assigned_to_name,
-                attachment_count: row.attachment_count,
-                comment_count: row.comment_count,
-            }
-        }))
+        Ok(result.map(Self::details_row_to_model))
+    }
+
+    /// Find fault with full details, scoped to a specific organization.
+    ///
+    /// SECURITY (#770): the `get_fault` handler runs WITHOUT an
+    /// `RlsConnection`, so the unscoped `find_by_id_with_details` leaked any
+    /// org's fault (and its reporter PII / timeline / attachment counts) to a
+    /// caller who guessed the UUID — a cross-tenant IDOR. This variant adds an
+    /// explicit `f.organization_id = $2` predicate so a cross-tenant id
+    /// resolves to `None` (→ 404).
+    pub async fn find_by_id_with_details_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<FaultWithDetails>, SqlxError> {
+        let result = sqlx::query_as::<_, FaultDetailsRow>(
+            r#"
+            SELECT
+                f.id, f.organization_id, f.building_id, f.unit_id, f.reporter_id,
+                f.title, f.description, f.location_description,
+                f.category::text AS category, f.priority::text AS priority, f.status::text AS status,
+                f.ai_category::text AS ai_category, f.ai_priority::text AS ai_priority,
+                f.ai_confidence, f.ai_processed_at,
+                f.assigned_to, f.assigned_at, f.triaged_by, f.triaged_at,
+                f.resolved_at, f.resolved_by, f.resolution_notes,
+                f.confirmed_at, f.confirmed_by, f.rating, f.feedback,
+                f.scheduled_date, f.estimated_completion, f.idempotency_key,
+                f.created_at, f.updated_at,
+                u.name as reporter_name,
+                u.email as reporter_email,
+                COALESCE(b.name, b.street) as building_name,
+                b.street || ', ' || b.city as building_address,
+                un.designation as unit_designation,
+                au.name as assigned_to_name,
+                (SELECT COUNT(*) FROM fault_attachments WHERE fault_id = f.id) as attachment_count,
+                (SELECT COUNT(*) FROM fault_timeline WHERE fault_id = f.id AND action = 'comment') as comment_count
+            FROM faults f
+            JOIN users u ON f.reporter_id = u.id
+            JOIN buildings b ON f.building_id = b.id
+            LEFT JOIN units un ON f.unit_id = un.id
+            LEFT JOIN users au ON f.assigned_to = au.id
+            WHERE f.id = $1 AND f.organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.map(Self::details_row_to_model))
+    }
+
+    /// Map a raw [`FaultDetailsRow`] into the public [`FaultWithDetails`] model.
+    fn details_row_to_model(row: FaultDetailsRow) -> FaultWithDetails {
+        let fault = Fault {
+            id: row.id,
+            organization_id: row.organization_id,
+            building_id: row.building_id,
+            unit_id: row.unit_id,
+            reporter_id: row.reporter_id,
+            title: row.title,
+            description: row.description,
+            location_description: row.location_description,
+            category: row.category,
+            priority: row.priority,
+            status: row.status,
+            ai_category: row.ai_category,
+            ai_priority: row.ai_priority,
+            ai_confidence: row.ai_confidence,
+            ai_processed_at: row.ai_processed_at,
+            assigned_to: row.assigned_to,
+            assigned_at: row.assigned_at,
+            triaged_by: row.triaged_by,
+            triaged_at: row.triaged_at,
+            resolved_at: row.resolved_at,
+            resolved_by: row.resolved_by,
+            resolution_notes: row.resolution_notes,
+            confirmed_at: row.confirmed_at,
+            confirmed_by: row.confirmed_by,
+            rating: row.rating,
+            feedback: row.feedback,
+            scheduled_date: row.scheduled_date,
+            estimated_completion: row.estimated_completion,
+            idempotency_key: row.idempotency_key,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+        };
+        FaultWithDetails {
+            fault,
+            reporter_name: row.reporter_name,
+            reporter_email: row.reporter_email,
+            building_name: row.building_name,
+            building_address: row.building_address,
+            unit_designation: row.unit_designation,
+            assigned_to_name: row.assigned_to_name,
+            attachment_count: row.attachment_count,
+            comment_count: row.comment_count,
+        }
     }
 
     /// List faults with filters (Story 4.3).
@@ -498,7 +599,8 @@ impl FaultRepository {
         );
 
         // Build query dynamically
-        let mut query_builder = sqlx::query_as::<_, FaultSummary>(&sql).bind(org_id);
+        let mut query_builder =
+            sqlx::query_as::<_, FaultSummary>(sqlx::AssertSqlSafe(sql)).bind(org_id);
 
         if let Some(building_id) = query.building_id {
             query_builder = query_builder.bind(building_id);

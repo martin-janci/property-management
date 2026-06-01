@@ -1,12 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
-import { useOfflineSupport } from './hooks';
+import { useOfflineSupport, usePushNotifications } from './hooks';
 import { colors } from './screens/shared/screenStyles';
 import './i18n'; // Initialize i18n
 import {
@@ -90,7 +90,21 @@ function MainApp() {
   const { isAuthenticated, isLoading } = useAuth();
   const { isConnected, queuedActionsCount, isSyncing, syncProgress, processQueue } =
     useOfflineSupport();
+  const { registerForPushNotifications } = usePushNotifications();
   const [showSyncToast, setShowSyncToast] = useState(false);
+
+  // Register this device's push token with the backend once authenticated.
+  // Without this the registration hook was never invoked, so no device ever
+  // received pushes. Errors are surfaced inside the hook and ignored here —
+  // a missing push token must not block the app. Keyed on `isAuthenticated`
+  // only: `registerForPushNotifications` is re-created each render, so adding
+  // it to the deps would re-register on every render.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: register once per auth transition; the callback is intentionally excluded
+  useEffect(() => {
+    if (isAuthenticated) {
+      void registerForPushNotifications();
+    }
+  }, [isAuthenticated]);
 
   // Show sync toast when sync progress starts
   const handleRetrySync = useCallback(() => {

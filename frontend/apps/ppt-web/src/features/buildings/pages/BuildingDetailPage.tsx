@@ -7,6 +7,7 @@
  */
 
 import type { BuildingStatus, BuildingType } from '@ppt/api-client';
+import { isSafeImageUrl } from '@ppt/shared';
 import { Link } from 'react-router-dom';
 import { useBuilding, useBuildingCommonAreas, useBuildingFloors } from '../hooks';
 
@@ -105,7 +106,7 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
       <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
         {/* Building Image */}
         <div className="h-64 bg-gray-200 relative">
-          {building.photoUrl ? (
+          {isSafeImageUrl(building.photoUrl) ? (
             <img
               src={building.photoUrl}
               alt={building.name}

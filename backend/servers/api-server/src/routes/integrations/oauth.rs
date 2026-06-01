@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use super::{
     install::{AirbnbCallbackResponse, OAuthCallbackQuery},
-    sync::OrgIdPath,
+    sync::{verify_org_access, OrgIdPath},
 };
 use crate::state::AppState;
 use common::errors::ErrorResponse;
@@ -104,9 +104,41 @@ pub async fn airbnb_oauth_callback(
         ));
     }
 
-    let client_id = std::env::var("AIRBNB_CLIENT_ID").unwrap_or_default();
-    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").unwrap_or_default();
-    let redirect_uri = std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default();
+    // Issue #765: the OAuth `state` must be a real CSRF token — single-use and
+    // server-bound. Verify it against the value persisted when the flow was
+    // initiated and consume it so it cannot be replayed. When the state store
+    // (Redis) is unavailable we fall back to the stateless org-prefix check
+    // above plus the membership check below (defence in depth).
+    match super::oauth_state::verify_and_consume(&state, &query.state, path.org_id).await {
+        super::oauth_state::ConsumeOutcome::Consumed => {}
+        super::oauth_state::ConsumeOutcome::StoreUnavailable => {
+            tracing::warn!(
+                org_id = %path.org_id,
+                "OAuth state store unavailable; relying on stateless state + membership checks"
+            );
+        }
+        super::oauth_state::ConsumeOutcome::Rejected => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_STATE",
+                    "OAuth state is invalid, expired, or already used",
+                )),
+            ));
+        }
+    }
+
+    // Issue #765: prevent cross-org IDOR — the embedded-state org match above
+    // is not an authorization check (the `state` value is client-visible and
+    // forgeable). Require the authenticated caller to actually be a member of
+    // the organization before binding Airbnb tokens to it.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
+    // Issue #711: pull Airbnb OAuth credentials from the AppState-cached
+    // config rather than re-reading the env on every callback.
+    let client_id = state.airbnb_config.client_id.clone();
+    let client_secret = state.airbnb_config.client_secret.clone();
+    let redirect_uri = state.airbnb_config.redirect_uri.clone();
 
     if client_id.is_empty() {
         return Err((
@@ -135,19 +167,25 @@ pub async fn airbnb_oauth_callback(
         )
     })?;
 
-    // Encrypt tokens before storage
-    let crypto = integrations::IntegrationCrypto::from_env().ok();
-    let (encrypted_access, encrypted_refresh) = match &crypto {
-        Some(c) => (
-            c.encrypt(&tokens.access_token)
-                .unwrap_or(tokens.access_token.clone()),
-            tokens
-                .refresh_token
-                .as_ref()
-                .map(|rt| c.encrypt(rt).unwrap_or(rt.clone())),
-        ),
-        None => (tokens.access_token.clone(), tokens.refresh_token.clone()),
+    // Encrypt tokens before storage. Issue #765: encryption is MANDATORY — if
+    // INTEGRATION_ENCRYPTION_KEY is unset we fail closed rather than persisting
+    // OAuth tokens in plaintext.
+    let crypto = integrations::IntegrationCrypto::try_from_env();
+    let encryption_unavailable = |e: integrations::CryptoError| {
+        tracing::error!(error = %e, "Refusing to store Airbnb OAuth tokens without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration token encryption is not configured",
+            )),
+        )
     };
+    let encrypted_access = integrations::encrypt_required(crypto.as_ref(), &tokens.access_token)
+        .map_err(encryption_unavailable)?;
+    let encrypted_refresh =
+        integrations::encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
+            .map_err(encryption_unavailable)?;
 
     let rental_repo = &state.rental_repo;
     let connection = rental_repo

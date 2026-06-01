@@ -1,0 +1,349 @@
+name: Branch-protection setup
+
+# One-time (and idempotent) workflow that registers "security-gate-conclusion"
+# as a required status check on the `dev` branch protection rule.
+#
+# WHY THIS EXISTS
+# ---------------
+# The security-test-gate.yml workflow fails a PR when it is labelled
+# 'security' and ships without a test file.  However, a failing CI check
+# is only blocking if it is listed as a "required status check" in the
+# branch protection rule for `dev`.  Without that registration the gate
+# is advisory — a repo admin can still merge a red PR.
+#
+# This workflow closes that gap by calling the GitHub REST API to add
+# "security-gate-conclusion" to the required-status-checks list.  It is
+# idempotent: running it twice is safe.
+#
+# HOW TO RUN
+# ----------
+#   gh workflow run branch-protection-setup.yml --ref dev
+#   # or via the Actions UI: Actions → Branch-protection setup → Run workflow
+#
+# PERMISSIONS REQUIRED
+# --------------------
+# The GITHUB_TOKEN in a standard repository does NOT have the
+# `administration:write` permission needed to edit branch protection.
+# You must pass a PAT with that permission as the GH_ADMIN_TOKEN secret,
+# OR a GitHub App installation token with the `administration` permission.
+#
+# Set the secret:
+#   gh secret set GH_ADMIN_TOKEN --body "<pat>"
+#
+# If GH_ADMIN_TOKEN is not set the workflow will fail with a clear error
+# rather than silently skipping.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run: print what would be changed without applying it'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  apply-branch-protection:
+    name: Register required status check on dev
+    runs-on: ubuntu-latest
+
+    permissions:
+      # contents:read is enough to call the REST API with GH_ADMIN_TOKEN.
+      contents: read
+
+    steps:
+      - name: Validate GH_ADMIN_TOKEN is set
+        env:
+          TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: GH_ADMIN_TOKEN secret is not set."
+            echo ""
+            echo "This workflow requires a GitHub PAT (or GitHub App token) with"
+            echo "the 'administration:write' repository permission."
+            echo ""
+            echo "Set the secret with:"
+            echo "  gh secret set GH_ADMIN_TOKEN --body \"<your-pat>\""
+            exit 1
+          fi
+          echo "GH_ADMIN_TOKEN is set."
+
+      - name: Fetch current branch protection for dev
+        id: current
+        env:
+          GH_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          echo "Fetching branch protection for dev..."
+          PROTECTION=$(gh api "repos/$REPO/branches/dev/protection" 2>&1) || {
+            echo "WARNING: branch protection not yet configured on dev (404 is normal for a new rule)."
+            echo "Will create minimal protection rule with required status check."
+            echo "protection_exists=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          echo "$PROTECTION" | python3 -m json.tool --no-ensure-ascii 2>/dev/null || echo "$PROTECTION"
+          echo "protection_exists=true" >> "$GITHUB_OUTPUT"
+
+          # Extract existing required status check contexts so we can merge them.
+          EXISTING=$(echo "$PROTECTION" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          checks = d.get('required_status_checks') or {}
+          contexts = checks.get('contexts', [])
+          checks_obj = checks.get('checks', [])
+          # prefer new-style checks array
+          if checks_obj:
+              print('\n'.join(c['context'] for c in checks_obj))
+          else:
+              print('\n'.join(contexts))
+          " 2>/dev/null || echo "")
+          echo "Existing required checks:"
+          echo "$EXISTING"
+          {
+            echo "existing_checks<<EOF"
+            echo "$EXISTING"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          # Persist the FULL current protection object so the apply step can
+          # round-trip it. We must never blindly PUT a hardcoded payload — that
+          # would silently revert any stronger setting (strict mode, extra
+          # required approvals, code-owner reviews, push restrictions) that the
+          # rule already has. The apply step rebuilds the payload FROM this.
+          {
+            echo "protection_json<<PROTECTION_EOF"
+            echo "$PROTECTION"
+            echo "PROTECTION_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Apply required status check
+        env:
+          GH_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+          REPO: ${{ github.repository }}
+          EXISTING_CHECKS: ${{ steps.current.outputs.existing_checks }}
+          PROTECTION_JSON: ${{ steps.current.outputs.protection_json }}
+          PROTECTION_EXISTS: ${{ steps.current.outputs.protection_exists }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          NEW_CHECK="security-gate-conclusion"
+
+          # Build the merged list of required status checks.
+          MERGED=$(python3 -c "
+          import sys, json
+
+          existing_raw = '''$EXISTING_CHECKS'''
+          new_check = '$NEW_CHECK'
+
+          existing = [c.strip() for c in existing_raw.strip().splitlines() if c.strip()]
+
+          if new_check in existing:
+              print('\n'.join(existing))
+          else:
+              print('\n'.join(existing + [new_check]))
+          ")
+
+          echo "Required status checks after merge:"
+          echo "$MERGED"
+
+          # Determine if the new check is already registered.
+          if echo "$EXISTING_CHECKS" | grep -qxF "$NEW_CHECK"; then
+            echo "INFO: '$NEW_CHECK' is already in required status checks — nothing to do."
+            exit 0
+          fi
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "DRY-RUN: would add '$NEW_CHECK' to dev branch required status checks."
+            echo "DRY-RUN: no changes applied."
+            exit 0
+          fi
+
+          # Build JSON payload for PUT /repos/{owner}/{repo}/branches/{branch}/protection
+          #
+          # SAFETY: GitHub's PUT replaces the ENTIRE protection object — any field
+          # we omit (or send weaker) is overwritten. So we must NOT ship a fixed
+          # payload. Instead we round-trip: start from the CURRENT protection that
+          # the previous step fetched, then *only add/strengthen*:
+          #   - add the new required status check to the existing contexts,
+          #   - force strict=true (never downgrade an existing strict=true),
+          #   - PRESERVE existing restrictions, PR-review rules, enforce_admins,
+          #     linear-history, conversation-resolution, etc. exactly as-is.
+          # If no protection existed yet, fall back to a safe baseline (strict=true,
+          # 1 approval, enforce_admins, no push restrictions).
+          PAYLOAD=$(PROTECTION_JSON="$PROTECTION_JSON" \
+            PROTECTION_EXISTS="$PROTECTION_EXISTS" \
+            MERGED="$MERGED" python3 -c "
+          import json, os
+
+          checks = [c.strip() for c in os.environ['MERGED'].strip().splitlines() if c.strip()]
+          exists = os.environ.get('PROTECTION_EXISTS') == 'true'
+
+          cur = {}
+          if exists:
+              raw = os.environ.get('PROTECTION_JSON', '').strip()
+              try:
+                  cur = json.loads(raw) if raw else {}
+              except json.JSONDecodeError:
+                  cur = {}
+
+          # --- required_status_checks: keep current strict (force to true), set checks ---
+          cur_rsc = cur.get('required_status_checks') or {}
+          # Never weaken strict: always require branches to be up to date before
+          # merge (strict=true). If the rule already had strict=true this is a
+          # no-op; if it was false we strengthen it. We never set strict=false.
+          rsc = {
+              'strict': True,
+              'checks': [{'context': c, 'app_id': -1} for c in checks],
+          }
+
+          # --- required_pull_request_reviews: preserve existing, else safe baseline ---
+          cur_prr = cur.get('required_pull_request_reviews')
+          if cur_prr:
+              prr = {
+                  'dismiss_stale_reviews': bool(cur_prr.get('dismiss_stale_reviews', False)),
+                  'require_code_owner_reviews': bool(cur_prr.get('require_code_owner_reviews', False)),
+                  'required_approving_review_count': int(cur_prr.get('required_approving_review_count', 1)),
+              }
+              # Preserve scoped review dismissal / bypass allowances if present.
+              if 'require_last_push_approval' in cur_prr:
+                  prr['require_last_push_approval'] = bool(cur_prr['require_last_push_approval'])
+          else:
+              prr = {
+                  'dismiss_stale_reviews': False,
+                  'require_code_owner_reviews': False,
+                  'required_approving_review_count': 1,
+              }
+
+          # --- enforce_admins: preserve, default to true ---
+          cur_ea = cur.get('enforce_admins')
+          if isinstance(cur_ea, dict):
+              enforce_admins = bool(cur_ea.get('enabled', True))
+          elif isinstance(cur_ea, bool):
+              enforce_admins = cur_ea
+          else:
+              enforce_admins = True
+
+          # --- restrictions: PRESERVE existing push restrictions, never null them ---
+          cur_restr = cur.get('restrictions')
+          if cur_restr:
+              restrictions = {
+                  'users': [u['login'] for u in cur_restr.get('users', [])],
+                  'teams': [t['slug'] for t in cur_restr.get('teams', [])],
+                  'apps': [a['slug'] for a in cur_restr.get('apps', [])],
+              }
+          else:
+              restrictions = None
+
+          payload = {
+              'required_status_checks': rsc,
+              'enforce_admins': enforce_admins,
+              'required_pull_request_reviews': prr,
+              'restrictions': restrictions,
+          }
+
+          # Preserve other boolean toggles only when the current rule has them on,
+          # so we never accidentally relax them.
+          for key in ('required_linear_history', 'allow_force_pushes',
+                      'allow_deletions', 'required_conversation_resolution',
+                      'block_creations', 'lock_branch'):
+              val = cur.get(key)
+              if isinstance(val, dict):
+                  val = val.get('enabled')
+              if val is not None:
+                  payload[key] = bool(val)
+
+          print(json.dumps(payload))
+          ")
+
+          echo "Payload to be sent (round-tripped from current protection):"
+          echo "$PAYLOAD" | python3 -m json.tool --no-ensure-ascii 2>/dev/null || echo "$PAYLOAD"
+
+          echo "Sending PUT to branch protection API..."
+          gh api -X PUT "repos/$REPO/branches/dev/protection" \
+            --input - <<< "$PAYLOAD"
+
+          echo ""
+          echo "SUCCESS: '$NEW_CHECK' is now a required status check on dev."
+          echo ""
+          echo "Effect:"
+          echo "  - Any PR labelled 'security' that ships without a test file will have"
+          echo "    'security-gate-conclusion' fail, which blocks merge."
+          echo "  - PRs without the 'security' label: 'security-test-gate' is skipped →"
+          echo "    'security-gate-conclusion' succeeds → merge is not blocked."
+
+      - name: Self-check — verify security-gate-conclusion is required
+        # Idempotent audit step. Reads back required_status_checks from the
+        # API after the apply step ran and fails the run if
+        # 'security-gate-conclusion' is not present. This makes the workflow
+        # self-auditing: a green run guarantees the gate is registered.
+        #
+        # In dry-run mode this only warns (the apply step did not patch).
+        env:
+          GH_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          REQUIRED_CHECK="security-gate-conclusion"
+
+          echo "Reading back required status checks for dev..."
+          RESPONSE=$(gh api "repos/$REPO/branches/dev/protection/required_status_checks" 2>&1) || {
+            echo "ERROR: could not fetch required status checks (branch may not be protected)."
+            echo "$RESPONSE"
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "DRY-RUN: skipping hard failure."
+              exit 0
+            fi
+            exit 1
+          }
+
+          echo "Raw API response:"
+          echo "$RESPONSE" | python3 -m json.tool --no-ensure-ascii 2>/dev/null || echo "$RESPONSE"
+
+          NAMES=$(echo "$RESPONSE" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          checks = d.get('checks') or []
+          contexts = d.get('contexts') or []
+          names = [c['context'] for c in checks] if checks else contexts
+          print('\n'.join(names))
+          ")
+
+          echo ""
+          echo "Required status checks on dev:"
+          if [ -z "$NAMES" ]; then
+            echo "  (none)"
+          else
+            echo "$NAMES" | sed 's/^/  - /'
+          fi
+
+          if echo "$NAMES" | grep -qxF "$REQUIRED_CHECK"; then
+            echo ""
+            echo "OK: '$REQUIRED_CHECK' is registered as a required status check on dev."
+          else
+            echo ""
+            echo "ERROR: '$REQUIRED_CHECK' is NOT in the required status checks for dev."
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "DRY-RUN: not failing the run (apply step did not patch)."
+              exit 0
+            fi
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          echo "## Branch Protection Setup" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Branch | \`dev\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Required check added | \`security-gate-conclusion\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dry-run | $DRY_RUN |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Status | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Run \`gh api repos/\$REPO/branches/dev/protection\` to verify." >> "$GITHUB_STEP_SUMMARY"

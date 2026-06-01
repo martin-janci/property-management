@@ -1,0 +1,218 @@
+{
+  "run_date": "2026-06-01",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/competitive.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 773afb6",
+      "score_delta": 0,
+      "evidence": "819 lines this run — PR #917 fix(security): org-scope competitive-intel routes + drop mock data (closes #895); landing site for IDOR fix. Security-sprint landing site, score-suppressed (mirrors 2026-05-30/31 precedent). Not added to hotspot_history.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 773afb6",
+      "score_delta": 0,
+      "evidence": "616 lines this run — PR #906 fix(security): scope rental connections to tenant & stop leaking OAuth tokens (closes #887, #804); repo-layer org scoping. Security-sprint landing site, score-suppressed (mirrors 2026-05-30/31 precedent). Not added to hotspot_history.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/insurance_cross_tenant_idor_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 773afb6",
+      "score_delta": 0,
+      "evidence": "520 lines this run — PR #873 fix(security): scope insurance routes to authenticated tenant (closes #826); new IDOR regression suite — pure test addition, not unstable code. Security-sprint landing site, score-suppressed (mirrors 2026-05-30/31 precedent). Not added to hotspot_history.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-922-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #922",
+      "score_delta": 2,
+      "evidence": "PR #922 (fix: address dev-review rounds 1-5 findings, #788) modified frontend/apps/ppt-web/src/App.tsx without a docs/screens/ppt/*.md update — drift signal on ppt product",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-874",
+      "type": "hotfix-no-test",
+      "source": "PR #874",
+      "score_delta": 2,
+      "evidence": "fix(security): fail closed on unverified portal webhooks (closes #833) — 1 file changed (backend/servers/api-server/src/routes/portal_webhooks.rs), no *test* file in diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-918",
+      "type": "hotfix-no-test",
+      "source": "PR #918",
+      "score_delta": 2,
+      "evidence": "fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, 3 screens), no *test* file in diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-921",
+      "type": "hotfix-no-test",
+      "source": "PR #921",
+      "score_delta": 2,
+      "evidence": "fix(security): SSO consumer review findings (closes #820) — 1 file changed (backend/servers/reality-server/src/state.rs), no *test* file in diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-923",
+      "type": "hotfix-no-test",
+      "source": "PR #923",
+      "score_delta": 2,
+      "evidence": "fix(ci): don't weaken branch protection; rebase lockfiles from base (closes #771) — 2 .yml files (.github/workflows/auto-rebase-stale-drafts.yml, branch-protection-setup.yml), no *test* file in diff (CI-config-only, test would be CI-integration)",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-pr-908",
+      "type": "closed-not-merged-pr",
+      "source": "PR #908",
+      "score_delta": 1,
+      "evidence": "fix(security): require PKCE on OAuth authorization-code flow (closes #823) — closed without merge on 2026-06-01. Per dispatcher, likely superseded or rolled back; underlying issue #823 (PKCE enforcement) may still be open",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "untriaged-issue-920",
+      "type": "untriaged-issue",
+      "source": "#920",
+      "score_delta": 1,
+      "evidence": "new GitHub issue #920 (OPEN, no labels): Announcement targeting not enforced on read (intra-org disclosure) — security-relevant, awaits triage label",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-01.md",
+      "observed": "exists with H1=# 2026-06-01",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state changed (last_pr/last_issue/last_commit/seen_signals advanced)",
+      "observed": "advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "94 items / 94 unique",
+      "expected": "equal"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counting on non-cumulative re-emit",
+      "observed": "all clear",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "score <= 8 all items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "0 new",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "diff --cached only .research/",
+      "observed": "deferred to commit-time gate",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in diff",
+      "observed": "deferred to commit-time gate",
+      "expected": "true"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "regenerated",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases recorded",
+      "observed": "all phases ran or properly skipped",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans converge",
+      "observed": "no plans deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "no archive changes this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identical",
+      "observed": "regenerated",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 auto-fix actions this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is no-op",
+      "observed": "no Phase 1.6",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in diff",
+      "observed": "deferred to commit-time gate",
+      "expected": "true"
+    }
+  ],
+  "auto_fix_skipped_reason": "no candidate met certainty bar + allowlist this run"
+}

@@ -265,22 +265,28 @@ private fun applyFilterAndSort(
     filter: TransactionFilter,
     sort: SortMode,
 ): List<FavoriteEntry> {
+    // `transactionType` comes from the flat server field; fall back to the nested
+    // listing type for any legacy/mock data that still uses the old shape.
+    fun FavoriteEntry.effectiveTransactionType(): String? = transactionType ?: listing?.type?.name
+
     val filtered =
         when (filter) {
             TransactionFilter.ALL -> favorites
             TransactionFilter.SALE ->
                 favorites.filter {
-                    it.listing?.type?.name?.equals("SALE", ignoreCase = true) == true
+                    it.effectiveTransactionType()?.equals("sale", ignoreCase = true) == true
                 }
             TransactionFilter.RENT ->
                 favorites.filter {
-                    it.listing?.type?.name?.equals("RENT", ignoreCase = true) == true
+                    it.effectiveTransactionType()?.equals("rent", ignoreCase = true) == true
                 }
         }
     return when (sort) {
-        SortMode.NEWEST -> filtered.sortedByDescending { it.listing?.createdAt }
-        SortMode.PRICE_ASC -> filtered.sortedBy { it.listing?.price ?: Long.MAX_VALUE }
-        SortMode.PRICE_DESC -> filtered.sortedByDescending { it.listing?.price ?: 0L }
+        SortMode.NEWEST -> filtered.sortedByDescending { it.createdAt }
+        SortMode.PRICE_ASC ->
+            filtered.sortedBy { it.currentPrice ?: it.listing?.price ?: Long.MAX_VALUE }
+        SortMode.PRICE_DESC ->
+            filtered.sortedByDescending { it.currentPrice ?: it.listing?.price ?: 0L }
     }
 }
 
@@ -368,13 +374,11 @@ private fun PropertyTabContent(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(items, key = { it.id }) { fav ->
-                        fav.listing?.let { listing ->
-                            FavoritePropertyCard(
-                                listing = listing,
-                                onClick = { onListingClick(fav.listingId) },
-                                onRemoveFavorite = { onRemoveFavorite(fav.listingId) },
-                            )
-                        }
+                        FavoriteEntryCard(
+                            entry = fav,
+                            onClick = { onListingClick(fav.listingId) },
+                            onRemoveFavorite = { onRemoveFavorite(fav.listingId) },
+                        )
                     }
                 }
 
@@ -474,6 +478,103 @@ private fun SortSegmentedControl(
     }
 }
 
+/**
+ * Card that renders a [FavoriteEntry] using the flat server fields (`title`, `currentPrice`,
+ * `photoUrl`, `city`, etc.) returned by `GET /api/v1/favorites`. Falls back to the nested
+ * [FavoriteEntry.listing] for any legacy / mock data that still carries the old shape.
+ */
+@Composable
+private fun FavoriteEntryCard(
+    entry: FavoriteEntry,
+    onClick: () -> Unit,
+    onRemoveFavorite: () -> Unit,
+) {
+    // Prefer the flat fields from PortalFavoriteWithListing; fall back to nested listing.
+    val title = entry.title ?: entry.listing?.title ?: ""
+    val price = entry.currentPrice ?: entry.listing?.price ?: 0L
+    val currency = entry.currency ?: entry.listing?.currency ?: "EUR"
+    val photoUrl = entry.photoUrl ?: entry.listing?.primaryImage?.url ?: ""
+    val metaText = buildString {
+        entry.city?.let { append(it) } ?: entry.listing?.address?.city?.let { append(it) }
+        if (entry.priceChanged) {
+            // `price_change_percentage = (current - original) / original * 100`, so a positive
+            // percentage means the price went up (↑) and a negative one means it went down (↓).
+            // When the percentage is null but `priceChanged` is true, fall back to ↓ to preserve
+            // the prior visual (the only case the server still emits today).
+            val pct = entry.priceChangePercentage
+            append(if (pct != null && pct > 0) " · ↑" else " · ↓")
+        }
+    }
+
+    Card(
+        modifier = Modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column {
+            Box(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f)) {
+                AsyncImage(
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(photoUrl)
+                            .crossfade(true)
+                            .build(),
+                    contentDescription = title,
+                    contentScale = ContentScale.Crop,
+                    modifier =
+                        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                )
+                // Heart pill (top-right) — white pill, red filled heart
+                Box(
+                    modifier =
+                        Modifier.align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.92f))
+                            .clickable(onClick = onRemoveFavorite),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = stringResource(R.string.cd_remove_favorite),
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 10.dp)
+            ) {
+                Text(
+                    text = FormatUtils.formatPrice(price, currency),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (metaText.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = metaText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Retained for any callers outside this file that still pass a ListingSummary directly.
 @Composable
 private fun FavoritePropertyCard(
     listing: ListingSummary,
@@ -499,7 +600,6 @@ private fun FavoritePropertyCard(
                     modifier =
                         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
                 )
-                // Heart pill (top-right) — white pill, red filled heart
                 Box(
                     modifier =
                         Modifier.align(Alignment.TopEnd)

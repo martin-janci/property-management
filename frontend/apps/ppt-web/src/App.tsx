@@ -59,6 +59,7 @@ import {
   Routes,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom';
 import {
   AnnouncerProvider,
@@ -885,24 +886,22 @@ function FileDisputePageRoute() {
       // We call the raw API function (not the hook) because the hook must be
       // keyed to a disputeId at render time and we only know the id after step 1.
       const validFiles = payload.evidence.filter((e) => e.status !== 'error');
-      let evidenceErrors = 0;
+      const failedEvidence: typeof validFiles = [];
       for (const item of validFiles) {
         try {
           await apiUploadEvidence(created.id, item.file, item.description || item.file.name);
         } catch {
-          evidenceErrors++;
+          failedEvidence.push(item);
         }
       }
+      const evidenceErrors = failedEvidence.length;
 
       // Step 3 — toast + navigate to the new dispute detail
       if (evidenceErrors > 0) {
         showToast({
           type: 'warning',
           title: t('disputes.filedWithEvidenceErrors', 'Dispute filed (some files failed)'),
-          message: t(
-            'disputes.evidenceUploadErrorsMsg',
-            `${evidenceErrors} file(s) could not be uploaded. Retry from the dispute detail page.`
-          ),
+          message: t('disputes.evidenceUploadErrorsMsg', { count: evidenceErrors }),
         });
       } else {
         showToast({
@@ -911,7 +910,12 @@ function FileDisputePageRoute() {
           message: t('disputes.submittedMsg', 'Your dispute has been submitted for review.'),
         });
       }
-      navigate(`/disputes/${created.id}`);
+      // TODO(#627): consume failedEvidence on DisputeDetailPage to surface a retry
+      // prompt once evidence-retry UI lands. For now we just thread it through
+      // router state so the detail page can pick it up when ready.
+      navigate(`/disputes/${created.id}`, {
+        state: evidenceErrors > 0 ? { failedEvidence } : undefined,
+      });
     } catch (error) {
       showToast({
         type: 'error',
@@ -2050,10 +2054,15 @@ function NewMessagePageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
 
-  // Fetch potential recipients from neighbors.
-  // buildingId is not part of the auth token; the hook handles undefined gracefully.
-  const { recipients, isLoading: isLoadingRecipients } = useMessageRecipients(undefined);
+  // Fetch potential recipients from the user's building neighbors. Without a
+  // building id the recipients query stays disabled and the list is always
+  // empty — making the page unusable. Mirror the NeighborsPage convention and
+  // use the first building the user has access to (building-selector deferred).
+  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
+  const buildingId = buildingsData?.items?.[0]?.id;
+  const { recipients, isLoading: isLoadingRecipients } = useMessageRecipients(buildingId);
   const startThread = useStartThread();
 
   const handleNewMsgSubmit = async (data: import('./features/messaging').CreateThreadRequest) => {
@@ -2078,7 +2087,10 @@ function NewMessagePageRoute() {
   return (
     <NewMessagePage
       recipients={recipients}
-      isLoadingRecipients={isLoadingRecipients}
+      initialRecipientIds={
+        searchParams.get('recipientId') ? [searchParams.get('recipientId') as string] : undefined
+      }
+      isLoadingRecipients={isLoadingRecipients || isLoadingBuildings}
       isSubmitting={startThread.isPending}
       onSubmit={handleNewMsgSubmit}
       onCancel={() => navigate('/messages')}

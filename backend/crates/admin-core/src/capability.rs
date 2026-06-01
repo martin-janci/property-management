@@ -119,6 +119,16 @@ impl Capability {
     ];
 }
 
+/// `Display` returns the same stable snake_case form as `as_str()`. This
+/// decouples log-chain rendering (`tracing::error!("{}", err)`, error
+/// wrappers that print the inner error via `{}`) from the internal Rust
+/// repr that `{:?}` would emit. See issue #615.
+impl std::fmt::Display for Capability {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// Process-wide capability registry. Each binary calls `init` at startup
 /// listing the capabilities it actually exposes; the UI consults this for
 /// discovery (`GET /admin/capabilities`).
@@ -353,6 +363,36 @@ mod tests {
         for cap in Capability::ALL {
             assert!(seen.insert(cap.as_str()), "duplicate capability str");
         }
+    }
+
+    #[test]
+    fn display_matches_as_str_for_every_variant() {
+        // Issue #615 — Display must emit the same stable snake_case form as
+        // as_str() so log chains never leak the Rust Debug repr.
+        for cap in Capability::ALL {
+            assert_eq!(
+                format!("{}", cap),
+                cap.as_str(),
+                "Display drifted from as_str() for {:?}",
+                cap
+            );
+        }
+    }
+
+    #[test]
+    fn missing_capability_error_renders_snake_case() {
+        // Display of AdminError::MissingCapability(...) must use snake_case
+        // (Capability::Display), not PascalCase (Debug). This is the bug
+        // class fixed in PR #612 (P1-04) for the JSON body and now extended
+        // to the log-chain renderer via #615.
+        let err = crate::AdminError::MissingCapability(Capability::AgenciesRead);
+        let rendered = format!("{}", err);
+        assert_eq!(rendered, "forbidden: missing capability agencies_read");
+        assert!(
+            !rendered.contains("AgenciesRead"),
+            "Display still leaked PascalCase: {}",
+            rendered
+        );
     }
 
     #[test]

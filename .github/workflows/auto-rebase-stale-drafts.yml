@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -147,9 +147,18 @@ jobs:
                   gh pr comment "$PR" --repo "$REPO" --body "$BODY"
                 else
                   echo "only mechanical conflicts: resolving from base"
-                  # Take base side for each mechanical conflict; regen later if applicable.
+                  # Take the BASE (dev) side for each mechanical conflict; regen later
+                  # if applicable.
+                  #
+                  # SAFETY: during `git rebase origin/dev`, git replays the feature
+                  # commits on top of dev. In that frame the base (dev) is "ours" and
+                  # the replayed feature commits are "theirs" — the OPPOSITE of the
+                  # merge-commit convention. So to keep the base/dev version of a
+                  # lockfile (the documented intent), we must use --ours, NOT --theirs.
+                  # Using --theirs here would keep the stale FEATURE-branch lockfile
+                  # and defeat the whole "resolve from base" purpose.
                   for f in $CONFLICTS; do
-                    git checkout --theirs -- "$f" || true
+                    git checkout --ours -- "$f" || true
                     git add -- "$f" || true
                   done
                   if git rebase --continue; then

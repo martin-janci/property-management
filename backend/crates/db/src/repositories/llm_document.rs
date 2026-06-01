@@ -74,6 +74,53 @@ impl LlmDocumentRepository {
         .await
     }
 
+    /// Find a generation request by ID — tenant-scoped (issue #766 / #816).
+    ///
+    /// `org_id` must originate from the verified request principal. Returns
+    /// `None` for both "not found" and "belongs to another tenant" so a caller
+    /// in org B cannot read org A's generation request (an IDOR information
+    /// leak: prompts, results, cost data).
+    pub async fn find_generation_request_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<LlmGenerationRequest>, SqlxError> {
+        sqlx::query_as::<_, LlmGenerationRequest>(
+            "SELECT * FROM llm_generation_requests WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Verify that `unit_id` belongs to `org_id` (issue #766 / #816).
+    ///
+    /// Lease generation must not be invoked against another tenant's unit.
+    /// Units link to an organization via their building
+    /// (`units.building_id -> buildings.organization_id`), so this checks the
+    /// join rather than a direct column. Returns `true` only when a unit with
+    /// that id exists under the caller's org.
+    pub async fn unit_belongs_to_org(
+        &self,
+        unit_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let exists: Option<bool> = sqlx::query_scalar(
+            r#"
+            SELECT TRUE
+            FROM units u
+            JOIN buildings b ON b.id = u.building_id
+            WHERE u.id = $1 AND b.organization_id = $2
+            "#,
+        )
+        .bind(unit_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(exists.unwrap_or(false))
+    }
+
     /// Update generation request status.
     #[allow(clippy::too_many_arguments)]
     pub async fn update_generation_status(
@@ -203,6 +250,30 @@ impl LlmDocumentRepository {
             .bind(id)
             .fetch_optional(&self.pool)
             .await
+    }
+
+    /// Find a prompt template by ID — tenant-scoped (issue #766 / #816).
+    ///
+    /// `org_id` must originate from the verified request principal. A template
+    /// is visible only when it belongs to the caller's org OR it is a system
+    /// (`is_system = TRUE`, `organization_id IS NULL`) template shared across
+    /// all tenants. Returns `None` for "not found" and for "another tenant's
+    /// org-specific template" so org B cannot read org A's prompt templates.
+    pub async fn find_prompt_template_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<LlmPromptTemplate>, SqlxError> {
+        sqlx::query_as::<_, LlmPromptTemplate>(
+            r#"
+            SELECT * FROM llm_prompt_templates
+            WHERE id = $1 AND (organization_id = $2 OR is_system = TRUE)
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Find the default template for a request type.
@@ -400,6 +471,31 @@ impl LlmDocumentRepository {
             "UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *",
         )
         .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Mark description as published — tenant-scoped (issue #766 / #816).
+    ///
+    /// `org_id` must originate from the verified request principal. The
+    /// `organization_id = $2` guard ensures a caller in org B cannot publish
+    /// (mutate) a generated listing description owned by org A. Returns `None`
+    /// for both "not found" and "belongs to another tenant".
+    pub async fn publish_description_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<GeneratedListingDescription>, SqlxError> {
+        sqlx::query_as::<_, GeneratedListingDescription>(
+            r#"
+            UPDATE generated_listing_descriptions
+            SET is_published = TRUE
+            WHERE id = $1 AND organization_id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await
     }
@@ -982,6 +1078,25 @@ impl LlmDocumentRepository {
             .bind(id)
             .fetch_optional(&self.pool)
             .await
+    }
+
+    /// Find photo enhancement by ID — tenant-scoped (issue #766 / #816).
+    ///
+    /// `org_id` must originate from the verified request principal. Returns
+    /// `None` for both "not found" and "belongs to another tenant" so a caller
+    /// in org B cannot read org A's photo enhancement record.
+    pub async fn find_photo_enhancement_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<PhotoEnhancement>, SqlxError> {
+        sqlx::query_as::<_, PhotoEnhancement>(
+            "SELECT * FROM photo_enhancements WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Update photo enhancement status and result.

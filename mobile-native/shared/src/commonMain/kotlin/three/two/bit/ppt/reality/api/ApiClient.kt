@@ -3,7 +3,7 @@ package three.two.bit.ppt.reality.api
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import three.two.bit.ppt.reality.favorites.AddFavoriteRequest
+import three.two.bit.ppt.reality.favorites.AddFavoriteBody
 import three.two.bit.ppt.reality.favorites.AddFavoriteResponse
 import three.two.bit.ppt.reality.favorites.FavoritesResponse
 import three.two.bit.ppt.reality.inquiry.CreateInquiryRequest
@@ -35,6 +35,13 @@ class ApiClient(
         accessToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
         tenantId?.let { header("X-Tenant-ID", it) }
     }
+
+    /**
+     * Percent-encode a value before splicing it into a request path so that ids containing `/`,
+     * `?`, `#`, or `..` cannot smuggle extra path segments or query parameters into the request
+     * (path-injection).
+     */
+    private fun pathSegment(value: String): String = value.encodeURLPathPart()
 
     suspend fun healthCheck(): String {
         return client.get("$baseUrl/health") { configureRequest() }.toString()
@@ -73,7 +80,8 @@ class ApiClient(
      */
     suspend fun getListing(id: String): Result<ListingDetail> {
         return try {
-            val response = client.get("$baseUrl/api/v1/listings/$id") { configureRequest() }
+            val response =
+                client.get("$baseUrl/api/v1/listings/${pathSegment(id)}") { configureRequest() }
             if (response.status.isSuccess()) {
                 Result.success(response.body())
             } else if (response.status == HttpStatusCode.NotFound) {
@@ -117,9 +125,12 @@ class ApiClient(
     suspend fun addFavorite(listingId: String): Result<AddFavoriteResponse> {
         return try {
             val response =
-                client.post("$baseUrl/api/v1/favorites") {
+                client.post("$baseUrl/api/v1/favorites/${pathSegment(listingId)}") {
                     configureRequest()
-                    setBody(AddFavoriteRequest(listingId))
+                    // Empty typed body — `AddFavoriteBody` serializes to `{}` via
+                    // ContentNegotiation, keeping this call on the same pipeline as every other.
+                    contentType(ContentType.Application.Json)
+                    setBody(AddFavoriteBody)
                 }
             if (response.status.isSuccess()) {
                 Result.success(response.body())
@@ -144,7 +155,9 @@ class ApiClient(
     suspend fun removeFavorite(listingId: String): Result<Unit> {
         return try {
             val response =
-                client.delete("$baseUrl/api/v1/favorites/$listingId") { configureRequest() }
+                client.delete("$baseUrl/api/v1/favorites/${pathSegment(listingId)}") {
+                    configureRequest()
+                }
             if (response.status.isSuccess()) {
                 Result.success(Unit)
             } else if (response.status == HttpStatusCode.Unauthorized) {

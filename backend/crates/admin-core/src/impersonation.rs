@@ -158,15 +158,20 @@ impl ImpersonationService for PgImpersonationService {
     }
 
     async fn end_impersonation(&self, token_id: Uuid, actor: Uuid) -> Result<(), AdminError> {
+        // Scope the update to the session owner: a caller may only end an
+        // impersonation session they themselves started. Without the
+        // `actor_id = $2` predicate any admin could terminate another admin's
+        // active session by guessing the token id.
         let row = sqlx::query_as::<_, (Uuid,)>(
             r#"
             UPDATE impersonation_tokens
             SET ended_at = NOW()
-            WHERE id = $1 AND ended_at IS NULL
+            WHERE id = $1 AND actor_id = $2 AND ended_at IS NULL
             RETURNING target_user_id
             "#,
         )
         .bind(token_id)
+        .bind(actor)
         .fetch_optional(&self.pool)
         .await
         .map_err(map_sqlx)?;

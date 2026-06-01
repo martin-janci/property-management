@@ -122,11 +122,17 @@ export async function registerOAuthClient(
 
 /**
  * PATCH /api/v1/admin/oauth/clients/{id} — update an OAuth client.
+ *
+ * When `data.auditReason` is set (required for scope changes) it is forwarded
+ * as `reason` in the JSON body so the backend writes it to the audit log.
  */
 export async function updateOAuthClient(
   id: string,
   data: UpdateOAuthClientRequest
 ): Promise<OAuthClientSummary> {
+  // Normalize at the client boundary so whitespace-only reasons (which are
+  // truthy) don't produce empty audit-log entries for any caller.
+  const auditReason = data.auditReason?.trim();
   return authenticatedFetchJson<OAuthClientSummary>(`${API_BASE}/oauth/clients/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({
@@ -136,6 +142,8 @@ export async function updateOAuthClient(
       scopes: data.scopes,
       is_active: data.isActive,
       rotate_refresh_tokens: data.rotateRefreshTokens,
+      // Audit trail: forwarded to the backend audit_log writer.
+      ...(auditReason ? { reason: auditReason } : {}),
     }),
   });
 }

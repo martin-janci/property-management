@@ -1,0 +1,195 @@
+{
+  "run_iso": "2026-05-31T03:11:44Z",
+  "window": "since 2026-05-30T20:44:12Z (last_run_iso); cursor advanced from PR #861/issue #859/commit 8bd4d44 to PR #869/issue #867/commit 773afb6",
+  "signals": [
+    {
+      "id": "hotfix-no-test-pr-866",
+      "type": "hotfix-no-test",
+      "source": "PR #866",
+      "score_delta": 2,
+      "evidence": "PR #866 (fix(api-server): register 5 routers missing from the production binary, closes #836) merged at 2026-05-31T00:23:51Z with diff confined to backend/servers/api-server/src/main.rs (+19 lines) and no *test* file in the change set — registering production routers via a separate code path from lib.rs::create_router (which TestApp uses) is exactly the divergence that allowed 5 routes (push-tokens, mfa/recovery-codes, pricing, property-valuations, data-residency) to pass tests while being unreachable in prod. Author's own follow-up issue #867 calls out the missing parity test.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "untriaged-issue-867",
+      "type": "untriaged-issue",
+      "source": "#867",
+      "score_delta": 1,
+      "evidence": "Issue #867 (no labels, OPEN, created 2026-05-30T23:43:16Z): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently. Companion finding to the hotfix-no-test-pr-866 signal — the test-gap row is the implementer-facing version of this same problem.",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "phases_run": {
+    "phase-1-observe": "ok (6 merged PRs, 1 new issue, 3 closed issues by merges in window, 0 new TODO/FIXME in committed code, 0 unchecked-todo PR bodies, 0 reverts, 0 stalled-review >7d, 0 churn-hotspot signals — sub-day window, micro-patches only, score-suppressed mirroring prior run)",
+    "phase-1.5-rotating-review": "skipped (ppt-dev-review skill not invoked in this one-shot routine pass — mirrors 2026-05-30 brief precedent; review_cursor unchanged)",
+    "phase-1.6-project-management": "skipped (ppt-project-management skill not invoked in this one-shot routine pass — mirrors 2026-05-30 brief precedent; pm_cursor + coverage_cursor unchanged)",
+    "phase-2-decide": "ok (2 new backlog items added, 3 triage rows resolved → done, security-llm-doc-idor re-verified ready)",
+    "phase-3-promote": "ok (no candidate met readiness gate this run — only new non-triage item test-gap-router-set-parity-tests scored 2, below 3 threshold; no security fast-track candidate)",
+    "phase-3.5-adversarial": "ok (no new plans this run — vacuously satisfied)",
+    "phase-4-write": "ok (brief, state.json, signals file, regenerated backlog.md + IDEAS_TRIAGE.md)",
+    "phase-5-auto-fix": "no candidate (allowlist + certainty bar held — see brief)",
+    "phase-6-stage-gate-commit": "pending (executes after this file is written)"
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — hotfix-no-test signal type is not in Phase 5 allowlist; new triage-issue-867 is vector=triage (out of allowlist); the test-gap row has confidence=high but score 2 < 3 threshold AND test-gap-router-set-parity-tests requires a real code change (not a doc-stub / orphan-remove / lockfile-bump safe shape)",
+  "resolutions_this_run": [
+    {
+      "backlog_id": "triage-issue-836",
+      "resolved_by": "PR #866",
+      "method": "PR-body match (closes #836) + triage issue closed",
+      "outcome": "status=done"
+    },
+    {
+      "backlog_id": "triage-issue-845",
+      "resolved_by": "PR #862",
+      "method": "PR-body match (closes #817, #824, #845) + triage issue closed",
+      "outcome": "status=done"
+    },
+    {
+      "backlog_id": "triage-issue-849",
+      "resolved_by": "PR #869",
+      "method": "PR-body match (closes #849) + triage issue closed",
+      "outcome": "status=done"
+    }
+  ],
+  "resolution_recheck": [
+    {
+      "backlog_id": "security-llm-doc-idor",
+      "status_unchanged": "ready",
+      "grep_result": "backend/servers/api-server/src/routes/ai.rs lines 2624, 2645, 2872 still bind `_principal: RequestPrincipal` (discarded — IDOR pattern intact); no PR in window touched ai.rs or llm_document.rs"
+    },
+    {
+      "backlog_id": "bug-webhook-airbnb-dup-sync-jobs",
+      "status_unchanged": "open",
+      "grep_result": "no PR in window touched webhook.rs inner-loop dedup TODO at webhook.rs:1073; PR #841's outer-event-id dedup landed in prior run (already noted [partial] in 2026-05-30 brief)"
+    },
+    {
+      "backlog_id": "test-gap-booking-push-validation-untested",
+      "status_unchanged": "open",
+      "grep_result": "no PR in window added regression tests for #607 batch-cap / non-negative guards on push_booking_availability / push_booking_rates"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-05-31.md && head -1 matches '# 2026-05-31'",
+      "observed": "brief exists with correct H1",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD diff",
+      "observed": "true (last_pr_seen 861→869, last_issue_seen 859→867, last_commit_sha 8bd4d44→773afb6, seen_signals +2, stats.runs 16→17)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
+      "observed": "true (87 items, all ids unique)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "every signal id in signals/2026-05-31.json absent from prior seen_signals OR cumulative-allowlist with score_delta=0",
+      "observed": "true (2 new ids: hotfix-no-test-pr-866, untriaged-issue-867 — neither in prior seen_signals)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + 14d decay",
+      "observed": "true (no items >8; oldest open non-triage item dx-portfolio-dashboard-stubs updated 2026-05-20 = 11d < 14d threshold, no decay due yet)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has 'adversarial pass:' annotation",
+      "observed": "no new plans this run — vacuously satisfied",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness gates",
+      "observed": "0 new plans (only ready item is security-llm-doc-idor — already promoted in prior run)",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only contains only .research/ paths",
+      "observed": "all staged paths under .research/",
+      "expected": "0 non-.research/ paths"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached secrets grep (excluding 4 baseline doc files)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "identical (regenerated this run from backlog.json)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases vs cursors",
+      "observed": "phase-1.5/1.6 skipped → review_cursor + pm_cursor + coverage_cursor unchanged from HEAD",
+      "expected": "cursors for failed phases unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan slugs present in plans/ ∪ plans/_archive/ at HEAD remain present this run",
+      "observed": "p0-10-mock-route-wiring, security-llm-doc-idor, security-realtors-mark-inquiry-read-idor, test-gap-inquiry-idor-regression all still in plans/; archive set unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD",
+      "observed": "now=7 head=7 (.gitkeep + 6 archived plans) — unchanged this run",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "identical (regenerated this run)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (cap + idempotency)",
+      "observed": "auto_fix_actions=[] (no candidate — see auto_fix_skipped_reason)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "Phase 1.6 skipped this run → no-op gate (pm_cursor.next_index unchanged at 0)",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached telegram token grep",
+      "observed": "0 matches (no Telegram bot-token URL or bare-token pattern in staged added lines)",
+      "expected": "0"
+    }
+  ]
+}

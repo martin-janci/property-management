@@ -232,6 +232,158 @@ fn not_found_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
+fn forbidden_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::FORBIDDEN,
+        Json(ErrorResponse::new("FORBIDDEN", msg)),
+    )
+}
+
+// ==================== Tenant-isolation helpers ====================
+//
+// SECURITY (issues #803, #846): meter handlers previously trusted a
+// client-supplied `organization_id` (request body / query param) and read
+// resources by id/path with no ownership check, letting any authenticated
+// caller register, read, or mutate another org's meters. Every handler now
+// derives or validates the org against the authenticated principal via the
+// `verify_org_access` membership gate (mirrors the `verify_org_access` idiom
+// in `routes/financial.rs` / `routes/integrations/sync.rs`), plus a
+// `verify_building_access` building→org gate (mirrors `routes/community.rs`).
+
+/// Verify the authenticated user is a member of `org_id`.
+async fn verify_org_access(
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let is_member = state
+        .org_member_repo
+        .is_member(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            internal_error("Database error")
+        })?;
+
+    if !is_member {
+        return Err(forbidden_error("You are not a member of this organization"));
+    }
+
+    Ok(())
+}
+
+/// Resolve the organization that owns `building_id` and verify the caller is a
+/// member of it. Returns the building's organization_id on success. A 404 is
+/// returned for an unknown building so cross-tenant probing cannot distinguish
+/// "missing" from "forbidden".
+async fn verify_building_access(
+    state: &AppState,
+    user_id: Uuid,
+    building_id: Uuid,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    // Intentionally the non-RLS lookup: this IS the access check, run before
+    // any RLS context is established for the request (mirrors community.rs).
+    #[allow(deprecated)]
+    let building = state
+        .building_repo
+        .find_by_id(building_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Building lookup failed");
+            internal_error("Failed to verify building access")
+        })?
+        .ok_or_else(|| not_found_error("Building not found"))?;
+
+    verify_org_access(state, user_id, building.organization_id).await?;
+    Ok(building.organization_id)
+}
+
+/// Resolve the building/org that owns `unit_id` and verify the caller is a
+/// member of it. Returns the unit's organization_id on success.
+async fn verify_unit_access(
+    state: &AppState,
+    user_id: Uuid,
+    unit_id: Uuid,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    #[allow(deprecated)]
+    let unit = state
+        .unit_repo
+        .find_by_id(unit_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Unit lookup failed");
+            internal_error("Failed to verify unit access")
+        })?
+        .ok_or_else(|| not_found_error("Unit not found"))?;
+
+    verify_building_access(state, user_id, unit.building_id).await
+}
+
+/// Resolve the meter by id, verify the caller is a member of its owning org,
+/// and return the meter. A 404 is returned for an unknown meter or a
+/// cross-tenant caller (no missing/forbidden distinction).
+async fn verify_meter_access(
+    state: &AppState,
+    user_id: Uuid,
+    meter_id: Uuid,
+) -> Result<db::models::Meter, (StatusCode, Json<ErrorResponse>)> {
+    let meter = state
+        .meter_repo
+        .get_meter(meter_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Meter lookup failed");
+            internal_error("Failed to verify meter access")
+        })?
+        .ok_or_else(|| not_found_error("Meter not found"))?;
+
+    let is_member = state
+        .org_member_repo
+        .is_member(meter.organization_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            internal_error("Database error")
+        })?;
+    if !is_member {
+        return Err(not_found_error("Meter not found"));
+    }
+
+    Ok(meter)
+}
+
+/// Resolve the utility bill by id and verify the caller is a member of its
+/// owning org. A 404 is returned for an unknown bill or a cross-tenant caller.
+async fn verify_bill_access(
+    state: &AppState,
+    user_id: Uuid,
+    bill_id: Uuid,
+) -> Result<db::models::UtilityBill, (StatusCode, Json<ErrorResponse>)> {
+    let bill = state
+        .meter_repo
+        .get_utility_bill(bill_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Utility bill lookup failed");
+            internal_error("Failed to verify utility bill access")
+        })?
+        .ok_or_else(|| not_found_error("Utility bill not found"))?;
+
+    let is_member = state
+        .org_member_repo
+        .is_member(bill.organization_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = ?e, "Failed to check org membership");
+            internal_error("Database error")
+        })?;
+    if !is_member {
+        return Err(not_found_error("Utility bill not found"));
+    }
+
+    Ok(bill)
+}
+
 // ==================== Meter Handlers ====================
 
 /// Register a new meter.
@@ -247,9 +399,28 @@ fn not_found_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
 )]
 async fn register_meter(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Json(payload): Json<RegisterMeterRequest>,
 ) -> ApiResult<(StatusCode, Json<db::models::Meter>)> {
+    // Trust the authenticated principal, not the client-supplied org: the
+    // caller must be a member of the target org AND own the target building.
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    let building_org =
+        verify_building_access(&state, auth.user_id, payload.data.building_id).await?;
+    if building_org != payload.organization_id {
+        return Err(forbidden_error(
+            "Building does not belong to the specified organization",
+        ));
+    }
+    if let Some(unit_id) = payload.data.unit_id {
+        let unit_org = verify_unit_access(&state, auth.user_id, unit_id).await?;
+        if unit_org != payload.organization_id {
+            return Err(forbidden_error(
+                "Unit does not belong to the specified organization",
+            ));
+        }
+    }
+
     let repo = &state.meter_repo;
 
     repo.register_meter(payload.organization_id, payload.data)
@@ -273,10 +444,12 @@ async fn register_meter(
 )]
 async fn list_meters(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(building_id): Path<Uuid>,
     Query(query): Query<ListMetersQuery>,
 ) -> ApiResult<Json<db::models::ListMetersResponse>> {
+    verify_building_access(&state, auth.user_id, building_id).await?;
+
     let repo = &state.meter_repo;
     let limit = query.limit.min(MAX_LIST_LIMIT);
 
@@ -302,9 +475,11 @@ async fn list_meters(
 )]
 async fn get_meter(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::MeterResponse>> {
+    verify_meter_access(&state, auth.user_id, id).await?;
+
     let repo = &state.meter_repo;
 
     match repo.get_meter_with_readings(id, 10).await {
@@ -331,14 +506,24 @@ async fn get_meter(
 )]
 async fn replace_meter(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(payload): Json<ReplaceMeterRequest>,
 ) -> ApiResult<(StatusCode, Json<db::models::Meter>)> {
+    // The replacement inherits org/building/unit from the existing meter, so
+    // the only authoritative org is the meter's own. Verify ownership and
+    // ignore any client-supplied org mismatch.
+    let meter = verify_meter_access(&state, auth.user_id, id).await?;
+    if meter.organization_id != payload.organization_id {
+        return Err(forbidden_error(
+            "organization_id does not match the meter's organization",
+        ));
+    }
+
     let repo = &state.meter_repo;
 
     match repo
-        .replace_meter(id, payload.organization_id, payload.data)
+        .replace_meter(id, meter.organization_id, payload.data)
         .await
     {
         Ok(meter) => Ok((StatusCode::CREATED, Json(meter))),
@@ -362,9 +547,11 @@ async fn replace_meter(
 )]
 async fn list_unit_meters(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(unit_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::Meter>>> {
+    verify_unit_access(&state, auth.user_id, unit_id).await?;
+
     let repo = &state.meter_repo;
 
     repo.list_meters_for_unit(unit_id)
@@ -394,6 +581,8 @@ async fn submit_reading(
     auth: AuthUser,
     Json(payload): Json<SubmitReading>,
 ) -> ApiResult<(StatusCode, Json<db::models::MeterReading>)> {
+    verify_meter_access(&state, auth.user_id, payload.meter_id).await?;
+
     let repo = &state.meter_repo;
 
     repo.submit_reading(auth.user_id, payload)
@@ -418,13 +607,16 @@ async fn submit_reading(
 )]
 async fn get_reading(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::MeterReading>> {
     let repo = &state.meter_repo;
 
     match repo.get_reading(id).await {
-        Ok(Some(reading)) => Ok(Json(reading)),
+        Ok(Some(reading)) => {
+            verify_meter_access(&state, auth.user_id, reading.meter_id).await?;
+            Ok(Json(reading))
+        }
         Ok(None) => Err(not_found_error("Reading not found")),
         Err(e) => {
             tracing::error!("Failed to get reading: {:?}", e);
@@ -448,10 +640,12 @@ async fn get_reading(
 )]
 async fn list_readings(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(meter_id): Path<Uuid>,
     Query(query): Query<ListReadingsQuery>,
 ) -> ApiResult<Json<db::models::ListReadingsResponse>> {
+    verify_meter_access(&state, auth.user_id, meter_id).await?;
+
     let repo = &state.meter_repo;
     let limit = query.limit.min(MAX_LIST_LIMIT);
 
@@ -479,9 +673,11 @@ async fn list_readings(
 )]
 async fn create_submission_window(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Json(payload): Json<CreateSubmissionWindowRequest>,
 ) -> ApiResult<(StatusCode, Json<db::models::ReadingSubmissionWindow>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+
     let repo = &state.meter_repo;
 
     repo.create_submission_window(payload.organization_id, payload.data)
@@ -506,9 +702,11 @@ async fn create_submission_window(
 )]
 async fn get_open_window(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(building_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::ReadingSubmissionWindow>> {
+    verify_building_access(&state, auth.user_id, building_id).await?;
+
     let repo = &state.meter_repo;
 
     match repo.get_open_submission_window(building_id).await {
@@ -543,6 +741,17 @@ async fn validate_reading(
 ) -> ApiResult<Json<db::models::MeterReading>> {
     let repo = &state.meter_repo;
 
+    // Resolve the reading's meter and verify org ownership before validating.
+    let reading = repo
+        .get_reading(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get reading: {:?}", e);
+            internal_error("Failed to get reading")
+        })?
+        .ok_or_else(|| not_found_error("Reading not found"))?;
+    verify_meter_access(&state, auth.user_id, reading.meter_id).await?;
+
     match repo.validate_reading(id, auth.user_id, payload).await {
         Ok(Some(reading)) => Ok(Json(reading)),
         Ok(None) => Err(not_found_error("Reading not found")),
@@ -565,9 +774,19 @@ async fn validate_reading(
 )]
 async fn get_pending_readings(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<PendingReadingsQuery>,
 ) -> ApiResult<Json<Vec<db::models::MeterReading>>> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    if let Some(building_id) = query.building_id {
+        let building_org = verify_building_access(&state, auth.user_id, building_id).await?;
+        if building_org != query.organization_id {
+            return Err(forbidden_error(
+                "Building does not belong to the specified organization",
+            ));
+        }
+    }
+
     let repo = &state.meter_repo;
 
     repo.get_pending_readings(query.organization_id, query.building_id)
@@ -591,9 +810,11 @@ async fn get_pending_readings(
 )]
 async fn get_validation_rules(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<ValidationRulesQuery>,
 ) -> ApiResult<Json<Vec<db::models::ReadingValidationRule>>> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+
     let repo = &state.meter_repo;
 
     repo.get_validation_rules(query.organization_id)
@@ -623,6 +844,8 @@ async fn create_utility_bill(
     auth: AuthUser,
     Json(payload): Json<CreateUtilityBillRequest>,
 ) -> ApiResult<(StatusCode, Json<db::models::UtilityBill>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+
     let repo = &state.meter_repo;
 
     repo.create_utility_bill(payload.organization_id, auth.user_id, payload.data)
@@ -647,9 +870,11 @@ async fn create_utility_bill(
 )]
 async fn get_utility_bill(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::UtilityBillResponse>> {
+    verify_bill_access(&state, auth.user_id, id).await?;
+
     let repo = &state.meter_repo;
 
     match repo.get_utility_bill_with_distributions(id).await {
@@ -680,6 +905,8 @@ async fn distribute_bill(
     Path(id): Path<Uuid>,
     Json(payload): Json<DistributeUtilityBill>,
 ) -> ApiResult<Json<db::models::UtilityBillResponse>> {
+    verify_bill_access(&state, auth.user_id, id).await?;
+
     let repo = &state.meter_repo;
 
     match repo
@@ -710,10 +937,12 @@ async fn distribute_bill(
 )]
 async fn get_consumption_history(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(meter_id): Path<Uuid>,
     Query(query): Query<ConsumptionQuery>,
 ) -> ApiResult<Json<db::models::ConsumptionHistoryResponse>> {
+    verify_meter_access(&state, auth.user_id, meter_id).await?;
+
     let repo = &state.meter_repo;
 
     match repo
@@ -741,10 +970,12 @@ async fn get_consumption_history(
 )]
 async fn get_consumption_aggregates(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(meter_id): Path<Uuid>,
     Query(query): Query<AggregatesQuery>,
 ) -> ApiResult<Json<Vec<db::models::ConsumptionAggregate>>> {
+    verify_meter_access(&state, auth.user_id, meter_id).await?;
+
     let repo = &state.meter_repo;
 
     repo.get_consumption_aggregates(meter_id, query.year)
@@ -770,9 +1001,11 @@ async fn get_consumption_aggregates(
 )]
 async fn list_providers(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<ProvidersQuery>,
 ) -> ApiResult<Json<Vec<db::models::SmartMeterProvider>>> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+
     let repo = &state.meter_repo;
 
     repo.get_smart_meter_providers(query.organization_id)
@@ -797,13 +1030,16 @@ async fn list_providers(
 )]
 async fn get_provider(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::SmartMeterProvider>> {
     let repo = &state.meter_repo;
 
     match repo.get_smart_meter_provider(id).await {
-        Ok(Some(provider)) => Ok(Json(provider)),
+        Ok(Some(provider)) => {
+            verify_org_access(&state, auth.user_id, provider.organization_id).await?;
+            Ok(Json(provider))
+        }
         Ok(None) => Err(not_found_error("Provider not found")),
         Err(e) => {
             tracing::error!("Failed to get provider: {:?}", e);
@@ -825,9 +1061,11 @@ async fn get_provider(
 )]
 async fn ingest_smart_reading(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Json(payload): Json<IngestReadingRequest>,
 ) -> ApiResult<StatusCode> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+
     let repo = &state.meter_repo;
 
     // Find meter by number
@@ -870,9 +1108,11 @@ async fn ingest_smart_reading(
 )]
 async fn list_missing_alerts(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Query(query): Query<AlertsQuery>,
 ) -> ApiResult<Json<Vec<db::models::MissingReadingAlert>>> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+
     let repo = &state.meter_repo;
 
     repo.get_missing_reading_alerts(query.organization_id, query.unresolved_only)
@@ -903,6 +1143,17 @@ async fn resolve_alert(
     Json(payload): Json<ResolveAlertRequest>,
 ) -> ApiResult<Json<db::models::MissingReadingAlert>> {
     let repo = &state.meter_repo;
+
+    // Resolve the alert's meter and verify org ownership before resolving.
+    let alert = repo
+        .get_missing_alert(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get alert: {:?}", e);
+            internal_error("Failed to get alert")
+        })?
+        .ok_or_else(|| not_found_error("Alert not found"))?;
+    verify_meter_access(&state, auth.user_id, alert.meter_id).await?;
 
     match repo
         .resolve_missing_alert(id, auth.user_id, payload.notes.as_deref())

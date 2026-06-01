@@ -175,24 +175,52 @@ pub async fn create_signature_request(
     for signer in &signature_request.signers {
         // Build a HMAC-secured signing URL via the lightweight provider.
         // The token binds signer email, request id, organisation, and the
-        // signer's current status; the embedded nonce is exposed on
-        // `SignedUrl.nonce` for the future `/sign` consumer to persist.
+        // signer's current status; the embedded nonce is persisted to
+        // `e_signature_nonces` so the future `/sign` consumer can enforce
+        // one-shot use (issue #673 follow-up to PR #542).
         // Issue #527 (c): org_id bound into HMAC prevents cross-tenant replay.
         let signer_status = signer.status.to_string();
-        let sign_url = ESIGN_PROVIDER
-            .build_signing_url(
-                &signer.email,
-                &signature_request.id.to_string(),
-                &org_id_str,
-                &signer_status,
-            )
-            .map(|s| s.url)
-            .unwrap_or_else(|_| {
-                format!(
-                    "{}/sign?request_id={}&email={}",
-                    *BASE_URL, signature_request.id, signer.email
-                )
-            });
+        let sign_url = match ESIGN_PROVIDER.build_signing_url(
+            &signer.email,
+            &signature_request.id.to_string(),
+            &org_id_str,
+            &signer_status,
+        ) {
+            Ok(signed) => {
+                // Persist the nonce BEFORE handing the URL to the email
+                // service. If persistence fails we abandon this signer's
+                // link rather than email a link with no DB-side enforcement
+                // — the email is best-effort anyway and the signer can be
+                // re-reminded later.
+                if let Err(e) = state
+                    .e_signature_nonce_repo
+                    .record_nonce(signature_request.id, signed.nonce)
+                    .await
+                {
+                    warn!(
+                        error = %e,
+                        email = %signer.email,
+                        signature_request_id = %signature_request.id,
+                        "Failed to persist e-signature nonce; skipping signer email"
+                    );
+                    continue;
+                }
+                signed.url
+            }
+            Err(e) => {
+                // Fail closed: never emit an unsigned `/sign` link. A link
+                // without a valid HMAC token defeats the signed-link integrity
+                // guarantee, so we abandon this signer's email rather than send
+                // an unauthenticated URL. The signer can be re-reminded later.
+                warn!(
+                    error = %e,
+                    email = %signer.email,
+                    signature_request_id = %signature_request.id,
+                    "Failed to build HMAC-signed signing URL; skipping signer email (refusing to emit unsigned link)"
+                );
+                continue;
+            }
+        };
 
         if let Err(e) = state
             .email_service
@@ -390,20 +418,44 @@ pub async fn send_reminder(
     let org_id_str = signature_request.organization_id.to_string();
     for signer in pending_signers {
         let signer_status = signer.status.to_string();
-        let sign_url = ESIGN_PROVIDER
-            .build_signing_url(
-                &signer.email,
-                &signature_request.id.to_string(),
-                &org_id_str,
-                &signer_status,
-            )
-            .map(|s| s.url)
-            .unwrap_or_else(|_| {
-                format!(
-                    "{}/sign?request_id={}&email={}",
-                    *BASE_URL, signature_request.id, signer.email
-                )
-            });
+        let sign_url = match ESIGN_PROVIDER.build_signing_url(
+            &signer.email,
+            &signature_request.id.to_string(),
+            &org_id_str,
+            &signer_status,
+        ) {
+            Ok(signed) => {
+                // Persist the nonce so the future /sign consumer can refuse
+                // a replay of a captured reminder URL (issue #673).
+                if let Err(e) = state
+                    .e_signature_nonce_repo
+                    .record_nonce(signature_request.id, signed.nonce)
+                    .await
+                {
+                    warn!(
+                        error = %e,
+                        email = %signer.email,
+                        signature_request_id = %signature_request.id,
+                        "Failed to persist e-signature nonce; skipping reminder"
+                    );
+                    continue;
+                }
+                signed.url
+            }
+            Err(e) => {
+                // Fail closed: never emit an unsigned `/sign` link. A reminder
+                // URL without a valid HMAC token defeats the signed-link
+                // integrity guarantee, so we skip this signer rather than send
+                // an unauthenticated URL.
+                warn!(
+                    error = %e,
+                    email = %signer.email,
+                    signature_request_id = %signature_request.id,
+                    "Failed to build HMAC-signed signing URL; skipping reminder (refusing to emit unsigned link)"
+                );
+                continue;
+            }
+        };
 
         if let Err(e) = state
             .email_service

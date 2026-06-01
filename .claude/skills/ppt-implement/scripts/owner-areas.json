@@ -9,6 +9,7 @@
   "pm-frontend": [
     "frontend/apps/ppt-web/**",
     "frontend/apps/reality-web/**",
+    "frontend/apps/admin-web/**",
     "frontend/packages/**",
     "frontend/packages/api-client/**",
     "docs/screens/**"

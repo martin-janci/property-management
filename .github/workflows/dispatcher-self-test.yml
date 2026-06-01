@@ -18,8 +18,22 @@ jobs:
   self-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          # GC2 (goal-check.sh) compares the current done-story count against
+          # HEAD's coverage.json via `git show HEAD:…`. A shallow clone makes
+          # that read silently return nothing, which used to be a silent pass
+          # (issue #700). Pull the full history so the baseline is always
+          # available; the script also reports `(no-baseline)` explicitly if
+          # it ever isn't.
+          fetch-depth: 0
       - name: dispatcher schema + invariant self-test
         run: bash .research/dispatcher-self-test.sh
+      - name: goal-check (enforcing)
+        env:
+          GOAL_CHECK_ENFORCE: "1"
+        run: |
+          chmod +x .research/goal-check.sh
+          ./.research/goal-check.sh
       - name: scope-check unit tests
         run: bash .claude/skills/ppt-implement/scripts/test-scope-check.sh

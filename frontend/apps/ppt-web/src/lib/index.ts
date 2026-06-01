@@ -42,12 +42,16 @@ export {
 } from './queryKeys';
 // WebSocket (Story 79.4)
 export {
+  buildWebSocketUrl,
   type ConnectionState,
   type ConnectionStateHandler,
   createWebSocketService,
   type MessageHandler,
+  parseServerMessage,
+  type ServerWsEnvelope,
   type WebSocketEventType,
   type WebSocketMessage,
   WebSocketService,
   type WebSocketServiceConfig,
+  WS_NOTIFICATIONS_PATH,
 } from './websocket';

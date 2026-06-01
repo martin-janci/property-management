@@ -45,10 +45,19 @@ impl AiChatRepository {
         .await
     }
 
-    /// Get session by ID.
-    pub async fn find_session_by_id(&self, id: Uuid) -> Result<Option<AiChatSession>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM ai_chat_sessions WHERE id = $1")
+    /// Get session by ID — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// Returns `None` for both "not found" and "belongs to another tenant"
+    /// to prevent cross-tenant ID enumeration.
+    pub async fn find_session_by_id(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<AiChatSession>, sqlx::Error> {
+        sqlx::query_as("SELECT * FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .fetch_optional(&self.pool)
             .await
     }
@@ -128,34 +137,47 @@ impl AiChatRepository {
         Ok(message)
     }
 
-    /// Get messages for a session.
+    /// Get messages for a session — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The JOIN ensures a caller in org B cannot enumerate messages from a
+    /// session owned by org A.
     pub async fn list_session_messages(
         &self,
         session_id: Uuid,
+        org_id: Uuid,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<AiChatMessage>, sqlx::Error> {
         sqlx::query_as(
             r#"
-            SELECT * FROM ai_chat_messages
-            WHERE session_id = $1
-            ORDER BY created_at ASC
-            LIMIT $2 OFFSET $3
+            SELECT m.* FROM ai_chat_messages m
+            JOIN ai_chat_sessions s ON s.id = m.session_id
+            WHERE m.session_id = $1 AND s.organization_id = $2
+            ORDER BY m.created_at ASC
+            LIMIT $3 OFFSET $4
             "#,
         )
         .bind(session_id)
+        .bind(org_id)
         .bind(limit)
         .bind(offset)
         .fetch_all(&self.pool)
         .await
     }
 
-    /// Delete a session and all its messages.
-    pub async fn delete_session(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM ai_chat_sessions WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a session and all its messages — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// Returns `false` for both "not found" and "belongs to another tenant"
+    /// to prevent cross-tenant ID enumeration.
+    pub async fn delete_session(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+        let result =
+            sqlx::query("DELETE FROM ai_chat_sessions WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(&self.pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -201,6 +223,47 @@ impl AiChatRepository {
         .bind(data.helpful)
         .bind(data.feedback_text)
         .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Record AI training feedback for a message — tenant-scoped (issue
+    /// #766 / #816).
+    ///
+    /// `user_id` and `org_id` both originate from the verified request
+    /// principal. The `INSERT ... SELECT ... WHERE EXISTS` only writes when
+    /// the target message's parent session belongs to the caller's org, so a
+    /// caller in org B cannot attach feedback to a message in org A's chat
+    /// session (an IDOR write + training-data-poisoning vector). Returns
+    /// `Ok(None)` when the message does not exist or belongs to another org.
+    pub async fn add_feedback_for_org(
+        &self,
+        user_id: Uuid,
+        org_id: Uuid,
+        data: ProvideFeedback,
+    ) -> Result<Option<AiTrainingFeedback>, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+            INSERT INTO ai_training_feedback (message_id, user_id, rating, helpful, feedback_text)
+            SELECT $1, $2, $3, $4, $5
+            WHERE EXISTS (
+                SELECT 1 FROM ai_chat_messages m
+                JOIN ai_chat_sessions s ON s.id = m.session_id
+                WHERE m.id = $1 AND s.organization_id = $6
+            )
+            ON CONFLICT (message_id, user_id) DO UPDATE SET
+                rating = EXCLUDED.rating,
+                helpful = EXCLUDED.helpful,
+                feedback_text = EXCLUDED.feedback_text
+            RETURNING *
+            "#,
+        )
+        .bind(data.message_id)
+        .bind(user_id)
+        .bind(data.rating)
+        .bind(data.helpful)
+        .bind(data.feedback_text)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
         .await
     }
 

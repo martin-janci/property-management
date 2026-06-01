@@ -214,23 +214,32 @@ pub async fn list_inquiries(
     principal: RequestPrincipal,
     Query(query): Query<InquiriesQuery>,
 ) -> Result<Json<InquiriesResponse>, (axum::http::StatusCode, String)> {
-    let inquiries = state
-        .reality_portal_repo
-        .get_realtor_inquiries(
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
+    let offset = query.offset.unwrap_or(0).max(0);
+
+    // Run the page query and the matching COUNT in parallel — the count must
+    // use the same status filter as the page so clients can compute
+    // `total / limit` for pagination. Returning `inquiries.len()` here (the
+    // previous behaviour, #774 item 3) silently lied on every non-final page:
+    // it reported the page size, not the real total.
+    let status_filter = query.status.clone();
+    let (inquiries, total) = tokio::try_join!(
+        state.reality_portal_repo.get_realtor_inquiries(
             principal.user_id,
             query.status,
-            query.limit.unwrap_or(20),
-            query.offset.unwrap_or(0),
+            limit,
+            offset,
+        ),
+        state
+            .reality_portal_repo
+            .count_realtor_inquiries(principal.user_id, status_filter),
+    )
+    .map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to list inquiries: {}", e),
         )
-        .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list inquiries: {}", e),
-            )
-        })?;
-
-    let total = inquiries.len() as i64;
+    })?;
 
     Ok(Json(InquiriesResponse { inquiries, total }))
 }

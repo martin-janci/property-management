@@ -283,6 +283,24 @@
 "either" = "Either";
 "send" = "Send";
 
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Inquiry";
+"inquiry_reply_placeholder" = "Write a reply…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Contact Details";
+"inquiry_message_placeholder" = "Tell us about your interest in this property…";
+"inquiry_sent_confirmation" = "Your inquiry has been sent. You will receive a reply at the email address provided.";
+
+/* Inquiries Screen */
+"inquiries_sign_in_description" = "Track your property inquiries and conversations with agents.";
+"failed_to_load_inquiries" = "Failed to load inquiries";
+
+/* Inquiry Status Badge */
+"inquiry_status_pending" = "Pending";
+"inquiry_status_replied" = "Replied";
+"inquiry_status_closed" = "Closed";
+
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Welcome to Reality Portal";
 "sign_in_description" = "Sign in to save favorites, track inquiries, and get personalized recommendations.";

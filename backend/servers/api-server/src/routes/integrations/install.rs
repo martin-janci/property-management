@@ -11,14 +11,15 @@ use axum::{
 };
 use db::models::infrastructure::{job_type, queue, CreateBackgroundJob};
 use integrations::{
-    AirbnbClient, AirbnbOAuthConfig, AvailabilityUpdate, BookingClient, BookingCredentials,
-    IntegrationCrypto, PortalType, PropertyMapping, RateUpdate, RoomTypeMapping,
+    encrypt_optional_required, encrypt_required, AirbnbClient, AirbnbOAuthConfig,
+    AvailabilityUpdate, BookingClient, BookingCredentials, IntegrationCrypto, PortalType,
+    PropertyMapping, RateUpdate, RoomTypeMapping,
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use super::sync::{OrgIdPath, ResourceIdPath};
+use super::sync::{verify_org_access, OrgIdPath, ResourceIdPath};
 use common::errors::ErrorResponse;
 
 const MAX_BATCH_SIZE: usize = 500;
@@ -359,6 +360,9 @@ pub async fn get_airbnb_status(
         "Getting Airbnb status"
     );
 
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
     let rental_repo = &state.rental_repo;
 
     let (connected_count, listings_count, last_sync_at, sync_error) = rental_repo
@@ -421,7 +425,7 @@ pub async fn get_airbnb_status(
     tag = "Integrations - Airbnb"
 )]
 pub async fn connect_airbnb(
-    State(_state): State<crate::state::AppState>,
+    State(state): State<crate::state::AppState>,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<AirbnbConnectRequest>,
@@ -432,11 +436,15 @@ pub async fn connect_airbnb(
         "Initiating Airbnb OAuth connection"
     );
 
-    let client_id = std::env::var("AIRBNB_CLIENT_ID").unwrap_or_default();
-    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").unwrap_or_default();
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
+    // Issue #711: AppState carries Airbnb credentials loaded once at startup.
+    let client_id = state.airbnb_config.client_id.clone();
+    let client_secret = state.airbnb_config.client_secret.clone();
     let redirect_uri = request
         .redirect_uri
-        .unwrap_or_else(|| std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default());
+        .unwrap_or_else(|| state.airbnb_config.redirect_uri.clone());
 
     if client_id.is_empty() {
         return Err((
@@ -454,7 +462,10 @@ pub async fn connect_airbnb(
         redirect_uri,
     });
 
-    let oauth_state = format!("{}:{}", path.org_id, uuid::Uuid::new_v4());
+    // Issue #765: generate a server-bound, single-use OAuth state tied to the
+    // initiating org + user (persisted in Redis with a short TTL when available)
+    // instead of a stateless, forgeable `{org_id}:{uuid}` string.
+    let oauth_state = super::oauth_state::issue(&state, path.org_id, auth.user_id).await;
     tracing::debug!(oauth_state = %oauth_state, "Generated OAuth state parameter");
 
     let auth_url = client.generate_auth_url(&oauth_state);
@@ -488,6 +499,9 @@ pub async fn sync_airbnb(
         org_id = %path.org_id,
         "Syncing Airbnb"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -524,10 +538,11 @@ pub async fn sync_airbnb(
         )
     })?;
 
+    // Issue #711: read cached config from AppState rather than the env.
     let oauth_config = AirbnbOAuthConfig {
-        client_id: std::env::var("AIRBNB_CLIENT_ID").unwrap_or_default(),
-        client_secret: std::env::var("AIRBNB_CLIENT_SECRET").unwrap_or_default(),
-        redirect_uri: std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default(),
+        client_id: state.airbnb_config.client_id.clone(),
+        client_secret: state.airbnb_config.client_secret.clone(),
+        redirect_uri: state.airbnb_config.redirect_uri.clone(),
     };
     let client = AirbnbClient::new(oauth_config);
 
@@ -610,6 +625,9 @@ pub async fn disconnect_airbnb(
         "Disconnecting Airbnb"
     );
 
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
     let rental_repo = &state.rental_repo;
 
     let connection = rental_repo
@@ -691,6 +709,9 @@ pub async fn get_booking_status(
         "Getting Booking.com status"
     );
 
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
     let rental_repo = &state.rental_repo;
 
     let connection = rental_repo
@@ -754,6 +775,9 @@ pub async fn connect_booking(
         hotel_id = %request.hotel_id,
         "Connecting to Booking.com"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -836,6 +860,9 @@ pub async fn sync_booking(
         org_id = %path.org_id,
         "Syncing Booking.com"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1044,6 +1071,9 @@ pub async fn disconnect_booking(
         org_id = %path.org_id,
         "Disconnecting Booking.com"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1445,7 +1475,7 @@ pub async fn push_booking_rates(
     tag = "Integrations - Portals"
 )]
 pub async fn list_portal_connections(
-    State(_state): State<crate::state::AppState>,
+    State(state): State<crate::state::AppState>,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<PortalConnectionResponse>>, (StatusCode, Json<ErrorResponse>)> {
@@ -1454,6 +1484,9 @@ pub async fn list_portal_connections(
         org_id = %path.org_id,
         "Listing portal connections"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     Ok(Json(Vec::new()))
 }
@@ -1474,7 +1507,7 @@ pub async fn list_portal_connections(
     tag = "Integrations - Portals"
 )]
 pub async fn create_portal_connection(
-    State(_state): State<crate::state::AppState>,
+    State(state): State<crate::state::AppState>,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<CreatePortalConnectionRequest>,
@@ -1485,6 +1518,9 @@ pub async fn create_portal_connection(
         portal_type = %request.portal_type,
         "Creating portal connection"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     let portal_type = PortalType::from_str(&request.portal_type).ok_or_else(|| {
         (
@@ -1585,7 +1621,7 @@ pub async fn delete_portal_connection(
     tag = "Integrations - Portals"
 )]
 pub async fn list_portal_inquiries(
-    State(_state): State<crate::state::AppState>,
+    State(state): State<crate::state::AppState>,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Query(_query): Query<PortalInquiryQuery>,
@@ -1595,6 +1631,9 @@ pub async fn list_portal_inquiries(
         org_id = %path.org_id,
         "Listing portal inquiries"
     );
+
+    // Issue #765: prevent cross-org IDOR — caller must belong to this org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
 
     Ok(Json(Vec::new()))
 }
@@ -1740,28 +1779,33 @@ pub async fn direct_connect_airbnb(
 
     let org_id = path.org_id;
 
-    // Validate required env vars before making any external calls.
-    let client_id = std::env::var("AIRBNB_CLIENT_ID").map_err(|_| {
+    // Issue #711: credentials are loaded once at server startup and cached
+    // on AppState. Per-request env reads are gone — misconfiguration is
+    // surfaced here (empty string -> NOT_CONFIGURED) but never round-trips
+    // through `std::env::var`.
+    let client_id = state.airbnb_config.client_id.clone();
+    if client_id.is_empty() {
         tracing::error!("AIRBNB_CLIENT_ID is not configured");
-        (
+        return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::new(
                 "NOT_CONFIGURED",
                 "Airbnb integration is not configured",
             )),
-        )
-    })?;
-    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").map_err(|_| {
+        ));
+    }
+    let client_secret = state.airbnb_config.client_secret.clone();
+    if client_secret.is_empty() {
         tracing::error!("AIRBNB_CLIENT_SECRET is not configured");
-        (
+        return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::new(
                 "NOT_CONFIGURED",
                 "Airbnb integration is not configured",
             )),
-        )
-    })?;
-    let redirect_uri = std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default();
+        ));
+    }
+    let redirect_uri = state.airbnb_config.redirect_uri.clone();
 
     // Verify the token is valid by fetching listings.
     let oauth_config = AirbnbOAuthConfig {
@@ -1787,43 +1831,34 @@ pub async fn direct_connect_airbnb(
 
     let listings_count = listings.len() as i32;
 
-    // Optionally encrypt tokens before storage.
-    let (stored_access, stored_refresh) = match IntegrationCrypto::try_from_env() {
-        Some(crypto) => {
-            let encrypted_access = crypto.encrypt(&request.access_token).map_err(|e| {
-                tracing::error!(error = %e, "Failed to encrypt Airbnb access token");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "CRYPTO_ERROR",
-                        "Failed to encrypt token",
-                    )),
-                )
-            })?;
-            let encrypted_refresh = request
-                .refresh_token
-                .as_deref()
-                .map(|rt| crypto.encrypt(rt))
-                .transpose()
-                .map_err(|e| {
-                    tracing::error!(error = %e, "Failed to encrypt Airbnb refresh token");
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new(
-                            "CRYPTO_ERROR",
-                            "Failed to encrypt refresh token",
-                        )),
-                    )
-                })?;
-            (encrypted_access, encrypted_refresh)
-        }
-        None => {
-            tracing::warn!(
-                "INTEGRATION_ENCRYPTION_KEY is not set; Airbnb tokens will be stored in plaintext"
-            );
-            (request.access_token.clone(), request.refresh_token.clone())
-        }
-    };
+    // Encrypt tokens before storage. Issue #765: encryption is MANDATORY for
+    // persisted secrets — if INTEGRATION_ENCRYPTION_KEY is unset we fail closed
+    // rather than storing tokens in plaintext.
+    let crypto = IntegrationCrypto::try_from_env();
+    let stored_access = encrypt_required(crypto.as_ref(), &request.access_token).map_err(|e| {
+        tracing::error!(error = %e, "Refusing to store Airbnb access token without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration token encryption is not configured",
+            )),
+        )
+    })?;
+    let stored_refresh = encrypt_optional_required(
+        crypto.as_ref(),
+        request.refresh_token.as_deref(),
+    )
+    .map_err(|e| {
+        tracing::error!(error = %e, "Refusing to store Airbnb refresh token without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration token encryption is not configured",
+            )),
+        )
+    })?;
 
     let connection = state
         .rental_repo

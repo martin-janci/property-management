@@ -23,7 +23,6 @@ export interface AnnouncementAttachment {
 export interface Announcement {
   id: string;
   title: string;
-  content: string;
   category: AnnouncementCategory;
   createdAt: string;
   author: string;
@@ -33,32 +32,38 @@ export interface Announcement {
   commentsCount: number;
 }
 
-/** API shape returned by `GET /api/v1/announcements`. */
-interface ApiAnnouncement {
+/**
+ * API shape of an item in `GET /api/v1/announcements/published`.
+ *
+ * The published-list endpoint returns `AnnouncementSummary` rows, which are
+ * intentionally lightweight: no `content` body, no author, no category. The
+ * full body is fetched lazily by `AnnouncementDetailScreen`.
+ */
+interface ApiAnnouncementSummary {
   id: string;
   title: string;
-  content: string;
   status: string;
-  pinned: boolean;
+  target_type: string;
   published_at?: string | null;
-  created_at: string;
-  updated_at: string;
+  pinned: boolean;
+  comments_enabled: boolean;
+  acknowledgment_required: boolean;
 }
 
+/** Response shape of `GET /api/v1/announcements/published`. */
 interface ApiAnnouncementListResponse {
-  announcements?: ApiAnnouncement[];
-  items?: ApiAnnouncement[];
+  announcements?: ApiAnnouncementSummary[];
+  count?: number;
   total?: number;
 }
 
-/** Coerce the api-server response into the UI's Announcement shape. */
-function toUiAnnouncement(a: ApiAnnouncement): Announcement {
+/** Coerce a published-list summary into the UI's Announcement shape. */
+function toUiAnnouncement(a: ApiAnnouncementSummary): Announcement {
   return {
     id: a.id,
     title: a.title,
-    content: a.content,
     category: 'general',
-    createdAt: a.published_at ?? a.created_at,
+    createdAt: a.published_at ?? new Date().toISOString(),
     author: 'Building Management',
     isRead: false,
     isPinned: a.pinned,
@@ -67,10 +72,10 @@ function toUiAnnouncement(a: ApiAnnouncement): Announcement {
   };
 }
 
-/** Normalise both paginated (`items`) and legacy (`announcements`) list shapes. */
-function extractItems(data: ApiAnnouncementListResponse | undefined): ApiAnnouncement[] {
+/** Extract the summary list from the published-list response. */
+function extractItems(data: ApiAnnouncementListResponse | undefined): ApiAnnouncementSummary[] {
   if (!data) return [];
-  return data.items ?? data.announcements ?? [];
+  return data.announcements ?? [];
 }
 
 interface AnnouncementsScreenProps {
@@ -82,20 +87,19 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
-  // Main list (all published)
+  // Resident-facing published list. The manager-only `/api/v1/announcements`
+  // endpoint 403s for residents — the published endpoint is RLS-scoped and
+  // readable by any authenticated tenant member.
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiAnnouncementListResponse>(
     ['announcements', 'list'],
-    '/api/v1/announcements?status=published',
+    '/api/v1/announcements/published',
     { staleTime: 60_000 }
   );
 
-  // Story 6.4 — pinned published announcements for the sticky band.
-  // This query is separate so the band is immune to category/search filters.
-  const { data: pinnedData } = useApiQuery<ApiAnnouncementListResponse>(
-    ['announcements', 'pinned'],
-    '/api/v1/announcements?status=published&pinned=true&pageSize=20',
-    { staleTime: 5 * 60_000 }
-  );
+  // Story 6.4 — pinned items are derived client-side from the published list
+  // (the published endpoint already orders `pinned DESC`). A dedicated query
+  // is unnecessary and the endpoint does not accept a `pinned` filter.
+  const pinnedData = data;
 
   const allRaw: Announcement[] = extractItems(data)
     .map(toUiAnnouncement)
@@ -103,7 +107,8 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
 
   const pinnedItems: Announcement[] = extractItems(pinnedData)
     .map(toUiAnnouncement)
-    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }));
+    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }))
+    .filter((a) => a.isPinned);
 
   const onRefresh = useCallback(async () => {
     await refetch();
@@ -169,12 +174,7 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   const filteredAnnouncements = allRaw
     .filter((a) => !a.isPinned)
     .filter((a) => (filter === 'all' ? true : a.category === filter))
-    .filter(
-      (a) =>
-        searchQuery === '' ||
-        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.content.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    .filter((a) => searchQuery === '' || a.title.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const unreadCount = allRaw.filter((a) => !a.isRead).length;
@@ -294,9 +294,6 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
               </View>
 
               <Text style={styles.announcementTitle}>{announcement.title}</Text>
-              <Text style={styles.announcementPreview} numberOfLines={2}>
-                {announcement.content}
-              </Text>
 
               <View style={styles.announcementFooter}>
                 <Text style={styles.authorText}>By {announcement.author}</Text>

@@ -56,6 +56,8 @@ pub enum AuditAction {
     OAuthRevoke,
     #[sqlx(rename = "oauth_client_create")]
     OAuthClientCreate,
+    #[sqlx(rename = "oauth_client_update")]
+    OAuthClientUpdate,
     #[sqlx(rename = "oauth_client_revoke")]
     OAuthClientRevoke,
     #[sqlx(rename = "oauth_client_secret_regenerate")]
@@ -120,6 +122,7 @@ impl AuditAction {
             Self::OAuthAuthorize => "OAuthAuthorize",
             Self::OAuthRevoke => "OAuthRevoke",
             Self::OAuthClientCreate => "OAuthClientCreate",
+            Self::OAuthClientUpdate => "OAuthClientUpdate",
             Self::OAuthClientRevoke => "OAuthClientRevoke",
             Self::OAuthClientSecretRegenerate => "OAuthClientSecretRegenerate",
             Self::OAuthTokenDeniedPrincipalKind => "OAuthTokenDeniedPrincipalKind",
@@ -226,4 +229,68 @@ pub struct AuditLogSummary {
 pub struct ActionCount {
     pub action: String,
     pub count: i64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// canonical_name() is the load-bearing serialization for
+    /// AuditLogResponse.action (see compliance.rs) AND drives the integrity
+    /// hash for existing rows. Drift in any single variant silently breaks
+    /// the chain — issue #439 P1-04 was the original bug; this test is the
+    /// regression guard requested by #615.
+    #[test]
+    fn canonical_name_is_stable_pascal_case() {
+        // Spot-check the variants explicitly named in the original bug
+        // report so future renames trip the test, not the wire format.
+        assert_eq!(
+            AuditAction::ResourceAccessed.canonical_name(),
+            "ResourceAccessed"
+        );
+        assert_eq!(
+            AuditAction::ResourceCreated.canonical_name(),
+            "ResourceCreated"
+        );
+        assert_eq!(
+            AuditAction::ResourceUpdated.canonical_name(),
+            "ResourceUpdated"
+        );
+        assert_eq!(
+            AuditAction::ResourceDeleted.canonical_name(),
+            "ResourceDeleted"
+        );
+        assert_eq!(AuditAction::Login.canonical_name(), "Login");
+        assert_eq!(AuditAction::LoginFailed.canonical_name(), "LoginFailed");
+        assert_eq!(
+            AuditAction::RefreshTokenReplayDetected.canonical_name(),
+            "RefreshTokenReplayDetected"
+        );
+    }
+
+    /// canonical_name() decouples the wire format from the `Debug` derive.
+    /// The historical format!("{:?}", action) is what existing hashes
+    /// were computed against — keep the two equal until a deliberate,
+    /// migration-gated transition.
+    #[test]
+    fn canonical_name_matches_debug_for_every_variant() {
+        for action in [
+            AuditAction::Login,
+            AuditAction::Logout,
+            AuditAction::ResourceAccessed,
+            AuditAction::ResourceCreated,
+            AuditAction::ResourceUpdated,
+            AuditAction::ResourceDeleted,
+            AuditAction::OAuthAuthorize,
+            AuditAction::OAuthRevoke,
+            AuditAction::RefreshTokenReplayDetected,
+        ] {
+            assert_eq!(
+                action.canonical_name(),
+                format!("{:?}", action),
+                "canonical_name drift would break integrity hash for {:?}",
+                action,
+            );
+        }
+    }
 }

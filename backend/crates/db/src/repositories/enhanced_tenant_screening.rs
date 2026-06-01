@@ -90,15 +90,23 @@ impl EnhancedTenantScreeningRepository {
         .await
     }
 
-    /// Get AI risk scoring model by ID.
+    /// Get AI risk scoring model by ID, scoped to the owning organization.
+    ///
+    /// Issue #834 (cross-tenant PII): models carry provider weighting / scoring
+    /// configuration. The `organization_id = $2` predicate stops a caller from
+    /// another org reading a foreign model by guessing its UUID.
     pub async fn get_risk_model(
         &self,
+        org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<AiRiskScoringModel>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM ai_risk_scoring_models WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(
+            "SELECT * FROM ai_risk_scoring_models WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Get active AI risk scoring model for organization.
@@ -192,15 +200,23 @@ impl EnhancedTenantScreeningRepository {
         .await
     }
 
-    /// Get provider config by ID.
+    /// Get provider config by ID, scoped to the owning organization.
+    ///
+    /// Issue #834: provider configs hold third-party integration settings
+    /// (endpoints, rate limits, cost). Scope by org so a foreign caller cannot
+    /// read another tenant's provider wiring by UUID.
     pub async fn get_provider_config(
         &self,
+        org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<ScreeningProviderConfig>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM screening_provider_configs WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(
+            "SELECT * FROM screening_provider_configs WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// List provider configs for organization.
@@ -316,14 +332,23 @@ impl EnhancedTenantScreeningRepository {
     }
 
     /// Get AI result by screening ID.
+    /// Get the AI result for a screening, scoped to the owning organization.
+    ///
+    /// Issue #834 (cross-tenant PII): AI results carry risk scores and
+    /// recommendations. Scoping by `organization_id` closes the IDOR where any
+    /// org could read another org's result by guessing the screening UUID.
     pub async fn get_ai_result_by_screening(
         &self,
+        org_id: Uuid,
         screening_id: Uuid,
     ) -> Result<Option<ScreeningAiResult>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM screening_ai_results WHERE screening_id = $1")
-            .bind(screening_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(
+            "SELECT * FROM screening_ai_results WHERE screening_id = $1 AND organization_id = $2",
+        )
+        .bind(screening_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Get AI result by ID.
@@ -471,14 +496,21 @@ impl EnhancedTenantScreeningRepository {
     }
 
     /// Get credit result by screening ID.
+    /// Get the credit result for a screening, scoped to the owning organization.
+    ///
+    /// Issue #834: credit results are sensitive PII (FICO scores, accounts).
     pub async fn get_credit_result_by_screening(
         &self,
+        org_id: Uuid,
         screening_id: Uuid,
     ) -> Result<Option<ScreeningCreditResult>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM screening_credit_results WHERE screening_id = $1")
-            .bind(screening_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(
+            "SELECT * FROM screening_credit_results WHERE screening_id = $1 AND organization_id = $2",
+        )
+        .bind(screening_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     // =========================================================================
@@ -522,15 +554,22 @@ impl EnhancedTenantScreeningRepository {
         .await
     }
 
-    /// Get background result by screening ID.
+    /// Get background result by screening ID, scoped to the owning organization.
+    ///
+    /// Issue #834: background results are sensitive PII (criminal records,
+    /// identity verification).
     pub async fn get_background_result_by_screening(
         &self,
+        org_id: Uuid,
         screening_id: Uuid,
     ) -> Result<Option<ScreeningBackgroundResult>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM screening_background_results WHERE screening_id = $1")
-            .bind(screening_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(
+            "SELECT * FROM screening_background_results WHERE screening_id = $1 AND organization_id = $2",
+        )
+        .bind(screening_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     // =========================================================================
@@ -567,15 +606,21 @@ impl EnhancedTenantScreeningRepository {
         .await
     }
 
-    /// Get eviction result by screening ID.
+    /// Get eviction result by screening ID, scoped to the owning organization.
+    ///
+    /// Issue #834: eviction history is sensitive PII.
     pub async fn get_eviction_result_by_screening(
         &self,
+        org_id: Uuid,
         screening_id: Uuid,
     ) -> Result<Option<ScreeningEvictionResult>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM screening_eviction_results WHERE screening_id = $1")
-            .bind(screening_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(
+            "SELECT * FROM screening_eviction_results WHERE screening_id = $1 AND organization_id = $2",
+        )
+        .bind(screening_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     // =========================================================================
@@ -711,14 +756,19 @@ impl EnhancedTenantScreeningRepository {
     }
 
     /// Get reports for screening.
+    /// Get reports for a screening, scoped to the owning organization.
+    ///
+    /// Issue #834: screening reports aggregate the sensitive PII above.
     pub async fn get_reports_by_screening(
         &self,
+        org_id: Uuid,
         screening_id: Uuid,
     ) -> Result<Vec<ScreeningReport>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT * FROM screening_reports WHERE screening_id = $1 AND deleted_at IS NULL ORDER BY generated_at DESC",
+            "SELECT * FROM screening_reports WHERE screening_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY generated_at DESC",
         )
         .bind(screening_id)
+        .bind(org_id)
         .fetch_all(&self.pool)
         .await
     }
@@ -773,22 +823,34 @@ impl EnhancedTenantScreeningRepository {
         .await
     }
 
-    /// Get complete screening data.
+    /// Get complete screening data, scoped to the owning organization.
+    ///
+    /// Issue #834: this aggregates every sensitive screening artefact, so each
+    /// component lookup is org-scoped. `get_risk_factors` keys off the
+    /// AI-result id, which is itself org-scoped above, so it needs no separate
+    /// org predicate.
     pub async fn get_complete_screening_data(
         &self,
+        org_id: Uuid,
         screening_id: Uuid,
     ) -> Result<CompleteScreeningData, sqlx::Error> {
-        let ai_result = self.get_ai_result_by_screening(screening_id).await?;
+        let ai_result = self
+            .get_ai_result_by_screening(org_id, screening_id)
+            .await?;
         let risk_factors = if let Some(ref ai) = ai_result {
             self.get_risk_factors(ai.id).await?
         } else {
             vec![]
         };
-        let credit_result = self.get_credit_result_by_screening(screening_id).await?;
-        let background_result = self
-            .get_background_result_by_screening(screening_id)
+        let credit_result = self
+            .get_credit_result_by_screening(org_id, screening_id)
             .await?;
-        let eviction_result = self.get_eviction_result_by_screening(screening_id).await?;
+        let background_result = self
+            .get_background_result_by_screening(org_id, screening_id)
+            .await?;
+        let eviction_result = self
+            .get_eviction_result_by_screening(org_id, screening_id)
+            .await?;
 
         Ok(CompleteScreeningData {
             ai_result,

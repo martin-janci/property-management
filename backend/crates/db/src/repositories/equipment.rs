@@ -212,15 +212,28 @@ impl EquipmentRepository {
         .await
     }
 
-    /// Get maintenance record by ID.
+    /// Get maintenance record by ID — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The JOIN ensures a caller in org B cannot read a maintenance record
+    /// whose parent equipment belongs to org A; returns `None` for both
+    /// "not found" and "belongs to another tenant" to prevent ID enumeration.
     pub async fn find_maintenance_by_id(
         &self,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<EquipmentMaintenance>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM equipment_maintenance WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as(
+            r#"
+            SELECT em.* FROM equipment_maintenance em
+            JOIN equipment e ON e.id = em.equipment_id
+            WHERE em.id = $1 AND e.organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// List maintenance records for equipment — tenant-scoped.
@@ -400,22 +413,36 @@ impl EquipmentRepository {
         .await
     }
 
-    /// Acknowledge a prediction.
+    /// Acknowledge a prediction — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The EXISTS sub-select ensures a caller in org B cannot acknowledge a
+    /// prediction whose parent equipment belongs to org A; `fetch_one` returns
+    /// `RowNotFound` when either the prediction does not exist or the equipment
+    /// belongs to a different tenant (callers should surface both as 404 to
+    /// prevent ID enumeration).
     pub async fn acknowledge_prediction(
         &self,
         id: Uuid,
+        org_id: Uuid,
         user_id: Uuid,
         action_taken: Option<&str>,
     ) -> Result<MaintenancePrediction, sqlx::Error> {
         sqlx::query_as(
             r#"
             UPDATE maintenance_predictions
-            SET acknowledged = TRUE, acknowledged_by = $2, action_taken = $3, updated_at = NOW()
+            SET acknowledged = TRUE, acknowledged_by = $3, action_taken = $4, updated_at = NOW()
             WHERE id = $1
+              AND EXISTS (
+                SELECT 1 FROM equipment e
+                WHERE e.id = maintenance_predictions.equipment_id
+                  AND e.organization_id = $2
+              )
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .bind(user_id)
         .bind(action_taken)
         .fetch_one(&self.pool)

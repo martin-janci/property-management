@@ -499,6 +499,82 @@ impl VoteRepository {
         }))
     }
 
+    /// Find vote with full details, scoped to a single organization.
+    ///
+    /// `find_by_id_with_details` looks votes up by primary key alone, which
+    /// lets a caller in org A read a vote that belongs to org B (cross-tenant
+    /// IDOR). This variant adds `AND v.organization_id = $2` so a vote from a
+    /// different tenant resolves to `None` (the route maps that to 404).
+    pub async fn find_by_id_with_details_for_org(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<Option<VoteWithDetails>, SqlxError> {
+        let result = sqlx::query_as::<_, VoteDetailsRow>(
+            r#"
+            SELECT
+                v.id, v.organization_id, v.building_id, v.title, v.description,
+                v.start_at, v.end_at, v.status::text as status, v.quorum_type::text as quorum_type,
+                v.quorum_percentage, v.allow_delegation, v.anonymous_voting,
+                v.participation_count, v.eligible_count, v.quorum_met,
+                v.results, v.results_calculated_at, v.created_by, v.published_by,
+                v.published_at, v.cancelled_by, v.cancelled_at, v.cancellation_reason,
+                v.created_at, v.updated_at,
+                COALESCE(b.name, b.street) as building_name,
+                u.name as created_by_name,
+                (SELECT COUNT(*) FROM vote_questions WHERE vote_id = v.id) as question_count,
+                (SELECT COUNT(*) FROM vote_responses WHERE vote_id = v.id) as response_count,
+                (SELECT COUNT(*) FROM vote_comments WHERE vote_id = v.id AND hidden = false) as comment_count
+            FROM votes v
+            JOIN buildings b ON v.building_id = b.id
+            JOIN users u ON v.created_by = u.id
+            WHERE v.id = $1 AND v.organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.map(|row| {
+            let vote = Vote {
+                id: row.id,
+                organization_id: row.organization_id,
+                building_id: row.building_id,
+                title: row.title,
+                description: row.description,
+                start_at: row.start_at,
+                end_at: row.end_at,
+                status: row.status,
+                quorum_type: row.quorum_type,
+                quorum_percentage: row.quorum_percentage,
+                allow_delegation: row.allow_delegation,
+                anonymous_voting: row.anonymous_voting,
+                participation_count: row.participation_count,
+                eligible_count: row.eligible_count,
+                quorum_met: row.quorum_met,
+                results: row.results,
+                results_calculated_at: row.results_calculated_at,
+                created_by: row.created_by,
+                published_by: row.published_by,
+                published_at: row.published_at,
+                cancelled_by: row.cancelled_by,
+                cancelled_at: row.cancelled_at,
+                cancellation_reason: row.cancellation_reason,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+            };
+            VoteWithDetails {
+                vote,
+                building_name: row.building_name,
+                created_by_name: row.created_by_name,
+                question_count: row.question_count,
+                response_count: row.response_count,
+                comment_count: row.comment_count,
+            }
+        }))
+    }
+
     /// List votes with filters.
     pub async fn list(
         &self,
@@ -546,7 +622,8 @@ impl VoteRepository {
             where_clause, limit, offset
         );
 
-        let mut query_builder = sqlx::query_as::<_, VoteSummary>(&sql).bind(org_id);
+        let mut query_builder =
+            sqlx::query_as::<_, VoteSummary>(sqlx::AssertSqlSafe(sql)).bind(org_id);
 
         if let Some(building_id) = query.building_id {
             query_builder = query_builder.bind(building_id);
@@ -1284,7 +1361,7 @@ impl VoteRepository {
             hidden_filter, hidden_filter
         );
 
-        let rows = sqlx::query_as::<_, CommentWithUserRow>(&sql)
+        let rows = sqlx::query_as::<_, CommentWithUserRow>(sqlx::AssertSqlSafe(sql))
             .bind(vote_id)
             .fetch_all(&self.pool)
             .await?;
@@ -1343,7 +1420,7 @@ impl VoteRepository {
             hidden_filter, hidden_filter
         );
 
-        let rows = sqlx::query_as::<_, CommentWithUserRow>(&sql)
+        let rows = sqlx::query_as::<_, CommentWithUserRow>(sqlx::AssertSqlSafe(sql))
             .bind(parent_id)
             .fetch_all(&self.pool)
             .await?;

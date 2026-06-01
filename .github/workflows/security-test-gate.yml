@@ -17,6 +17,23 @@ name: Security-label test-file gate
 # The check is advisory (non-blocking) on draft PRs — a draft is a work
 # in progress and we don't want to gate review iteration.  It becomes
 # blocking the moment the PR is marked "ready for review".
+#
+# Required-status-check note
+# --------------------------
+# Branch protection for `dev` requires the check named
+# "security-gate-conclusion" (the `conclusion` job below).  That job
+# ALWAYS runs — unlike `security-test-gate` which is skipped when the
+# label is absent — so the branch-protection rule has a stable check
+# name to enforce.  The pattern is:
+#
+#   security label present + test file present  → gate=success → conclusion=success
+#   security label present + no test file       → gate=failure → conclusion=failure  ← blocks merge
+#   security label absent                        → gate=skipped → conclusion=success
+#   draft PR (any label state)                   → gate=success (warning only) → conclusion=success
+#
+# See .github/workflows/branch-protection-setup.yml for the one-time
+# workflow_dispatch that registers "security-gate-conclusion" as a
+# required status check on the dev branch.
 
 on:
   pull_request:
@@ -132,6 +149,66 @@ jobs:
           echo "    End-to-end       : e2e/**"
           echo ""
           exit 1
+
+  # ---------------------------------------------------------------------
+  # Conclusion job — ALWAYS runs; this is the name registered as a
+  # required status check in branch protection for `dev`.
+  #
+  # Motivation: `security-test-gate` above carries a job-level `if:`
+  # condition and is SKIPPED when the PR has no `security` label.
+  # GitHub branch protection treats a skipped check as "not blocking",
+  # so requiring `security-test-gate` directly would allow any PR
+  # without the label to bypass the gate — even if someone later added
+  # the label.  By contrast, `conclusion` always emits a status:
+  #
+  #   security label + gate passed  → success
+  #   security label + gate failed  → failure   (blocks merge)
+  #   no security label             → success   (gate not applicable)
+  #   push event (self-test only)   → success   (not a PR, rule skipped)
+  # ---------------------------------------------------------------------
+  conclusion:
+    name: security-gate-conclusion
+    runs-on: ubuntu-latest
+    needs: [security-test-gate]
+    # `always()` ensures this job runs even when security-test-gate is
+    # skipped (no label) or fails (label present, no test) — that is the
+    # whole point.  The `github.event_name` guard skips it on push events
+    # (self-test only path) so it doesn't attempt to read PR context.
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Evaluate gate result
+        env:
+          GATE_RESULT: ${{ needs.security-test-gate.result }}
+          HAS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'security') }}
+        run: |
+          set -euo pipefail
+          echo "security-test-gate result : $GATE_RESULT"
+          echo "PR has security label     : $HAS_LABEL"
+
+          case "$GATE_RESULT" in
+            success)
+              echo "PASS: security-test-gate succeeded."
+              exit 0
+              ;;
+            skipped)
+              # No security label → gate did not run → policy does not apply.
+              echo "PASS: PR is not labelled 'security' — gate not applicable."
+              exit 0
+              ;;
+            failure|cancelled|timed_out)
+              echo ""
+              echo "FAIL: security-test-gate did not pass (result=$GATE_RESULT)."
+              echo "      See the 'Security label — test-file required' job above"
+              echo "      for the actionable error message."
+              echo ""
+              exit 1
+              ;;
+            *)
+              # Unknown result — fail closed.
+              echo "FAIL: unexpected security-test-gate result '$GATE_RESULT'."
+              exit 1
+              ;;
+          esac
 
   # ---------------------------------------------------------------------
   # Self-test fixture (finding #6 — gate is not self-tested)

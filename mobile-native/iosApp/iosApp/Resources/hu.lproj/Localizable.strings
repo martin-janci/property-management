@@ -255,8 +255,8 @@
 "filter_listing_type" = "Hirdetés típusa";
 "filter_price_min" = "Min ár";
 "filter_price_max" = "Max ár";
-"filter_min_value" = "Min: %d";
-"filter_max_value" = "Max: %d";
+"filter_min_value" = "Min.: %d";
+"filter_max_value" = "Max.: %d";
 "filter_bathrooms" = "Fürdőszobák";
 
 /* Account Screen - Additional */
@@ -282,6 +282,24 @@
 "phone" = "Telefon";
 "either" = "Bármely";
 "send" = "Küldés";
+
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Érdeklődés";
+"inquiry_reply_placeholder" = "Írjon választ…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Kapcsolati adatok";
+"inquiry_message_placeholder" = "Írja le érdeklődését ezen ingatlan iránt…";
+"inquiry_sent_confirmation" = "Érdeklődése elküldve. Választ kap a megadott e-mail-címre.";
+
+/* Inquiries Screen */
+"inquiries_sign_in_description" = "Kövesse nyomon ingatlan-érdeklődéseit és az ügynökökkel folytatott beszélgetéseit.";
+"failed_to_load_inquiries" = "Nem sikerült betölteni az érdeklődéseket";
+
+/* Inquiry Status Badge */
+"inquiry_status_pending" = "Függőben";
+"inquiry_status_replied" = "Megválaszolt";
+"inquiry_status_closed" = "Lezárt";
 
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Üdvözöljük a Reality Portal-ban";

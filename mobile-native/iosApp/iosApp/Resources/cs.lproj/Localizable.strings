@@ -255,8 +255,8 @@
 "filter_listing_type" = "Typ nabídky";
 "filter_price_min" = "Min cena";
 "filter_price_max" = "Max cena";
-"filter_min_value" = "Min: %d";
-"filter_max_value" = "Max: %d";
+"filter_min_value" = "Od: %d";
+"filter_max_value" = "Do: %d";
 "filter_bathrooms" = "Koupelny";
 
 /* Account Screen - Additional */
@@ -282,6 +282,24 @@
 "phone" = "Telefon";
 "either" = "Jakýkoliv";
 "send" = "Odeslat";
+
+/* Inquiry Detail Screen */
+"inquiry_detail_title" = "Dotaz";
+"inquiry_reply_placeholder" = "Napište odpověď…";
+
+/* Send Inquiry Screen */
+"section_contact_details" = "Kontaktní údaje";
+"inquiry_message_placeholder" = "Popište váš zájem o tuto nemovitost…";
+"inquiry_sent_confirmation" = "Váš dotaz byl odeslán. Odpověď obdržíte na zadanou e-mailovou adresu.";
+
+/* Inquiries Screen */
+"inquiries_sign_in_description" = "Sledujte své dotazy na nemovitosti a konverzace s agenty.";
+"failed_to_load_inquiries" = "Nepodařilo se načíst dotazy";
+
+/* Inquiry Status Badge */
+"inquiry_status_pending" = "Čekající";
+"inquiry_status_replied" = "Zodpovězený";
+"inquiry_status_closed" = "Uzavřený";
 
 /* Login Screen - Additional */
 "welcome_to_reality_portal" = "Vítejte v Reality Portál";

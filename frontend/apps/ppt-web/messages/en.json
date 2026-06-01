@@ -295,7 +295,7 @@
     "multipleRespondentsMsg": "Only the first respondent will be recorded.",
     "addEvidence": "Add Evidence",
     "filedWithEvidenceErrors": "Dispute filed (some files failed)",
-    "evidenceUploadErrorsMsg": "One or more evidence files could not be uploaded. Retry from the dispute detail page.",
+    "evidenceUploadErrorsMsg": "{{count}} evidence file(s) could not be uploaded. Retry from the dispute detail page.",
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
@@ -376,7 +376,24 @@
       "resolutionWithdrawnDesc": "The filer has withdrawn the dispute",
       "resolutionDismissed": "Dismissed",
       "resolutionDismissedDesc": "Dispute dismissed — insufficient grounds or procedural issue",
-      "selectedType": "Selected: {{label}}"
+      "selectedType": "Selected: {{label}}",
+      "timeline": {
+        "icon": {
+          "disputeFiled": "Dispute filed",
+          "statusChanged": "Status changed",
+          "mediatorAssigned": "Mediator assigned",
+          "evidenceAdded": "Evidence added",
+          "noteAdded": "Note added",
+          "meetingScheduled": "Meeting scheduled",
+          "resolutionProposed": "Resolution proposed",
+          "resolutionAccepted": "Resolution accepted",
+          "escalated": "Escalated",
+          "closed": "Closed"
+        }
+      },
+      "errors": {
+        "detailsMinLength": "Details must be at least 10 characters."
+      }
     }
   },
   "packages": {
@@ -2593,7 +2610,8 @@
         "send": "Send for Signature"
       },
       "role": {
-        "tenant": "Tenant"
+        "tenant": "Tenant",
+        "manager": "Manager"
       },
       "status": {
         "pending": "Pending Signature",

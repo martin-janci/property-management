@@ -346,6 +346,162 @@ mod token_refresh {
 
         response.assert_status(StatusCode::BAD_REQUEST);
     }
+
+    /// Regression for #676: `/auth/refresh` must return a **fresh** tenant
+    /// list from the database — not the membership set frozen at login time.
+    ///
+    /// Scenario:
+    ///   1. Seed a user with active memberships in TWO organizations.
+    ///   2. Log in (which previously bound the tenants list into the
+    ///      response). Capture `tenants` from the login response and assert
+    ///      both orgs are present.
+    ///   3. Revoke the membership in org B server-side by flipping its
+    ///      `organization_members.status` to `removed`.
+    ///   4. Call `/auth/refresh` with the refresh token from step 2.
+    ///   5. Assert the refresh response's `tenants` array contains ONLY
+    ///      org A — the revoked org B must not survive.
+    ///
+    /// Pre-fix behaviour: `tenants` was either absent from the refresh
+    /// response or carried the stale login-time list, so `deriveActiveRole`
+    /// on the frontend could keep handing back a removed role until the
+    /// user logged out and back in.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_refresh_returns_fresh_tenants_after_revoke(pool: PgPool) {
+        use uuid::Uuid;
+
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+
+        // Register, verify, and login.
+        cleanup_test_user(&pool, &user.email).await;
+        let (_, refresh_token) = create_authenticated_user(&app, &user).await;
+
+        // Look up the user's id so we can seed memberships against it.
+        let user_id: Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+            .bind(&user.email)
+            .fetch_one(&pool)
+            .await
+            .expect("user row exists after registration");
+
+        // Seed two organizations and grant active membership in both.
+        let org_a: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO organizations (name, slug, contact_email, status)
+            VALUES ($1, $2, $3, 'active')
+            RETURNING id
+            "#,
+        )
+        .bind("Org A — kept")
+        .bind(format!("org-a-{}", &user.email))
+        .bind(format!("org-a-{}", user.email))
+        .fetch_one(&pool)
+        .await
+        .expect("seed org A");
+
+        let org_b: Uuid = sqlx::query_scalar(
+            r#"
+            INSERT INTO organizations (name, slug, contact_email, status)
+            VALUES ($1, $2, $3, 'active')
+            RETURNING id
+            "#,
+        )
+        .bind("Org B — revoked")
+        .bind(format!("org-b-{}", &user.email))
+        .bind(format!("org-b-{}", user.email))
+        .fetch_one(&pool)
+        .await
+        .expect("seed org B");
+
+        for org_id in [org_a, org_b] {
+            sqlx::query(
+                r#"
+                INSERT INTO organization_members
+                    (organization_id, user_id, role_type, status, joined_at)
+                VALUES ($1, $2, 'manager', 'active', NOW())
+                "#,
+            )
+            .bind(org_id)
+            .bind(user_id)
+            .execute(&pool)
+            .await
+            .expect("seed membership");
+        }
+
+        // Sanity: a refresh BEFORE revocation must report both orgs. This
+        // also exercises the rotation path so the next refresh below uses
+        // the freshly-issued token.
+        let pre_request = json_request(
+            Method::POST,
+            "/api/v1/auth/refresh",
+            json!({ "refreshToken": refresh_token }),
+        );
+        let pre_response = app.execute(pre_request).await;
+        pre_response.assert_status(StatusCode::OK);
+        let pre_json = pre_response.json_value();
+        let pre_tenants = pre_json["tenants"]
+            .as_array()
+            .expect("refresh response must include `tenants` array (#676)");
+        let pre_ids: std::collections::HashSet<String> = pre_tenants
+            .iter()
+            .map(|t| t["tenantId"].as_str().unwrap_or_default().to_string())
+            .collect();
+        assert!(
+            pre_ids.contains(&org_a.to_string()),
+            "pre-revoke refresh tenants must contain org A; got {pre_ids:?}"
+        );
+        assert!(
+            pre_ids.contains(&org_b.to_string()),
+            "pre-revoke refresh tenants must contain org B; got {pre_ids:?}"
+        );
+        let rotated_refresh = pre_json["refreshToken"]
+            .as_str()
+            .expect("refresh response carries rotated refreshToken")
+            .to_string();
+
+        // Revoke org B directly in the DB — emulates an admin removing the
+        // user from that organization mid-session.
+        sqlx::query(
+            r#"
+            UPDATE organization_members
+               SET status = 'removed'
+             WHERE organization_id = $1 AND user_id = $2
+            "#,
+        )
+        .bind(org_b)
+        .bind(user_id)
+        .execute(&pool)
+        .await
+        .expect("revoke org B membership");
+
+        // Now refresh again. The fix MUST re-query memberships and drop
+        // org B from the response.
+        let post_request = json_request(
+            Method::POST,
+            "/api/v1/auth/refresh",
+            json!({ "refreshToken": rotated_refresh }),
+        );
+        let post_response = app.execute(post_request).await;
+        post_response.assert_status(StatusCode::OK);
+        let post_json = post_response.json_value();
+        let post_tenants = post_json["tenants"]
+            .as_array()
+            .expect("refresh response must include `tenants` array (#676)");
+        let post_ids: std::collections::HashSet<String> = post_tenants
+            .iter()
+            .map(|t| t["tenantId"].as_str().unwrap_or_default().to_string())
+            .collect();
+        assert!(
+            post_ids.contains(&org_a.to_string()),
+            "post-revoke refresh must still contain org A; got {post_ids:?}"
+        );
+        assert!(
+            !post_ids.contains(&org_b.to_string()),
+            "post-revoke refresh MUST drop org B (revoked server-side); got {post_ids:?}"
+        );
+
+        // Cleanup
+        cleanup_test_user(&pool, &user.email).await;
+    }
 }
 
 // =============================================================================

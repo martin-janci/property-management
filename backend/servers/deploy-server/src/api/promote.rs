@@ -25,6 +25,12 @@ pub struct PromoteRequest {
     pub target: String,
     #[serde(default)]
     pub dry_run: bool,
+    /// Explicit operator override: mark the release live even if the health
+    /// grace period does not pass. Required to promote past a failing grace
+    /// check in manual (`rollback_mode != "auto"`) mode — see #769. Has no
+    /// effect in auto mode, which always rolls back on grace failure.
+    #[serde(default)]
+    pub force: bool,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -148,7 +154,29 @@ pub async fn promote_handler(
                         "health grace failed; no previous release to roll back to".into(),
                     ));
                 }
-                false
+                // Manual (non-auto) mode: fail closed (#769). A release must
+                // not go live without passing the health grace period unless
+                // an operator explicitly forces it. Returning Conflict (409)
+                // leaves the just-deployed (blue/green) containers in place but
+                // does NOT flip the release to LIVE in the store, so a retry or
+                // rollback can proceed from a known state.
+                match manual_grace_outcome(req.force) {
+                    ManualGraceOutcome::Reject => {
+                        return Err(DeployError::Conflict(format!(
+                            "health grace failed for {} on {}: {e}; release NOT marked live. \
+                             Re-run with \"force\": true to promote despite the failing grace check.",
+                            req.tag, target
+                        )));
+                    }
+                    ManualGraceOutcome::ForceLive => {
+                        tracing::warn!(
+                            tag = %req.tag,
+                            target = %target,
+                            "health grace failed but force=true — marking release live anyway (#769)"
+                        );
+                        false
+                    }
+                }
             }
         }
     } else {
@@ -189,6 +217,27 @@ pub async fn promote_handler(
         dry_run: false,
         health_grace_passed,
     }))
+}
+
+/// What to do in manual (non-auto) mode when the health grace check has
+/// failed. Pulled out of `promote_handler` so the fail-closed decision (#769)
+/// is unit-testable without a live Docker/Caddy/store stack.
+#[derive(Debug, PartialEq, Eq)]
+enum ManualGraceOutcome {
+    /// Refuse to mark the release live — return a 409 Conflict.
+    Reject,
+    /// Operator forced it — mark live with `health_grace_passed = false`.
+    ForceLive,
+}
+
+/// In manual mode a failing grace check must fail closed unless the operator
+/// passed `force: true` (#769).
+fn manual_grace_outcome(force: bool) -> ManualGraceOutcome {
+    if force {
+        ManualGraceOutcome::ForceLive
+    } else {
+        ManualGraceOutcome::Reject
+    }
 }
 
 fn parse_duration_secs(s: &str) -> Option<u64> {
@@ -320,5 +369,28 @@ mod tests {
     #[test]
     fn duration_parse_empty_returns_none() {
         assert_eq!(parse_duration_secs(""), None);
+    }
+
+    // #769 regression: in manual (non-auto) mode a failing health grace check
+    // must NOT mark the release live unless the operator explicitly forces it.
+    #[test]
+    fn manual_grace_failure_without_force_is_rejected() {
+        assert_eq!(manual_grace_outcome(false), ManualGraceOutcome::Reject);
+    }
+
+    #[test]
+    fn manual_grace_failure_with_force_goes_live() {
+        assert_eq!(manual_grace_outcome(true), ManualGraceOutcome::ForceLive);
+    }
+
+    #[test]
+    fn promote_request_force_defaults_false() {
+        // A request body that omits `force` must default to the fail-closed
+        // path (force = false), so the grace gate is never silently bypassed.
+        let req: PromoteRequest =
+            serde_json::from_str(r#"{"tag":"v1.0.0","target":"prod"}"#).unwrap();
+        assert!(!req.force);
+        assert!(!req.dry_run);
+        assert_eq!(manual_grace_outcome(req.force), ManualGraceOutcome::Reject);
     }
 }

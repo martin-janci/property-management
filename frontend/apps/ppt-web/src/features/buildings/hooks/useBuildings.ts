@@ -19,22 +19,29 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 /**
  * Creates a buildings API client with current auth token.
+ *
+ * `createBuildingsApi` bakes the `Authorization: Bearer <token>` header into
+ * the returned client at construction time, so the client must be re-created
+ * whenever the token rotates — see {@link useBuildingsApi}.
  */
-function getBuildingsApi() {
+function getBuildingsApi(accessToken: string | undefined) {
   return createBuildingsApi({
     baseUrl: API_BASE_URL,
-    accessToken: getToken() ?? undefined,
+    accessToken,
   });
 }
 
 /**
  * Hook to get buildings API hooks with current auth context.
  *
- * Creates memoized API client and returns TanStack Query hooks
- * for buildings operations.
+ * Creates a memoized API client and returns TanStack Query hooks for buildings
+ * operations. The memo is keyed on the current access token so a token refresh
+ * (rotation) rebuilds the client with the fresh Bearer header instead of
+ * sending a stale token for the rest of the component's lifetime.
  */
 export function useBuildingsApi() {
-  const api = useMemo(() => getBuildingsApi(), []);
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getBuildingsApi(token), [token]);
   return useMemo(() => createBuildingHooks(api), [api]);
 }
 

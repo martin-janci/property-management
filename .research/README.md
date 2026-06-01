@@ -39,6 +39,7 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 - `management/` — Phase 1.6 delivery artifacts: `project-state.md` (dashboard), `action-list.json`/`.md`, `risks.json`, `decisions.md`, `stakeholders.md`, `roles/<role>.md`. Maintained by the `ppt-project-management` skill.
   - `coverage.json` — 134-story delivery coverage map (done/partial/not-started + evidence + gaps), built by `/ppt-project-management scan` (local deep scan) and maintained cheaply by the daily routine.
   - `roadmap.md` — ranked gap plan generated from `coverage.json` (balanced rubric, owner + rationale per task).
+- `goal-check.sh` — deterministic goal/convergence checks (GC1 referential integrity, GC2 coverage-progress monotonicity, GC3 buffer bounds). Enforcing as of PR 2 (`GOAL_CHECK_ENFORCE=1` in Phase 6 + CI): GC2 regression aborts the run; GC1/GC3 stay record-only. See the `ppt-goal-gate` skill.
 
 In-repo skills the implementer agent uses live at **`.claude/skills/`** (one
 level up, at the repo root). `.claude/skills/` is auto-discovered by any
@@ -97,10 +98,21 @@ Setup at https://claude.ai/code/routines → **New routine**.
 | **Name** | `ppt-research` |
 | **Instructions** | full contents of `routine-prompt.md` |
 | **Repository** | `martin-janci/property-management`, branch `main`, ✅ *Allow unrestricted branch pushes* |
-| **Model** | Sonnet 4.6 (or Opus 4.7 for higher-quality analyses; Opus costs more) |
+| **Model** | Sonnet 4.6 (or Opus 4.8 for higher-quality analyses; Opus costs more) |
 | **Connectors** | **None.** The routine uses `gh` CLI via Bash. |
 | **Schedule** | Daily 05:00 local |
 | **API trigger** | Optional — handy for ad-hoc `text: "deep"` or `text: "reset"` runs |
+
+**Sibling routine — `ppt-research-dispatcher`.** Same setup as above with
+these overrides:
+
+| Field | Value |
+|---|---|
+| **Name** | `ppt-research-dispatcher` |
+| **Instructions** | full contents of `dispatcher-prompt.md` |
+| **Model** | **Opus 4.8** — the dispatcher's per-PR review (Phase 5) and self-review (Phase 8) both spawn Opus subagents internally; running the dispatcher itself on Opus avoids a Sonnet→Opus context handoff between phases and keeps reasoning consistent across the whole loop. |
+| **Schedule** | Every ~2h |
+| **Branch target** | commits to `dev` (not `main` — see *Routine vs dispatcher state* below) |
 
 ### Environment
 

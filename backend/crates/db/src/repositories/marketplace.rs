@@ -288,7 +288,7 @@ impl MarketplaceRepository {
         ));
 
         // Build query with bindings
-        let results = sqlx::query_as::<_, ProviderSearchResult>(&sql)
+        let results = sqlx::query_as::<_, ProviderSearchResult>(sqlx::AssertSqlSafe(sql))
             .bind(&query.category)
             .bind(query.min_rating)
             .bind(query.max_hourly_rate)

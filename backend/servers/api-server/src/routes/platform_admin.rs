@@ -1,4 +1,3 @@
-//! Platform Admin routes (Epic 10B).
 //!
 //! Routes for platform-wide administrative operations including
 //! organization management, feature flags, system health, and announcements.
@@ -23,7 +22,8 @@ use db::models::{
 use db::repositories::{
     ActiveAnnouncement, FeatureFlagWithCount, FeatureFlagWithOverrides, HealthDashboard,
     MetricHistory, OnboardingTour, PlatformStats, ResolvedFeatureFlag, SupportActivityLog,
-    SupportData, SupportUserInfo, SupportUserMembership, SupportUserSession,
+    SupportData, SupportDataViewedProps, SupportSessionsRevokedProps, SupportToolingEventKind,
+    SupportUserInfo, SupportUserMembership, SupportUserSearchedProps, SupportUserSession,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -2491,7 +2491,7 @@ pub async fn search_users_for_support(
     headers: axum::http::HeaderMap,
     Query(query): Query<SearchUsersQuery>,
 ) -> Result<Json<SearchUsersResponse>, (StatusCode, Json<ErrorResponse>)> {
-    extract_super_admin_token(&headers, &state)?;
+    let (admin_user_id, _admin_email) = extract_super_admin_token(&headers, &state)?;
 
     let page_size = query.page_size.clamp(1, 100);
     let page = query.page.max(1);
@@ -2516,6 +2516,30 @@ pub async fn search_users_for_support(
                 )),
             )
         })?;
+
+    // Emit support_user_searched analytics event (#635).
+    // Fire-and-forget: a tracking failure must not fail the API response.
+    let props = serde_json::to_value(SupportUserSearchedProps {
+        query_length: query.query.as_deref().map(|q| q.len() as i64),
+        status_filter: query.status.clone(),
+        result_count: total,
+    })
+    .unwrap_or_default();
+    if let Err(e) = state
+        .platform_admin_repo
+        .log_support_tooling_event(
+            admin_user_id,
+            SupportToolingEventKind::SupportUserSearched,
+            props,
+        )
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            admin_user_id = %admin_user_id,
+            "support_user_searched event: failed to persist (non-fatal)"
+        );
+    }
 
     Ok(Json(SearchUsersResponse {
         users,
@@ -2718,6 +2742,30 @@ pub async fn revoke_user_sessions(
         "User sessions revoked by support"
     );
 
+    // Emit support_sessions_revoked analytics event (#635).
+    // Fire-and-forget: a tracking failure must not fail the API response.
+    let props = serde_json::to_value(SupportSessionsRevokedProps {
+        target_user_id: id,
+        revoked_count,
+    })
+    .unwrap_or_default();
+    if let Err(e) = state
+        .platform_admin_repo
+        .log_support_tooling_event(
+            admin_id,
+            SupportToolingEventKind::SupportSessionsRevoked,
+            props,
+        )
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            admin_user_id = %admin_id,
+            target_user_id = %id,
+            "support_sessions_revoked event: failed to persist (non-fatal)"
+        );
+    }
+
     Ok(Json(RevokeSessionsResponse {
         message: format!("{} session(s) revoked", revoked_count),
         revoked_count,
@@ -2804,7 +2852,7 @@ pub async fn get_support_data(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<SupportDataResponse>, (StatusCode, Json<ErrorResponse>)> {
-    extract_super_admin_token(&headers, &state)?;
+    let (admin_user_id, _admin_email) = extract_super_admin_token(&headers, &state)?;
 
     let data = state
         .platform_admin_repo
@@ -2820,6 +2868,29 @@ pub async fn get_support_data(
                 )),
             )
         })?;
+
+    // Emit support_data_viewed analytics event (#635).
+    // Fire-and-forget: a tracking failure must not fail the API response.
+    let props = serde_json::to_value(SupportDataViewedProps {
+        tenant_count: data.total_orgs,
+        fault_total: data.total_faults,
+    })
+    .unwrap_or_default();
+    if let Err(e) = state
+        .platform_admin_repo
+        .log_support_tooling_event(
+            admin_user_id,
+            SupportToolingEventKind::SupportDataViewed,
+            props,
+        )
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            admin_user_id = %admin_user_id,
+            "support_data_viewed event: failed to persist (non-fatal)"
+        );
+    }
 
     Ok(Json(SupportDataResponse { data }))
 }

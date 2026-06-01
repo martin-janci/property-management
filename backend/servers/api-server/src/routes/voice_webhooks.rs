@@ -27,7 +27,7 @@ use db::models::{
     VoiceTokenRefreshRequest, VoiceTokenRefreshResult, WebhookVerificationResult,
 };
 use hmac::{Hmac, KeyInit, Mac};
-use integrations::{encrypt_if_available, IntegrationCrypto};
+use integrations::{encrypt_optional_required, encrypt_required, CryptoError, IntegrationCrypto};
 use serde::Deserialize;
 use sha2::Sha256;
 use sqlx::PgConnection;
@@ -35,6 +35,21 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 type HmacSha256 = Hmac<Sha256>;
+
+/// Map a fail-closed encryption error to an HTTP 500.
+///
+/// Issue #765: persisted voice OAuth tokens must always be encrypted; when
+/// `INTEGRATION_ENCRYPTION_KEY` is unset we refuse to store them in plaintext.
+fn voice_encryption_required(e: CryptoError) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!(error = %e, "Refusing to store voice OAuth token without encryption");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new(
+            "ENCRYPTION_REQUIRED",
+            "Integration token encryption is not configured",
+        )),
+    )
+}
 
 // ============================================================================
 // Router
@@ -266,8 +281,12 @@ async fn google_actions_webhook(
 
 /// Exchange OAuth authorization code for tokens.
 ///
-/// This endpoint is called after the user completes account linking
-/// on the voice assistant platform.
+/// This endpoint completes account linking: it is invoked by the
+/// authenticated Property Management user (from the voice account-linking
+/// flow), **not** by the voice platform itself. It therefore requires a
+/// valid PM access token (`AuthUser`) and binds the resulting voice device
+/// to that user's identity and organization — never to random UUIDs
+/// (security fix #890).
 #[utoipa::path(
     post,
     path = "/api/v1/webhooks/voice/oauth/exchange",
@@ -275,17 +294,43 @@ async fn google_actions_webhook(
     responses(
         (status = 200, description = "Token exchange successful", body = VoiceOAuthExchangeResponse),
         (status = 400, description = "Invalid authorization code"),
+        (status = 401, description = "Unauthorized - missing or invalid PM access token"),
+        (status = 403, description = "Forbidden - no active organization context"),
         (status = 500, description = "Token exchange failed"),
     ),
+    security(("bearer_auth" = [])),
     tag = "Voice OAuth"
 )]
 async fn oauth_token_exchange(
     State(state): State<AppState>,
+    auth: api_core::AuthUser,
     Json(request): Json<VoiceOAuthExchangeRequest>,
 ) -> Result<Json<VoiceOAuthExchangeResponse>, (StatusCode, Json<ErrorResponse>)> {
     use integrations::{VoiceOAuthManager, VoicePlatform};
 
-    tracing::info!("OAuth token exchange for platform: {}", request.platform);
+    // Bind the linking to the authenticated PM user + their active org.
+    // Without an org context we cannot create a tenant-scoped voice device.
+    let user_id = auth.user_id;
+    let org_id = auth.tenant_id.ok_or_else(|| {
+        tracing::warn!(
+            user_id = %auth.user_id,
+            "Voice OAuth exchange rejected: no active organization context"
+        );
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NO_ORGANIZATION_CONTEXT",
+                "An active organization context is required to link a voice device",
+            )),
+        )
+    })?;
+
+    tracing::info!(
+        user_id = %user_id,
+        org_id = %org_id,
+        platform = %request.platform,
+        "OAuth token exchange for voice device linking"
+    );
 
     // Validate platform
     if request.platform != voice_platform::ALEXA
@@ -344,33 +389,49 @@ async fn oauth_token_exchange(
                 )
             })?;
 
-        let access_encrypted = encrypt_if_available(crypto.as_ref(), &tokens.access_token);
-        let refresh_encrypted = tokens
-            .refresh_token
-            .as_ref()
-            .map(|rt| encrypt_if_available(crypto.as_ref(), rt));
+        // Issue #765: encryption is MANDATORY — fail closed if no key is set.
+        let access_encrypted = encrypt_required(crypto.as_ref(), &tokens.access_token)
+            .map_err(voice_encryption_required)?;
+        let refresh_encrypted =
+            encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
+                .map_err(voice_encryption_required)?;
 
         (access_encrypted, refresh_encrypted, tokens.expires_at)
-    } else {
-        // Platform not configured - use simulated tokens for development
+    } else if cfg!(debug_assertions) {
+        // Platform not configured - use simulated tokens for development only.
+        // Gated behind `debug_assertions` (security fix #890): release builds
+        // must never mint fake voice tokens.
         tracing::warn!(
-            "Voice OAuth not configured for platform {}, using simulated tokens",
+            "Voice OAuth not configured for platform {}, using simulated tokens (debug build)",
             request.platform
         );
         let simulated_access = format!("voice_access_{}_{}", request.platform, Uuid::new_v4());
         let simulated_refresh = format!("voice_refresh_{}_{}", request.platform, Uuid::new_v4());
         (
-            encrypt_if_available(crypto.as_ref(), &simulated_access),
-            Some(encrypt_if_available(crypto.as_ref(), &simulated_refresh)),
+            encrypt_required(crypto.as_ref(), &simulated_access)
+                .map_err(voice_encryption_required)?,
+            Some(
+                encrypt_required(crypto.as_ref(), &simulated_refresh)
+                    .map_err(voice_encryption_required)?,
+            ),
             Some(Utc::now() + Duration::hours(1)),
         )
+    } else {
+        tracing::error!(
+            "Voice OAuth not configured for platform {} in a release build",
+            request.platform
+        );
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "OAUTH_NOT_CONFIGURED",
+                "Voice OAuth is not configured for this platform",
+            )),
+        ));
     };
 
-    // For this webhook endpoint, we don't have tenant context
-    // The user_id and org_id should be extracted from the OAuth token claims
-    // For now, use placeholder values (in production, validate JWT/token)
-    let user_id = Uuid::new_v4();
-    let org_id = Uuid::new_v4();
+    // Device is bound to the authenticated PM user and their organization
+    // (derived above from the verified access token — never random UUIDs).
     let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
 
     // Create the voice device with tokens
@@ -485,46 +546,48 @@ async fn oauth_token_refresh(
         )
     })?;
 
-    let (new_access_encrypted, new_refresh_encrypted, new_expires_at) =
-        if oauth_manager.has_platform(voice_platform) {
-            // Decrypt the refresh token
-            let refresh_token = decrypt_if_available(crypto.as_ref(), refresh_token_encrypted);
+    let (new_access_encrypted, new_refresh_encrypted, new_expires_at) = if oauth_manager
+        .has_platform(voice_platform)
+    {
+        // Decrypt the refresh token
+        let refresh_token = decrypt_if_available(crypto.as_ref(), refresh_token_encrypted);
 
-            // Refresh the tokens using OAuth client
-            let tokens = oauth_manager
-                .refresh_token(voice_platform, &refresh_token)
-                .await
-                .map_err(|e| {
-                    tracing::error!("Token refresh failed: {}", e);
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new(
-                            "TOKEN_REFRESH_FAILED",
-                            format!("Failed to refresh token: {}", e),
-                        )),
-                    )
-                })?;
+        // Refresh the tokens using OAuth client
+        let tokens = oauth_manager
+            .refresh_token(voice_platform, &refresh_token)
+            .await
+            .map_err(|e| {
+                tracing::error!("Token refresh failed: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "TOKEN_REFRESH_FAILED",
+                        format!("Failed to refresh token: {}", e),
+                    )),
+                )
+            })?;
 
-            let access_encrypted = encrypt_if_available(crypto.as_ref(), &tokens.access_token);
-            let refresh_encrypted = tokens
-                .refresh_token
-                .as_ref()
-                .map(|rt| encrypt_if_available(crypto.as_ref(), rt));
+        // Issue #765: encryption is MANDATORY — fail closed if no key is set.
+        let access_encrypted = encrypt_required(crypto.as_ref(), &tokens.access_token)
+            .map_err(voice_encryption_required)?;
+        let refresh_encrypted =
+            encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
+                .map_err(voice_encryption_required)?;
 
-            (access_encrypted, refresh_encrypted, tokens.expires_at)
-        } else {
-            // Platform not configured - use simulated tokens for development
-            tracing::warn!(
-                "Voice OAuth not configured for platform {}, using simulated refresh",
-                device.platform
-            );
-            let new_access = format!("voice_access_refreshed_{}", Uuid::new_v4());
-            (
-                encrypt_if_available(crypto.as_ref(), &new_access),
-                None,
-                Some(Utc::now() + Duration::hours(1)),
-            )
-        };
+        (access_encrypted, refresh_encrypted, tokens.expires_at)
+    } else {
+        // Platform not configured - use simulated tokens for development
+        tracing::warn!(
+            "Voice OAuth not configured for platform {}, using simulated refresh",
+            device.platform
+        );
+        let new_access = format!("voice_access_refreshed_{}", Uuid::new_v4());
+        (
+            encrypt_required(crypto.as_ref(), &new_access).map_err(voice_encryption_required)?,
+            None,
+            Some(Utc::now() + Duration::hours(1)),
+        )
+    };
 
     // Update the device tokens
     state
@@ -853,15 +916,18 @@ fn verify_hmac_signature(signature: &str, body: &str) -> Result<bool, String> {
 /// Authenticate user via OAuth access token.
 async fn authenticate_voice_user(
     conn: &mut PgConnection,
-    access_token: &str,
+    // Reserved for real OAuth/JWT validation; not used by the simplified
+    // platform lookup below. Issue #765 removed the dead plaintext-encryption of
+    // this value (it was computed and discarded).
+    _access_token: &str,
     platform: &str,
 ) -> Result<db::models::VoiceAssistantDevice, (StatusCode, Json<ErrorResponse>)> {
     // In production, validate the access token and extract user ID
     // For now, find device by platform that has matching token pattern
 
-    // Look for device with this token (simplified - production would validate JWT/OAuth)
-    let crypto = IntegrationCrypto::try_from_env();
-    let _encrypted_token = encrypt_if_available(crypto.as_ref(), access_token);
+    // Look for device with this token (simplified - production would validate JWT/OAuth).
+    // Note: this is a read-only lookup, not a persistence path, so no encryption
+    // of the access token is performed here.
 
     // Try to find a device - for demo, just find any active device for the platform
     // In production, you would validate the token and look up the associated user

@@ -6,6 +6,14 @@
  * the OpenAPI spec for the admin surface is regenerated.
  */
 
+// Import and re-export the canonical fault-status count type from the faults
+// module so that the admin support-data surface and the manager dashboard use
+// the same definition.  Consumers that already import FaultStatusCount from
+// '@ppt/api-client' (the admin sub-path) will continue to work unchanged.
+import type { FaultStatusCount } from '../faults/types';
+
+export type { FaultStatusCount };
+
 export type AgencyStatus = 'active' | 'suspended' | 'archived' | string;
 
 export interface Agency {
@@ -71,6 +79,12 @@ export interface UpdateOAuthClientRequest {
   scopes?: string[];
   isActive?: boolean;
   rotateRefreshTokens?: boolean;
+  /**
+   * Audit reason for scope-grant changes. Sent as `reason` in the request
+   * body so the backend can write it to the audit log. Required when scopes
+   * differ from the client's current scope list.
+   */
+  auditReason?: string;
 }
 
 export interface RegenerateSecretResponse {
@@ -80,6 +94,17 @@ export interface RegenerateSecretResponse {
 /** Known OAuth scopes served by the PPT api-server. */
 export const KNOWN_OAUTH_SCOPES = ['profile', 'email', 'org:read', 'full'] as const;
 export type KnownOAuthScope = (typeof KNOWN_OAUTH_SCOPES)[number];
+
+/**
+ * Human-readable descriptions for each OAuth scope.
+ * Mirrors the `OAuthScope::description()` values in `db/models/oauth.rs`.
+ */
+export const OAUTH_SCOPE_DESCRIPTIONS: Record<KnownOAuthScope, string> = {
+  profile: 'Access your basic profile information (name, avatar)',
+  email: 'Access your email address',
+  'org:read': 'Read-only access to your organization data',
+  full: 'Full access to your account and data',
+};
 
 // ============================================================
 // Platform Health Monitoring (Epic 10B.3)
@@ -199,11 +224,9 @@ export interface CreateSystemAnnouncementResponse {
 // Support Data (Epic 10B.5)
 // ============================================================
 
-/** Per-status fault count returned inside `SupportData`. */
-export interface FaultStatusCount {
-  status: string;
-  count: number;
-}
+// NOTE: FaultStatusCount is the shared type re-exported from '../faults/types'
+// at the top of this file.  The admin support-data route and the manager
+// dashboard fault-statistics route both use the same bucket shape.
 
 /**
  * Platform-wide tenant diagnostics returned by

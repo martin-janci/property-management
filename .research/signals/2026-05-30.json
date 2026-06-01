@@ -1,0 +1,246 @@
+{
+  "run_iso": "2026-05-30T20:47:06Z",
+  "window": "since 2026-05-30T03:05:00Z (this-day incremental rerun; morning run's 36 signals are preserved in git history at the prior version of this file)",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+      "type": "churn-hotspot",
+      "source": "git log ce56a3b..origin/dev \u2014 backend/servers/api-server/src/routes/reports.rs",
+      "score_delta": 0,
+      "evidence": "top-3 source-file churn this run (134 lines): PR #860 (security IDOR fix) + #793. Micro-window (sub-day rerun) \u2014 these are landing sites for verified security fixes, not unstable hotspots; score suppressed (mirrors dead-code suppression precedent) \u2014 added to seen_signals + hotspot_history but no backlog row seeded.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/auth.rs",
+      "type": "churn-hotspot",
+      "source": "git log ce56a3b..origin/dev \u2014 backend/servers/api-server/src/routes/auth.rs",
+      "score_delta": 0,
+      "evidence": "top-3 source-file churn this run (78 lines): PR #855 (security RequestPrincipal token-type). Micro-window (sub-day rerun) \u2014 these are landing sites for verified security fixes, not unstable hotspots; score suppressed (mirrors dead-code suppression precedent) \u2014 added to seen_signals + hotspot_history but no backlog row seeded.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "type": "churn-hotspot",
+      "source": "git log ce56a3b..origin/dev \u2014 backend/servers/api-server/src/routes/integrations/webhook.rs",
+      "score_delta": 0,
+      "evidence": "top-3 source-file churn this run (75 lines): PR #841 (Airbnb dedup ledger). Micro-window (sub-day rerun) \u2014 these are landing sites for verified security fixes, not unstable hotspots; score suppressed (mirrors dead-code suppression precedent) \u2014 added to seen_signals + hotspot_history but no backlog row seeded.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-839-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #839",
+      "score_delta": 2,
+      "evidence": "PR #839 (fix(ppt-web): localize evidence-upload partial-fail toast + pass list via router state) touched frontend/apps/ppt-web/src/App.tsx (FileDisputePageRoute internal logic \u2014 i18n string + router state threading) without updating any docs/screens/ppt/*.md. Heuristic caveat: not a route topology change.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "untriaged-issue-836",
+      "type": "untriaged-issue",
+      "source": "#836",
+      "score_delta": 1,
+      "evidence": "Issue #836 (no labels, OPEN): Code review: Epic 2B-C \u2014 Mobile push & device registration (origin/dev)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-845",
+      "type": "untriaged-issue",
+      "source": "#845",
+      "score_delta": 1,
+      "evidence": "Issue #845 (no labels, OPEN): Code review: Epic 14 \u2014 IoT alerts, correlations, thresholds (origin/dev)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-846",
+      "type": "untriaged-issue",
+      "source": "#846",
+      "score_delta": 1,
+      "evidence": "Issue #846 (no labels, OPEN): Code review: Epics 12+65 \u2014 Meters & Energy/ESG (origin/dev)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-847",
+      "type": "untriaged-issue",
+      "source": "#847",
+      "score_delta": 1,
+      "evidence": "Issue #847 (no labels, OPEN): Code review: Reality-server \u2014 Inquiries IDOR (Epics 16\u201319) (origin/dev)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-848",
+      "type": "untriaged-issue",
+      "source": "#848",
+      "score_delta": 1,
+      "evidence": "Issue #848 (no labels, OPEN): Code review: Epics 78+134 \u2014 Vendor portal stubs & Predictive maintenance gaps (origin/dev)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-849",
+      "type": "untriaged-issue",
+      "source": "#849",
+      "score_delta": 1,
+      "evidence": "Issue #849 (no labels, OPEN): Code review: Epic 10B+143 \u2014 Admin impersonation, Help, Board meetings auth (origin/dev)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-850",
+      "type": "untriaged-issue",
+      "source": "#850",
+      "score_delta": 1,
+      "evidence": "Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 \u2014 Multi-currency, Data residency, Violations (origin/dev)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-851",
+      "type": "untriaged-issue",
+      "source": "#851",
+      "score_delta": 1,
+      "evidence": "Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 \u2014 Listings/syndication & Developer API stubs (origin/dev)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-859",
+      "type": "untriaged-issue",
+      "source": "#859",
+      "score_delta": 1,
+      "evidence": "Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500)",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar + allowlist this run (screen-map-drift score=2 below threshold 3; triage vector out of allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-05-30.md && head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state vs HEAD progress",
+      "observed": "true (cursors advanced: last_pr_seen 786\u2192861, last_issue_seen 791\u2192859, last_commit_sha \u2192 8bd4d44, seen_signals +13, hotspot_history +3, stats.runs +1)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true (85 unique ids)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal double-count",
+      "observed": "true (13 new ids; cumulative churn-hotspots stay score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "true (no items >8; nothing updated_at >14d yet \u2014 closest is dx-portfolio-dashboard-stubs at 10d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new-plan annotation",
+      "observed": "no new plans this run \u2014 vacuously satisfied",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + readiness",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-.research/ paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached secrets grep",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regenerated",
+      "observed": "identical (regenerated this run from updated backlog.json)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases vs cursors",
+      "observed": "phase-1.5/1.6 skipped; review_cursor, pm_cursor, coverage_cursor unchanged from HEAD",
+      "expected": "cursors for failed phases unchanged"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence vs HEAD",
+      "observed": "all 4 HEAD plans (p0-10-mock-route-wiring, security-llm-doc-idor, security-realtors-mark-inquiry-read-idor, test-gap-inquiry-idor-regression) still present in plans/",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=7 head=7 (.gitkeep + 6 archived plans) \u2014 unchanged this run",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regenerated",
+      "observed": "identical (regenerated this run)",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (cap + idempotency)",
+      "observed": "auto_fix_actions=[] (no candidate \u2014 screen-map-drift at score 2 below threshold 3; triage out of allowlist)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "Phase 1.6 skipped \u2192 no-op gate",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached telegram token grep",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

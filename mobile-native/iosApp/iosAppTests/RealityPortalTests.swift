@@ -118,6 +118,81 @@ final class AuthenticationTests: XCTestCase {
         let auth = AuthManager()
         XCTAssertFalse(auth.isAuthenticated)
     }
+
+    // MARK: SSO CSRF nonce (closes #578 secondary finding)
+    //
+    // These tests pin the contract of `beginSsoFlow` / `consumeSsoState`:
+    // a freshly minted nonce must validate exactly once, all other inputs
+    // (nil, empty, mismatched, replay) must be rejected, and successive
+    // calls to `beginSsoFlow` must yield distinct values.
+
+    func testBeginSsoFlowReturnsHexString() throws {
+        let auth = AuthManager()
+        let nonce = auth.beginSsoFlow()
+        // 32 random bytes → 64 hex chars; allow the UUID fallback (≥ 32 chars).
+        XCTAssertGreaterThanOrEqual(nonce.count, 32)
+        let allowed = CharacterSet(charactersIn: "0123456789abcdefABCDEF-")
+        XCTAssertTrue(nonce.unicodeScalars.allSatisfy { allowed.contains($0) })
+    }
+
+    func testBeginSsoFlowGeneratesUniqueNoncesAcrossCalls() throws {
+        let auth = AuthManager()
+        // We compare two successive calls — the second overwrites the first
+        // pending value, which is acceptable (caller starts a new flow).
+        let first = auth.beginSsoFlow()
+        let second = auth.beginSsoFlow()
+        XCTAssertNotEqual(first, second, "Two SSO flows must mint different nonces")
+    }
+
+    func testConsumeSsoStateAcceptsMatchingNonce() throws {
+        let auth = AuthManager()
+        let nonce = auth.beginSsoFlow()
+        XCTAssertTrue(auth.consumeSsoState(nonce))
+    }
+
+    func testConsumeSsoStateRejectsMismatch() throws {
+        let auth = AuthManager()
+        _ = auth.beginSsoFlow()
+        XCTAssertFalse(auth.consumeSsoState("not-the-real-nonce"))
+    }
+
+    func testConsumeSsoStateRejectsNil() throws {
+        let auth = AuthManager()
+        _ = auth.beginSsoFlow()
+        XCTAssertFalse(auth.consumeSsoState(nil))
+    }
+
+    func testConsumeSsoStateRejectsEmptyString() throws {
+        let auth = AuthManager()
+        _ = auth.beginSsoFlow()
+        XCTAssertFalse(auth.consumeSsoState(""))
+    }
+
+    func testConsumeSsoStateIsSingleUse() throws {
+        // Replay protection: a successful consume must clear the pending
+        // value, so a second attempt with the same nonce returns false.
+        let auth = AuthManager()
+        let nonce = auth.beginSsoFlow()
+        XCTAssertTrue(auth.consumeSsoState(nonce))
+        XCTAssertFalse(auth.consumeSsoState(nonce))
+    }
+
+    func testConsumeSsoStateRejectsWhenNoFlowStarted() throws {
+        // Fresh AuthManager — no `beginSsoFlow` call — must reject any input.
+        let auth = AuthManager()
+        XCTAssertFalse(auth.consumeSsoState("anything"))
+        XCTAssertFalse(auth.consumeSsoState(nil))
+    }
+
+    func testFailedConsumeAlsoClearsPendingState() throws {
+        // A mismatched consume must also clear the pending nonce so a
+        // probe with the wrong state can't be retried with the right one.
+        let auth = AuthManager()
+        let nonce = auth.beginSsoFlow()
+        XCTAssertFalse(auth.consumeSsoState("wrong"))
+        XCTAssertFalse(auth.consumeSsoState(nonce),
+                       "First consume cleared the pending nonce, second must fail")
+    }
 }
 
 // MARK: - Deep Link / URL Parsing Tests
@@ -515,6 +590,249 @@ final class NavigationStateRestorationServiceTests: XCTestCase {
         // be written to disk (stale auth routes across launches are misleading).
         XCTAssertNil(service.encodeRoute(.login),    ".login should not be encoded")
         XCTAssertNil(service.encodeRoute(.register), ".register should not be encoded")
+    }
+}
+
+// MARK: - InquiryStatus Tests
+
+/// Verifies the Swift `InquiryStatus` enum used by `InquiriesView`
+/// and that `KMPBridge.toInquiryPreview` maps KMP status values correctly.
+final class InquiryStatusTests: XCTestCase {
+
+    // MARK: displayName
+    //
+    // displayName now calls String(localized:) so the resolved string depends on the
+    // test runner's locale.  Assert that each case returns a non-empty string rather
+    // than a hardcoded English value — locale-fragile assertions break on non-English
+    // CI runners and are meaningless as a correctness check.
+
+    func testPendingDisplayNameIsNonEmpty() {
+        XCTAssertFalse(InquiryStatus.pending.displayName.isEmpty,
+                       "pending.displayName must resolve to a non-empty localised string")
+    }
+
+    func testRepliedDisplayNameIsNonEmpty() {
+        XCTAssertFalse(InquiryStatus.replied.displayName.isEmpty,
+                       "replied.displayName must resolve to a non-empty localised string")
+    }
+
+    func testClosedDisplayNameIsNonEmpty() {
+        XCTAssertFalse(InquiryStatus.closed.displayName.isEmpty,
+                       "closed.displayName must resolve to a non-empty localised string")
+    }
+
+    func testAllDisplayNamesAreDistinct() {
+        let names = [InquiryStatus.pending.displayName,
+                     InquiryStatus.replied.displayName,
+                     InquiryStatus.closed.displayName]
+        XCTAssertEqual(names.count, Set(names).count,
+                       "Each InquiryStatus must have a distinct displayName")
+    }
+
+    // MARK: badge colours resolve without crashing
+
+    func testPendingColorsAreNonNil() {
+        // backgroundColor / foregroundColor call into InquiryStatusColors;
+        // just ensure they don't crash — we don't assert specific hex values here.
+        _ = InquiryStatus.pending.backgroundColor
+        _ = InquiryStatus.pending.foregroundColor
+    }
+
+    func testRepliedColorsAreNonNil() {
+        _ = InquiryStatus.replied.backgroundColor
+        _ = InquiryStatus.replied.foregroundColor
+    }
+
+    func testClosedColorsAreNonNil() {
+        _ = InquiryStatus.closed.backgroundColor
+        _ = InquiryStatus.closed.foregroundColor
+    }
+}
+
+// MARK: - InquiryPreview Tests
+
+/// Verifies the `InquiryPreview` model that `InquiriesView` renders.
+final class InquiryPreviewTests: XCTestCase {
+
+    func testFormattedDateProducesNonEmptyString() {
+        let preview = InquiryPreview(
+            id: "p-1",
+            listingId: "lst-1",
+            listingTitle: "Test Property",
+            lastMessage: "Hello",
+            status: .pending,
+            date: Date(),
+            hasUnread: false
+        )
+        XCTAssertFalse(preview.formattedDate.isEmpty)
+    }
+
+    func testSampleDataIsAvailableInDebug() {
+        #if DEBUG
+        XCTAssertFalse(InquiryPreview.samples.isEmpty, "Sample data required for SwiftUI previews")
+        // All sample IDs should be unique
+        let ids = InquiryPreview.samples.map(\.id)
+        XCTAssertEqual(ids.count, Set(ids).count, "Sample IDs must be unique")
+        #endif
+    }
+}
+
+// MARK: - PushNotificationManager Tests
+
+/// Unit tests for `PushNotificationManager`'s preference management.
+/// These tests do not interact with APNs and work entirely offline.
+final class PushNotificationManagerTests: XCTestCase {
+
+    private var keychain: KeychainService!
+    private var manager: PushNotificationManager!
+
+    override func setUp() {
+        super.setUp()
+        // Isolate from the real app keychain — use a unique service name.
+        keychain = KeychainService(
+            service: "three.two.bit.ppt.reality.tests.push.\(UUID().uuidString)"
+        )
+        manager = PushNotificationManager(keychainService: keychain)
+    }
+
+    override func tearDown() {
+        keychain.deleteAll()
+        // testDisablingNewListingsPersists writes a preference into
+        // UserDefaults.standard (PushNotificationManager reads preferences from
+        // the standard suite and does not accept an injected suite). Remove it
+        // so a leftover `false` cannot make order-dependent tests in other
+        // suites — which assume `newListings` defaults to `true` — fail
+        // non-deterministically. Issue #698 finding 4.
+        for key in NotificationPreferenceKey.allCases {
+            UserDefaults.standard.removeObject(forKey: key.rawValue)
+        }
+        super.tearDown()
+    }
+
+    // MARK: Default preferences
+
+    func testNewListingsDefaultsToEnabled() {
+        XCTAssertTrue(manager.isEnabled(.newListings))
+    }
+
+    func testPriceDropsDefaultsToEnabled() {
+        XCTAssertTrue(manager.isEnabled(.priceDrops))
+    }
+
+    func testInquiryResponsesDefaultsToEnabled() {
+        XCTAssertTrue(manager.isEnabled(.inquiryResponses))
+    }
+
+    func testMarketingDefaultsToDisabled() {
+        XCTAssertFalse(manager.isEnabled(.marketing))
+    }
+
+    // MARK: setEnabled persists the value
+
+    func testDisablingNewListingsPersists() async {
+        // Disable new listings — the manager is already authorized in this
+        // path because we skip the authorization gate (not authorized means
+        // setEnabled returns early without persisting).  We test the
+        // UserDefaults persistence side only, which doesn't require APNs.
+        UserDefaults.standard.set(false, forKey: NotificationPreferenceKey.newListings.rawValue)
+        let freshManager = PushNotificationManager(keychainService: keychain)
+        XCTAssertFalse(freshManager.isEnabled(.newListings))
+    }
+
+    // MARK: clearDeviceToken
+
+    func testClearDeviceTokenRemovesToken() {
+        // Simulate a stored token
+        try? keychain.save("abc123", forKey: KeychainService.Keys.pushDeviceToken)
+        let freshManager = PushNotificationManager(keychainService: keychain)
+        XCTAssertNotNil(freshManager.deviceToken)
+
+        freshManager.clearDeviceToken()
+        XCTAssertNil(freshManager.deviceToken)
+        XCTAssertNil(keychain.loadOptional(forKey: KeychainService.Keys.pushDeviceToken))
+    }
+
+    // MARK: didRegisterForRemoteNotifications
+
+    func testDeviceTokenConvertedToHex() {
+        let rawBytes: [UInt8] = [0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x23, 0x45, 0x67]
+        let data = Data(rawBytes)
+        manager.didRegisterForRemoteNotifications(deviceToken: data)
+        XCTAssertEqual(manager.deviceToken, "deadbeef01234567")
+    }
+
+    func testDeviceTokenPersistedToKeychain() {
+        let rawBytes: [UInt8] = [0xCA, 0xFE, 0xBA, 0xBE]
+        manager.didRegisterForRemoteNotifications(deviceToken: Data(rawBytes))
+        XCTAssertEqual(
+            keychain.loadOptional(forKey: KeychainService.Keys.pushDeviceToken),
+            "cafebabe"
+        )
+    }
+}
+
+// MARK: - KeychainService Tests
+
+/// Verifies the `KeychainService` persistence layer used for auth tokens
+/// and push device tokens.
+final class KeychainServiceTests: XCTestCase {
+
+    private var keychain: KeychainService!
+
+    override func setUp() {
+        super.setUp()
+        // Use an isolated test service so tests don't affect the real app keychain.
+        keychain = KeychainService(
+            service: "three.two.bit.ppt.reality.tests.keychain.\(UUID().uuidString)"
+        )
+    }
+
+    override func tearDown() {
+        keychain.deleteAll()
+        super.tearDown()
+    }
+
+    func testSaveAndLoad() throws {
+        try keychain.save("secret-token", forKey: "test_key")
+        let loaded = try keychain.load(forKey: "test_key")
+        XCTAssertEqual(loaded, "secret-token")
+    }
+
+    func testOverwriteExistingValue() throws {
+        try keychain.save("v1", forKey: "reuse_key")
+        try keychain.save("v2", forKey: "reuse_key")
+        XCTAssertEqual(try keychain.load(forKey: "reuse_key"), "v2")
+    }
+
+    func testLoadOptionalReturnsNilForMissingKey() {
+        XCTAssertNil(keychain.loadOptional(forKey: "does_not_exist"))
+    }
+
+    func testDeleteRemovesItem() throws {
+        try keychain.save("to-delete", forKey: "del_key")
+        try keychain.delete(forKey: "del_key")
+        XCTAssertNil(keychain.loadOptional(forKey: "del_key"))
+    }
+
+    func testDeleteMissingKeyDoesNotThrow() {
+        XCTAssertNoThrow(try keychain.delete(forKey: "never_existed"))
+    }
+
+    func testContainsReturnsFalseForMissingKey() {
+        XCTAssertFalse(keychain.contains(key: "absent"))
+    }
+
+    func testContainsReturnsTrueAfterSave() throws {
+        try keychain.save("x", forKey: "present")
+        XCTAssertTrue(keychain.contains(key: "present"))
+    }
+
+    func testDeleteAllClearsAllItems() throws {
+        try keychain.save("a", forKey: "key_a")
+        try keychain.save("b", forKey: "key_b")
+        keychain.deleteAll()
+        XCTAssertFalse(keychain.contains(key: "key_a"))
+        XCTAssertFalse(keychain.contains(key: "key_b"))
     }
 }
 

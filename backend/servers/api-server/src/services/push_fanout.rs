@@ -101,6 +101,13 @@ pub struct FcmConfig {
     /// OAuth2 bearer token for FCM HTTP v1 API.
     /// Read once at startup so it is not re-read on every send in the hot path.
     pub oauth_token: Option<String>,
+    /// Base URL override for FCM v1 sends (e.g. a wiremock server in tests).
+    ///
+    /// When `None`, the production FCM base URL is used:
+    /// `https://fcm.googleapis.com`.  Set this to override only in tests — the
+    /// path segments (`/v1/projects/{id}/messages:send` and `/fcm/send`) are
+    /// appended by the adapter regardless.
+    pub fcm_base_url: Option<String>,
 }
 
 impl FcmConfig {
@@ -110,12 +117,20 @@ impl FcmConfig {
             project_id: std::env::var("FCM_PROJECT_ID").ok(),
             server_key: std::env::var("FCM_SERVER_KEY").ok(),
             oauth_token: std::env::var("FCM_OAUTH_TOKEN").ok(),
+            fcm_base_url: None,
         }
     }
 
     /// Return `true` when at least one credential is configured.
     pub fn is_configured(&self) -> bool {
         self.project_id.is_some() || self.server_key.is_some()
+    }
+
+    /// Return the effective FCM base URL (production default when unset).
+    pub fn base_url(&self) -> &str {
+        self.fcm_base_url
+            .as_deref()
+            .unwrap_or("https://fcm.googleapis.com")
     }
 }
 
@@ -171,7 +186,10 @@ impl FcmHttpAdapter {
         device_token: &str,
         notification: &Notification,
     ) -> (bool, bool) {
-        let url = format!("https://fcm.googleapis.com/v1/projects/{project_id}/messages:send");
+        let url = format!(
+            "{}/v1/projects/{project_id}/messages:send",
+            self.fcm_config.base_url()
+        );
 
         // Build the FCM message payload.
         let body = serde_json::json!({
@@ -285,9 +303,10 @@ impl FcmHttpAdapter {
             }
         });
 
+        let legacy_url = format!("{}/fcm/send", self.fcm_config.base_url());
         let resp = match self
             .http
-            .post("https://fcm.googleapis.com/fcm/send")
+            .post(&legacy_url)
             .header("Authorization", format!("key={server_key}"))
             .json(&body)
             .send()
@@ -646,6 +665,7 @@ mod tests {
             project_id: None,
             server_key: None,
             oauth_token: None,
+            fcm_base_url: None,
         };
         assert!(!config.is_configured());
     }
@@ -656,6 +676,7 @@ mod tests {
             project_id: Some("my-gcp-project".to_string()),
             server_key: None,
             oauth_token: None,
+            fcm_base_url: None,
         };
         assert!(config.is_configured());
     }
@@ -666,6 +687,7 @@ mod tests {
             project_id: None,
             server_key: Some("AAAA...key".to_string()),
             oauth_token: None,
+            fcm_base_url: None,
         };
         assert!(config.is_configured());
     }
@@ -676,8 +698,31 @@ mod tests {
             project_id: Some("proj".to_string()),
             server_key: Some("key".to_string()),
             oauth_token: None,
+            fcm_base_url: None,
         };
         assert!(config.is_configured());
+    }
+
+    #[test]
+    fn fcm_config_base_url_defaults_to_google() {
+        let config = FcmConfig {
+            project_id: None,
+            server_key: None,
+            oauth_token: None,
+            fcm_base_url: None,
+        };
+        assert_eq!(config.base_url(), "https://fcm.googleapis.com");
+    }
+
+    #[test]
+    fn fcm_config_base_url_override() {
+        let config = FcmConfig {
+            project_id: None,
+            server_key: None,
+            oauth_token: None,
+            fcm_base_url: Some("http://localhost:9999".to_string()),
+        };
+        assert_eq!(config.base_url(), "http://localhost:9999");
     }
 
     #[test]

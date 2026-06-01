@@ -72,6 +72,8 @@
     <string>Reality Portal needs access to your photos to upload profile pictures or share listings.</string>
     <key>NSCameraUsageDescription</key>
     <string>Reality Portal needs camera access to take photos for your profile or inquiries.</string>
+    <key>NSUserNotificationUsageDescription</key>
+    <string>Receive alerts for new property listings, price drops, and replies to your inquiries.</string>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>

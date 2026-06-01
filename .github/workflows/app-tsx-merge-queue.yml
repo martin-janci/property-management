@@ -1,0 +1,443 @@
+name: App.tsx merge-queue ordering
+
+# Problem (dispatcher #563-#568 cluster)
+# ----------------------------------------
+# frontend/apps/ppt-web/src/App.tsx is the top churn hotspot: every epic that
+# adds a route also lands in App.tsx. When multiple dispatcher drafts are open
+# at the same time and they ALL touch App.tsx, the second and third PR in the
+# stack conflict-rebase onto the first, producing triple-conflict noise that
+# costs the shepherd a manual round-trip.
+#
+# Solution
+# --------
+# This workflow enforces a soft merge-queue for App.tsx-touching PRs:
+#
+#   1. LABEL — any PR that modifies an App.tsx file gets the label
+#      `app-tsx-queue` automatically.
+#
+#   2. DETECT COLLISION — when a newly-pushed or opened PR carries
+#      `app-tsx-queue`, the workflow scans for *other* open PRs that also
+#      carry the label and are ahead (older, lower PR number) in the queue.
+#      If any are found, it posts an ordering comment so the dispatcher knows
+#      it MUST wait for the earlier PR(s) to merge before rebasing this one.
+#
+#   3. AUTO-REBASE (on-demand) — a `workflow_dispatch` input lets the
+#      dispatcher (or a human) trigger a rebase of one specific
+#      `app-tsx-queue` PR onto the current dev HEAD without waiting for the
+#      nightly auto-rebase-stale-drafts sweep.
+#
+# Why NOT GitHub's native merge queue?
+# -------------------------------------
+# GitHub's built-in merge queue (branch protection → merge queue) is repo-wide
+# and is not filterable to a path pattern — it would queue ALL PRs, not just
+# App.tsx-touching ones. The path-scoped label + ordering approach here is the
+# practical alternative for a mixed-traffic repo.
+#
+# Why soft (label + comment) rather than hard (CI status check that blocks)?
+# ---------------------------------------------------------------------------
+# A hard block would break every non-conflicting App.tsx PR (e.g. a route added
+# to a previously untouched path section) until the queue drains. The soft
+# approach warns the dispatcher without blocking green PRs that were rebased
+# correctly on top of dev.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      # Primary churn file — ppt-web router
+      - 'frontend/apps/ppt-web/src/App.tsx'
+      # Secondary App.tsx files that occasionally receive route wiring too
+      - 'frontend/apps/admin-web/src/App.tsx'
+      - 'frontend/apps/mobile/src/App.tsx'
+
+  # Manual trigger: rebase a specific App.tsx-queue PR onto dev right now.
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to rebase onto current dev HEAD'
+        required: true
+        type: number
+      dry_run:
+        description: 'Dry-run only (detect conflicts but do not push)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # Serialize all jobs in this workflow so two simultaneous PR pushes
+  # don't race on the label / ordering logic.
+  group: app-tsx-merge-queue
+  cancel-in-progress: false
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  # JOB 1 — label-and-order
+  # Triggered automatically on PR open/sync for any App.tsx-touching PR.
+  # ──────────────────────────────────────────────────────────────────────────
+  label-and-order:
+    name: Label & queue ordering
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Ensure app-tsx-queue label exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Create the label if it doesn't exist yet (idempotent).
+          gh label create app-tsx-queue \
+            --repo "$REPO" \
+            --color "e4e669" \
+            --description "PR touches App.tsx — must be serialised through the merge queue" \
+            2>/dev/null || true
+
+      - name: Apply app-tsx-queue label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "app-tsx-queue"
+          echo "Labelled PR #$PR_NUMBER with app-tsx-queue"
+
+      - name: Check queue position
+        id: queue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          THIS_PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          # Find all open PRs labelled app-tsx-queue that are NOT a draft
+          # and have a LOWER PR number (i.e., opened earlier = ahead in queue).
+          # Draft PRs are excluded because the dispatcher opens drafts while
+          # implementing; only ready/non-draft PRs represent actual merge candidates.
+          AHEAD=$(gh pr list \
+            --repo "$REPO" \
+            --state open \
+            --label "app-tsx-queue" \
+            --json number,isDraft,baseRefName \
+            --limit 50 \
+            | jq --argjson this "$THIS_PR" \
+              '[.[] | select(.number < $this and .isDraft == false and .baseRefName == "dev")]')
+
+          AHEAD_COUNT=$(echo "$AHEAD" | jq 'length')
+          echo "ahead_count=$AHEAD_COUNT" >> "$GITHUB_OUTPUT"
+          echo "ahead_prs=$(echo "$AHEAD" | jq -r '[.[].number] | map("#\(.)" ) | join(", ")')" >> "$GITHUB_OUTPUT"
+
+          echo "PRs ahead in App.tsx queue: $AHEAD_COUNT"
+          echo "$AHEAD" | jq '.'
+
+      - name: Post ordering comment (queue occupied)
+        if: steps.queue.outputs.ahead_count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          AHEAD_PRS: ${{ steps.queue.outputs.ahead_prs }}
+          AHEAD_COUNT: ${{ steps.queue.outputs.ahead_count }}
+        run: |
+          set -euo pipefail
+
+          BODY=$(cat <<'COMMENT_EOF'
+          ## ⚠️  App.tsx merge-queue: ordering conflict detected
+
+          This PR modifies `App.tsx` and there $PLURAL already open, non-draft
+          PR(s) that also touch `App.tsx` and were opened **before** this one:
+
+          **Ahead in queue:** $AHEAD_PRS
+
+          ### Why this matters
+
+          `frontend/apps/ppt-web/src/App.tsx` is the route-wiring hotspot.
+          When multiple PRs modify it simultaneously, the later PRs conflict-rebase
+          onto the earlier ones — causing triple-merge-conflict noise for the
+          shepherd agent.
+
+          ### What to do
+
+          1. Wait for the PR(s) listed above to be **merged into `dev`** first.
+          2. Then rebase this PR onto the updated `dev`:
+             ```bash
+             git fetch origin dev
+             git rebase origin/dev
+             git push --force-with-lease
+             ```
+             Or trigger the on-demand rebase via:
+             ```
+             gh workflow run app-tsx-merge-queue.yml \
+               -f pr_number=$PR_NUMBER \
+               -f dry_run=false
+             ```
+          3. Re-push — this workflow will re-check the queue position.
+
+          > _Automated by `.github/workflows/app-tsx-merge-queue.yml`_
+          COMMENT_EOF
+          )
+
+          # Substitute shell variables into the heredoc body
+          PLURAL="is $AHEAD_COUNT PR"
+          [ "$AHEAD_COUNT" != "1" ] && PLURAL="are $AHEAD_COUNT PRs"
+
+          BODY=$(echo "$BODY" \
+            | sed "s|\$PLURAL|$PLURAL|g" \
+            | sed "s|\$AHEAD_PRS|$AHEAD_PRS|g" \
+            | sed "s|\$PR_NUMBER|$PR_NUMBER|g")
+
+          # Only post if we haven't already posted an identical ordering comment
+          # (avoids comment spam on every push to the PR).
+          EXISTING=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json comments \
+            --jq '[.comments[].body | select(contains("App.tsx merge-queue: ordering conflict"))] | length')
+
+          if [ "$EXISTING" -eq 0 ]; then
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body "$BODY"
+            echo "Posted ordering comment on PR #$PR_NUMBER"
+          else
+            echo "Ordering comment already present on PR #$PR_NUMBER — skipping duplicate"
+          fi
+
+      - name: Post queue-clear comment (queue is free)
+        if: steps.queue.outputs.ahead_count == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          # Only post the "you're first" message if there's already a stale
+          # ordering-conflict comment on this PR (meaning we need to clear it).
+          STALE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json comments \
+            --jq '[.comments[].body | select(contains("App.tsx merge-queue: ordering conflict"))] | length')
+
+          if [ "$STALE" -gt 0 ]; then
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
+              "## ✅  App.tsx merge-queue: queue is clear
+
+          The PR(s) that were ahead of this one have merged. This PR is now
+          **first in the App.tsx queue** and can be rebased onto \`dev\` and merged.
+
+          > _Automated by \`.github/workflows/app-tsx-merge-queue.yml\`_"
+            echo "Posted queue-clear comment on PR #$PR_NUMBER"
+          else
+            echo "No stale ordering comments; nothing to clear"
+          fi
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # JOB 2 — on-demand-rebase
+  # Triggered manually via workflow_dispatch for a specific PR number.
+  # ──────────────────────────────────────────────────────────────────────────
+  on-demand-rebase:
+    name: On-demand rebase onto dev
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repo (full history)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Validate PR and check queue position
+        id: validate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+        run: |
+          set -euo pipefail
+
+          # Fetch PR metadata
+          PR_META=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          PR_STATE=$(echo "$PR_META" | jq -r '.state')
+          PR_HEAD=$(echo "$PR_META" | jq -r '.head.ref')
+          PR_BASE=$(echo "$PR_META" | jq -r '.base.ref')
+          PR_AUTHOR=$(echo "$PR_META" | jq -r '.user.login')
+
+          echo "PR #$PR_NUMBER: $PR_HEAD -> $PR_BASE (state=$PR_STATE, author=$PR_AUTHOR)"
+
+          if [ "$PR_STATE" != "open" ]; then
+            echo "::error::PR #$PR_NUMBER is not open (state=$PR_STATE). Aborting."
+            exit 1
+          fi
+
+          if [ "$PR_BASE" != "dev" ]; then
+            echo "::error::PR #$PR_NUMBER targets $PR_BASE (expected dev). Aborting."
+            exit 1
+          fi
+
+          # Verify this PR actually carries the app-tsx-queue label
+          HAS_LABEL=$(echo "$PR_META" \
+            | jq -r '[.labels[].name] | contains(["app-tsx-queue"])' )
+          if [ "$HAS_LABEL" != "true" ]; then
+            echo "::warning::PR #$PR_NUMBER does not carry the app-tsx-queue label."
+            echo "::warning::Only App.tsx-touching PRs should be rebased via this workflow."
+            # Non-fatal: a human may trigger for a mislabelled PR — let it continue.
+          fi
+
+          # Check queue position: are there PRs ahead of us?
+          AHEAD=$(gh pr list \
+            --repo "$REPO" \
+            --state open \
+            --label "app-tsx-queue" \
+            --json number,isDraft,baseRefName \
+            --limit 50 \
+            | jq --argjson this "$PR_NUMBER" \
+              '[.[] | select(.number < $this and .isDraft == false and .baseRefName == "dev")]')
+          AHEAD_COUNT=$(echo "$AHEAD" | jq 'length')
+
+          echo "head_ref=$PR_HEAD"    >> "$GITHUB_OUTPUT"
+          echo "ahead_count=$AHEAD_COUNT" >> "$GITHUB_OUTPUT"
+
+          if [ "$AHEAD_COUNT" -gt 0 ]; then
+            AHEAD_LIST=$(echo "$AHEAD" | jq -r '[.[].number] | map("#\(.)" ) | join(", ")')
+            echo "::warning::PR #$PR_NUMBER is NOT first in the App.tsx queue."
+            echo "::warning::PRs ahead: $AHEAD_LIST"
+            echo "::warning::Proceeding with rebase anyway (manual trigger) — expect conflicts if the earlier PRs touch the same routes."
+          fi
+
+      - name: Rebase PR branch onto dev
+        id: rebase
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          HEAD_REF: ${{ steps.validate.outputs.head_ref }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin dev
+          git fetch origin "$HEAD_REF"
+
+          WORKDIR="$(mktemp -d)/pr-$PR_NUMBER"
+          mkdir -p "$WORKDIR"
+          git worktree add "$WORKDIR" "origin/$HEAD_REF"
+
+          RESULT="success"
+          CONFLICT_FILES=""
+
+          (
+            cd "$WORKDIR"
+            git checkout -B "$HEAD_REF"
+
+            if git rebase origin/dev; then
+              echo "Rebase clean for PR #$PR_NUMBER."
+              if [ "$DRY_RUN" != "true" ]; then
+                git push --force-with-lease origin "$HEAD_REF"
+                echo "Force-pushed $HEAD_REF onto dev."
+              else
+                echo "(dry-run) would have force-pushed $HEAD_REF"
+              fi
+            else
+              CONFLICTS=$(git diff --name-only --diff-filter=U 2>/dev/null || true)
+              # Mechanical files (lock files, generated clients, openapi spec) can be
+              # resolved by taking the base side — mirror the logic in auto-rebase-stale-drafts.
+              MECHANICAL='^(backend/\.sqlx/.*\.json|backend/Cargo\.lock|docs/api/openapi\.yaml|frontend/packages/api-client/src/.*\.ts|frontend/pnpm-lock\.yaml|VERSION|mobile-native/gradle\.properties)$'
+              NON_MECHANICAL=$(echo "$CONFLICTS" | grep -Ev "$MECHANICAL" || true)
+
+              if [ -z "$NON_MECHANICAL" ] && [ -n "$CONFLICTS" ]; then
+                echo "Only mechanical conflicts; resolving from dev (--ours in rebase = the branch rebased onto)..."
+                for f in $CONFLICTS; do
+                  git checkout --ours -- "$f" || true
+                  git add -- "$f" || true
+                done
+                if git rebase --continue; then
+                  if [ "$DRY_RUN" != "true" ]; then
+                    git push --force-with-lease origin "$HEAD_REF"
+                    echo "Force-pushed after mechanical resolution."
+                  else
+                    echo "(dry-run) would have force-pushed after mechanical resolution"
+                  fi
+                  echo "REBASE_RESULT=mechanical_ok" >> /tmp/rebase_result
+                else
+                  git rebase --abort || true
+                  echo "REBASE_RESULT=failed" >> /tmp/rebase_result
+                  echo "CONFLICT_FILES=$CONFLICTS" >> /tmp/rebase_result
+                fi
+              elif [ -n "$NON_MECHANICAL" ]; then
+                git rebase --abort || true
+                echo "REBASE_RESULT=real_conflicts" >> /tmp/rebase_result
+                echo "CONFLICT_FILES=$NON_MECHANICAL" >> /tmp/rebase_result
+              fi
+            fi
+          ) || true
+
+          git worktree remove --force "$WORKDIR" || true
+
+          # Read result from temp file (worktree subshell)
+          REBASE_RESULT=$(grep 'REBASE_RESULT=' /tmp/rebase_result 2>/dev/null | cut -d= -f2 || echo "success")
+          CONFLICT_FILES=$(grep 'CONFLICT_FILES=' /tmp/rebase_result 2>/dev/null | cut -d= -f2- || echo "")
+
+          echo "rebase_result=$REBASE_RESULT" >> "$GITHUB_OUTPUT"
+          echo "conflict_files=$CONFLICT_FILES" >> "$GITHUB_OUTPUT"
+
+      - name: Comment rebase outcome on PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          REBASE_RESULT: ${{ steps.rebase.outputs.rebase_result }}
+          CONFLICT_FILES: ${{ steps.rebase.outputs.conflict_files }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          AHEAD_COUNT: ${{ steps.validate.outputs.ahead_count }}
+        run: |
+          set -euo pipefail
+
+          case "${REBASE_RESULT:-success}" in
+            success|mechanical_ok)
+              if [ "$DRY_RUN" = "true" ]; then
+                ICON="🔍"; STATUS="Dry-run: rebase would succeed (no real conflicts)"
+              else
+                ICON="✅"; STATUS="Rebase onto \`dev\` completed successfully"
+              fi
+              ;;
+            real_conflicts)
+              ICON="❌"
+              STATUS="Rebase failed: real code conflicts in App.tsx or related files"
+              ;;
+            failed)
+              ICON="❌"
+              STATUS="Rebase failed: could not continue after mechanical-conflict resolution"
+              ;;
+            *)
+              ICON="✅"; STATUS="Rebase onto \`dev\` completed"
+              ;;
+          esac
+
+          QUEUE_NOTE=""
+          if [ "${AHEAD_COUNT:-0}" -gt 0 ]; then
+            QUEUE_NOTE="
+
+          > ⚠️  **Note:** this PR was NOT first in the App.tsx queue when triggered ($AHEAD_COUNT PR(s) ahead). Conflicts with earlier queue members may persist."
+          fi
+
+          CONFLICT_NOTE=""
+          if [ -n "$CONFLICT_FILES" ]; then
+            CONFLICT_NOTE="
+
+          **Conflicting files requiring manual resolution:**
+          \`\`\`
+          $CONFLICT_FILES
+          \`\`\`"
+          fi
+
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
+            "$ICON **App.tsx queue on-demand rebase** — $STATUS$QUEUE_NOTE$CONFLICT_NOTE
+
+          > _Triggered via \`.github/workflows/app-tsx-merge-queue.yml\` (workflow_dispatch)_"

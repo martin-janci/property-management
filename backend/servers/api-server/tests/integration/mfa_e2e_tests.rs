@@ -95,8 +95,9 @@ async fn setup_and_enable_mfa(app: &TestApp, access_token: &str) {
 
 // ─── Flow 1: MFA setup response shape ───────────────────────────────────────
 
-/// /api/v1/auth/mfa/setup returns `secret`, `qrUri`, and `backupCodes` (camelCase).
-#[sqlx::test]
+/// /api/v1/auth/mfa/setup returns `secret` and `qrUri` only (camelCase).
+/// Recovery codes (10 single-use) are issued on verify, not setup (Story 9.2).
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_setup_response_shape(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -115,12 +116,13 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
     resp.assert_status(StatusCode::OK);
     let body = resp.json_value();
 
-    // camelCase field names — the FE uses `qrUri` and `backupCodes`
+    // Setup returns only secret + qrUri; backupCodes moved to verify (Story 9.2)
     assert!(body["secret"].is_string(), "secret must be a string");
     assert!(body["qrUri"].is_string(), "qrUri must be a string (camelCase)");
     assert!(
-        body["backupCodes"].is_array(),
-        "backupCodes must be an array (camelCase)"
+        body["backupCodes"].is_null(),
+        "backupCodes must NOT appear in setup response (issued at verify); got: {}",
+        body
     );
 
     // QR URI should be a valid otpauth:// URI
@@ -131,9 +133,20 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
         qr_uri
     );
 
-    // Should have 10 backup codes
-    let backup_codes = body["backupCodes"].as_array().unwrap();
-    assert_eq!(backup_codes.len(), 10, "should generate 10 backup codes");
+    // Verify → 10 single-use recovery codes are returned (not at setup)
+    let secret = body["secret"].as_str().unwrap();
+    let code = current_totp_code(secret);
+    let (verify_status, verify_body) = do_mfa_verify(&app, &access_token, &code).await;
+    assert_eq!(
+        verify_status,
+        StatusCode::OK,
+        "verify must succeed; body: {}",
+        verify_body
+    );
+    let recovery_codes = verify_body["recoveryCodes"]
+        .as_array()
+        .expect("recoveryCodes must be array in verify response");
+    assert_eq!(recovery_codes.len(), 10, "verify must return 10 recovery codes");
 
     cleanup_test_user(&pool, &user.email).await;
 }
@@ -141,7 +154,7 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
 // ─── Flow 1b: Setup → Verify with valid TOTP code ───────────────────────────
 
 /// Full setup → verify path with a real TOTP code derived from the returned secret.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_full_setup_and_verify_with_valid_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -171,7 +184,7 @@ async fn test_mfa_full_setup_and_verify_with_valid_code(pool: PgPool) {
 }
 
 /// Verifying with an invalid code returns 400 with INVALID_CODE.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_verify_invalid_code_returns_400(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -190,7 +203,7 @@ async fn test_mfa_verify_invalid_code_returns_400(pool: PgPool) {
 // ─── Flow 6: MFA status endpoint ────────────────────────────────────────────
 
 /// GET /api/v1/auth/mfa/status returns `enabled: false` before setup.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_status_disabled_before_setup(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -215,7 +228,7 @@ async fn test_mfa_status_disabled_before_setup(pool: PgPool) {
 }
 
 /// GET /api/v1/auth/mfa/status returns `enabled: true` after successful verify.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_status_enabled_after_verify(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -246,7 +259,7 @@ async fn test_mfa_status_enabled_after_verify(pool: PgPool) {
 
 /// When MFA is enabled and `two_factor_code` is omitted from login, the server
 /// returns `mfaRequired: true` with empty tokens (not a 401).
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_login_returns_mfa_required_when_mfa_enabled_and_code_absent(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -286,7 +299,7 @@ async fn test_login_returns_mfa_required_when_mfa_enabled_and_code_absent(pool: 
 }
 
 /// Login succeeds when valid `twoFactorCode` is included.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_login_succeeds_with_valid_mfa_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -338,7 +351,7 @@ async fn test_login_succeeds_with_valid_mfa_code(pool: PgPool) {
 }
 
 /// Login with an *invalid* two_factor_code returns 401 INVALID_MFA_CODE.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_login_fails_with_invalid_mfa_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -369,7 +382,7 @@ async fn test_login_fails_with_invalid_mfa_code(pool: PgPool) {
 // ─── Flow 4: Disable flow ────────────────────────────────────────────────────
 
 /// POST /api/v1/auth/mfa/disable with valid TOTP code disables MFA.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_disable_with_valid_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -423,7 +436,7 @@ async fn test_mfa_disable_with_valid_code(pool: PgPool) {
 }
 
 /// POST /api/v1/auth/mfa/disable with invalid code returns 400.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_disable_with_invalid_code_returns_400(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -450,7 +463,7 @@ async fn test_mfa_disable_with_invalid_code_returns_400(pool: PgPool) {
 // ─── Flow 5: Backup-codes regeneration ──────────────────────────────────────
 
 /// POST /api/v1/auth/mfa/backup-codes/regenerate returns fresh codes.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -458,22 +471,22 @@ async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
 
     let (access_token, _) = create_authenticated_user(&app, &user).await;
 
-    // Enable MFA, capturing the original backup codes
+    // Enable MFA; recovery codes are issued by verify (not setup) in Story 9.2.
     let setup_body = do_mfa_setup(&app, &access_token).await;
     let secret = setup_body["secret"]
         .as_str()
         .expect("secret field")
         .to_string();
-    let original_backup_codes = setup_body["backupCodes"]
+
+    let verify_code = current_totp_code(&secret);
+    let (st, verify_body) = do_mfa_verify(&app, &access_token, &verify_code).await;
+    assert_eq!(st, StatusCode::OK);
+    let original_backup_codes = verify_body["recoveryCodes"]
         .as_array()
-        .expect("backupCodes array")
+        .expect("recoveryCodes array in verify response")
         .iter()
         .map(|v| v.as_str().unwrap_or("").to_string())
         .collect::<Vec<_>>();
-
-    let verify_code = current_totp_code(&secret);
-    let (st, _) = do_mfa_verify(&app, &access_token, &verify_code).await;
-    assert_eq!(st, StatusCode::OK);
 
     // Regenerate backup codes
     let regen_code = current_totp_code(&secret);
@@ -524,7 +537,7 @@ async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
 }
 
 /// Regenerate with invalid code returns 400.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_backup_codes_regeneration_invalid_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -551,7 +564,7 @@ async fn test_mfa_backup_codes_regeneration_invalid_code(pool: PgPool) {
 // ─── Auth guard: unauthenticated requests ────────────────────────────────────
 
 /// All MFA endpoints require a valid bearer token.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_endpoints_require_authentication(pool: PgPool) {
     let app = TestApp::new(pool).await;
 
@@ -580,7 +593,7 @@ async fn test_mfa_endpoints_require_authentication(pool: PgPool) {
 }
 
 /// Setup endpoint returns 409 when MFA is already enabled.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_setup_conflicts_when_already_enabled(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -611,7 +624,7 @@ async fn test_mfa_setup_conflicts_when_already_enabled(pool: PgPool) {
 /// This test is `#[ignore]`d until rate-limiting middleware lands on
 /// `/api/v1/auth/mfa/verify` — at which point flip the assertion to
 /// expect 429 (or whatever the chosen lockout response is).
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "Awaiting rate-limit middleware on /auth/mfa/verify — issue #487"]
 async fn test_mfa_verify_rate_limited(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

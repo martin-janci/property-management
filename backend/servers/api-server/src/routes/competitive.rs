@@ -1,24 +1,46 @@
 //! Competitive feature routes (Epic 70) - Virtual tours, dynamic pricing, neighborhood insights, comparables.
+//!
+//! # Authorization & data model (issue #895)
+//!
+//! Two security defects were closed here:
+//!
+//! 1. **Cross-tenant IDOR.** Every handler accepted a `listing_id` path param and
+//!    a `TenantExtractor` but discarded both (`_tenant`, `_listing`, unused
+//!    `State`). There was no ownership check, so any authenticated caller could
+//!    target any listing across organizations. Every handler now resolves the
+//!    listing scoped to the caller's tenant via
+//!    [`ListingRepository::find_by_id_and_org`] and returns `404` for a missing
+//!    or foreign-org listing *before* doing anything else. This mirrors the
+//!    standard listing-ownership gate in `routes/listings.rs`.
+//!
+//! 2. **Fabricated data.** Every handler previously returned hard-coded mock
+//!    data (e.g. `https://my.matterport.com/show/?m=example`, invented prices
+//!    and amenities) while the OpenAPI implied production behavior. There is no
+//!    persistence for any competitive feature — no `virtual_tours`,
+//!    `tour_hotspots`, `pricing_suggestions`, `neighborhood_insights`,
+//!    `nearby_amenities` tables and no repository. Rather than fabricate values,
+//!    every handler now returns `501 Not Implemented` after the org-ownership
+//!    gate, so callers get an honest signal. This mirrors the vendor-portal fix
+//!    (#828) and developer-portal fix (#851). The org-ownership gate runs first
+//!    regardless, so even the `501` path is tenant-checked (and a foreign-org
+//!    listing still yields `404`, never `501`).
 
 use crate::state::AppState;
 use api_core::extractors::TenantExtractor;
 use axum::{
     extract::{Path, Query, State},
+    http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
 };
-use chrono::Utc;
 use db::models::{
-    amenity_category, confidence_level, tour_type, ComparablePropertySummary, ComparablesRequest,
-    ComparablesResponse, ComparisonTableEntry, CompetitiveAnalysis, CompetitiveFeaturesStatus,
-    CreateTourHotspot, CreateVirtualTour, NearbyAmenity, NeighborhoodInsights,
-    NeighborhoodInsightsRequest, NeighborhoodInsightsResponse, PriceHistory, PriceRange,
-    PricingAnalysisRequest, PricingAnalysisResponse, PricingFactor, PricingSuggestion,
-    ReorderTours, TourHotspot, UpdateVirtualTour, VirtualTour, VirtualTourWithHotspots,
+    ComparablesRequest, ComparablesResponse, CompetitiveAnalysis, CompetitiveFeaturesStatus,
+    CreateTourHotspot, CreateVirtualTour, NearbyAmenity, NeighborhoodInsightsRequest,
+    NeighborhoodInsightsResponse, PriceHistory, PricingAnalysisRequest, PricingAnalysisResponse,
+    PricingSuggestion, ReorderTours, TourHotspot, UpdateVirtualTour, VirtualTour,
+    VirtualTourWithHotspots,
 };
-use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -100,6 +122,54 @@ pub fn router() -> Router<AppState> {
 }
 
 // ============================================
+// Shared authorization + stub helpers (#895)
+// ============================================
+
+/// Resolve a listing scoped to the caller's tenant, or fail closed.
+///
+/// SECURITY (#895): every competitive handler takes a `listing_id` path param.
+/// Before doing any work, the listing MUST be confirmed to belong to the
+/// caller's organization. A missing listing OR a listing owned by a different
+/// org both return `404` — never leaking existence across tenants and never
+/// reaching the feature stub. Mirrors the ownership gate in `routes/listings.rs`.
+async fn ensure_listing_in_org(
+    state: &AppState,
+    listing_id: Uuid,
+    tenant: &TenantExtractor,
+) -> Result<(), (StatusCode, String)> {
+    state
+        .listing_repo
+        .find_by_id_and_org(listing_id, tenant.tenant_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to fetch listing: {}", e),
+            )
+        })?
+        .ok_or_else(|| (StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+    Ok(())
+}
+
+/// Uniform "not implemented" error for competitive endpoints whose persistence
+/// does not exist yet (#895).
+///
+/// These handlers previously fabricated mock data. Until the competitive-feature
+/// schema lands (`virtual_tours`, `tour_hotspots`, `pricing_suggestions`,
+/// `neighborhood_insights`, `nearby_amenities`, comparables stores), every
+/// endpoint returns `501` after the org-ownership gate so callers get an honest
+/// signal rather than fabricated values. Mirrors the vendor-portal (#828) and
+/// developer-portal (#851) fixes.
+fn not_implemented(feature: &str) -> (StatusCode, String) {
+    (
+        StatusCode::NOT_IMPLEMENTED,
+        format!(
+            "{feature} is not implemented yet (no competitive-feature persistence; see issue #895)"
+        ),
+    )
+}
+
+// ============================================
 // Story 70.1: Virtual Tour Integration
 // ============================================
 
@@ -119,55 +189,17 @@ pub struct VirtualToursResponse {
     responses(
         (status = 200, description = "Virtual tours list", body = VirtualToursResponse),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn list_virtual_tours(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
-) -> Result<Json<VirtualToursResponse>, (axum::http::StatusCode, String)> {
-    // Mock implementation - would query database
-    let now = Utc::now();
-
-    let tour = VirtualTour {
-        id: Uuid::new_v4(),
-        listing_id,
-        tour_type: tour_type::MATTERPORT.to_string(),
-        title: Some("Full Property Tour".to_string()),
-        description: Some("Explore the entire property in 3D".to_string()),
-        photo_url: None,
-        embed_url: Some("https://my.matterport.com/show/?m=example".to_string()),
-        external_id: Some("example-tour-id".to_string()),
-        video_url: None,
-        thumbnail_url: Some("https://example.com/tour-thumb.jpg".to_string()),
-        display_order: 1,
-        is_featured: true,
-        created_at: now,
-        updated_at: now,
-    };
-
-    let hotspot = TourHotspot {
-        id: Uuid::new_v4(),
-        tour_id: tour.id,
-        label: "Living Room".to_string(),
-        description: Some("Spacious living area with natural light".to_string()),
-        position_x: dec!(45.5),
-        position_y: dec!(30.2),
-        link_to_tour_id: None,
-        action_type: Some("info".to_string()),
-        created_at: now,
-    };
-
-    let tour_with_hotspots = VirtualTourWithHotspots {
-        tour,
-        hotspots: vec![hotspot],
-    };
-
-    Ok(Json(VirtualToursResponse {
-        tours: vec![tour_with_hotspots],
-        total: 1,
-    }))
+) -> Result<Json<VirtualToursResponse>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Virtual tours"))
 }
 
 /// Create a virtual tour for a listing.
@@ -181,49 +213,18 @@ pub async fn list_virtual_tours(
         (status = 201, description = "Virtual tour created", body = VirtualTour),
         (status = 400, description = "Invalid request"),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn create_virtual_tour(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
-    Json(data): Json<CreateVirtualTour>,
-) -> Result<Json<VirtualTour>, (axum::http::StatusCode, String)> {
-    // Validate tour type
-    let valid_types = [
-        tour_type::PHOTO_360,
-        tour_type::MATTERPORT,
-        tour_type::VIDEO,
-        tour_type::EXTERNAL_EMBED,
-    ];
-
-    if !valid_types.contains(&data.tour_type.as_str()) {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            format!("Invalid tour type: {}", data.tour_type),
-        ));
-    }
-
-    let now = Utc::now();
-    let tour = VirtualTour {
-        id: Uuid::new_v4(),
-        listing_id,
-        tour_type: data.tour_type,
-        title: data.title,
-        description: data.description,
-        photo_url: data.photo_url,
-        embed_url: data.embed_url,
-        external_id: data.external_id,
-        video_url: data.video_url,
-        thumbnail_url: data.thumbnail_url,
-        display_order: 1,
-        is_featured: data.is_featured,
-        created_at: now,
-        updated_at: now,
-    };
-
-    Ok(Json(tour))
+    Json(_data): Json<CreateVirtualTour>,
+) -> Result<Json<VirtualTour>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Creating virtual tours"))
 }
 
 /// Get a single virtual tour.
@@ -237,38 +238,18 @@ pub async fn create_virtual_tour(
     ),
     responses(
         (status = 200, description = "Virtual tour details", body = VirtualTourWithHotspots),
-        (status = 404, description = "Tour not found"),
+        (status = 404, description = "Listing or tour not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn get_virtual_tour(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
-    Path((listing_id, tour_id)): Path<(Uuid, Uuid)>,
-) -> Result<Json<VirtualTourWithHotspots>, (axum::http::StatusCode, String)> {
-    let now = Utc::now();
-
-    let tour = VirtualTour {
-        id: tour_id,
-        listing_id,
-        tour_type: tour_type::MATTERPORT.to_string(),
-        title: Some("Property Tour".to_string()),
-        description: None,
-        photo_url: None,
-        embed_url: Some("https://my.matterport.com/show/?m=example".to_string()),
-        external_id: None,
-        video_url: None,
-        thumbnail_url: None,
-        display_order: 1,
-        is_featured: true,
-        created_at: now,
-        updated_at: now,
-    };
-
-    Ok(Json(VirtualTourWithHotspots {
-        tour,
-        hotspots: vec![],
-    }))
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
+    Path((listing_id, _tour_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<VirtualTourWithHotspots>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Virtual tours"))
 }
 
 /// Update a virtual tour.
@@ -283,36 +264,19 @@ pub async fn get_virtual_tour(
     request_body = UpdateVirtualTour,
     responses(
         (status = 200, description = "Virtual tour updated", body = VirtualTour),
-        (status = 404, description = "Tour not found"),
+        (status = 404, description = "Listing or tour not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn update_virtual_tour(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
-    Path((listing_id, tour_id)): Path<(Uuid, Uuid)>,
-    Json(data): Json<UpdateVirtualTour>,
-) -> Result<Json<VirtualTour>, (axum::http::StatusCode, String)> {
-    let now = Utc::now();
-
-    let tour = VirtualTour {
-        id: tour_id,
-        listing_id,
-        tour_type: tour_type::MATTERPORT.to_string(),
-        title: data.title.or(Some("Updated Tour".to_string())),
-        description: data.description,
-        photo_url: data.photo_url,
-        embed_url: data.embed_url,
-        external_id: None,
-        video_url: data.video_url,
-        thumbnail_url: data.thumbnail_url,
-        display_order: 1,
-        is_featured: data.is_featured.unwrap_or(false),
-        created_at: now,
-        updated_at: now,
-    };
-
-    Ok(Json(tour))
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
+    Path((listing_id, _tour_id)): Path<(Uuid, Uuid)>,
+    Json(_data): Json<UpdateVirtualTour>,
+) -> Result<Json<VirtualTour>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Updating virtual tours"))
 }
 
 /// Delete a virtual tour.
@@ -326,16 +290,18 @@ pub async fn update_virtual_tour(
     ),
     responses(
         (status = 204, description = "Virtual tour deleted"),
-        (status = 404, description = "Tour not found"),
+        (status = 404, description = "Listing or tour not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn delete_virtual_tour(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
-    Path((_listing_id, _tour_id)): Path<(Uuid, Uuid)>,
-) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    Ok(axum::http::StatusCode::NO_CONTENT)
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
+    Path((listing_id, _tour_id)): Path<(Uuid, Uuid)>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Deleting virtual tours"))
 }
 
 /// Reorder virtual tours.
@@ -348,16 +314,18 @@ pub async fn delete_virtual_tour(
     responses(
         (status = 200, description = "Tours reordered"),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn reorder_virtual_tours(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
-    Path(_listing_id): Path<Uuid>,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
+    Path(listing_id): Path<Uuid>,
     Json(_data): Json<ReorderTours>,
-) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    Ok(axum::http::StatusCode::OK)
+) -> Result<StatusCode, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Reordering virtual tours"))
 }
 
 /// List hotspots for a tour.
@@ -371,28 +339,18 @@ pub async fn reorder_virtual_tours(
     ),
     responses(
         (status = 200, description = "Tour hotspots", body = Vec<TourHotspot>),
-        (status = 404, description = "Tour not found"),
+        (status = 404, description = "Listing or tour not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn list_tour_hotspots(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
-    Path((_listing_id, tour_id)): Path<(Uuid, Uuid)>,
-) -> Result<Json<Vec<TourHotspot>>, (axum::http::StatusCode, String)> {
-    let hotspot = TourHotspot {
-        id: Uuid::new_v4(),
-        tour_id,
-        label: "Kitchen".to_string(),
-        description: Some("Modern kitchen with appliances".to_string()),
-        position_x: dec!(60.0),
-        position_y: dec!(40.0),
-        link_to_tour_id: None,
-        action_type: Some("info".to_string()),
-        created_at: Utc::now(),
-    };
-
-    Ok(Json(vec![hotspot]))
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
+    Path((listing_id, _tour_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<Vec<TourHotspot>>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Tour hotspots"))
 }
 
 /// Create a hotspot on a tour.
@@ -407,29 +365,19 @@ pub async fn list_tour_hotspots(
     request_body = CreateTourHotspot,
     responses(
         (status = 201, description = "Hotspot created", body = TourHotspot),
-        (status = 404, description = "Tour not found"),
+        (status = 404, description = "Listing or tour not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn create_tour_hotspot(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
-    Path((_listing_id, tour_id)): Path<(Uuid, Uuid)>,
-    Json(data): Json<CreateTourHotspot>,
-) -> Result<Json<TourHotspot>, (axum::http::StatusCode, String)> {
-    let hotspot = TourHotspot {
-        id: Uuid::new_v4(),
-        tour_id,
-        label: data.label,
-        description: data.description,
-        position_x: data.position_x,
-        position_y: data.position_y,
-        link_to_tour_id: data.link_to_tour_id,
-        action_type: data.action_type,
-        created_at: Utc::now(),
-    };
-
-    Ok(Json(hotspot))
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
+    Path((listing_id, _tour_id)): Path<(Uuid, Uuid)>,
+    Json(_data): Json<CreateTourHotspot>,
+) -> Result<Json<TourHotspot>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Creating tour hotspots"))
 }
 
 /// Delete a hotspot from a tour.
@@ -444,16 +392,18 @@ pub async fn create_tour_hotspot(
     ),
     responses(
         (status = 204, description = "Hotspot deleted"),
-        (status = 404, description = "Hotspot not found"),
+        (status = 404, description = "Listing or hotspot not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn delete_tour_hotspot(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
-    Path((_listing_id, _tour_id, _hotspot_id)): Path<(Uuid, Uuid, Uuid)>,
-) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    Ok(axum::http::StatusCode::NO_CONTENT)
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
+    Path((listing_id, _tour_id, _hotspot_id)): Path<(Uuid, Uuid, Uuid)>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Deleting tour hotspots"))
 }
 
 // ============================================
@@ -468,34 +418,18 @@ pub async fn delete_tour_hotspot(
     params(("listing_id" = Uuid, Path, description = "Listing ID")),
     responses(
         (status = 200, description = "Pricing suggestion", body = PricingSuggestion),
-        (status = 404, description = "No pricing data available"),
+        (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn get_pricing_suggestion(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
-) -> Result<Json<PricingSuggestion>, (axum::http::StatusCode, String)> {
-    let now = Utc::now();
-
-    let suggestion = PricingSuggestion {
-        id: Uuid::new_v4(),
-        listing_id,
-        suggested_price_low: dec!(185000),
-        suggested_price_mid: dec!(195000),
-        suggested_price_high: dec!(210000),
-        currency: "EUR".to_string(),
-        confidence_level: confidence_level::HIGH.to_string(),
-        confidence_score: Some(85),
-        comparables_count: 8,
-        market_trend: "stable".to_string(),
-        seasonal_adjustment: Some(dec!(1.02)),
-        calculated_at: now,
-        valid_until: now + chrono::Duration::days(7),
-    };
-
-    Ok(Json(suggestion))
+) -> Result<Json<PricingSuggestion>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Pricing suggestions"))
 }
 
 /// Analyze pricing for a listing and generate suggestions.
@@ -508,94 +442,18 @@ pub async fn get_pricing_suggestion(
     responses(
         (status = 200, description = "Pricing analysis", body = PricingAnalysisResponse),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn analyze_pricing(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
     Json(_data): Json<PricingAnalysisRequest>,
-) -> Result<Json<PricingAnalysisResponse>, (axum::http::StatusCode, String)> {
-    let now = Utc::now();
-
-    let suggestion = PricingSuggestion {
-        id: Uuid::new_v4(),
-        listing_id,
-        suggested_price_low: dec!(185000),
-        suggested_price_mid: dec!(195000),
-        suggested_price_high: dec!(210000),
-        currency: "EUR".to_string(),
-        confidence_level: confidence_level::HIGH.to_string(),
-        confidence_score: Some(85),
-        comparables_count: 8,
-        market_trend: "stable".to_string(),
-        seasonal_adjustment: Some(dec!(1.02)),
-        calculated_at: now,
-        valid_until: now + chrono::Duration::days(7),
-    };
-
-    let factors = vec![
-        PricingFactor {
-            id: Uuid::new_v4(),
-            suggestion_id: suggestion.id,
-            factor_type: "location".to_string(),
-            factor_name: "Prime Location".to_string(),
-            impact: dec!(5.0),
-            explanation: "Located in a desirable neighborhood with good amenities".to_string(),
-        },
-        PricingFactor {
-            id: Uuid::new_v4(),
-            suggestion_id: suggestion.id,
-            factor_type: "size".to_string(),
-            factor_name: "Above Average Size".to_string(),
-            impact: dec!(3.5),
-            explanation: "Property size is larger than average for the area".to_string(),
-        },
-        PricingFactor {
-            id: Uuid::new_v4(),
-            suggestion_id: suggestion.id,
-            factor_type: "condition".to_string(),
-            factor_name: "Recently Renovated".to_string(),
-            impact: dec!(4.0),
-            explanation: "Recent renovations add value to the property".to_string(),
-        },
-    ];
-
-    let price_history = vec![PriceHistory {
-        id: Uuid::new_v4(),
-        listing_id: Some(listing_id),
-        property_type: "apartment".to_string(),
-        city: "Bratislava".to_string(),
-        postal_code: Some("81101".to_string()),
-        transaction_type: "sale".to_string(),
-        price: dec!(190000),
-        price_per_sqm: Some(dec!(2800)),
-        currency: "EUR".to_string(),
-        recorded_at: now - chrono::Duration::days(30),
-    }];
-
-    let comparables_used = vec![ComparablePropertySummary {
-        id: Uuid::new_v4(),
-        property_type: "apartment".to_string(),
-        city: "Bratislava".to_string(),
-        size_sqm: dec!(68),
-        rooms: Some(3),
-        price: dec!(188000),
-        price_per_sqm: dec!(2765),
-        currency: "EUR".to_string(),
-        distance_meters: dec!(500),
-        similarity_score: 92,
-        transaction_date: Some(now - chrono::Duration::days(45)),
-        is_active: false,
-    }];
-
-    Ok(Json(PricingAnalysisResponse {
-        suggestion,
-        factors,
-        price_history,
-        comparables_used,
-    }))
+) -> Result<Json<PricingAnalysisResponse>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Pricing analysis"))
 }
 
 /// Get price history for a listing's area.
@@ -607,44 +465,17 @@ pub async fn analyze_pricing(
     responses(
         (status = 200, description = "Price history", body = Vec<PriceHistory>),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn get_price_history(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
-) -> Result<Json<Vec<PriceHistory>>, (axum::http::StatusCode, String)> {
-    let now = Utc::now();
-
-    let history = vec![
-        PriceHistory {
-            id: Uuid::new_v4(),
-            listing_id: Some(listing_id),
-            property_type: "apartment".to_string(),
-            city: "Bratislava".to_string(),
-            postal_code: Some("81101".to_string()),
-            transaction_type: "sale".to_string(),
-            price: dec!(185000),
-            price_per_sqm: Some(dec!(2720)),
-            currency: "EUR".to_string(),
-            recorded_at: now - chrono::Duration::days(90),
-        },
-        PriceHistory {
-            id: Uuid::new_v4(),
-            listing_id: None,
-            property_type: "apartment".to_string(),
-            city: "Bratislava".to_string(),
-            postal_code: Some("81101".to_string()),
-            transaction_type: "sale".to_string(),
-            price: dec!(192000),
-            price_per_sqm: Some(dec!(2825)),
-            currency: "EUR".to_string(),
-            recorded_at: now - chrono::Duration::days(60),
-        },
-    ];
-
-    Ok(Json(history))
+) -> Result<Json<Vec<PriceHistory>>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Price history"))
 }
 
 // ============================================
@@ -660,103 +491,17 @@ pub async fn get_price_history(
     responses(
         (status = 200, description = "Neighborhood insights", body = NeighborhoodInsightsResponse),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn get_neighborhood_insights(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
-) -> Result<Json<NeighborhoodInsightsResponse>, (axum::http::StatusCode, String)> {
-    let now = Utc::now();
-    let insights_id = Uuid::new_v4();
-
-    let insights = NeighborhoodInsights {
-        id: insights_id,
-        listing_id: Some(listing_id),
-        latitude: dec!(48.1486),
-        longitude: dec!(17.1077),
-        walk_score: Some(85),
-        transit_score: Some(78),
-        bike_score: Some(72),
-        population: Some(450000),
-        median_age: Some(dec!(38.5)),
-        median_income: Some(dec!(1850)),
-        crime_index: Some(25),
-        safety_rating: Some("good".to_string()),
-        data_sources: serde_json::json!({
-            "walk_score": "Walk Score API",
-            "amenities": "OpenStreetMap",
-            "demographics": "Statistical Office SR"
-        }),
-        fetched_at: now,
-        valid_until: now + chrono::Duration::days(30),
-    };
-
-    let amenities = vec![
-        NearbyAmenity {
-            id: Uuid::new_v4(),
-            insights_id,
-            category: amenity_category::SUPERMARKET.to_string(),
-            name: "Tesco Express".to_string(),
-            address: Some("Obchodna 15".to_string()),
-            distance_meters: dec!(150),
-            latitude: dec!(48.1490),
-            longitude: dec!(17.1080),
-            rating: Some(dec!(4.2)),
-            details: None,
-        },
-        NearbyAmenity {
-            id: Uuid::new_v4(),
-            insights_id,
-            category: amenity_category::TRANSIT_STOP.to_string(),
-            name: "Hodzovo namestie (tram)".to_string(),
-            address: None,
-            distance_meters: dec!(200),
-            latitude: dec!(48.1480),
-            longitude: dec!(17.1070),
-            rating: None,
-            details: Some(serde_json::json!({"lines": ["1", "2", "4"]})),
-        },
-        NearbyAmenity {
-            id: Uuid::new_v4(),
-            insights_id,
-            category: amenity_category::SCHOOL.to_string(),
-            name: "Zakladna skola Grosslingova".to_string(),
-            address: Some("Grosslingova 18".to_string()),
-            distance_meters: dec!(450),
-            latitude: dec!(48.1460),
-            longitude: dec!(17.1100),
-            rating: Some(dec!(4.5)),
-            details: None,
-        },
-        NearbyAmenity {
-            id: Uuid::new_v4(),
-            insights_id,
-            category: amenity_category::PARK.to_string(),
-            name: "Medicka zahrada".to_string(),
-            address: None,
-            distance_meters: dec!(600),
-            latitude: dec!(48.1450),
-            longitude: dec!(17.1120),
-            rating: Some(dec!(4.7)),
-            details: None,
-        },
-    ];
-
-    let mut amenities_by_category: HashMap<String, Vec<NearbyAmenity>> = HashMap::new();
-    for amenity in &amenities {
-        amenities_by_category
-            .entry(amenity.category.clone())
-            .or_default()
-            .push(amenity.clone());
-    }
-
-    Ok(Json(NeighborhoodInsightsResponse {
-        insights,
-        amenities,
-        amenities_by_category,
-    }))
+) -> Result<Json<NeighborhoodInsightsResponse>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Neighborhood insights"))
 }
 
 /// Refresh neighborhood insights for a listing.
@@ -769,6 +514,7 @@ pub async fn get_neighborhood_insights(
     responses(
         (status = 200, description = "Neighborhood insights refreshed", body = NeighborhoodInsightsResponse),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
@@ -777,9 +523,9 @@ pub async fn refresh_neighborhood_insights(
     tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
     Json(_data): Json<NeighborhoodInsightsRequest>,
-) -> Result<Json<NeighborhoodInsightsResponse>, (axum::http::StatusCode, String)> {
-    // Reuse get_neighborhood_insights with fresh data
-    get_neighborhood_insights(State(state), tenant, Path(listing_id)).await
+) -> Result<Json<NeighborhoodInsightsResponse>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Refreshing neighborhood insights"))
 }
 
 /// Get nearby amenities for a listing.
@@ -791,30 +537,17 @@ pub async fn refresh_neighborhood_insights(
     responses(
         (status = 200, description = "Nearby amenities", body = Vec<NearbyAmenity>),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn get_nearby_amenities(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
-    Path(_listing_id): Path<Uuid>,
-) -> Result<Json<Vec<NearbyAmenity>>, (axum::http::StatusCode, String)> {
-    let insights_id = Uuid::new_v4();
-
-    let amenities = vec![NearbyAmenity {
-        id: Uuid::new_v4(),
-        insights_id,
-        category: amenity_category::SUPERMARKET.to_string(),
-        name: "Lidl".to_string(),
-        address: Some("Stefanikova 25".to_string()),
-        distance_meters: dec!(300),
-        latitude: dec!(48.1495),
-        longitude: dec!(17.1085),
-        rating: Some(dec!(4.0)),
-        details: None,
-    }];
-
-    Ok(Json(amenities))
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
+    Path(listing_id): Path<Uuid>,
+) -> Result<Json<Vec<NearbyAmenity>>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Nearby amenities"))
 }
 
 // ============================================
@@ -833,101 +566,18 @@ pub async fn get_nearby_amenities(
     responses(
         (status = 200, description = "Comparable properties", body = ComparablesResponse),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn get_comparables(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
     Query(_params): Query<ComparablesRequest>,
-) -> Result<Json<ComparablesResponse>, (axum::http::StatusCode, String)> {
-    let now = Utc::now();
-
-    let comparables = vec![
-        ComparablePropertySummary {
-            id: Uuid::new_v4(),
-            property_type: "apartment".to_string(),
-            city: "Bratislava".to_string(),
-            size_sqm: dec!(72),
-            rooms: Some(3),
-            price: dec!(198000),
-            price_per_sqm: dec!(2750),
-            currency: "EUR".to_string(),
-            distance_meters: dec!(350),
-            similarity_score: 95,
-            transaction_date: Some(now - chrono::Duration::days(20)),
-            is_active: false,
-        },
-        ComparablePropertySummary {
-            id: Uuid::new_v4(),
-            property_type: "apartment".to_string(),
-            city: "Bratislava".to_string(),
-            size_sqm: dec!(68),
-            rooms: Some(2),
-            price: dec!(185000),
-            price_per_sqm: dec!(2720),
-            currency: "EUR".to_string(),
-            distance_meters: dec!(500),
-            similarity_score: 88,
-            transaction_date: Some(now - chrono::Duration::days(45)),
-            is_active: false,
-        },
-        ComparablePropertySummary {
-            id: Uuid::new_v4(),
-            property_type: "apartment".to_string(),
-            city: "Bratislava".to_string(),
-            size_sqm: dec!(75),
-            rooms: Some(3),
-            price: dec!(210000),
-            price_per_sqm: dec!(2800),
-            currency: "EUR".to_string(),
-            distance_meters: dec!(800),
-            similarity_score: 82,
-            transaction_date: None,
-            is_active: true,
-        },
-    ];
-
-    let comparison_table = vec![
-        ComparisonTableEntry {
-            feature: "Size (sqm)".to_string(),
-            source_value: "70".to_string(),
-            comparable_values: vec!["72".to_string(), "68".to_string(), "75".to_string()],
-        },
-        ComparisonTableEntry {
-            feature: "Rooms".to_string(),
-            source_value: "3".to_string(),
-            comparable_values: vec!["3".to_string(), "2".to_string(), "3".to_string()],
-        },
-        ComparisonTableEntry {
-            feature: "Price/sqm".to_string(),
-            source_value: "2785 EUR".to_string(),
-            comparable_values: vec![
-                "2750 EUR".to_string(),
-                "2720 EUR".to_string(),
-                "2800 EUR".to_string(),
-            ],
-        },
-        ComparisonTableEntry {
-            feature: "Distance".to_string(),
-            source_value: "-".to_string(),
-            comparable_values: vec!["350m".to_string(), "500m".to_string(), "800m".to_string()],
-        },
-    ];
-
-    Ok(Json(ComparablesResponse {
-        listing_id,
-        comparables,
-        comparison_table,
-        average_price_per_sqm: dec!(2757),
-        price_range: PriceRange {
-            min: dec!(185000),
-            max: dec!(210000),
-            median: dec!(198000),
-            currency: "EUR".to_string(),
-        },
-    }))
+) -> Result<Json<ComparablesResponse>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Comparable properties"))
 }
 
 /// Refresh comparable properties for a listing.
@@ -939,6 +589,7 @@ pub async fn get_comparables(
     responses(
         (status = 200, description = "Comparables refreshed", body = ComparablesResponse),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
@@ -946,15 +597,9 @@ pub async fn refresh_comparables(
     State(state): State<AppState>,
     tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
-) -> Result<Json<ComparablesResponse>, (axum::http::StatusCode, String)> {
-    // Reuse get_comparables with default params
-    get_comparables(
-        State(state),
-        tenant,
-        Path(listing_id),
-        Query(ComparablesRequest::default()),
-    )
-    .await
+) -> Result<Json<ComparablesResponse>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Refreshing comparable properties"))
 }
 
 // ============================================
@@ -970,6 +615,7 @@ pub async fn refresh_comparables(
     responses(
         (status = 200, description = "Complete competitive analysis", body = CompetitiveAnalysis),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
@@ -977,55 +623,9 @@ pub async fn get_competitive_analysis(
     State(state): State<AppState>,
     tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
-) -> Result<Json<CompetitiveAnalysis>, (axum::http::StatusCode, String)> {
-    // Fetch all competitive data
-    let tours_response = list_virtual_tours(
-        State(state.clone()),
-        TenantExtractor(tenant.0.clone()),
-        Path(listing_id),
-    )
-    .await?;
-
-    let pricing_response = analyze_pricing(
-        State(state.clone()),
-        TenantExtractor(tenant.0.clone()),
-        Path(listing_id),
-        Json(PricingAnalysisRequest {
-            listing_id,
-            force_refresh: false,
-        }),
-    )
-    .await
-    .ok()
-    .map(|r| r.0);
-
-    let neighborhood_response = get_neighborhood_insights(
-        State(state.clone()),
-        TenantExtractor(tenant.0.clone()),
-        Path(listing_id),
-    )
-    .await
-    .ok()
-    .map(|r| r.0);
-
-    let comparables_response = get_comparables(
-        State(state),
-        tenant,
-        Path(listing_id),
-        Query(ComparablesRequest::default()),
-    )
-    .await
-    .ok()
-    .map(|r| r.0);
-
-    Ok(Json(CompetitiveAnalysis {
-        listing_id,
-        virtual_tours: tours_response.0.tours,
-        pricing_analysis: pricing_response,
-        neighborhood: neighborhood_response,
-        comparables: comparables_response,
-        generated_at: Utc::now(),
-    }))
+) -> Result<Json<CompetitiveAnalysis>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Competitive analysis"))
 }
 
 /// Get competitive features status for a listing.
@@ -1037,24 +637,15 @@ pub async fn get_competitive_analysis(
     responses(
         (status = 200, description = "Competitive features status", body = CompetitiveFeaturesStatus),
         (status = 404, description = "Listing not found"),
+        (status = 501, description = "Not implemented (no competitive-feature persistence)"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn get_competitive_status(
-    State(_state): State<AppState>,
-    TenantExtractor(_tenant): TenantExtractor,
+    State(state): State<AppState>,
+    tenant: TenantExtractor,
     Path(listing_id): Path<Uuid>,
-) -> Result<Json<CompetitiveFeaturesStatus>, (axum::http::StatusCode, String)> {
-    // Mock implementation - would query actual data
-    Ok(Json(CompetitiveFeaturesStatus {
-        listing_id,
-        has_virtual_tours: true,
-        virtual_tour_count: 2,
-        has_pricing_analysis: true,
-        pricing_analysis_valid: true,
-        has_neighborhood_insights: true,
-        neighborhood_insights_valid: true,
-        has_comparables: true,
-        comparables_count: 5,
-    }))
+) -> Result<Json<CompetitiveFeaturesStatus>, (StatusCode, String)> {
+    ensure_listing_in_org(&state, listing_id, &tenant).await?;
+    Err(not_implemented("Competitive features status"))
 }
