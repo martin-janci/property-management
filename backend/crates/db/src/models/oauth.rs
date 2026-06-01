@@ -131,6 +131,12 @@ pub struct UpdateOAuthClient {
     pub scopes: Option<Vec<String>>,
     pub is_active: Option<bool>,
     pub rotate_refresh_tokens: Option<bool>,
+    /// Operator-supplied justification for the change. The admin-web UI
+    /// requires this when scopes are edited (privileged mutation) and
+    /// forwards it as `reason`; it is persisted to the audit log only and
+    /// is **not** written to the `oauth_clients` row.
+    #[serde(default)]
+    pub reason: Option<String>,
 }
 
 /// OAuth client summary for listing.

@@ -56,6 +56,8 @@ pub enum AuditAction {
     OAuthRevoke,
     #[sqlx(rename = "oauth_client_create")]
     OAuthClientCreate,
+    #[sqlx(rename = "oauth_client_update")]
+    OAuthClientUpdate,
     #[sqlx(rename = "oauth_client_revoke")]
     OAuthClientRevoke,
     #[sqlx(rename = "oauth_client_secret_regenerate")]
@@ -120,6 +122,7 @@ impl AuditAction {
             Self::OAuthAuthorize => "OAuthAuthorize",
             Self::OAuthRevoke => "OAuthRevoke",
             Self::OAuthClientCreate => "OAuthClientCreate",
+            Self::OAuthClientUpdate => "OAuthClientUpdate",
             Self::OAuthClientRevoke => "OAuthClientRevoke",
             Self::OAuthClientSecretRegenerate => "OAuthClientSecretRegenerate",
             Self::OAuthTokenDeniedPrincipalKind => "OAuthTokenDeniedPrincipalKind",
