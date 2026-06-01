@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-01T08:11:00Z",
+  "generated": "2026-06-01T08:36:58Z",
   "assignments": [
     {
       "task_id": "gap-82-4-swiftui-listing-detail",
@@ -242,18 +242,18 @@
     {
       "task_id": "pm-integration-esignature-webhook-idempotency",
       "branch": "auto-impl/pm-integration-esignature-webhook-idempo",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-01T08:11:00Z",
-      "last_updated": "2026-06-01T08:11:00Z",
-      "status_changed_at": "2026-06-01T08:11:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-01T08:36:58Z",
+      "status_changed_at": "2026-06-01T08:36:58Z",
+      "pr_number": 931,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/931",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=931 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=SQL-level terminal-state guard on update_esignature_workflow_by_external_id; db crate fmt/check/clippy/unit-tests green; DB integration tests #[ignore]-gated",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
