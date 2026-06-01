@@ -74,13 +74,20 @@ impl BackgroundJobRepository {
         let job_types_arr: Option<Vec<String>> =
             job_types.map(|jt| jt.iter().map(|s| s.to_string()).collect());
 
-        let job =
-            sqlx::query_as::<_, BackgroundJob>("SELECT * FROM claim_background_job($1, $2, $3)")
-                .bind(queue)
-                .bind(worker_id)
-                .bind(job_types_arr)
-                .fetch_optional(&self.pool)
-                .await?;
+        // `claim_background_job` returns the composite `background_jobs` type.
+        // When no job is claimable the function returns a NULL composite, which
+        // `SELECT * FROM ...` expands into a single all-NULL row. Without the
+        // `WHERE id IS NOT NULL` guard that row reaches the decoder and fails
+        // with `UnexpectedNullError` on the non-nullable `id`; with it, an empty
+        // claim collapses to zero rows so `fetch_optional` yields `None`.
+        let job = sqlx::query_as::<_, BackgroundJob>(
+            "SELECT * FROM claim_background_job($1, $2, $3) WHERE id IS NOT NULL",
+        )
+        .bind(queue)
+        .bind(worker_id)
+        .bind(job_types_arr)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(job)
     }
