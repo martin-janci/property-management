@@ -20,6 +20,13 @@ import shared
 /// Epic 82 - Story 82.5: Inquiries and Account (PushNotificationManager)
 @main
 struct RealityPortalApp: App {
+    // MARK: - App Delegate
+
+    // SwiftUI's App lifecycle does not surface APNs callbacks or expose a place
+    // to set the UNUserNotificationCenter delegate; the adaptor installs a
+    // UIKit AppDelegate that does both. Issue #698 finding 2.
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     // MARK: - State Objects
 
     @State private var navigationCoordinator = NavigationCoordinator()
@@ -101,6 +108,27 @@ struct RealityPortalApp: App {
             UIApplication.shared.registerForRemoteNotifications()
         }
 
+        // Bridge the APNs token callbacks delivered to `AppDelegate` back into
+        // `PushNotificationManager`. The manager stays UIKit-free; the delegate
+        // posts the raw token / error via NotificationCenter. Issue #698.
+        NotificationCenter.default.addObserver(
+            forName: .pushNotificationManagerDidRegister,
+            object: nil,
+            queue: .main
+        ) { note in
+            guard let token = note.userInfo?["deviceToken"] as? Data else { return }
+            pushNotificationManager.didRegisterForRemoteNotifications(deviceToken: token)
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: .pushNotificationManagerDidFailToRegister,
+            object: nil,
+            queue: .main
+        ) { note in
+            guard let error = note.userInfo?["error"] as? Error else { return }
+            pushNotificationManager.didFailToRegisterForRemoteNotifications(error: error)
+        }
+
         // Restore navigation state from the previous launch.
         restorationService.restore(
             into: navigationCoordinator,
@@ -127,22 +155,6 @@ struct RealityPortalApp: App {
         @unknown default:
             break
         }
-    }
-
-    // MARK: - APNs Token Handling
-
-    /// Forward an APNs device token to the `PushNotificationManager`.
-    ///
-    /// In a pure SwiftUI lifecycle app, hook this via `UIApplicationDelegateAdaptor`
-    /// if an explicit AppDelegate is added. The notification-center bridge in
-    /// `configureApp()` handles APNs registration requests from the service layer.
-    func didRegisterForRemoteNotifications(deviceToken: Data) {
-        pushNotificationManager.didRegisterForRemoteNotifications(deviceToken: deviceToken)
-    }
-
-    /// Forward an APNs registration failure to the `PushNotificationManager`.
-    func didFailToRegisterForRemoteNotifications(error: Error) {
-        pushNotificationManager.didFailToRegisterForRemoteNotifications(error: error)
     }
 
     // MARK: - Incoming URL Handling

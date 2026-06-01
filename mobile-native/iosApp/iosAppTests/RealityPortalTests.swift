@@ -697,6 +697,15 @@ final class PushNotificationManagerTests: XCTestCase {
 
     override func tearDown() {
         keychain.deleteAll()
+        // testDisablingNewListingsPersists writes a preference into
+        // UserDefaults.standard (PushNotificationManager reads preferences from
+        // the standard suite and does not accept an injected suite). Remove it
+        // so a leftover `false` cannot make order-dependent tests in other
+        // suites — which assume `newListings` defaults to `true` — fail
+        // non-deterministically. Issue #698 finding 4.
+        for key in NotificationPreferenceKey.allCases {
+            UserDefaults.standard.removeObject(forKey: key.rawValue)
+        }
         super.tearDown()
     }
 

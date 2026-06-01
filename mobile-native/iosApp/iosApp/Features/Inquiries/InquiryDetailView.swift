@@ -23,10 +23,22 @@ struct InquiryDetailView: View {
     @State private var replyText = ""
     @State private var isSendingReply = false
 
-    private var inquiryRepository: InquiryRepository {
-        DependencyContainer.shared.makeAuthenticatedInquiryRepository(
+    // Cached repository — a computed `var` would re-run
+    // `makeAuthenticatedInquiryRepository` (allocating a new repository) on
+    // every `body` re-evaluation and every async access, so `loadInquiry` and
+    // `sendReply` could end up using different instances. Lazily initialized
+    // once and reused thereafter. See issue #698 finding 3.
+    @State private var inquiryRepository: InquiryRepository?
+
+    private func resolveRepository() -> InquiryRepository {
+        if let repo = inquiryRepository {
+            return repo
+        }
+        let repo = DependencyContainer.shared.makeAuthenticatedInquiryRepository(
             sessionToken: authManager.getSessionToken()
         )
+        inquiryRepository = repo
+        return repo
     }
 
     var body: some View {
@@ -197,7 +209,7 @@ struct InquiryDetailView: View {
         isLoading = true
         errorMessage = nil
 
-        let result = await inquiryRepository.getInquiry(inquiryId: inquiryId)
+        let result = await resolveRepository().getInquiry(inquiryId: inquiryId)
 
         if let fetched = result.getOrNull() {
             inquiry = fetched
@@ -213,7 +225,7 @@ struct InquiryDetailView: View {
         guard !trimmed.isEmpty else { return }
 
         isSendingReply = true
-        let result = await inquiryRepository.replyToInquiry(
+        let result = await resolveRepository().replyToInquiry(
             inquiryId: inquiryId,
             message: trimmed
         )
