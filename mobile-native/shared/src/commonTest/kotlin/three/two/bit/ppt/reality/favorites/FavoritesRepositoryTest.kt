@@ -86,4 +86,38 @@ class FavoritesRepositoryTest {
             "expected FavoritesException, got ${ex?.let { it::class }}",
         )
     }
+
+    /**
+     * Round-1 review (#788): listing ids are spliced into the request path and must be
+     * percent-encoded so a hostile id cannot smuggle extra path segments or query parameters
+     * (path-injection). A `/`-bearing id must NOT escape its segment.
+     */
+    @Test
+    fun isFavorite_url_encodes_listing_id_path_segment() = runTest {
+        var capturedPath: String? = null
+        val engine = MockEngine { request ->
+            capturedPath = request.url.encodedPath
+            respond(
+                content = ByteReadChannel("""{"is_favorited": false}"""),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+            )
+        }
+        val client = HttpClient(engine) { install(ContentNegotiation) { json(json) } }
+        val repo =
+            FavoritesRepository(
+                baseUrl = "https://example.test",
+                sessionToken = "test-token",
+                client = client,
+            )
+
+        repo.isFavorite("../admin/secret")
+
+        // The `/` characters must be percent-encoded; the path stays anchored under /favorites/.
+        assertEquals(
+            "/api/v1/favorites/..%2Fadmin%2Fsecret/check",
+            capturedPath,
+            "listingId must be percent-encoded into a single path segment",
+        )
+    }
 }

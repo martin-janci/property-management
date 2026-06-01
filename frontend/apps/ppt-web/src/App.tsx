@@ -59,6 +59,7 @@ import {
   Routes,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom';
 import {
   AnnouncerProvider,
@@ -2053,10 +2054,15 @@ function NewMessagePageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
 
-  // Fetch potential recipients from neighbors.
-  // buildingId is not part of the auth token; the hook handles undefined gracefully.
-  const { recipients, isLoading: isLoadingRecipients } = useMessageRecipients(undefined);
+  // Fetch potential recipients from the user's building neighbors. Without a
+  // building id the recipients query stays disabled and the list is always
+  // empty — making the page unusable. Mirror the NeighborsPage convention and
+  // use the first building the user has access to (building-selector deferred).
+  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
+  const buildingId = buildingsData?.items?.[0]?.id;
+  const { recipients, isLoading: isLoadingRecipients } = useMessageRecipients(buildingId);
   const startThread = useStartThread();
 
   const handleNewMsgSubmit = async (data: import('./features/messaging').CreateThreadRequest) => {
@@ -2081,7 +2087,10 @@ function NewMessagePageRoute() {
   return (
     <NewMessagePage
       recipients={recipients}
-      isLoadingRecipients={isLoadingRecipients}
+      initialRecipientIds={
+        searchParams.get('recipientId') ? [searchParams.get('recipientId') as string] : undefined
+      }
+      isLoadingRecipients={isLoadingRecipients || isLoadingBuildings}
       isSubmitting={startThread.isPending}
       onSubmit={handleNewMsgSubmit}
       onCancel={() => navigate('/messages')}

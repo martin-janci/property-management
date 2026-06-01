@@ -343,12 +343,46 @@ export function hasAnyRole(userRole: string, roles: Role[]): boolean {
 // ============================================
 
 /**
+ * Validate that a stored return URL is a safe, same-origin relative path.
+ *
+ * Open-redirect protection: the post-login redirect target comes from the URL /
+ * sessionStorage and is fed straight into `navigate()`. An attacker who can seed
+ * the return URL (e.g. `?returnUrl=https://evil.com`) could otherwise bounce a
+ * freshly-authenticated user off-site. Only accept root-relative in-app paths:
+ *
+ * - must start with a single `/` (rooted, same-origin),
+ * - must NOT start with `//` or `/\` (protocol-relative → off-origin),
+ * - must NOT contain a scheme such as `javascript:` / `data:` (those never start
+ *   with `/`, so the leading-slash rule already rejects them, but we also strip
+ *   control chars defensively).
+ *
+ * Returns the sanitized path, or `null` if the value is not a safe relative path.
+ */
+export function sanitizeReturnUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  // Reject anything containing control characters (incl. \t \n \r) used to
+  // smuggle past naive prefix checks.
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: deliberately matching control chars to reject them
+  if (/[\u0000-\u001f\u007f-\u009f]/.test(url)) return null;
+  // Must be a rooted, same-origin path.
+  if (!url.startsWith('/')) return null;
+  // Reject protocol-relative URLs (`//host`, `/\host`) that resolve off-origin.
+  if (url.startsWith('//') || url.startsWith('/\\')) return null;
+  return url;
+}
+
+/**
  * Store return URL for post-login redirect.
+ *
+ * The URL is sanitized to a same-origin relative path; unsafe values
+ * (absolute/off-origin/scheme URLs) are dropped rather than stored.
  */
 export function setReturnUrl(url: string): void {
   if (typeof sessionStorage === 'undefined') return;
+  const safe = sanitizeReturnUrl(url);
+  if (safe === null) return;
   try {
-    sessionStorage.setItem('auth_return_url', url);
+    sessionStorage.setItem('auth_return_url', safe);
   } catch {
     // Storage blocked or full
   }
@@ -356,13 +390,16 @@ export function setReturnUrl(url: string): void {
 
 /**
  * Get and clear the stored return URL.
+ *
+ * Re-validates on read (defense in depth) so a value written by an older build
+ * or tampered storage can never become an open-redirect target.
  */
 export function getAndClearReturnUrl(): string | null {
   if (typeof sessionStorage === 'undefined') return null;
   try {
     const url = sessionStorage.getItem('auth_return_url');
     sessionStorage.removeItem('auth_return_url');
-    return url;
+    return sanitizeReturnUrl(url);
   } catch {
     return null;
   }

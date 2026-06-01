@@ -176,6 +176,31 @@ export function validateUrl(url: string): ValidationResult {
   return { valid: true };
 }
 
+/**
+ * Returns `true` when `url` is safe to use as an `<img src>` value.
+ *
+ * Allowlist (defense in depth against injected URLs from API/user data):
+ *  - absolute `http:` / `https:` URLs,
+ *  - root-relative paths (`/...`), excluding protocol-relative `//host`.
+ *
+ * Everything else — `javascript:`, `data:`, `blob:`, `file:`, `vbscript:`,
+ * bare/relative strings — is rejected. While browsers do not execute
+ * `javascript:` in `img src`, restricting to an explicit allowlist prevents
+ * data-exfiltration and tracking-pixel style abuse via attacker-controlled
+ * image URLs.
+ */
+export function isSafeImageUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  // Root-relative (same-origin) path, but not protocol-relative `//host`.
+  if (url.startsWith('/')) return !url.startsWith('//');
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 // ============================================
 // Numeric Validation
 // ============================================

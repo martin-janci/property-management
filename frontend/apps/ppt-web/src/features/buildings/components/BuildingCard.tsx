@@ -7,6 +7,7 @@
  */
 
 import type { Building, BuildingStatus, BuildingType } from '@ppt/api-client';
+import { isSafeImageUrl } from '@ppt/shared';
 
 interface BuildingCardProps {
   building: Building;
@@ -38,14 +39,18 @@ const TYPE_LABELS: Record<BuildingType, string> = {
 export function BuildingCard({ building, onView, onEdit }: BuildingCardProps) {
   const { id, name, address, type, status, unitCount, floorCount, photoUrl } = building;
 
+  // Only render server-provided photo URLs that pass the http(s)/relative
+  // allowlist — guards against injected javascript:/data: image sources.
+  const safePhotoUrl = isSafeImageUrl(photoUrl) ? photoUrl : undefined;
+
   const addressLine = [address.street, address.city, address.postalCode].filter(Boolean).join(', ');
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       {/* Building Image */}
       <div className="h-48 bg-gray-200 relative">
-        {photoUrl ? (
-          <img src={photoUrl} alt={name} className="w-full h-full object-cover" />
+        {safePhotoUrl ? (
+          <img src={safePhotoUrl} alt={name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
             <svg

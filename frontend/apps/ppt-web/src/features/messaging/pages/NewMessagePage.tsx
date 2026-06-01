@@ -12,6 +12,8 @@ import type { CreateThreadRequest, RecipientOption } from '../types';
 
 interface NewMessagePageProps {
   recipients: RecipientOption[];
+  /** Recipient ids to preselect (e.g. when arriving from "Contact" on a neighbor). */
+  initialRecipientIds?: string[];
   isLoadingRecipients?: boolean;
   isSubmitting?: boolean;
   onSubmit: (data: CreateThreadRequest) => void;
@@ -20,13 +22,16 @@ interface NewMessagePageProps {
 
 export function NewMessagePage({
   recipients,
+  initialRecipientIds,
   isLoadingRecipients,
   isSubmitting,
   onSubmit,
   onCancel,
 }: NewMessagePageProps) {
   const { t } = useTranslation();
-  const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([]);
+  const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>(
+    initialRecipientIds ?? []
+  );
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<{
