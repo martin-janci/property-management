@@ -2,6 +2,7 @@
 //!
 //! Routes for distributed tracing, feature flags, background jobs, and health monitoring.
 
+use api_core::extractors::AuthUser;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -27,6 +28,27 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::state::AppState;
+
+/// Reject any caller that is not a platform administrator.
+///
+/// Infrastructure routes expose platform-wide internals — distributed traces
+/// (which carry cross-tenant `user_id` / `org_id`), feature flags, background
+/// jobs and host health/metrics. They are not tenant-scoped resources, so the
+/// only safe gate is the platform-admin capability, mirroring the operations
+/// routes (Epic 73). Returns 403 for authenticated non-admins.
+fn require_platform_admin(auth: &AuthUser) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if auth.is_platform_admin() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Only platform administrators can access infrastructure endpoints",
+            )),
+        ))
+    }
+}
 
 /// Create infrastructure router.
 pub fn router() -> Router<AppState> {
@@ -216,7 +238,9 @@ fn default_limit() -> i64 {
 )]
 pub async fn get_dashboard(
     State(state): State<AppState>,
+    auth: AuthUser,
 ) -> Result<Json<InfrastructureDashboard>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     // Calculate actual uptime (Story 88.1)
     let uptime_seconds = state.boot_time.elapsed().as_secs() as i64;
 
@@ -306,8 +330,10 @@ pub async fn get_dashboard(
 )]
 pub async fn list_traces(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<TraceQueryParams>,
 ) -> Result<Json<PaginatedResponse<Trace>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     let trace_query = TraceQuery {
         service_name: query.service_name,
         operation_name: query.operation_name,
@@ -361,8 +387,10 @@ pub async fn list_traces(
 )]
 pub async fn get_trace(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<TraceIdPath>,
 ) -> Result<Json<TraceWithSpans>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     // Get the trace
     let trace = match state.infrastructure_repo.get_trace(path.trace_id).await {
         Ok(Some(t)) => t,
@@ -418,8 +446,10 @@ pub async fn get_trace(
 )]
 pub async fn get_trace_spans(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<TraceIdPath>,
 ) -> Result<Json<Vec<Span>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     // Check if trace exists
     match state.infrastructure_repo.get_trace(path.trace_id).await {
         Ok(Some(_)) => {}
@@ -477,8 +507,10 @@ pub async fn get_trace_spans(
 )]
 pub async fn list_feature_flags(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<FlagQueryParams>,
 ) -> Result<Json<PaginatedResponse<FeatureFlag>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state
         .infrastructure_repo
         .list_feature_flags(
@@ -528,10 +560,11 @@ pub async fn list_feature_flags(
 )]
 pub async fn create_feature_flag(
     State(state): State<AppState>,
+    auth: AuthUser,
     Json(data): Json<CreateFeatureFlag>,
 ) -> Result<(StatusCode, Json<FeatureFlag>), (StatusCode, Json<ErrorResponse>)> {
-    // For now, use a placeholder user ID - in production, extract from auth context
-    let created_by = Uuid::nil();
+    require_platform_admin(&auth)?;
+    let created_by = auth.user_id;
 
     match state
         .infrastructure_repo
@@ -576,8 +609,10 @@ pub async fn create_feature_flag(
 )]
 pub async fn get_feature_flag(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<FlagIdPath>,
 ) -> Result<Json<FeatureFlag>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.get_feature_flag(path.id).await {
         Ok(Some(flag)) => Ok(Json(flag)),
         Ok(None) => Err((
@@ -613,10 +648,12 @@ pub async fn get_feature_flag(
 )]
 pub async fn update_feature_flag(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<FlagIdPath>,
     Json(data): Json<UpdateFeatureFlag>,
 ) -> Result<Json<FeatureFlag>, (StatusCode, Json<ErrorResponse>)> {
-    let updated_by = Uuid::nil(); // Placeholder
+    require_platform_admin(&auth)?;
+    let updated_by = auth.user_id;
 
     match state
         .infrastructure_repo
@@ -656,9 +693,11 @@ pub async fn update_feature_flag(
 )]
 pub async fn delete_feature_flag(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<FlagIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted_by = Uuid::nil(); // Placeholder
+    require_platform_admin(&auth)?;
+    let deleted_by = auth.user_id;
 
     match state
         .infrastructure_repo
@@ -699,10 +738,12 @@ pub async fn delete_feature_flag(
 )]
 pub async fn toggle_feature_flag(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<FlagIdPath>,
     Json(data): Json<ToggleFlagRequest>,
 ) -> Result<Json<FeatureFlag>, (StatusCode, Json<ErrorResponse>)> {
-    let toggled_by = Uuid::nil(); // Placeholder
+    require_platform_admin(&auth)?;
+    let toggled_by = auth.user_id;
 
     match state
         .infrastructure_repo
@@ -744,8 +785,10 @@ pub async fn toggle_feature_flag(
 )]
 pub async fn list_flag_overrides(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<FlagIdPath>,
 ) -> Result<Json<Vec<FeatureFlagOverride>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     // First check if flag exists
     match state.infrastructure_repo.get_feature_flag(path.id).await {
         Ok(None) => {
@@ -798,9 +841,11 @@ pub async fn list_flag_overrides(
 )]
 pub async fn create_flag_override(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<FlagIdPath>,
     Json(data): Json<CreateOverrideRequest>,
 ) -> Result<(StatusCode, Json<FeatureFlagOverride>), (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     // Check if flag exists
     match state.infrastructure_repo.get_feature_flag(path.id).await {
         Ok(None) => {
@@ -838,7 +883,7 @@ pub async fn create_flag_override(
         }
     };
 
-    let created_by = Uuid::nil(); // Placeholder
+    let created_by = auth.user_id;
 
     match state
         .infrastructure_repo
@@ -881,9 +926,11 @@ pub async fn create_flag_override(
 )]
 pub async fn delete_flag_override(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<OverrideIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted_by = Uuid::nil(); // Placeholder
+    require_platform_admin(&auth)?;
+    let deleted_by = auth.user_id;
 
     match state
         .infrastructure_repo
@@ -925,8 +972,10 @@ pub async fn delete_flag_override(
 )]
 pub async fn get_flag_audit_log(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<FlagIdPath>,
 ) -> Result<Json<Vec<FeatureFlagAuditLog>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     // Check if flag exists
     match state.infrastructure_repo.get_feature_flag(path.id).await {
         Ok(None) => {
@@ -982,8 +1031,10 @@ pub async fn get_flag_audit_log(
 )]
 pub async fn evaluate_feature_flag(
     State(state): State<AppState>,
+    auth: AuthUser,
     Json(data): Json<EvaluateFeatureFlag>,
 ) -> Result<Json<FeatureFlagEvaluation>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state
         .infrastructure_repo
         .evaluate_feature_flag(&data.key, data.user_id, data.org_id)
@@ -1032,8 +1083,10 @@ pub async fn evaluate_feature_flag(
 )]
 pub async fn list_jobs(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<JobQueryParams>,
 ) -> Result<Json<PaginatedResponse<BackgroundJob>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     use db::models::infrastructure::{BackgroundJobQuery, BackgroundJobStatus};
 
     let job_query = BackgroundJobQuery {
@@ -1085,8 +1138,10 @@ pub async fn list_jobs(
 )]
 pub async fn create_job(
     State(state): State<AppState>,
+    auth: AuthUser,
     Json(data): Json<CreateBackgroundJob>,
 ) -> Result<(StatusCode, Json<BackgroundJob>), (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.background_job_repo.create(data, None).await {
         Ok(job) => Ok((StatusCode::CREATED, Json(job))),
         Err(e) => {
@@ -1114,8 +1169,10 @@ pub async fn create_job(
 )]
 pub async fn get_job(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<JobIdPath>,
 ) -> Result<Json<BackgroundJob>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.background_job_repo.find_by_id(path.id).await {
         Ok(Some(job)) => Ok(Json(job)),
         Ok(None) => Err((
@@ -1149,9 +1206,11 @@ pub async fn get_job(
 )]
 pub async fn retry_job(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<JobIdPath>,
     Json(data): Json<RetryBackgroundJob>,
 ) -> Result<Json<BackgroundJob>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state
         .background_job_repo
         .retry_job(
@@ -1195,8 +1254,10 @@ pub async fn retry_job(
 )]
 pub async fn cancel_job(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<JobIdPath>,
 ) -> Result<Json<BackgroundJob>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.background_job_repo.cancel_job(path.id).await {
         Ok(Some(job)) => Ok(Json(job)),
         Ok(None) => Err((
@@ -1231,8 +1292,10 @@ pub async fn cancel_job(
 )]
 pub async fn get_job_executions(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<JobIdPath>,
 ) -> Result<Json<Vec<BackgroundJobExecution>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.background_job_repo.get_executions(path.id).await {
         Ok(executions) => Ok(Json(executions)),
         Err(e) => {
@@ -1261,7 +1324,9 @@ pub async fn get_job_executions(
 )]
 pub async fn get_queue_stats(
     State(state): State<AppState>,
+    auth: AuthUser,
 ) -> Result<Json<Vec<BackgroundJobQueueStats>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.background_job_repo.get_all_queue_stats().await {
         Ok(stats) => Ok(Json(stats)),
         Err(e) => {
@@ -1290,7 +1355,9 @@ pub async fn get_queue_stats(
 )]
 pub async fn get_job_type_stats(
     State(state): State<AppState>,
+    auth: AuthUser,
 ) -> Result<Json<Vec<BackgroundJobTypeStats>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.get_job_type_stats().await {
         Ok(stats) => Ok(Json(stats)),
         Err(e) => {
@@ -1320,7 +1387,9 @@ pub async fn get_job_type_stats(
 )]
 pub async fn get_detailed_health(
     State(state): State<AppState>,
+    auth: AuthUser,
 ) -> Result<Json<SystemHealth>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     // Calculate actual uptime (Story 88.1)
     let uptime_seconds = state.boot_time.elapsed().as_secs() as i64;
 
@@ -1390,7 +1459,9 @@ pub async fn get_detailed_health(
 )]
 pub async fn list_health_checks(
     State(state): State<AppState>,
+    auth: AuthUser,
 ) -> Result<Json<Vec<HealthCheckConfig>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.list_health_checks().await {
         Ok(configs) => Ok(Json(configs)),
         Err(e) => {
@@ -1421,8 +1492,10 @@ pub async fn list_health_checks(
 )]
 pub async fn get_health_check(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<HealthCheckIdPath>,
 ) -> Result<Json<HealthCheckConfig>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.get_health_check(path.id).await {
         Ok(Some(config)) => Ok(Json(config)),
         Ok(None) => Err((
@@ -1457,8 +1530,10 @@ pub async fn get_health_check(
 )]
 pub async fn get_health_check_results(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<HealthCheckIdPath>,
 ) -> Result<Json<Vec<HealthCheckResult>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state
         .infrastructure_repo
         .get_health_check_results(path.id, 100)
@@ -1494,8 +1569,10 @@ pub async fn get_health_check_results(
 )]
 pub async fn list_alerts(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(query): Query<AlertQueryParams>,
 ) -> Result<Json<PaginatedResponse<HealthAlert>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state
         .infrastructure_repo
         .list_alerts(
@@ -1543,8 +1620,10 @@ pub async fn list_alerts(
 )]
 pub async fn get_alert(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<AlertIdPath>,
 ) -> Result<Json<HealthAlert>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.get_alert(path.id).await {
         Ok(Some(alert)) => Ok(Json(alert)),
         Ok(None) => Err((
@@ -1577,10 +1656,12 @@ pub async fn get_alert(
 )]
 pub async fn acknowledge_alert(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<AlertIdPath>,
     Json(data): Json<AcknowledgeAlert>,
 ) -> Result<Json<HealthAlert>, (StatusCode, Json<ErrorResponse>)> {
-    let acknowledged_by = Uuid::nil(); // Placeholder
+    require_platform_admin(&auth)?;
+    let acknowledged_by = auth.user_id;
 
     match state
         .infrastructure_repo
@@ -1624,9 +1705,11 @@ pub async fn acknowledge_alert(
 )]
 pub async fn resolve_alert(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<AlertIdPath>,
     Json(data): Json<ResolveAlert>,
 ) -> Result<Json<HealthAlert>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state
         .infrastructure_repo
         .resolve_alert(path.id, data.note.as_deref())
@@ -1666,7 +1749,9 @@ pub async fn resolve_alert(
 )]
 pub async fn list_alert_rules(
     State(state): State<AppState>,
+    auth: AuthUser,
 ) -> Result<Json<Vec<HealthAlertRule>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.list_alert_rules().await {
         Ok(rules) => Ok(Json(rules)),
         Err(e) => {
@@ -1697,8 +1782,10 @@ pub async fn list_alert_rules(
 )]
 pub async fn create_alert_rule(
     State(state): State<AppState>,
+    auth: AuthUser,
     Json(data): Json<CreateHealthAlertRule>,
 ) -> Result<(StatusCode, Json<HealthAlertRule>), (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.create_alert_rule(data).await {
         Ok(rule) => Ok((StatusCode::CREATED, Json(rule))),
         Err(e) => {
@@ -1729,8 +1816,10 @@ pub async fn create_alert_rule(
 )]
 pub async fn get_alert_rule(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<AlertRuleIdPath>,
 ) -> Result<Json<HealthAlertRule>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.get_alert_rule(path.id).await {
         Ok(Some(rule)) => Ok(Json(rule)),
         Ok(None) => Err((
@@ -1766,9 +1855,11 @@ pub async fn get_alert_rule(
 )]
 pub async fn update_alert_rule(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<AlertRuleIdPath>,
     Json(data): Json<UpdateHealthAlertRule>,
 ) -> Result<Json<HealthAlertRule>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state
         .infrastructure_repo
         .update_alert_rule(path.id, data)
@@ -1807,8 +1898,10 @@ pub async fn update_alert_rule(
 )]
 pub async fn delete_alert_rule(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<AlertRuleIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state.infrastructure_repo.delete_alert_rule(path.id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
@@ -1844,9 +1937,11 @@ pub async fn delete_alert_rule(
 )]
 pub async fn toggle_alert_rule(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<AlertRuleIdPath>,
     Json(data): Json<ToggleAlertRuleRequest>,
 ) -> Result<Json<HealthAlertRule>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&auth)?;
     match state
         .infrastructure_repo
         .toggle_alert_rule(path.id, data.enabled)
