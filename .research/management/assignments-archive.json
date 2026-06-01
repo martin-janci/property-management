@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-01T12:26:25Z",
+  "archived_at": "2026-06-01T20:16:42Z",
   "assignments": [
     {
       "task_id": "fix-569-mediation-workspace-polish",
@@ -3015,6 +3015,30 @@
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-integration-esignature-webhook-idempotency",
+      "branch": "auto-impl/pm-integration-esignature-webhook-idempo",
+      "status": "merged",
+      "claimed_at": "2026-06-01T08:11:00Z",
+      "last_updated": "2026-06-01T20:14:54Z",
+      "status_changed_at": "2026-06-01T20:14:54Z",
+      "pr_number": 931,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/931",
+      "merged_at": "2026-06-01T20:14:54Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=931 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=SQL-level terminal-state guard on update_esignature_workflow_by_external_id; db crate fmt/check/clippy/unit-tests green; DB integration tests #[ignore]-gated",
+      "reviewer_summary": "verdict=approve head_oid=02269fe4a2ddad2042168a36921262f8c35e5349 note=esignature-idempotency-guard-correct-ci-green",
+      "last_reviewed_oid": "02269fe4a2ddad2042168a36921262f8c35e5349",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-06-01T20:14:20Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-qa-create-backend-servers-reality-server",
