@@ -207,10 +207,19 @@ pub async fn create_signature_request(
                 }
                 signed.url
             }
-            Err(_) => format!(
-                "{}/sign?request_id={}&email={}",
-                *BASE_URL, signature_request.id, signer.email
-            ),
+            Err(e) => {
+                // Fail closed: never emit an unsigned `/sign` link. A link
+                // without a valid HMAC token defeats the signed-link integrity
+                // guarantee, so we abandon this signer's email rather than send
+                // an unauthenticated URL. The signer can be re-reminded later.
+                warn!(
+                    error = %e,
+                    email = %signer.email,
+                    signature_request_id = %signature_request.id,
+                    "Failed to build HMAC-signed signing URL; skipping signer email (refusing to emit unsigned link)"
+                );
+                continue;
+            }
         };
 
         if let Err(e) = state
@@ -433,10 +442,19 @@ pub async fn send_reminder(
                 }
                 signed.url
             }
-            Err(_) => format!(
-                "{}/sign?request_id={}&email={}",
-                *BASE_URL, signature_request.id, signer.email
-            ),
+            Err(e) => {
+                // Fail closed: never emit an unsigned `/sign` link. A reminder
+                // URL without a valid HMAC token defeats the signed-link
+                // integrity guarantee, so we skip this signer rather than send
+                // an unauthenticated URL.
+                warn!(
+                    error = %e,
+                    email = %signer.email,
+                    signature_request_id = %signature_request.id,
+                    "Failed to build HMAC-signed signing URL; skipping reminder (refusing to emit unsigned link)"
+                );
+                continue;
+            }
         };
 
         if let Err(e) = state
