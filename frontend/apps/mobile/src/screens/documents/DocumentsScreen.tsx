@@ -50,32 +50,38 @@ const AUDIENCE_OPTIONS: ReadonlyArray<{
   { value: 'public', label: 'Public', color: '#047857', bg: '#d1fae5', icon: '🌍' },
 ] as const;
 
-/** Subset of `Document` returned by `GET /api/v1/documents`. */
+/**
+ * Item shape of `GET /api/v1/documents` (`DocumentSummary` on the server).
+ *
+ * Fields mirror the backend exactly: `title` (not `name`), `file_name`
+ * (not `file_path`), `mime_type` (not `content_type`), and `created_at`
+ * (the summary has no separate upload timestamp). The summary carries no
+ * `access_scope` or `status` — those live on the document detail/permissions
+ * endpoints, not the list.
+ */
 interface ApiDocument {
   id: string;
-  name: string;
-  file_path?: string | null;
-  size_bytes?: number | null;
-  content_type?: string | null;
-  uploaded_at?: string | null;
+  title: string;
+  category: string;
+  file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  folder_id?: string | null;
   created_at: string;
-  /** RLS-enforced audience scope (gap-7a-3). */
-  access_scope?: AccessScope;
-  /** Publication status: absent means published (backward compat). */
-  status?: DocumentStatus;
 }
 
 interface ApiDocumentListResponse {
   documents: ApiDocument[];
+  count?: number;
   total?: number;
 }
 
 function pickDocumentType(d: ApiDocument): DocumentType {
-  const ct = (d.content_type ?? '').toLowerCase();
-  const name = d.name.toLowerCase();
-  if (ct.includes('pdf') || name.endsWith('.pdf')) return 'pdf';
-  if (ct.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/.test(name)) return 'image';
-  if (ct.includes('spreadsheet') || ct.includes('excel') || /\.(xlsx?|csv)$/.test(name))
+  const mime = (d.mime_type ?? '').toLowerCase();
+  const fileName = (d.file_name ?? d.title).toLowerCase();
+  if (mime.includes('pdf') || fileName.endsWith('.pdf')) return 'pdf';
+  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/.test(fileName)) return 'image';
+  if (mime.includes('spreadsheet') || mime.includes('excel') || /\.(xlsx?|csv)$/.test(fileName))
     return 'spreadsheet';
   return 'document';
 }
@@ -83,16 +89,14 @@ function pickDocumentType(d: ApiDocument): DocumentType {
 function toUiDocument(d: ApiDocument): Document {
   return {
     id: d.id,
-    name: d.name,
+    name: d.title,
     type: pickDocumentType(d),
     size: d.size_bytes ?? undefined,
     createdAt: d.created_at,
-    updatedAt: d.uploaded_at ?? d.created_at,
-    parentId: null,
-    downloadUrl: d.file_path ?? undefined,
+    updatedAt: d.created_at,
+    parentId: d.folder_id ?? null,
+    downloadUrl: undefined,
     children: undefined,
-    accessScope: d.access_scope,
-    status: d.status,
   };
 }
 

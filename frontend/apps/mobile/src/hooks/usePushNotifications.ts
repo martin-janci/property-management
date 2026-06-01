@@ -231,9 +231,12 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       deviceName: Device.deviceName ?? undefined,
     };
 
+    // `apiRequest` serialises the body itself — pass the object, not a string,
+    // otherwise the payload is JSON-encoded twice and the server sees a quoted
+    // string instead of an object.
     await apiRequest<PushTokenResponse>('/api/v1/users/me/push-tokens', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body,
     });
   };
 
