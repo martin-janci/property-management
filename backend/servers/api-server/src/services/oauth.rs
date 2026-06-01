@@ -614,15 +614,25 @@ impl OAuthService {
     // ==================== Token Operations ====================
 
     /// Validate and introspect an access token.
+    /// Introspect a token on behalf of an authenticated client.
+    ///
+    /// `authenticated_client_id` is the client that authenticated to the
+    /// introspection endpoint. RFC 7662 §2.2 lets the server tailor the
+    /// response to the requester; we bind the metadata to the calling client so
+    /// one client cannot enumerate another client's token contents (scopes,
+    /// subject, expiry). A token that belongs to a different client is reported
+    /// as `inactive` — indistinguishable from an unknown/expired token, which
+    /// also avoids leaking token existence across client boundaries.
     pub async fn introspect_token(
         &self,
         token: &str,
+        authenticated_client_id: &str,
     ) -> Result<IntrospectionResponse, OAuthServiceError> {
         let token_hash = self.hash_token(token);
 
         // Try access token first
         if let Some(access_token) = self.repo.find_access_token_by_hash(&token_hash).await? {
-            if !access_token.is_valid() {
+            if !access_token.is_valid() || access_token.client_id != authenticated_client_id {
                 return Ok(IntrospectionResponse::inactive());
             }
 
@@ -640,7 +650,7 @@ impl OAuthService {
 
         // Try refresh token
         if let Some(refresh_token) = self.repo.find_refresh_token_by_hash(&token_hash).await? {
-            if !refresh_token.is_valid() {
+            if !refresh_token.is_valid() || refresh_token.client_id != authenticated_client_id {
                 return Ok(IntrospectionResponse::inactive());
             }
 
@@ -659,21 +669,37 @@ impl OAuthService {
         Ok(IntrospectionResponse::inactive())
     }
 
-    /// Revoke a token.
+    /// Revoke a token on behalf of an authenticated client.
+    ///
+    /// `authenticated_client_id` is the client that authenticated to the
+    /// revocation endpoint. RFC 7009 §2.1 requires that the server "first
+    /// validate the client credentials ... and then verify whether the token
+    /// was issued to the client making the revocation request." A token that
+    /// belongs to a different client is left untouched — this closes the
+    /// unauthenticated cross-client revocation / DoS hole where any party that
+    /// learned a token could revoke it. Returning `Ok(())` regardless keeps the
+    /// RFC-mandated behaviour of not disclosing whether the token existed.
     pub async fn revoke_token(
         &self,
         token: &str,
         _token_type_hint: Option<&str>,
+        authenticated_client_id: &str,
     ) -> Result<(), OAuthServiceError> {
         let token_hash = self.hash_token(token);
 
-        // Try to revoke as access token
-        if self.repo.revoke_access_token_by_hash(&token_hash).await? {
+        // Try to revoke as access token — only if it belongs to this client.
+        if let Some(access_token) = self.repo.find_access_token_by_hash(&token_hash).await? {
+            if access_token.client_id == authenticated_client_id {
+                self.repo.revoke_access_token_by_hash(&token_hash).await?;
+            }
             return Ok(());
         }
 
-        // Try to revoke as refresh token
-        if self.repo.revoke_refresh_token_by_hash(&token_hash).await? {
+        // Try to revoke as refresh token — only if it belongs to this client.
+        if let Some(refresh_token) = self.repo.find_refresh_token_by_hash(&token_hash).await? {
+            if refresh_token.client_id == authenticated_client_id {
+                self.repo.revoke_refresh_token_by_hash(&token_hash).await?;
+            }
             return Ok(());
         }
 

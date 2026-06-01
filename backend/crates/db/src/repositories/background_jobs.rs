@@ -369,14 +369,32 @@ impl BackgroundJobRepository {
         Ok(jobs)
     }
 
-    /// Reset stuck jobs back to pending.
+    /// Reset stuck jobs, honoring the per-job retry budget.
+    ///
+    /// A job is "stuck" when it has been `running` longer than
+    /// `timeout_minutes`. `claim_background_job` already incremented `attempts`
+    /// when the job was claimed, so the comparison is against the attempts
+    /// already consumed:
+    ///
+    /// - jobs that still have budget (`attempts < max_attempts`) are reset to
+    ///   `pending` so a healthy worker can pick them up again;
+    /// - jobs that have exhausted their budget (`attempts >= max_attempts`) are
+    ///   routed to the terminal `timed_out` state with `completed_at` set, so a
+    ///   job that hangs on every run can no longer loop forever.
+    ///
+    /// Returns the total number of stuck jobs that were transitioned (reset +
+    /// timed out).
     pub async fn reset_stuck_jobs(&self, timeout_minutes: i32) -> Result<i64, SqlxError> {
         let result = sqlx::query(
             r#"
             UPDATE background_jobs
-            SET status = 'pending',
-                worker_id = NULL,
-                started_at = NULL,
+            SET status = CASE
+                    WHEN attempts < max_attempts THEN 'pending'::background_job_status
+                    ELSE 'timed_out'::background_job_status
+                END,
+                worker_id = CASE WHEN attempts < max_attempts THEN NULL ELSE worker_id END,
+                started_at = CASE WHEN attempts < max_attempts THEN NULL ELSE started_at END,
+                completed_at = CASE WHEN attempts < max_attempts THEN completed_at ELSE NOW() END,
                 error_message = 'Job reset due to timeout'
             WHERE status = 'running'
               AND started_at < NOW() - ($1 || ' minutes')::INTERVAL

@@ -1028,8 +1028,13 @@ mod refresh_rotation {
         // Obtain an initial refresh token via the full auth flow.
         let (_at, rt) = auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
-        // Explicitly revoke the refresh token via RFC 7009.
-        let revoke_body = form_body(&[("token", &rt), ("token_type_hint", "refresh_token")]);
+        // Explicitly revoke the refresh token via RFC 7009 (client-authenticated).
+        let revoke_body = form_body(&[
+            ("token", &rt),
+            ("token_type_hint", "refresh_token"),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
         let revoke_resp = app
             .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
             .await;
@@ -1415,8 +1420,13 @@ mod audit_trail {
             .expect("access_token")
             .to_string();
 
-        // Revoke the access token (RFC 7009)
-        let revoke_body = form_body(&[("token", &oauth_at), ("token_type_hint", "access_token")]);
+        // Revoke the access token (RFC 7009, client-authenticated)
+        let revoke_body = form_body(&[
+            ("token", &oauth_at),
+            ("token_type_hint", "access_token"),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
         let revoke_resp = app
             .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
             .await;
@@ -1487,8 +1497,13 @@ mod audit_trail {
             .expect("refresh_token")
             .to_string();
 
-        // Revoke the refresh token via RFC 7009.
-        let revoke_body = form_body(&[("token", &oauth_rt), ("token_type_hint", "refresh_token")]);
+        // Revoke the refresh token via RFC 7009 (client-authenticated).
+        let revoke_body = form_body(&[
+            ("token", &oauth_rt),
+            ("token_type_hint", "refresh_token"),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
         let revoke_resp = app
             .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
             .await;
@@ -1896,8 +1911,13 @@ mod provider_security {
         let (oauth_at, _rt) =
             auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
-        // Revoke the access token via RFC 7009
-        let revoke_body = form_body(&[("token", &oauth_at), ("token_type_hint", "access_token")]);
+        // Revoke the access token via RFC 7009 (client-authenticated)
+        let revoke_body = form_body(&[
+            ("token", &oauth_at),
+            ("token_type_hint", "access_token"),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
         let revoke_resp = app
             .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
             .await;
@@ -1940,8 +1960,13 @@ mod provider_security {
         let (_at, rt) =
             auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
-        // Revoke the refresh token via RFC 7009
-        let revoke_body = form_body(&[("token", &rt), ("token_type_hint", "refresh_token")]);
+        // Revoke the refresh token via RFC 7009 (client-authenticated)
+        let revoke_body = form_body(&[
+            ("token", &rt),
+            ("token_type_hint", "refresh_token"),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
         let revoke_resp = app
             .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
             .await;
@@ -2481,6 +2506,159 @@ mod provider_security {
             err["error"], "invalid_client",
             "error must be invalid_client for deactivated client, got {}",
             err
+        );
+    }
+
+    // ── C. Revocation endpoint authentication (#823 / RFC 7009 §2.1) ─────────
+
+    /// The revocation endpoint must require client authentication. An
+    /// unauthenticated caller (no client_id / client_secret) must be rejected
+    /// with 401 and MUST NOT revoke the token. Before the fix the endpoint took
+    /// any token from any caller and revoked it — a trivial unauthenticated DoS.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_revoke_without_client_auth_is_rejected_and_no_op(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        let (oauth_at, _rt) =
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+
+        // Revoke WITHOUT any client credentials.
+        let revoke_body = form_body(&[("token", &oauth_at), ("token_type_hint", "access_token")]);
+        let resp = app
+            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::UNAUTHORIZED,
+            "unauthenticated revoke must return 401. body={}",
+            resp.text()
+        );
+
+        // The token must still be active — the unauthenticated call must be a
+        // no-op, not a successful revocation.
+        let introspect_body = form_body(&[
+            ("token", &oauth_at),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
+        let intro = app
+            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
+            .await
+            .json_value();
+        assert_eq!(
+            intro["active"], true,
+            "token must remain active after an unauthenticated revoke attempt, got {}",
+            intro
+        );
+    }
+
+    /// A client must not be able to revoke another client's token. The
+    /// revocation endpoint authenticates the caller, but the token belongs to a
+    /// different client, so the revoke must be a no-op (200 per RFC 7009, but
+    /// the victim token stays active).
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_revoke_cross_client_token_is_no_op(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+
+        // Victim client issues a token.
+        let (victim_id, victim_secret, victim_redirect) = seed_confidential_client(&pool).await;
+        let (victim_at, _rt) =
+            auth_flow_confidential(&app, &user_at, &victim_id, &victim_secret, &victim_redirect)
+                .await;
+
+        // Attacker client authenticates with its OWN valid credentials and tries
+        // to revoke the victim's token.
+        let (attacker_id, attacker_secret, _attacker_redirect) =
+            seed_confidential_client(&pool).await;
+        let revoke_body = form_body(&[
+            ("token", &victim_at),
+            ("token_type_hint", "access_token"),
+            ("client_id", &attacker_id),
+            ("client_secret", &attacker_secret),
+        ]);
+        let resp = app
+            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::OK,
+            "RFC 7009 returns 200 even when the token is not the caller's. body={}",
+            resp.text()
+        );
+
+        // Victim token must still be active — the cross-client revoke is a no-op.
+        let introspect_body = form_body(&[
+            ("token", &victim_at),
+            ("client_id", &victim_id),
+            ("client_secret", &victim_secret),
+        ]);
+        let intro = app
+            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
+            .await
+            .json_value();
+        assert_eq!(
+            intro["active"], true,
+            "another client must not be able to revoke this token, got {}",
+            intro
+        );
+    }
+
+    /// Introspection must be bound to the authenticating client. A client that
+    /// authenticates correctly but introspects a token belonging to a different
+    /// client must get `active=false` (RFC 7662 §2.2) — no cross-client metadata
+    /// leak (scope / sub / expiry).
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_introspect_cross_client_token_reports_inactive(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (user_at, _) = create_authenticated_user(&app, &user).await;
+
+        // Owner client issues a token.
+        let (owner_id, owner_secret, owner_redirect) = seed_confidential_client(&pool).await;
+        let (owner_at, _rt) =
+            auth_flow_confidential(&app, &user_at, &owner_id, &owner_secret, &owner_redirect).await;
+
+        // Sanity: the owner sees its own token as active.
+        let owner_introspect = form_body(&[
+            ("token", &owner_at),
+            ("client_id", &owner_id),
+            ("client_secret", &owner_secret),
+        ]);
+        let owner_intro = app
+            .execute(form_request("/api/v1/oauth/introspect", &owner_introspect))
+            .await
+            .json_value();
+        assert_eq!(
+            owner_intro["active"], true,
+            "owner must see its own token active, got {}",
+            owner_intro
+        );
+
+        // A different (validly authenticated) client introspects the same token.
+        let (other_id, other_secret, _other_redirect) = seed_confidential_client(&pool).await;
+        let other_introspect = form_body(&[
+            ("token", &owner_at),
+            ("client_id", &other_id),
+            ("client_secret", &other_secret),
+        ]);
+        let other_intro = app
+            .execute(form_request("/api/v1/oauth/introspect", &other_introspect))
+            .await
+            .json_value();
+        assert_eq!(
+            other_intro["active"], false,
+            "a token belonging to another client must introspect as inactive, got {}",
+            other_intro
+        );
+        assert!(
+            other_intro["scope"].is_null() && other_intro["sub"].is_null(),
+            "no token metadata may leak across clients, got {}",
+            other_intro
         );
     }
 }
