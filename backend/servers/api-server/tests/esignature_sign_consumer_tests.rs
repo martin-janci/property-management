@@ -21,6 +21,7 @@
 //! once (LazyLock); we pin that secret here and mint tokens with a provider
 //! that shares it, so server-side verification matches.
 
+#[allow(dead_code)]
 mod common;
 
 use std::time::Duration;
@@ -28,7 +29,7 @@ use std::time::Duration;
 use axum::http::StatusCode;
 use common::TestApp;
 use db::repositories::ESignatureNonceRepository;
-use integrations::{LightweightConfig, LightweightProvider, SigningToken};
+use integrations::{LightweightConfig, LightweightProvider};
 use sqlx::PgPool;
 use uuid::Uuid;
 
