@@ -62,9 +62,7 @@ export function extractNotificationData(
  * Safe to call unconditionally on startup; failures are swallowed so a missing
  * launch notification never blocks app boot.
  */
-export async function consumeLaunchNotification(
-  handler: LaunchNotificationHandler
-): Promise<void> {
+export async function consumeLaunchNotification(handler: LaunchNotificationHandler): Promise<void> {
   try {
     const response = await Notifications.getLastNotificationResponseAsync();
     const data = extractNotificationData(response);
