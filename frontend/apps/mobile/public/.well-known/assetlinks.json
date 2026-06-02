@@ -4,9 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "three.two.bit.ppt.management",
-      "sha256_cert_fingerprints": [
-        "__ANDROID_SIGNING_SHA256__"
-      ]
+      "sha256_cert_fingerprints": ["__ANDROID_SIGNING_SHA256__"]
     }
   }
 ]
