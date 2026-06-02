@@ -1545,16 +1545,18 @@
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "#920"
+        "#920",
+        "#944"
       ],
       "evidence": [
-        "new GitHub issue #920 (OPEN, no labels): Announcement targeting not enforced on read (intra-org disclosure) — security-relevant, awaits triage label"
+        "new GitHub issue #920 (OPEN, no labels): Announcement targeting not enforced on read (intra-org disclosure) — security-relevant, awaits triage label",
+        "resolved: GitHub issue #920 closed (#944)"
       ],
       "files": [],
       "created_at": "2026-06-01",
-      "updated_at": "2026-06-01",
+      "updated_at": "2026-06-02",
       "plan": null
     },
     {
@@ -1641,16 +1643,18 @@
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "#751"
+        "#751",
+        "#942"
       ],
       "evidence": [
-        "Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings"
+        "Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings",
+        "resolved: GitHub issue #751 closed (#942)"
       ],
       "files": [],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-02",
       "plan": null
     },
     {
@@ -1659,16 +1663,18 @@
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "#752"
+        "#752",
+        "#929"
       ],
       "evidence": [
-        "Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings"
+        "Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings",
+        "resolved: GitHub issue #752 closed (#929)"
       ],
       "files": [],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-02",
       "plan": null
     },
     {
@@ -1695,16 +1701,18 @@
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "#756"
+        "#756",
+        "#934"
       ],
       "evidence": [
-        "Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider"
+        "Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider",
+        "resolved: GitHub issue #756 closed (#934)"
       ],
       "files": [],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-02",
       "plan": null
     },
     {
@@ -1713,16 +1721,18 @@
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "#761"
+        "#761",
+        "#936"
       ],
       "evidence": [
-        "Issue #761 (no labels, OPEN): Current dev review: Epic 84 E-Signature & Leases"
+        "Issue #761 (no labels, OPEN): Current dev review: Epic 84 E-Signature & Leases",
+        "resolved: GitHub issue #761 closed (#936)"
       ],
       "files": [],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-02",
       "plan": null
     },
     {
@@ -1731,16 +1741,18 @@
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "#763"
+        "#763",
+        "#935"
       ],
       "evidence": [
-        "Issue #763 (no labels, OPEN): Current dev review: Reality Server & Inquiries"
+        "Issue #763 (no labels, OPEN): Current dev review: Reality Server & Inquiries",
+        "resolved: GitHub issue #763 closed (#935)"
       ],
       "files": [],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-02",
       "plan": null
     },
     {
@@ -1785,16 +1797,18 @@
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "#767"
+        "#767",
+        "#943"
       ],
       "evidence": [
-        "Issue #767 (no labels, OPEN): Current dev review: Mobile RN Property Management app"
+        "Issue #767 (no labels, OPEN): Current dev review: Mobile RN Property Management app",
+        "resolved: GitHub issue #767 closed (#943)"
       ],
       "files": [],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-02",
       "plan": null
     },
     {
@@ -1803,16 +1817,18 @@
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "#768"
+        "#768",
+        "#930"
       ],
       "evidence": [
-        "Issue #768 (no labels, OPEN): Current dev review: Admin-web features (10B)"
+        "Issue #768 (no labels, OPEN): Current dev review: Admin-web features (10B)",
+        "resolved: GitHub issue #768 closed (#930)"
       ],
       "files": [],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-02",
       "plan": null
     },
     {
@@ -2061,6 +2077,114 @@
       ],
       "created_at": "2026-05-24",
       "updated_at": "2026-05-24",
+      "plan": null
+    },
+    {
+      "id": "refactor-oauth-integration-tests-hot",
+      "title": "Stabilize oauth_integration_tests churn — heavy edits across 3 OAuth fix PRs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #930",
+        "PR #933"
+      ],
+      "evidence": [
+        "churn-hotspot this run: backend/servers/api-server/tests/oauth_integration_tests.rs — touched by PR #930 (audit OAuth client mutations) and PR #933 (introspect/revoke hardening)"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-02",
+      "plan": null
+    },
+    {
+      "id": "refactor-services-oauth-rs-hot",
+      "title": "Watch services/oauth.rs churn after introspect/revoke hardening (#933)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #933"
+      ],
+      "evidence": [
+        "churn-hotspot this run: backend/servers/api-server/src/services/oauth.rs — touched by PR #933 (OAuth introspect/revoke hardening, scheduler retry budget). 920 lines."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-02",
+      "plan": null
+    },
+    {
+      "id": "refactor-routes-oauth-rs-hot",
+      "title": "Watch routes/oauth.rs churn after audit-log + hardening PRs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #930",
+        "PR #933"
+      ],
+      "evidence": [
+        "churn-hotspot this run: backend/servers/api-server/src/routes/oauth.rs — touched by PR #930 (audit OAuth mutations w/ reason) and PR #933 (introspect/revoke hardening). 1212 lines."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-02",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-943-mobile-dev-review-tail",
+      "title": "Mobile RN dev-review tail (#943) shipped without test coverage",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #943",
+        "issue #767"
+      ],
+      "evidence": [
+        "PR #943 fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, screens/announcements/AnnouncementsScreen.tsx, screens/documents/DocumentsScreen.tsx, screens/neighbors/NeighborsScreen.tsx) merged with no jest/RN Testing Library tests in diff. Second hotfix-no-test on the same mobile RN files in 14 days (cf. test-gap-hotfix-no-test-pr-918-mobile-dev-review)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/App.tsx",
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx"
+      ],
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-02",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-939-deploy-server-scopes",
+      "title": "deploy-server OIDC scope mapping (#939) shipped without unit test for derive_oidc_scopes",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #939"
+      ],
+      "evidence": [
+        "PR #939 fix(deploy-server): grant refs/heads/dev the release:deploy scope — extracted derive_oidc_scopes() in backend/servers/deploy-server/src/infra/audit.rs and added a new branch for refs/heads/dev with no rustdoc-test or unit test exercising the mapping table. PR body itself flags: dev token now target-agnostic for release:deploy → can request target: prod; tightening tracked as follow-up.",
+        "Latent scope-escalation note from PR body: derive_oidc_scopes is target-agnostic for release:deploy; dev/main can call any target. Hardening tracked as follow-up."
+      ],
+      "files": [
+        "backend/servers/deploy-server/src/infra/audit.rs"
+      ],
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-02",
       "plan": null
     }
   ]

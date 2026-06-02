@@ -1,0 +1,172 @@
+{
+  "generated": "2026-06-02T03:13:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-01T03:30:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 churn this run (3 substantive commits): backend/servers/api-server/tests/oauth_integration_tests.rs. PR #930 (audit OAuth client mutations), PR #933 (scheduler retry budget + OAuth introspect/revoke hardening). Already runs_seen=1 from 2026-05-28."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-01T03:30:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 churn this run (2 substantive commits): backend/servers/api-server/src/services/oauth.rs (920 LOC). Touched by PR #933 (introspect/revoke hardening). First-time hotspot."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/oauth.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-01T03:30:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 churn this run (2 substantive commits): backend/servers/api-server/src/routes/oauth.rs (1212 LOC). Touched by PR #930 + PR #933. First-time hotspot."
+    },
+    {
+      "id": "hotfix-no-test-pr-943",
+      "type": "hotfix-no-test",
+      "source": "PR #943",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #943 fix(mobile): address dev-review findings (#767) merged 2026-06-01T20:02Z — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, screens/announcements/AnnouncementsScreen.tsx, screens/documents/DocumentsScreen.tsx, screens/neighbors/NeighborsScreen.tsx). PR diff contains no test/spec/__tests__ files. This is the SECOND hotfix-no-test PR against the same mobile-RN surface in 14d (cf. hotfix-no-test-pr-918)."
+    },
+    {
+      "id": "hotfix-no-test-pr-939",
+      "type": "hotfix-no-test",
+      "source": "PR #939",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #939 fix(deploy-server): grant refs/heads/dev the release:deploy scope merged 2026-06-01T19:07Z — single file: backend/servers/deploy-server/src/infra/audit.rs (+74/-12). Extracted derive_oidc_scopes() + added refs/heads/dev branch; no unit test for the scope mapping. PR body acknowledges latent scope-escalation follow-up: dev token can now request target: prod under release:deploy."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-02.md && head -1 …",
+      "observed": "# 2026-06-02",
+      "expected": "# 2026-06-02"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state vs HEAD diff",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog",
+      "observed": "99 unique of 99",
+      "expected": "all unique"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal IDs not in prior seen unless cumulative+delta=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "max=6, 0 decay candidates >14d",
+      "expected": "<=8, decay applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial-pass annotation",
+      "observed": "0 new plans this run",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans this run, each meets gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ in staged set",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures honestly reported",
+      "observed": "no phase failures this run",
+      "expected": "all listed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "all prior plans accounted for",
+      "expected": "no silent deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "plans/_archive monotonic",
+      "observed": "now=7 was=7",
+      "expected": "now>=was"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3 with type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 ran?)",
+      "observed": "Phase 1.6 skipped this run — gate is no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}

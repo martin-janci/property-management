@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-01T03:30:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 929,
+  "last_run_iso": "2026-06-02T03:13:00Z",
+  "last_run_ms": 240000,
+  "last_pr_seen": 947,
   "last_issue_seen": 920,
-  "last_commit_sha": "e7b51076c58b7853b7b474a250230ad981890d68",
+  "last_commit_sha": "e6cdf221a7d995feaf17599092972147e0006a5a",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -113,9 +113,9 @@
       "recent_churn": 193
     },
     "backend/servers/api-server/tests/oauth_integration_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-28",
-      "recent_churn": 1096
+      "runs_seen": 2,
+      "last_seen": "2026-06-02",
+      "recent_churn": 378
     },
     "backend/servers/api-server/tests/ws_integration_tests.rs": {
       "runs_seen": 1,
@@ -156,6 +156,16 @@
       "runs_seen": 1,
       "last_seen": "2026-05-30",
       "recent_churn": 75
+    },
+    "backend/servers/api-server/src/services/oauth.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-02",
+      "recent_churn": 40
+    },
+    "backend/servers/api-server/src/routes/oauth.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-02",
+      "recent_churn": 161
     }
   },
   "seen_signals": [
@@ -168,9 +178,11 @@
     "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/integrations/webhook.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/reports.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/insurance_cross_tenant_idor_tests.rs",
@@ -241,6 +253,8 @@
     "hotfix-no-test-pr-918",
     "hotfix-no-test-pr-921",
     "hotfix-no-test-pr-923",
+    "hotfix-no-test-pr-939",
+    "hotfix-no-test-pr-943",
     "lag-warning-2026-05-23",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
@@ -306,7 +320,7 @@
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-05-23",
+    "api-handlers": "2026-06-02",
     "api-core": "2026-05-29",
     "reality-server": "2026-05-26",
     "ppt-web-ui": "2026-05-27",
@@ -316,8 +330,8 @@
     "mobile-native-kmp": "2026-05-26"
   },
   "stats": {
-    "runs": 18,
-    "vectors_created": 91,
+    "runs": 19,
+    "vectors_created": 96,
     "plans_created": 7,
     "quiet_days": 0,
     "auto_fix_count": 0
