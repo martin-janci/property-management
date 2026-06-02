@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 import { createDeepLink } from '../qrcode/DeepLinkHandler';
 import { colors } from '../screens/shared/screenStyles';
+import { consumeLaunchNotification, syncBadgeFromData } from '../services/backgroundNotifications';
 import { apiRequest } from './useApi';
 
 // Configure notification handling
@@ -72,6 +73,9 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notif: Notifications.Notification) => {
         setNotification(notif);
+        // Mirror any badge count carried by the (possibly FCM data-only)
+        // payload onto the app icon — iOS does not auto-apply it.
+        void syncBadgeFromData(notif.request.content.data);
       }
     );
 
@@ -82,6 +86,14 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         handleNotificationNavigation(data);
       }
     );
+
+    // Cold-start: if the app was launched from a killed state by tapping a
+    // push, the response listener above never fires. Route that launch
+    // notification through the same handler once on mount.
+    void consumeLaunchNotification((data) => {
+      void syncBadgeFromData(data);
+      handleNotificationNavigation(data as Record<string, unknown>);
+    });
 
     // Check if already registered
     checkRegistrationStatus();
