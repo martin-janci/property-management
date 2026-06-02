@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
 import { useOfflineSupport, usePushNotifications } from './hooks';
+import { deepLinkManager, type ParsedDeepLink } from './qrcode';
 import { colors } from './screens/shared/screenStyles';
 import './i18n'; // Initialize i18n
 import {
@@ -85,6 +86,44 @@ type Screen =
   | 'LeaseDetail'
   | 'More';
 
+/**
+ * gap-85-3: translate a parsed deep link (custom scheme OR universal link)
+ * into the in-app screen name + params understood by `handleNavigate`.
+ *
+ * The DeepLinkHandler route table keys detail params as `id`; the App screens
+ * expect domain-specific param names (`announcementId`, `voteId`,
+ * `documentId`). When an `:id` is present we route to the matching *Detail
+ * screen; otherwise we land on the list screen.
+ */
+function resolveDeepLinkTarget(
+  link: ParsedDeepLink
+): { screen: Screen; params?: Record<string, unknown> } | null {
+  if (!link.success || !link.screen) {
+    return null;
+  }
+  const id = link.params?.id;
+  switch (link.screen) {
+    case 'Announcements':
+      return id
+        ? { screen: 'AnnouncementDetail', params: { announcementId: id } }
+        : { screen: 'Announcements' };
+    case 'Voting':
+      return id ? { screen: 'VoteDetail', params: { voteId: id } } : { screen: 'Voting' };
+    case 'Documents':
+      return id
+        ? { screen: 'DocumentDetail', params: { documentId: id } }
+        : { screen: 'Documents' };
+    case 'Messages':
+      return id ? { screen: 'ThreadDetail', params: { threadId: id } } : { screen: 'Messages' };
+    case 'WidgetSettings':
+      return { screen: 'Settings' };
+    default:
+      // Faults, ReportFault, Outages, Settings, Dashboard map 1:1. Pass any
+      // remaining route params through verbatim.
+      return { screen: link.screen as Screen, params: link.params };
+  }
+}
+
 function MainApp() {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
@@ -120,6 +159,26 @@ function MainApp() {
     setCurrentScreen(screen as Screen);
     setScreenParams(params);
   }, []);
+
+  // gap-85-3: route incoming deep links (custom scheme + universal/App Links).
+  // The manager handles the cold-start initial URL, runtime `url` events, and
+  // queues auth-required links until the user is authenticated.
+  useEffect(() => {
+    const unsubscribe = deepLinkManager.addHandler((link) => {
+      const target = resolveDeepLinkTarget(link);
+      if (target) {
+        handleNavigate(target.screen, target.params);
+      }
+    });
+    void deepLinkManager.initialize();
+    return unsubscribe;
+  }, [handleNavigate]);
+
+  // Keep the manager's auth gate in sync so auth-required links queued while
+  // logged out are dispatched the moment the user authenticates.
+  useEffect(() => {
+    deepLinkManager.setAuthenticated(isAuthenticated);
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
