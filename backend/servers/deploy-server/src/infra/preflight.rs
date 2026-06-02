@@ -166,6 +166,12 @@ const REQUIRED_ENV: &[(&str, EnvCheck)] = &[
     // — exactly the up-front-failure contract this validator exists to
     // uphold.
     ("PPT_PM_CLIENT_SECRET", EnvCheck::MinLen(32)),
+    // E-signature secrets: `build_service_envs` requires both (token >= 32
+    // chars, webhook non-empty) and panics the api container without them.
+    // Validate up-front so a missing ESIGN secret fails preflight instead of
+    // crash-looping the deploy (issue #951 follow-up).
+    ("PPT_ESIGN_TOKEN_SECRET", EnvCheck::MinLen(32)),
+    ("PPT_ESIGN_WEBHOOK_SECRET", EnvCheck::NonEmpty),
 ];
 
 #[derive(Copy, Clone)]
