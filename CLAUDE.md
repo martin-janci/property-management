@@ -58,7 +58,7 @@
 | Language | Rust (edition 2021, `rust-version = 1.75`) |
 | Async runtime | Tokio 1.35 |
 | Web framework | Axum 0.8 + axum-extra 0.12, Tower 0.5 / tower-http 0.6 |
-| Database | PostgreSQL 16+ (RLS), SQLx 0.8 |
+| Database | PostgreSQL 16+ (RLS), SQLx 0.9 |
 | Cache | Redis 1.2 (sessions, pub/sub) |
 | Auth | `jsonwebtoken` 9.2 + `argon2` 0.5 (token TTLs in `docs/api/README.md`) |
 | API | OpenAPI via `utoipa` 5 (+ `utoipa-swagger-ui` 9), WebSocket |
