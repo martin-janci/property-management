@@ -386,13 +386,20 @@ function MainApp() {
       </View>
 
       {/* Sync progress toast */}
-      {isSyncingWithProgress && showSyncToast && syncProgress && (
-        <SyncProgressToast
-          progress={syncProgress}
-          onRetry={handleRetrySync}
-          onDismiss={() => setShowSyncToast(false)}
-        />
-      )}
+      <SyncProgressToast
+        visible={isSyncingWithProgress || showSyncToast}
+        progress={
+          syncProgress?.total
+            ? Math.round(((syncProgress?.current || 0) / syncProgress.total) * 100)
+            : 0
+        }
+        total={syncProgress?.total || 0}
+        current={syncProgress?.current || 0}
+        failed={syncProgress?.failed || 0}
+        isComplete={syncProgress?.isComplete || false}
+        onDismiss={() => setShowSyncToast(false)}
+        onRetry={handleRetrySync}
+      />
 
       <StatusBar style="auto" />
     </View>
@@ -400,37 +407,32 @@ function MainApp() {
 }
 
 interface MoreMenuProps {
-  onNavigate: (screen: string, params?: Record<string, unknown>) => void;
+  onNavigate: (screen: string) => void;
 }
 
-function MoreMenu({ onNavigate }: MoreMenuProps) {
-  const { t } = useTranslation();
-  const items: { icon: string; label: string; screen: string }[] = [
-    { icon: '📬', label: t('tabs.messages'), screen: 'Messages' },
-    { icon: '👥', label: t('tabs.neighbors'), screen: 'Neighbors' },
-    { icon: '🔔', label: t('tabs.notifications'), screen: 'Notifications' },
-    { icon: '📅', label: t('tabs.personMonths'), screen: 'PersonMonths' },
-    { icon: '⚠️', label: t('tabs.outages'), screen: 'Outages' },
-    { icon: '📰', label: t('tabs.newsFeed'), screen: 'News' },
-    { icon: '📝', label: t('tabs.forms'), screen: 'Forms' },
-    { icon: '🏢', label: t('tabs.buildings'), screen: 'Buildings' },
-    { icon: '📄', label: t('tabs.leases'), screen: 'Leases' },
-    { icon: '📊', label: t('tabs.meters'), screen: 'Meters' },
-    { icon: '👤', label: t('tabs.profile'), screen: 'Profile' },
-  ];
+const MORE_ITEMS: ReadonlyArray<{ icon: string; label: string; screen: string }> = [
+  { icon: '🔔', label: 'Notifications', screen: 'Notifications' },
+  { icon: '💬', label: 'Messages', screen: 'Messages' },
+  { icon: '🏘️', label: 'Neighbours', screen: 'Neighbors' },
+  { icon: '📏', label: 'Meters', screen: 'Meters' },
+  { icon: '👥', label: 'Person-months', screen: 'PersonMonths' },
+  { icon: '⚡', label: 'Outages', screen: 'Outages' },
+  { icon: '📰', label: 'News', screen: 'News' },
+  { icon: '📝', label: 'Forms', screen: 'Forms' },
+  { icon: '🏢', label: 'Buildings', screen: 'Buildings' },
+  { icon: '📑', label: 'Leases', screen: 'Leases' },
+  { icon: '👤', label: 'Profile', screen: 'Profile' },
+];
 
+function MoreMenu({ onNavigate }: MoreMenuProps) {
   return (
     <View style={moreStyles.container}>
       <View style={moreStyles.header}>
-        <Text style={moreStyles.title}>{t('tabs.more')}</Text>
-        <Text style={moreStyles.subtitle}>{t('tabs.moreSubtitle')}</Text>
+        <Text style={moreStyles.title}>More</Text>
+        <Text style={moreStyles.subtitle}>Everything else available in the app.</Text>
       </View>
-      {items.map((item) => (
-        <Pressable
-          key={item.screen}
-          style={moreStyles.row}
-          onPress={() => onNavigate(item.screen)}
-        >
+      {MORE_ITEMS.map((item) => (
+        <Pressable key={item.screen} style={moreStyles.row} onPress={() => onNavigate(item.screen)}>
           <Text style={moreStyles.rowIcon}>{item.icon}</Text>
           <Text style={moreStyles.rowLabel}>{item.label}</Text>
           <Text style={moreStyles.rowChevron}>›</Text>
