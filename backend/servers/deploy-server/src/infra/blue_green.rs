@@ -164,6 +164,24 @@ pub fn build_service_envs(
             "PPT_PM_CLIENT_SECRET must be at least 32 characters".into(),
         ));
     }
+    // E-signature secrets. api-server refuses to boot outside
+    // `RUST_ENV=development` without BOTH of these (see
+    // api-server/src/main.rs: `LightweightProvider::from_env()` panics
+    // without `ESIGN_TOKEN_SECRET`, and the next check panics without
+    // `ESIGN_WEBHOOK_SECRET`). Treat both as required so a deploy never
+    // crash-loops the api container on a fresh feature rollout.
+    let esign_token_secret = require("PPT_ESIGN_TOKEN_SECRET")?;
+    if esign_token_secret.len() < 32 {
+        return Err(crate::DeployError::Config(
+            "PPT_ESIGN_TOKEN_SECRET must be at least 32 characters".into(),
+        ));
+    }
+    let esign_webhook_secret = require("PPT_ESIGN_WEBHOOK_SECRET")?;
+    if esign_webhook_secret.is_empty() {
+        return Err(crate::DeployError::Config(
+            "PPT_ESIGN_WEBHOOK_SECRET must not be empty".into(),
+        ));
+    }
 
     // The `ppt-postgres` container is reachable by name from the
     // `ppt-<target>` bridge network once it's connected to that network
@@ -240,6 +258,8 @@ pub fn build_service_envs(
     let mut api_env = backend_env.clone();
     api_env.push(format!("TOTP_ENCRYPTION_KEY={totp_key}"));
     api_env.push(format!("INTEGRATION_ENCRYPTION_KEY={integration_key}"));
+    api_env.push(format!("ESIGN_TOKEN_SECRET={esign_token_secret}"));
+    api_env.push(format!("ESIGN_WEBHOOK_SECRET={esign_webhook_secret}"));
     api_env.push(format!("PLATFORM_HOST={platform_hosts}"));
 
     let mut reality_env = std::mem::take(&mut backend_env);
