@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
 import { useOfflineSupport, usePushNotifications } from './hooks';
+import { deepLinkManager, type ParsedDeepLink } from './qrcode';
 import { colors } from './screens/shared/screenStyles';
 import './i18n'; // Initialize i18n
 import {
@@ -85,6 +86,44 @@ type Screen =
   | 'LeaseDetail'
   | 'More';
 
+/**
+ * gap-85-3: translate a parsed deep link (custom scheme OR universal link)
+ * into the in-app screen name + params understood by `handleNavigate`.
+ *
+ * The DeepLinkHandler route table keys detail params as `id`; the App screens
+ * expect domain-specific param names (`announcementId`, `voteId`,
+ * `documentId`). When an `:id` is present we route to the matching *Detail
+ * screen; otherwise we land on the list screen.
+ */
+function resolveDeepLinkTarget(
+  link: ParsedDeepLink
+): { screen: Screen; params?: Record<string, unknown> } | null {
+  if (!link.success || !link.screen) {
+    return null;
+  }
+  const id = link.params?.id;
+  switch (link.screen) {
+    case 'Announcements':
+      return id
+        ? { screen: 'AnnouncementDetail', params: { announcementId: id } }
+        : { screen: 'Announcements' };
+    case 'Voting':
+      return id ? { screen: 'VoteDetail', params: { voteId: id } } : { screen: 'Voting' };
+    case 'Documents':
+      return id
+        ? { screen: 'DocumentDetail', params: { documentId: id } }
+        : { screen: 'Documents' };
+    case 'Messages':
+      return id ? { screen: 'ThreadDetail', params: { threadId: id } } : { screen: 'Messages' };
+    case 'WidgetSettings':
+      return { screen: 'Settings' };
+    default:
+      // Faults, ReportFault, Outages, Settings, Dashboard map 1:1. Pass any
+      // remaining route params through verbatim.
+      return { screen: link.screen as Screen, params: link.params };
+  }
+}
+
 function MainApp() {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
@@ -120,6 +159,26 @@ function MainApp() {
     setCurrentScreen(screen as Screen);
     setScreenParams(params);
   }, []);
+
+  // gap-85-3: route incoming deep links (custom scheme + universal/App Links).
+  // The manager handles the cold-start initial URL, runtime `url` events, and
+  // queues auth-required links until the user is authenticated.
+  useEffect(() => {
+    const unsubscribe = deepLinkManager.addHandler((link) => {
+      const target = resolveDeepLinkTarget(link);
+      if (target) {
+        handleNavigate(target.screen, target.params);
+      }
+    });
+    void deepLinkManager.initialize();
+    return unsubscribe;
+  }, [handleNavigate]);
+
+  // Keep the manager's auth gate in sync so auth-required links queued while
+  // logged out are dispatched the moment the user authenticates.
+  useEffect(() => {
+    deepLinkManager.setAuthenticated(isAuthenticated);
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -327,20 +386,13 @@ function MainApp() {
       </View>
 
       {/* Sync progress toast */}
-      <SyncProgressToast
-        visible={isSyncingWithProgress || showSyncToast}
-        progress={
-          syncProgress?.total
-            ? Math.round(((syncProgress?.current || 0) / syncProgress.total) * 100)
-            : 0
-        }
-        total={syncProgress?.total || 0}
-        current={syncProgress?.current || 0}
-        failed={syncProgress?.failed || 0}
-        isComplete={syncProgress?.isComplete || false}
-        onDismiss={() => setShowSyncToast(false)}
-        onRetry={handleRetrySync}
-      />
+      {isSyncingWithProgress && showSyncToast && syncProgress && (
+        <SyncProgressToast
+          progress={syncProgress}
+          onRetry={handleRetrySync}
+          onDismiss={() => setShowSyncToast(false)}
+        />
+      )}
 
       <StatusBar style="auto" />
     </View>
@@ -348,32 +400,37 @@ function MainApp() {
 }
 
 interface MoreMenuProps {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, params?: Record<string, unknown>) => void;
 }
 
-const MORE_ITEMS: ReadonlyArray<{ icon: string; label: string; screen: string }> = [
-  { icon: '🔔', label: 'Notifications', screen: 'Notifications' },
-  { icon: '💬', label: 'Messages', screen: 'Messages' },
-  { icon: '🏘️', label: 'Neighbours', screen: 'Neighbors' },
-  { icon: '📏', label: 'Meters', screen: 'Meters' },
-  { icon: '👥', label: 'Person-months', screen: 'PersonMonths' },
-  { icon: '⚡', label: 'Outages', screen: 'Outages' },
-  { icon: '📰', label: 'News', screen: 'News' },
-  { icon: '📝', label: 'Forms', screen: 'Forms' },
-  { icon: '🏢', label: 'Buildings', screen: 'Buildings' },
-  { icon: '📑', label: 'Leases', screen: 'Leases' },
-  { icon: '👤', label: 'Profile', screen: 'Profile' },
-];
-
 function MoreMenu({ onNavigate }: MoreMenuProps) {
+  const { t } = useTranslation();
+  const items: { icon: string; label: string; screen: string }[] = [
+    { icon: '📬', label: t('tabs.messages'), screen: 'Messages' },
+    { icon: '👥', label: t('tabs.neighbors'), screen: 'Neighbors' },
+    { icon: '🔔', label: t('tabs.notifications'), screen: 'Notifications' },
+    { icon: '📅', label: t('tabs.personMonths'), screen: 'PersonMonths' },
+    { icon: '⚠️', label: t('tabs.outages'), screen: 'Outages' },
+    { icon: '📰', label: t('tabs.newsFeed'), screen: 'News' },
+    { icon: '📝', label: t('tabs.forms'), screen: 'Forms' },
+    { icon: '🏢', label: t('tabs.buildings'), screen: 'Buildings' },
+    { icon: '📄', label: t('tabs.leases'), screen: 'Leases' },
+    { icon: '📊', label: t('tabs.meters'), screen: 'Meters' },
+    { icon: '👤', label: t('tabs.profile'), screen: 'Profile' },
+  ];
+
   return (
     <View style={moreStyles.container}>
       <View style={moreStyles.header}>
-        <Text style={moreStyles.title}>More</Text>
-        <Text style={moreStyles.subtitle}>Everything else available in the app.</Text>
+        <Text style={moreStyles.title}>{t('tabs.more')}</Text>
+        <Text style={moreStyles.subtitle}>{t('tabs.moreSubtitle')}</Text>
       </View>
-      {MORE_ITEMS.map((item) => (
-        <Pressable key={item.screen} style={moreStyles.row} onPress={() => onNavigate(item.screen)}>
+      {items.map((item) => (
+        <Pressable
+          key={item.screen}
+          style={moreStyles.row}
+          onPress={() => onNavigate(item.screen)}
+        >
           <Text style={moreStyles.rowIcon}>{item.icon}</Text>
           <Text style={moreStyles.rowLabel}>{item.label}</Text>
           <Text style={moreStyles.rowChevron}>›</Text>
