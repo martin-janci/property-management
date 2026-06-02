@@ -454,7 +454,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
       "depends_on": []

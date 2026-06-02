@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gap-80",
-  "selected_at": "2026-06-01T20:06:11Z",
+  "epic_prefix": "gap-85",
+  "selected_at": "2026-06-02T08:12:44Z",
   "last_action": "repick",
-  "reason": "prior target 'gap-6' exhausted; closest-to-done is 'gap-80' (open=4 claimable=2)",
+  "reason": "prior target 'gap-80' exhausted; closest-to-done is 'gap-85' (open=3 claimable=2)",
   "stats_at_selection": {
-    "open": 4,
+    "open": 3,
     "claimable": 2
   }
 }
