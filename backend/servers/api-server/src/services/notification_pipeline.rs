@@ -4,7 +4,7 @@
 //! - **2b-1** Channel infrastructure: `NotificationPipeline` + `DeliveryRequest` dispatch
 //! - **2b-2** Preference routing: `PreferenceRouter` checks per-user, per-channel settings
 //! - **2b-3** Delivery tracking: in-memory + logging; ready to swap for a DB adapter
-//! - **2b-4** Transport adapters: `SmtpEmailAdapter`, `FcmPushAdapter` (stub), `DbInAppAdapter`
+//! - **2b-4** Transport adapters: `SmtpEmailAdapter`, `FcmHttpAdapter`, `DbInAppAdapter`
 //! - **2b-5** Pipeline integration: `NotificationPipeline::dispatch` / `dispatch_to_users`
 //!
 //! ## Architecture
@@ -19,7 +19,7 @@
 //!    │
 //!    └─ For each enabled channel:
 //!         ├─ email  ─► impl EmailTransport (SmtpEmailAdapter)
-//!         ├─ push   ─► impl PushTransport  (FcmPushAdapter)
+//!         ├─ push   ─► impl PushTransport  (FcmHttpAdapter)
 //!         └─ in_app ─► impl InAppTransport (DbInAppAdapter)
 //!              │
 //!              ▼
@@ -100,74 +100,6 @@ impl EmailTransport for SmtpEmailAdapter {
             )
             .await
             .map_err(|e| NotificationError::EmailFailed(e.to_string()))
-    }
-}
-
-// ============================================================================
-// Story 2b-4b — Push transport adapter (FCM stub)
-// ============================================================================
-
-/// FCM / APNs push notification adapter.
-///
-/// **Current status:** stub that logs intent; a real FCM HTTP v1 or APNs
-/// implementation should replace `send_to_fcm` / `send_to_apns` in a
-/// follow-up PR without changing the trait boundary.
-#[derive(Clone, Default)]
-pub struct FcmPushAdapter {
-    /// FCM server key (None = disabled / not configured)
-    fcm_server_key: Option<String>,
-}
-
-impl FcmPushAdapter {
-    /// Create a new adapter.  Pass `None` to run in log-only (no real push) mode.
-    pub fn new(fcm_server_key: Option<String>) -> Self {
-        Self { fcm_server_key }
-    }
-
-    /// Load from environment variable `FCM_SERVER_KEY`.
-    pub fn from_env() -> Self {
-        Self::new(std::env::var("FCM_SERVER_KEY").ok())
-    }
-
-    /// Returns `true` when push delivery is enabled (FCM key is set).
-    pub fn is_configured(&self) -> bool {
-        self.fcm_server_key.is_some()
-    }
-}
-
-#[async_trait]
-impl PushTransport for FcmPushAdapter {
-    async fn send(
-        &self,
-        user_id: Uuid,
-        device_tokens: &[String],
-        notification: &Notification,
-    ) -> TransportResult {
-        if !self.is_configured() {
-            // Issue #484: previously returned Ok(()) which caused the
-            // pipeline to mark the delivery as `Sent`. Return the
-            // explicit `PushNotConfigured` error so callers see a
-            // `Skipped` outcome and `sent` counters are not inflated.
-            tracing::info!(
-                user_id = %user_id,
-                token_count = device_tokens.len(),
-                title = %notification.title,
-                category = %notification.category,
-                "[Epic 2B] Push notification (FCM not configured — skipped)"
-            );
-            return Err(NotificationError::PushNotConfigured);
-        }
-
-        // TODO (follow-up): call FCM HTTP v1 API for each device_token
-        // For now, log that we would send and return Ok.
-        tracing::info!(
-            user_id = %user_id,
-            token_count = device_tokens.len(),
-            title = %notification.title,
-            "[Epic 2B] Push notification queued (FCM stub — real send pending)"
-        );
-
-        Ok(())
     }
 }
 
@@ -705,15 +637,6 @@ mod tests {
         assert_eq!(SmtpEmailAdapter::parse_locale("de"), Locale::German);
         assert_eq!(SmtpEmailAdapter::parse_locale("en"), Locale::English);
         assert_eq!(SmtpEmailAdapter::parse_locale("unknown"), Locale::English);
-    }
-
-    #[test]
-    fn fcm_adapter_is_configured() {
-        let without_key = FcmPushAdapter::new(None);
-        assert!(!without_key.is_configured());
-
-        let with_key = FcmPushAdapter::new(Some("server-key-abc".to_string()));
-        assert!(with_key.is_configured());
     }
 
     #[test]

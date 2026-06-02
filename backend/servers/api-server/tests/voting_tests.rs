@@ -133,6 +133,43 @@ mod authorization {
 
         assert_eq!(response.status, StatusCode::UNAUTHORIZED);
     }
+
+    /// A delegated cast (delegation_id present) still requires authentication —
+    /// the delegation re-validation guard (Story 5.4) runs only after the
+    /// `RlsConnection` extractor succeeds, so an unauthenticated request is
+    /// rejected before the guard is reached.
+    #[sqlx::test]
+    async fn test_cast_delegated_vote_without_auth_is_rejected(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let body = json!({
+            "unit_id": Uuid::new_v4(),
+            "delegation_id": Uuid::new_v4(),
+            "answers": {}
+        });
+        let request = json_request(
+            Method::POST,
+            &format!("/api/v1/voting/{}/cast", Uuid::new_v4()),
+            body,
+        );
+        let response = app.execute(request).await;
+
+        assert_eq!(response.status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[sqlx::test]
+    async fn test_get_results_without_auth_is_rejected(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let response = app
+            .execute(empty_request(
+                Method::GET,
+                &format!("/api/v1/voting/{}/results", Uuid::new_v4()),
+            ))
+            .await;
+
+        assert_eq!(response.status, StatusCode::UNAUTHORIZED);
+    }
 }
 
 // =============================================================================

@@ -2342,7 +2342,10 @@ async fn create_comment(
         ));
     }
 
-    // If parent_id is provided, verify it exists and belongs to same announcement
+    // If parent_id is provided, verify it exists and belongs to same announcement.
+    // Capture the parent comment's author so we can notify them about the reply
+    // before `parent` drops at the end of this block (Story 6.3 AC).
+    let mut parent_author: Option<Uuid> = None;
     if let Some(parent_id) = req.parent_id {
         match state
             .announcement_repo
@@ -2371,6 +2374,7 @@ async fn create_comment(
                         )),
                     ));
                 }
+                parent_author = Some(parent.user_id);
             }
             Ok(None) => {
                 rls.release().await;
@@ -2417,6 +2421,52 @@ async fn create_comment(
                 user_id = %auth.user_id,
                 "Comment created"
             );
+
+            // Story 6.3 AC: notify the announcement author and, for replies,
+            // the parent comment's author. Exclude the actor (commenter). The
+            // RLS connection is released above; the pipeline does not need it
+            // (matches the publish_announcement ordering).
+            let mut recipients: Vec<Uuid> = Vec::new();
+            for candidate in [Some(announcement.author_id), parent_author]
+                .into_iter()
+                .flatten()
+            {
+                if candidate != auth.user_id && !recipients.contains(&candidate) {
+                    recipients.push(candidate);
+                }
+            }
+
+            if !recipients.is_empty() {
+                // Short snippet of the comment body for the notification preview.
+                let snippet: String = comment.content.chars().take(140).collect();
+                let notification = Notification::new(
+                    Uuid::nil(),
+                    NotificationCategory::Announcements,
+                    format!("New comment on {}", announcement.title),
+                    snippet,
+                )
+                .with_action_url(format!("/announcements/{}", id))
+                .with_data(serde_json::json!({
+                    "announcement_id": id,
+                    "comment_id": comment.id,
+                }));
+
+                let (sent, skipped, failed) = state
+                    .notification_pipeline
+                    .broadcast(&recipients, &notification, Some(id))
+                    .await;
+
+                tracing::info!(
+                    comment_id = %comment.id,
+                    announcement_id = %id,
+                    recipients = recipients.len(),
+                    sent,
+                    skipped,
+                    failed,
+                    "Dispatched comment notifications"
+                );
+            }
+
             Ok((StatusCode::CREATED, Json(comment)))
         }
         Err(e) => {

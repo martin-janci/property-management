@@ -1544,6 +1544,37 @@ impl AnnouncementRepository {
         self.unpin_rls(&self.pool, id).await
     }
 
+    /// Auto-unpin announcements that have been pinned longer than `max_age`
+    /// (Story 6.4 / issue #972.7). Returns the IDs of the announcements that
+    /// were unpinned.
+    ///
+    /// Runs from the background scheduler without user context — like
+    /// `publish_scheduled`, these are privileged/admin-level maintenance
+    /// operations and use the internal pool directly (no RLS enforcement).
+    pub async fn auto_unpin_expired(
+        &self,
+        max_age: chrono::Duration,
+    ) -> Result<Vec<Uuid>, SqlxError> {
+        // Build the Postgres interval from whole seconds via `make_interval`
+        // (matches the codebase's `make_interval`/`|| ' days'` convention and
+        // avoids relying on chrono<->interval Encode impls).
+        let max_age_secs = max_age.num_seconds().max(0) as f64;
+
+        let rows: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            UPDATE announcements
+            SET pinned = false, pinned_at = NULL, pinned_by = NULL, updated_at = NOW()
+            WHERE pinned = true AND pinned_at < NOW() - make_interval(secs => $1)
+            RETURNING id
+            "#,
+        )
+        .bind(max_age_secs)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|(id,)| id).collect())
+    }
+
     // ------------------------------------------------------------------------
     // Attachments
     // ------------------------------------------------------------------------
