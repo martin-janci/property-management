@@ -13,6 +13,10 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Emit relative redirects (#957) — see ppt-web template. Avoids leaking the
+    # internal :8080 port / https->http downgrade in implicit slash redirects.
+    absolute_redirect off;
+
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
