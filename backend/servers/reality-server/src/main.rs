@@ -476,6 +476,11 @@ async fn main() -> anyhow::Result<()> {
         // and accepts no large uploads; 4 MiB is more than enough for
         // JSON+forms.
         .layer(DefaultBodyLimit::max(4 * 1024 * 1024))
+        // Baseline security headers (HSTS, nosniff, frame-deny, referrer) on
+        // every response — the API edge previously shipped none (#954).
+        .layer(axum::middleware::from_fn(
+            api_core::middleware::security_headers,
+        ))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var

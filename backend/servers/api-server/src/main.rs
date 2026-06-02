@@ -524,6 +524,11 @@ async fn main() -> anyhow::Result<()> {
         // this per-route via `DefaultBodyLimit::max(...)` and stream
         // chunks instead of buffering full payloads. Cap here: 16 MiB.
         .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+        // Baseline security headers (HSTS, nosniff, frame-deny, referrer) on
+        // every response — the API edge previously shipped none (#954).
+        .layer(axum::middleware::from_fn(
+            api_core::middleware::security_headers,
+        ))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST
