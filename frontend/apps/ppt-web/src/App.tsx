@@ -34,6 +34,7 @@ import {
   useConfirmFault,
   useCreateAnnouncementComment,
   useCreateDispute,
+  useCreateFault,
   useCreateOutage,
   useDeleteAnnouncement,
   useDeleteAnnouncementComment,
@@ -59,6 +60,7 @@ import {
   useStartOutage,
   useTriageFault,
   useUpdateDisputeStatus,
+  useUpdateFault,
   useUpdateOutage,
   useUpdateScheduleCron,
 } from '@ppt/api-client';
@@ -131,25 +133,36 @@ import type {
 // Lazy-loaded route components for code splitting (Epic 130)
 import {
   AccessibilitySettingsPage,
+  AiChatPage,
   AnnouncementsPage,
   ArticleDetailPage,
   AuthCallbackPage,
+  AutomationRulesPage,
+  BookFacilityPage,
   BudgetManagementPage,
+  BuildingDetailPage,
+  BuildingsPage,
   ChangePasswordPage,
   CreateAnnouncementPage,
+  CreateFacilityPage,
   CreateFaultPage,
   CreateGroupPage,
   CreateOutagePage,
+  CreateRulePage,
   DisputeDetailPage,
   DisputesPage,
   DocumentDetailPage,
   DocumentsPage,
   DocumentUploadPage,
   EditAnnouncementPage,
+  EditFacilityPage,
   EditFaultPage,
   EditOutagePage,
+  EditRulePage,
   EmergencyContactDirectoryPage,
   EventsPage,
+  ExecutionMonitoringPage,
+  FacilitiesPage,
   FaultDetailPage,
   FaultsPage,
   FeedPage,
@@ -165,6 +178,7 @@ import {
   MarketplacePage,
   MediationWorkspacePage,
   MessagesPage,
+  MyBookingsPage,
   NeighborDetailPage,
   NeighborsPage,
   NeighborsPrivacySettingsPage,
@@ -174,6 +188,7 @@ import {
   OAuthGrantsPage,
   OutagesPage,
   PaymentManagementPage,
+  PendingBookingsPage,
   PrivacySettingsPage,
   ProfileEditPage,
   RegisterPage,
@@ -182,6 +197,7 @@ import {
   ScheduleDetailPage,
   ServerErrorPage,
   SessionExpiredPage,
+  TemplateLibraryPage,
   ThreadDetailPage,
   TwoFactorAuthPage,
   ViewAnnouncementPage,
@@ -430,7 +446,9 @@ function AppNavigation() {
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
+      <Link to="/buildings">{t('nav.buildings')}</Link>
       <Link to="/documents">{t('nav.documents')}</Link>
+      <Link to="/ai-assistant">{t('nav.aiChat')}</Link>
       <Link to="/news">{t('nav.news')}</Link>
       <Link to="/emergency">{t('nav.emergency')}</Link>
       <Link to="/disputes">{t('nav.disputes')}</Link>
@@ -811,6 +829,125 @@ function App() {
                                   }
                                 />
 
+                                {/* Buildings management (Epic 3, Story 3.1) — gap-sweep */}
+                                <Route
+                                  path="/buildings"
+                                  element={
+                                    <ProtectedRoute>
+                                      <BuildingsPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/buildings/:buildingId"
+                                  element={
+                                    <ProtectedRoute>
+                                      <BuildingDetailPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                {/* Facilities & bookings (Epic 3, Story 3.7) — gap-sweep.
+                                  Pages self-resolve params via useParams/useNavigate. */}
+                                <Route
+                                  path="/buildings/:buildingId/facilities"
+                                  element={
+                                    <ProtectedRoute>
+                                      <FacilitiesPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/buildings/:buildingId/facilities/new"
+                                  element={
+                                    <ProtectedRoute>
+                                      <CreateFacilityPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/buildings/:buildingId/facilities/:facilityId/edit"
+                                  element={
+                                    <ProtectedRoute>
+                                      <EditFacilityPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/buildings/:buildingId/facilities/:facilityId/book"
+                                  element={
+                                    <ProtectedRoute>
+                                      <BookFacilityPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/buildings/:buildingId/facilities/pending"
+                                  element={
+                                    <ProtectedRoute>
+                                      <PendingBookingsPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/facilities/bookings/my"
+                                  element={
+                                    <ProtectedRoute>
+                                      <MyBookingsPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                {/* AI Assistant chat (Epic 13, Story 13.1) — gap-sweep */}
+                                <Route
+                                  path="/ai-assistant"
+                                  element={
+                                    <ProtectedRoute>
+                                      <AiChatPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                {/* Workflow Automation (Epic 13) — gap-sweep.
+                                  Paths match the pages' hard-coded navigate() targets. */}
+                                <Route
+                                  path="/automations/rules"
+                                  element={
+                                    <ProtectedRoute>
+                                      <AutomationRulesPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/automations/rules/new"
+                                  element={
+                                    <ProtectedRoute>
+                                      <CreateRulePage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/automations/rules/:id/edit"
+                                  element={
+                                    <ProtectedRoute>
+                                      <EditRulePage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/automations/templates"
+                                  element={
+                                    <ProtectedRoute>
+                                      <TemplateLibraryPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/automations/executions"
+                                  element={
+                                    <ProtectedRoute>
+                                      <ExecutionMonitoringPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+
                                 {/* Phase 5 admin is at admin.rlt.sk now;
                                   see frontend/apps/admin-web. */}
 
@@ -841,6 +978,26 @@ function DocumentsPageRoute() {
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? 'default-org';
   return <DocumentsPage organizationId={organizationId} />;
+}
+
+/** Route wrapper for buildings list (Epic 3, Story 3.1) — gap-sweep */
+function BuildingsPageRoute() {
+  const navigate = useNavigate();
+  return (
+    <BuildingsPage
+      onNavigateToView={(id) => navigate(`/buildings/${id}`)}
+      onNavigateToEdit={(id) => navigate(`/buildings/${id}`)}
+    />
+  );
+}
+
+/** Route wrapper for building detail (Epic 3, Story 3.1) — gap-sweep */
+function BuildingDetailPageRoute() {
+  const { buildingId } = useParams<{ buildingId: string }>();
+  if (!buildingId) {
+    return <div>Building not found</div>;
+  }
+  return <BuildingDetailPage buildingId={buildingId} />;
 }
 
 /** Route wrapper for folder-tree page (gap-7a-2) */
@@ -2541,14 +2698,39 @@ function FaultsPageRoute() {
 function CreateFaultPageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { data: buildingsData } = useBuildings();
+  const createFault = useCreateFault();
+
+  const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
 
   return (
     <CreateFaultPage
-      buildings={[]}
+      buildings={buildings}
       units={[]}
-      onSubmit={() => {
-        showToast({ type: 'success', title: 'Created', message: 'Fault reported' });
-        navigate('/faults');
+      isSubmitting={createFault.isPending}
+      onSubmit={async (data) => {
+        try {
+          // Map FaultFormData (camelCase) -> CreateFaultRequest (snake_case).
+          // NOTE: photos (File[]) are not sent here — base64/upload wiring via
+          // useAddAttachment is a separate follow-up (see fault-new screen-map).
+          const created = await createFault.mutateAsync({
+            building_id: data.buildingId,
+            unit_id: data.unitId,
+            title: data.title,
+            description: data.description,
+            location_description: data.locationDescription,
+            category: data.category,
+            priority: data.priority,
+          });
+          showToast({ type: 'success', title: 'Created', message: 'Fault reported' });
+          navigate(created?.id ? `/faults/${created.id}` : '/faults');
+        } catch (err) {
+          showToast({
+            type: 'error',
+            title: 'Failed to report fault',
+            message: err instanceof Error ? err.message : 'Please try again.',
+          });
+        }
       }}
       onCancel={() => navigate('/faults')}
     />
@@ -2644,20 +2826,52 @@ function EditFaultPageRoute() {
   const { faultId } = useParams<{ faultId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { data, isLoading } = useFault(faultId ?? '');
+  const { data: buildingsData } = useBuildings();
+  const updateFault = useUpdateFault(faultId ?? '');
 
   if (!faultId) {
     return <div>Fault not found</div>;
   }
+  if (isLoading || !data) {
+    return <div className="p-6">Loading…</div>;
+  }
+
+  const fault = data.fault;
+  const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
 
   return (
     <EditFaultPage
       faultId={faultId}
-      initialData={{}}
-      buildings={[]}
+      initialData={{
+        buildingId: fault.building_id,
+        unitId: fault.unit_id,
+        title: fault.title,
+        description: fault.description,
+        locationDescription: fault.location_description,
+        category: fault.category,
+        priority: fault.priority,
+      }}
+      buildings={buildings}
       units={[]}
-      onSubmit={() => {
-        showToast({ type: 'success', title: 'Updated', message: 'Fault updated' });
-        navigate(`/faults/${faultId}`);
+      isSubmitting={updateFault.isPending}
+      onSubmit={async (formData) => {
+        try {
+          await updateFault.mutateAsync({
+            title: formData.title,
+            description: formData.description,
+            location_description: formData.locationDescription,
+            category: formData.category,
+          });
+          showToast({ type: 'success', title: 'Updated', message: 'Fault updated' });
+          navigate(`/faults/${faultId}`);
+        } catch (err) {
+          showToast({
+            type: 'error',
+            title: 'Failed to update fault',
+            message: err instanceof Error ? err.message : 'Please try again.',
+          });
+        }
       }}
       onCancel={() => navigate(`/faults/${faultId}`)}
     />
