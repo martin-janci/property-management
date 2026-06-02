@@ -131,6 +131,20 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   // EAS Cloud injects via GOOGLE_SERVICES_JSON secret; omitted for plain local dev.
   const googleServicesFile = hasGoogleServicesJson() ? './google-services.json' : undefined;
 
+  // -------------------------------------------------------------------------
+  // gap-85-3: Universal Links (iOS) / App Links (Android) host.
+  // -------------------------------------------------------------------------
+  // The HTTPS host that the app associates with deep links. Single source of
+  // truth is the `APP_LINK_HOST` env var (per-env in .env.<env>), falling back
+  // to the convention placeholder domain. This SAME host must be used in:
+  //   - iOS `associatedDomains` (`applinks:<host>`) below
+  //   - the Android `https` intentFilter below
+  //   - the served well-known files:
+  //       public/.well-known/apple-app-site-association
+  //       public/.well-known/assetlinks.json
+  //   - the JS route matcher (src/qrcode/universalLinks.ts → extra.appLinkHost)
+  const appLinkHost = envVars.APP_LINK_HOST ?? process.env.APP_LINK_HOST ?? 'app.ppt.example.com';
+
   return {
     ...config,
     name: config.name ?? 'PPT Management',
@@ -153,6 +167,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
        * App Store Connect API key set once in EAS (Key ID + Issuer ID + p8).
        */
       buildNumber: config.ios?.buildNumber ?? '1',
+      /**
+       * gap-85-3: Universal Links entitlement.
+       * `applinks:<host>` lets iOS route HTTPS taps on `https://<host>/...` to
+       * the app when the apple-app-site-association file is served from that
+       * host (see public/.well-known/apple-app-site-association). Expo writes
+       * this into the generated `<app>.entitlements` at prebuild time.
+       */
+      associatedDomains: [...(config.ios?.associatedDomains ?? []), `applinks:${appLinkHost}`],
       infoPlist: {
         ...(config.ios?.infoPlist ?? {}),
         API_BASE_URL: apiBaseUrl,
@@ -243,9 +265,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           category: ['BROWSABLE', 'DEFAULT'],
         },
         {
+          // gap-85-3: HTTPS App Link. autoVerify drives Android to fetch
+          // https://<host>/.well-known/assetlinks.json and verify the signing
+          // SHA-256 before claiming the link without a chooser dialog.
           action: 'VIEW',
           autoVerify: true,
-          data: [{ scheme: 'https', host: 'app.ppt.example.com', pathPrefix: '/' }],
+          data: [{ scheme: 'https', host: appLinkHost, pathPrefix: '/' }],
           category: ['BROWSABLE', 'DEFAULT'],
         },
       ],
@@ -273,6 +298,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       WS_BASE_URL: wsBaseUrl,
       ENVIRONMENT: environment,
       DEBUG_MODE: debugMode,
+      // gap-85-3: HTTPS host the app claims for universal links / App Links.
+      // Read in JS via src/qrcode/universalLinks.ts → getAppLinkHost().
+      appLinkHost,
       /**
        * EAS 85.2: EAS project ID at runtime for update channel routing.
        * Populated from EXPO_PROJECT_ID env var (set in CI via GitHub secret).
