@@ -201,6 +201,83 @@ against `git rev-list/fetch`; no checkout needed.
 
 ---
 
+## Phase 0.4 — Environment capability & target-branch resolution (degraded-mode gate)
+
+**Why this exists (invariant, not war story):** the dispatcher assumes it runs
+on a host that (a) is checked out on the integration branch it owns, (b) has
+`gh` plus a working push path to that branch, and (c) may spawn implementer
+subagents that push `auto-impl/*` branches and open PRs. None of these hold in
+every environment. A Claude-Code-on-the-web / IDE / GitHub-Action session is
+checked out on a *session branch* (e.g. `claude/<slug>`), may have NO `gh`
+binary (GitHub access is via `mcp__github__*` MCP tools only), and the local git
+proxy may HTTP-403 a direct push to anything but the session branch
+(`git-push-blocked-by-proxy`, already noted in Phase 6). When those assumptions
+break, the dispatcher MUST degrade deterministically and keep running — it must
+NOT halt to ask a human, and it must NOT silently push pipeline state to a
+branch the next run won't read. This gate resolves the target branch and the run
+capabilities ONCE, up front, so every later phase consults the result instead of
+re-discovering it (or stalling on it).
+
+```bash
+# 1) Branch the dispatcher owns. Override for non-default integration branches.
+TARGET_BRANCH="${DISPATCHER_TARGET_BRANCH:-dev}"
+CUR_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)
+
+# 2) Capability probe.
+HAVE_GH=0; command -v gh >/dev/null 2>&1 && HAVE_GH=1
+# The orchestrator knows whether the github MCP server is connected this run;
+# export HAVE_MCP_GH=1 when mcp__github__* tools are available, else 0/unset.
+HAVE_MCP_GH="${HAVE_MCP_GH:-0}"
+
+# 3) Decide the run mode.
+DISPATCHER_DEGRADED=0; DISPATCHER_NO_SPAWN=0; DEGRADE_REASON=""
+# (a) The PR-opening skills (ppt-implement / ppt-pr-create) shell out to `gh`.
+#     Without gh AND without an MCP fallback wired into those skills, a spawned
+#     implementer can code+verify but cannot open a PR — it would leave an
+#     orphan branch and a dangling in-progress row. Refuse to spawn in that case.
+if [ "$HAVE_GH" = "0" ] && [ "$HAVE_MCP_GH" = "0" ]; then
+  DISPATCHER_NO_SPAWN=1; DEGRADE_REASON="no-pr-path(no gh, no MCP github)"
+fi
+# (b) Session pinned to a non-target branch. Publish pipeline state to the
+#     branch we ARE on (durable + reviewable) but NEVER claim/spawn: claims on a
+#     non-target branch are never observed by the next real run on TARGET_BRANCH,
+#     so they would become dangling rows.
+if [ "$CUR_BRANCH" != "$TARGET_BRANCH" ]; then
+  PUBLISH_BRANCH="$CUR_BRANCH"
+  DISPATCHER_DEGRADED=1; DISPATCHER_NO_SPAWN=1
+  DEGRADE_REASON="${DEGRADE_REASON:+$DEGRADE_REASON; }session-branch=$CUR_BRANCH != target=$TARGET_BRANCH"
+else
+  PUBLISH_BRANCH="$TARGET_BRANCH"
+fi
+export TARGET_BRANCH PUBLISH_BRANCH DISPATCHER_DEGRADED DISPATCHER_NO_SPAWN
+echo "Phase 0.4: target=$TARGET_BRANCH cur=$CUR_BRANCH publish=$PUBLISH_BRANCH degraded=$DISPATCHER_DEGRADED no_spawn=$DISPATCHER_NO_SPAWN reason='${DEGRADE_REASON:-none}'"
+```
+
+**Contract for later phases.**
+
+- `DISPATCHER_NO_SPAWN=1` → SKIP every phase that opens a PR, merges, or
+  spawns a git-mutating / issue-creating subagent: Phase 2.5 (post-merge
+  review — it opens GitHub issues), Phase 3 (claim), Phase 4 (implementer
+  spawn), Phase 5.4 (pre-merge autofix), Phase 5.5 (merge), Phase 5.6
+  (rebase), Phase 5.7 (followup respawn). Each of those phase headers checks
+  `$DISPATCHER_NO_SPAWN` in addition to its existing `$DISPATCHER_SKIP_MUTATING`
+  check. The run STILL does: Phase 2 (read-only GH reconciliation — review
+  decisions and merges already on GH are recorded), Phase 2.6 (buffer hygiene:
+  GC1 reconcile + Tier-0 drain + Tier-1 deferred re-open — pure local backlog
+  math, no PRs), Phase 6 (commit state to `$PUBLISH_BRANCH`), Phase 7
+  (summary), Phase 8 (self-review).
+- `DISPATCHER_DEGRADED=1` (implies `PUBLISH_BRANCH != TARGET_BRANCH`) → Phase 6
+  commits + pushes to `$PUBLISH_BRANCH`. The Phase 0.5 run-lock CAS is SKIPPED
+  (a session branch is single-writer by construction, so the cross-run mutex is
+  moot), and the Phase 1 hard-reset-to-`origin/dev` step is REPLACED by a
+  fast-forward of `$PUBLISH_BRANCH` (never reset a session branch to dev — that
+  would discard the operator's work).
+- A run is NEVER allowed to halt and wait for human input on these conditions.
+  Degrade, log the reason in Phase 7 (`Run mode:` line), finish. The commit log
+  is the escalation channel — not a blocking prompt.
+
+---
+
 ## Phase 0.5 — Run-level lock (acquire)
 
 **Why this exists (invariant, not war story):** at most one dispatcher run may
@@ -1992,7 +2069,8 @@ Empty branches deleted:   [<branch>, …]                             (item #1; 
 Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
 Unresolved-dep items:     [<id> dep="<truncated-legacy-text>", …]   (issue #583 — poisoned-sentinel rows whose legacy `dependency` text didn't parse; need human resolution; [] if none)
 GC1 cascade:              <closed-leak=<N> orphan-triage=<M> | clean>   (gc1-reconcile; archive-terminal closes + coverage-missing orphans)
-Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m>  (Phase 0.5)
+Run mode:                 <normal | degraded reason='<…>'> target=<branch> publish=<branch> no_spawn=<0|1> gh=<0|1> mcp_gh=<0|1>   (Phase 0.4)
+Run lock:                 <acquired <run_id> ttl=<m>m | stole-stale exp=<iso> | abort-held expires-in=<m>m | skipped (degraded)>  (Phase 0.5)
 Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
 Tier 2 response:          <http=<code> body="<truncated>" | not-fired>          (issue #5)
 Review dedup-skipped:     [PR#<n> existing-at=<iso>, …]             (issue #3; [] if none)
@@ -2313,6 +2391,7 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - **sandbox-reclaim** (P3) is bounded at 1 attempt per row; the helper at `.claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh` picks the timeout (60m for `Mode: cloud-ok`, 120m otherwise) and classifies the row as wait/reclaim/fail. Reclaim re-spawns the same specialist with the same brief and bumps `reclaim_attempts`; a second sandbox-timeout becomes `failed` with `reason: sandbox-failure-after-reclaim`
 - **disk preflight** (item #7) aborts the run gracefully at <5% free; never crashes mid-subagent
 - **recent-run skip-gate** (issue #1) — if `assignments.generated` is < 30min old, set `DISPATCHER_SKIP_MUTATING=1` and SKIP every mutating phase (2.5, 2.6, 2.7, 3, 4, 5, 5.5, 5.6, 5.7). Phase 2 (GH reconciliation) and Phase 7 (summary) still run. Prevents the `assignments.json` rebase races seen on 2026-05-27.
+- **environment degraded-mode gate** (Phase 0.4) — resolve `TARGET_BRANCH` (`${DISPATCHER_TARGET_BRANCH:-dev}`) and probe capabilities ONCE up front. When `gh` is absent AND the github MCP fallback is unavailable, OR the session is checked out on a non-target branch, set `DISPATCHER_NO_SPAWN=1` (and `DISPATCHER_DEGRADED=1` for the off-target case). In that mode the run does read-only reconciliation + buffer hygiene + state commit to `$PUBLISH_BRANCH` only — it SKIPS every PR-opening/merging/issue-creating phase (2.5, 3, 4, 5.4, 5.5, 5.6, 5.7) and SKIPS the Phase 0.5 lock when off-target. The dispatcher MUST degrade and report (`Run mode:` line) — NEVER halt to ask a human, and NEVER push pipeline state to a branch the next run won't read.
 - **failed-dep cascade** (issue #6) — open action-list items whose `depends_on` points at a terminal-`failed` row are dropped (`status=open → status=dropped`) in Phase 2.7 with an audit prefix; max 20 cascades/run. Re-planning is upstream (operator-driven).
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
