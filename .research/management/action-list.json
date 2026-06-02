@@ -2020,10 +2020,10 @@
     },
     {
       "id": "gap-80-1-dispute-api-integration-tests",
-      "action": "Add integration tests for dispute filing API: full create+status-transition lifecycle, RLS tenant isolation (cross-tenant access denied), dispute status machine transitions, evidence upload auth guard",
+      "action": "[SHIPPED: merged via PR #946 on 2026-06-02; closing archive-terminal-leak] Add integration tests for dispute filing API: full create+status-transition lifecycle, RLS tenant isolation (cross-tenant access denied), dispute status machine transitions, evidence upload auth guard",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "coverage-refill 2026-05-28",
       "deadline": null,
       "dependency": "none",

@@ -15,6 +15,45 @@ That way prompt edits ship via normal PRs to `dev` without needing a
 UPSTREAM PLANNER: `POST $DISPATCHER_URL` with `Authorization: Bearer
 $DISPATCHER_TOKEN` (fire-and-forget).
 
+## GitHub I/O contract (MCP-primary — READ THIS BEFORE ANY GitHub call)
+
+**This environment has a working GitHub MCP (`mcp__github__*`) but an
+UNRELIABLE `gh` CLI / git transport.** Direct `git push` / `git fetch` over
+the git protocol is HTTP-403'd by the sandbox proxy (finding
+`git-push-blocked-by-proxy`), and `gh` CLI calls through the same proxy are
+unreliable. The platform auto-checks-out the repo fresh each run, so GitHub
+I/O must go through the API, not the git transport or `gh`.
+
+**RULE (applies to every phase below):** for each GitHub *network* operation,
+call the matching `mcp__github__*` tool FIRST. Fall back to the `gh` / `git`
+form shown inline in a phase ONLY when no matching MCP tool exists in your
+tool list this run. PR #814 already made Phase 6 push MCP-primary; this
+contract extends the same rule to the ~45 `gh` reads and the `git fetch/pull`
+calls scattered through the phases. Wherever a later phase prints a `gh …` or
+`git fetch/push` command, treat it as pseudo-code and translate it to its
+`mcp__github__*` equivalent at call time:
+
+| Inline `gh`/`git` command in a phase below | Use instead |
+|---|---|
+| `gh pr list --head <b> --json state,mergedAt,reviewDecision,headRefOid,mergeable …` | `mcp__github__list_pull_requests` (filter head) → `mcp__github__get_pull_request` for the detail fields |
+| `gh pr list --search 'head:auto-impl/…'` (orphan / dup-skip scan) | `mcp__github__list_pull_requests` (state=open, ≤100) + client-side `stem()` filter |
+| `gh pr create --base dev --head <b> --draft …` | `mcp__github__create_pull_request` (`draft:true`) |
+| `gh pr merge …` (Phase 5.5 — but defer to the `ppt-pr-merge` skill) | `mcp__github__merge_pull_request` (squash) |
+| `gh api …/pulls/<n>/reviews` (reviewer dedup, issue #3) | `mcp__github__get_pull_request_reviews` |
+| `PR.headRefOid` / `mergeable` / `reviewDecision` / `mergedAt` | fields on `mcp__github__get_pull_request` |
+| `git fetch origin <b>` + `git rev-list --count origin/dev..origin/<b>` (`COMMITS_AHEAD`, item #1) | `mcp__github__get_pull_request` (compare base↔head commits) or `mcp__github__list_commits` |
+| Phase 6 commit + push | `mcp__github__push_files` (already `PUSH_METHOD=mcp` default) |
+| `git push origin --delete <b>` (empty-branch cleanup) | best-effort; skip if no MCP ref-delete tool — leaving an orphan branch is non-fatal |
+| `gh api POST /git/refs` (Phase 0.5 atomic-CAS lock) | KEEP as `gh api` — there is no MCP atomic ref-CAS primitive; this is the one sanctioned `gh` use. If `gh api` fails, log `lock=skipped-gh-unavailable` and proceed (the Phase 1 `assignments.generated` soft-gate still guards overlap). |
+
+Local git that does NOT touch the network stays as-is: `git rev-parse HEAD`,
+`git status`, `git diff`/`git add` on the working tree, reading checked-out
+files. Only GitHub *network* I/O is MCP-primary.
+
+When you fall back to a `gh`/`git` form because the MCP tool was missing,
+append `github_io_fallback=<op>` to the Phase 7 summary so the gap is visible
+next run.
+
 ## Central store
 
 `.research/management/assignments.json`
@@ -137,7 +176,7 @@ Per-run, claim up to **3 NEW** tasks. There is NO global in-progress cap —
 multiple cron runs can overlap and each may contribute 3 in-progress, so the
 global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrency.
 
-- Phase 3: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the count of `{in-progress, review}` rows in `assignments.json`. Default `DISPATCHER_WIP_CAP=8`. Set `DISPATCHER_WIP_CAP=0` to restore the legacy `free_slots=3` (uncapped) behavior. See *WIP-throttle preamble* in Phase 3.
+- Phase 3: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the count of `{in-progress, review}` rows in `assignments.json`. Default `DISPATCHER_WIP_CAP=12` (raised from 8 on 2026-06-02 to lift throughput — merge drain is healthy at 14–37 PRs/day, so a higher ceiling lets more implementer work run in parallel). Set `DISPATCHER_WIP_CAP=0` to restore the legacy `free_slots=3` (uncapped) behavior. See *WIP-throttle preamble* in Phase 3.
 - Phase 4: hard cap of 3 implementer subagents spawned per run (matches `free_slots` ceiling).
 
 ## Buffer
@@ -857,7 +896,7 @@ than claims, and create back-pressure that surfaces merge-pipeline
 bottlenecks early.
 
 ```bash
-WIP_CAP="${DISPATCHER_WIP_CAP:-8}"   # default 8; set 0 to disable
+WIP_CAP="${DISPATCHER_WIP_CAP:-12}"  # default 12 (raised from 8, 2026-06-02); set 0 to disable
 if [ "$WIP_CAP" = "0" ]; then
   free_slots=3
   WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
@@ -2286,7 +2325,7 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 ## HARD RULES
 
 - per-run cap: claim at most 3 NEW tasks AND spawn at most 3 implementer subagents
-- **WIP throttle (PR 4/5)**: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))`. Default `DISPATCHER_WIP_CAP=8`. Set `=0` to disable. Counts rows in `{in-progress, review}`. Smooth back-pressure: claims trickle until exactly at cap, then 0 until merges drain.
+- **WIP throttle (PR 4/5)**: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))`. Default `DISPATCHER_WIP_CAP=12` (raised from 8, 2026-06-02). Set `=0` to disable. Counts rows in `{in-progress, review}`. Smooth back-pressure: claims trickle until exactly at cap, then 0 until merges drain.
 - per-run **per-epic** cap of 2 (item #2). Lifted when `DISPATCHER_FINISH_FIRST=1` AND a target epic is selected (PR 3/5).
 - state transitions are MANDATORY; `merged` / `failed` are TERMINAL
 - legacy `status == "done"` is equivalent to `merged` (counting only); never auto-migrate or rewrite those rows
@@ -2298,6 +2337,7 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - no cap on reviewer (Phase 5) subagents
 - never re-claim an id already in assignments (regardless of its status)
 - never claim items whose `depends_on: [task_id, …]` array contains any task whose `assignments.json` row is not in `{merged, done}` (gap 3 — structured field replaces free-text `dependency` parsing)
+- **GitHub I/O is MCP-primary** (see *GitHub I/O contract* at the top): every GitHub network call uses `mcp__github__*` first; `gh` CLI / `git fetch/push` are 403-unreliable in this env and are fallback-only. The sole sanctioned `gh` use is the Phase 0.5 atomic ref-CAS lock (`gh api POST /git/refs`), which has no MCP equivalent.
 - never push to `main`
 - never bypass git hooks (no `--no-verify`)
 - never set `assignment.status="merged"` inside Phase 5.5 — only Phase 2 sets `merged` from GH truth
