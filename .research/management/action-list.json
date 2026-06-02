@@ -14,7 +14,7 @@
     },
     {
       "id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
-      "action": "Add ai.rs (3142 LOC), platform_admin.rs (2762), announcements.rs (2722) to the module-split backlog; add a CI grep/clippy lint that flags mutating handlers binding `_principal` (discarded principal) — the pattern behind the ai.rs IDOR cluster",
+      "action": "Add ai.rs (3142 LOC), platform_admin.rs (2762), announcements.rs (2722) to the module-split backlog; add a CI grep/clippy lint that flags mutating handlers binding `_principal` (discarded principal) \u2014 the pattern behind the ai.rs IDOR cluster",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "dependency": "none",
@@ -68,7 +68,7 @@
       "depends_on": [
         "UNRESOLVED:Epic 2B WebSocket infrastructure"
       ],
-      "resolved_by": "PR #597 — WebSocket realtime sync confirmed present on dev",
+      "resolved_by": "PR #597 \u2014 WebSocket realtime sync confirmed present on dev",
       "updated_at": "2026-05-29"
     },
     {
@@ -84,7 +84,7 @@
     },
     {
       "id": "gap-7a-2-folder-tree-ui",
-      "action": "Build dedicated folder-tree UI page for document organization — backend supports 5-level hierarchy + circular check (7a-2 Folder Organization)",
+      "action": "Build dedicated folder-tree UI page for document organization \u2014 backend supports 5-level hierarchy + circular check (7a-2 Folder Organization)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
@@ -101,7 +101,7 @@
     },
     {
       "id": "pm-security-resolve-435-followups",
-      "action": "Resolve the residual post-merge security findings in issues #438/#439 — P0-12 cookie scope, P1-04 Debug-format audit-hash domain, P1-01 ordering, IG3 test gap; assign a single owner and treat P0/P1 as pre-feature-work (P1-05 SSRF resolved by PR #450)",
+      "action": "Resolve the residual post-merge security findings in issues #438/#439 \u2014 P0-12 cookie scope, P1-04 Debug-format audit-hash domain, P1-01 ordering, IG3 test gap; assign a single owner and treat P0/P1 as pre-feature-work (P1-05 SSRF resolved by PR #450)",
       "owner_role": "pm-security",
       "priority": "high",
       "dependency": "none",
@@ -112,7 +112,7 @@
     },
     {
       "id": "pm-backend-implement-81-schedule-endpoints",
-      "action": "Implement Epic 81 report-schedule endpoints the frontend already calls (/schedules/{id}/pause, /resume, /executions) — currently 404 in production",
+      "action": "Implement Epic 81 report-schedule endpoints the frontend already calls (/schedules/{id}/pause, /resume, /executions) \u2014 currently 404 in production",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "none",
@@ -123,7 +123,7 @@
     },
     {
       "id": "gap-7a-4-mobile-preview",
-      "action": "Implement mobile document download/preview with presigned URLs — web preview (react-pdf) shipped in PR #446; implement ppt-mobile DocumentPreviewScreen calling backend get_preview_url endpoint (7a-4 Document Download & Preview)",
+      "action": "Implement mobile document download/preview with presigned URLs \u2014 web preview (react-pdf) shipped in PR #446; implement ppt-mobile DocumentPreviewScreen calling backend get_preview_url endpoint (7a-4 Document Download & Preview)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
@@ -140,7 +140,7 @@
     },
     {
       "id": "gap-79-1-announcements-page-wiring",
-      "action": "Wire AnnouncementsPage and FaultsPage to @ppt/api-client query hooks — infra exists (queryKeys/axios interceptors/51 hooks) but AnnouncementsPage/FaultsPage integration incomplete (79-1 API Client Integration)",
+      "action": "Wire AnnouncementsPage and FaultsPage to @ppt/api-client query hooks \u2014 infra exists (queryKeys/axios interceptors/51 hooks) but AnnouncementsPage/FaultsPage integration incomplete (79-1 API Client Integration)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
@@ -191,7 +191,7 @@
     },
     {
       "id": "gap-10b-5-support-data-impl",
-      "action": "Implement support data access handler bodies — search/get user/memberships/sessions/activity routes defined but stubs; add SQLx queries with parameterized search (10b-5 Support Data Access)",
+      "action": "Implement support data access handler bodies \u2014 search/get user/memberships/sessions/activity routes defined but stubs; add SQLx queries with parameterized search (10b-5 Support Data Access)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
@@ -202,7 +202,7 @@
     },
     {
       "id": "gap-10b-6-onboarding-impl",
-      "action": "Implement user onboarding tour handler bodies in onboarding.rs — get/start/complete/skip/reset routes mounted; handlers call todo!() or return empty; add SQLx queries + onboarding_progress table (10b-6 User Onboarding Tour)",
+      "action": "Implement user onboarding tour handler bodies in onboarding.rs \u2014 get/start/complete/skip/reset routes mounted; handlers call todo!() or return empty; add SQLx queries + onboarding_progress table (10b-6 User Onboarding Tour)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
@@ -210,12 +210,12 @@
       "deadline": null,
       "source": "gap-scan 2026-05-24",
       "depends_on": [],
-      "resolved_by": "PR #695 — onboarding tour SQLx handlers implemented",
+      "resolved_by": "PR #695 \u2014 onboarding tour SQLx handlers implemented",
       "updated_at": "2026-05-29"
     },
     {
       "id": "gap-10b-7-help-impl",
-      "action": "Implement contextual help handler bodies in help.rs — articles/FAQ/tooltips with search+context routes mounted; handlers return stubs; add SQLx queries + help_articles table (10b-7 Contextual Help & Documentation)",
+      "action": "Implement contextual help handler bodies in help.rs \u2014 articles/FAQ/tooltips with search+context routes mounted; handlers return stubs; add SQLx queries + help_articles table (10b-7 Contextual Help & Documentation)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
@@ -226,38 +226,38 @@
     },
     {
       "id": "gap-6-2-announcement-web-ui",
-      "action": "Wire AnnouncementsPage web frontend to viewing/acknowledgment APIs (mark_read, acknowledge, get_acknowledgments) — apiStatus stub; blocked on Epic 2B notification delivery pipeline (6-2 Announcement Viewing & Acknowledgment)",
+      "action": "Wire AnnouncementsPage web frontend to viewing/acknowledgment APIs (mark_read, acknowledge, get_acknowledgments) \u2014 apiStatus stub; blocked on Epic 2B notification delivery pipeline (6-2 Announcement Viewing & Acknowledgment)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
       "status": "in-progress",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
-      "note": "unblocked — Epic 2B pipeline (#463) + WS sync (#472) merged; web UI in draft PR #474",
+      "note": "unblocked \u2014 Epic 2B pipeline (#463) + WS sync (#472) merged; web UI in draft PR #474",
       "depends_on": []
     },
     {
       "id": "gap-6-3-comments-web-ui",
-      "action": "Wire announcement comments/discussion web UI to backend list/create/delete comment routes — AnnouncementComments frontend buildStatus planned; blocked on Epic 2B (6-3 Announcement Comments & Discussion)",
+      "action": "Wire announcement comments/discussion web UI to backend list/create/delete comment routes \u2014 AnnouncementComments frontend buildStatus planned; blocked on Epic 2B (6-3 Announcement Comments & Discussion)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
       "status": "in-progress",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
-      "note": "unblocked — Epic 2B (#463) merged; web UI in draft PR #475",
+      "note": "unblocked \u2014 Epic 2B (#463) merged; web UI in draft PR #475",
       "depends_on": []
     },
     {
       "id": "gap-6-4-pin-web-ui",
-      "action": "Wire pin/unpin announcement UI to backend pin_announcement route — frontend buildStatus planned; blocked on Epic 2B (6-4 Pinned Announcements)",
+      "action": "Wire pin/unpin announcement UI to backend pin_announcement route \u2014 frontend buildStatus planned; blocked on Epic 2B (6-4 Pinned Announcements)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
       "status": "in-progress",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
-      "note": "unblocked — Epic 2B (#463) merged; web UI in draft PR #479",
+      "note": "unblocked \u2014 Epic 2B (#463) merged; web UI in draft PR #479",
       "depends_on": []
     },
     {
@@ -330,14 +330,14 @@
     },
     {
       "id": "gap-8a-3-mobile-push",
-      "action": "Implement mobile OS push notification registration and system channel binding for 8a-3 preference sync — WebSocket deferred; implement FCM/APNs registration + delivery to mobile (8a-3 Notification Preference Sync)",
+      "action": "Implement mobile OS push notification registration and system channel binding for 8a-3 preference sync \u2014 WebSocket deferred; implement FCM/APNs registration + delivery to mobile (8a-3 Notification Preference Sync)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "none",
       "status": "in-progress",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
-      "note": "dependency cleared — Epic 2B pipeline (#463) + WS sync (#472) merged; only the mobile-push leg of 8a-3 remains before promotion to done",
+      "note": "dependency cleared \u2014 Epic 2B pipeline (#463) + WS sync (#472) merged; only the mobile-push leg of 8a-3 remains before promotion to done",
       "depends_on": []
     },
     {
@@ -350,7 +350,7 @@
       "deadline": null,
       "source": "gap-scan 2026-05-24",
       "depends_on": [],
-      "resolved_by": "PR #513 + #719 — e-signature workflow + signerParties (manager/landlord) shipped",
+      "resolved_by": "PR #513 + #719 \u2014 e-signature workflow + signerParties (manager/landlord) shipped",
       "updated_at": "2026-05-29"
     },
     {
@@ -454,7 +454,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
       "depends_on": []
@@ -503,7 +503,7 @@
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [],
-      "resolved_by": "PR #706 — system-announcements CRUD + tests merged",
+      "resolved_by": "PR #706 \u2014 system-announcements CRUD + tests merged",
       "updated_at": "2026-05-29"
     },
     {
@@ -683,7 +683,7 @@
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [],
-      "resolved_by": "PR #695 — onboarding-config API + persistence landed",
+      "resolved_by": "PR #695 \u2014 onboarding-config API + persistence landed",
       "updated_at": "2026-05-29"
     },
     {
@@ -705,7 +705,7 @@
     },
     {
       "id": "gap-80-2-dispute-filing-api",
-      "action": "Add POST /api/v1/disputes endpoint with migration for disputes table; implement dispute state machine (open→in-review→resolved)",
+      "action": "Add POST /api/v1/disputes endpoint with migration for disputes table; implement dispute state machine (open\u2192in-review\u2192resolved)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
@@ -883,7 +883,7 @@
       "depends_on": [
         "gap-84-2-esignature-email-backend"
       ],
-      "resolved_by": "PR #719 — e-signature request/signer-selection UI; all 6 PR#513 follow-ups resolved",
+      "resolved_by": "PR #719 \u2014 e-signature request/signer-selection UI; all 6 PR#513 follow-ups resolved",
       "updated_at": "2026-05-29"
     },
     {
@@ -1051,7 +1051,7 @@
       "status": "done",
       "source": "pm-analysis 2026-05-27",
       "depends_on": [],
-      "resolved_by": "PR #720 — MFA-interception test coverage + api-client fetch tests merged",
+      "resolved_by": "PR #720 \u2014 MFA-interception test coverage + api-client fetch tests merged",
       "updated_at": "2026-05-29"
     },
     {
@@ -1082,7 +1082,7 @@
     },
     {
       "id": "gap-82-3-search-enhancements-fix",
-      "action": "Fix two must-fix bugs in PR#537 iOS search enhancements: (1) nearMeChip alert binding uses no-op setter making location-denied alert undismissible — fix binding; (2) properties_found i18n key used but absent from all 6 locale files — add key plus translate 15 new keys for 5 non-English locales (blocking from PR#537 reviewer verdict=changes)",
+      "action": "Fix two must-fix bugs in PR#537 iOS search enhancements: (1) nearMeChip alert binding uses no-op setter making location-denied alert undismissible \u2014 fix binding; (2) properties_found i18n key used but absent from all 6 locale files \u2014 add key plus translate 15 new keys for 5 non-English locales (blocking from PR#537 reviewer verdict=changes)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
@@ -1248,7 +1248,7 @@
       "dependency": "none",
       "status": "done",
       "source": "gap-scan 2026-05-27 | gc1-reconcile 2026-06-01T20:04:57Z",
-      "note": "scheduled for next sprint; unblocks story 79-2 promotion — cookie-Path security blocker resolved by PR #642 (merged 2026-05-28); e2e is the only remaining gap before 79-2 promotes partial->done",
+      "note": "scheduled for next sprint; unblocks story 79-2 promotion \u2014 cookie-Path security blocker resolved by PR #642 (merged 2026-05-28); e2e is the only remaining gap before 79-2 promotes partial->done",
       "depends_on": [],
       "gc1_closed": {
         "reason": "archive-terminal",
@@ -1305,7 +1305,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "source": "gap-scan 2026-05-27",
       "depends_on": []
     },
@@ -1355,7 +1355,7 @@
     },
     {
       "id": "gap-10b-4-sysannounce-screen-map",
-      "action": "Create docs/screens/ppt/system-announcements.md screen-map for system announcements admin route (CLAUDE.md rule B — required when new route added); wired by PR#503; update buildStatus+apiStatus fields",
+      "action": "Create docs/screens/ppt/system-announcements.md screen-map for system announcements admin route (CLAUDE.md rule B \u2014 required when new route added); wired by PR#503; update buildStatus+apiStatus fields",
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
@@ -1369,7 +1369,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "source": "pm-analysis 2026-05-27",
       "depends_on": []
     },
@@ -1434,7 +1434,7 @@
     },
     {
       "id": "fix-583-unparseable-dep-items",
-      "action": "dispatcher ingestion (PR #562): 3 action-list items with unparseable depends_on values are silently claimable — add a human-followup flag or validation on ingestion so unparseable deps block auto-claim. Tracking issue #583. Assigned to devops/dispatcher specialist; slot after fix-573 is fully merged and stable.",
+      "action": "dispatcher ingestion (PR #562): 3 action-list items with unparseable depends_on values are silently claimable \u2014 add a human-followup flag or validation on ingestion so unparseable deps block auto-claim. Tracking issue #583. Assigned to devops/dispatcher specialist; slot after fix-573 is fully merged and stable.",
       "owner_role": "pm-devops",
       "priority": "low",
       "dependency": "none",
@@ -1539,7 +1539,7 @@
     },
     {
       "id": "pm-data-fault-status-kpi-consistency",
-      "action": "Reconcile the FaultStatusCount/FaultByStatusTable metric definition surfaced by SupportDataPage (#635) against the owner_analytics / portfolio_performance fault KPIs — confirm the status buckets and counting window are defined once and reused, not re-derived per route, to avoid divergent fault-count numbers across admin-web vs ppt-web dashboards.",
+      "action": "Reconcile the FaultStatusCount/FaultByStatusTable metric definition surfaced by SupportDataPage (#635) against the owner_analytics / portfolio_performance fault KPIs \u2014 confirm the status buckets and counting window are defined once and reused, not re-derived per route, to avoid divergent fault-count numbers across admin-web vs ppt-web dashboards.",
       "owner_role": "pm-data",
       "priority": "medium",
       "dependency": "none",
@@ -1561,7 +1561,7 @@
     },
     {
       "id": "pm-scrum-master-triage-followup-backlog-growth",
-      "action": "Triage the from-merged-review follow-up backlog: 5 items closed this window (#636 closed #580; #635/#637/#638/#642 resolved their queue items) — confirm the close rate now matches the ingest rate, and slot the remaining open from-merged-review items (fix-569/573/574/581/583) into the dispatcher buffer with explicit owners.",
+      "action": "Triage the from-merged-review follow-up backlog: 5 items closed this window (#636 closed #580; #635/#637/#638/#642 resolved their queue items) \u2014 confirm the close rate now matches the ingest rate, and slot the remaining open from-merged-review items (fix-569/573/574/581/583) into the dispatcher buffer with explicit owners.",
       "owner_role": "pm-scrum-master",
       "priority": "medium",
       "dependency": "none",
@@ -1728,7 +1728,7 @@
     },
     {
       "id": "gap-10b-4-backend-impl-v2",
-      "action": "Implement system announcements handler bodies in platform_admin.rs — 2 prior attempts timed out; use Mode: cloud-ok, implement CRUD handlers with SQLx queries against schedule_maintenance table (10b-4 System Announcements)",
+      "action": "Implement system announcements handler bodies in platform_admin.rs \u2014 2 prior attempts timed out; use Mode: cloud-ok, implement CRUD handlers with SQLx queries against schedule_maintenance table (10b-4 System Announcements)",
       "owner_role": "pm-backend",
       "priority": "high",
       "status": "done",
@@ -1745,7 +1745,7 @@
     },
     {
       "id": "gap-10b-5-support-data-backend-v2",
-      "action": "Implement support data access handler bodies — search/get user/memberships/sessions/activity routes defined but stubs; 3 prior attempts timed out; use Mode: cloud-ok with SQLx parameterized search (10b-5 Support Data Access)",
+      "action": "Implement support data access handler bodies \u2014 search/get user/memberships/sessions/activity routes defined but stubs; 3 prior attempts timed out; use Mode: cloud-ok with SQLx parameterized search (10b-5 Support Data Access)",
       "owner_role": "pm-backend",
       "priority": "high",
       "status": "open",
@@ -1756,7 +1756,7 @@
     },
     {
       "id": "gap-10b-6-onboarding-backend-v2",
-      "action": "Implement user onboarding tour handler bodies — get/start/complete/skip/reset routes call todo!() or empty; 2 prior attempts timed out; add SQLx queries + onboarding_progress table migration (10b-6 User Onboarding Tour)",
+      "action": "Implement user onboarding tour handler bodies \u2014 get/start/complete/skip/reset routes call todo!() or empty; 2 prior attempts timed out; add SQLx queries + onboarding_progress table migration (10b-6 User Onboarding Tour)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -1767,7 +1767,7 @@
     },
     {
       "id": "gap-10b-7-help-backend-v2",
-      "action": "Implement contextual help handler bodies in help.rs — articles/FAQ/tooltips with search routes mounted but return stubs; add SQLx queries + help_articles table; prior attempt timed out (10b-7 Contextual Help)",
+      "action": "Implement contextual help handler bodies in help.rs \u2014 articles/FAQ/tooltips with search routes mounted but return stubs; add SQLx queries + help_articles table; prior attempt timed out (10b-7 Contextual Help)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "done",
@@ -1784,7 +1784,7 @@
     },
     {
       "id": "gap-82-5-ios-keychain-push-v2",
-      "action": "Retry PushNotificationManager + Keychain token storage in iOS Reality Portal — PR #539 was closed without merge; implement in new branch, ensure draft PR stays open until macOS reviewer confirms (82-5 Inquiries and Account)",
+      "action": "Retry PushNotificationManager + Keychain token storage in iOS Reality Portal \u2014 PR #539 was closed without merge; implement in new branch, ensure draft PR stays open until macOS reviewer confirms (82-5 Inquiries and Account)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "status": "done",
@@ -1879,7 +1879,7 @@
     },
     {
       "id": "gap-81-1-schedule-rbac-fix",
-      "action": "Add RequireCapability(ManageReports) guard to PUT /api/v1/reports/schedules/{id} handler — PR #531 reviewer found any authenticated user can mutate schedules without RBAC check",
+      "action": "Add RequireCapability(ManageReports) guard to PUT /api/v1/reports/schedules/{id} handler \u2014 PR #531 reviewer found any authenticated user can mutate schedules without RBAC check",
       "owner_role": "pm-backend",
       "priority": "high",
       "status": "open",
@@ -1890,7 +1890,7 @@
     },
     {
       "id": "gap-81-1-schedule-cron-unit-tests",
-      "action": "Add unit tests for validate_cron_expression function in reports.rs — PR #531 reviewer requested tests for valid/invalid expressions, edge cases (step, @reboot, range overflow, invalid field counts)",
+      "action": "Add unit tests for validate_cron_expression function in reports.rs \u2014 PR #531 reviewer requested tests for valid/invalid expressions, edge cases (step, @reboot, range overflow, invalid field counts)",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "done",
@@ -2053,7 +2053,7 @@
     },
     {
       "id": "pm-security-fix-ai-maintenance-idor",
-      "action": "Fix IDOR in find_maintenance_by_id and acknowledge_prediction in ai.rs — PR #493 reviewer noted these two handlers lack tenant scope; add WHERE tenant_id=$N to both SQLx queries",
+      "action": "Fix IDOR in find_maintenance_by_id and acknowledge_prediction in ai.rs \u2014 PR #493 reviewer noted these two handlers lack tenant scope; add WHERE tenant_id=$N to both SQLx queries",
       "owner_role": "pm-security",
       "priority": "high",
       "status": "open",
@@ -2120,7 +2120,7 @@
     },
     {
       "id": "pm-scrum-master-merge-662-reports-idor",
-      "action": "Review and merge #662 (reports cross-tenant IDOR — closes #646/#647): highest-severity unreviewed non-draft PR; unblocks Epic 81 authz promotion",
+      "action": "Review and merge #662 (reports cross-tenant IDOR \u2014 closes #646/#647): highest-severity unreviewed non-draft PR; unblocks Epic 81 authz promotion",
       "owner_role": "pm-security",
       "priority": "high",
       "dependency": "none",
@@ -2142,7 +2142,7 @@
     },
     {
       "id": "pm-integration-sqlx-0-9-upgrade-audit",
-      "action": "Audit sqlx 0.8.6→0.9.0 (Dependabot PR #666) breaking changes (query! macro expansion, migrate API) and run cargo check --workspace on a branch before merge; sqlx 0.8 is the workspace pin",
+      "action": "Audit sqlx 0.8.6\u21920.9.0 (Dependabot PR #666) breaking changes (query! macro expansion, migrate API) and run cargo check --workspace on a branch before merge; sqlx 0.8 is the workspace pin",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "none",
