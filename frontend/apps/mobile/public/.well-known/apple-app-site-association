@@ -1,0 +1,44 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["__APPLE_TEAM_ID__.three.two.bit.ppt.management"],
+        "appID": "__APPLE_TEAM_ID__.three.two.bit.ppt.management",
+        "paths": [
+          "/dashboard",
+          "/dashboard/*",
+          "/faults",
+          "/faults/*",
+          "/fault/report",
+          "/announcements",
+          "/announcements/*",
+          "/voting",
+          "/voting/*",
+          "/documents",
+          "/documents/*",
+          "/outages",
+          "/outages/*",
+          "/messages",
+          "/messages/*",
+          "/settings",
+          "/settings/*"
+        ],
+        "components": [
+          { "/": "/dashboard*" },
+          { "/": "/faults*" },
+          { "/": "/fault/report*" },
+          { "/": "/announcements*" },
+          { "/": "/voting*" },
+          { "/": "/documents*" },
+          { "/": "/outages*" },
+          { "/": "/messages*" },
+          { "/": "/settings*" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["__APPLE_TEAM_ID__.three.two.bit.ppt.management"]
+  }
+}

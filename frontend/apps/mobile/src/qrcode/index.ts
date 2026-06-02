@@ -8,3 +8,4 @@ export * from './DeepLinkHandler';
 export * from './QRCodeGenerator';
 export * from './QRCodeScanner';
 export type * from './types';
+export * from './universalLinks';
