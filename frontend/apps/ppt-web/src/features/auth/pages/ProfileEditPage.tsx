@@ -2,10 +2,11 @@
  * Profile Edit Page (UC-14.6).
  *
  * Lets the authenticated user view and update their basic profile fields.
- * Persists optimistically through `useAuth().setUser`, which updates both
- * the in-memory auth state and the storage cache so other consumers
- * (header, dashboards) see the new name without a reload. The backend
- * `PATCH /me` endpoint isn't exposed through `@ppt/api-client` yet.
+ * Persists the change to the backend (`PATCH /me` via
+ * `getAuthApi().updateProfile`) and then updates the in-memory auth state and
+ * storage cache through `useAuth().setUser`, so other consumers (header,
+ * dashboards) see the new name without a reload and the edit survives a token
+ * refresh / re-login / other devices.
  */
 
 import type { AuthUser } from '@ppt/api-client';
@@ -13,6 +14,7 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import { getAuthApi } from '../authApiClient';
 import '../styles/AuthPage.css';
 
 interface FormErrors {
@@ -53,10 +55,20 @@ export function ProfileEditPage() {
 
       setIsSubmitting(true);
       try {
+        const trimmedFirst = firstName.trim();
+        const trimmedLast = lastName.trim();
+
+        // Persist to the backend first. The backend only round-trips a single
+        // `displayName`, so we send the combined name and keep the split
+        // first/last from the trimmed inputs locally.
+        await getAuthApi().updateProfile({
+          displayName: `${trimmedFirst} ${trimmedLast}`,
+        });
+
         const updated: AuthUser = {
           ...(user as AuthUser),
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
+          firstName: trimmedFirst,
+          lastName: trimmedLast,
         };
         // setUser persists to storage AND updates in-memory auth state, so
         // every consumer of the context re-renders with the new name.

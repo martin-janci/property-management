@@ -14,8 +14,16 @@ import type {
 } from '@ppt/api-client';
 import {
   uploadEvidence as apiUploadEvidence,
+  getARAgingReport,
+  getOverdueInvoices,
+  getToken,
+  listInvoices,
+  ShortTermRentalsService,
+  sendInvoice,
   setMfaChallengeHandler,
   useAcknowledgeAnnouncement,
+  useAddAttachment,
+  useAddComment,
   useAnnouncement,
   useAnnouncementAcknowledgmentStats,
   useAnnouncementComments,
@@ -23,16 +31,19 @@ import {
   useArchiveAnnouncement,
   useBuildings,
   useCancelOutage,
+  useConfirmFault,
   useCreateAnnouncementComment,
   useCreateDispute,
   useCreateOutage,
   useDeleteAnnouncement,
   useDeleteAnnouncementComment,
+  useDeleteAttachment,
   useDispute,
   useDisputeEvidence,
   useDisputes,
   useDisputeTimeline,
   useDownloadReport,
+  useFault,
   useFaults,
   useMarkReadAnnouncement,
   useOutage,
@@ -40,16 +51,20 @@ import {
   usePinAnnouncement,
   usePinnedAnnouncements,
   usePublishAnnouncement,
+  useReopenFault,
   useReportExecutionHistory,
+  useResolveFault,
   useResolveOutage,
   useRetryReportExecution,
   useStartOutage,
+  useTriageFault,
   useUpdateDisputeStatus,
   useUpdateOutage,
   useUpdateScheduleCron,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BrowserRouter,
@@ -74,6 +89,7 @@ import {
 import {
   toApiSendMessageRequest,
   toStartThreadRequest,
+  useDeleteMessage,
   useMarkThreadRead,
   useMessageRecipients,
   useSendMessage,
@@ -101,6 +117,17 @@ import type { ActivityType } from './features/disputes/components/DisputeTimelin
 import type { DisputeDetail as UiDisputeDetail } from './features/disputes/pages/DisputeDetailPage';
 import { useNeighbors, usePrivacySettings } from './features/neighbors';
 import type { ListOutagesParams, OutageDetail } from './features/outages';
+import type {
+  BookingListParams,
+  BookingWithGuests,
+  RentalBooking,
+  BookingStatus as RentalBookingStatus,
+  CalendarEvent as RentalCalendarEvent,
+  RentalGuest,
+  PlatformConnection as RentalPlatformConnection,
+  PlatformType as RentalPlatformType,
+  RentalStatistics,
+} from './features/rentals/types';
 // Lazy-loaded route components for code splitting (Epic 130)
 import {
   AccessibilitySettingsPage,
@@ -160,6 +187,34 @@ import {
   ViewAnnouncementPage,
   ViewOutagePage,
 } from './routes';
+
+// Rentals feature pages (Epic 18 / UC-29, UC-30) — lazy-loaded for code splitting.
+const RentalsDashboardPage = lazy(() =>
+  import('./features/rentals').then((m) => ({ default: m.RentalsDashboardPage }))
+);
+const PlatformConnectionsPage = lazy(() =>
+  import('./features/rentals').then((m) => ({ default: m.PlatformConnectionsPage }))
+);
+const BookingsPage = lazy(() =>
+  import('./features/rentals').then((m) => ({ default: m.BookingsPage }))
+);
+const BookingDetailPage = lazy(() =>
+  import('./features/rentals').then((m) => ({ default: m.BookingDetailPage }))
+);
+const RentalsCalendarPage = lazy(() =>
+  import('./features/rentals').then((m) => ({ default: m.CalendarPage }))
+);
+const GuestRegistrationPage = lazy(() =>
+  import('./features/rentals').then((m) => ({ default: m.GuestRegistrationPage }))
+);
+const TaxReportPage = lazy(() =>
+  import('./features/rentals').then((m) => ({ default: m.TaxReportPage }))
+);
+
+// Sessions management page (#966) — lazy-loaded.
+const SessionsPage = lazy(() =>
+  import('./features/settings/pages/SessionsPage').then((m) => ({ default: m.SessionsPage }))
+);
 
 // ============================================
 // Type Mapping Utilities (API <-> UI)
@@ -380,8 +435,10 @@ function AppNavigation() {
       <Link to="/emergency">{t('nav.emergency')}</Link>
       <Link to="/disputes">{t('nav.disputes')}</Link>
       <Link to="/outages">{t('nav.outages')}</Link>
+      <Link to="/rentals">{t('nav.rentals', { defaultValue: 'Rentals' })}</Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
+      <Link to="/settings/sessions">{t('nav.sessions', { defaultValue: 'Sessions' })}</Link>
       {/* Super-admin moved to admin.rlt.sk (separate SPA) — no nav link here. */}
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}
@@ -665,6 +722,74 @@ function App() {
                                 <Route
                                   path="/financial/budgets"
                                   element={<BudgetManagementPageRoute />}
+                                />
+
+                                {/* Short-Term Rentals routes (Epic 18, UC-29/30) */}
+                                <Route
+                                  path="/rentals"
+                                  element={
+                                    <ProtectedRoute>
+                                      <RentalsDashboardPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/rentals/connections"
+                                  element={
+                                    <ProtectedRoute>
+                                      <PlatformConnectionsPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/rentals/bookings"
+                                  element={
+                                    <ProtectedRoute>
+                                      <BookingsPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/rentals/bookings/:bookingId"
+                                  element={
+                                    <ProtectedRoute>
+                                      <BookingDetailPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/rentals/calendar"
+                                  element={
+                                    <ProtectedRoute>
+                                      <RentalsCalendarPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/rentals/guests"
+                                  element={
+                                    <ProtectedRoute>
+                                      <GuestRegistrationPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/rentals/reports"
+                                  element={
+                                    <ProtectedRoute>
+                                      <TaxReportPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+
+                                {/* Active sessions management (#966) */}
+                                <Route
+                                  path="/settings/sessions"
+                                  element={
+                                    <ProtectedRoute>
+                                      <SessionsPage />
+                                    </ProtectedRoute>
+                                  }
                                 />
 
                                 {/* Reports routes (Epic 81) */}
@@ -2015,7 +2140,11 @@ function MessagesPageRoute() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const [msgQueryParams, setMsgQueryParams] = useState<{ limit: number; offset: number }>({
+  const [msgQueryParams, setMsgQueryParams] = useState<{
+    limit: number;
+    offset: number;
+    search?: string;
+  }>({
     limit: 20,
     offset: 0,
   });
@@ -2036,6 +2165,7 @@ function MessagesPageRoute() {
         setMsgQueryParams({
           limit: params.pageSize ?? 20,
           offset: ((params.page ?? 1) - 1) * (params.pageSize ?? 20),
+          search: params.search,
         });
       }}
       onDeleteThreads={() => {
@@ -2108,6 +2238,7 @@ function ThreadDetailPageRoute() {
   const { thread, isLoading: threadLoading } = useThread(threadId ?? '', !!threadId);
   const sendMessage = useSendMessage();
   const markRead = useMarkThreadRead();
+  const deleteMessage = useDeleteMessage();
 
   if (!threadId) {
     return <div>Thread not found</div>;
@@ -2147,6 +2278,7 @@ function ThreadDetailPageRoute() {
       isLoading={false}
       isSending={sendMessage.isPending}
       onSendMessage={handleThreadSendMessage}
+      onDeleteMessage={(messageId) => deleteMessage.mutate({ threadId, messageId })}
       onMarkAsRead={handleThreadMarkAsRead}
       onBack={() => navigate('/messages')}
     />
@@ -2170,11 +2302,11 @@ function mapApiFaultStatusToUi(
     ApiFaultSummary['status'],
     import('./features/faults/components/FaultCard').FaultStatus
   > = {
-    reported: 'new',
+    new: 'new',
     triaged: 'triaged',
     in_progress: 'in_progress',
     scheduled: 'scheduled',
-    on_hold: 'waiting_parts',
+    waiting_parts: 'waiting_parts',
     resolved: 'resolved',
     closed: 'closed',
     reopened: 'reopened',
@@ -2190,10 +2322,10 @@ const UI_FAULT_STATUS_TO_API: Record<
   import('./features/faults/components/FaultCard').FaultStatus,
   ApiFaultSummary['status'] | undefined
 > = {
-  new: 'reported',
+  new: 'new',
   triaged: 'triaged',
   in_progress: 'in_progress',
-  waiting_parts: 'on_hold',
+  waiting_parts: 'waiting_parts',
   scheduled: 'scheduled',
   resolved: 'resolved',
   closed: 'closed',
@@ -2213,6 +2345,123 @@ function transformApiFaultToUi(
     priority: fault.priority ?? 'medium',
     status: mapApiFaultStatusToUi(fault.status),
     createdAt: fault.created_at,
+  };
+}
+
+/**
+ * Map API FaultWithDetails (snake_case) → page-level FaultDetail (camelCase).
+ *
+ * The api-client `FaultWithDetails` mirrors the backend model: nullable columns
+ * are typed `T | null`, while the page `FaultDetail` uses optional (`T | undefined`)
+ * fields, so we strip `null` → `undefined` on the nullable fields.
+ */
+function mapApiFaultDetailToUi(
+  fault: import('@ppt/api-client').FaultWithDetails
+): import('./features/faults').FaultDetail {
+  return {
+    id: fault.id,
+    organizationId: fault.organization_id,
+    buildingId: fault.building_id,
+    unitId: fault.unit_id ?? undefined,
+    reporterId: fault.reporter_id,
+    title: fault.title,
+    description: fault.description,
+    locationDescription: fault.location_description ?? undefined,
+    category: fault.category,
+    priority: fault.priority ?? 'medium',
+    status: mapApiFaultStatusToUi(fault.status),
+    aiCategory: fault.ai_category ?? undefined,
+    aiPriority: fault.ai_priority ?? undefined,
+    aiConfidence: fault.ai_confidence != null ? Number(fault.ai_confidence) : undefined,
+    assignedTo: fault.assigned_to ?? undefined,
+    assignedAt: fault.assigned_at ?? undefined,
+    triagedBy: fault.triaged_by ?? undefined,
+    triagedAt: fault.triaged_at ?? undefined,
+    resolvedAt: fault.resolved_at ?? undefined,
+    resolvedBy: fault.resolved_by ?? undefined,
+    resolutionNotes: fault.resolution_notes ?? undefined,
+    confirmedAt: fault.confirmed_at ?? undefined,
+    confirmedBy: fault.confirmed_by ?? undefined,
+    rating: fault.rating ?? undefined,
+    feedback: fault.feedback ?? undefined,
+    scheduledDate: fault.scheduled_date ?? undefined,
+    estimatedCompletion: fault.estimated_completion ?? undefined,
+    createdAt: fault.created_at,
+    updatedAt: fault.updated_at,
+    reporterName: fault.reporter_name,
+    reporterEmail: fault.reporter_email,
+    buildingName: fault.building_name,
+    buildingAddress: fault.building_address,
+    unitDesignation: fault.unit_designation ?? undefined,
+    assignedToName: fault.assigned_to_name ?? undefined,
+    attachmentCount: fault.attachment_count,
+    commentCount: fault.comment_count,
+  };
+}
+
+/**
+ * Map an API fault `event_type` string to the page TimelineEntry `action`.
+ * Unknown event types fall back to `status_changed`.
+ */
+function mapFaultEventTypeToAction(
+  eventType: string
+): import('./features/faults/components/FaultTimeline').TimelineAction {
+  const mapping: Record<
+    string,
+    import('./features/faults/components/FaultTimeline').TimelineAction
+  > = {
+    created: 'created',
+    reported: 'created',
+    triaged: 'triaged',
+    assigned: 'assigned',
+    status_changed: 'status_changed',
+    priority_changed: 'priority_changed',
+    work_note: 'work_note',
+    comment: 'comment',
+    comment_added: 'comment',
+    attachment_added: 'attachment_added',
+    scheduled: 'scheduled',
+    resolved: 'resolved',
+    confirmed: 'confirmed',
+    reopened: 'reopened',
+    rated: 'rated',
+  };
+  return mapping[eventType] ?? 'status_changed';
+}
+
+/** Map API FaultTimelineEntry (snake_case) → page TimelineEntry. */
+function mapApiFaultTimelineToUi(
+  entry: import('@ppt/api-client').FaultTimelineEntry
+): import('./features/faults/components/FaultTimeline').TimelineEntry {
+  return {
+    id: entry.id,
+    faultId: entry.fault_id,
+    userId: entry.user_id,
+    action: mapFaultEventTypeToAction(entry.action),
+    note: entry.note ?? undefined,
+    oldValue: entry.old_value ?? undefined,
+    newValue: entry.new_value ?? undefined,
+    isInternal: entry.is_internal,
+    createdAt: entry.created_at,
+    userName: entry.user_name ?? '',
+    userEmail: entry.user_email ?? '',
+  };
+}
+
+/** Map API FaultAttachment (snake_case) → page FaultAttachment. */
+function mapApiFaultAttachmentToUi(
+  att: import('@ppt/api-client').FaultAttachment
+): import('./features/faults').FaultAttachment {
+  return {
+    id: att.id,
+    faultId: att.fault_id,
+    filename: att.file_name,
+    originalFilename: att.file_name,
+    contentType: att.file_type,
+    sizeBytes: att.file_size,
+    storageUrl: att.file_url,
+    description: undefined,
+    createdAt: att.created_at,
   };
 }
 
@@ -2298,58 +2547,87 @@ function CreateFaultPageRoute() {
   );
 }
 
+/**
+ * Route wrapper for fault detail page (UC-03, #970.1).
+ *
+ * Wired to @ppt/api-client fault hooks (TanStack Query). `useFault` returns the
+ * `FaultDetailResponse` ({ fault, timeline, attachments }); the snake_case API
+ * shapes are mapped to the page's camelCase `FaultDetail` / `TimelineEntry` /
+ * `FaultAttachment` via the module-level mappers near `transformApiFaultToUi`.
+ */
 function FaultDetailPageRoute() {
   const { faultId } = useParams<{ faultId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+  const { user } = useAuth();
+
+  const { data, isLoading, error } = useFault(faultId ?? '');
+  const triage = useTriageFault(faultId ?? '');
+  const resolve = useResolveFault(faultId ?? '');
+  const confirm = useConfirmFault(faultId ?? '');
+  const reopen = useReopenFault(faultId ?? '');
+  const addComment = useAddComment(faultId ?? '');
+  const addAttachment = useAddAttachment(faultId ?? '');
+  const deleteAttachment = useDeleteAttachment(faultId ?? '');
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('faults.failedToLoad', { defaultValue: 'Failed to load fault' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
 
   if (!faultId) {
     return <div>Fault not found</div>;
   }
 
-  // P0-10 (deferred): this route renders hardcoded mock data because the
-  // local FaultDetailPage component's `FaultDetail` type and the
-  // api-client's `FaultWithDetails` type are divergent (FE-006: the
-  // hand-written and generated type layers both define overlapping
-  // shapes with different field sets). Wiring real `useFault()` here
-  // would require either updating FaultDetailPage to accept the
-  // api-client types, OR mapping between them at the call site.
-  // Both options are larger than the security-fix scope of this PR.
-  // Tracked as a follow-up plan; see PR description.
-  const mockFault: import('./features/faults').FaultDetail = {
-    id: faultId,
-    organizationId: 'org-1',
-    buildingId: 'bld-1',
-    reporterId: 'user-1',
-    title: 'Sample Fault',
-    description: 'This is a sample fault description.',
-    category: 'plumbing',
-    priority: 'medium',
-    status: 'new',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    reporterName: 'John Doe',
-    reporterEmail: 'john@example.com',
-    buildingName: 'Building A',
-    buildingAddress: '123 Main St',
-    attachmentCount: 0,
-    commentCount: 0,
-  };
+  const isManager =
+    user?.role === 'manager' ||
+    user?.role === 'org_admin' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'technical_manager' ||
+    user?.role === 'property_manager';
+
+  const fault = data?.fault ? mapApiFaultDetailToUi(data.fault) : undefined;
+  const timeline = (data?.timeline ?? []).map(mapApiFaultTimelineToUi);
+  const attachments = (data?.attachments ?? []).map(mapApiFaultAttachmentToUi);
+
+  if (isLoading || !fault) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <FaultDetailPage
-      fault={mockFault}
-      timeline={[]}
-      attachments={[]}
+      fault={fault}
+      timeline={timeline}
+      attachments={attachments}
+      isManager={isManager}
+      isLoading={isLoading}
       onBack={() => navigate('/faults')}
       onEdit={() => navigate(`/faults/${faultId}/edit`)}
-      onTriage={() => showToast({ type: 'success', title: 'Triaged', message: '' })}
-      onResolve={() => showToast({ type: 'success', title: 'Resolved', message: '' })}
-      onConfirm={() => showToast({ type: 'success', title: 'Confirmed', message: '' })}
-      onReopen={() => showToast({ type: 'info', title: 'Reopened', message: '' })}
-      onAddComment={() => {}}
-      onAddAttachment={() => {}}
-      onDeleteAttachment={() => {}}
+      onTriage={(triageData) =>
+        triage.mutate({
+          priority: triageData.priority,
+          category: triageData.category,
+          assigned_to: triageData.assignedTo,
+        })
+      }
+      onResolve={(notes) => resolve.mutate({ resolution_notes: notes })}
+      onConfirm={(rating) => confirm.mutate(rating)}
+      onReopen={(reason) => reopen.mutate(reason)}
+      onAddComment={(content, isInternal) =>
+        addComment.mutate({ content, is_internal: isInternal })
+      }
+      onAddAttachment={(file) => addAttachment.mutate(file)}
+      onDeleteAttachment={(id) => deleteAttachment.mutate(id)}
     />
   );
 }
@@ -2516,37 +2794,156 @@ function MarketplacePageRoute() {
 // Financial Route Wrappers (Epic 52)
 // ============================================
 
+/**
+ * Route wrapper for financial dashboard (Epic 52, #975.1).
+ *
+ * Wires the hand-written financial api-client functions via TanStack Query:
+ *   getARAgingReport({ organization_id })  — AR aging buckets + totals
+ *   getOverdueInvoices(orgId)              — overdue invoice list
+ *   listInvoices({ organization_id })      — full invoice list (for status counts)
+ *
+ * Metrics are derived from `arReport.totals` plus invoice sums; invoiceCounts are
+ * derived client-side from the invoice list. recentPayments stays `[]` — there is
+ * no org-wide payments endpoint in the api-client.
+ */
 function FinancialDashboardPageRoute() {
   const { user } = useAuth();
+  const orgId = user?.organizationId ?? '';
+
+  const { data: arReportData, isLoading: arLoading } = useQuery({
+    queryKey: ['financial', 'ar-aging', orgId],
+    queryFn: () => getARAgingReport({ organization_id: orgId }),
+    enabled: !!orgId,
+  });
+  const { data: overdueData, isLoading: overdueLoading } = useQuery({
+    queryKey: ['financial', 'overdue-invoices', orgId],
+    queryFn: () => getOverdueInvoices(orgId),
+    enabled: !!orgId,
+  });
+  const { data: invoicesData, isLoading: invoicesLoading } = useQuery({
+    queryKey: ['financial', 'invoices', orgId],
+    queryFn: () => listInvoices({ organization_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const isLoading = arLoading || overdueLoading || invoicesLoading;
+
+  const totals = arReportData?.totals ?? {
+    current: 0,
+    days_30: 0,
+    days_60: 0,
+    days_90_plus: 0,
+    total: 0,
+  };
+  const invoices = invoicesData?.invoices ?? [];
+  const overdueInvoices = overdueData ?? [];
+
+  // Outstanding = sum of balances still due across all invoices.
+  const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.balance_due ?? 0), 0);
+  const totalOverdue = overdueInvoices.reduce((sum, inv) => sum + (inv.balance_due ?? 0), 0);
+  const currency = invoices[0]?.currency ?? 'EUR';
+
+  // Derive per-status counts client-side from the invoice list.
+  const invoiceCounts = invoices.reduce(
+    (acc, inv) => {
+      if (inv.status === 'draft') acc.draft += 1;
+      else if (inv.status === 'sent') acc.sent += 1;
+      else if (inv.status === 'overdue') acc.overdue += 1;
+      else if (inv.status === 'paid') acc.paid += 1;
+      return acc;
+    },
+    { draft: 0, sent: 0, overdue: 0, paid: 0 }
+  );
 
   return (
     <FinancialDashboardPage
-      organizationId={user?.organizationId ?? ''}
+      organizationId={orgId}
       buildings={[]}
-      metrics={{ totalBalance: 0, totalOutstanding: 0, totalOverdue: 0, currency: 'EUR' }}
-      invoiceCounts={{ draft: 0, sent: 0, overdue: 0, paid: 0 }}
-      recentPayments={[]}
-      overdueInvoices={[]}
-      arReport={{
-        entries: [],
-        totals: { current: 0, days_30: 0, days_60: 0, days_90_plus: 0, total: 0 },
+      metrics={{
+        totalBalance: totals.total,
+        totalOutstanding,
+        totalOverdue,
+        currency,
       }}
+      invoiceCounts={invoiceCounts}
+      recentPayments={[]}
+      overdueInvoices={overdueInvoices}
+      arReport={{
+        entries: arReportData?.entries ?? [],
+        totals,
+      }}
+      isLoading={isLoading}
     />
   );
 }
 
+/**
+ * Route wrapper for invoice management (Epic 52, #975.2).
+ *
+ * Lists invoices via listInvoices({ organization_id, status, limit, offset }) with
+ * status + pagination state, and sends invoices via sendInvoice (invalidating the
+ * list on success). ListInvoicesParams only supports status + unit_id + limit/offset
+ * (no building or search), so only status + pagination are wired; buildings stays `[]`.
+ */
 function InvoiceManagementPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  const orgId = user?.organizationId ?? '';
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<
+    import('@ppt/api-client').InvoiceStatus | undefined
+  >();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['financial', 'invoices', orgId, statusFilter, page, pageSize],
+    queryFn: () =>
+      listInvoices({
+        organization_id: orgId,
+        status: statusFilter,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+      }),
+    enabled: !!orgId,
+  });
+
+  const sendInvoiceMutation = useMutation({
+    mutationFn: (invoiceId: string) => sendInvoice(invoiceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financial', 'invoices', orgId] });
+      showToast({
+        type: 'success',
+        title: t('financial.invoices.sent', { defaultValue: 'Invoice sent' }),
+        message: '',
+      });
+    },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('financial.invoices.sendFailed', { defaultValue: 'Failed to send invoice' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    },
+  });
 
   return (
     <InvoiceManagementPage
-      invoices={[]}
-      total={0}
+      invoices={data?.invoices ?? []}
+      total={data?.total ?? 0}
       buildings={[]}
+      isLoading={isLoading}
       onNavigateToCreate={() => navigate('/financial/invoices/new')}
       onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
-      onSendInvoice={() => {}}
-      onFilterChange={() => {}}
+      onSendInvoice={(id: string) => sendInvoiceMutation.mutate(id)}
+      onFilterChange={(params) => {
+        setStatusFilter(params.status);
+        setPage(params.page);
+        setPageSize(params.pageSize);
+      }}
     />
   );
 }
@@ -2584,6 +2981,469 @@ function BudgetManagementPageRoute() {
       onNavigateToDetail={(id: string) => navigate(`/financial/budgets/${id}`)}
       onYearChange={() => {}}
       onBuildingChange={() => {}}
+    />
+  );
+}
+
+// ============================================
+// Short-Term Rentals Route Wrappers (Epic 18, #976.1)
+// ============================================
+
+/**
+ * Map a generated Rentals_RentalPlatform → the page-level BookingSource.
+ * The generated platform enum carries 'vrbo' which the page lacks; fold it to 'other'.
+ */
+function mapRentalPlatformToSource(
+  platform: import('@ppt/api-client').Rentals_RentalPlatform
+): RentalBooking['source'] {
+  switch (platform) {
+    case 'airbnb':
+      return 'airbnb';
+    case 'booking':
+      return 'booking';
+    case 'direct':
+      return 'direct';
+    default:
+      return 'other';
+  }
+}
+
+/** Map a generated Rentals_RentalPlatform → the page PlatformType (airbnb | booking). */
+function mapRentalPlatformToType(
+  platform: import('@ppt/api-client').Rentals_RentalPlatform
+): RentalPlatformType {
+  return platform === 'booking' ? 'booking' : 'airbnb';
+}
+
+/** Map a generated Rentals_SyncStatus → the page ConnectionStatus. */
+function mapSyncStatusToConnectionStatus(
+  syncStatus: import('@ppt/api-client').Rentals_SyncStatus,
+  isActive: boolean
+): RentalPlatformConnection['status'] {
+  if (!isActive) return 'disconnected';
+  switch (syncStatus) {
+    case 'synced':
+      return 'connected';
+    case 'pending':
+      return 'pending';
+    case 'error':
+      return 'error';
+    default:
+      return 'disconnected';
+  }
+}
+
+/** Map a generated Rentals_Reservation → the page RentalBooking. */
+function mapReservationToBooking(
+  res: import('@ppt/api-client').Rentals_Reservation
+): RentalBooking {
+  return {
+    id: res.id,
+    unitId: res.unitId,
+    // The reservation payload does not carry building context; left blank.
+    buildingId: '',
+    guestName: res.guestName,
+    guestEmail: res.guestEmail,
+    guestPhone: res.guestPhone,
+    checkIn: res.checkIn,
+    checkOut: res.checkOut,
+    status: res.status as RentalBookingStatus,
+    source: mapRentalPlatformToSource(res.platform),
+    platformBookingId: res.externalId,
+    totalPrice: res.totalPrice?.amount,
+    currency: res.totalPrice?.currency,
+    guestCount: res.guestCount,
+    notes: res.notes,
+    createdAt: res.createdAt,
+    updatedAt: res.updatedAt,
+  };
+}
+
+/** Map a generated Rentals_PlatformConnection → the page PlatformConnection. */
+function mapApiConnectionToUi(
+  conn: import('@ppt/api-client').Rentals_PlatformConnection
+): RentalPlatformConnection {
+  return {
+    id: conn.id,
+    unitId: conn.unitId,
+    platform: mapRentalPlatformToType(conn.platform),
+    status: mapSyncStatusToConnectionStatus(conn.syncStatus, conn.isActive),
+    platformPropertyId: conn.externalListingId,
+    lastSyncAt: conn.lastSyncAt,
+    isAutoSyncEnabled: conn.isActive,
+    createdAt: conn.createdAt,
+  };
+}
+
+/** Map a generated Rentals_GuestRegistration → the page RentalGuest. */
+function mapApiGuestToUi(guest: import('@ppt/api-client').Rentals_GuestRegistration): RentalGuest {
+  return {
+    id: guest.id,
+    bookingId: guest.reservationId ?? '',
+    firstName: guest.firstName,
+    lastName: guest.lastName,
+    dateOfBirth: guest.dateOfBirth,
+    nationality: guest.nationality,
+    documentType: guest.documentType,
+    documentNumber: guest.documentNumber,
+    documentExpiry: guest.documentExpiry,
+    registrationStatus: guest.submittedToAuthorities ? 'registered' : 'pending',
+    registeredAt: guest.submittedAt,
+    isPrimary: false,
+    createdAt: guest.createdAt,
+  };
+}
+
+/**
+ * Build the auth header + tenant id required by the generated
+ * ShortTermRentalsService methods. Returns null when either is missing so
+ * the calling query stays disabled.
+ */
+function useRentalsAuth(): { authorization: string; xTenantId: string } | null {
+  const { user } = useAuth();
+  const token = getToken();
+  if (!token || !user?.organizationId) return null;
+  return { authorization: `Bearer ${token}`, xTenantId: user.organizationId };
+}
+
+/** Route wrapper for the rentals dashboard. */
+function RentalsDashboardPageRoute() {
+  const navigate = useNavigate();
+  const auth = useRentalsAuth();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['rentals', 'reservations', auth?.xTenantId],
+    queryFn: () =>
+      ShortTermRentalsService.rentalsApiListReservations({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+      }),
+    enabled: !!auth,
+  });
+  const { data: connData } = useQuery({
+    queryKey: ['rentals', 'connections', auth?.xTenantId],
+    queryFn: () =>
+      ShortTermRentalsService.rentalsApiListConnections({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+      }),
+    enabled: !!auth,
+  });
+
+  const bookings = (data?.data ?? []).map(mapReservationToBooking);
+  const connections = (connData ?? []).map(mapApiConnectionToUi);
+  const now = Date.now();
+  const upcomingBookings = bookings.filter((b) => new Date(b.checkIn).getTime() >= now);
+  const activeBookings = bookings.filter((b) => b.status === 'checked_in');
+
+  const statistics: RentalStatistics = {
+    totalBookings: bookings.length,
+    activeBookings: activeBookings.length,
+    upcomingBookings: upcomingBookings.length,
+    totalRevenue: bookings.reduce((sum, b) => sum + (b.totalPrice ?? 0), 0),
+    occupancyRate: 0,
+    averageStayDuration: 0,
+    pendingGuestRegistrations: 0,
+    currency: bookings[0]?.currency ?? 'EUR',
+  };
+
+  return (
+    <RentalsDashboardPage
+      statistics={statistics}
+      upcomingBookings={upcomingBookings}
+      activeBookings={activeBookings}
+      platformConnections={connections}
+      isLoading={isLoading}
+      onViewBooking={(id) => navigate(`/rentals/bookings/${id}`)}
+      onCheckIn={(id) => navigate(`/rentals/bookings/${id}`)}
+      onCheckOut={(id) => navigate(`/rentals/bookings/${id}`)}
+      onViewAllBookings={() => navigate('/rentals/bookings')}
+      onViewCalendar={() => navigate('/rentals/calendar')}
+      onViewConnections={() => navigate('/rentals/connections')}
+      onViewGuestRegistration={() => navigate('/rentals/guests')}
+      onViewTaxReport={() => navigate('/rentals/reports')}
+    />
+  );
+}
+
+/** Route wrapper for platform connections. */
+function PlatformConnectionsPageRoute() {
+  const navigate = useNavigate();
+  const auth = useRentalsAuth();
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['rentals', 'connections', auth?.xTenantId],
+    queryFn: () =>
+      ShortTermRentalsService.rentalsApiListConnections({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+      }),
+    enabled: !!auth,
+  });
+
+  const createConnection = useMutation({
+    mutationFn: (vars: { unitId: string; platform: RentalPlatformType }) =>
+      ShortTermRentalsService.rentalsApiCreateConnection({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+        requestBody: { unitId: vars.unitId, platform: vars.platform },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
+    },
+  });
+
+  const syncPlatforms = useMutation({
+    mutationFn: (unitId: string) =>
+      ShortTermRentalsService.rentalsApiSyncPlatforms({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+        unitId,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
+    },
+  });
+
+  const connections = (data ?? []).map(mapApiConnectionToUi);
+
+  return (
+    <PlatformConnectionsPage
+      connections={connections}
+      units={[]}
+      isLoading={isLoading}
+      onConnect={() => {}}
+      onDisconnect={() => {}}
+      onSync={(connectionId) => {
+        const conn = connections.find((c) => c.id === connectionId);
+        if (conn) syncPlatforms.mutate(conn.unitId);
+      }}
+      onSettings={() => {}}
+      onCreateConnection={(unitId, platform) => createConnection.mutate({ unitId, platform })}
+      onBack={() => navigate('/rentals')}
+    />
+  );
+}
+
+/** Route wrapper for the bookings list. */
+function BookingsPageRoute() {
+  const navigate = useNavigate();
+  const auth = useRentalsAuth();
+  const [filters, setFilters] = useState<BookingListParams>({});
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['rentals', 'reservations', auth?.xTenantId, filters],
+    queryFn: () =>
+      ShortTermRentalsService.rentalsApiListReservations({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+        unitId: filters.unitId,
+        status: filters.status,
+        from: filters.fromDate,
+        to: filters.toDate,
+        page: filters.page,
+        limit: filters.limit,
+      }),
+    enabled: !!auth,
+  });
+
+  const bookings = (data?.data ?? []).map(mapReservationToBooking);
+
+  return (
+    <BookingsPage
+      bookings={bookings}
+      total={data?.pagination?.totalItems ?? bookings.length}
+      buildings={[]}
+      units={[]}
+      isLoading={isLoading}
+      onFilterChange={setFilters}
+      onViewBooking={(id) => navigate(`/rentals/bookings/${id}`)}
+      onEditBooking={(id) => navigate(`/rentals/bookings/${id}`)}
+      onCancelBooking={() => {}}
+      onCheckIn={() => {}}
+      onCheckOut={() => {}}
+      onCreateBooking={() => navigate('/rentals/bookings')}
+      onBack={() => navigate('/rentals')}
+    />
+  );
+}
+
+/** Route wrapper for a single booking detail. */
+function BookingDetailPageRoute() {
+  const { bookingId } = useParams<{ bookingId: string }>();
+  const navigate = useNavigate();
+  const auth = useRentalsAuth();
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['rentals', 'reservation', bookingId, auth?.xTenantId],
+    queryFn: () =>
+      ShortTermRentalsService.rentalsApiGetReservation({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+        id: bookingId!,
+      }),
+    enabled: !!auth && !!bookingId,
+  });
+
+  const checkIn = useMutation({
+    mutationFn: () =>
+      ShortTermRentalsService.rentalsApiCheckIn({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+        id: bookingId!,
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
+  });
+  const checkOut = useMutation({
+    mutationFn: () =>
+      ShortTermRentalsService.rentalsApiCheckOut({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+        id: bookingId!,
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
+  });
+
+  if (!bookingId) {
+    return <div>Booking not found</div>;
+  }
+
+  if (isLoading || !data) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  const booking: BookingWithGuests = { ...mapReservationToBooking(data), guests: [] };
+
+  return (
+    <BookingDetailPage
+      booking={booking}
+      isLoading={isLoading}
+      onBack={() => navigate('/rentals/bookings')}
+      onEdit={() => {}}
+      onCancel={() => {}}
+      onCheckIn={() => checkIn.mutate()}
+      onCheckOut={() => checkOut.mutate()}
+      onAddGuest={() => navigate('/rentals/guests')}
+      onEditGuest={() => navigate('/rentals/guests')}
+      onRegisterGuest={() => navigate('/rentals/guests')}
+      onDeleteGuest={() => {}}
+    />
+  );
+}
+
+/** Route wrapper for the calendar view. No calendar endpoint exists yet; events stay empty. */
+function RentalsCalendarPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <RentalsCalendarPage
+      units={[]}
+      events={[] as RentalCalendarEvent[]}
+      isLoading={false}
+      onUnitChange={() => {}}
+      onMonthChange={() => {}}
+      onEventClick={() => {}}
+      onAddBlock={() => {}}
+      onBack={() => navigate('/rentals')}
+    />
+  );
+}
+
+/** Route wrapper for guest registration. */
+function GuestRegistrationPageRoute() {
+  const navigate = useNavigate();
+  const auth = useRentalsAuth();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['rentals', 'guests', auth?.xTenantId],
+    queryFn: () =>
+      ShortTermRentalsService.rentalsApiListGuests({
+        authorization: auth!.authorization,
+        xTenantId: auth!.xTenantId,
+      }),
+    enabled: !!auth,
+  });
+
+  // Group registered guests by reservation so the page can list per-booking
+  // pending registrations. Without per-booking metadata we surface a single
+  // synthetic grouping keyed by reservationId.
+  const guests = (data?.data ?? []).map(mapApiGuestToUi);
+  const byBooking = new Map<string, RentalGuest[]>();
+  for (const g of guests) {
+    const list = byBooking.get(g.bookingId) ?? [];
+    list.push(g);
+    byBooking.set(g.bookingId, list);
+  }
+  const bookingsWithPendingGuests = Array.from(byBooking.entries()).map(
+    ([bookingId, bookingGuests]) => ({
+      id: bookingId,
+      guestName: bookingGuests[0]
+        ? `${bookingGuests[0].firstName} ${bookingGuests[0].lastName}`
+        : '',
+      unitName: '',
+      checkIn: '',
+      checkOut: '',
+      guests: bookingGuests,
+    })
+  );
+
+  return (
+    <GuestRegistrationPage
+      bookingsWithPendingGuests={bookingsWithPendingGuests}
+      isLoading={isLoading}
+      onRegisterGuest={() => {}}
+      onRegisterAllGuests={() => {}}
+      onEditGuest={() => {}}
+      onAddGuest={() => {}}
+      onBack={() => navigate('/rentals')}
+    />
+  );
+}
+
+/** Route wrapper for tax reports. No tax-report endpoint exists yet; returns an empty report. */
+function TaxReportPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <TaxReportPage
+      buildings={[]}
+      isLoading={false}
+      onGenerateReport={async (params) =>
+        ({
+          year: params.year,
+          jurisdiction: {
+            country: params.jurisdiction,
+            name: params.jurisdiction,
+            defaultTaxRate: 0,
+            requiresGuestRegistration: false,
+          },
+          reportType: params.reportType,
+          generatedAt: new Date().toISOString(),
+          currency: 'EUR',
+          summary: {
+            totalIncome: 0,
+            totalBookings: 0,
+            totalNightsOccupied: 0,
+            averageOccupancyRate: 0,
+            totalExpenses: 0,
+            netProfit: 0,
+            estimatedTax: 0,
+            effectiveTaxRate: 0,
+          },
+          expensesByCategory: [],
+          propertiesCovered: [],
+        }) satisfies import('./features/rentals/types').TaxReportData
+      }
+      onExportReport={async () => {}}
+      onBack={() => navigate('/rentals')}
     />
   );
 }

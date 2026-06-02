@@ -19,6 +19,7 @@ import { authenticatedFetchJson } from '../lib/fetch';
 import type {
   AdminPaginatedResponse,
   Agency,
+  AgencyDetail,
   CreateSystemAnnouncementRequest,
   CreateSystemAnnouncementResponse,
   HealthDashboard,
@@ -65,6 +66,19 @@ export async function listAgencies(
   return authenticatedFetchJson<AdminPaginatedResponse<Agency>>(`${API_BASE}/agencies${qs}`, {
     signal,
   });
+}
+
+/**
+ * GET /api/v1/admin/agencies/{id} — detailed view of a single agency.
+ *
+ * Returns the widened `AgencyDetail` shape (created/updated timestamps plus
+ * member/building/unit counts) used by the org drill-in page.
+ */
+export async function getAgency(agencyId: string, signal?: AbortSignal): Promise<AgencyDetail> {
+  return authenticatedFetchJson<AgencyDetail>(
+    `${API_BASE}/agencies/${encodeURIComponent(agencyId)}`,
+    { signal }
+  );
 }
 
 /**

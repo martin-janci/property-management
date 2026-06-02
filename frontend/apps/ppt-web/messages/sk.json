@@ -811,5 +811,27 @@
         "cancelled": "Zrušené"
       }
     }
+  },
+  "settings": {
+    "sessions": {
+      "title": "Aktívne relácie",
+      "subtitle": "Skontrolujte, kde ste prihlásení, a odhláste relácie, ktoré nepoznáte.",
+      "loading": "Načítavam relácie…",
+      "loadError": "Vaše relácie sa nepodarilo načítať.",
+      "retry": "Skúsiť znova",
+      "empty": "Nenašli sa žiadne aktívne relácie.",
+      "revoke": "Zrušiť",
+      "revoking": "Ruším…",
+      "revokeAll": "Zrušiť všetky ostatné relácie",
+      "revokeError": "Reláciu sa nepodarilo zrušiť. Skúste to znova.",
+      "revokeAllError": "Ostatné relácie sa nepodarilo zrušiť. Skúste to znova.",
+      "currentBadge": "Toto zariadenie",
+      "currentSession": "Aktuálna relácia",
+      "ipAddress": "IP adresa",
+      "lastActive": "Naposledy aktívna",
+      "created": "Prihlásenie",
+      "unknownDevice": "Neznáme zariadenie",
+      "unknownIp": "Neznáma"
+    }
   }
 }

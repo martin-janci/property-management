@@ -1,0 +1,158 @@
+/**
+ * Active Sessions page styles (Story 1.5 / UC-14).
+ */
+
+.sessions-page {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.sessions-header {
+  margin-bottom: 1.5rem;
+}
+
+.sessions-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--ppt-fg-primary, #111827);
+}
+
+.sessions-header p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ppt-fg-muted, #6b7280);
+}
+
+.sessions-status {
+  font-size: 0.875rem;
+  color: var(--ppt-fg-muted, #6b7280);
+}
+
+.sessions-error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--ppt-color-danger, #b91c1c);
+  background: var(--ppt-bg-danger-subtle, #fef2f2);
+  border: 1px solid var(--ppt-border-danger, #fecaca);
+  border-radius: 0.5rem;
+}
+
+.sessions-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.sessions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.session-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--ppt-bg-surface, #ffffff);
+  border: 1px solid var(--ppt-border-default, #e5e7eb);
+  border-radius: 0.5rem;
+}
+
+.session-card--current {
+  border-color: var(--ppt-brand-500, #3b82f6);
+  background: var(--ppt-bg-brand-subtle, #eff6ff);
+}
+
+.session-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.session-device {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.session-device-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ppt-fg-primary, #111827);
+}
+
+.session-current-badge {
+  padding: 0.0625rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: var(--ppt-brand-500, #3b82f6);
+  color: var(--ppt-fg-on-accent, #ffffff);
+  border-radius: 9999px;
+}
+
+.session-meta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.125rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.session-meta-row {
+  display: contents;
+}
+
+.session-meta dt {
+  color: var(--ppt-fg-muted, #6b7280);
+}
+
+.session-meta dd {
+  margin: 0;
+  color: var(--ppt-fg-secondary, #374151);
+  overflow-wrap: anywhere;
+}
+
+.session-actions {
+  flex: 0 0 auto;
+}
+
+.sessions-btn {
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: var(--ppt-bg-app, #f9fafb);
+  color: var(--ppt-fg-secondary, #374151);
+  border: 1px solid var(--ppt-border-default, #e5e7eb);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sessions-btn:hover:not(:disabled) {
+  background: var(--ppt-border-default, #e5e7eb);
+}
+
+.sessions-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sessions-btn--danger {
+  color: var(--ppt-color-danger, #b91c1c);
+  border-color: var(--ppt-border-danger, #fecaca);
+}
+
+.sessions-btn--danger:hover:not(:disabled) {
+  background: var(--ppt-bg-danger-subtle, #fef2f2);
+}

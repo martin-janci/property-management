@@ -12,6 +12,7 @@ export {
   fetchHealthDashboard,
   fetchMetricHistory,
   fetchSupportData,
+  getAgency,
   getOAuthClient,
   getSystemAnnouncement,
   listAgencies,
@@ -29,6 +30,7 @@ export {
   adminKeys,
   useAcknowledgeAlert,
   useAgencies,
+  useAgency,
   useCreateSystemAnnouncement,
   useDeleteSystemAnnouncement,
   useHealthAlerts,
@@ -54,6 +56,7 @@ export {
 export type {
   AdminPaginatedResponse,
   Agency,
+  AgencyDetail,
   AgencyStatus,
   CreateSystemAnnouncementRequest,
   CreateSystemAnnouncementResponse,

@@ -779,5 +779,27 @@
       "statusCancelled": "Megszakított",
       "statusSkipped": "Kihagyott"
     }
+  },
+  "settings": {
+    "sessions": {
+      "title": "Active sessions",
+      "subtitle": "Review where you're signed in and sign out of sessions you don't recognise.",
+      "loading": "Loading sessions…",
+      "loadError": "Could not load your sessions.",
+      "retry": "Try again",
+      "empty": "No active sessions found.",
+      "revoke": "Revoke",
+      "revoking": "Revoking…",
+      "revokeAll": "Revoke all other sessions",
+      "revokeError": "Could not revoke that session. Please try again.",
+      "revokeAllError": "Could not revoke the other sessions. Please try again.",
+      "currentBadge": "This device",
+      "currentSession": "Current session",
+      "ipAddress": "IP address",
+      "lastActive": "Last active",
+      "created": "Signed in",
+      "unknownDevice": "Unknown device",
+      "unknownIp": "Unknown"
+    }
   }
 }

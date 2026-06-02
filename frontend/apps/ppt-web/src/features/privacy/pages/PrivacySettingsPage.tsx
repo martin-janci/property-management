@@ -8,8 +8,6 @@ import { useCallback, useEffect, useState } from 'react';
 interface PrivacySettings {
   profile_visibility: 'visible' | 'hidden' | 'contacts_only';
   show_contact_info: boolean;
-  marketing_consent: boolean;
-  analytics_consent: boolean;
 }
 
 interface DataExportRequest {
@@ -213,42 +211,6 @@ export function PrivacySettingsPage() {
               </label>
               <p className="field-description">
                 When enabled, your email and phone will be visible on your profile.
-              </p>
-            </div>
-
-            <div className="form-field">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={settings.marketing_consent}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      marketing_consent: e.target.checked,
-                    })
-                  }
-                />
-                Receive marketing communications
-              </label>
-              <p className="field-description">Opt-in to receive promotional emails and updates.</p>
-            </div>
-
-            <div className="form-field">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={settings.analytics_consent}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      analytics_consent: e.target.checked,
-                    })
-                  }
-                />
-                Allow analytics tracking
-              </label>
-              <p className="field-description">
-                Help us improve the platform by sharing usage data.
               </p>
             </div>
 
