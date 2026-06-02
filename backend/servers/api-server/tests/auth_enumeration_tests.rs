@@ -16,6 +16,10 @@
 //! subtree, which has no `tests/integration.rs` entry point and is never
 //! compiled or run by `cargo test`).
 
+// Each integration-test binary compiles `common` independently and uses only a
+// subset of its helpers; without this the rest trip `-D dead_code` under CI's
+// `RUSTFLAGS=-Dwarnings`. Matches every other test file in this directory.
+#[allow(dead_code)]
 mod common;
 
 use common::{cleanup_test_user, verify_user_email, TestApp, TestUser};
