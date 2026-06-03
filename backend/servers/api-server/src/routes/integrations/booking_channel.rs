@@ -19,9 +19,7 @@ use axum::{
 };
 use chrono::NaiveDate;
 use db::models::BookingListQuery;
-use integrations::{
-    AvailabilityUpdate, BookingClient, PropertyMapping, RateUpdate, RoomTypeMapping,
-};
+use integrations::{AvailabilityUpdate, BookingClient, RateUpdate};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -275,20 +273,6 @@ pub async fn push_booking_listing(
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
-    // Build a PropertyMapping with a single room-type entry for this unit.
-    let mapping = PropertyMapping {
-        internal_property_id: request.unit_id,
-        external_property_id: hotel_id.clone(),
-        external_property_name: None,
-        room_mappings: vec![RoomTypeMapping {
-            internal_unit_id: request.unit_id,
-            external_room_type_id: request.room_type_id.clone(),
-            external_room_type_name: None,
-        }],
-        sync_enabled: true,
-        last_sync_at: None,
-    };
-
     let mut avail_pushed = 0i32;
     let mut rates_pushed = 0i32;
 
@@ -311,7 +295,7 @@ pub async fn push_booking_listing(
 
         let count = avail_updates.len() as i32;
         client
-            .push_availability(&mapping, avail_updates)
+            .push_availability(&hotel_id, &avail_updates)
             .await
             .map_err(|e| {
                 tracing::error!(error = %e, "Failed to push availability to Booking.com");
@@ -344,7 +328,7 @@ pub async fn push_booking_listing(
 
         rates_pushed = rate_updates.len() as i32;
         client
-            .push_rates(&hotel_id, rate_updates)
+            .push_rates(&hotel_id, &rate_updates)
             .await
             .map_err(|e| {
                 tracing::error!(error = %e, "Failed to push rates to Booking.com");
