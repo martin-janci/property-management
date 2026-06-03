@@ -477,6 +477,9 @@ pub async fn connect_airbnb(
 }
 
 /// Trigger Airbnb sync.
+///
+/// Gap 83-1: Uses `with_token_refresh` so the stored OAuth access token is
+/// proactively refreshed before expiry and automatically rotated on 401.
 #[utoipa::path(
     post,
     path = "/api/v1/integrations/organizations/{org_id}/airbnb/sync",
@@ -484,6 +487,7 @@ pub async fn connect_airbnb(
     responses(
         (status = 200, description = "Sync initiated", body = SyncResponse),
         (status = 403, description = "Forbidden"),
+        (status = 404, description = "No Airbnb connection found"),
         (status = 500, description = "Internal server error")
     ),
     security(("bearer_auth" = [])),
@@ -503,87 +507,141 @@ pub async fn sync_airbnb(
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
 
-    let rental_repo = &state.rental_repo;
-
-    let connection = rental_repo
-        .find_airbnb_connection_by_org(path.org_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to find Airbnb connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to check connection",
-                )),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "NOT_FOUND",
-                    "No Airbnb connection found",
-                )),
-            )
-        })?;
-
-    let access_token = connection.access_token.ok_or_else(|| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "Airbnb not authorized",
-            )),
-        )
-    })?;
-
-    // Issue #711: read cached config from AppState rather than the env.
+    // Issue #711 + Gap 83-1: use cached config; wrap the Airbnb API calls in
+    // `with_token_refresh` so the access token is proactively renewed near
+    // expiry and auto-rotated on 401.
     let oauth_config = AirbnbOAuthConfig {
         client_id: state.airbnb_config.client_id.clone(),
         client_secret: state.airbnb_config.client_secret.clone(),
         redirect_uri: state.airbnb_config.redirect_uri.clone(),
     };
-    let client = AirbnbClient::new(oauth_config);
+    let state_ref = &state;
+    let org_id = path.org_id;
 
-    let listings = client.fetch_listings(&access_token).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to fetch Airbnb listings");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "SYNC_ERROR",
-                format!("Failed to sync: {}", e),
-            )),
-        )
-    })?;
+    let (listings, connection_id) =
+        match super::token_rotation::with_token_refresh(state_ref, org_id, |access_token| {
+            let client = AirbnbClient::new(oauth_config.clone());
+            async move {
+                let listings = client.fetch_listings(&access_token).await?;
+                Ok(listings)
+            }
+        })
+        .await
+        {
+            super::token_rotation::TokenRotationOutcome::Ok(listings) => {
+                // We need the connection_id for the last_sync update below.
+                // Re-fetch the (now-updated) connection briefly.
+                let conn_id = state
+                    .rental_repo
+                    .find_airbnb_connection_by_org(org_id)
+                    .await
+                    .ok()
+                    .flatten()
+                    .map(|c| c.id);
+                (listings, conn_id)
+            }
+            super::token_rotation::TokenRotationOutcome::NoConnection => {
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "No Airbnb connection found")),
+                ));
+            }
+            super::token_rotation::TokenRotationOutcome::ExpiredNoRefresh => {
+                return Err((
+                    StatusCode::UNAUTHORIZED,
+                    Json(ErrorResponse::new(
+                        "TOKEN_EXPIRED",
+                        "Airbnb token expired and no refresh token available",
+                    )),
+                ));
+            }
+            super::token_rotation::TokenRotationOutcome::DecryptionFailed(e) => {
+                tracing::error!(org_id = %org_id, error = %e, "Token decryption failed");
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DECRYPTION_ERROR",
+                        "Failed to decrypt Airbnb credentials",
+                    )),
+                ));
+            }
+            super::token_rotation::TokenRotationOutcome::RefreshFailed(e) => {
+                tracing::error!(org_id = %org_id, error = %e, "Token refresh failed");
+                return Err((
+                    StatusCode::UNAUTHORIZED,
+                    Json(ErrorResponse::new(
+                        "TOKEN_REFRESH_FAILED",
+                        "Failed to refresh Airbnb token",
+                    )),
+                ));
+            }
+            super::token_rotation::TokenRotationOutcome::CallFailed(e) => {
+                tracing::error!(org_id = %org_id, error = %e, "Airbnb API call failed");
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "SYNC_ERROR",
+                        format!("Failed to sync: {}", e),
+                    )),
+                ));
+            }
+        };
+
+    // Fetch reservations for each listing (best-effort; errors are warnings).
+    let client_for_res = AirbnbClient::new(AirbnbOAuthConfig {
+        client_id: state.airbnb_config.client_id.clone(),
+        client_secret: state.airbnb_config.client_secret.clone(),
+        redirect_uri: state.airbnb_config.redirect_uri.clone(),
+    });
+
+    // We need the plaintext token again for reservation fetches.  Rather than
+    // calling with_token_refresh again (double refresh risk), decrypt the now-
+    // current token from the connection.
+    let current_access_token = state
+        .rental_repo
+        .find_airbnb_connection_by_org(org_id)
+        .await
+        .ok()
+        .flatten()
+        .and_then(|c| {
+            let crypto = integrations::IntegrationCrypto::try_from_env();
+            c.canonical_encrypted_token().map(|t| {
+                integrations::decrypt_if_available(crypto.as_ref(), t)
+            })
+        });
 
     let mut total_items = listings.len();
-    for listing in &listings {
-        match client
-            .fetch_reservations(&access_token, &listing.id, None, None)
-            .await
-        {
-            Ok(reservations) => {
-                total_items += reservations.len();
-                tracing::info!(
-                    listing_id = %listing.id,
-                    reservation_count = reservations.len(),
-                    "Fetched reservations for listing"
-                );
-            }
-            Err(e) => {
-                tracing::warn!(
-                    listing_id = %listing.id,
-                    error = %e,
-                    "Failed to fetch reservations for listing"
-                );
+    if let Some(ref token) = current_access_token {
+        for listing in &listings {
+            match client_for_res
+                .fetch_reservations(token, &listing.id, None, None)
+                .await
+            {
+                Ok(reservations) => {
+                    total_items += reservations.len();
+                    tracing::info!(
+                        listing_id = %listing.id,
+                        reservation_count = reservations.len(),
+                        "Fetched reservations for listing"
+                    );
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        listing_id = %listing.id,
+                        error = %e,
+                        "Failed to fetch reservations for listing"
+                    );
+                }
             }
         }
     }
 
-    let _ = rental_repo
-        .update_connection_last_sync(connection.id, chrono::Utc::now())
-        .await;
+    if let Some(cid) = connection_id {
+        let _ = state
+            .rental_repo
+            .update_connection_last_sync(cid, chrono::Utc::now())
+            .await;
+    }
 
     tracing::info!(
         org_id = %path.org_id,
