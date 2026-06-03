@@ -318,8 +318,16 @@ pub mod ota_xml {
         if has_success {
             return (true, None);
         }
-        // Ambiguous -- caller decides
-        (true, None)
+        // Indeterminate: neither <Success> nor <Errors> was seen (malformed,
+        // truncated, or an unexpected response shape). Do NOT silently treat
+        // this as success -- that would mask a failed push. Surface it as a
+        // non-success indeterminate state so callers can react.
+        (
+            false,
+            Some(
+                "Indeterminate Booking.com response: no <Success> or <Errors> element".to_string(),
+            ),
+        )
     }
 
     /// Parse an `OTA_HotelResNotifRQ` body and return a list of
@@ -330,15 +338,16 @@ pub mod ota_xml {
     pub fn parse_res_notif_rq_raw(
         xml: &str,
     ) -> Result<Vec<(String, String, String)>, BookingError> {
-        // We use the string-scan approach here because quick-xml's fragment
-        // extraction from a streaming reader requires buffering the whole
-        // subtree, which duplicates complexity for no gain on this particular
-        // element structure.  The string-scan is safe: we only look for a
-        // well-known element boundary and pass the fragment up.
+        // Element boundaries are located with a namespace-safe scan that only
+        // matches the *element name* (so a hypothetical `<HotelReservationFoo>`
+        // can never be mistaken for `<HotelReservation>`). The `ResStatus`
+        // attribute is then read from the `<HotelReservation>` *start-tag only*
+        // via the streaming reader, so a nested child element carrying a
+        // similarly named attribute can never shadow it.
         let mut results = Vec::new();
         let mut pos = 0;
 
-        while let Some(start_rel) = xml[pos..].find("<HotelReservation") {
+        while let Some(start_rel) = find_element_start(&xml[pos..], "HotelReservation") {
             let abs_start = pos + start_rel;
             // Locate matching close tag -- naive scan safe here since
             // HotelReservation is not self-nested in OTA.
@@ -346,8 +355,13 @@ pub mod ota_xml {
                 let abs_end = abs_start + end_rel + "</HotelReservation>".len();
                 let fragment = &xml[abs_start..abs_end];
 
+                // ResStatus lives on the HotelReservation start-tag itself.
+                // Parse the start-tag attributes precisely rather than scanning
+                // the whole fragment for `ResStatus="`.
                 let res_status =
-                    extract_xml_attr(fragment, "ResStatus").unwrap_or_else(|| "Commit".to_string());
+                    start_tag_attr(fragment, "ResStatus").unwrap_or_else(|| "Commit".to_string());
+                // ResID_Value lives on a nested <HotelReservationID> element;
+                // a word-boundary-aware fragment scan is correct here.
                 let res_id = extract_xml_attr(fragment, "ResID_Value")
                     .or_else(|| extract_xml_attr(fragment, "ID"))
                     .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
@@ -360,6 +374,53 @@ pub mod ota_xml {
         }
 
         Ok(results)
+    }
+
+    /// Find the byte offset of the start-tag of an element named exactly
+    /// `name` (namespace prefixes allowed), ensuring the match ends on a tag
+    /// boundary (whitespace, `>` or `/`) so `<HotelReservationFoo>` is not
+    /// mistaken for `<HotelReservation>`.
+    fn find_element_start(xml: &str, name: &str) -> Option<usize> {
+        let mut search_from = 0;
+        while let Some(rel) = xml[search_from..].find('<') {
+            let lt = search_from + rel;
+            let after = &xml[lt + 1..];
+            // Skip closing tags / comments / declarations.
+            let after = after.strip_prefix('/').map(|_| "").unwrap_or(after);
+            // Allow an optional `prefix:` before the element name.
+            let candidate = after.rsplit(':').next().unwrap_or(after);
+            if let Some(rest) = candidate.strip_prefix(name) {
+                let boundary = rest
+                    .chars()
+                    .next()
+                    .map(|c| c.is_whitespace() || c == '>' || c == '/')
+                    .unwrap_or(false);
+                // Ensure the `prefix:` (if any) sits immediately after `<`.
+                let prefix_ok = after == candidate || after.ends_with(candidate);
+                if boundary && prefix_ok {
+                    return Some(lt);
+                }
+            }
+            search_from = lt + 1;
+        }
+        None
+    }
+
+    /// Read an attribute from the *start-tag* of an XML fragment via the
+    /// streaming reader, so nested elements cannot shadow the value.
+    fn start_tag_attr(fragment: &str, attr: &str) -> Option<String> {
+        let mut reader = Reader::from_str(fragment);
+        reader.config_mut().trim_text(true);
+        loop {
+            match reader.read_event() {
+                Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
+                    return attr_value(e, attr);
+                }
+                Ok(Event::Eof) => return None,
+                Err(_) => return None,
+                _ => {}
+            }
+        }
     }
 
     // ------------------------------------------------------------------
@@ -389,15 +450,32 @@ pub mod ota_xml {
             .and_then(|a| a.unescape_value().ok().map(|v| v.into_owned()))
     }
 
-    /// Naive attribute extractor that works on a raw XML fragment.
+    /// Word-boundary-aware attribute extractor for a raw XML fragment.
+    ///
+    /// Matches `attr_name="..."` only when the attribute name is not a suffix
+    /// of a longer name -- i.e. the character preceding the match must be a
+    /// tag/attribute boundary (whitespace, `<`, `/` or `:`). This prevents
+    /// `XResStatus="..."` from being mis-read as `ResStatus="..."`.
     pub fn extract_xml_attr(xml: &str, attr_name: &str) -> Option<String> {
         let pattern = format!("{}=\"", attr_name);
-        xml.find(&pattern).and_then(|start| {
-            let val_start = start + pattern.len();
-            xml[val_start..]
-                .find('"')
-                .map(|end| xml[val_start..val_start + end].to_string())
-        })
+        let mut from = 0;
+        while let Some(rel) = xml[from..].find(&pattern) {
+            let start = from + rel;
+            let prev_ok = start == 0
+                || xml[..start]
+                    .chars()
+                    .next_back()
+                    .map(|c| c.is_whitespace() || c == '<' || c == '/' || c == ':')
+                    .unwrap_or(true);
+            if prev_ok {
+                let val_start = start + pattern.len();
+                return xml[val_start..]
+                    .find('"')
+                    .map(|end| xml[val_start..val_start + end].to_string());
+            }
+            from = start + pattern.len();
+        }
+        None
     }
 
     /// Naive element-content extractor that works on a raw XML fragment.
@@ -597,6 +675,70 @@ pub mod ota_xml {
             assert_eq!(notifs.len(), 1);
             assert_eq!(notifs[0].1, "Cancel");
             assert_eq!(notifs[0].0, "BK-002");
+        }
+
+        #[test]
+        fn test_parse_response_status_indeterminate_is_not_success() {
+            // No <Success> and no <Errors> -- must NOT be reported as success.
+            let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelAvailNotifRS xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+</OTA_HotelAvailNotifRS>"#;
+            let (ok, err) = parse_response_status(xml);
+            assert!(!ok, "indeterminate response must not be success");
+            assert!(
+                err.is_some(),
+                "indeterminate response should carry a message"
+            );
+        }
+
+        #[test]
+        fn test_parse_response_status_truncated_is_not_success() {
+            // Truncated / malformed XML must surface as non-success, not OK.
+            let xml =
+                r#"<OTA_HotelAvailNotifRS xmlns="http://www.opentravel.org/OTA/2003/05"><Succ"#;
+            let (ok, _err) = parse_response_status(xml);
+            assert!(!ok, "truncated response must not be success");
+        }
+
+        #[test]
+        fn test_extract_xml_attr_word_boundary() {
+            // A longer attribute name ending in the target must not match.
+            let frag = r#"<HotelReservation XResStatus="Bogus" ResStatus="Commit"/>"#;
+            assert_eq!(
+                extract_xml_attr(frag, "ResStatus").as_deref(),
+                Some("Commit")
+            );
+        }
+
+        #[test]
+        fn test_res_status_not_shadowed_by_nested_element() {
+            // ResStatus on the start-tag must win over any nested element that
+            // happens to carry a ResStatus attribute.
+            let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelResNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <HotelReservations>
+    <HotelReservation ResStatus="Cancel">
+      <ResGlobalInfo>
+        <SomeNested ResStatus="Commit"/>
+        <HotelReservationIDs>
+          <HotelReservationID ResID_Value="BK-003"/>
+        </HotelReservationIDs>
+      </ResGlobalInfo>
+    </HotelReservation>
+  </HotelReservations>
+</OTA_HotelResNotifRQ>"#;
+            let notifs = parse_res_notif_rq_raw(xml).unwrap();
+            assert_eq!(notifs.len(), 1);
+            assert_eq!(notifs[0].1, "Cancel", "start-tag ResStatus must win");
+            assert_eq!(notifs[0].0, "BK-003");
+        }
+
+        #[test]
+        fn test_find_element_start_no_prefix_false_match() {
+            // `<HotelReservationFoo>` must not be detected as HotelReservation.
+            let xml = r#"<HotelReservationFoo ResStatus="Cancel"></HotelReservationFoo>"#;
+            let notifs = parse_res_notif_rq_raw(xml).unwrap();
+            assert_eq!(notifs.len(), 0, "must not match the longer element name");
         }
     }
 }
@@ -835,6 +977,21 @@ pub enum BookingReservationStatus {
     NoShow,
 }
 
+/// Map an OTA `ResStatus` value to the internal [`BookingReservationStatus`].
+///
+/// Recognised OTA values: `Commit`/`Confirmed`, `Cancel`/`Cancelled`,
+/// `Modify`/`Modified`, `NoShow`/`No_Show` (case-insensitive). Anything
+/// unrecognised maps to [`BookingReservationStatus::New`].
+pub fn map_reservation_status(res_status: &str) -> BookingReservationStatus {
+    match res_status.to_lowercase().as_str() {
+        "commit" | "confirmed" => BookingReservationStatus::Confirmed,
+        "cancel" | "cancelled" => BookingReservationStatus::Cancelled,
+        "modify" | "modified" => BookingReservationStatus::Modified,
+        "noshow" | "no_show" => BookingReservationStatus::NoShow,
+        _ => BookingReservationStatus::New,
+    }
+}
+
 /// Booking.com guest information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BookingGuest {
@@ -917,7 +1074,13 @@ impl OtaReadRS {
         // Use quick-xml based status parser for error/success detection.
         let (status_success, status_error) = ota_xml::parse_response_status(xml);
 
-        if !status_success {
+        // Some Booking.com OTA_ReadRS variants omit <Success/> and instead
+        // signal success implicitly with a <ReservationsList> element. Accept
+        // that as success even though parse_response_status returns the
+        // indeterminate (false, _) state for a response with no <Success>.
+        let implicit_success = xml.contains("<ReservationsList");
+
+        if !status_success && !implicit_success {
             return Ok(Self {
                 success: false,
                 error: status_error,
@@ -925,9 +1088,9 @@ impl OtaReadRS {
             });
         }
 
-        // Also accept a <ReservationsList> element as an implicit success
-        // indicator (some Booking.com response variants omit <Success/>).
-        if !xml.contains("<Success") && !xml.contains("<ReservationsList") {
+        // Require an explicit success indicator (either <Success/> or the
+        // implicit <ReservationsList> element) before attempting to parse.
+        if !xml.contains("<Success") && !implicit_success {
             return Ok(Self {
                 success: false,
                 error: Some("Unknown response format".to_string()),
@@ -1000,13 +1163,7 @@ impl OtaReadRS {
         // Extract status
         let status_str =
             Self::extract_attr(xml, "ResStatus").unwrap_or_else(|| "Confirmed".to_string());
-        let status = match status_str.to_lowercase().as_str() {
-            "commit" | "confirmed" => BookingReservationStatus::Confirmed,
-            "cancel" | "cancelled" => BookingReservationStatus::Cancelled,
-            "modify" | "modified" => BookingReservationStatus::Modified,
-            "noshow" | "no_show" => BookingReservationStatus::NoShow,
-            _ => BookingReservationStatus::New,
-        };
+        let status = map_reservation_status(&status_str);
 
         // Extract guest info
         let guest = BookingGuest {
@@ -1529,8 +1686,7 @@ impl BookingClient {
 
         let description = Self::extract_xml_element(xml, "DescriptiveText");
 
-        let star_rating = Self::extract_xml_attr(xml, "Rating")
-            .and_then(|s| s.parse::<i32>().ok());
+        let star_rating = Self::extract_xml_attr(xml, "Rating").and_then(|s| s.parse::<i32>().ok());
 
         let address = BookingAddress {
             street: Self::extract_xml_element(xml, "AddressLine").unwrap_or_default(),
@@ -1601,7 +1757,9 @@ impl BookingClient {
 
         if !ota_response.success {
             return Err(BookingError::Api(
-                ota_response.error.unwrap_or_else(|| "Unknown error".to_string()),
+                ota_response
+                    .error
+                    .unwrap_or_else(|| "Unknown error".to_string()),
             ));
         }
 
@@ -1666,7 +1824,9 @@ impl BookingClient {
 
         if !ota_response.success {
             return Err(BookingError::PushFailed(
-                ota_response.error.unwrap_or_else(|| "Unknown error".to_string()),
+                ota_response
+                    .error
+                    .unwrap_or_else(|| "Unknown error".to_string()),
             ));
         }
 
