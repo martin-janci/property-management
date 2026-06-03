@@ -17,15 +17,20 @@
  *      exactly once on startup and hands the notification's data payload to a
  *      caller-supplied handler. The actual screen routing is owned by the
  *      navigation/deep-link layer — this module deliberately does NOT import
- *      `Linking` or the deep-link helper so the two concerns stay decoupled.
+ *      `Linking` so the two concerns stay decoupled.
  *
  *   2. `syncBadgeFromData()` keeps the app-icon badge in sync with the
  *      `badge` field a backgrounded data-notification may carry, since iOS
  *      only auto-applies the badge for *alert* notifications, not data-only
  *      ones routed through FCM.
+ *
+ *   3. `deepLinkForNotification()` maps a push `{type,id}` payload to the
+ *      `ppt://` deep link that opens the matching screen, shared by every
+ *      tap entry point in `usePushNotifications`.
  */
 
 import * as Notifications from 'expo-notifications';
+import { createDeepLink } from '../qrcode/DeepLinkHandler';
 
 /** Shape of the data payload our backend attaches to every push. */
 export interface PushNotificationData {
@@ -74,6 +79,36 @@ export async function consumeLaunchNotification(handler: LaunchNotificationHandl
       console.warn('[push] failed to read launch notification', err);
     }
   }
+}
+
+/**
+ * Map a push notification's `{ type, id }` data payload to the `ppt://` deep
+ * link that opens the matching screen when the notification is tapped.
+ *
+ * Shared by the foreground tap handler, the runtime-tap handler, and the
+ * cold-start launch handler in `usePushNotifications` so all three entry
+ * points route identically. Unknown / missing types fall back to the
+ * Dashboard so a tap is never a dead end.
+ */
+export function deepLinkForNotification(data: PushNotificationData | null): string {
+  const type = data?.type;
+  const idString = data?.id != null ? String(data.id) : undefined;
+
+  // Each push `type` maps to a list screen; when an entity `id` is present we
+  // pass it through so the deep-link layer can open the detail screen.
+  const screenForType: Record<string, string> = {
+    announcement: 'Announcements',
+    fault: 'Faults',
+    vote: 'Voting',
+    message: 'Messages',
+    outage: 'Outages',
+  };
+
+  const screen = type ? screenForType[type] : undefined;
+  if (!screen) {
+    return createDeepLink('Dashboard');
+  }
+  return idString ? createDeepLink(screen, { id: idString }) : createDeepLink(screen);
 }
 
 /**

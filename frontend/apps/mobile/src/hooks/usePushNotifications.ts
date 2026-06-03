@@ -3,9 +3,13 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Platform } from 'react-native';
-import { createDeepLink } from '../qrcode/DeepLinkHandler';
 import { colors } from '../screens/shared/screenStyles';
-import { consumeLaunchNotification, syncBadgeFromData } from '../services/backgroundNotifications';
+import {
+  consumeLaunchNotification,
+  deepLinkForNotification,
+  type PushNotificationData,
+  syncBadgeFromData,
+} from '../services/backgroundNotifications';
 import { apiRequest } from './useApi';
 
 // Configure notification handling
@@ -114,44 +118,12 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   };
 
   const handleNotificationNavigation = (data: Record<string, unknown>) => {
-    // Handle deep linking based on notification data
-    const { type, id } = data;
-    const idString = id ? String(id) : undefined;
-
-    // Map notification types to screen names and create deep links
-    let deepLinkUrl: string;
-
-    switch (type) {
-      case 'announcement':
-        deepLinkUrl = idString
-          ? createDeepLink('Announcements', { id: idString })
-          : createDeepLink('Announcements');
-        break;
-      case 'fault':
-        deepLinkUrl = idString
-          ? createDeepLink('Faults', { id: idString })
-          : createDeepLink('Faults');
-        break;
-      case 'vote':
-        deepLinkUrl = idString
-          ? createDeepLink('Voting', { id: idString })
-          : createDeepLink('Voting');
-        break;
-      case 'message':
-        deepLinkUrl = idString
-          ? createDeepLink('Messages', { id: idString })
-          : createDeepLink('Messages');
-        break;
-      case 'outage':
-        deepLinkUrl = idString
-          ? createDeepLink('Outages', { id: idString })
-          : createDeepLink('Outages');
-        break;
-      default:
-        deepLinkUrl = createDeepLink('Dashboard');
-    }
-
-    Linking.openURL(deepLinkUrl);
+    // Map the notification's {type, id} payload to a `ppt://` deep link and
+    // hand it to the OS Linking layer; `deepLinkManager` (initialised in
+    // App.tsx) picks up the `url` event and routes to the screen. Mapping
+    // logic lives in `backgroundNotifications.deepLinkForNotification` so the
+    // foreground, runtime-tap, and cold-start paths route identically.
+    Linking.openURL(deepLinkForNotification(data as PushNotificationData));
   };
 
   const registerForPushNotifications = async (): Promise<string | null> => {
