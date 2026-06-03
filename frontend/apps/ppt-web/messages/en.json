@@ -322,6 +322,12 @@
       "noTimelineEvents": "No timeline events yet.",
       "mustBeParty": "You must be a party or manager to participate in this discussion.",
       "noLongerActive": "This dispute is no longer active.",
+      "loadError": {
+        "title": "Failed to load dispute",
+        "message": "We could not load this mediation case. Please try again.",
+        "retry": "Try again",
+        "retrying": "Retrying…"
+      },
       "recordResolution": "Record Resolution",
       "onlyManagersCanResolve": "Only managers and mediators can record a resolution.",
       "escalateTitle": "Escalate Dispute",

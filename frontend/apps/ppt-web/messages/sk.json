@@ -261,6 +261,12 @@
       "noTimelineEvents": "Zatiaľ žiadne udalosti.",
       "mustBeParty": "Musíte byť stranou alebo správcom, aby ste sa mohli zapojiť do diskusie.",
       "noLongerActive": "Tento spor už nie je aktívny.",
+      "loadError": {
+        "title": "Nepodarilo sa načítať spor",
+        "message": "Tento mediačný prípad sa nepodarilo načítať. Skúste to znova.",
+        "retry": "Skúsiť znova",
+        "retrying": "Skúšam znova…"
+      },
       "recordResolution": "Zaznamenať riešenie",
       "onlyManagersCanResolve": "Riešenie môžu zaznamenať iba správcovia a mediátori.",
       "escalateTitle": "Eskalovať spor",

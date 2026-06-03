@@ -260,6 +260,12 @@
       "noTimelineEvents": "Brak wydarzeń na osi czasu.",
       "mustBeParty": "Musisz być stroną lub zarządcą, aby uczestniczyć w tej dyskusji.",
       "noLongerActive": "Ten spór nie jest już aktywny.",
+      "loadError": {
+        "title": "Nie udało się załadować sporu",
+        "message": "Nie udało się załadować tej sprawy mediacyjnej. Spróbuj ponownie.",
+        "retry": "Spróbuj ponownie",
+        "retrying": "Ponawianie…"
+      },
       "recordResolution": "Zarejestruj rozwiązanie",
       "onlyManagersCanResolve": "Tylko zarządcy i mediatorzy mogą rejestrować rozwiązania.",
       "escalateTitle": "Eskaluj spór",

@@ -72,7 +72,13 @@ export function MediationWorkspacePage({
     undefined
   );
 
-  const { data: dispute, isLoading: disputeLoading } = useDispute(disputeId);
+  const {
+    data: dispute,
+    isLoading: disputeLoading,
+    isError: disputeError,
+    refetch: refetchDispute,
+    isFetching: disputeFetching,
+  } = useDispute(disputeId);
   const { data: sessions = [], isLoading: sessionsLoading } = useMediationSessions(disputeId);
 
   const resolveDispute = useResolveDispute(organizationId);
@@ -189,6 +195,51 @@ export function MediationWorkspacePage({
           aria-label={t('common.loading')}
           className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600"
         />
+      </div>
+    );
+  }
+
+  // Fetch failed and we have no dispute to fall back on: show an explicit
+  // error banner with a retry affordance instead of rendering the page with
+  // 'unknown' status and empty placeholders.
+  if (disputeError && !dispute) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-sm text-violet-600 hover:text-violet-800 mb-4 flex items-center gap-1"
+        >
+          {t('disputes.mediation.backToDispute')}
+        </button>
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+          <svg
+            className="w-12 h-12 text-red-400 mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
+          </svg>
+          <p className="text-gray-900 font-medium">{t('disputes.mediation.loadError.title')}</p>
+          <p className="text-gray-500 text-sm mt-1">{t('disputes.mediation.loadError.message')}</p>
+          <button
+            type="button"
+            onClick={() => refetchDispute()}
+            disabled={disputeFetching}
+            className="mt-5 inline-flex items-center px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {disputeFetching
+              ? t('disputes.mediation.loadError.retrying')
+              : t('disputes.mediation.loadError.retry')}
+          </button>
+        </div>
       </div>
     );
   }
