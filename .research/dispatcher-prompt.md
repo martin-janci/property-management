@@ -426,8 +426,8 @@ TTL steals are visible per-run in the commit log.
      GEN_EPOCH=$(date -u -d "$GEN_AT" +%s 2>/dev/null || echo 0)
      NOW_EPOCH=$(date -u +%s)
      AGE_MIN=$(( (NOW_EPOCH - GEN_EPOCH) / 60 ))
-     if [ "$AGE_MIN" -lt 30 ] && [ "$GEN_EPOCH" -gt 0 ]; then
-       echo "skip-gate: assignments.generated=$GEN_AT (age=${AGE_MIN}m < 30m); another run is in flight"
+     if [ "$AGE_MIN" -lt 25 ] && [ "$GEN_EPOCH" -gt 0 ]; then
+       echo "skip-gate: assignments.generated=$GEN_AT (age=${AGE_MIN}m < 25m); another run is in flight"
        echo "  → Phase 2 (GH reconciliation, idempotent) WILL run; Phases 3/4/5/5.5/5.6/5.7 SKIP."
        echo "  → Phase 6 will commit only if Phase 2 produced status transitions."
        export DISPATCHER_SKIP_MUTATING=1
@@ -444,7 +444,7 @@ TTL steals are visible per-run in the commit log.
    - Phase 7 prints summary as usual with `skip_reason=recent-run` in the header line.
 
    This is a soft lock based on a repo-level timestamp, not a filesystem lock —
-   it survives cross-host parallel runs. Two runs within the same 30-min window
+   it survives cross-host parallel runs. Two runs within the same 25-min window
    will see the same `assignments.generated` and both skip mutating phases on
    their second pass; one of them already did the work.
 
@@ -2371,7 +2371,7 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - **auto-rebase** (item #6) is bounded at 3 attempts per row; after that a human must intervene
 - **sandbox-reclaim** (P3) is bounded at 1 attempt per row; the helper at `.claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh` picks the timeout (60m for `Mode: cloud-ok`, 120m otherwise) and classifies the row as wait/reclaim/fail. Reclaim re-spawns the same specialist with the same brief and bumps `reclaim_attempts`; a second sandbox-timeout becomes `failed` with `reason: sandbox-failure-after-reclaim`
 - **disk preflight** (item #7) aborts the run gracefully at <5% free; never crashes mid-subagent
-- **recent-run skip-gate** (issue #1) — if `assignments.generated` is < 30min old, set `DISPATCHER_SKIP_MUTATING=1` and SKIP every mutating phase (2.5, 2.6, 2.7, 3, 4, 5, 5.5, 5.6, 5.7). Phase 2 (GH reconciliation) and Phase 7 (summary) still run. Prevents the `assignments.json` rebase races seen on 2026-05-27.
+- **recent-run skip-gate** (issue #1) — if `assignments.generated` is < 25min old, set `DISPATCHER_SKIP_MUTATING=1` and SKIP every mutating phase (2.5, 2.6, 2.7, 3, 4, 5, 5.5, 5.6, 5.7). Phase 2 (GH reconciliation) and Phase 7 (summary) still run. Prevents the `assignments.json` rebase races seen on 2026-05-27.
 - **failed-dep cascade** (issue #6) — open action-list items whose `depends_on` points at a terminal-`failed` row are dropped (`status=open → status=dropped`) in Phase 2.7 with an audit prefix; max 20 cascades/run. Re-planning is upstream (operator-driven).
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
