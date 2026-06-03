@@ -76,6 +76,9 @@ url = "2.5"
 # HTTP client (for integrations)
 reqwest = { version = "0.13", features = ["json", "form", "query"] }
 
+# XML parsing/generation (for OTA/Booking.com integration)
+quick-xml = { version = "0.37", features = ["serialize"] }
+
 # Observability (Epic 95)
 opentelemetry = { version = "0.32", features = ["metrics", "trace"] }
 opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
