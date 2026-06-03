@@ -37,6 +37,17 @@ export class LoginPage extends BasePage {
     return this.loginPath;
   }
 
+  /**
+   * Wait for the login form rather than a `<main>` landmark. Some login screens
+   * (e.g. admin-web's bare `<form aria-label="admin login">`) render no `<main>`
+   * at all, so the BasePage default would time out. Waiting on the email field
+   * is the resilient, app-agnostic readiness signal for a login surface.
+   */
+  override async waitReady(): Promise<void> {
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.emailInput().waitFor({ state: 'visible' });
+  }
+
   // ---- form fields (single source of truth for login selectors) ----
 
   emailInput(): Locator {

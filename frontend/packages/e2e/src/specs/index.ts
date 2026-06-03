@@ -8,4 +8,10 @@ export type { RegisterNavigationOptions } from './navigation';
 export { registerNavigationSpecs } from './navigation';
 export type { RegisterRouteHealthOptions } from './route-health';
 export { registerRouteHealthSpecs } from './route-health';
-export { isSitemapApp, navigablePublicRoutes, routeUrl } from './shared';
+export {
+  contentPublicRoutes,
+  isCallbackRoute,
+  isSitemapApp,
+  navigablePublicRoutes,
+  routeUrl,
+} from './shared';

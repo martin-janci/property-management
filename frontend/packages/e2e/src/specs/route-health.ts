@@ -6,7 +6,7 @@
 import type { ConsoleMessage } from '@playwright/test';
 import { expect, test } from '../fixtures';
 import { SitemapPage } from '../pages/SitemapPage';
-import { isSitemapApp, navigablePublicRoutes } from './shared';
+import { contentPublicRoutes, isSitemapApp } from './shared';
 
 export interface RegisterRouteHealthOptions {
   readonly app: string;
@@ -27,7 +27,10 @@ export function registerRouteHealthSpecs({
     return;
   }
 
-  for (const route of navigablePublicRoutes(app)) {
+  // SSO callback routes are excluded: they render only a transient spinner /
+  // error banner and need a backend to resolve, so they have no plain content
+  // surface to health-check (see `isCallbackRoute`).
+  for (const route of contentPublicRoutes(app)) {
     test(`route loads cleanly: ${route.id}`, async ({ page }) => {
       const errors: string[] = [];
       const onError = (msg: ConsoleMessage) => {

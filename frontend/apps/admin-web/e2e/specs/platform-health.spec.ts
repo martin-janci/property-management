@@ -11,10 +11,17 @@
  * All selectors are encapsulated in the page object — no raw locator strings.
  */
 
-import { expect, test } from '@ppt/e2e';
+import { backendEnabled, expect, test } from '@ppt/e2e';
 import { PlatformHealthPage } from '../pages';
 
-test.describe('admin-web platform health', () => {
+test.describe('admin-web platform health @requires-backend', () => {
+  // Platform Health is an authed, capability-gated control-plane screen backed
+  // by the health API. Without a backend there is no session to establish and
+  // no data to render, so the whole block skips cleanly unless a backend is
+  // wired (E2E_WITH_BACKEND=1). The `login('admin')` fixture would also skip on
+  // its own, but gating up front keeps the report honest (skipped, not failed).
+  test.skip(!backendEnabled(), 'authed health screen requires a backend');
+
   // admin-web's login route is not in the sitemap; the LoginPage used by the
   // `login` fixture falls back to '/login', which is correct for admin-web.
   test.beforeEach(async ({ login }) => {

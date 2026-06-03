@@ -21,6 +21,25 @@ export function navigablePublicRoutes(app: SitemapApp): FrontendRoute[] {
   return getPublicRoutes(app).filter((r) => hasResolvableParams(r));
 }
 
+/**
+ * Whether a route is an SSO / OAuth callback landing page rather than a plain
+ * content page. These exchange a `code`/`state` for tokens against the backend
+ * and only ever render a transient spinner or an error banner — they have no
+ * stable `main` + heading and cannot "load cleanly" without a backend, so the
+ * route-health factory excludes them.
+ */
+export function isCallbackRoute(route: FrontendRoute): boolean {
+  return (route.tags ?? []).includes('sso') || route.id.endsWith('-auth-callback');
+}
+
+/**
+ * Public content routes safe for route-health: navigable public routes minus
+ * SSO callback landing pages (which have no plain content surface).
+ */
+export function contentPublicRoutes(app: SitemapApp): FrontendRoute[] {
+  return navigablePublicRoutes(app).filter((r) => !isCallbackRoute(r));
+}
+
 /** Build a concrete URL for a route, applying example params when present. */
 export function routeUrl(route: FrontendRoute): string {
   return buildUrl(route, exampleParams(route));

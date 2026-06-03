@@ -9,7 +9,7 @@
  * through the {@link HomePage} page object (no raw nav selectors in the body).
  */
 
-import { expect, test } from '@ppt/e2e';
+import { backendEnabled, expect, test } from '@ppt/e2e';
 import { HomePage } from '../pages';
 
 test.describe('ppt-web · primary navigation', () => {
@@ -25,30 +25,6 @@ test.describe('ppt-web · primary navigation', () => {
     await expect(home.disputesLink()).toBeVisible();
     await expect(home.accessibilityLink()).toBeVisible();
     await expect(home.privacyLink()).toBeVisible();
-  });
-
-  test('navigates to the documents page via the nav link', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto();
-
-    await home.documentsLink().click();
-    await expect(page).toHaveURL(/\/documents/);
-  });
-
-  test('navigates to the news page via the nav link', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto();
-
-    await home.newsLink().click();
-    await expect(page).toHaveURL(/\/news/);
-  });
-
-  test('navigates to the emergency contacts page via the nav link', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto();
-
-    await home.emergencyLink().click();
-    await expect(page).toHaveURL(/\/emergency/);
   });
 
   test('navigates to the disputes page via the nav link', async ({ page }) => {
@@ -73,6 +49,41 @@ test.describe('ppt-web · primary navigation', () => {
 
     await home.privacyLink().click();
     await expect(page).toHaveURL(/\/settings\/privacy/);
+  });
+});
+
+/**
+ * Protected-route navigation. documents/news/emergency are auth-gated routes:
+ * without a backend the app redirects clicks to `/login`, so clicking the nav
+ * link never settles on the target URL. The "back home" case depends on first
+ * reaching a protected route, so it lives here too. These skip cleanly unless
+ * a backend is wired (E2E_WITH_BACKEND=1).
+ */
+test.describe('ppt-web · protected-route navigation @requires-backend', () => {
+  test.skip(!backendEnabled(), 'protected routes redirect to /login without a backend');
+
+  test('navigates to the documents page via the nav link', async ({ page }) => {
+    const home = new HomePage(page);
+    await home.goto();
+
+    await home.documentsLink().click();
+    await expect(page).toHaveURL(/\/documents/);
+  });
+
+  test('navigates to the news page via the nav link', async ({ page }) => {
+    const home = new HomePage(page);
+    await home.goto();
+
+    await home.newsLink().click();
+    await expect(page).toHaveURL(/\/news/);
+  });
+
+  test('navigates to the emergency contacts page via the nav link', async ({ page }) => {
+    const home = new HomePage(page);
+    await home.goto();
+
+    await home.emergencyLink().click();
+    await expect(page).toHaveURL(/\/emergency/);
   });
 
   test('navigates back home from another page', async ({ page }) => {

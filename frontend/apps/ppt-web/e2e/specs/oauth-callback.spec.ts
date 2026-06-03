@@ -89,9 +89,13 @@ test.describe('OAuth callback flow (AuthCallbackPage)', () => {
         }),
       });
     });
+    // Catch-all stub so no `/api/v1/*` call escapes to the (absent) backend via
+    // the Vite dev proxy. The later-registered handler runs first, so we
+    // `fallback()` (not `continue()`) the sso URL to the specific stub above —
+    // `continue()` would send it to the real network and ECONNREFUSED.
     await page.route('**/api/v1/**', async (route) => {
       if (route.request().url().includes('/api/v1/auth/sso/callback')) {
-        await route.continue();
+        await route.fallback();
       } else {
         await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
       }
@@ -164,7 +168,7 @@ test.describe('OAuth callback flow (AuthCallbackPage)', () => {
     });
     await page.route('**/api/v1/**', async (route) => {
       if (route.request().url().includes('/api/v1/auth/sso/callback')) {
-        await route.continue();
+        await route.fallback();
       } else {
         await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
       }

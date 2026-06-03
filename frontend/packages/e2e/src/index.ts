@@ -57,6 +57,8 @@ export type {
 } from './specs';
 // Spec factories
 export {
+  contentPublicRoutes,
+  isCallbackRoute,
   isSitemapApp,
   navigablePublicRoutes,
   registerA11ySpecs,

@@ -10,7 +10,7 @@
  * credentials come from the framework `testUsers` fixture.
  */
 
-import { expect, test } from '@ppt/e2e';
+import { backendEnabled, expect, test } from '@ppt/e2e';
 import { DocumentsPage, HomePage, LoginPage } from '../pages';
 
 test.describe('ppt-web · login page UI', () => {
@@ -119,11 +119,16 @@ test.describe('ppt-web · protected routes', () => {
 });
 
 /**
- * Backend-gated flows. These require a running backend with seeded test users;
- * the framework `login` fixture calls `test.skip()` gracefully when the backend
- * is unavailable.
+ * Backend-gated flows. These require a running backend with seeded test users.
+ * The framework `login` fixture calls `test.skip()` when the backend is
+ * unavailable, but that path waits on the full login attempt (goto + submit +
+ * a 15s URL wait) which can race the per-test timeout under a loaded dev
+ * server. Gating the describe up front on `backendEnabled()` skips them
+ * deterministically (skipped, never timed-out-failed) when no backend is wired.
  */
 test.describe('ppt-web · authenticated flows @requires-backend', () => {
+  test.skip(!backendEnabled(), 'authenticated flows require a backend');
+
   test('logs in with valid credentials and leaves the login route', async ({ page, login }) => {
     await login('manager');
     await expect(page).not.toHaveURL(/\/login/);

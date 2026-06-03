@@ -7,6 +7,7 @@
 import type { Page } from '@playwright/test';
 import type { SitemapApp } from '../env';
 import { expect, test } from '../fixtures';
+import { backendEnabled } from '../flow/FlowRunner';
 import { LoginPage } from '../pages/LoginPage';
 
 export interface RegisterAuthOptions {
@@ -59,7 +60,11 @@ export function registerAuthSpecs(opts: RegisterAuthOptions): void {
     await expect(page).toHaveURL(/login/);
   });
 
-  test('surfaces an error banner for invalid credentials', async ({ page }) => {
+  test('surfaces an error banner for invalid credentials @requires-backend', async ({ page }) => {
+    test.skip(
+      !backendEnabled(),
+      'invalid-credentials banner needs a backend — set E2E_WITH_BACKEND=1 to run'
+    );
     const login = makeLoginPage(page, opts);
     await login.goto();
     await login.fillAndSubmit('nonexistent@example.com', 'wrongPassword');
