@@ -7,6 +7,7 @@
 import * as Notifications from 'expo-notifications';
 import {
   consumeLaunchNotification,
+  deepLinkForNotification,
   extractNotificationData,
   syncBadgeFromData,
 } from './backgroundNotifications';
@@ -80,6 +81,32 @@ describe('consumeLaunchNotification', () => {
 
     await expect(consumeLaunchNotification(handler)).resolves.toBeUndefined();
     expect(handler).not.toHaveBeenCalled();
+  });
+});
+
+describe('deepLinkForNotification', () => {
+  it('routes a typed push with an id to the matching detail deep link', () => {
+    expect(deepLinkForNotification({ type: 'announcement', id: '42' })).toBe(
+      'ppt://announcements/42'
+    );
+    expect(deepLinkForNotification({ type: 'fault', id: 7 })).toBe('ppt://faults/7');
+    expect(deepLinkForNotification({ type: 'vote', id: '9' })).toBe('ppt://voting/9');
+    expect(deepLinkForNotification({ type: 'message', id: '3' })).toBe('ppt://messages/3');
+    expect(deepLinkForNotification({ type: 'outage', id: '5' })).toBe('ppt://outages/5');
+  });
+
+  it('routes a typed push without an id to the list deep link', () => {
+    expect(deepLinkForNotification({ type: 'announcement' })).toBe('ppt://announcements');
+    expect(deepLinkForNotification({ type: 'fault' })).toBe('ppt://faults');
+  });
+
+  it('falls back to the dashboard for an unknown type', () => {
+    expect(deepLinkForNotification({ type: 'wat', id: '1' })).toBe('ppt://dashboard');
+  });
+
+  it('falls back to the dashboard for a missing type or null payload', () => {
+    expect(deepLinkForNotification({ id: '1' })).toBe('ppt://dashboard');
+    expect(deepLinkForNotification(null)).toBe('ppt://dashboard');
   });
 });
 
