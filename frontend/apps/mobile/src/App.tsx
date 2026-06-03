@@ -24,6 +24,7 @@ import {
   FaultsListScreen,
   FormsScreen,
   LeaseDetailScreen,
+  LeaseSignatureScreen,
   LeasesScreen,
   MessagesScreen,
   MeterDetailScreen,
@@ -84,6 +85,7 @@ type Screen =
   | 'Buildings'
   | 'Leases'
   | 'LeaseDetail'
+  | 'LeaseSignature'
   | 'More';
 
 /**
@@ -304,6 +306,13 @@ function MainApp() {
         return (
           <LeaseDetailScreen onBack={() => handleNavigate('Leases')} onNavigate={handleNavigate} />
         );
+      case 'LeaseSignature':
+        return (
+          <LeaseSignatureScreen
+            esignatureId={screenParams?.esignatureId as string | undefined}
+            onBack={() => handleNavigate('LeaseDetail')}
+          />
+        );
       case 'More':
         return <MoreMenu onNavigate={handleNavigate} />;
       default:
@@ -381,6 +390,7 @@ function MainApp() {
             currentScreen === 'Buildings' ||
             currentScreen === 'Leases' ||
             currentScreen === 'LeaseDetail' ||
+            currentScreen === 'LeaseSignature' ||
             currentScreen === 'Meters' ||
             currentScreen === 'MeterDetail' ||
             currentScreen === 'Profile' ||
