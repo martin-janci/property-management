@@ -96,7 +96,12 @@ async fn insert_owner_resident(conn: &mut PgConnection, unit: Uuid, user: Uuid) 
 }
 
 /// Active vote with delegation allowed, open now, ending in the future.
-async fn insert_active_vote(conn: &mut PgConnection, org: Uuid, building: Uuid, creator: Uuid) -> Uuid {
+async fn insert_active_vote(
+    conn: &mut PgConnection,
+    org: Uuid,
+    building: Uuid,
+    creator: Uuid,
+) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         "INSERT INTO votes \
             (organization_id, building_id, title, start_at, end_at, status, \
@@ -230,7 +235,10 @@ async fn revoked_delegation_is_rejected_by_eligibility_and_cast_guard(pool: PgPo
         .await
         .expect("check_eligibility (active)");
     assert!(
-        before.eligible_units.iter().any(|u| u.unit_id == unit && u.is_delegated),
+        before
+            .eligible_units
+            .iter()
+            .any(|u| u.unit_id == unit && u.is_delegated),
         "delegate should be eligible while delegation is active"
     );
     assert!(
@@ -256,7 +264,10 @@ async fn revoked_delegation_is_rejected_by_eligibility_and_cast_guard(pool: PgPo
         .await
         .expect("check_eligibility (revoked)");
     assert!(
-        !after.eligible_units.iter().any(|u| u.unit_id == unit && u.is_delegated),
+        !after
+            .eligible_units
+            .iter()
+            .any(|u| u.unit_id == unit && u.is_delegated),
         "revoked delegation must not grant delegated eligibility; got {:?}",
         after.eligible_units
     );
