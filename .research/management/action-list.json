@@ -7,10 +7,11 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-05-25",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": "merged PR#491; closed 2026-06-03T14:26:29Z archive-terminal-leak non-stem id"
     },
     {
       "id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
@@ -18,9 +19,32 @@
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-05-25",
+      "depends_on": [],
+      "gc1_closed": "merged PR#494; closed 2026-06-03T14:26:29Z archive-terminal-leak non-stem id"
+    },
+    {
+      "id": "gap-7a-2-mobile-folder-tree-wiring",
+      "action": "Wire the React Native DocumentsScreen folder navigation to the real backend folder hierarchy: fetch GET /api/v1/documents/folders/tree (get_folder_tree) via @ppt/api-client and render nested folders per breadcrumb level instead of the current root-only scaffold.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-7a-2-mobile-folder-manage-ui",
+      "action": "Add folder create + document-move management to the React Native documents feature: a NewFolderSheet (POST /api/v1/documents/folders) and a MoveDocumentSheet that PATCHes a document folder_id, mirroring the web FolderTree/MoveFolderDialog.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03",
+      "deadline": null,
+      "dependency": null,
       "depends_on": []
     }
   ]
