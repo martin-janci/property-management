@@ -87,6 +87,8 @@ pub enum NotificationCategory {
     Community,
     /// Financial notifications (invoices, payments).
     Financial,
+    /// Document sharing notifications (Story 7A.5).
+    Documents,
     /// System maintenance and updates.
     System,
 }
@@ -101,6 +103,7 @@ impl NotificationCategory {
             NotificationCategory::Messages,
             NotificationCategory::Community,
             NotificationCategory::Financial,
+            NotificationCategory::Documents,
             NotificationCategory::System,
         ]
     }
@@ -114,6 +117,7 @@ impl NotificationCategory {
             NotificationCategory::Messages => "messages",
             NotificationCategory::Community => "community",
             NotificationCategory::Financial => "financial",
+            NotificationCategory::Documents => "documents",
             NotificationCategory::System => "system",
         }
     }
@@ -133,6 +137,10 @@ impl NotificationCategory {
             NotificationCategory::Community => &[NotificationChannel::InApp],
             // Financial defaults to all
             NotificationCategory::Financial => NotificationChannel::all(),
+            // Documents (share notifications) default to push and in-app
+            NotificationCategory::Documents => {
+                &[NotificationChannel::Push, NotificationChannel::InApp]
+            }
             // System defaults to email and in-app
             NotificationCategory::System => {
                 &[NotificationChannel::Email, NotificationChannel::InApp]
@@ -388,7 +396,7 @@ mod tests {
     #[test]
     fn test_notification_category_all() {
         let categories = NotificationCategory::all();
-        assert_eq!(categories.len(), 7);
+        assert_eq!(categories.len(), 8);
     }
 
     #[test]
