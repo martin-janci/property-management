@@ -96,7 +96,11 @@ where
     Fut: std::future::Future<Output = Result<T, AirbnbError>>,
 {
     // 1. Load connection.
-    let connection = match state.rental_repo.find_airbnb_connection_by_org(org_id).await {
+    let connection = match state
+        .rental_repo
+        .find_airbnb_connection_by_org(org_id)
+        .await
+    {
         Ok(Some(c)) => c,
         Ok(None) => return TokenRotationOutcome::NoConnection,
         Err(e) => {
@@ -392,13 +396,12 @@ pub async fn revoke_airbnb_token(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use integrations::{AirbnbOAuthConfig, AirbnbOAuthTokens};
 
     #[test]
     fn test_refresh_buffer_secs_is_positive() {
-        assert!(REFRESH_BUFFER_SECS > 0);
+        const { assert!(REFRESH_BUFFER_SECS > 0) };
         // Must be at least the minimum enforced by TokenRefreshConfig.
-        assert!(REFRESH_BUFFER_SECS >= integrations::MIN_REFRESH_BUFFER_SECS);
+        const { assert!(REFRESH_BUFFER_SECS >= integrations::MIN_REFRESH_BUFFER_SECS) };
     }
 
     #[test]
@@ -419,7 +422,10 @@ mod tests {
         // Token expiring in 2 minutes — within the 5-minute buffer.
         let exp_soon = now + chrono::Duration::seconds(120);
         let threshold = now + chrono::Duration::seconds(REFRESH_BUFFER_SECS);
-        assert!(exp_soon <= threshold, "Token expiring in 2 min should need proactive refresh");
+        assert!(
+            exp_soon <= threshold,
+            "Token expiring in 2 min should need proactive refresh"
+        );
 
         // Token expiring in 10 minutes — outside the buffer.
         let exp_later = now + chrono::Duration::seconds(600);

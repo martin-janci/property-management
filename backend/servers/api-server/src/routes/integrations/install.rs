@@ -543,7 +543,10 @@ pub async fn sync_airbnb(
             super::token_rotation::TokenRotationOutcome::NoConnection => {
                 return Err((
                     StatusCode::NOT_FOUND,
-                    Json(ErrorResponse::new("NOT_FOUND", "No Airbnb connection found")),
+                    Json(ErrorResponse::new(
+                        "NOT_FOUND",
+                        "No Airbnb connection found",
+                    )),
                 ));
             }
             super::token_rotation::TokenRotationOutcome::ExpiredNoRefresh => {
@@ -605,9 +608,8 @@ pub async fn sync_airbnb(
         .flatten()
         .and_then(|c| {
             let crypto = integrations::IntegrationCrypto::try_from_env();
-            c.canonical_encrypted_token().map(|t| {
-                integrations::decrypt_if_available(crypto.as_ref(), t)
-            })
+            c.canonical_encrypted_token()
+                .map(|t| integrations::decrypt_if_available(crypto.as_ref(), t))
         });
 
     let mut total_items = listings.len();
