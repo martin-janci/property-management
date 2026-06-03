@@ -6,6 +6,8 @@
 
 // Story 61.2: Accounting Export
 export { AccountingExportsList } from './AccountingExportsList';
+// Gap 83-1: Airbnb Integration
+export { AirbnbConnectionPanel } from './AirbnbConnectionPanel';
 export { CalendarConnectDialog } from './CalendarConnectDialog';
 // Story 61.1: Calendar Integration
 export { CalendarConnectionsList } from './CalendarConnectionsList';
