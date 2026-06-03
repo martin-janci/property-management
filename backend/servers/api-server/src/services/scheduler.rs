@@ -386,7 +386,7 @@ impl Scheduler {
                     SELECT DISTINCT ur.user_id
                     FROM unit_residents ur
                     JOIN units u ON ur.unit_id = u.id
-                    WHERE u.building_id = ANY($1) AND ur.move_out_date IS NULL
+                    WHERE u.building_id = ANY($1) AND ur.end_date IS NULL
                     "#,
                 )
                 .bind(&target_ids)
@@ -399,7 +399,7 @@ impl Scheduler {
                 let users: Vec<(uuid::Uuid,)> = sqlx::query_as(
                     r#"
                     SELECT DISTINCT user_id FROM unit_residents
-                    WHERE unit_id = ANY($1) AND move_out_date IS NULL
+                    WHERE unit_id = ANY($1) AND end_date IS NULL
                     "#,
                 )
                 .bind(&target_ids)
@@ -583,7 +583,7 @@ impl Scheduler {
             JOIN units u ON ur.unit_id = u.id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             "#,
         )
         .bind(building_id)
@@ -658,7 +658,7 @@ impl Scheduler {
             JOIN units u ON ur.unit_id = u.id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
               AND NOT EXISTS (
                   SELECT 1 FROM vote_responses vr
                   WHERE vr.vote_id = $2 AND vr.unit_id = ur.unit_id
@@ -698,7 +698,7 @@ impl Scheduler {
             JOIN unit_residents ur ON ur.unit_id = u.id
             WHERE v.id = ANY($1)
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
               AND NOT EXISTS (
                   SELECT 1 FROM vote_responses vr
                   WHERE vr.vote_id = v.id AND vr.unit_id = ur.unit_id

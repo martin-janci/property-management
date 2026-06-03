@@ -1206,7 +1206,7 @@ impl VoteRepository {
                 WHERE u.building_id = $1
                   AND ur.user_id = $2
                   AND ur.resident_type = 'owner'
-                  AND ur.move_out_date IS NULL
+                  AND ur.end_date IS NULL
 
                 UNION ALL
 
@@ -1221,10 +1221,10 @@ impl VoteRepository {
                 FROM units u
                 JOIN delegations d ON u.id = d.unit_id
                 WHERE u.building_id = $1
-                  AND d.delegate_id = $2
+                  AND d.delegate_user_id = $2
                   AND d.status = 'active'
-                  AND d.scope IN ('voting', 'full')
-                  AND (d.expires_at IS NULL OR d.expires_at > NOW())
+                  AND (d.scopes && ARRAY['voting','all']::delegation_scope[])
+                  AND (d.end_date IS NULL OR d.end_date >= CURRENT_DATE)
                   AND $3 = true
             )
             SELECT
@@ -1296,7 +1296,7 @@ impl VoteRepository {
             JOIN unit_residents ur ON u.id = ur.unit_id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             "#,
         )
         .bind(vote.building_id)
@@ -1324,7 +1324,7 @@ impl VoteRepository {
             JOIN units u ON ur.unit_id = u.id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             "#,
         )
         .bind(building_id)
@@ -1927,7 +1927,7 @@ impl VoteRepository {
             JOIN unit_residents ur ON u.id = ur.unit_id
             WHERE u.building_id = $2
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             ORDER BY u.designation
             "#,
         )

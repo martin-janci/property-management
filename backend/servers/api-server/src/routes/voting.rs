@@ -1109,11 +1109,11 @@ async fn cast_vote(
             SELECT EXISTS (
                 SELECT 1 FROM delegations
                 WHERE id = $1
-                  AND delegate_id = $2
+                  AND delegate_user_id = $2
                   AND unit_id = $3
                   AND status = 'active'
-                  AND scope IN ('voting', 'full')
-                  AND (expires_at IS NULL OR expires_at > NOW())
+                  AND (scopes && ARRAY['voting','all']::delegation_scope[])
+                  AND (end_date IS NULL OR end_date >= CURRENT_DATE)
             )
             "#,
         )
