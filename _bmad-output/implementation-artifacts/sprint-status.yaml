@@ -40,7 +40,7 @@ epics:
     name: "Platform Administration"
     status: in-progress
     stories_total: 7
-    stories_completed: 3
+    stories_completed: 5  # 10b-1,2,3,4,6 done (coverage.json 2026-05-29: all status=done, high confidence)
   epic-80:
     name: "Dispute Resolution"
     status: partial
@@ -65,7 +65,7 @@ development_status:
   # Epic 8A: Basic Notification Preferences
   8a-1-channel-level-notification-toggles: done
   8a-2-critical-notification-override: done
-  8a-3-notification-preference-sync: done
+  8a-3-notification-preference-sync: done  # WebSocket realtime-sync leg DONE (PR #472, merged 2026-05-25 — coverage.json: "WS half cleared by PR #472"). Mobile OS push (FCM/APNs) remains deferred; backend realtime tests tracked in #480/#484.
   # Epic 10A: OAuth Provider Foundation
   10a-1-oauth-authorization-server: ready-for-dev
   10a-2-oauth-client-registration: ready-for-dev
@@ -74,9 +74,9 @@ development_status:
   10b-1-organization-management-dashboard: done
   10b-2-feature-flag-management: done
   10b-3-platform-health-monitoring: done
-  10b-4-system-announcements: ready-for-dev
+  10b-4-system-announcements: done  # coverage.json 2026-05-27: handlers fully implemented since cf533ae4; SystemAnnouncementRepository CRUD + maintenance + ack; public_announcements_router; cargo check -p api-server exit 0 (frontend admin-web component still pending — backend story complete)
   10b-5-support-data-access: ready-for-dev
-  10b-6-user-onboarding-tour: ready-for-dev
+  10b-6-user-onboarding-tour: done  # coverage.json 2026-05-27: onboarding.rs routes mounted at /api/v1/onboarding; OnboardingRepository (needs_onboarding/get_tours_for_user/start_tour/complete_step/complete_tour/skip_tour/reset_tour); handlers fully implemented since cf533ae4; cargo check -p api-server exit 0 (frontend component still pending — backend story complete)
   10b-7-contextual-help-documentation: ready-for-dev
   # Epic 80: Dispute Resolution (verified 2026-05-25)
   80-2-dispute-filing-flow: partial  # EvidenceUploader.tsx + useDraftStorage.ts missing; AC-2, AC-4 not met
@@ -185,7 +185,7 @@ test_hardening_batch:
 #   8a-3-notification-preference-sync  → #480, #484
 #   10a-1-oauth-authorization-server   → #481, #487
 #   10a-2-oauth-client-registration    → #482
-#   10a-3-oauth-token-management       → #481
+#   10a-3-oauth-token-management        → #481
 #   7a-5-document-sharing              → #485
 #   6-2-announcement-viewing-acknowledgment → #486
 #   6-5-direct-messaging               → #486
@@ -198,7 +198,7 @@ notes:
   - "Story 6.1 completed 2025-12-21 - awaiting code review"
   - "Epic 8A all stories completed 2025-12-21 - code review completed 2026-05-23 - marked done"
   - "Story 8A.2 notification dispatch logic deferred - requires Epic 2B"
-  - "Story 8A.3 WebSocket sync deferred - requires WebSocket infrastructure"
+  - "Story 8A.3 WebSocket sync DONE - delivered by PR #472 (merged 2026-05-25); coverage.json confirms WS leg cleared"
   - "Story 8A.3 mobile OS integration deferred - requires mobile app implementation"
   - "2026-05-25: test-hardening batch thb-2026-05-25 slotted — issues #480-#487 must be closed or deferred before dependent stories can be promoted to done"
 

@@ -44,6 +44,41 @@ interface ApiVoteSummary {
   quorum_met?: boolean | null;
 }
 
+/** Narrow an unknown value to a well-formed `ApiVoteSummary`.
+ *
+ *  The list endpoint is consumed without a generated client, so the response
+ *  shape is `unknown` at runtime. A blind cast (previously
+ *  `data as unknown as ApiVoteSummary[]`) made `.map(toUiVote)` crash the
+ *  whole screen the moment the backend returned an unexpected shape — a
+ *  non-array, an array of nulls, or summaries missing `id`/`title`/`status`.
+ *  Validate the required string fields here and drop anything malformed. */
+function isApiVoteSummary(value: unknown): value is ApiVoteSummary {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === 'string' &&
+    typeof v.title === 'string' &&
+    typeof v.status === 'string' &&
+    typeof v.end_at === 'string'
+  );
+}
+
+/** Safely normalise the `/api/v1/voting` response into a validated summary
+ *  list. Accepts either a bare array or `{ votes: [...] }` (the shape varies
+ *  by backend version) and tolerates any other/garbage shape by returning an
+ *  empty list rather than throwing. Malformed individual entries are dropped
+ *  so one bad row can't take down the whole screen. */
+export function parseVoteSummaries(data: unknown): ApiVoteSummary[] {
+  const candidates: unknown[] = Array.isArray(data)
+    ? data
+    : typeof data === 'object' &&
+        data !== null &&
+        Array.isArray((data as { votes?: unknown }).votes)
+      ? (data as { votes: unknown[] }).votes
+      : [];
+  return candidates.filter(isApiVoteSummary);
+}
+
 /** Map the api-server's status string onto the UI's narrowed enum. */
 function toUiStatus(status: string): VoteStatus {
   switch (status) {
@@ -84,11 +119,6 @@ interface VotingScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
-interface ApiVoteListResponse {
-  votes: ApiVoteSummary[];
-  total?: number;
-}
-
 export function VotingScreen({ onNavigate }: VotingScreenProps) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
@@ -96,18 +126,17 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
   // Voting routes use `RlsConnection` and require both Authorization and
   // X-Tenant-ID — both are sent by `useApiQuery` (the latter pulled from
   // the JWT's `tenant_id` claim).
-  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiVoteListResponse>(
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
     ['voting', 'list'],
     '/api/v1/voting',
     { staleTime: 30_000 }
   );
 
   // The list endpoint may return either an array or `{ votes: [...] }`
-  // depending on backend version — accept both.
-  const apiVotes: ApiVoteSummary[] = Array.isArray(data)
-    ? (data as unknown as ApiVoteSummary[])
-    : (data?.votes ?? []);
-  const votes: Vote[] = apiVotes.map(toUiVote);
+  // depending on backend version — accept both, and reject anything else
+  // (or any malformed row) so an unexpected response shape renders the empty
+  // state instead of crashing the screen at `.map()` time.
+  const votes: Vote[] = parseVoteSummaries(data).map(toUiVote);
 
   const onRefresh = useCallback(async () => {
     await refetch();

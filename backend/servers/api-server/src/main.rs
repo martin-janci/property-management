@@ -404,6 +404,34 @@ async fn main() -> anyhow::Result<()> {
         tenant_rate_limiters,
     );
 
+    // gap-84-1: Wire the S3 / MinIO storage service so document download &
+    // preview endpoints can mint short-lived presigned URLs. The constructor
+    // (`from_env_async`) initialises the real aws-sdk-s3 client — for an
+    // S3-compatible endpoint like MinIO it picks up S3_ENDPOINT and uses
+    // path-style addressing. Fail-soft: a missing/invalid config logs a
+    // warning and leaves `storage_service = None`, in which case the download
+    // endpoint returns 503 STORAGE_NOT_CONFIGURED rather than crashing the
+    // whole server (mirrors the optional-service pattern used elsewhere).
+    let state = match integrations::StorageService::from_env_async().await {
+        Ok(storage) => {
+            tracing::info!(
+                bucket = %storage.bucket(),
+                region = %storage.region(),
+                download_ttl_secs = storage.download_ttl_secs(),
+                "S3 storage service initialised — document downloads enabled"
+            );
+            state.with_storage(storage)
+        }
+        Err(e) => {
+            tracing::warn!(
+                error = %e,
+                "S3 storage not configured — document download/preview endpoints \
+                 will return 503 until S3_BUCKET / AWS_* env vars are set"
+            );
+            state
+        }
+    };
+
     // Start background scheduler for scheduled announcements
     let scheduler_enabled = std::env::var("SCHEDULER_ENABLED")
         .map(|v| v != "false" && v != "0")

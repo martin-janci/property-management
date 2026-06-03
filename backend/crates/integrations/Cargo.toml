@@ -38,3 +38,5 @@ redis = { workspace = true }
 futures-lite = "2.2"
 # Async trait for connector actions
 async-trait = "0.1"
+# XML parsing/generation (for OTA/Booking.com integration, Story 83.2)
+quick-xml = { workspace = true }

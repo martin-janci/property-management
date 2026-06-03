@@ -156,6 +156,66 @@ export interface UpdateDisputeStatusRequest {
 }
 
 // ============================================
+// Mediation Session Types (Story 80.3)
+// ============================================
+
+export type SessionType = 'in_person' | 'video_call' | 'phone' | 'written';
+
+export type SessionStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'rescheduled';
+
+/**
+ * A mediation session as returned by the api-server.
+ *
+ * Field names mirror the backend `MediationSession` model exactly. The
+ * backend serializes with serde defaults (no `rename_all`), so the wire
+ * format is snake_case — these property names match the JSON on the wire.
+ */
+export interface MediationSession {
+  id: string;
+  dispute_id: string;
+  mediator_id: string;
+  session_type: SessionType;
+  scheduled_at: string;
+  duration_minutes?: number | null;
+  location?: string | null;
+  meeting_url?: string | null;
+  status: SessionStatus;
+  notes?: string | null;
+  outcome?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Request body for scheduling a session
+ * (`POST /api/v1/disputes/{id}/sessions`).
+ *
+ * The backend derives `dispute_id` from the path and `mediator_id` from the
+ * authenticated user, so neither needs to be sent by the client.
+ */
+export interface ScheduleSessionRequest {
+  session_type: SessionType;
+  scheduled_at: string;
+  duration_minutes?: number | null;
+  location?: string | null;
+  meeting_url?: string | null;
+  attendee_party_ids?: string[];
+}
+
+/**
+ * Partial update for an existing session
+ * (`PATCH /api/v1/disputes/{id}/sessions/{sessionId}`) — reschedule,
+ * relocate, or change status.
+ */
+export interface UpdateSessionRequest {
+  scheduled_at?: string;
+  duration_minutes?: number | null;
+  location?: string | null;
+  meeting_url?: string | null;
+  status?: SessionStatus;
+}
+
+// ============================================
 // Timeline Types (Story 80.3)
 // ============================================
 

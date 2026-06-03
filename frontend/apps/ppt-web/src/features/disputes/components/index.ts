@@ -13,4 +13,6 @@ export { FileDisputeDialog } from './FileDisputeDialog';
 export { MediationChatThread } from './MediationChatThread';
 export { MediationResolutionForm } from './MediationResolutionForm';
 export { MediationSessionCard } from './MediationSessionCard';
+export { MediationSessionDialog } from './MediationSessionDialog';
+export { MediationSessionsPanel } from './MediationSessionsPanel';
 export { ResolutionCard } from './ResolutionCard';
