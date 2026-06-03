@@ -149,6 +149,7 @@
     "noDocuments": "Brak dostepnych dokumentow",
     "share": "Udostepnij",
     "searchPlaceholder": "Search documents…",
+    "folderItemCount": "{{count}} elementow",
     "filter": {
       "all": "All",
       "audience": "Audience"

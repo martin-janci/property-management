@@ -26,6 +26,8 @@ export interface Document {
   parentId: string | null;
   downloadUrl?: string;
   children?: Document[];
+  /** Number of documents directly in a folder (folder rows only, gap-7a-2). */
+  documentCount?: number;
   /** RLS-enforced audience scope returned from the server (gap-7a-3). */
   accessScope?: AccessScope;
   status?: DocumentStatus;
@@ -74,6 +76,64 @@ interface ApiDocumentListResponse {
   documents: ApiDocument[];
   count?: number;
   total?: number;
+}
+
+/**
+ * Node of `GET /api/v1/documents/folders/tree` (`FolderTreeNode` on the
+ * server). The server nests children under each node; `parent_id` is the
+ * id of the containing folder (null for root-level folders) and
+ * `document_count` is the number of documents directly in the folder.
+ */
+interface ApiFolderTreeNode {
+  id: string;
+  name: string;
+  parent_id?: string | null;
+  document_count: number;
+  children?: ApiFolderTreeNode[] | null;
+}
+
+interface ApiFolderTreeResponse {
+  tree: ApiFolderTreeNode[];
+}
+
+/** Lightweight breadcrumb entry: just enough to render + look up children. */
+interface FolderCrumb {
+  id: string;
+  name: string;
+}
+
+/**
+ * Walk the nested folder tree to the folder identified by `path` (a list of
+ * folder ids from root downward) and return its direct subfolders. An empty
+ * path returns the root-level folders.
+ */
+function subfoldersAtPath(
+  tree: ApiFolderTreeNode[],
+  path: ReadonlyArray<FolderCrumb>
+): ApiFolderTreeNode[] {
+  let level = tree;
+  for (const crumb of path) {
+    const match = level.find((n) => n.id === crumb.id);
+    if (!match) return [];
+    level = match.children ?? [];
+  }
+  return level;
+}
+
+/** Map a folder tree node to the screen's unified `Document` row shape. */
+function folderNodeToDocument(node: ApiFolderTreeNode): Document {
+  return {
+    id: node.id,
+    name: node.name,
+    type: 'folder',
+    createdAt: '',
+    updatedAt: '',
+    parentId: node.parent_id ?? null,
+    // Carry the live document count so the row meta ("N items") is real
+    // rather than always 0. `children` here is the on-tree subfolder list,
+    // which the row's "items" count intentionally does not use.
+    documentCount: node.document_count,
+  };
 }
 
 function pickDocumentType(d: ApiDocument): DocumentType {
@@ -129,36 +189,71 @@ const audienceBadgeStyles = StyleSheet.create({
 
 export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProps) {
   const { t } = useTranslation();
-  const [currentPath, setCurrentPath] = useState<Document[]>([]);
+  /** Folder drill-down path from root → current folder (gap-7a-2). */
+  const [currentPath, setCurrentPath] = useState<FolderCrumb[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [downloading, setDownloading] = useState<string | null>(null);
   /** Active access_scope audience filter (gap-7a-3). Undefined = no filter. */
   const [selectedScope, setSelectedScope] = useState<AccessScope | undefined>(undefined);
 
-  // Build query params: include access_scope when a filter is active.
-  const queryParams = selectedScope ? `?access_scope=${selectedScope}` : '';
+  const currentFolder = currentPath.length > 0 ? currentPath[currentPath.length - 1] : null;
+
+  // ── Live folder hierarchy (gap-7a-2) ──────────────────────────────────────
+  // Drives the breadcrumb drill-down. Tenant scoping is enforced server-side
+  // by the RLS connection behind GET /api/v1/documents/folders/tree.
+  const {
+    data: folderData,
+    isLoading: foldersLoading,
+    error: foldersError,
+    refetch: refetchFolders,
+    isFetching: foldersFetching,
+  } = useApiQuery<ApiFolderTreeResponse>(
+    ['documents', 'folders', 'tree'],
+    '/api/v1/documents/folders/tree',
+    {
+      staleTime: 60_000,
+    }
+  );
+
+  const folderTree = folderData?.tree ?? [];
+
+  // ── Documents in the current folder ───────────────────────────────────────
+  // When inside a folder we scope the list by `folder_id`. At the root we omit
+  // it (the endpoint then returns every document) and filter client-side to
+  // the ones with no parent, so the root view shows only top-level documents.
+  const listQuery: string[] = [];
+  if (currentFolder) listQuery.push(`folder_id=${currentFolder.id}`);
+  if (selectedScope) listQuery.push(`access_scope=${selectedScope}`);
+  const queryParams = listQuery.length > 0 ? `?${listQuery.join('&')}` : '';
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiDocumentListResponse>(
-    ['documents', 'list', selectedScope],
+    ['documents', 'list', currentFolder?.id ?? 'root', selectedScope],
     `/api/v1/documents${queryParams}`,
     { staleTime: 60_000 }
   );
 
-  // The api-server returns a flat list; the screen still supports a
-  // folder breadcrumb but at this layer all documents live at the root.
-  const documents: Document[] = (data?.documents ?? []).map(toUiDocument);
+  const apiDocuments: Document[] = (data?.documents ?? []).map(toUiDocument);
+  // At the root the endpoint returns all documents; keep only the ones that
+  // live at the root (no folder). Inside a folder the server already scoped
+  // the list, so take everything it returned.
+  const documents: Document[] = currentFolder
+    ? apiDocuments
+    : apiDocuments.filter((d) => d.parentId === null);
 
   const onRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
+    await Promise.all([refetch(), refetchFolders()]);
+  }, [refetch, refetchFolders]);
 
   const getCurrentDocuments = (): Document[] => {
-    if (currentPath.length === 0) {
-      return documents;
-    }
-    const current = currentPath[currentPath.length - 1];
-    return current.children || [];
+    // Subfolders at this level come from the live folder tree; documents come
+    // from the (folder-scoped) list query. Folders render first.
+    const folders = subfoldersAtPath(folderTree, currentPath).map(folderNodeToDocument);
+    return [...folders, ...documents];
   };
+
+  const isLoadingView = isLoading || foldersLoading;
+  const combinedError = error ?? foldersError;
+  const isRefreshing = isFetching || foldersFetching;
 
   const getFileIcon = (type: DocumentType): string => {
     switch (type) {
@@ -187,7 +282,7 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
   };
 
   const navigateToFolder = (folder: Document) => {
-    setCurrentPath((prev) => [...prev, folder]);
+    setCurrentPath((prev) => [...prev, { id: folder.id, name: folder.name }]);
   };
 
   const navigateBack = () => {
@@ -316,18 +411,22 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.accent}
+          />
         }
       >
-        {isLoading ? (
+        {isLoadingView ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>{t('common.loading') ?? 'Loading…'}</Text>
           </View>
-        ) : error ? (
+        ) : combinedError ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>⚠️</Text>
             <Text style={styles.emptyTitle}>{t('documents.loadError') ?? "Couldn't load"}</Text>
-            <Text style={styles.emptyText}>{error.message}</Text>
+            <Text style={styles.emptyText}>{combinedError.message}</Text>
           </View>
         ) : filteredDocuments.length === 0 ? (
           <View style={styles.emptyState}>
@@ -359,7 +458,9 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
                     </Text>
                     <View style={styles.documentMeta}>
                       {doc.type === 'folder' ? (
-                        <Text style={styles.metaText}>{doc.children?.length || 0} items</Text>
+                        <Text style={styles.metaText}>
+                          {t('documents.folderItemCount', { count: doc.documentCount ?? 0 })}
+                        </Text>
                       ) : (
                         <Text style={styles.metaText}>
                           {formatFileSize(doc.size || 0)} • {formatDate(doc.updatedAt)}
@@ -370,14 +471,17 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
                     {doc.accessScope ? <AudienceScopeBadge scope={doc.accessScope} /> : null}
                   </View>
                   <View style={styles.rowActions}>
-                    {/* Permissions detail button */}
-                    <Pressable
-                      style={styles.permissionsButton}
-                      onPress={() => _onNavigate?.('DocumentPermissions', { documentId: doc.id })}
-                      hitSlop={8}
-                    >
-                      <Text style={styles.permissionsIcon}>🔒</Text>
-                    </Pressable>
+                    {/* Permissions detail button — documents only (folders
+                        have no per-document RLS scope to inspect). */}
+                    {doc.type !== 'folder' ? (
+                      <Pressable
+                        style={styles.permissionsButton}
+                        onPress={() => _onNavigate?.('DocumentPermissions', { documentId: doc.id })}
+                        hitSlop={8}
+                      >
+                        <Text style={styles.permissionsIcon}>🔒</Text>
+                      </Pressable>
+                    ) : null}
                     {doc.type === 'folder' ? (
                       <Text style={styles.arrowIcon}>›</Text>
                     ) : downloading === doc.id ? (

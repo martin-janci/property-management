@@ -157,6 +157,7 @@
     "emptyTitle": "Ziadne dokumenty",
     "noMatches": "Ziadne dokumenty nezodpovedaju hladaniu",
     "folderEmpty": "Tento priecinok je prazdny",
+    "folderItemCount": "{{count}} poloziek",
     "searchPlaceholder": "Hladat dokumenty…",
     "filter": {
       "all": "Vsetky",
