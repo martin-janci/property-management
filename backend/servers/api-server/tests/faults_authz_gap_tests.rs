@@ -177,10 +177,7 @@ async fn non_reporter_non_manager_member_fails_manager_gate(pool: PgPool) {
     let member = seed_user(&pool, "plain-member@fault-authz.test").await;
     seed_membership(&pool, org, member, "member").await;
 
-    let member_is_manager = repo
-        .is_manager_in_org(member, org)
-        .await
-        .expect("query ok");
+    let member_is_manager = repo.is_manager_in_org(member, org).await.expect("query ok");
     assert!(
         !member_is_manager,
         "a non-manager same-org member must NOT clear the manager gate (→ 403)"
