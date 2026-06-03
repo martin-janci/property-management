@@ -508,7 +508,7 @@ export function DocumentsBrowse({
         <MoveFolderDialog
           documentTitles={[moveTarget.title]}
           buildingId={buildingId}
-          currentFolderId={null} /* TODO: pre-select once DocumentSummary exposes folder_id */
+          currentFolderId={moveTarget.folder_id ?? null}
           onConfirm={handleMoveConfirm}
           onCancel={() => setMoveTarget(null)}
           isPending={isMovePending}
