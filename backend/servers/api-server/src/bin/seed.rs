@@ -30,8 +30,13 @@ use dialoguer::{Confirm, Input, Password};
 /// staging Reality Portal apexes. Operators with custom apex hostnames can
 /// override via repeated `--reality-portal-redirect-uri` flags.
 const DEFAULT_REALITY_PORTAL_REDIRECT_URIS: &[&str] = &[
-    "https://rlt.sk/api/v1/sso/callback",
-    "https://staging.rlt.sk/api/v1/sso/callback",
+    // The SSO callback lands on reality-server (:8081), which is exposed on the
+    // `api.` subdomain — the bare apex serves the Next.js reality-web app and
+    // has no `/api/v1/sso/*` handler, so an apex callback 404s the OAuth
+    // code-exchange (#952). Keep these in sync with deploy-server's
+    // `SSO_CALLBACK_URL` (see `blue_green.rs`).
+    "https://api.rlt.sk/api/v1/sso/callback",
+    "https://api.staging.rlt.sk/api/v1/sso/callback",
 ];
 
 /// UPSERT the `reality-portal` row in `oauth_clients` with the given secret.
