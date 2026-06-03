@@ -1416,10 +1416,15 @@
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "pm-analysis 2026-05-27",
-      "depends_on": []
+      "source": "pm-analysis 2026-05-27 | dispatcher-triage 2026-06-03T07:49:17Z",
+      "depends_on": [],
+      "triage_closed": {
+        "reason": "stale-complete",
+        "evidence": "PR #566 merged 2026-05-27T07:16:18Z; PR #567 merged 2026-05-27T07:16:26Z",
+        "at": "2026-06-03T07:49:17Z"
+      }
     },
     {
       "id": "fix-581-reality-mobile-screen-maps",
@@ -2130,10 +2135,15 @@
       "owner_role": "pm-security",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "pm-analysis 2026-05-29",
-      "depends_on": []
+      "source": "pm-analysis 2026-05-29 | dispatcher-triage 2026-06-03T07:49:17Z",
+      "depends_on": [],
+      "triage_closed": {
+        "reason": "stale-complete",
+        "evidence": "PR #662 closed-without-merge 2026-05-30; underlying issues #646 #647 closed as completed 2026-05-28 (IDOR fixed via another PR)",
+        "at": "2026-06-03T07:49:17Z"
+      }
     },
     {
       "id": "pm-scrum-master-sync-sprint-status-10b",
