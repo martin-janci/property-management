@@ -78,7 +78,21 @@ export function LeaseSignatureScreen({ esignatureId, onBack }: LeaseSignatureScr
   const queryClient = useQueryClient();
   const [signerName, setSignerName] = useState('');
 
-  // Guard against missing navigation param.
+  // All hooks must run unconditionally on every render (Rules of Hooks), so
+  // they are called before the missing-id guard below. The query is disabled
+  // until an id is present, so no request fires for the missing-id case.
+  const requestQuery = useApiQuery<ESignatureRequest>(
+    ['esignatures', 'detail', esignatureId ?? '__missing__'],
+    `/api/v1/esignatures/${esignatureId ?? ''}`,
+    { staleTime: 15_000, refetchInterval: 30_000, enabled: Boolean(esignatureId) }
+  );
+
+  const signMutation = useApiMutation<ESignatureResult, SignActionVariables>(
+    `/api/v1/esignatures/${esignatureId ?? ''}/sign`,
+    'POST'
+  );
+
+  // Guard against missing navigation param (after all hook calls).
   if (!esignatureId) {
     return (
       <View style={s.container}>
@@ -97,17 +111,6 @@ export function LeaseSignatureScreen({ esignatureId, onBack }: LeaseSignatureScr
       </View>
     );
   }
-
-  const requestQuery = useApiQuery<ESignatureRequest>(
-    ['esignatures', 'detail', esignatureId],
-    `/api/v1/esignatures/${esignatureId}`,
-    { staleTime: 15_000, refetchInterval: 30_000 }
-  );
-
-  const signMutation = useApiMutation<ESignatureResult, SignActionVariables>(
-    `/api/v1/esignatures/${esignatureId}/sign`,
-    'POST'
-  );
 
   const request = requestQuery.data;
   const isLoading = requestQuery.isLoading;
