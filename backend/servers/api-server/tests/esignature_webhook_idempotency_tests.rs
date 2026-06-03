@@ -165,7 +165,9 @@ async fn duplicate_completed_webhook_on_terminal_request_is_noop(pool: PgPool) {
     assert_eq!(body.get("success"), Some(&json!(true)));
     assert_eq!(
         body.get("message"),
-        Some(&json!("Signature request already finalized; webhook ignored")),
+        Some(&json!(
+            "Signature request already finalized; webhook ignored"
+        )),
         "expected the terminal-state guard message, got: {body}"
     );
 
@@ -175,13 +177,12 @@ async fn duplicate_completed_webhook_on_terminal_request_is_noop(pool: PgPool) {
         "signed",
         "duplicate webhook must not mutate signer status"
     );
-    let signed_doc: Option<Uuid> = sqlx::query_scalar(
-        r#"SELECT signed_document_id FROM signature_requests WHERE id = $1"#,
-    )
-    .bind(request_id)
-    .fetch_one(&pool)
-    .await
-    .expect("read signed_document_id");
+    let signed_doc: Option<Uuid> =
+        sqlx::query_scalar(r#"SELECT signed_document_id FROM signature_requests WHERE id = $1"#)
+            .bind(request_id)
+            .fetch_one(&pool)
+            .await
+            .expect("read signed_document_id");
     assert!(
         signed_doc.is_none(),
         "duplicate webhook must not store a signed document on a terminal request"
