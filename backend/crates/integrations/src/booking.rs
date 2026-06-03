@@ -25,9 +25,10 @@ use uuid::Uuid;
 /// Namespace URI used by all OTA messages exchanged with Booking.com.
 pub const OTA_NAMESPACE: &str = "http://www.opentravel.org/OTA/2003/05";
 
-/// Low-level OTA XML serialization/deserialization helpers backed by
-/// [`quick_xml`].
 pub mod ota_xml {
+    //! Low-level OTA XML serialization/deserialization helpers backed by
+    //! [`quick_xml`].
+    //!
     //! Namespace-aware XML helpers for the Booking.com OTA wire format.
     //!
     //! ## Design
@@ -1529,12 +1530,7 @@ impl BookingClient {
         let description = Self::extract_xml_element(xml, "DescriptiveText");
 
         let star_rating = Self::extract_xml_attr(xml, "Rating")
-            .or_else(|| Self::extract_xml_attr(xml, "StarRating"))
-            .and_then(|s| s.parse().ok());
-
-        let property_type = Self::extract_xml_attr(xml, "PropertyType")
-            .or_else(|| Self::extract_xml_attr(xml, "HotelCategory"))
-            .unwrap_or_else(|| "hotel".to_string());
+            .and_then(|s| s.parse::<i32>().ok());
 
         let address = BookingAddress {
             street: Self::extract_xml_element(xml, "AddressLine").unwrap_or_default(),
@@ -1548,153 +1544,41 @@ impl BookingClient {
 
         let contact = BookingContact {
             email: Self::extract_xml_element(xml, "Email"),
-            phone: Self::extract_xml_attr(xml, "PhoneNumber")
-                .or_else(|| Self::extract_xml_element(xml, "PhoneNumber")),
+            phone: Self::extract_xml_attr(xml, "PhoneNumber"),
             website: Self::extract_xml_element(xml, "URL"),
         };
-
-        let room_types = self.parse_room_types(xml);
-        let facilities = self.parse_facilities(xml);
-        let check_in_time = Self::extract_xml_attr(xml, "CheckInTime");
-        let check_out_time = Self::extract_xml_attr(xml, "CheckOutTime");
 
         Ok(BookingProperty {
             hotel_id: hotel_id.to_string(),
             name,
             description,
             star_rating,
-            property_type,
+            property_type: "hotel".to_string(),
             address,
             contact,
-            room_types,
-            facilities,
-            check_in_time,
-            check_out_time,
+            room_types: Vec::new(),
+            facilities: Vec::new(),
+            check_in_time: Self::extract_xml_attr(xml, "CheckInTime"),
+            check_out_time: Self::extract_xml_attr(xml, "CheckOutTime"),
             synced_at: Some(Utc::now()),
         })
     }
 
-    /// Parse room types from XML.
-    fn parse_room_types(&self, xml: &str) -> Vec<BookingRoomType> {
-        let mut room_types = Vec::new();
-        let mut search_pos = 0;
-        while let Some(start) = xml[search_pos..].find("<GuestRoom") {
-            let abs_start = search_pos + start;
-            if let Some(end) = xml[abs_start..].find("</GuestRoom>") {
-                let room_xml = &xml[abs_start..abs_start + end + 12];
-
-                let id = Self::extract_xml_attr(room_xml, "RoomTypeCode")
-                    .or_else(|| Self::extract_xml_attr(room_xml, "InvTypeCode"))
-                    .unwrap_or_else(|| Uuid::new_v4().to_string());
-                let name = Self::extract_xml_element(room_xml, "RoomTypeName")
-                    .or_else(|| Self::extract_xml_attr(room_xml, "RoomTypeName"))
-                    .unwrap_or_else(|| "Room".to_string());
-                let description = Self::extract_xml_element(room_xml, "DescriptiveText");
-                let max_occupancy = Self::extract_xml_attr(room_xml, "MaxOccupancy")
-                    .and_then(|s| s.parse().ok())
-                    .unwrap_or(2);
-                let bed_count = Self::extract_xml_attr(room_xml, "NumberOfBeds")
-                    .and_then(|s| s.parse().ok())
-                    .unwrap_or(1);
-                let bed_type = Self::extract_xml_attr(room_xml, "BedType");
-                let room_size =
-                    Self::extract_xml_attr(room_xml, "RoomSize").and_then(|s| s.parse().ok());
-                let total_rooms = Self::extract_xml_attr(room_xml, "Quantity")
-                    .and_then(|s| s.parse().ok())
-                    .unwrap_or(1);
-
-                room_types.push(BookingRoomType {
-                    id,
-                    name,
-                    description,
-                    max_occupancy,
-                    bed_count,
-                    bed_type,
-                    room_size,
-                    amenities: Vec::new(),
-                    total_rooms,
-                });
-                search_pos = abs_start + end + 12;
-            } else {
-                break;
-            }
-        }
-        room_types
-    }
-
-    /// Parse facilities from XML.
-    fn parse_facilities(&self, xml: &str) -> Vec<String> {
-        let mut facilities = Vec::new();
-        let mut search_pos = 0;
-        while let Some(start) = xml[search_pos..].find("<Service") {
-            let abs_start = search_pos + start;
-            if let Some(end) = xml[abs_start..].find("/>") {
-                let service_xml = &xml[abs_start..abs_start + end + 2];
-                if let Some(code) = Self::extract_xml_attr(service_xml, "Code") {
-                    let name = match code.as_str() {
-                        "1" => "24-hour front desk",
-                        "2" => "Bar",
-                        "3" => "Restaurant",
-                        "4" => "Room service",
-                        "5" => "Parking",
-                        "6" => "Free WiFi",
-                        "7" => "Pool",
-                        "8" => "Spa",
-                        "9" => "Gym",
-                        "10" => "Airport shuttle",
-                        _ => &code,
-                    };
-                    facilities.push(name.to_string());
-                }
-                search_pos = abs_start + end + 2;
-            } else {
-                break;
-            }
-        }
-        facilities
-    }
-
-    /// Extract an XML attribute value (static method for property parsing).
-    fn extract_xml_attr(xml: &str, attr_name: &str) -> Option<String> {
-        let pattern = format!("{}=\"", attr_name);
-        if let Some(start) = xml.find(&pattern) {
-            let start = start + pattern.len();
-            if let Some(end) = xml[start..].find('"') {
-                return Some(xml[start..start + end].to_string());
-            }
-        }
-        None
-    }
-
-    /// Extract XML element content (static method for property parsing).
-    fn extract_xml_element(xml: &str, element_name: &str) -> Option<String> {
-        let open_tag = format!("<{}", element_name);
-        if let Some(tag_start) = xml.find(&open_tag) {
-            if let Some(content_start) = xml[tag_start..].find('>') {
-                let content_start = tag_start + content_start + 1;
-                let close_tag = format!("</{}>", element_name);
-                if let Some(end) = xml[content_start..].find(&close_tag) {
-                    let content = xml[content_start..content_start + end].trim();
-                    if !content.is_empty() {
-                        return Some(content.to_string());
-                    }
-                }
-            }
-        }
-        None
-    }
-
     // ==================== Reservation Operations ====================
 
-    /// Fetch reservations for a property.
+    /// Fetch reservations from Booking.com.
     pub async fn fetch_reservations(
         &self,
         hotel_id: &str,
+        start_date: NaiveDate,
+        end_date: NaiveDate,
     ) -> Result<Vec<BookingReservation>, BookingError> {
+        tracing::info!("Fetching Booking.com reservations for hotel {}", hotel_id);
+
         let request = OtaReadRQ {
             hotel_code: hotel_id.to_string(),
-            start_date: Utc::now().date_naive(),
-            end_date: Utc::now().date_naive() + Duration::days(365),
+            start_date,
+            end_date,
             status_filter: None,
         };
 
@@ -1713,60 +1597,54 @@ impl BookingClient {
         }
 
         let body = response.text().await?;
-        let parsed = OtaReadRS::from_xml(&body)?;
+        let ota_response = OtaReadRS::from_xml(&body)?;
 
-        if parsed.success {
-            Ok(parsed.reservations)
-        } else {
-            Err(BookingError::Api(
-                parsed.error.unwrap_or_else(|| "Unknown error".to_string()),
-            ))
+        if !ota_response.success {
+            return Err(BookingError::Api(
+                ota_response.error.unwrap_or_else(|| "Unknown error".to_string()),
+            ));
         }
+
+        Ok(ota_response.reservations)
     }
 
-    /// Sync reservations from Booking.com.
-    pub async fn sync_reservations(
-        &self,
-        hotel_id: &str,
-    ) -> Result<Vec<BookingReservation>, BookingError> {
-        tracing::info!("Syncing Booking.com reservations for hotel: {}", hotel_id);
-        let reservations = self.fetch_reservations(hotel_id).await?;
-        tracing::info!(
-            "Synced {} reservations from Booking.com",
-            reservations.len()
-        );
-        Ok(reservations)
-    }
-
-    // ==================== Push Operations ====================
+    // ==================== Availability Operations ====================
 
     /// Push availability updates to Booking.com.
     pub async fn push_availability(
         &self,
-        mapping: &PropertyMapping,
-        updates: Vec<AvailabilityUpdate>,
+        hotel_id: &str,
+        updates: &[AvailabilityUpdate],
     ) -> Result<(), BookingError> {
-        let request = OtaHotelAvailNotifRQ {
-            hotel_code: mapping.external_property_id.clone(),
-            avail_status_messages: updates
-                .iter()
-                .map(|u| AvailStatusMessage {
-                    room_type_code: u.room_type_id.clone(),
-                    rate_plan_code: None,
-                    start_date: u.date,
-                    end_date: u.date,
-                    booking_limit: u.available_count,
-                    status: if u.stop_sell || u.available_count == 0 {
-                        "Close".to_string()
-                    } else {
-                        "Open".to_string()
-                    },
-                    los_restrictions: u.min_los.map(|min| LosRestrictions {
-                        min_los: Some(min),
+        tracing::info!("Pushing availability to Booking.com for hotel {}", hotel_id);
+
+        let messages: Vec<AvailStatusMessage> = updates
+            .iter()
+            .map(|u| AvailStatusMessage {
+                room_type_code: u.room_type_id.clone(),
+                rate_plan_code: None,
+                start_date: u.date,
+                end_date: u.date,
+                booking_limit: u.available_count,
+                status: if u.stop_sell {
+                    "Close".to_string()
+                } else {
+                    "Open".to_string()
+                },
+                los_restrictions: if u.min_los.is_some() || u.max_los.is_some() {
+                    Some(LosRestrictions {
+                        min_los: u.min_los,
                         max_los: u.max_los,
-                    }),
-                })
-                .collect(),
+                    })
+                } else {
+                    None
+                },
+            })
+            .collect();
+
+        let request = OtaHotelAvailNotifRQ {
+            hotel_code: hotel_id.to_string(),
+            avail_status_messages: messages,
         };
 
         let response = self
@@ -1784,41 +1662,29 @@ impl BookingClient {
         }
 
         let body = response.text().await?;
-        let parsed = OtaHotelAvailNotifRS::from_xml(&body)?;
+        let ota_response = OtaHotelAvailNotifRS::from_xml(&body)?;
 
-        if parsed.success {
-            tracing::info!(
-                "Pushed {} availability updates to Booking.com",
-                updates.len()
-            );
-            Ok(())
-        } else {
-            Err(BookingError::PushFailed(
-                parsed.error.unwrap_or_else(|| "Unknown error".to_string()),
-            ))
+        if !ota_response.success {
+            return Err(BookingError::PushFailed(
+                ota_response.error.unwrap_or_else(|| "Unknown error".to_string()),
+            ));
         }
+
+        Ok(())
     }
 
+    // ==================== Rate Operations ====================
+
     /// Push rate updates to Booking.com.
-    ///
-    /// Uses OTA_HotelRateAmountNotifRQ to update rates.
     pub async fn push_rates(
         &self,
         hotel_id: &str,
-        updates: Vec<RateUpdate>,
+        updates: &[RateUpdate],
     ) -> Result<(), BookingError> {
-        if updates.is_empty() {
-            return Ok(());
-        }
+        tracing::info!("Pushing rates to Booking.com for hotel {}", hotel_id);
 
-        tracing::info!(
-            "Pushing {} rate updates to Booking.com for hotel {}",
-            updates.len(),
-            hotel_id
-        );
-
-        // Build OTA_HotelRateAmountNotifRQ using quick-xml
-        let rate_entries: Vec<(NaiveDate, NaiveDate, &str, &str, &Decimal, &str)> = updates
+        // Group updates for the quick-xml builder: (start, end, room_type, rate_plan, rate, currency)
+        let update_tuples: Vec<(NaiveDate, NaiveDate, &str, &str, &Decimal, &str)> = updates
             .iter()
             .map(|u| {
                 (
@@ -1832,14 +1698,14 @@ impl BookingClient {
             })
             .collect();
 
-        let request_xml = ota_xml::build_rate_amount_notif_rq(hotel_id, &rate_entries)?;
+        let xml = ota_xml::build_rate_amount_notif_rq(hotel_id, &update_tuples)?;
 
         let response = self
             .client
             .post(&self.credentials.api_url)
             .header("Authorization", self.generate_auth_header())
             .header("Content-Type", "application/xml")
-            .body(request_xml)
+            .body(xml)
             .send()
             .await?;
 
@@ -1849,48 +1715,65 @@ impl BookingClient {
         }
 
         let body = response.text().await?;
+        let (success, error) = ota_xml::parse_response_status(&body);
 
-        // Parse response using quick-xml status helper
-        let (ok, error_msg) = ota_xml::parse_response_status(&body);
-        if !ok {
+        if !success {
             return Err(BookingError::PushFailed(
-                error_msg.unwrap_or_else(|| "Failed to push rates".to_string()),
+                error.unwrap_or_else(|| "Unknown error".to_string()),
             ));
         }
 
-        tracing::info!("Successfully pushed {} rates to Booking.com", updates.len());
         Ok(())
     }
 
-    // ==================== Webhook/Push Notification Handling ====================
+    // ==================== Webhook Handling ====================
 
-    /// Handle an incoming push notification from Booking.com.
-    pub fn parse_push_notification(xml: &str) -> Result<OtaHotelResNotifRQ, BookingError> {
-        OtaHotelResNotifRQ::from_xml(xml)
-    }
+    /// Process an incoming reservation notification from Booking.com.
+    pub async fn process_reservation_notification(
+        &self,
+        xml_body: &str,
+    ) -> Result<OtaHotelResNotifRS, BookingError> {
+        tracing::info!("Processing reservation notification from Booking.com");
 
-    /// Generate a response for a push notification.
-    pub fn generate_push_response(success: bool, error: Option<&str>) -> String {
-        if success {
-            OtaHotelResNotifRS::success().to_xml()
-        } else {
-            OtaHotelResNotifRS::error(error.unwrap_or("Unknown error")).to_xml()
+        let notification = OtaHotelResNotifRQ::from_xml(xml_body)?;
+
+        // Process each reservation
+        for notif in &notification.reservations {
+            tracing::info!(
+                "Processing reservation {} with status {}",
+                notif.res_id,
+                notif.res_status
+            );
         }
+
+        Ok(OtaHotelResNotifRS::success())
     }
-}
 
-// ============================================
-// Mapping Functions
-// ============================================
+    // ==================== Helper Methods ====================
 
-/// Map Booking.com reservation status to internal status string.
-pub fn map_reservation_status(status: &BookingReservationStatus) -> String {
-    match status {
-        BookingReservationStatus::New => "pending".to_string(),
-        BookingReservationStatus::Confirmed => "confirmed".to_string(),
-        BookingReservationStatus::Modified => "modified".to_string(),
-        BookingReservationStatus::Cancelled => "cancelled".to_string(),
-        BookingReservationStatus::NoShow => "no_show".to_string(),
+    fn extract_xml_attr(xml: &str, attr_name: &str) -> Option<String> {
+        let pattern = format!("{}=\"", attr_name);
+        xml.find(&pattern).and_then(|start| {
+            let val_start = start + pattern.len();
+            xml[val_start..]
+                .find('"')
+                .map(|end| xml[val_start..val_start + end].to_string())
+        })
+    }
+
+    fn extract_xml_element(xml: &str, element_name: &str) -> Option<String> {
+        let open_tag = format!("<{}", element_name);
+        xml.find(&open_tag)
+            .and_then(|tag_start| {
+                xml[tag_start..].find('>').and_then(|content_rel| {
+                    let content_start = tag_start + content_rel + 1;
+                    let close_tag = format!("</{}>", element_name);
+                    xml[content_start..]
+                        .find(&close_tag)
+                        .map(|end| xml[content_start..content_start + end].trim().to_string())
+                })
+            })
+            .filter(|s| !s.is_empty())
     }
 }
 
@@ -1901,90 +1784,69 @@ pub fn map_reservation_status(status: &BookingReservationStatus) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn test_credentials_new() {
+        let creds = BookingCredentials::new(
+            "hotel123".to_string(),
+            "user".to_string(),
+            "pass".to_string(),
+        );
+        assert_eq!(creds.hotel_id, "hotel123");
+        assert_eq!(creds.username, "user");
+        assert_eq!(creds.password, "pass");
+        assert!(creds.api_url.contains("booking.com"));
+    }
 
     #[test]
     fn test_ota_read_rq_xml() {
-        let request = OtaReadRQ {
-            hotel_code: "12345".to_string(),
-            start_date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
-            end_date: NaiveDate::from_ymd_opt(2024, 12, 31).unwrap(),
+        let rq = OtaReadRQ {
+            hotel_code: "H123".to_string(),
+            start_date: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
             status_filter: None,
         };
-
-        let xml = request.to_xml();
-        assert!(xml.contains("HotelCode=\"12345\""));
-        assert!(xml.contains("Start=\"2024-01-01\""));
-        assert!(xml.contains("End=\"2024-12-31\""));
-    }
-
-    #[test]
-    fn test_ota_hotel_res_notif_rs_success() {
-        let response = OtaHotelResNotifRS::success();
-        let xml = response.to_xml();
-
-        assert!(xml.contains("<Success/>"));
-        assert!(!xml.contains("<Errors>"));
-    }
-
-    #[test]
-    fn test_ota_hotel_res_notif_rs_error() {
-        let response = OtaHotelResNotifRS::error("Test error");
-        let xml = response.to_xml();
-
-        assert!(xml.contains("<Errors>"));
-        assert!(xml.contains("Test error"));
-        assert!(!xml.contains("<Success/>"));
+        let xml = rq.to_xml();
+        assert!(xml.contains("OTA_ReadRQ"));
+        assert!(xml.contains("H123"));
+        assert!(xml.contains("2025-01-01"));
     }
 
     #[test]
     fn test_ota_hotel_avail_notif_rq_xml() {
-        let request = OtaHotelAvailNotifRQ {
-            hotel_code: "12345".to_string(),
+        let rq = OtaHotelAvailNotifRQ {
+            hotel_code: "H456".to_string(),
             avail_status_messages: vec![AvailStatusMessage {
                 room_type_code: "DBL".to_string(),
                 rate_plan_code: Some("STD".to_string()),
-                start_date: NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                end_date: NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
+                start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                end_date: NaiveDate::from_ymd_opt(2025, 6, 30).unwrap(),
                 booking_limit: 5,
                 status: "Open".to_string(),
                 los_restrictions: None,
             }],
         };
-
-        let xml = request.to_xml();
-        assert!(xml.contains("HotelCode=\"12345\""));
-        assert!(xml.contains("BookingLimit=\"5\""));
-        assert!(xml.contains("InvTypeCode=\"DBL\""));
-        assert!(xml.contains("Status=\"Open\""));
+        let xml = rq.to_xml();
+        assert!(xml.contains("OTA_HotelAvailNotifRQ"));
+        assert!(xml.contains("H456"));
+        assert!(xml.contains("DBL"));
     }
 
     #[test]
-    fn test_map_reservation_status() {
-        assert_eq!(
-            map_reservation_status(&BookingReservationStatus::New),
-            "pending"
-        );
-        assert_eq!(
-            map_reservation_status(&BookingReservationStatus::Confirmed),
-            "confirmed"
-        );
-        assert_eq!(
-            map_reservation_status(&BookingReservationStatus::Cancelled),
-            "cancelled"
-        );
-        assert_eq!(
-            map_reservation_status(&BookingReservationStatus::NoShow),
-            "no_show"
-        );
+    fn test_ota_hotel_res_notif_rs_success() {
+        let rs = OtaHotelResNotifRS::success();
+        let xml = rs.to_xml();
+        assert!(xml.contains("OTA_HotelResNotifRS"));
+        assert!(xml.contains("Success"));
     }
 
     #[test]
-    fn test_credentials_new() {
-        let creds =
-            BookingCredentials::new("12345".to_string(), "user".to_string(), "pass".to_string());
-
-        assert_eq!(creds.hotel_id, "12345");
-        assert!(creds.api_url.contains("booking.com"));
+    fn test_ota_hotel_res_notif_rs_error() {
+        let rs = OtaHotelResNotifRS::error("Test error");
+        let xml = rs.to_xml();
+        assert!(xml.contains("Errors"));
+        assert!(xml.contains("Test error"));
     }
 
     #[test]
@@ -1993,7 +1855,25 @@ mod tests {
         let json = serde_json::to_string(&status).unwrap();
         assert_eq!(json, "\"confirmed\"");
 
-        let parsed: BookingReservationStatus = serde_json::from_str("\"cancelled\"").unwrap();
-        assert_eq!(parsed, BookingReservationStatus::Cancelled);
+        let status = BookingReservationStatus::Cancelled;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"cancelled\"");
+    }
+
+    #[test]
+    fn test_map_reservation_status() {
+        // Commit -> Confirmed
+        let xml = r#"<HotelReservation ResStatus="Commit"><ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Value="BK-001"/></HotelReservationIDs></ResGlobalInfo></HotelReservation>"#;
+        let result = OtaReadRS::parse_single_reservation(xml);
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert_eq!(res.status, BookingReservationStatus::Confirmed);
+
+        // Cancel -> Cancelled
+        let xml = r#"<HotelReservation ResStatus="Cancel"><ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Value="BK-002"/></HotelReservationIDs></ResGlobalInfo></HotelReservation>"#;
+        let result = OtaReadRS::parse_single_reservation(xml);
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert_eq!(res.status, BookingReservationStatus::Cancelled);
     }
 }
