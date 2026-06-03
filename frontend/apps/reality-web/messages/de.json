@@ -3,6 +3,7 @@
     "allListings": "Alle Angebote",
     "branding": "Branding",
     "dashboard": "Agentur-Dashboard",
+    "inviteError": "Einladung konnte nicht gesendet werden. Bitte versuche es erneut.",
     "inviteRealtor": "Makler einladen",
     "manageRealtors": "Makler verwalten",
     "performanceOverview": "Leistungsübersicht",

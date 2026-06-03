@@ -3,6 +3,7 @@
     "allListings": "All Listings",
     "branding": "Branding",
     "dashboard": "Agency Dashboard",
+    "inviteError": "Failed to send the invitation. Please try again.",
     "inviteRealtor": "Invite Realtor",
     "manageRealtors": "Manage Realtors",
     "performanceOverview": "Performance Overview",
@@ -12,8 +13,7 @@
     "period90d": "90 Days",
     "quickActions": "Quick Actions",
     "topRealtors": "Top Realtors",
-    "viewAll": "View All",
-    "inviteError": "Error sending invitation. Please try again."
+    "viewAll": "View All"
   },
   "auth": {
     "login": {
