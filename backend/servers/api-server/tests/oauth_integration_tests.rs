@@ -392,6 +392,41 @@ mod pkce_flow {
         assert_eq!(body["error"], "invalid_request");
     }
 
+    /// Regression (issue #823, PR #908): PKCE is mandatory for the
+    /// authorization-code flow for *all* clients, not just public ones
+    /// (OAuth 2.1 §4.1.1 / RFC 7636). Previously `validate_authorize_request`
+    /// only required `code_challenge` when `!is_confidential`, so a confidential
+    /// client could obtain an authorization code with no PKCE binding — a code
+    /// then exchangeable at `/token` with no `code_verifier` at all (the token
+    /// path only checked the verifier `if let Some(challenge)`). A confidential
+    /// client authorizing without `code_challenge` must now be rejected with
+    /// 400 `invalid_request`.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_confidential_client_requires_pkce(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, _client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        // No code_challenge supplied.
+        let uri = format!(
+            "/api/v1/oauth/authorize?response_type=code&client_id={}&redirect_uri={}&scope=profile",
+            urlencoding::encode(&client_id),
+            urlencoding::encode(&redirect_uri),
+        );
+        // Authenticated (issue #820) so the request reaches PKCE validation.
+        let req = get_request_with_auth(&uri, &access_token);
+        let resp = app.execute(req).await;
+        assert_eq!(
+            resp.status,
+            StatusCode::BAD_REQUEST,
+            "confidential client without PKCE must be rejected. body={}",
+            resp.text()
+        );
+        let body = resp.json_value();
+        assert_eq!(body["error"], "invalid_request");
+    }
+
     /// Regression (issue #820): the authorize consent GET advertises bearer
     /// auth + a 401 in its OpenAPI but previously took no auth extractor, so it
     /// served the consent page (client name, scopes, redirect URI) to any
