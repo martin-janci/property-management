@@ -2023,11 +2023,17 @@
       "action": "Add integration tests for dispute filing API: full create+status-transition lifecycle, RLS tenant isolation (cross-tenant access denied), dispute status machine transitions, evidence upload auth guard",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-06-03T04:09:42Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 946,
+        "merged_at": "2026-06-01T22:06:53Z",
+        "at": "2026-06-03T04:09:42Z"
+      }
     },
     {
       "id": "gap-82-8-kmp-android-inquiries-account",
