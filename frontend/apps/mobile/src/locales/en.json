@@ -157,6 +157,7 @@
     "emptyTitle": "No documents",
     "noMatches": "No documents match your search",
     "folderEmpty": "This folder is empty",
+    "folderItemCount": "{{count}} items",
     "searchPlaceholder": "Search documents…",
     "filter": {
       "all": "All",
