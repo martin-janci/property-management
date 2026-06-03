@@ -149,6 +149,7 @@
     "noDocuments": "Keine Dokumente verfugbar",
     "share": "Teilen",
     "searchPlaceholder": "Search documents…",
+    "folderItemCount": "{{count}} Elemente",
     "filter": {
       "all": "All",
       "audience": "Audience"
