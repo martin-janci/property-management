@@ -8,6 +8,14 @@ on:
     paths:
       - 'frontend/**'
 
+# The JUnit summary step (mikepenz/action-junit-report) creates a check run,
+# which requires `checks: write`. Same-repo pushes/PRs get a write token; fork
+# PRs fall back to read-only and the step degrades to an annotation.
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   e2e:
     name: E2E (${{ matrix.app }})
@@ -51,8 +59,11 @@ jobs:
         working-directory: frontend
         run: pnpm install
 
+      # Run from the app dir so pnpm resolves the `playwright` binary from the
+      # app's @playwright/test devDependency (it is not hoisted to the
+      # workspace root, so `pnpm exec` at frontend/ fails with "not found").
       - name: Install Playwright browsers
-        working-directory: frontend
+        working-directory: frontend/apps/${{ matrix.app }}
         run: pnpm exec playwright install --with-deps chromium
 
       # Each app's `e2e` script is `playwright test`, which delegates to the
