@@ -232,7 +232,12 @@ function MainApp() {
       case 'Documents':
         return <DocumentsScreen onNavigate={handleNavigate} />;
       case 'DocumentDetail':
-        return <DocumentDetailScreen onBack={() => handleNavigate('Documents')} />;
+        return (
+          <DocumentDetailScreen
+            documentId={screenParams?.documentId as string | undefined}
+            onBack={() => handleNavigate('Documents')}
+          />
+        );
       case 'DocumentPreview':
         return screenParams?.document ? (
           <DocumentPreviewScreen
