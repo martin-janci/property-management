@@ -52,6 +52,8 @@ pub fn router() -> Router<AppState> {
         .route("/{id}", put(update_lease))
         .route("/{id}/terminate", post(terminate_lease))
         .route("/{id}/renew", post(renew_lease))
+        // E-signing (issue #977): wire to the hardened signature-request subsystem
+        .route("/{id}/send-for-signature", post(send_lease_for_signature))
         // Lease Amendments
         .route("/{id}/amendments", post(create_amendment))
         .route("/{id}/amendments", get(list_amendments))
@@ -808,6 +810,177 @@ async fn terminate_lease(
 
     rls.release().await;
     result
+}
+
+/// Request body for sending a lease out for e-signature (issue #977).
+///
+/// The lease's generated agreement must already exist as a row in the
+/// `documents` table; its id is supplied here. The endpoint then delegates to
+/// the hardened signature-request subsystem to create the signing workflow.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct SendLeaseForSignatureRequest {
+    /// Id of the generated lease-agreement document (a `documents` row).
+    pub document_id: Uuid,
+    /// Landlord's email for the signing invitation. Defaults to the
+    /// authenticated requester's email when omitted.
+    #[serde(default)]
+    pub landlord_email: Option<String>,
+    /// Days until the signature request expires (default: 30).
+    #[serde(default)]
+    pub expires_in_days: Option<i32>,
+}
+
+/// Send a lease out for e-signature (issue #977, Option A).
+///
+/// Wires leases into the existing hardened signature-request subsystem
+/// (`routes::signatures`) rather than a lease-native signing flow: it resolves
+/// the lease's generated document and creates a signature request for it with
+/// the landlord and tenant as signers, reusing the one HMAC-signed-link / nonce
+/// / email path. The lease is then bound to the created request and moved to
+/// `pending_signature`.
+///
+/// Document resolution caveat: a lease currently has no FK to a `documents`
+/// row (only a `document_url` text column), and lease-agreement generation is
+/// not yet wired to persist a `documents` row. So this endpoint requires the
+/// caller to pass the generated document's id and returns `400` if absent.
+async fn send_lease_for_signature(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<SendLeaseForSignatureRequest>,
+) -> Result<(StatusCode, Json<db::models::SignatureRequest>), (StatusCode, Json<ErrorResponse>)> {
+    // Sending a lease out for signature is a manager action (same gate as
+    // review_application). Without this, any org member could trigger signing.
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Only managers can send a lease for signature",
+            )),
+        ));
+    }
+
+    // Load the lease (RLS-scoped) to derive the tenant signer and confirm it
+    // exists within the caller's organisation.
+    let lease = match state
+        .lease_repo
+        .find_lease_by_id_rls(&mut **rls.conn(), id)
+        .await
+    {
+        Ok(Some(l)) => l,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Lease not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to load lease for signature: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to load lease")),
+            ));
+        }
+    };
+
+    // Build the signer set: landlord (the requesting manager, unless an explicit
+    // landlord_email is given) + tenant (from the lease record).
+    let landlord_email = payload
+        .landlord_email
+        .clone()
+        .unwrap_or_else(|| auth.email.clone());
+    if landlord_email.trim().is_empty() {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                "A landlord email is required to send the lease for signature",
+            )),
+        ));
+    }
+    if lease.tenant_email.trim().is_empty() {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                "Lease has no tenant email; cannot create a signing request",
+            )),
+        ));
+    }
+
+    let signers = vec![
+        db::models::CreateSigner {
+            email: landlord_email,
+            name: lease.landlord_name.clone(),
+            order: 0,
+        },
+        db::models::CreateSigner {
+            email: lease.tenant_email.clone(),
+            name: lease.tenant_name.clone(),
+            order: 0,
+        },
+    ];
+
+    let create_request = db::models::CreateSignatureRequest {
+        signers,
+        subject: Some(format!("Lease agreement for {}", lease.tenant_name)),
+        message: None,
+        provider: None,
+        expires_in_days: payload.expires_in_days,
+    };
+
+    // Delegate to the single hardened signature-request creation path. This
+    // owns document existence/dedup checks plus HMAC link + nonce + email; we do
+    // NOT duplicate any of that here. The caller owns the rls lifecycle.
+    let response = match crate::routes::signatures::create_signature_request_for_document(
+        &state,
+        &auth,
+        &mut rls,
+        payload.document_id,
+        create_request,
+    )
+    .await
+    {
+        Ok(resp) => resp,
+        Err(e) => {
+            rls.release().await;
+            return Err(e);
+        }
+    };
+
+    let signature_request_id = response.signature_request.id;
+
+    // Bind the lease to the created request and transition draft ->
+    // pending_signature. The actual signing transitions are owned by the
+    // signature subsystem, not lease-native logic.
+    if let Err(e) = state
+        .lease_repo
+        .mark_sent_for_signature_rls(&mut **rls.conn(), id, signature_request_id)
+        .await
+    {
+        // The signature request was already created; surface a clear error but
+        // do not roll it back (the manager can retry binding via a follow-up).
+        tracing::error!("Failed to mark lease as sent for signature: {:?}", e);
+        rls.release().await;
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DB_ERROR",
+                "Signature request created but failed to update lease status",
+            )),
+        ));
+    }
+
+    rls.release().await;
+
+    Ok((StatusCode::CREATED, Json(response.signature_request)))
 }
 
 async fn renew_lease(

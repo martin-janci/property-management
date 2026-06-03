@@ -871,11 +871,19 @@ impl LeaseRepository {
         Ok(lease)
     }
 
-    /// Send lease for signature with RLS context.
-    pub async fn send_for_signature_rls<'e, E>(
+    /// Mark a lease as sent for signature, binding it to the signature request
+    /// created in the hardened signature-request subsystem.
+    ///
+    /// Records the `signature_request_id` and transitions a `draft` lease to
+    /// `pending_signature`. The actual signing (landlord/tenant) and the
+    /// resulting status transitions are owned by the signature-request
+    /// subsystem (`routes::signatures`), not by lease-native logic — this is
+    /// Option A wiring for issue #977.
+    pub async fn mark_sent_for_signature_rls<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        signature_request_id: Uuid,
     ) -> Result<Lease, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -883,71 +891,15 @@ impl LeaseRepository {
         let lease = sqlx::query_as::<_, Lease>(
             r#"
             UPDATE leases SET
-                status = 'pending_signature',
-                updated_at = NOW()
-            WHERE id = $1 AND status = 'draft'
-            RETURNING *
-            "#,
-        )
-        .bind(id)
-        .fetch_one(executor)
-        .await?;
-
-        Ok(lease)
-    }
-
-    /// Record landlord signature with RLS context.
-    pub async fn record_landlord_signature_rls<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<Lease, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        let lease = sqlx::query_as::<_, Lease>(
-            r#"
-            UPDATE leases SET
-                landlord_signed_at = NOW(),
-                status = CASE
-                    WHEN tenant_signed_at IS NOT NULL THEN 'active'::lease_status
-                    ELSE status
-                END,
+                signature_request_id = $2,
+                status = CASE WHEN status = 'draft' THEN 'pending_signature' ELSE status END,
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
             "#,
         )
         .bind(id)
-        .fetch_one(executor)
-        .await?;
-
-        Ok(lease)
-    }
-
-    /// Record tenant signature with RLS context.
-    pub async fn record_tenant_signature_rls<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<Lease, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        let lease = sqlx::query_as::<_, Lease>(
-            r#"
-            UPDATE leases SET
-                tenant_signed_at = NOW(),
-                status = CASE
-                    WHEN landlord_signed_at IS NOT NULL THEN 'active'::lease_status
-                    ELSE status
-                END,
-                updated_at = NOW()
-            WHERE id = $1
-            RETURNING *
-            "#,
-        )
-        .bind(id)
+        .bind(signature_request_id)
         .fetch_one(executor)
         .await?;
 
@@ -1973,39 +1925,6 @@ impl LeaseRepository {
     )]
     pub async fn update_lease(&self, id: Uuid, data: UpdateLease) -> Result<Lease, SqlxError> {
         self.update_lease_rls(&self.pool, id, data).await
-    }
-
-    /// Send lease for signature.
-    ///
-    /// **Deprecated**: Use `send_for_signature_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use send_for_signature_rls with RlsConnection instead"
-    )]
-    pub async fn send_for_signature(&self, id: Uuid) -> Result<Lease, SqlxError> {
-        self.send_for_signature_rls(&self.pool, id).await
-    }
-
-    /// Record landlord signature.
-    ///
-    /// **Deprecated**: Use `record_landlord_signature_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use record_landlord_signature_rls with RlsConnection instead"
-    )]
-    pub async fn record_landlord_signature(&self, id: Uuid) -> Result<Lease, SqlxError> {
-        self.record_landlord_signature_rls(&self.pool, id).await
-    }
-
-    /// Record tenant signature.
-    ///
-    /// **Deprecated**: Use `record_tenant_signature_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use record_tenant_signature_rls with RlsConnection instead"
-    )]
-    pub async fn record_tenant_signature(&self, id: Uuid) -> Result<Lease, SqlxError> {
-        self.record_tenant_signature_rls(&self.pool, id).await
     }
 
     /// Terminate lease.

@@ -68,9 +68,30 @@ pub async fn create_signature_request(
     Path(document_id): Path<Uuid>,
     Json(request): Json<CreateSignatureRequest>,
 ) -> Result<(StatusCode, Json<CreateSignatureRequestResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let result =
+        create_signature_request_for_document(&state, &auth, &mut rls, document_id, request).await;
+    rls.release().await;
+    result.map(|resp| (StatusCode::CREATED, Json(resp)))
+}
+
+/// Core signature-request creation flow, shared by the document-scoped HTTP
+/// handler and other subsystems (e.g. lease e-signing in `routes::leases`).
+///
+/// This is the single hardened path that owns the HMAC-signed-link + nonce +
+/// email logic (issue #527 / #673). Callers must NOT duplicate that logic — they
+/// resolve a `document_id` and delegate here. The caller owns the
+/// [`RlsConnection`] lifecycle and is responsible for calling `rls.release()`
+/// after this returns (this function does not release it, so the caller can keep
+/// using the connection for follow-up work in the same request).
+pub(crate) async fn create_signature_request_for_document(
+    state: &AppState,
+    auth: &AuthUser,
+    rls: &mut RlsConnection,
+    document_id: Uuid,
+    request: CreateSignatureRequest,
+) -> Result<CreateSignatureRequestResponse, (StatusCode, Json<ErrorResponse>)> {
     // Validate request
     if request.signers.is_empty() {
-        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -88,14 +109,12 @@ pub async fn create_signature_request(
     {
         Ok(Some(doc)) => doc,
         Ok(None) => {
-            rls.release().await;
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
             ));
         }
         Err(e) => {
-            rls.release().await;
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
@@ -111,7 +130,6 @@ pub async fn create_signature_request(
     {
         Ok(reqs) => reqs,
         Err(e) => {
-            rls.release().await;
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
@@ -126,7 +144,6 @@ pub async fn create_signature_request(
                 | db::models::SignatureRequestStatus::InProgress
         )
     }) {
-        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -145,15 +162,12 @@ pub async fn create_signature_request(
     {
         Ok(req) => req,
         Err(e) => {
-            rls.release().await;
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
             ));
         }
     };
-
-    rls.release().await;
 
     info!(
         signature_request_id = %signature_request.id,
@@ -247,13 +261,10 @@ pub async fn create_signature_request(
         }
     }
 
-    Ok((
-        StatusCode::CREATED,
-        Json(CreateSignatureRequestResponse {
-            signature_request,
-            message: "Signature request created. Signers will receive email invitations.".into(),
-        }),
-    ))
+    Ok(CreateSignatureRequestResponse {
+        signature_request,
+        message: "Signature request created. Signers will receive email invitations.".into(),
+    })
 }
 
 /// List signature requests for a document.
