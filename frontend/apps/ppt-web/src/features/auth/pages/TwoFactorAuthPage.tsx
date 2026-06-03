@@ -1,12 +1,19 @@
 /**
- * Two-Factor Authentication Setup Page (UC-14.10, Epic 9, Story 9.1).
+ * Two-Factor Authentication Setup Page (UC-14.10, Epic 9, Stories 9.1 + 9.2).
  *
  * Wires to the backend MFA endpoints via @ppt/api-client useMfa* hooks:
- *   POST /api/v1/auth/mfa/setup              — initiate TOTP setup
- *   POST /api/v1/auth/mfa/verify             — confirm TOTP code, enables 2FA
+ *   POST /api/v1/auth/mfa/setup              — initiate TOTP setup (returns secret + QR)
+ *   POST /api/v1/auth/mfa/verify             — confirm TOTP code, enables 2FA, returns 10
+ *                                              single-use recovery codes (shown ONCE)
  *   POST /api/v1/auth/mfa/disable            — disable 2FA (requires code)
- *   GET  /api/v1/auth/mfa/status             — current enabled/disabled state
- *   POST /api/v1/auth/mfa/backup-codes/regenerate — refresh backup codes
+ *   GET  /api/v1/auth/mfa/status             — current enabled/disabled state + remaining codes
+ *   POST /api/v1/auth/mfa/backup-codes/regenerate — refresh recovery codes
+ *
+ * Recovery-codes UI (Story 9.2):
+ *   - The 10 codes are surfaced once on enable and once on each regenerate.
+ *   - A "Copy all" action copies the whole set to the clipboard.
+ *   - A warning banner appears when the remaining count is low or exhausted,
+ *     prompting the user to regenerate before they are locked out.
  */
 
 import {
@@ -23,6 +30,9 @@ import { Navigate } from 'react-router-dom';
 import { useToast } from '../../../components/Toast';
 import { useAuth } from '../../../contexts/AuthContext';
 import '../styles/AuthPage.css';
+
+// Threshold below which we nudge the user to regenerate codes (0 = exhausted).
+const LOW_CODES_THRESHOLD = 3;
 
 // ─── QR code canvas renderer ─────────────────────────────────────────────────
 
@@ -44,9 +54,51 @@ function QrCodeCanvas({ uri }: { uri: string }) {
   );
 }
 
+// ─── Recovery codes panel ────────────────────────────────────────────────────
+
+/**
+ * Displays a one-time list of recovery codes with copy-all and download
+ * actions. Reused by the enable flow and the regenerate flow.
+ */
+function RecoveryCodesPanel({ codes }: { codes: string[] }) {
+  const { showToast } = useToast();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyAll = useCallback(async () => {
+    const text = codes.join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      showToast({ type: 'success', title: 'Recovery codes copied to clipboard' });
+    } catch {
+      showToast({
+        type: 'error',
+        title: 'Could not copy automatically',
+        message: 'Select the codes and copy them manually.',
+      });
+    }
+  }, [codes, showToast]);
+
+  return (
+    <div>
+      <ul className="auth-recovery-codes" aria-label="Recovery codes">
+        {codes.map((c) => (
+          <li key={c}>{c}</li>
+        ))}
+      </ul>
+      <div className="auth-recovery-actions">
+        <button type="button" className="auth-submit" onClick={handleCopyAll}>
+          {copied ? 'Copied!' : 'Copy all'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Step state ──────────────────────────────────────────────────────────────
 
-type Step = 'idle' | 'setup-pending' | 'verify-setup' | 'disable' | 'regen-codes';
+type Step = 'idle' | 'setup-pending' | 'show-codes' | 'disable' | 'regen-codes';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -65,7 +117,8 @@ export function TwoFactorAuthPage() {
   const [step, setStep] = useState<Step>('idle');
   const [code, setCode] = useState('');
   const [formError, setFormError] = useState<string>();
-  const [newBackupCodes, setNewBackupCodes] = useState<string[]>([]);
+  // Recovery codes are held only in memory, shown once, then cleared.
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 
   // ── Handlers ──
 
@@ -89,8 +142,9 @@ export function TwoFactorAuthPage() {
         return;
       }
       try {
-        await verifyMutation.mutateAsync({ code: code.trim() });
-        setStep('idle');
+        const result = await verifyMutation.mutateAsync({ code: code.trim() });
+        setRecoveryCodes(result.recoveryCodes ?? []);
+        setStep('show-codes');
         showToast({ type: 'success', title: 'Two-factor authentication enabled' });
       } catch (err) {
         setFormError(String(err) || 'The code was not accepted. Please try again.');
@@ -110,7 +164,7 @@ export function TwoFactorAuthPage() {
       event.preventDefault();
       setFormError(undefined);
       if (!code.trim()) {
-        setFormError('Enter your authenticator code or a backup code to confirm.');
+        setFormError('Enter your authenticator code or a recovery code to confirm.');
         return;
       }
       try {
@@ -127,7 +181,7 @@ export function TwoFactorAuthPage() {
   const handleStartRegen = useCallback(() => {
     setFormError(undefined);
     setCode('');
-    setNewBackupCodes([]);
+    setRecoveryCodes([]);
     setStep('regen-codes');
   }, []);
 
@@ -141,8 +195,8 @@ export function TwoFactorAuthPage() {
       }
       try {
         const result = await regenMutation.mutateAsync({ code: code.trim() });
-        setNewBackupCodes(result.backupCodes);
-        showToast({ type: 'success', title: 'Backup codes regenerated — save them now!' });
+        setRecoveryCodes(result.backupCodes);
+        showToast({ type: 'success', title: 'Recovery codes regenerated — save them now!' });
       } catch (err) {
         setFormError(String(err) || 'The code was not accepted. Please try again.');
       }
@@ -154,7 +208,7 @@ export function TwoFactorAuthPage() {
     setStep('idle');
     setFormError(undefined);
     setCode('');
-    setNewBackupCodes([]);
+    setRecoveryCodes([]);
   }, []);
 
   // ── Auth guard ──
@@ -166,6 +220,9 @@ export function TwoFactorAuthPage() {
 
   const mfaEnabled = statusQuery.data?.enabled ?? false;
   const backupCodesRemaining = statusQuery.data?.backupCodesRemaining ?? 0;
+  const codesExhausted = mfaEnabled && backupCodesRemaining === 0;
+  const codesLow =
+    mfaEnabled && backupCodesRemaining > 0 && backupCodesRemaining <= LOW_CODES_THRESHOLD;
   const setupData = setupMutation.data;
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -193,12 +250,30 @@ export function TwoFactorAuthPage() {
             {mfaEnabled ? (
               <div className="auth-success-banner" role="status">
                 Two-factor authentication is <strong>enabled</strong>.{' '}
-                {backupCodesRemaining > 0 && (
-                  <span>Backup codes remaining: {backupCodesRemaining}.</span>
-                )}
+                <span>Recovery codes remaining: {backupCodesRemaining}.</span>
               </div>
             ) : (
               <p className="auth-help">Two-factor authentication is not yet enabled.</p>
+            )}
+
+            {/* Exhausted / low recovery-codes warning (Story 9.2) */}
+            {codesExhausted && (
+              <div className="auth-warning-banner" role="alert">
+                <span>
+                  <strong>You have no recovery codes left.</strong> If you lose access to your
+                  authenticator app you could be locked out. Regenerate a new set now and store them
+                  somewhere safe.
+                </span>
+              </div>
+            )}
+            {codesLow && (
+              <div className="auth-warning-banner" role="status">
+                <span>
+                  Only {backupCodesRemaining} recovery{' '}
+                  {backupCodesRemaining === 1 ? 'code' : 'codes'} left. Consider regenerating a
+                  fresh set so you don't get locked out.
+                </span>
+              </div>
             )}
 
             <div
@@ -221,18 +296,20 @@ export function TwoFactorAuthPage() {
                   <button
                     type="button"
                     className="auth-submit"
-                    onClick={handleStartDisable}
-                    style={{ background: 'var(--color-danger, #c0392b)' }}
+                    onClick={handleStartRegen}
+                    style={
+                      codesExhausted ? undefined : { background: 'var(--color-secondary, #6c757d)' }
+                    }
                   >
-                    Disable two-factor authentication
+                    Regenerate recovery codes
                   </button>
                   <button
                     type="button"
                     className="auth-submit"
-                    onClick={handleStartRegen}
-                    style={{ background: 'var(--color-secondary, #6c757d)' }}
+                    onClick={handleStartDisable}
+                    style={{ background: 'var(--color-danger, #c0392b)' }}
                   >
-                    Regenerate backup codes
+                    Disable two-factor authentication
                   </button>
                 </>
               )}
@@ -245,7 +322,8 @@ export function TwoFactorAuthPage() {
           <>
             <p className="auth-help">
               Scan the QR code below with your authenticator app (Google Authenticator, Authy,
-              etc.), or enter the secret manually.
+              etc.), or enter the secret manually. You'll receive your recovery codes once setup is
+              confirmed.
             </p>
 
             <div style={{ textAlign: 'center', margin: '1rem 0' }}>
@@ -267,19 +345,6 @@ export function TwoFactorAuthPage() {
                 {setupData.secret}
               </code>
             </div>
-
-            {setupData.backupCodes.length > 0 && (
-              <div className="auth-field" style={{ marginTop: '1rem' }}>
-                <p className="auth-label" style={{ fontWeight: 700 }}>
-                  Save these backup codes now — they will not be shown again.
-                </p>
-                <ul style={{ fontFamily: 'monospace', fontSize: '0.9rem', paddingLeft: '1.25rem' }}>
-                  {setupData.backupCodes.map((bc) => (
-                    <li key={bc}>{bc}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             <form
               className="auth-form"
@@ -318,11 +383,33 @@ export function TwoFactorAuthPage() {
           </>
         )}
 
+        {/* ── Show recovery codes once after enable ── */}
+        {step === 'show-codes' && (
+          <>
+            <div className="auth-success-banner" role="status">
+              Two-factor authentication is now <strong>enabled</strong>.
+            </div>
+            <p className="auth-help" style={{ fontWeight: 700, marginTop: '1rem' }}>
+              Save these {recoveryCodes.length} recovery codes now — they will not be shown again.
+              Each one can be used once if you lose access to your authenticator app.
+            </p>
+            <RecoveryCodesPanel codes={recoveryCodes} />
+            <button
+              type="button"
+              className="auth-submit"
+              onClick={handleCancel}
+              style={{ marginTop: '1rem' }}
+            >
+              I've saved my codes
+            </button>
+          </>
+        )}
+
         {/* ── Disable: confirm code ── */}
         {step === 'disable' && (
           <form className="auth-form" onSubmit={handleDisable} noValidate>
             <p className="auth-help">
-              Enter your authenticator code or a backup code to confirm disabling 2FA.
+              Enter your authenticator code or a recovery code to confirm disabling 2FA.
             </p>
             <div className="auth-field">
               <label htmlFor="disable-code" className="auth-label">
@@ -358,13 +445,13 @@ export function TwoFactorAuthPage() {
           </form>
         )}
 
-        {/* ── Regenerate backup codes ── */}
+        {/* ── Regenerate recovery codes ── */}
         {step === 'regen-codes' && (
           <>
-            {newBackupCodes.length === 0 ? (
+            {recoveryCodes.length === 0 ? (
               <form className="auth-form" onSubmit={handleRegen} noValidate>
                 <p className="auth-help">
-                  Enter your authenticator code to regenerate backup codes. All existing backup
+                  Enter your authenticator code to regenerate recovery codes. All existing recovery
                   codes will be invalidated.
                 </p>
                 <div className="auth-field">
@@ -388,7 +475,7 @@ export function TwoFactorAuthPage() {
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button type="submit" className="auth-submit" disabled={regenMutation.isPending}>
-                    {regenMutation.isPending ? 'Regenerating…' : 'Regenerate backup codes'}
+                    {regenMutation.isPending ? 'Regenerating…' : 'Regenerate recovery codes'}
                   </button>
                   <button type="button" className="auth-link" onClick={handleCancel}>
                     Cancel
@@ -396,15 +483,12 @@ export function TwoFactorAuthPage() {
                 </div>
               </form>
             ) : (
-              <div>
+              <>
                 <p className="auth-help" style={{ fontWeight: 700 }}>
-                  Save these new backup codes — they will not be shown again.
+                  Save these {recoveryCodes.length} new recovery codes — they will not be shown
+                  again.
                 </p>
-                <ul style={{ fontFamily: 'monospace', fontSize: '0.9rem', paddingLeft: '1.25rem' }}>
-                  {newBackupCodes.map((bc) => (
-                    <li key={bc}>{bc}</li>
-                  ))}
-                </ul>
+                <RecoveryCodesPanel codes={recoveryCodes} />
                 <button
                   type="button"
                   className="auth-submit"
@@ -413,7 +497,7 @@ export function TwoFactorAuthPage() {
                 >
                   Done
                 </button>
-              </div>
+              </>
             )}
           </>
         )}

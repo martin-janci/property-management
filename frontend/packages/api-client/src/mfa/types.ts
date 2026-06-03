@@ -10,8 +10,6 @@ export interface MfaSetupResponse {
   secret: string;
   /** URI for QR code generation (otpauth:// scheme) */
   qrUri: string;
-  /** Backup codes (only shown once, user must save them) */
-  backupCodes: string[];
 }
 
 /** Request body for POST /api/v1/auth/mfa/verify */
@@ -26,6 +24,12 @@ export interface VerifyMfaResponse {
   message: string;
   /** Whether MFA is now enabled */
   enabled: boolean;
+  /**
+   * The 10 single-use recovery codes, issued when MFA is enabled.
+   * Shown to the user ONCE — they are not retrievable afterwards.
+   * Each code is usable via POST /api/v1/users/me/mfa/recovery-codes/verify.
+   */
+  recoveryCodes: string[];
 }
 
 /** Request body for POST /api/v1/auth/mfa/disable */
