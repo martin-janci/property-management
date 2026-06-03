@@ -1369,7 +1369,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "deferred",
       "source": "pm-analysis 2026-05-27",
       "depends_on": []
     },
