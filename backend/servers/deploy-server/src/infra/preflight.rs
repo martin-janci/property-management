@@ -373,6 +373,8 @@ mod tests {
         std::env::set_var("PPT_JWT_SECRET", "a".repeat(32));
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "0".repeat(64));
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
+        std::env::set_var("PPT_ESIGN_TOKEN_SECRET", "e".repeat(32));
+        std::env::set_var("PPT_ESIGN_WEBHOOK_SECRET", "w");
         std::env::set_var("PPT_PM_CLIENT_SECRET", "z".repeat(32));
         let errors = check_env_vars();
         assert!(errors.is_empty(), "expected no errors, got {errors:?}");
@@ -385,6 +387,8 @@ mod tests {
         std::env::set_var("PPT_JWT_SECRET", "tooshort");
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "0".repeat(64));
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
+        std::env::set_var("PPT_ESIGN_TOKEN_SECRET", "e".repeat(32));
+        std::env::set_var("PPT_ESIGN_WEBHOOK_SECRET", "w");
         std::env::set_var("PPT_PM_CLIENT_SECRET", "z".repeat(32));
         let errors = check_env_vars();
         assert_eq!(errors.len(), 1);
@@ -399,6 +403,8 @@ mod tests {
         // 64 chars but not hex
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "z".repeat(64));
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
+        std::env::set_var("PPT_ESIGN_TOKEN_SECRET", "e".repeat(32));
+        std::env::set_var("PPT_ESIGN_WEBHOOK_SECRET", "w");
         std::env::set_var("PPT_PM_CLIENT_SECRET", "z".repeat(32));
         let errors = check_env_vars();
         assert_eq!(errors.len(), 1);
@@ -412,6 +418,8 @@ mod tests {
         std::env::set_var("PPT_JWT_SECRET", "a".repeat(32));
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "0".repeat(32)); // half the required length
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
+        std::env::set_var("PPT_ESIGN_TOKEN_SECRET", "e".repeat(32));
+        std::env::set_var("PPT_ESIGN_WEBHOOK_SECRET", "w");
         std::env::set_var("PPT_PM_CLIENT_SECRET", "z".repeat(32));
         let errors = check_env_vars();
         assert_eq!(errors.len(), 1);
@@ -427,6 +435,8 @@ mod tests {
         std::env::set_var("PPT_JWT_SECRET", "a".repeat(32));
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "0".repeat(64));
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
+        std::env::set_var("PPT_ESIGN_TOKEN_SECRET", "e".repeat(32));
+        std::env::set_var("PPT_ESIGN_WEBHOOK_SECRET", "w");
         std::env::set_var("PPT_PM_CLIENT_SECRET", "tooshort");
         let errors = check_env_vars();
         assert_eq!(errors.len(), 1);
