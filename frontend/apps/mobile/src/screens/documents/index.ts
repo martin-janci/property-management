@@ -1,4 +1,8 @@
 export { DocumentDetailScreen } from './DocumentDetailScreen';
+export type { MoveDocumentSheetProps } from './MoveDocumentSheet';
+export { MoveDocumentSheet } from './MoveDocumentSheet';
+export type { NewFolderSheetProps } from './NewFolderSheet';
+export { NewFolderSheet } from './NewFolderSheet';
 export type { DocumentPermissionsScreenProps } from './DocumentPermissionsScreen';
 export { DocumentPermissionsScreen } from './DocumentPermissionsScreen';
 export { DocumentPreviewScreen } from './DocumentPreviewScreen';
