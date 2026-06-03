@@ -1954,22 +1954,34 @@
       "action": "Configure FCM push notifications for React Native Property Management app: add expo-notifications, wire FCM token registration, background/foreground message handling, notification tap routing to screen",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-06-03T00:06:08Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 961,
+        "merged_at": "2026-06-02T18:15:07Z",
+        "at": "2026-06-03T00:06:08Z"
+      }
     },
     {
       "id": "gap-85-3-rn-universal-links",
       "action": "Configure universal links (iOS) and App Links (Android) for React Native Property Management app: apple-app-site-association JSON, assetlinks.json, metro entitlements, deep-link handler routing",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-06-03T00:06:08Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 962,
+        "merged_at": "2026-06-02T18:07:07Z",
+        "at": "2026-06-03T00:06:08Z"
+      }
     },
     {
       "id": "gap-9-2-mfa-recovery-codes-backend",
@@ -2023,11 +2035,17 @@
       "action": "Add integration tests for dispute filing API: full create+status-transition lifecycle, RLS tenant isolation (cross-tenant access denied), dispute status machine transitions, evidence upload auth guard",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
-      "source": "coverage-refill 2026-05-28",
+      "status": "done",
+      "source": "coverage-refill 2026-05-28 | gc1-reconcile 2026-06-03T00:06:08Z",
       "deadline": null,
       "dependency": "none",
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 946,
+        "merged_at": "2026-06-01T22:06:53Z",
+        "at": "2026-06-03T00:06:08Z"
+      }
     },
     {
       "id": "gap-82-8-kmp-android-inquiries-account",
