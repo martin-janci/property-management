@@ -1,1 +1,27 @@
-__ARCHIVE_PLACEHOLDER__
+{
+  "archived_at": "2026-06-03T17:15:00Z",
+  "assignments": [
+    {
+      "task_id": "fix-569-mediation-workspace-polish",
+      "branch": "auto-impl/fix-569-mediation-workspace-polish",
+      "status": "merged",
+      "claimed_at": "2026-05-27T18:12:36Z",
+      "last_updated": "2026-05-28T14:22:00Z",
+      "status_changed_at": "2026-05-28T14:22:00Z",
+      "pr_number": 633,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/633",
+      "merged_at": "2026-05-28T14:22:00Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=633 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=RHF+zod form, 3 extracted sub-components, aria-labels, native i18n sk/cs/de/pl/hu (82 keys), 10 tests; 410/410 pass",
+      "reviewer_summary": "verdict=approve head_oid=4415e77552db5fdcb41c7e7ce5d02eec69d2ac93 note=all-checks-pass-rust-failure-pre-existing-non-blocking",
+      "last_reviewed_oid": "4415e77552db5fdcb41c7e7ce5d02eec69d2ac93",
+      "scope_drift": false,
+      "code_reuse_warn": "none",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-05-28T14:22:00Z"
+    }
+  ]
+}
