@@ -1,9 +1,16 @@
 import {
+  type MediationSession,
   type ResolveDisputeRequest,
+  type ScheduleSessionRequest,
+  type UpdateSessionRequest,
   useAssignMediator,
+  useCancelSession,
   useDispute,
   useEscalateDispute,
+  useMediationSessions,
   useResolveDispute,
+  useScheduleSession,
+  useUpdateSession,
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +18,8 @@ import { MediationAssignDialog } from '../components/MediationAssignDialog';
 import { MediationChatThread } from '../components/MediationChatThread';
 import { MediationEscalateDialog } from '../components/MediationEscalateDialog';
 import { MediationResolutionForm } from '../components/MediationResolutionForm';
+import { MediationSessionDialog } from '../components/MediationSessionDialog';
+import { MediationSessionsPanel } from '../components/MediationSessionsPanel';
 import { MediationTimelineView } from '../components/MediationTimelineView';
 
 type Tab = 'timeline' | 'chat' | 'resolve';
@@ -58,12 +67,20 @@ export function MediationWorkspacePage({
   const [activeTab, setActiveTab] = useState<Tab>('timeline');
   const [showEscalateDialog, setShowEscalateDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+  // Session dialog: undefined = closed; null = schedule; session = reschedule.
+  const [sessionDialog, setSessionDialog] = useState<MediationSession | null | undefined>(
+    undefined
+  );
 
   const { data: dispute, isLoading: disputeLoading } = useDispute(disputeId);
+  const { data: sessions = [], isLoading: sessionsLoading } = useMediationSessions(disputeId);
 
   const resolveDispute = useResolveDispute(organizationId);
   const escalateDispute = useEscalateDispute(organizationId);
   const assignMediator = useAssignMediator();
+  const scheduleSession = useScheduleSession(disputeId);
+  const updateSession = useUpdateSession(disputeId);
+  const cancelSession = useCancelSession(disputeId);
 
   const isMediator = !!dispute && dispute.assignedMediatorId === currentUserId;
   const isParty =
@@ -109,6 +126,56 @@ export function MediationWorkspacePage({
     } catch (err) {
       onToastError(
         t('disputes.mediation.assignError'),
+        err instanceof Error ? err.message : undefined
+      );
+    }
+  };
+
+  const handleScheduleSession = async (data: ScheduleSessionRequest) => {
+    try {
+      await scheduleSession.mutateAsync(data);
+      onToastSuccess(
+        t('disputes.mediation.sessions.scheduledSuccess'),
+        t('disputes.mediation.sessions.scheduledMsg')
+      );
+      setSessionDialog(undefined);
+    } catch (err) {
+      onToastError(
+        t('disputes.mediation.sessions.scheduleError'),
+        err instanceof Error ? err.message : undefined
+      );
+    }
+  };
+
+  const handleRescheduleSession = async (sessionId: string, data: UpdateSessionRequest) => {
+    try {
+      await updateSession.mutateAsync({ sessionId, data });
+      onToastSuccess(
+        t('disputes.mediation.sessions.rescheduledSuccess'),
+        t('disputes.mediation.sessions.rescheduledMsg')
+      );
+      setSessionDialog(undefined);
+    } catch (err) {
+      onToastError(
+        t('disputes.mediation.sessions.rescheduleError'),
+        err instanceof Error ? err.message : undefined
+      );
+    }
+  };
+
+  const handleCancelSession = async (session: MediationSession) => {
+    if (!window.confirm(t('disputes.mediation.sessions.cancelConfirm'))) {
+      return;
+    }
+    try {
+      await cancelSession.mutateAsync(session.id);
+      onToastSuccess(
+        t('disputes.mediation.sessions.cancelledSuccess'),
+        t('disputes.mediation.sessions.cancelledMsg')
+      );
+    } catch (err) {
+      onToastError(
+        t('disputes.mediation.sessions.cancelError'),
         err instanceof Error ? err.message : undefined
       );
     }
@@ -290,6 +357,15 @@ export function MediationWorkspacePage({
             </div>
           </div>
 
+          <MediationSessionsPanel
+            sessions={sessions}
+            isLoading={sessionsLoading}
+            canManage={isActive && canManage}
+            onSchedule={() => setSessionDialog(null)}
+            onReschedule={(session) => setSessionDialog(session)}
+            onCancel={handleCancelSession}
+          />
+
           <div className="bg-violet-50 rounded-xl border border-violet-100 p-4">
             <h3 className="text-sm font-semibold text-violet-900 mb-2">
               {t('disputes.mediation.guidelines')}
@@ -397,6 +473,16 @@ export function MediationWorkspacePage({
           onConfirm={handleAssignMediator}
           onCancel={() => setShowAssignDialog(false)}
           isSubmitting={assignMediator.isPending}
+        />
+      )}
+
+      {sessionDialog !== undefined && (
+        <MediationSessionDialog
+          session={sessionDialog ?? undefined}
+          onScheduleConfirm={handleScheduleSession}
+          onRescheduleConfirm={handleRescheduleSession}
+          onCancel={() => setSessionDialog(undefined)}
+          isSubmitting={scheduleSession.isPending || updateSession.isPending}
         />
       )}
     </div>
