@@ -348,6 +348,14 @@
       "deleteErrorMessage": "A mappa törlése nem sikerült",
       "createError": "Létrehozás sikertelen",
       "createErrorMessage": "A mappa létrehozása nem sikerült"
+    },
+    "versionHistory": {
+      "title": "Verziótörténet",
+      "loading": "Verziók betöltése…",
+      "loadError": "A verziótörténet betöltése nem sikerült.",
+      "empty": "Ehhez a dokumentumhoz nincsenek elérhető verziók.",
+      "version": "{{n}}. verzió",
+      "current": "Aktuális"
     }
   },
   "disputes": {

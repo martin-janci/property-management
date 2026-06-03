@@ -350,6 +350,14 @@
       "deleteErrorMessage": "Nepodarilo sa vymazať priečinok",
       "createError": "Vytvorenie zlyhalo",
       "createErrorMessage": "Nepodarilo sa vytvoriť priečinok"
+    },
+    "versionHistory": {
+      "title": "História verzií",
+      "loading": "Načítavam verzie…",
+      "loadError": "Históriu verzií sa nepodarilo načítať.",
+      "empty": "Pre tento dokument nie sú dostupné žiadne verzie.",
+      "version": "Verzia {{n}}",
+      "current": "Aktuálna"
     }
   },
   "disputes": {

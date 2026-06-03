@@ -350,6 +350,14 @@
       "deleteErrorMessage": "Nie udało się usunąć folderu",
       "createError": "Tworzenie nie powiodło się",
       "createErrorMessage": "Nie udało się utworzyć folderu"
+    },
+    "versionHistory": {
+      "title": "Historia wersji",
+      "loading": "Ładowanie wersji…",
+      "loadError": "Nie udało się załadować historii wersji.",
+      "empty": "Brak dostępnych wersji dla tego dokumentu.",
+      "version": "Wersja {{n}}",
+      "current": "Bieżąca"
     }
   },
   "disputes": {

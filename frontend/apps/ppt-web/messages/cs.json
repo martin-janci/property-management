@@ -349,6 +349,14 @@
       "deleteErrorMessage": "Nepodařilo se smazat složku",
       "createError": "Vytvoření selhalo",
       "createErrorMessage": "Nepodařilo se vytvořit složku"
+    },
+    "versionHistory": {
+      "title": "Historie verzí",
+      "loading": "Načítání verzí…",
+      "loadError": "Historii verzí se nepodařilo načíst.",
+      "empty": "Pro tento dokument nejsou k dispozici žádné verze.",
+      "version": "Verze {{n}}",
+      "current": "Aktuální"
     }
   },
   "disputes": {
