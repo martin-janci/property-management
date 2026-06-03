@@ -945,13 +945,7 @@ fn airbnb_dedup_key(event: &integrations::AirbnbWebhookEvent) -> String {
     hasher.update(b"|");
     hasher.update(event.listing_id.as_deref().unwrap_or("").as_bytes());
     hasher.update(b"|");
-    hasher.update(
-        event
-            .confirmation_code
-            .as_deref()
-            .unwrap_or("")
-            .as_bytes(),
-    );
+    hasher.update(event.confirmation_code.as_deref().unwrap_or("").as_bytes());
     hasher.update(b"|");
     hasher.update(event.timestamp.to_rfc3339().as_bytes());
     format!("synthetic:{}", hex::encode(hasher.finalize()))

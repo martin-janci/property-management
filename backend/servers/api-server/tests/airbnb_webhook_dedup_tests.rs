@@ -47,7 +47,10 @@ async fn first_delivery_records_and_redelivery_is_suppressed(pool: PgPool) {
 
     // First delivery: ledger row created → handler would enqueue SYNC_EXTERNAL.
     let first = try_record_delivery(&pool, key, "ReservationCreated").await;
-    assert_eq!(first, 1, "first delivery must insert exactly one ledger row");
+    assert_eq!(
+        first, 1,
+        "first delivery must insert exactly one ledger row"
+    );
 
     // Redelivery (same event_id): conflict → 0 rows → handler returns 200
     // WITHOUT enqueuing a second SYNC_EXTERNAL job.
@@ -88,8 +91,14 @@ async fn synthetic_key_redelivery_is_suppressed(pool: PgPool) {
 async fn distinct_deliveries_each_record(pool: PgPool) {
     // Two genuinely different deliveries (different keys) must both record,
     // so legitimate back-to-back events still each enqueue their sync job.
-    assert_eq!(try_record_delivery(&pool, "evt_a", "ReservationUpdated").await, 1);
-    assert_eq!(try_record_delivery(&pool, "evt_b", "ReservationUpdated").await, 1);
+    assert_eq!(
+        try_record_delivery(&pool, "evt_a", "ReservationUpdated").await,
+        1
+    );
+    assert_eq!(
+        try_record_delivery(&pool, "evt_b", "ReservationUpdated").await,
+        1
+    );
     assert_eq!(ledger_count(&pool, "evt_a").await, 1);
     assert_eq!(ledger_count(&pool, "evt_b").await, 1);
 }
