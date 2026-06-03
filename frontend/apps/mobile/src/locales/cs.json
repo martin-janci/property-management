@@ -157,6 +157,7 @@
     "emptyTitle": "Zadne dokumenty",
     "noMatches": "Zadne dokumenty neodpovidaji hledani",
     "folderEmpty": "Tato slozka je prazdna",
+    "folderItemCount": "{{count}} polozek",
     "preview": {
       "fetching": "Pripravuji nahled…",
       "urlReady": "Dokument je pripraven",
