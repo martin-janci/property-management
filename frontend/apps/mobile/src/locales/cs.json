@@ -386,7 +386,7 @@
     "sign": "Podepsat dokument",
     "decline": "Odmitnout",
     "confirmSignTitle": "Podepsat dokument",
-    "confirmSignMessage": "Podpisem souhlasiste s podminkami dokumentu. Tuto akci nelze vrati.",
+    "confirmSignMessage": "Podpisem souhlasite s podminkami dokumentu. Tuto akci nelze vratit.",
     "confirmDeclineTitle": "Odmitnout podpis",
     "confirmDeclineMessage": "Jste si jisti, ze chcete odmitnout tuto zadost o podpis?",
     "actionComplete": "Hotovo",
