@@ -19,6 +19,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
 import { HelpTooltip } from '../features/help';
@@ -30,9 +31,27 @@ const AgenciesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const query = useAgencies({ page: 1, page_size: 50 });
 
+  // Locale-aware date formatter for the created column. Falls back to the raw
+  // ISO string if Intl can't parse it (defensive — backend always sends ISO).
+  const formatDate = useCallback((iso: string | undefined): string => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }, []);
+
   const columns = useMemo<ReadonlyArray<ResourceTableColumn<Agency>>>(
     () => [
-      { key: 'name', header: t('admin.agencies.columns.name'), render: (a) => a.name },
+      {
+        key: 'name',
+        header: t('admin.agencies.columns.name'),
+        // Name drills into the agency detail page (org metrics / members).
+        render: (a) => <Link to={`/tenants/agencies/${a.id}`}>{a.name}</Link>,
+      },
       { key: 'slug', header: t('admin.agencies.columns.slug'), render: (a) => a.slug },
       { key: 'status', header: t('admin.agencies.columns.status'), render: (a) => a.status },
       {
@@ -40,8 +59,13 @@ const AgenciesPage: React.FC = () => {
         header: t('admin.agencies.columns.members'),
         render: (a) => String(a.member_count),
       },
+      {
+        key: 'created',
+        header: t('admin.agencies.columns.created', { defaultValue: 'Created' }),
+        render: (a) => formatDate(a.created_at),
+      },
     ],
-    [t]
+    [t, formatDate]
   );
 
   // N9: the suspend handler is the canonical "this works under MFA"

@@ -22,6 +22,31 @@ export interface Agency {
   slug: string;
   status: AgencyStatus;
   member_count: number;
+  /** ISO-8601 timestamp of agency creation. Sent by the list endpoint. */
+  created_at: string;
+  /** Number of buildings owned by the agency. Sent by the list endpoint. */
+  building_count: number;
+}
+
+/**
+ * Detailed agency view returned by `GET /api/v1/admin/agencies/{id}`.
+ *
+ * Mirrors the widened backend `AgencyDetailResponse` (see
+ * `servers/api-server/src/routes/admin/agencies.rs`). The counts come from the
+ * `OrganizationMetrics` aggregate the repo already materialises, so no extra
+ * SQL is needed server-side.
+ */
+export interface AgencyDetail {
+  id: string;
+  name: string;
+  slug: string;
+  status: AgencyStatus;
+  created_at: string;
+  updated_at: string;
+  member_count: number;
+  active_member_count: number;
+  building_count: number;
+  unit_count: number;
 }
 
 export interface ListAgenciesParams {

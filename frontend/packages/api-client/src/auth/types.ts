@@ -105,6 +105,76 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+// ============================================================================
+// Profile (PATCH /me)
+// ============================================================================
+
+/**
+ * Request to update the current user's profile (`PATCH /api/v1/auth/me`).
+ *
+ * **Whitelist only**: the backend (`UpdateMeRequest` in `routes/auth.rs`) only
+ * persists `displayName`, `phone`, and `avatarUrl`. Identity fields
+ * (id, email, role, status) are intentionally not accepted here.
+ */
+export interface UpdateProfileRequest {
+  displayName?: string;
+  phone?: string;
+  avatarUrl?: string;
+}
+
+// ============================================================================
+// Session Management (GET/POST /auth/sessions)
+// ============================================================================
+
+/**
+ * A single active session for the current user.
+ *
+ * Mirrors the backend `SessionInfo` DTO (`routes/auth.rs`), which serializes
+ * with `camelCase` field names.
+ */
+export interface SessionInfo {
+  /** Session ID */
+  id: string;
+  /** Device info, if available */
+  deviceInfo?: string | null;
+  /** IP address the session was created from */
+  ipAddress?: string | null;
+  /** User agent string */
+  userAgent?: string | null;
+  /** When the session was created (RFC3339) */
+  createdAt: string;
+  /** When the session was last used (RFC3339) */
+  lastUsedAt: string;
+  /** Whether this is the session making the request */
+  isCurrent: boolean;
+}
+
+/** Response for `GET /api/v1/auth/sessions`. */
+export interface ListSessionsResponse {
+  sessions: SessionInfo[];
+}
+
+/**
+ * Request body for `POST /api/v1/auth/sessions/revoke`.
+ *
+ * The backend `RevokeSessionRequest` has no `rename_all` attribute, so the
+ * field is snake_case: `session_id`.
+ */
+export interface RevokeSessionRequest {
+  session_id: string;
+}
+
+/** Response for `POST /api/v1/auth/sessions/revoke`. */
+export interface RevokeSessionResponse {
+  message: string;
+}
+
+/** Response for `POST /api/v1/auth/sessions/revoke-all`. */
+export interface RevokeAllSessionsResponse {
+  message: string;
+  revokedCount: number;
+}
+
 /** Auth error codes */
 export type AuthErrorCode =
   | 'INVALID_CREDENTIALS'

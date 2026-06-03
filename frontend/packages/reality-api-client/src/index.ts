@@ -15,6 +15,7 @@ export type {
   AgencyAddress,
   AgencyBranding,
   AgencyListing,
+  AgencyMember,
   AgencyPerformance,
   AgencyStats,
   CreateAgencyRequest,

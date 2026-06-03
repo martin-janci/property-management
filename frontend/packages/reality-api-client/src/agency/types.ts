@@ -81,6 +81,21 @@ export interface Realtor {
 
 export type RealtorStatus = 'invited' | 'active' | 'inactive' | 'suspended';
 
+/**
+ * Agency team member as returned by `GET /api/v1/agencies/{id}/members`
+ * (reality-server `RealityAgencyMember`). Membership-level info only — richer
+ * realtor profiles come from the `useRealtors` endpoint.
+ */
+export interface AgencyMember {
+  id: string;
+  agencyId: string;
+  userId: string;
+  role: string;
+  isActive: boolean;
+  joinedAt: string;
+  leftAt?: string;
+}
+
 export interface RealtorStats {
   totalListings: number;
   activeListings: number;
