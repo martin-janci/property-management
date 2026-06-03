@@ -8,6 +8,7 @@
 import { AuthError } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAuthApi } from '../authApiClient';
 import '../styles/AuthPage.css';
@@ -20,25 +21,27 @@ interface FormErrors {
   general?: string;
 }
 
-function getErrorMessage(error: unknown): string {
+/** Maps an error to an i18n key relative to the `auth.resetPassword` namespace. */
+function getErrorKey(error: unknown): string {
   if (error instanceof AuthError) {
     switch (error.code) {
       case 'TOKEN_EXPIRED':
-        return 'This reset link has expired. Please request a new one.';
+        return 'tokenExpired';
       case 'TOKEN_INVALID':
-        return 'This reset link is invalid. Please request a new one.';
+        return 'tokenInvalid';
       case 'WEAK_PASSWORD':
-        return 'Password does not meet the strength requirements.';
+        return 'weakPassword';
       case 'NETWORK_ERROR':
-        return 'Network error. Please check your connection and try again.';
+        return 'networkError';
       default:
-        return error.message || 'Could not reset password. Please try again.';
+        return 'resetFailed';
     }
   }
-  return 'An unexpected error occurred. Please try again.';
+  return 'unexpectedError';
 }
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = useMemo(() => searchParams.get('token') ?? '', [searchParams]);
@@ -55,14 +58,13 @@ export function ResetPasswordPage() {
       setErrors({});
 
       if (!token) {
-        setErrors({ general: 'Missing reset token. Please request a new link.' });
+        setErrors({ general: 'missingToken' });
         return;
       }
       const next: FormErrors = {};
-      if (!password) next.password = 'Password is required';
-      else if (password.length < MIN_PASSWORD_LENGTH)
-        next.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
-      if (confirmPassword !== password) next.confirmPassword = 'Passwords do not match';
+      if (!password) next.password = 'passwordRequired';
+      else if (password.length < MIN_PASSWORD_LENGTH) next.password = 'passwordTooShort';
+      if (confirmPassword !== password) next.confirmPassword = 'passwordsDoNotMatch';
       if (Object.keys(next).length > 0) {
         setErrors(next);
         return;
@@ -73,7 +75,7 @@ export function ResetPasswordPage() {
         await getAuthApi().resetPassword({ token, newPassword: password });
         setSubmitted(true);
       } catch (error) {
-        setErrors({ general: getErrorMessage(error) });
+        setErrors({ general: getErrorKey(error) });
       } finally {
         setIsSubmitting(false);
       }
@@ -81,20 +83,24 @@ export function ResetPasswordPage() {
     [token, password, confirmPassword]
   );
 
+  /** Resolves a field/general error key into a localized message. */
+  const errorText = (key?: string) =>
+    key ? t(`auth.resetPassword.${key}`, { count: MIN_PASSWORD_LENGTH }) : '';
+
   if (submitted) {
     return (
       <div className="auth-page">
         <div className="auth-container">
           <div className="auth-header">
-            <h1 className="auth-title">Password updated</h1>
-            <p className="auth-subtitle">You can now sign in with your new password.</p>
+            <h1 className="auth-title">{t('auth.resetPassword.successTitle')}</h1>
+            <p className="auth-subtitle">{t('auth.resetPassword.successSubtitle')}</p>
           </div>
           <button
             type="button"
             className="auth-submit"
             onClick={() => navigate('/login', { replace: true })}
           >
-            Sign in
+            {t('auth.resetPassword.signIn')}
           </button>
         </div>
       </div>
@@ -106,14 +112,12 @@ export function ResetPasswordPage() {
       <div className="auth-page">
         <div className="auth-container">
           <div className="auth-header">
-            <h1 className="auth-title">Invalid link</h1>
-            <p className="auth-subtitle">
-              The reset link is missing a token. Request a new password reset email.
-            </p>
+            <h1 className="auth-title">{t('auth.resetPassword.invalidLinkTitle')}</h1>
+            <p className="auth-subtitle">{t('auth.resetPassword.invalidLinkSubtitle')}</p>
           </div>
           <div className="auth-links">
             <Link to="/forgot-password" className="auth-link">
-              Request a new link
+              {t('auth.resetPassword.requestNewLink')}
             </Link>
           </div>
         </div>
@@ -125,21 +129,21 @@ export function ResetPasswordPage() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <h1 className="auth-title">Set a new password</h1>
-          <p className="auth-subtitle">Choose a strong password you haven't used before.</p>
+          <h1 className="auth-title">{t('auth.resetPassword.title')}</h1>
+          <p className="auth-subtitle">{t('auth.resetPassword.subtitle')}</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {errors.general && (
             <div className="auth-error-banner" role="alert" aria-live="polite">
               <span aria-hidden="true">!</span>
-              <span>{errors.general}</span>
+              <span>{errorText(errors.general)}</span>
             </div>
           )}
 
           <div className="auth-field">
             <label htmlFor="password" className="auth-label">
-              New password
+              {t('auth.resetPassword.newPassword')}
             </label>
             <input
               id="password"
@@ -153,15 +157,17 @@ export function ResetPasswordPage() {
               aria-invalid={errors.password ? 'true' : 'false'}
             />
             {errors.password ? (
-              <span className="auth-field-error">{errors.password}</span>
+              <span className="auth-field-error">{errorText(errors.password)}</span>
             ) : (
-              <span className="auth-help">At least {MIN_PASSWORD_LENGTH} characters.</span>
+              <span className="auth-help">
+                {t('auth.resetPassword.passwordHelp', { count: MIN_PASSWORD_LENGTH })}
+              </span>
             )}
           </div>
 
           <div className="auth-field">
             <label htmlFor="confirmPassword" className="auth-label">
-              Confirm password
+              {t('auth.resetPassword.confirmPassword')}
             </label>
             <input
               id="confirmPassword"
@@ -175,7 +181,7 @@ export function ResetPasswordPage() {
               aria-invalid={errors.confirmPassword ? 'true' : 'false'}
             />
             {errors.confirmPassword && (
-              <span className="auth-field-error">{errors.confirmPassword}</span>
+              <span className="auth-field-error">{errorText(errors.confirmPassword)}</span>
             )}
           </div>
 
@@ -183,10 +189,10 @@ export function ResetPasswordPage() {
             {isSubmitting ? (
               <>
                 <span className="auth-spinner" aria-hidden="true" />
-                <span>Updating…</span>
+                <span>{t('auth.resetPassword.submitting')}</span>
               </>
             ) : (
-              'Update password'
+              t('auth.resetPassword.submit')
             )}
           </button>
         </form>

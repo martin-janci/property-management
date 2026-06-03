@@ -26,6 +26,7 @@ import {
 import QRCode from 'qrcode';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useToast } from '../../../components/Toast';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -37,6 +38,7 @@ const LOW_CODES_THRESHOLD = 3;
 // ─── QR code canvas renderer ─────────────────────────────────────────────────
 
 function QrCodeCanvas({ uri }: { uri: string }) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -48,7 +50,7 @@ function QrCodeCanvas({ uri }: { uri: string }) {
   return (
     <canvas
       ref={canvasRef}
-      aria-label="Scan this QR code with your authenticator app"
+      aria-label={t('auth.twoFactor.qrAriaLabel')}
       style={{ border: '1px solid #ddd', borderRadius: 4 }}
     />
   );
@@ -61,6 +63,7 @@ function QrCodeCanvas({ uri }: { uri: string }) {
  * actions. Reused by the enable flow and the regenerate flow.
  */
 function RecoveryCodesPanel({ codes }: { codes: string[] }) {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -70,26 +73,26 @@ function RecoveryCodesPanel({ codes }: { codes: string[] }) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      showToast({ type: 'success', title: 'Recovery codes copied to clipboard' });
+      showToast({ type: 'success', title: t('auth.twoFactor.copiedToast') });
     } catch {
       showToast({
         type: 'error',
-        title: 'Could not copy automatically',
-        message: 'Select the codes and copy them manually.',
+        title: t('auth.twoFactor.copyFailedTitle'),
+        message: t('auth.twoFactor.copyFailedMessage'),
       });
     }
-  }, [codes, showToast]);
+  }, [codes, showToast, t]);
 
   return (
     <div>
-      <ul className="auth-recovery-codes" aria-label="Recovery codes">
+      <ul className="auth-recovery-codes" aria-label={t('auth.twoFactor.recoveryCodesAriaLabel')}>
         {codes.map((c) => (
           <li key={c}>{c}</li>
         ))}
       </ul>
       <div className="auth-recovery-actions">
         <button type="button" className="auth-submit" onClick={handleCopyAll}>
-          {copied ? 'Copied!' : 'Copy all'}
+          {copied ? t('auth.twoFactor.copied') : t('auth.twoFactor.copyAll')}
         </button>
       </div>
     </div>
@@ -103,6 +106,7 @@ type Step = 'idle' | 'setup-pending' | 'show-codes' | 'disable' | 'regen-codes';
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function TwoFactorAuthPage() {
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
   const { showToast } = useToast();
 
@@ -129,28 +133,32 @@ export function TwoFactorAuthPage() {
       await setupMutation.mutateAsync();
       setStep('setup-pending');
     } catch (err) {
-      showToast({ type: 'error', title: 'Could not start MFA setup', message: String(err) });
+      showToast({
+        type: 'error',
+        title: t('auth.twoFactor.setupErrorTitle'),
+        message: String(err),
+      });
     }
-  }, [setupMutation, showToast]);
+  }, [setupMutation, showToast, t]);
 
   const handleVerifySetup = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setFormError(undefined);
       if (!/^\d{6}$/.test(code.trim())) {
-        setFormError('Enter the 6-digit code from your authenticator app.');
+        setFormError(t('auth.twoFactor.enterCode'));
         return;
       }
       try {
         const result = await verifyMutation.mutateAsync({ code: code.trim() });
         setRecoveryCodes(result.recoveryCodes ?? []);
         setStep('show-codes');
-        showToast({ type: 'success', title: 'Two-factor authentication enabled' });
+        showToast({ type: 'success', title: t('auth.twoFactor.enabledToast') });
       } catch (err) {
-        setFormError(String(err) || 'The code was not accepted. Please try again.');
+        setFormError(String(err) || t('auth.twoFactor.codeNotAccepted'));
       }
     },
-    [code, verifyMutation, showToast]
+    [code, verifyMutation, showToast, t]
   );
 
   const handleStartDisable = useCallback(() => {
@@ -164,18 +172,18 @@ export function TwoFactorAuthPage() {
       event.preventDefault();
       setFormError(undefined);
       if (!code.trim()) {
-        setFormError('Enter your authenticator code or a recovery code to confirm.');
+        setFormError(t('auth.twoFactor.enterCodeToDisable'));
         return;
       }
       try {
         await disableMutation.mutateAsync({ code: code.trim() });
         setStep('idle');
-        showToast({ type: 'success', title: 'Two-factor authentication disabled' });
+        showToast({ type: 'success', title: t('auth.twoFactor.disabledToast') });
       } catch (err) {
-        setFormError(String(err) || 'The code was not accepted. Please try again.');
+        setFormError(String(err) || t('auth.twoFactor.codeNotAccepted'));
       }
     },
-    [code, disableMutation, showToast]
+    [code, disableMutation, showToast, t]
   );
 
   const handleStartRegen = useCallback(() => {
@@ -190,18 +198,18 @@ export function TwoFactorAuthPage() {
       event.preventDefault();
       setFormError(undefined);
       if (!/^\d{6}$/.test(code.trim())) {
-        setFormError('Enter the 6-digit code from your authenticator app.');
+        setFormError(t('auth.twoFactor.enterCode'));
         return;
       }
       try {
         const result = await regenMutation.mutateAsync({ code: code.trim() });
         setRecoveryCodes(result.backupCodes);
-        showToast({ type: 'success', title: 'Recovery codes regenerated — save them now!' });
+        showToast({ type: 'success', title: t('auth.twoFactor.regeneratedToast') });
       } catch (err) {
-        setFormError(String(err) || 'The code was not accepted. Please try again.');
+        setFormError(String(err) || t('auth.twoFactor.codeNotAccepted'));
       }
     },
-    [code, regenMutation, showToast]
+    [code, regenMutation, showToast, t]
   );
 
   const handleCancel = useCallback(() => {
@@ -231,16 +239,14 @@ export function TwoFactorAuthPage() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <h1 className="auth-title">Two-factor authentication</h1>
-          <p className="auth-subtitle">
-            Add an extra layer of security by requiring a code from your authenticator app.
-          </p>
+          <h1 className="auth-title">{t('auth.twoFactor.title')}</h1>
+          <p className="auth-subtitle">{t('auth.twoFactor.subtitle')}</p>
         </div>
 
         {/* Loading status */}
         {statusQuery.isLoading && (
           <p className="auth-help" aria-live="polite">
-            Loading MFA status…
+            {t('auth.twoFactor.loadingStatus')}
           </p>
         )}
 
@@ -249,30 +255,24 @@ export function TwoFactorAuthPage() {
           <>
             {mfaEnabled ? (
               <div className="auth-success-banner" role="status">
-                Two-factor authentication is <strong>enabled</strong>.{' '}
-                <span>Recovery codes remaining: {backupCodesRemaining}.</span>
+                <Trans i18nKey="auth.twoFactor.enabledBanner" components={{ 1: <strong /> }} />{' '}
+                <span>{t('auth.twoFactor.codesRemaining', { count: backupCodesRemaining })}</span>
               </div>
             ) : (
-              <p className="auth-help">Two-factor authentication is not yet enabled.</p>
+              <p className="auth-help">{t('auth.twoFactor.notEnabled')}</p>
             )}
 
             {/* Exhausted / low recovery-codes warning (Story 9.2) */}
             {codesExhausted && (
               <div className="auth-warning-banner" role="alert">
                 <span>
-                  <strong>You have no recovery codes left.</strong> If you lose access to your
-                  authenticator app you could be locked out. Regenerate a new set now and store them
-                  somewhere safe.
+                  <Trans i18nKey="auth.twoFactor.codesExhausted" components={{ 1: <strong /> }} />
                 </span>
               </div>
             )}
             {codesLow && (
               <div className="auth-warning-banner" role="status">
-                <span>
-                  Only {backupCodesRemaining} recovery{' '}
-                  {backupCodesRemaining === 1 ? 'code' : 'codes'} left. Consider regenerating a
-                  fresh set so you don't get locked out.
-                </span>
+                <span>{t('auth.twoFactor.codesLow', { count: backupCodesRemaining })}</span>
               </div>
             )}
 
@@ -287,7 +287,9 @@ export function TwoFactorAuthPage() {
                   onClick={handleStartSetup}
                   disabled={setupMutation.isPending}
                 >
-                  {setupMutation.isPending ? 'Starting setup…' : 'Set up two-factor authentication'}
+                  {setupMutation.isPending
+                    ? t('auth.twoFactor.startingSetup')
+                    : t('auth.twoFactor.setupButton')}
                 </button>
               )}
 
@@ -301,7 +303,7 @@ export function TwoFactorAuthPage() {
                       codesExhausted ? undefined : { background: 'var(--color-secondary, #6c757d)' }
                     }
                   >
-                    Regenerate recovery codes
+                    {t('auth.twoFactor.regenerateButton')}
                   </button>
                   <button
                     type="button"
@@ -309,7 +311,7 @@ export function TwoFactorAuthPage() {
                     onClick={handleStartDisable}
                     style={{ background: 'var(--color-danger, #c0392b)' }}
                   >
-                    Disable two-factor authentication
+                    {t('auth.twoFactor.disableButton')}
                   </button>
                 </>
               )}
@@ -320,18 +322,14 @@ export function TwoFactorAuthPage() {
         {/* ── Setup pending: show secret/QR + verify form ── */}
         {step === 'setup-pending' && setupData && (
           <>
-            <p className="auth-help">
-              Scan the QR code below with your authenticator app (Google Authenticator, Authy,
-              etc.), or enter the secret manually. You'll receive your recovery codes once setup is
-              confirmed.
-            </p>
+            <p className="auth-help">{t('auth.twoFactor.setupInstructions')}</p>
 
             <div style={{ textAlign: 'center', margin: '1rem 0' }}>
               <QrCodeCanvas uri={setupData.qrUri} />
             </div>
 
             <div className="auth-field">
-              <p className="auth-label">Manual entry secret</p>
+              <p className="auth-label">{t('auth.twoFactor.manualEntrySecret')}</p>
               <code
                 style={{
                   display: 'block',
@@ -354,7 +352,7 @@ export function TwoFactorAuthPage() {
             >
               <div className="auth-field">
                 <label htmlFor="setup-code" className="auth-label">
-                  Verification code
+                  {t('auth.twoFactor.verificationCode')}
                 </label>
                 <input
                   id="setup-code"
@@ -373,10 +371,12 @@ export function TwoFactorAuthPage() {
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <button type="submit" className="auth-submit" disabled={verifyMutation.isPending}>
-                  {verifyMutation.isPending ? 'Verifying…' : 'Verify and enable'}
+                  {verifyMutation.isPending
+                    ? t('auth.twoFactor.verifying')
+                    : t('auth.twoFactor.verifyAndEnable')}
                 </button>
                 <button type="button" className="auth-link" onClick={handleCancel}>
-                  Cancel
+                  {t('auth.twoFactor.cancel')}
                 </button>
               </div>
             </form>
@@ -387,11 +387,10 @@ export function TwoFactorAuthPage() {
         {step === 'show-codes' && (
           <>
             <div className="auth-success-banner" role="status">
-              Two-factor authentication is now <strong>enabled</strong>.
+              <Trans i18nKey="auth.twoFactor.enabledSuccess" components={{ 1: <strong /> }} />
             </div>
             <p className="auth-help" style={{ fontWeight: 700, marginTop: '1rem' }}>
-              Save these {recoveryCodes.length} recovery codes now — they will not be shown again.
-              Each one can be used once if you lose access to your authenticator app.
+              {t('auth.twoFactor.saveCodesNow', { count: recoveryCodes.length })}
             </p>
             <RecoveryCodesPanel codes={recoveryCodes} />
             <button
@@ -400,7 +399,7 @@ export function TwoFactorAuthPage() {
               onClick={handleCancel}
               style={{ marginTop: '1rem' }}
             >
-              I've saved my codes
+              {t('auth.twoFactor.savedCodes')}
             </button>
           </>
         )}
@@ -408,12 +407,10 @@ export function TwoFactorAuthPage() {
         {/* ── Disable: confirm code ── */}
         {step === 'disable' && (
           <form className="auth-form" onSubmit={handleDisable} noValidate>
-            <p className="auth-help">
-              Enter your authenticator code or a recovery code to confirm disabling 2FA.
-            </p>
+            <p className="auth-help">{t('auth.twoFactor.disableInstructions')}</p>
             <div className="auth-field">
               <label htmlFor="disable-code" className="auth-label">
-                Authentication code
+                {t('auth.twoFactor.authenticationCode')}
               </label>
               <input
                 id="disable-code"
@@ -436,10 +433,12 @@ export function TwoFactorAuthPage() {
                 style={{ background: 'var(--color-danger, #c0392b)' }}
                 disabled={disableMutation.isPending}
               >
-                {disableMutation.isPending ? 'Disabling…' : 'Disable two-factor authentication'}
+                {disableMutation.isPending
+                  ? t('auth.twoFactor.disabling')
+                  : t('auth.twoFactor.disableButton')}
               </button>
               <button type="button" className="auth-link" onClick={handleCancel}>
-                Cancel
+                {t('auth.twoFactor.cancel')}
               </button>
             </div>
           </form>
@@ -450,13 +449,10 @@ export function TwoFactorAuthPage() {
           <>
             {recoveryCodes.length === 0 ? (
               <form className="auth-form" onSubmit={handleRegen} noValidate>
-                <p className="auth-help">
-                  Enter your authenticator code to regenerate recovery codes. All existing recovery
-                  codes will be invalidated.
-                </p>
+                <p className="auth-help">{t('auth.twoFactor.regenInstructions')}</p>
                 <div className="auth-field">
                   <label htmlFor="regen-code" className="auth-label">
-                    Authenticator code
+                    {t('auth.twoFactor.authenticatorCode')}
                   </label>
                   <input
                     id="regen-code"
@@ -475,18 +471,19 @@ export function TwoFactorAuthPage() {
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button type="submit" className="auth-submit" disabled={regenMutation.isPending}>
-                    {regenMutation.isPending ? 'Regenerating…' : 'Regenerate recovery codes'}
+                    {regenMutation.isPending
+                      ? t('auth.twoFactor.regenerating')
+                      : t('auth.twoFactor.regenerateButton')}
                   </button>
                   <button type="button" className="auth-link" onClick={handleCancel}>
-                    Cancel
+                    {t('auth.twoFactor.cancel')}
                   </button>
                 </div>
               </form>
             ) : (
               <>
                 <p className="auth-help" style={{ fontWeight: 700 }}>
-                  Save these {recoveryCodes.length} new recovery codes — they will not be shown
-                  again.
+                  {t('auth.twoFactor.saveNewCodes', { count: recoveryCodes.length })}
                 </p>
                 <RecoveryCodesPanel codes={recoveryCodes} />
                 <button
@@ -495,7 +492,7 @@ export function TwoFactorAuthPage() {
                   onClick={handleCancel}
                   style={{ marginTop: '1rem' }}
                 >
-                  Done
+                  {t('auth.twoFactor.done')}
                 </button>
               </>
             )}

@@ -8,7 +8,7 @@
 import { AuthError } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuthApi } from '../authApiClient';
 import '../styles/AuthPage.css';
@@ -25,6 +25,11 @@ interface FormErrors {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 
+/**
+ * Validates the form and returns i18n keys (relative to the `auth.register`
+ * namespace) for any field that fails. Keys are resolved by the component so
+ * the validator stays free of the `t` function.
+ */
 function validate(values: {
   email: string;
   password: string;
@@ -33,42 +38,43 @@ function validate(values: {
   lastName: string;
 }): FormErrors {
   const errors: FormErrors = {};
-  if (!values.firstName.trim()) errors.firstName = 'First name is required';
-  if (!values.lastName.trim()) errors.lastName = 'Last name is required';
+  if (!values.firstName.trim()) errors.firstName = 'firstNameRequired';
+  if (!values.lastName.trim()) errors.lastName = 'lastNameRequired';
   if (!values.email.trim()) {
-    errors.email = 'Email is required';
+    errors.email = 'emailRequired';
   } else if (!EMAIL_RE.test(values.email.trim())) {
-    errors.email = 'Enter a valid email address';
+    errors.email = 'invalidEmail';
   }
   if (!values.password) {
-    errors.password = 'Password is required';
+    errors.password = 'passwordRequired';
   } else if (values.password.length < MIN_PASSWORD_LENGTH) {
-    errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+    errors.password = 'passwordTooShort';
   }
   if (values.confirmPassword !== values.password) {
-    errors.confirmPassword = 'Passwords do not match';
+    errors.confirmPassword = 'passwordsDoNotMatch';
   }
   return errors;
 }
 
-function getErrorMessage(error: unknown): string {
+/** Maps an error to an i18n key relative to the `auth.register` namespace. */
+function getErrorKey(error: unknown): string {
   if (error instanceof AuthError) {
     switch (error.code) {
       case 'EMAIL_ALREADY_EXISTS':
-        return 'An account with this email already exists.';
+        return 'emailExists';
       case 'WEAK_PASSWORD':
-        return 'Password does not meet the strength requirements.';
+        return 'weakPassword';
       case 'NETWORK_ERROR':
-        return 'Network error. Please check your connection and try again.';
+        return 'networkError';
       default:
-        return error.message || 'Registration failed. Please try again.';
+        return 'registrationFailed';
     }
   }
-  return 'An unexpected error occurred. Please try again.';
+  return 'unexpectedError';
 }
 
 export function RegisterPage() {
-  useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState('');
@@ -105,7 +111,7 @@ export function RegisterPage() {
         });
         setSubmitted(true);
       } catch (error) {
-        setErrors({ general: getErrorMessage(error) });
+        setErrors({ general: getErrorKey(error) });
       } finally {
         setIsSubmitting(false);
       }
@@ -113,15 +119,22 @@ export function RegisterPage() {
     [email, password, confirmPassword, firstName, lastName]
   );
 
+  /** Resolves a field/general error key into a localized message. */
+  const errorText = (key?: string) =>
+    key ? t(`auth.register.${key}`, { count: MIN_PASSWORD_LENGTH }) : '';
+
   if (submitted) {
     return (
       <div className="auth-page">
         <div className="auth-container">
           <div className="auth-header">
-            <h1 className="auth-title">Check your inbox</h1>
+            <h1 className="auth-title">{t('auth.register.checkInboxTitle')}</h1>
             <p className="auth-subtitle">
-              We sent a verification link to <strong>{email}</strong>. Click the link to activate
-              your account.
+              <Trans
+                i18nKey="auth.register.checkInboxSubtitle"
+                values={{ email }}
+                components={{ 1: <strong /> }}
+              />
             </p>
           </div>
           <button
@@ -129,7 +142,7 @@ export function RegisterPage() {
             className="auth-submit"
             onClick={() => navigate('/login', { replace: true })}
           >
-            Back to sign in
+            {t('auth.register.backToSignIn')}
           </button>
         </div>
       </div>
@@ -142,22 +155,22 @@ export function RegisterPage() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <h1 className="auth-title">Create your account</h1>
-          <p className="auth-subtitle">Get started with Property Management</p>
+          <h1 className="auth-title">{t('auth.register.title')}</h1>
+          <p className="auth-subtitle">{t('auth.register.subtitle')}</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {errors.general && (
             <div className="auth-error-banner" role="alert" aria-live="polite">
               <span aria-hidden="true">!</span>
-              <span>{errors.general}</span>
+              <span>{errorText(errors.general)}</span>
             </div>
           )}
 
           <div className="auth-field-row">
             <div className="auth-field">
               <label htmlFor="firstName" className="auth-label">
-                First name
+                {t('auth.register.firstName')}
               </label>
               <input
                 id="firstName"
@@ -170,11 +183,13 @@ export function RegisterPage() {
                 className={`auth-input ${errors.firstName ? 'auth-input--error' : ''}`}
                 aria-invalid={errors.firstName ? 'true' : 'false'}
               />
-              {errors.firstName && <span className="auth-field-error">{errors.firstName}</span>}
+              {errors.firstName && (
+                <span className="auth-field-error">{errorText(errors.firstName)}</span>
+              )}
             </div>
             <div className="auth-field">
               <label htmlFor="lastName" className="auth-label">
-                Last name
+                {t('auth.register.lastName')}
               </label>
               <input
                 id="lastName"
@@ -187,13 +202,15 @@ export function RegisterPage() {
                 className={`auth-input ${errors.lastName ? 'auth-input--error' : ''}`}
                 aria-invalid={errors.lastName ? 'true' : 'false'}
               />
-              {errors.lastName && <span className="auth-field-error">{errors.lastName}</span>}
+              {errors.lastName && (
+                <span className="auth-field-error">{errorText(errors.lastName)}</span>
+              )}
             </div>
           </div>
 
           <div className="auth-field">
             <label htmlFor="email" className="auth-label">
-              Email
+              {t('auth.register.email')}
             </label>
             <input
               id="email"
@@ -206,12 +223,12 @@ export function RegisterPage() {
               className={`auth-input ${errors.email ? 'auth-input--error' : ''}`}
               aria-invalid={errors.email ? 'true' : 'false'}
             />
-            {errors.email && <span className="auth-field-error">{errors.email}</span>}
+            {errors.email && <span className="auth-field-error">{errorText(errors.email)}</span>}
           </div>
 
           <div className="auth-field">
             <label htmlFor="password" className="auth-label">
-              Password
+              {t('auth.register.password')}
             </label>
             <input
               id="password"
@@ -225,15 +242,17 @@ export function RegisterPage() {
               aria-invalid={errors.password ? 'true' : 'false'}
             />
             {errors.password ? (
-              <span className="auth-field-error">{errors.password}</span>
+              <span className="auth-field-error">{errorText(errors.password)}</span>
             ) : (
-              <span className="auth-help">At least {MIN_PASSWORD_LENGTH} characters.</span>
+              <span className="auth-help">
+                {t('auth.register.passwordHelp', { count: MIN_PASSWORD_LENGTH })}
+              </span>
             )}
           </div>
 
           <div className="auth-field">
             <label htmlFor="confirmPassword" className="auth-label">
-              Confirm password
+              {t('auth.register.confirmPassword')}
             </label>
             <input
               id="confirmPassword"
@@ -247,7 +266,7 @@ export function RegisterPage() {
               aria-invalid={errors.confirmPassword ? 'true' : 'false'}
             />
             {errors.confirmPassword && (
-              <span className="auth-field-error">{errors.confirmPassword}</span>
+              <span className="auth-field-error">{errorText(errors.confirmPassword)}</span>
             )}
           </div>
 
@@ -255,19 +274,19 @@ export function RegisterPage() {
             {isSubmitting ? (
               <>
                 <span className="auth-spinner" aria-hidden="true" />
-                <span>Creating account…</span>
+                <span>{t('auth.register.submitting')}</span>
               </>
             ) : (
-              'Create account'
+              t('auth.register.submit')
             )}
           </button>
         </form>
 
         <div className="auth-links">
           <span>
-            Already have an account?{' '}
+            {t('auth.register.haveAccount')}{' '}
             <Link to="/login" className="auth-link">
-              Sign in
+              {t('auth.register.signIn')}
             </Link>
           </span>
         </div>

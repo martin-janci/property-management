@@ -8,6 +8,7 @@
 import { AuthError } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getAuthApi } from '../authApiClient';
@@ -22,25 +23,27 @@ interface FormErrors {
   general?: string;
 }
 
-function getErrorMessage(error: unknown): string {
+/** Maps an error to an i18n key relative to the `auth.changePassword` namespace. */
+function getErrorKey(error: unknown): string {
   if (error instanceof AuthError) {
     switch (error.code) {
       case 'INVALID_CREDENTIALS':
-        return 'Current password is incorrect.';
+        return 'currentPasswordIncorrect';
       case 'WEAK_PASSWORD':
-        return 'Password does not meet the strength requirements.';
+        return 'weakPassword';
       case 'SESSION_EXPIRED':
-        return 'Your session has expired. Please sign in again.';
+        return 'sessionExpired';
       case 'NETWORK_ERROR':
-        return 'Network error. Please check your connection and try again.';
+        return 'networkError';
       default:
-        return error.message || 'Could not change password. Please try again.';
+        return 'changeFailed';
     }
   }
-  return 'An unexpected error occurred. Please try again.';
+  return 'unexpectedError';
 }
 
 export function ChangePasswordPage() {
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -57,13 +60,11 @@ export function ChangePasswordPage() {
       setSuccessMessage(undefined);
 
       const next: FormErrors = {};
-      if (!currentPassword) next.currentPassword = 'Current password is required';
-      if (!newPassword) next.newPassword = 'New password is required';
-      else if (newPassword.length < MIN_PASSWORD_LENGTH)
-        next.newPassword = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
-      else if (newPassword === currentPassword)
-        next.newPassword = 'New password must differ from the current password';
-      if (confirmPassword !== newPassword) next.confirmPassword = 'Passwords do not match';
+      if (!currentPassword) next.currentPassword = 'currentPasswordRequired';
+      if (!newPassword) next.newPassword = 'newPasswordRequired';
+      else if (newPassword.length < MIN_PASSWORD_LENGTH) next.newPassword = 'passwordTooShort';
+      else if (newPassword === currentPassword) next.newPassword = 'sameAsCurrent';
+      if (confirmPassword !== newPassword) next.confirmPassword = 'passwordsDoNotMatch';
       if (Object.keys(next).length > 0) {
         setErrors(next);
         return;
@@ -72,18 +73,22 @@ export function ChangePasswordPage() {
       setIsSubmitting(true);
       try {
         await getAuthApi().changePassword({ currentPassword, newPassword });
-        setSuccessMessage('Password updated successfully.');
+        setSuccessMessage(t('auth.changePassword.success'));
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       } catch (error) {
-        setErrors({ general: getErrorMessage(error) });
+        setErrors({ general: getErrorKey(error) });
       } finally {
         setIsSubmitting(false);
       }
     },
-    [currentPassword, newPassword, confirmPassword]
+    [currentPassword, newPassword, confirmPassword, t]
   );
+
+  /** Resolves a field/general error key into a localized message. */
+  const errorText = (key?: string) =>
+    key ? t(`auth.changePassword.${key}`, { count: MIN_PASSWORD_LENGTH }) : '';
 
   if (isLoading) return null;
   if (!isAuthenticated) {
@@ -94,15 +99,15 @@ export function ChangePasswordPage() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <h1 className="auth-title">Change password</h1>
-          <p className="auth-subtitle">Update the password used to sign in to your account.</p>
+          <h1 className="auth-title">{t('auth.changePassword.title')}</h1>
+          <p className="auth-subtitle">{t('auth.changePassword.subtitle')}</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {errors.general && (
             <div className="auth-error-banner" role="alert" aria-live="polite">
               <span aria-hidden="true">!</span>
-              <span>{errors.general}</span>
+              <span>{errorText(errors.general)}</span>
             </div>
           )}
           {successMessage && (
@@ -113,7 +118,7 @@ export function ChangePasswordPage() {
 
           <div className="auth-field">
             <label htmlFor="currentPassword" className="auth-label">
-              Current password
+              {t('auth.changePassword.currentPassword')}
             </label>
             <input
               id="currentPassword"
@@ -127,13 +132,13 @@ export function ChangePasswordPage() {
               aria-invalid={errors.currentPassword ? 'true' : 'false'}
             />
             {errors.currentPassword && (
-              <span className="auth-field-error">{errors.currentPassword}</span>
+              <span className="auth-field-error">{errorText(errors.currentPassword)}</span>
             )}
           </div>
 
           <div className="auth-field">
             <label htmlFor="newPassword" className="auth-label">
-              New password
+              {t('auth.changePassword.newPassword')}
             </label>
             <input
               id="newPassword"
@@ -147,15 +152,17 @@ export function ChangePasswordPage() {
               aria-invalid={errors.newPassword ? 'true' : 'false'}
             />
             {errors.newPassword ? (
-              <span className="auth-field-error">{errors.newPassword}</span>
+              <span className="auth-field-error">{errorText(errors.newPassword)}</span>
             ) : (
-              <span className="auth-help">At least {MIN_PASSWORD_LENGTH} characters.</span>
+              <span className="auth-help">
+                {t('auth.changePassword.passwordHelp', { count: MIN_PASSWORD_LENGTH })}
+              </span>
             )}
           </div>
 
           <div className="auth-field">
             <label htmlFor="confirmPassword" className="auth-label">
-              Confirm new password
+              {t('auth.changePassword.confirmPassword')}
             </label>
             <input
               id="confirmPassword"
@@ -169,7 +176,7 @@ export function ChangePasswordPage() {
               aria-invalid={errors.confirmPassword ? 'true' : 'false'}
             />
             {errors.confirmPassword && (
-              <span className="auth-field-error">{errors.confirmPassword}</span>
+              <span className="auth-field-error">{errorText(errors.confirmPassword)}</span>
             )}
           </div>
 
@@ -177,10 +184,10 @@ export function ChangePasswordPage() {
             {isSubmitting ? (
               <>
                 <span className="auth-spinner" aria-hidden="true" />
-                <span>Updating…</span>
+                <span>{t('auth.changePassword.submitting')}</span>
               </>
             ) : (
-              'Update password'
+              t('auth.changePassword.submit')
             )}
           </button>
         </form>
