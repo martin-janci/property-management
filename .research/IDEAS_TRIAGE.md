@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-06-03 03:13 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-03 21:30 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -11,6 +11,7 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | #952 | 2026-06-03 | open |
 | 1 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) | #951 | 2026-06-03 | open |
 | 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | #950 | 2026-06-03 | open |
+| 1 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-06-03 | open |
 | 1 | Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure) | #920, #944 | 2026-06-02 | done |
 | 1 | Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings | #751, #942 | 2026-06-02 | done |
 | 1 | Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings | #752, #929 | 2026-06-02 | done |

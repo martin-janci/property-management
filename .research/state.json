@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-03T03:13:31Z",
-  "last_run_ms": 180000,
-  "last_pr_seen": 992,
-  "last_issue_seen": 986,
-  "last_commit_sha": "548b4fc3750a9595759b4b34a24c2ca3e3c43f4a",
+  "last_run_iso": "2026-06-03T21:30:00Z",
+  "last_run_ms": 5500,
+  "last_pr_seen": 1032,
+  "last_issue_seen": 1014,
+  "last_commit_sha": "a63f9ebcd66bb64450294c46ca5c81f23a916bec",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -183,9 +183,9 @@
       "recent_churn": 14
     },
     "frontend/apps/mobile/src/App.tsx": {
-      "runs_seen": 1,
+      "runs_seen": 2,
       "last_seen": "2026-06-03",
-      "recent_churn": 66
+      "recent_churn": 96
     }
   },
   "seen_signals": [
@@ -349,7 +349,9 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-finding-cross-cutting-schema-drift-1008",
+    "untriaged-issue-1014"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -364,7 +366,7 @@
   },
   "stats": {
     "runs": 20,
-    "vectors_created": 108,
+    "vectors_created": 110,
     "plans_created": 7,
     "quiet_days": 0,
     "auto_fix_count": 0

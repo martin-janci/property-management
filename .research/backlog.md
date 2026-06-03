@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-06-03 03:13 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-03 21:30 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -14,15 +14,21 @@ picks from here.
 | Score | Title | Vector | Source | Updated | Status |
 |-------|-------|--------|--------|---------|--------|
 | 6 | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | test-gap | PR #497, PR #507, PR #548 | 2026-05-26 | done |
+| 3 | Schema drift: runtime SQL errors from non-existent columns in voting/messaging/notification paths | bug | Issue #1008 | 2026-06-03 | open |
 | 3 | IDOR: ai.rs LLM-doc handlers publish/list/get any tenant's listing descriptions & photo enhancements unscoped | security | code-review api-core 2026-05-29, ai.rs:2620, ai.rs:2599, ai.rs:2847, PR #879 | 2026-06-01 | ready |
 | 3 | IDOR: reality-server realtors mark_inquiry_read flips any realtor's inquiry by ID with no owner scoping | security | issue #519, PR #508, realtors.rs:250, PR #548 | 2026-05-26 | done |
 | 3 | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | security | code-review api-core 2026-05-23, ai.rs:3002, PR #461 | 2026-05-25 | done |
 | 3 | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | security | issue #439, signatures.rs:628, integrations.rs:2743, PR #450 | 2026-05-25 | done |
 | 3 | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | security | code-review api-core 2026-05-25, ai.rs:1133, equipment.rs:144 | 2026-05-25 | done |
+| 2 | Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs | bug | PR #538, webhook.rs:1028, PR #841, PR #1030 | 2026-06-03 | done |
+| 2 | Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI | bug | code-review reality-web 2026-05-28, rotating-expert-review, PR #1023 | 2026-06-03 | done |
+| 2 | MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure | bug | PR #555, code-review 2026-05-27, PR #1029 | 2026-06-03 | done |
+| 2 | DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id) | dx | PR #623, PR #1031 | 2026-06-03 | done |
+| 2 | Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape | bug | code-review mobile-rn 2026-05-27, rotating-expert-review, PR #1028 | 2026-06-03 | done |
 | 2 | Mobile document-detail wiring (PR #992) shipped without a regression test for the deep-link payload path | test-gap | PR #992 | 2026-06-03 | open |
 | 2 | Frontend gap-sweep (PR #990, 34 files across Epics 1/6/7B/9/10B/11/15/17/18) shipped without a regression test | test-gap | PR #990 | 2026-06-03 | open |
 | 2 | Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1 | test-gap | PR #959, issue #953 | 2026-06-03 | open |
-| 2 | API + SPA security-headers middleware (PR #963) shipped without an assertion test for HSTS/nosniff/CSP | test-gap | PR #963, issue #954 | 2026-06-03 | open |
+| 2 | API + SPA security-headers middleware (PR #963) shipped without an assertion test for HSTS/nosniff/CSP | test-gap | PR #963, issue #954, PR #1021 | 2026-06-03 | done |
 | 2 | Risky churn: mobile App.tsx deep-link/doc-detail wiring changing across back-to-back PRs without coverage | bug | PR #992, PR #962 | 2026-06-03 | open |
 | 2 | Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test | bug | PR #963 | 2026-06-03 | open |
 | 2 | Mobile RN dev-review tail (#943) shipped without test coverage | test-gap | PR #943, issue #767 | 2026-06-02 | open |
@@ -34,15 +40,10 @@ picks from here.
 | 2 | Reality-server SSO consumer review fix (PR #921, closes #820) shipped without a regression test | test-gap | PR #921 | 2026-06-01 | open |
 | 2 | CI branch-protection + auto-rebase workflow change (PR #923) shipped without an integration test | test-gap | PR #923 | 2026-06-01 | open |
 | 2 | ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column) | bug | PR #611, issue #616, PR #643, PR #815 | 2026-05-30 | done |
-| 2 | Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs | bug | PR #538, webhook.rs:1028, PR #841 | 2026-05-30 | open |
 | 2 | Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update | test-gap | PR #839 | 2026-05-30 | open |
-| 2 | Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI | bug | code-review reality-web 2026-05-28, rotating-expert-review | 2026-05-28 | open |
 | 2 | Reduce App.tsx route-aggregator coupling (top churn hotspot, merge-conflict risk) | refactor | PR #474, PR #475, PR #489, PR #511, PR #547, PR #549, PR #555 | 2026-05-27 | open |
 | 2 | Screen-map drift: report execution-history route (PR #547) added without a ppt screen doc | test-gap | PR #547, frontend/apps/ppt-web/src/routes/lazyRoutes.tsx, PR #623 | 2026-05-27 | done |
-| 2 | MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure | bug | PR #555, code-review 2026-05-27 | 2026-05-27 | open |
 | 2 | Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test | test-gap | PR #607, issue #572 | 2026-05-27 | open |
-| 2 | DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id) | dx | PR #623 | 2026-05-27 | open |
-| 2 | Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape | bug | code-review mobile-rn 2026-05-27, rotating-expert-review | 2026-05-27 | open |
 | 2 | ppt-web status/auth components hardcode English in an otherwise i18n'd app | refactor | code-review ppt-web-ui 2026-05-24, rotating-expert-review, PR #549 | 2026-05-26 | open |
 | 2 | announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work) | refactor | git log origin/dev since 2026-05-24, PR #504, PR #505, PR #548 | 2026-05-26 | open |
 | 2 | Dispute state machine (PR #506) shipped with no tests + no org predicate on update_status | test-gap | PR #506, issue #520, PR #514, PR #548 | 2026-05-26 | done |
@@ -60,12 +61,14 @@ picks from here.
 | 2 | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | refactor | code-review api-handlers 2026-05-23, PR #437 | 2026-05-24 | done |
 | 2 | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | security | issue #160, PR #420, PR #421 | 2026-05-23 | done |
 | 2 | Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation | dx | PR #282, PR #328, commit c97781a, commit 254f01d | 2026-05-23 | open |
+| 1 | PR #908 (fix(security): require PKCE on OAuth authorization-code flow, closes #823) was closed unmerged — verify whether PKCE enforcement still pending | security | PR #908, PR #1025 | 2026-06-03 | done |
 | 1 | api-server main.rs touched twice this run (gap-sweep + security headers) — minor churn marker | refactor | PR #989, PR #963 | 2026-06-03 | open |
 | 1 | docker/nginx admin-web + ppt-web templates churned twice this run (security headers + redirects) | dx | PR #963, PR #964 | 2026-06-03 | open |
 | 1 | frontend/apps/mobile/src/App.tsx churned twice this run (universal links + doc-detail wiring) | refactor | PR #962, PR #992 | 2026-06-03 | open |
 | 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | triage | #952 | 2026-06-03 | open |
 | 1 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) | triage | #951 | 2026-06-03 | open |
 | 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | triage | #950 | 2026-06-03 | open |
+| 1 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | triage | #1014 | 2026-06-03 | open |
 | 1 | Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure) | triage | #920, #944 | 2026-06-02 | done |
 | 1 | Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings | triage | #751, #942 | 2026-06-02 | done |
 | 1 | Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings | triage | #752, #929 | 2026-06-02 | done |
@@ -103,7 +106,6 @@ picks from here.
 | 1 | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev) | triage | #851, PR #904 | 2026-06-01 | done |
 | 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500) | triage | #859, PR #871 | 2026-06-01 | done |
 | 1 | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently | triage | #867, PR #870 | 2026-06-01 | done |
-| 1 | PR #908 (fix(security): require PKCE on OAuth authorization-code flow, closes #823) was closed unmerged — verify whether PKCE enforcement still pending | security | PR #908 | 2026-06-01 | open |
 | 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | triage | #836, PR #866 | 2026-05-31 | done |
 | 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | triage | #845, PR #862 | 2026-05-31 | done |
 | 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | triage | #849, PR #869 | 2026-05-31 | done |
