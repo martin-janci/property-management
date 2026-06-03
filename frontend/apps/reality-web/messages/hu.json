@@ -3,6 +3,7 @@
     "allListings": "Összes hirdetés",
     "branding": "Arculat",
     "dashboard": "Ügynökség irányítópult",
+    "inviteError": "Hiba a meghívó küldésekor. Kérjük, próbálja újra.",
     "inviteRealtor": "Ügynök meghívása",
     "manageRealtors": "Ügynökök kezelése",
     "performanceOverview": "Teljesítmény áttekintés",
@@ -12,8 +13,7 @@
     "period90d": "90 nap",
     "quickActions": "Gyors műveletek",
     "topRealtors": "Legjobb ügynökök",
-    "viewAll": "Összes megtekintése",
-    "inviteError": "Hiba a meghívó küldésekor. Kérjük, próbálja újra."
+    "viewAll": "Összes megtekintése"
   },
   "auth": {
     "login": {
@@ -30,7 +30,7 @@
       "passwordRequired": "A jelszó kötelező",
       "submit": "Bejelentkezés",
       "submitting": "Bejelentkezés…",
-      "subtitle": "Üdvözlünk újra a Reality Portálon.",
+      "subtitle": "Üdvözöljük újra a Reality Portálon.",
       "title": "Bejelentkezés"
     }
   },
@@ -55,7 +55,7 @@
     "email": "E-mail",
     "failedToSend": "Nem sikerült elküldeni az üzenetet. Kérjük, próbálja újra.",
     "iWantTo": "Szeretnék",
-    "inquirySent": "Érdeklődését elküdtük. Hamarosan felveszik Önnel a kapcsolatot.",
+    "inquirySent": "Érdeklődését elküldtük. Hamarosan felveszik Önnel a kapcsolatot.",
     "message": "Üzenet",
     "messageSent": "Üzenet elküldve!",
     "name": "Az Ön neve",
@@ -123,7 +123,7 @@
     "company": "Cég",
     "contact": "Kapcsolat",
     "copyright": "© {year} Reality Portal. Minden jog fenntartva.",
-    "description": "Találja meg tökéletes ingatlanját Szlovákiában, Csehországban és azon túl.",
+    "description": "Találja meg tökéletes ingatlanát Szlovákiában, Csehországban és azon túl.",
     "help": "Súgó",
     "houses": "Házak",
     "land": "Telkek",
@@ -151,12 +151,12 @@
     "featuredForSale": "Kiemelt eladó ingatlanok",
     "featuredListings": "Kiemelt hirdetések",
     "heroSubtitle": "Keressen több ezer hirdetés között Szlovákiában, Csehországban és azon túl.",
-    "heroTitle": "Találja meg tökéletes ingatlanját",
+    "heroTitle": "Találja meg tökéletes ingatlanát",
     "listingsCount": "{count} hirdetés",
     "newListings": "Új hirdetések",
     "searchPlaceholder": "Adja meg a várost, címet vagy kulcsszót...",
     "subtitle": "Keressen több ezer hirdetés között",
-    "title": "Találja meg tökéletes ingatlanját",
+    "title": "Találja meg tökéletes ingatlanát",
     "viewAll": "Összes megtekintése",
     "viewAllProperties": "Összes ingatlan megtekintése",
     "emptyTitle": "Jelenleg nincsenek kiemelt hirdetéseink",
@@ -175,16 +175,30 @@
       "karlovaves": "Karlova Ves",
       "dubravka": "Dúbravka"
     },
-    "city": { "bratislava": "Bratislava" },
+    "city": {
+      "bratislava": "Bratislava"
+    },
     "value": {
-      "agents": { "label": "Igazolt ügynökök", "desc": "Személyazonosság ellenőrzött, 30 napos válasz SLA" },
-      "passport": { "label": "Épület-passport", "desc": "Energia · alap egyenleg · hibák közzétéve" },
-      "history": { "label": "Árváltozások", "desc": "Minden változás dátummal a hirdetésen" },
-      "mortgage": { "label": "Előminősített hitel", "desc": "Az alkalmazásban, partnerbankokkal" }
+      "agents": {
+        "label": "Igazolt ügynökök",
+        "desc": "Személyazonosság ellenőrzött, 30 napos válasz SLA"
+      },
+      "passport": {
+        "label": "Épület-passport",
+        "desc": "Energia · alap egyenleg · hibák közzétéve"
+      },
+      "history": {
+        "label": "Árváltozások",
+        "desc": "Minden változás dátummal a hirdetésen"
+      },
+      "mortgage": {
+        "label": "Előminősített hitel",
+        "desc": "Az alkalmazásban, partnerbankokkal"
+      }
     },
     "cta": {
-      "title": "Eladja az ingatlanját?",
-      "body": "Hirdesse meg 5 perc alatt, kapjon ingyenes épület-passportot és érje el 210 000 ellenőrzött vevőt hetente.",
+      "title": "Eladja az ingatlanát?",
+      "body": "Hirdesse meg 5 perc alatt, kapjon ingyenes épület-passportot, és érje el 210 000 ellenőrzött vevőt hetente.",
       "learnMore": "Tudjon meg többet",
       "startListing": "Ingatlan feladása"
     }
@@ -216,7 +230,7 @@
     "location": "Helyszín",
     "monthlyCharges": "Havi költségek",
     "notFound": "Hirdetés nem található",
-    "notFoundDesc": "A keresett hirdetés nem létezik vagy eltávolítódták.",
+    "notFoundDesc": "A keresett hirdetés nem létezik vagy eltávolították.",
     "perMonth": "/hó",
     "price": "Ár",
     "rooms": "Szobák",
@@ -242,7 +256,7 @@
     "sortOldest": "Legrégebbi",
     "sortPriceHigh": "Ár: legdrágábbtól",
     "sortPriceLow": "Ár: legolcsóbbtól",
-    "sortSizeLarge": "Méret: legnagyobb tól",
+    "sortSizeLarge": "Méret: legnagyobbtól",
     "sortSizeSmall": "Méret: legkisebbtől",
     "tabAll": "Összes",
     "tabForRent": "Kiadó",
@@ -260,43 +274,345 @@
     "sell": "Eladás"
   },
   "pages": {
-    "about": { "description": "A Reality Portal a vezető ingatlan-hirdetési platform Szlovákiában, Csehországban és azon túl.", "title": "A Reality Portalról" },
-    "contact": { "description": "Támogatással vagy üzleti kérdésekkel forduljon hozzánk a következő címen:", "email": "info@rlt.sk", "title": "Kapcsolatfelvétel" },
-    "privacy": { "description": "Elkötelezettünk vagyunk személyes adatainak védelme mellett a GDPR és az alkalmazandó jogszabályok szerint. A teljes adatvédelmi nyilatkozat hamarosan itt kerül közzétételére.", "title": "Adatvédelmi irányelvek" },
-    "terms": { "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek.", "title": "Felhasználási feltételek" },
-    "agentProfile": { "activeListings": "Aktív hirdetések", "contact": "Kapcsolat", "languages": "Nyelvek", "reviews": "Értékelések", "specializations": "Szakterületek", "verified": "Igazolt ügynök" },
-    "careers": { "hero": { "cta": "Nyitott pozíciók", "subtitle": "Csatlakozz a csapatunkhoz és segíts megváltoztatni az ingatlanvásárlás, -eladás és -bérlés módját.", "title": "Építsünk együtt értelmes ingatlanpiacot." }, "title": "Karrier", "h1": "Let's build a real estate market that makes sense." },
-    "cookies": { "reopen": "Cookie beállítások újranyitása", "title": "Sütik kezelése", "subtitle": "Cookie policy", "lastUpdated": "Last updated: 1 January 2025" },
-    "forAgents": { "features": "Amit kapsz", "pricing": "Csomagok", "subtitle": "Adj el többet a Reality Portállal", "title": "Ügynököknek és irodáknak", "heroTitle": "Sell more with Reality Portal", "heroBadge": "For agents & agencies", "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place." },
-    "help": { "categories": "Kategóriák", "faq": "Gyakori kérdések", "searchPlaceholder": "Keress a súgóban...", "title": "Súgóközpont", "subtitle": "How can we help?", "intro": "Search our help centre or contact us directly." },
-    "journal": { "editorsPicks": "Szerkesztői ajánlás", "featured": "Kiemelt cikk", "latest": "Legújabb cikkek", "mostRead": "Legolvasottabb", "newsletter": "Hírlevél", "subtitle": "Elemzések, tippek és hírek az ingatlanvilágból.", "title": "Reality magazin", "readingTime": "{min} min read", "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.", "newsletterSuccess": "✅ You're subscribed!", "newsletterEmailPlaceholder": "you@email.com", "newsletterSubmit": "Subscribe", "newsletterTitle": "Newsletter signup" },
-    "listingEdit": { "save": "Mentés", "success": "Hirdetés mentve!", "title": "Hirdetés szerkesztése" },
-    "priceMap": { "clickHint": "Kattints egy kerületre a részletes statisztikákért.", "subtitle": "Pozsöny – áttekintés", "title": "Ártérkép", "h1": "Price map" },
-    "profile": { "tabs": { "activity": "Aktivitás", "listings": "Hirdetéseim", "reviews": "Értékelések", "settings": "Beállítások" }, "title": "Profilom" },
-    "report": { "submit": "Bejelentés elküldése", "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.", "success": "Bejelentés elküldve", "title": "Report a listing", "h1": "Report a listing" },
-    "security": { "reportCta": "Hirdetés bejelentése", "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.", "title": "Security", "h1": "Your security is our priority", "scenariosHeading": "Common fraud scenarios" },
-    "sell": {
-      "steps": { "type": { "title": "Type & location", "description": "Choose a property type and enter the address" }, "details": { "title": "Details", "description": "Area, rooms, floor, year built" }, "photos": { "title": "Photos", "description": "Add high-quality photos" }, "price": { "title": "Price", "description": "Set the asking price" }, "contact": { "title": "Contact & summary", "description": "Verify details and publish" } },
-      "submit": "Hirdetés közzététele", "title": "Add listing", "stepLabel": "Step {step} of {total}: {stepTitle}", "asideTitle": "Steps", "back": "← Back", "next": "Next →", "publish": "Publish listing", "submittedTitle": "Your listing has been submitted!", "submittedBody": "After review it will be published within 2 hours.", "submittedCta": "Add another listing",
-      "fields": { "transactionType": "Transaction type", "propertyType": "Property type", "address": "Address", "addressPlaceholder": "Street and number", "city": "City / Town", "cityPlaceholder": "e.g. Bratislava", "area": "Area (m²)", "areaPlaceholder": "e.g. 65", "rooms": "Number of rooms", "roomsPlaceholder": "e.g. 3", "floor": "Floor", "floorPlaceholder": "e.g. 2", "totalFloors": "Total floors", "totalFloorsPlaceholder": "e.g. 7", "yearBuilt": "Year built", "yearBuiltPlaceholder": "e.g. 1995", "description": "Property description", "descriptionPlaceholder": "Describe the property, its features and amenities…", "price": "Asking price (€)", "priceSalePlaceholder": "e.g. 250000", "priceRentPlaceholder": "Monthly rent, e.g. 800", "priceNegotiable": "Price is negotiable", "contactName": "Name", "contactNamePlaceholder": "Your full name", "contactPhone": "Phone", "contactPhonePlaceholder": "+421 9XX XXX XXX", "contactEmail": "E-mail", "contactEmailPlaceholder": "you@email.com" },
-      "transactionOptions": { "sale": "Sale", "rent": "Rent" },
-      "propertyOptions": { "apartment": "Apartment", "house": "House", "land": "Land", "commercial": "Commercial" },
-      "photos": { "intro": "Upload photos (5 minimum, 30 maximum recommended).", "cta": "Click or drag photos here", "formats": "JPG, PNG, WEBP · up to 10 MB each", "selected_one": "✓ {count} photo selected", "selected_other": "✓ {count} photos selected" },
-      "summary": { "type": "Type", "location": "Location", "area": "Area", "rooms": "Rooms", "price": "Price", "photos": "Photos", "negotiable": "(negotiable)" },
-      "terms": { "label": "I agree to the {termsLink} and the {privacyLink}.", "termsLink": "terms of use", "privacyLink": "privacy policy" },
-      "validation": { "required": "Required", "addressRequired": "Address is required", "cityRequired": "City is required", "areaRequired": "Area is required", "areaPositive": "Area must be greater than 0", "roomsRequired": "Number of rooms is required", "priceRequired": "Price is required", "pricePositive": "Price must be greater than 0", "nameRequired": "Name is required", "phoneRequired": "Phone is required", "phoneFormat": "Please enter a valid phone number", "emailRequired": "E-mail is required", "emailFormat": "Please enter a valid e-mail address", "termsRequired": "You must agree to the terms of use to publish", "roomsPositive": "Number of rooms must be greater than 0" }
+    "about": {
+      "description": "A Reality Portal a vezető ingatlan-hirdetési platform Szlovákiában, Csehországban és azon túl.",
+      "title": "A Reality Portalról"
     },
-    "listings": { "title": "Összes ingatlan", "description": "Böngésszen az összes ingatlanhirdetés között Szlovákiában, Csehországban és azon túl." },
-    "favorites": { "title": "Kedvenceim", "description": "Az Ön által mentett ingatlanok." },
-    "login": { "title": "Sign in", "description": "Sign in to your Reality Portal account." },
-    "register": { "title": "Create your account", "description": "Save listings, set alerts and contact agents.", "termsLabel": "I agree to the {termsLink} and the {privacyLink}.", "termsRequired": "You must accept the Terms of Service and Privacy Policy to register.", "termsLinkText": "Terms of Service", "privacyLinkText": "Privacy Policy", "checkInbox": "Check your inbox", "checkInboxBody": "We sent a verification email to {email}. Click the link to activate your account.", "backToSignIn": "Back to sign in", "creating": "Creating account…", "submit": "Create account", "displayNameRequired": "Display name is required", "emailRequired": "Email is required", "emailInvalid": "Enter a valid email address", "passwordRequired": "Password is required", "passwordTooShort": "Password must be at least {min} characters", "passwordsMismatch": "Passwords do not match", "emailTaken": "An account with this email already exists.", "genericError": "Registration failed. Please try again.", "displayNameLabel": "Display name", "emailLabel": "Email", "passwordLabel": "Password", "confirmPasswordLabel": "Confirm password", "passwordHint": "At least {min} characters.", "haveAccount": "Already have an account?", "signInLink": "Sign in" },
-    "forgotPassword": { "title": "Reset your password", "description": "Enter your email and we'll send you a reset link.", "emailLabel": "Email", "emailRequired": "Email is required", "emailInvalid": "Enter a valid email address", "submit": "Send reset link", "submitting": "Sending…", "checkInbox": "Check your inbox", "checkInboxBody": "If an account exists for {email}, we've sent instructions to reset your password.", "backToSignIn": "Back to sign in", "remembered": "Remembered your password?", "signIn": "Sign in", "networkError": "Network error. Please check your connection and try again.", "serverError": "Server error. Please try again later.", "genericError": "Could not send reset email. Please try again." },
-    "resetPassword": { "title": "Set a new password", "description": "Choose a strong password you haven't used before.", "invalidTitle": "Invalid link", "invalidBody": "This reset link is invalid or has expired. Request a new one.", "successTitle": "Password updated", "successBody": "You can now sign in with your new password.", "passwordLabel": "New password", "confirmLabel": "Confirm password", "passwordHint": "At least 8 characters.", "passwordRequired": "Password is required", "passwordTooShort": "Password must be at least 8 characters", "passwordsMismatch": "Passwords do not match", "submit": "Update password", "submitting": "Saving…", "requestNew": "Request a new reset link", "goToSignIn": "Go to sign in", "genericError": "Could not reset password. Please try again." }
+    "contact": {
+      "description": "Támogatással vagy üzleti kérdésekkel forduljon hozzánk a következő címen:",
+      "email": "info@rlt.sk",
+      "title": "Kapcsolatfelvétel"
+    },
+    "privacy": {
+      "description": "Elkötelezettünk vagyunk személyes adatainak védelme mellett a GDPR és az alkalmazandó jogszabályok szerint. A teljes adatvédelmi nyilatkozat hamarosan itt kerül közzétételre.",
+      "title": "Adatvédelmi irányelvek"
+    },
+    "terms": {
+      "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek.",
+      "title": "Felhasználási feltételek"
+    },
+    "agentProfile": {
+      "activeListings": "Aktív hirdetések",
+      "contact": "Kapcsolat",
+      "languages": "Nyelvek",
+      "reviews": "Értékelések",
+      "specializations": "Szakterületek",
+      "verified": "Igazolt ügynök"
+    },
+    "careers": {
+      "hero": {
+        "cta": "Nyitott pozíciók",
+        "subtitle": "Csatlakozz a csapatunkhoz és segíts megváltoztatni az ingatlanvásárlás, -eladás és -bérlés módját.",
+        "title": "Építsünk együtt értelmes ingatlanpiacot."
+      },
+      "title": "Karrier",
+      "h1": "Let's build a real estate market that makes sense."
+    },
+    "cookies": {
+      "reopen": "Cookie beállítások újranyitása",
+      "title": "Sütik kezelése",
+      "subtitle": "Cookie policy",
+      "lastUpdated": "Last updated: 1 January 2025"
+    },
+    "forAgents": {
+      "features": "Amit kapsz",
+      "pricing": "Csomagok",
+      "subtitle": "Adj el többet a Reality Portállal",
+      "title": "Ügynököknek és irodáknak",
+      "heroTitle": "Sell more with Reality Portal",
+      "heroBadge": "For agents & agencies",
+      "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
+    },
+    "help": {
+      "categories": "Kategóriák",
+      "faq": "Gyakori kérdések",
+      "searchPlaceholder": "Keress a súgóban...",
+      "title": "Súgóközpont",
+      "subtitle": "How can we help?",
+      "intro": "Search our help centre or contact us directly."
+    },
+    "journal": {
+      "editorsPicks": "Szerkesztői ajánlás",
+      "featured": "Kiemelt cikk",
+      "latest": "Legújabb cikkek",
+      "mostRead": "Legolvasottabb",
+      "newsletter": "Hírlevél",
+      "subtitle": "Elemzések, tippek és hírek az ingatlanvilágból.",
+      "title": "Reality magazin",
+      "readingTime": "{min} min read",
+      "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
+      "newsletterSuccess": "✅ You're subscribed!",
+      "newsletterEmailPlaceholder": "you@email.com",
+      "newsletterSubmit": "Subscribe",
+      "newsletterTitle": "Newsletter signup"
+    },
+    "listingEdit": {
+      "save": "Mentés",
+      "success": "Hirdetés mentve!",
+      "title": "Hirdetés szerkesztése"
+    },
+    "priceMap": {
+      "clickHint": "Kattints egy kerületre a részletes statisztikákért.",
+      "subtitle": "Pozsony – áttekintés",
+      "title": "Ártérkép",
+      "h1": "Price map"
+    },
+    "profile": {
+      "tabs": {
+        "activity": "Aktivitás",
+        "listings": "Hirdetéseim",
+        "reviews": "Értékelések",
+        "settings": "Beállítások"
+      },
+      "title": "Profilom"
+    },
+    "report": {
+      "submit": "Bejelentés elküldése",
+      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
+      "success": "Bejelentés elküldve",
+      "title": "Report a listing",
+      "h1": "Report a listing"
+    },
+    "security": {
+      "reportCta": "Hirdetés bejelentése",
+      "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.",
+      "title": "Security",
+      "h1": "Your security is our priority",
+      "scenariosHeading": "Common fraud scenarios"
+    },
+    "sell": {
+      "steps": {
+        "type": {
+          "title": "Type & location",
+          "description": "Choose a property type and enter the address"
+        },
+        "details": {
+          "title": "Details",
+          "description": "Area, rooms, floor, year built"
+        },
+        "photos": {
+          "title": "Photos",
+          "description": "Add high-quality photos"
+        },
+        "price": {
+          "title": "Price",
+          "description": "Set the asking price"
+        },
+        "contact": {
+          "title": "Contact & summary",
+          "description": "Verify details and publish"
+        }
+      },
+      "submit": "Hirdetés közzététele",
+      "title": "Add listing",
+      "stepLabel": "Step {step} of {total}: {stepTitle}",
+      "asideTitle": "Steps",
+      "back": "← Back",
+      "next": "Next →",
+      "publish": "Publish listing",
+      "submittedTitle": "Your listing has been submitted!",
+      "submittedBody": "After review it will be published within 2 hours.",
+      "submittedCta": "Add another listing",
+      "fields": {
+        "transactionType": "Transaction type",
+        "propertyType": "Property type",
+        "address": "Address",
+        "addressPlaceholder": "Street and number",
+        "city": "City / Town",
+        "cityPlaceholder": "e.g. Bratislava",
+        "area": "Area (m²)",
+        "areaPlaceholder": "e.g. 65",
+        "rooms": "Number of rooms",
+        "roomsPlaceholder": "e.g. 3",
+        "floor": "Floor",
+        "floorPlaceholder": "e.g. 2",
+        "totalFloors": "Total floors",
+        "totalFloorsPlaceholder": "e.g. 7",
+        "yearBuilt": "Year built",
+        "yearBuiltPlaceholder": "e.g. 1995",
+        "description": "Property description",
+        "descriptionPlaceholder": "Describe the property, its features and amenities…",
+        "price": "Asking price (€)",
+        "priceSalePlaceholder": "e.g. 250000",
+        "priceRentPlaceholder": "Monthly rent, e.g. 800",
+        "priceNegotiable": "Price is negotiable",
+        "contactName": "Name",
+        "contactNamePlaceholder": "Your full name",
+        "contactPhone": "Phone",
+        "contactPhonePlaceholder": "+421 9XX XXX XXX",
+        "contactEmail": "E-mail",
+        "contactEmailPlaceholder": "you@email.com"
+      },
+      "transactionOptions": {
+        "sale": "Sale",
+        "rent": "Rent"
+      },
+      "propertyOptions": {
+        "apartment": "Apartment",
+        "house": "House",
+        "land": "Land",
+        "commercial": "Commercial"
+      },
+      "photos": {
+        "intro": "Upload photos (5 minimum, 30 maximum recommended).",
+        "cta": "Click or drag photos here",
+        "formats": "JPG, PNG, WEBP · up to 10 MB each",
+        "selected_one": "✓ {count} photo selected",
+        "selected_other": "✓ {count} photos selected"
+      },
+      "summary": {
+        "type": "Type",
+        "location": "Location",
+        "area": "Area",
+        "rooms": "Rooms",
+        "price": "Price",
+        "photos": "Photos",
+        "negotiable": "(negotiable)"
+      },
+      "terms": {
+        "label": "I agree to the {termsLink} and the {privacyLink}.",
+        "termsLink": "terms of use",
+        "privacyLink": "privacy policy"
+      },
+      "validation": {
+        "required": "Required",
+        "addressRequired": "Address is required",
+        "cityRequired": "City is required",
+        "areaRequired": "Area is required",
+        "areaPositive": "Area must be greater than 0",
+        "roomsRequired": "Number of rooms is required",
+        "priceRequired": "Price is required",
+        "pricePositive": "Price must be greater than 0",
+        "nameRequired": "Name is required",
+        "phoneRequired": "Phone is required",
+        "phoneFormat": "Please enter a valid phone number",
+        "emailRequired": "E-mail is required",
+        "emailFormat": "Please enter a valid e-mail address",
+        "termsRequired": "You must agree to the terms of use to publish",
+        "roomsPositive": "Number of rooms must be greater than 0"
+      }
+    },
+    "listings": {
+      "title": "Összes ingatlan",
+      "description": "Böngésszen az összes ingatlanhirdetés között Szlovákiában, Csehországban és azon túl."
+    },
+    "favorites": {
+      "title": "Kedvenceim",
+      "description": "Az Ön által mentett ingatlanok."
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Sign in to your Reality Portal account."
+    },
+    "register": {
+      "title": "Create your account",
+      "description": "Save listings, set alerts and contact agents.",
+      "termsLabel": "I agree to the {termsLink} and the {privacyLink}.",
+      "termsRequired": "You must accept the Terms of Service and Privacy Policy to register.",
+      "termsLinkText": "Terms of Service",
+      "privacyLinkText": "Privacy Policy",
+      "checkInbox": "Check your inbox",
+      "checkInboxBody": "We sent a verification email to {email}. Click the link to activate your account.",
+      "backToSignIn": "Back to sign in",
+      "creating": "Creating account…",
+      "submit": "Create account",
+      "displayNameRequired": "Display name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least {min} characters",
+      "passwordsMismatch": "Passwords do not match",
+      "emailTaken": "An account with this email already exists.",
+      "genericError": "Registration failed. Please try again.",
+      "displayNameLabel": "Display name",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "confirmPasswordLabel": "Confirm password",
+      "passwordHint": "At least {min} characters.",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "description": "Enter your email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email address",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "checkInbox": "Check your inbox",
+      "checkInboxBody": "If an account exists for {email}, we've sent instructions to reset your password.",
+      "backToSignIn": "Back to sign in",
+      "remembered": "Remembered your password?",
+      "signIn": "Sign in",
+      "networkError": "Network error. Please check your connection and try again.",
+      "serverError": "Server error. Please try again later.",
+      "genericError": "Could not send reset email. Please try again."
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "description": "Choose a strong password you haven't used before.",
+      "invalidTitle": "Invalid link",
+      "invalidBody": "This reset link is invalid or has expired. Request a new one.",
+      "successTitle": "Password updated",
+      "successBody": "You can now sign in with your new password.",
+      "passwordLabel": "New password",
+      "confirmLabel": "Confirm password",
+      "passwordHint": "At least 8 characters.",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "passwordsMismatch": "Passwords do not match",
+      "submit": "Update password",
+      "submitting": "Saving…",
+      "requestNew": "Request a new reset link",
+      "goToSignIn": "Go to sign in",
+      "genericError": "Could not reset password. Please try again."
+    }
   },
   "search": {
-    "apartment": "Lakás", "applyFilters": "Szűrők alkalmazása", "area_range": "Területtartomány", "button": "Keresés", "buy": "Vásárlás", "clearFilters": "Szűrők törlése", "commercial": "Üzleti", "filters": "Szűrők", "house": "Ház", "land": "Telek", "listingsCount": "{count} hirdetés", "maxArea": "Max. terület", "maxPrice": "Max. ár", "minArea": "Min. terület", "minPrice": "Min. ár", "noResults": "Nem található hirdetés", "noResultsTip": "Próbálja módosítani a keresést vagy a szűrőket", "placeholder": "Keresés város, cím vagy kulcsszó alapján...", "popular": "Népszerű:", "price_range": "Ártartomány", "property_type": "Ingatlan típusa", "recentSearches": "Legútóbbi keresések", "rent": "Kiadó", "resultsCount": "{count} hirdetés található", "sale": "Eladó", "searching": "Keresés folyamatban...", "transaction_type": "Tranzakció típusa"
+    "apartment": "Lakás",
+    "applyFilters": "Szűrők alkalmazása",
+    "area_range": "Területtartomány",
+    "button": "Keresés",
+    "buy": "Vásárlás",
+    "clearFilters": "Szűrők törlése",
+    "commercial": "Üzleti",
+    "filters": "Szűrők",
+    "house": "Ház",
+    "land": "Telek",
+    "listingsCount": "{count} hirdetés",
+    "maxArea": "Max. terület",
+    "maxPrice": "Max. ár",
+    "minArea": "Min. terület",
+    "minPrice": "Min. ár",
+    "noResults": "Nem található hirdetés",
+    "noResultsTip": "Próbálja módosítani a keresést vagy a szűrőket",
+    "placeholder": "Keresés város, cím vagy kulcsszó alapján...",
+    "popular": "Népszerű:",
+    "price_range": "Ártartomány",
+    "property_type": "Ingatlan típusa",
+    "recentSearches": "Legutóbbi keresések",
+    "rent": "Kiadó",
+    "resultsCount": "{count} hirdetés található",
+    "sale": "Eladó",
+    "searching": "Keresés folyamatban...",
+    "transaction_type": "Tranzakció típusa"
   },
-  "error": { "title": "Valami elromlott", "description": "Váratlan hiba történt. Próbálja meg újra egy pillanat múlva.", "retry": "Újra" },
-  "notFound": { "title": "Az oldal nem található", "description": "A keresett oldal nem létezik, vagy átkerült máshová.", "home": "Vissza a főoldalra" },
-  "cookieBanner": { "title": "We use cookies", "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it — we won't set them unless you accept.", "accept": "Accept all", "reject": "Reject optional", "manage": "Cookie settings" }
+  "error": {
+    "title": "Valami elromlott",
+    "description": "Váratlan hiba történt. Próbálja meg újra egy pillanat múlva.",
+    "retry": "Újra"
+  },
+  "notFound": {
+    "title": "Az oldal nem található",
+    "description": "A keresett oldal nem létezik, vagy átkerült máshová.",
+    "home": "Vissza a főoldalra"
+  },
+  "cookieBanner": {
+    "title": "We use cookies",
+    "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it — we won't set them unless you accept.",
+    "accept": "Accept all",
+    "reject": "Reject optional",
+    "manage": "Cookie settings"
+  }
 }
