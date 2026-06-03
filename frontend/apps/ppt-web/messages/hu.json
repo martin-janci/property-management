@@ -260,6 +260,12 @@
       "noTimelineEvents": "Még nincsenek idősor-események.",
       "mustBeParty": "A megbeszélésben való részvételhez félnek vagy kezelőnek kell lennie.",
       "noLongerActive": "Ez a vita már nem aktív.",
+      "loadError": {
+        "title": "A vita betöltése sikertelen",
+        "message": "Nem sikerült betölteni ezt a közvetítési ügyet. Kérjük, próbálja újra.",
+        "retry": "Próbálja újra",
+        "retrying": "Újrapróbálkozás…"
+      },
       "recordResolution": "Megoldás rögzítése",
       "onlyManagersCanResolve": "Megoldást csak kezelők és mediátorok rögzíthetnek.",
       "escalateTitle": "Vita eszkalálása",

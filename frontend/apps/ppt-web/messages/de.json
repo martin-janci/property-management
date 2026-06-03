@@ -260,6 +260,12 @@
       "noTimelineEvents": "Noch keine Ereignisse.",
       "mustBeParty": "Sie müssen Partei oder Verwalter sein, um an dieser Diskussion teilnehmen zu können.",
       "noLongerActive": "Diese Streitigkeit ist nicht mehr aktiv.",
+      "loadError": {
+        "title": "Streitfall konnte nicht geladen werden",
+        "message": "Dieser Mediationsfall konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+        "retry": "Erneut versuchen",
+        "retrying": "Wird wiederholt…"
+      },
       "recordResolution": "Lösung aufzeichnen",
       "onlyManagersCanResolve": "Nur Verwalter und Mediatoren können eine Lösung aufzeichnen.",
       "escalateTitle": "Streitigkeit eskalieren",
