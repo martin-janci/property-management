@@ -529,7 +529,8 @@ pub async fn sync_airbnb(
         .await
         {
             super::token_rotation::TokenRotationOutcome::Ok(listings) => {
-                // Resolve the connection_id for last-sync update.
+                // We need the connection_id for the last_sync update below.
+                // Re-fetch the (now-updated) connection briefly.
                 let conn_id = state
                     .rental_repo
                     .find_airbnb_connection_by_org(org_id)
