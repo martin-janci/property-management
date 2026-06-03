@@ -1213,6 +1213,9 @@ mod tests {
         assert_eq!(normalize_thread_search(Some("alice")), Some("alice"));
         assert_eq!(normalize_thread_search(Some("  alice  ")), Some("alice"));
         // Interior whitespace is preserved; only the edges are trimmed.
-        assert_eq!(normalize_thread_search(Some("  van der  ")), Some("van der"));
+        assert_eq!(
+            normalize_thread_search(Some("  van der  ")),
+            Some("van der")
+        );
     }
 }
