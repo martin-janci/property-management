@@ -243,6 +243,7 @@
   },
   "faults": {
     "title": "Zgłoszenia usterek",
+    "failedToLoad": "Nie udało się załadować usterek",
     "newFault": "Nowa usterka",
     "reportFault": "Zgłoś usterkę",
     "description": "Opis",

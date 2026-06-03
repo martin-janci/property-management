@@ -242,6 +242,7 @@
   },
   "faults": {
     "title": "Hlášení závad",
+    "failedToLoad": "Nepodařilo se načíst závady",
     "newFault": "Nová závada",
     "reportFault": "Nahlásit závadu",
     "description": "Popis",

@@ -28,7 +28,7 @@ describe('FaultsPage state wiring', () => {
 
   it('renders an inline error state (not the empty state) when isError is true', () => {
     render(<FaultsPage {...baseProps} isError />);
-    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load faults.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load faults');
     expect(screen.queryByText('No faults found.')).not.toBeInTheDocument();
   });
 

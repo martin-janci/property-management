@@ -241,6 +241,7 @@
   },
   "faults": {
     "title": "Störungsmeldungen",
+    "failedToLoad": "Störungen konnten nicht geladen werden",
     "newFault": "Neue Störung",
     "reportFault": "Störung melden",
     "description": "Beschreibung",

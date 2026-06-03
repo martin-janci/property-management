@@ -4,6 +4,7 @@ import type {
   AnnouncementTargetType,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AnnouncementCard } from './AnnouncementCard';
 import { PinnedAnnouncementsBand } from './PinnedAnnouncementsBand';
 
@@ -51,6 +52,7 @@ export function AnnouncementList({
   onPin,
   onCreate,
 }: AnnouncementListProps) {
+  const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<AnnouncementStatus | ''>('');
   const [targetTypeFilter, setTargetTypeFilter] = useState<AnnouncementTargetType | ''>('');
 
@@ -116,14 +118,16 @@ export function AnnouncementList({
           role="alert"
           className="text-center py-12 border border-red-200 bg-red-50 rounded-md text-red-700"
         >
-          <p className="font-medium">Failed to load announcements.</p>
+          <p className="font-medium">
+            {t('announcements.failedToLoad', { defaultValue: 'Failed to load announcements' })}
+          </p>
           {onRetry && (
             <button
               type="button"
               onClick={onRetry}
               className="mt-3 px-3 py-1 border border-red-300 rounded text-red-700 hover:bg-red-100"
             >
-              Retry
+              {t('common.retry', { defaultValue: 'Retry' })}
             </button>
           )}
         </div>

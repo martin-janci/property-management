@@ -31,7 +31,7 @@ describe('AnnouncementsPage state wiring', () => {
 
   it('renders an inline error state (not the empty state) when isError is true', () => {
     render(<AnnouncementsPage {...baseProps} isError />);
-    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load announcements.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load announcements');
     expect(screen.queryByText('No announcements found.')).not.toBeInTheDocument();
   });
 

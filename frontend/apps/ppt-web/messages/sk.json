@@ -243,6 +243,7 @@
   },
   "faults": {
     "title": "Hlásenia porúch",
+    "failedToLoad": "Nepodarilo sa načítať poruchy",
     "newFault": "Nová porucha",
     "reportFault": "Nahlásiť poruchu",
     "description": "Popis",

@@ -1658,7 +1658,7 @@ function AnnouncementsPageRoute() {
     pageSize: 10,
   });
 
-  const { data, isLoading, error } = useAnnouncements(listParams);
+  const { data, isLoading, error, refetch } = useAnnouncements(listParams);
   // Story 6.4 — separate query for the sticky pinned band; immune to list filters.
   // Routes through the shared hook (#486 / #516) so the URL + staleTime + pageSize
   // can't drift between this callsite and other consumers (mobile).
@@ -1763,6 +1763,10 @@ function AnnouncementsPageRoute() {
       announcements={announcements}
       total={total}
       isLoading={isLoading}
+      isError={!!error}
+      onRetry={() => {
+        void refetch();
+      }}
       pinnedAnnouncements={pinnedAnnouncements}
       onNavigateToCreate={() => navigate('/announcements/new')}
       onNavigateToView={(id) => navigate(`/announcements/${id}`)}
@@ -2478,7 +2482,7 @@ function FaultsPageRoute() {
   const { showToast } = useToast();
   const [faultQuery, setFaultQuery] = useState<FaultListQuery>({ page: 1, limit: 10 });
 
-  const { data, isLoading, error } = useFaults(faultQuery);
+  const { data, isLoading, error, refetch } = useFaults(faultQuery);
 
   useEffect(() => {
     if (error) {
@@ -2521,6 +2525,10 @@ function FaultsPageRoute() {
       faults={faults}
       total={total}
       isLoading={isLoading}
+      isError={!!error}
+      onRetry={() => {
+        void refetch();
+      }}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}

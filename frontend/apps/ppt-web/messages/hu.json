@@ -241,6 +241,7 @@
   },
   "faults": {
     "title": "Hibajelentések",
+    "failedToLoad": "Nem sikerült betölteni a hibákat",
     "newFault": "Új hiba",
     "reportFault": "Hiba jelentése",
     "description": "Leírás",

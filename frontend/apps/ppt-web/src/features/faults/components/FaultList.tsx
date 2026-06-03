@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FaultCategory, FaultPriority, FaultStatus, FaultSummary } from './FaultCard';
 import { FaultCard } from './FaultCard';
 
@@ -80,6 +81,7 @@ export function FaultList({
   onTriage,
   onCreate,
 }: FaultListProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const totalPages = Math.ceil(total / pageSize);
 
@@ -157,14 +159,16 @@ export function FaultList({
           role="alert"
           className="text-center py-8 border border-red-200 bg-red-50 rounded-lg text-red-700"
         >
-          <p className="font-medium">Failed to load faults.</p>
+          <p className="font-medium">
+            {t('faults.failedToLoad', { defaultValue: 'Failed to load faults' })}
+          </p>
           {onRetry && (
             <button
               type="button"
               onClick={onRetry}
               className="mt-3 px-3 py-1 border border-red-300 rounded text-red-700 hover:bg-red-100"
             >
-              Retry
+              {t('common.retry', { defaultValue: 'Retry' })}
             </button>
           )}
         </div>
