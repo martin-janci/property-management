@@ -13,6 +13,10 @@ interface AnnouncementListProps {
   page: number;
   pageSize: number;
   isLoading?: boolean;
+  /** True when the list query failed. Renders an inline error state. */
+  isError?: boolean;
+  /** Retry the failed list query. */
+  onRetry?: () => void;
   /** Pinned published announcements shown in the sticky band above the list (Story 6.4) */
   pinnedAnnouncements?: AnnouncementSummary[];
   onPageChange: (page: number) => void;
@@ -33,6 +37,8 @@ export function AnnouncementList({
   page,
   pageSize,
   isLoading,
+  isError,
+  onRetry,
   pinnedAnnouncements = [],
   onPageChange,
   onStatusFilter,
@@ -105,7 +111,23 @@ export function AnnouncementList({
       </div>
 
       {/* List */}
-      {isLoading ? (
+      {isError ? (
+        <div
+          role="alert"
+          className="text-center py-12 border border-red-200 bg-red-50 rounded-md text-red-700"
+        >
+          <p className="font-medium">Failed to load announcements.</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-3 px-3 py-1 border border-red-300 rounded text-red-700 hover:bg-red-100"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      ) : isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
         </div>
