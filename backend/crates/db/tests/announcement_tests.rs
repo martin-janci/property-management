@@ -657,13 +657,11 @@ async fn test_auto_unpin_expired() {
     assert_eq!(unpinned, vec![stale_id], "only the stale pin should unpin");
 
     // Stale announcement is fully unpinned (pinned flag + audit columns cleared).
-    let stale = sqlx::query(
-        "SELECT pinned, pinned_at, pinned_by FROM announcements WHERE id = $1",
-    )
-    .bind(stale_id)
-    .fetch_one(&db.pool)
-    .await
-    .unwrap();
+    let stale = sqlx::query("SELECT pinned, pinned_at, pinned_by FROM announcements WHERE id = $1")
+        .bind(stale_id)
+        .fetch_one(&db.pool)
+        .await
+        .unwrap();
     let stale_pinned: bool = stale.get("pinned");
     let stale_pinned_at: Option<chrono::DateTime<chrono::Utc>> = stale.get("pinned_at");
     let stale_pinned_by: Option<Uuid> = stale.get("pinned_by");
