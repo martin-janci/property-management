@@ -176,8 +176,7 @@ async fn cast_vote_rls_stores_unit_ownership_share_as_weight(pool: PgPool) {
     let share = Decimal::new(4250, 2); // 42.50
     let unit = seed_unit(&pool, building, "W-1", share).await;
 
-    let (vote_id, question_id) =
-        seed_active_vote(&repo, &pool, org, building, user, 4).await;
+    let (vote_id, question_id) = seed_active_vote(&repo, &pool, org, building, user, 4).await;
 
     let mut conn = pool.acquire().await.expect("acquire");
     set_context(&mut conn, org, user).await;
@@ -195,13 +194,14 @@ async fn cast_vote_rls_stores_unit_ownership_share_as_weight(pool: PgPool) {
     .await
     .expect("cast vote");
 
-    let weight: Decimal =
-        sqlx::query_scalar("SELECT vote_weight FROM vote_responses WHERE vote_id = $1 AND unit_id = $2")
-            .bind(vote_id)
-            .bind(unit)
-            .fetch_one(&pool)
-            .await
-            .expect("read vote_weight");
+    let weight: Decimal = sqlx::query_scalar(
+        "SELECT vote_weight FROM vote_responses WHERE vote_id = $1 AND unit_id = $2",
+    )
+    .bind(vote_id)
+    .bind(unit)
+    .fetch_one(&pool)
+    .await
+    .expect("read vote_weight");
 
     assert_eq!(
         weight, share,
@@ -221,8 +221,7 @@ async fn cast_vote_rls_writes_ballot_cast_audit_row(pool: PgPool) {
     let building = seed_building(&pool, org, "Audit Building").await;
     let unit = seed_unit(&pool, building, "A-1", Decimal::new(10000, 2)).await;
 
-    let (vote_id, question_id) =
-        seed_active_vote(&repo, &pool, org, building, user, 2).await;
+    let (vote_id, question_id) = seed_active_vote(&repo, &pool, org, building, user, 2).await;
 
     let mut conn = pool.acquire().await.expect("acquire");
     set_context(&mut conn, org, user).await;
@@ -268,8 +267,7 @@ async fn cast_vote_rls_increments_participation_count(pool: PgPool) {
     let building = seed_building(&pool, org, "Participation Building").await;
     let unit = seed_unit(&pool, building, "P-1", Decimal::new(5000, 2)).await;
 
-    let (vote_id, question_id) =
-        seed_active_vote(&repo, &pool, org, building, user, 3).await;
+    let (vote_id, question_id) = seed_active_vote(&repo, &pool, org, building, user, 3).await;
 
     // Freshly-activated vote: no ballots yet.
     let before: i32 =
@@ -321,8 +319,7 @@ async fn get_poll_results_rls_returns_live_tally_for_active_vote(pool: PgPool) {
     let building = seed_building(&pool, org, "Results Building").await;
     let unit = seed_unit(&pool, building, "R-1", Decimal::new(10000, 2)).await;
 
-    let (vote_id, question_id) =
-        seed_active_vote(&repo, &pool, org, building, user, 4).await;
+    let (vote_id, question_id) = seed_active_vote(&repo, &pool, org, building, user, 4).await;
 
     let mut conn = pool.acquire().await.expect("acquire");
     set_context(&mut conn, org, user).await;
@@ -351,7 +348,10 @@ async fn get_poll_results_rls_returns_live_tally_for_active_vote(pool: PgPool) {
         results.participation_count, 1,
         "active-vote results must reflect the cast ballot, not zeroed cached results (#971.8)"
     );
-    assert_eq!(results.eligible_count, 4, "eligible_count comes from the loaded vote row");
+    assert_eq!(
+        results.eligible_count, 4,
+        "eligible_count comes from the loaded vote row"
+    );
     assert!(
         !results.questions.is_empty(),
         "active-vote results must include live per-question tallies (#971.8)"
