@@ -39,6 +39,8 @@ export interface DocumentSummary {
   title: string;
   description?: string;
   category: string;
+  /** Owning folder id; absent/null means the document lives at the root. */
+  folder_id?: string | null;
   file_name: string;
   mime_type: string;
   size_bytes: number;
