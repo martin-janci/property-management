@@ -12,6 +12,7 @@ import type {
   DocumentListQuery,
   DocumentSearchRequest,
   GenerateSummaryRequest,
+  VersionHistoryResponse,
 } from './types';
 
 export type { CreateFolderRequest, UpdateFolderRequest } from './api';
@@ -280,6 +281,13 @@ export function useRevokeDocumentShare(documentId: string) {
  * the client uses); the tenant is derived server-side from the JWT, so an empty
  * `xTenantId` is passed for the generated header parameter.
  *
+ * The generated OpenAPI client models this endpoint as a bare camelCase array
+ * (`Array<Documents_Document>`), but the real backend returns the
+ * `VersionHistoryResponse` envelope (`{ history: { versions: [...] } }`,
+ * snake_case). The transport just parses the JSON body, so we re-type the
+ * result to the real backend shape via `unknown` — consumers then read the
+ * actual `history.versions` payload.
+ *
  * LIST-ONLY: there is no generated restore method, so restore is not exposed.
  */
 export function useDocumentVersions(documentId: string) {
@@ -290,7 +298,7 @@ export function useDocumentVersions(documentId: string) {
         authorization: `Bearer ${getToken() ?? ''}`,
         xTenantId: '',
         id: documentId,
-      }),
+      }) as unknown as Promise<VersionHistoryResponse>,
     enabled: !!documentId,
     staleTime: 30_000,
   });
