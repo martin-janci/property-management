@@ -11,6 +11,17 @@
       "deadline": null,
       "source": "pm-analysis 2026-05-25",
       "depends_on": []
+    },
+    {
+      "id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
+      "action": "Add ai.rs (3142 LOC), platform_admin.rs (2762), announcements.rs (2722) to the module-split backlog; add a CI grep/clippy lint that flags mutating handlers binding `_principal` (discarded principal) — the pattern behind the ai.rs IDOR cluster",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-25",
+      "depends_on": []
     }
   ]
 }
