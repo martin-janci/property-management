@@ -13,7 +13,7 @@ use db::models::infrastructure::{job_type, queue, CreateBackgroundJob};
 use integrations::{
     encrypt_optional_required, encrypt_required, AirbnbClient, AirbnbOAuthConfig,
     AvailabilityUpdate, BookingClient, BookingCredentials, IntegrationCrypto, PortalType,
-    PropertyMapping, RateUpdate, RoomTypeMapping,
+    RateUpdate,
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
@@ -905,16 +905,24 @@ pub async fn sync_booking(
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
-    let reservations = client.sync_reservations(&hotel_id).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to sync Booking.com reservations");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "SYNC_ERROR",
-                format!("Failed to sync: {}", e),
-            )),
-        )
-    })?;
+    // Sync a window spanning recent past through near future (mirrors sync.rs defaults).
+    let now = chrono::Utc::now().date_naive();
+    let start_date = now - chrono::Duration::days(30);
+    let end_date = now + chrono::Duration::days(90);
+
+    let reservations = client
+        .fetch_reservations(&hotel_id, start_date, end_date)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to sync Booking.com reservations");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "SYNC_ERROR",
+                    format!("Failed to sync: {}", e),
+                )),
+            )
+        })?;
 
     let pulled_count = reservations.len() as i32;
     let mut persisted_count = 0i32;
@@ -1235,24 +1243,6 @@ pub async fn push_booking_availability(
     let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
-    // Build property mapping from the request room mappings
-    let mapping = PropertyMapping {
-        internal_property_id: path.org_id,
-        external_property_id: hotel_id.clone(),
-        external_property_name: None,
-        room_mappings: request
-            .room_mappings
-            .iter()
-            .map(|rm| RoomTypeMapping {
-                internal_unit_id: rm.internal_unit_id,
-                external_room_type_id: rm.external_room_type_id.clone(),
-                external_room_type_name: rm.external_room_type_name.clone(),
-            })
-            .collect(),
-        sync_enabled: true,
-        last_sync_at: None,
-    };
-
     let items_count = request.updates.len() as i32;
 
     // Convert DTOs to integration types
@@ -1272,7 +1262,7 @@ pub async fn push_booking_availability(
         .collect();
 
     match client
-        .push_availability(&mapping, availability_updates)
+        .push_availability(&hotel_id, &availability_updates)
         .await
     {
         Ok(()) => {
@@ -1426,7 +1416,7 @@ pub async fn push_booking_rates(
         })
         .collect();
 
-    match client.push_rates(&hotel_id, rate_updates).await {
+    match client.push_rates(&hotel_id, &rate_updates).await {
         Ok(()) => {
             tracing::info!(
                 org_id = %path.org_id,
