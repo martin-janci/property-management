@@ -124,6 +124,7 @@ impl MessagingRepository {
         organization_id: Uuid,
         limit: Option<i64>,
         offset: Option<i64>,
+        search: Option<&str>,
     ) -> Result<Vec<ThreadWithPreview>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -182,12 +183,14 @@ impl MessagingRepository {
             LEFT JOIN unread_counts uc ON uc.thread_id = t.id
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
+              AND ($3::text IS NULL OR (u.first_name ILIKE '%'||$3||'%' OR u.last_name ILIKE '%'||$3||'%'))
             ORDER BY t.last_message_at DESC NULLS LAST, t.created_at DESC
-            LIMIT $3 OFFSET $4
+            LIMIT $4 OFFSET $5
             "#,
         )
         .bind(user_id)
         .bind(organization_id)
+        .bind(search)
         .bind(limit)
         .bind(offset)
         .fetch_all(executor)
@@ -207,19 +210,29 @@ impl MessagingRepository {
         executor: E,
         user_id: Uuid,
         organization_id: Uuid,
+        search: Option<&str>,
     ) -> Result<i64, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
         let (count,): (i64,) = sqlx::query_as(
             r#"
-            SELECT COUNT(*) FROM message_threads
-            WHERE $1 = ANY(participant_ids)
-              AND organization_id = $2
+            SELECT COUNT(*)
+            FROM message_threads t
+            CROSS JOIN LATERAL (
+                SELECT id, first_name, last_name, email
+                FROM users
+                WHERE id = ANY(t.participant_ids) AND id != $1
+                LIMIT 1
+            ) u
+            WHERE $1 = ANY(t.participant_ids)
+              AND t.organization_id = $2
+              AND ($3::text IS NULL OR (u.first_name ILIKE '%'||$3||'%' OR u.last_name ILIKE '%'||$3||'%'))
             "#,
         )
         .bind(user_id)
         .bind(organization_id)
+        .bind(search)
         .fetch_one(executor)
         .await?;
 
@@ -687,7 +700,7 @@ impl MessagingRepository {
         limit: Option<i64>,
         offset: Option<i64>,
     ) -> Result<Vec<ThreadWithPreview>, SqlxError> {
-        self.list_threads_rls(&self.pool, user_id, organization_id, limit, offset)
+        self.list_threads_rls(&self.pool, user_id, organization_id, limit, offset, None)
             .await
     }
 
@@ -703,7 +716,7 @@ impl MessagingRepository {
         user_id: Uuid,
         organization_id: Uuid,
     ) -> Result<i64, SqlxError> {
-        self.count_threads_rls(&self.pool, user_id, organization_id)
+        self.count_threads_rls(&self.pool, user_id, organization_id, None)
             .await
     }
 

@@ -191,6 +191,33 @@ impl FaultRepository {
         Ok(fault)
     }
 
+    /// Find a fault by idempotency key with RLS context (Story 4.1, #970).
+    ///
+    /// Use this with an `RlsConnection` so the lookup is scoped to the caller's
+    /// tenant by the `faults_tenant_isolation` RLS policy. Unlike the
+    /// pool-based [`find_by_idempotency_key`](Self::find_by_idempotency_key),
+    /// this prevents a key collision across organizations from leaking another
+    /// tenant's fault during offline-create idempotency replay.
+    pub async fn find_by_idempotency_key_rls<'e, E>(
+        &self,
+        executor: E,
+        key: &str,
+    ) -> Result<Option<Fault>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let fault = sqlx::query_as::<_, Fault>(
+            r#"
+            SELECT * FROM faults WHERE idempotency_key = $1
+            "#,
+        )
+        .bind(key)
+        .fetch_optional(executor)
+        .await?;
+
+        Ok(fault)
+    }
+
     /// Find a fault by ID, scoped to a specific organization.
     ///
     /// SECURITY (#770): explicitly threads `organization_id` into the WHERE

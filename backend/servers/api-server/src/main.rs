@@ -152,6 +152,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::organizations::get_organization_branding,
         routes::organizations::update_organization_branding,
         routes::organizations::export_organization_data,
+        routes::messaging::delete_message,
     ),
     components(schemas(
         routes::health::HealthResponse,
@@ -429,6 +430,10 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(3),
+        pin_max_age_days: std::env::var("PIN_MAX_AGE_DAYS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(30),
     };
     let scheduler_pool = state.db.clone();
     let announcement_repo = AnnouncementRepository::new(scheduler_pool.clone());
