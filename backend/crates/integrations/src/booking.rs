@@ -79,10 +79,7 @@ pub mod ota_xml {
     }
 
     /// Write a closing tag for `tag`.
-    pub fn write_end(
-        writer: &mut Writer<Cursor<Vec<u8>>>,
-        tag: &str,
-    ) -> Result<(), BookingError> {
+    pub fn write_end(writer: &mut Writer<Cursor<Vec<u8>>>, tag: &str) -> Result<(), BookingError> {
         writer
             .write_event(Event::End(BytesEnd::new(tag)))
             .map_err(|e| BookingError::Xml(e.to_string()))
@@ -221,7 +218,10 @@ pub mod ota_xml {
     }
 
     /// Serialize an `OTA_HotelResNotifRS` document using quick-xml.
-    pub fn build_res_notif_rs(success: bool, error_text: Option<&str>) -> Result<String, BookingError> {
+    pub fn build_res_notif_rs(
+        success: bool,
+        error_text: Option<&str>,
+    ) -> Result<String, BookingError> {
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
 
         write_root_start(&mut writer, "OTA_HotelResNotifRS", "1.0")?;
@@ -309,7 +309,10 @@ pub mod ota_xml {
         }
 
         if has_errors || error_msg.is_some() {
-            return (false, error_msg.or_else(|| Some("Unknown error from Booking.com".to_string())));
+            return (
+                false,
+                error_msg.or_else(|| Some("Unknown error from Booking.com".to_string())),
+            );
         }
         if has_success {
             return (true, None);
@@ -323,7 +326,9 @@ pub mod ota_xml {
     ///
     /// Each fragment is the raw XML of one `<HotelReservation>` element so
     /// that higher-level code can parse reservation details independently.
-    pub fn parse_res_notif_rq_raw(xml: &str) -> Result<Vec<(String, String, String)>, BookingError> {
+    pub fn parse_res_notif_rq_raw(
+        xml: &str,
+    ) -> Result<Vec<(String, String, String)>, BookingError> {
         // We use the string-scan approach here because quick-xml's fragment
         // extraction from a streaming reader requires buffering the whole
         // subtree, which duplicates complexity for no gain on this particular
@@ -340,8 +345,8 @@ pub mod ota_xml {
                 let abs_end = abs_start + end_rel + "</HotelReservation>".len();
                 let fragment = &xml[abs_start..abs_end];
 
-                let res_status = extract_xml_attr(fragment, "ResStatus")
-                    .unwrap_or_else(|| "Commit".to_string());
+                let res_status =
+                    extract_xml_attr(fragment, "ResStatus").unwrap_or_else(|| "Commit".to_string());
                 let res_id = extract_xml_attr(fragment, "ResID_Value")
                     .or_else(|| extract_xml_attr(fragment, "ID"))
                     .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
@@ -380,11 +385,7 @@ pub mod ota_xml {
                 let key_bytes = a.key.into_inner().to_vec();
                 local_name(&key_bytes) == name
             })
-            .and_then(|a| {
-                a.unescape_value()
-                    .ok()
-                    .map(|v| v.into_owned())
-            })
+            .and_then(|a| a.unescape_value().ok().map(|v| v.into_owned()))
     }
 
     /// Naive attribute extractor that works on a raw XML fragment.
@@ -392,22 +393,26 @@ pub mod ota_xml {
         let pattern = format!("{}=\"", attr_name);
         xml.find(&pattern).and_then(|start| {
             let val_start = start + pattern.len();
-            xml[val_start..].find('"').map(|end| xml[val_start..val_start + end].to_string())
+            xml[val_start..]
+                .find('"')
+                .map(|end| xml[val_start..val_start + end].to_string())
         })
     }
 
     /// Naive element-content extractor that works on a raw XML fragment.
     pub fn extract_xml_element(xml: &str, element_name: &str) -> Option<String> {
         let open_tag = format!("<{}", element_name);
-        xml.find(&open_tag).and_then(|tag_start| {
-            xml[tag_start..].find('>').and_then(|content_rel| {
-                let content_start = tag_start + content_rel + 1;
-                let close_tag = format!("</{}>", element_name);
-                xml[content_start..].find(&close_tag).map(|end| {
-                    xml[content_start..content_start + end].trim().to_string()
+        xml.find(&open_tag)
+            .and_then(|tag_start| {
+                xml[tag_start..].find('>').and_then(|content_rel| {
+                    let content_start = tag_start + content_rel + 1;
+                    let close_tag = format!("</{}>", element_name);
+                    xml[content_start..]
+                        .find(&close_tag)
+                        .map(|end| xml[content_start..content_start + end].trim().to_string())
                 })
             })
-        }).filter(|s| !s.is_empty())
+            .filter(|s| !s.is_empty())
     }
 
     // ------------------------------------------------------------------
@@ -435,7 +440,10 @@ pub mod ota_xml {
 
             let xml = build_avail_notif_rq("12345", &msgs).unwrap();
 
-            assert!(xml.contains("OTA_HotelAvailNotifRQ"), "root element missing");
+            assert!(
+                xml.contains("OTA_HotelAvailNotifRQ"),
+                "root element missing"
+            );
             assert!(
                 xml.contains("http://www.opentravel.org/OTA/2003/05"),
                 "OTA namespace missing"
@@ -475,7 +483,10 @@ pub mod ota_xml {
 
             let xml = build_rate_amount_notif_rq("12345", &updates).unwrap();
 
-            assert!(xml.contains("OTA_HotelRateAmountNotifRQ"), "root element missing");
+            assert!(
+                xml.contains("OTA_HotelRateAmountNotifRQ"),
+                "root element missing"
+            );
             assert!(
                 xml.contains("http://www.opentravel.org/OTA/2003/05"),
                 "OTA namespace missing"
@@ -1281,12 +1292,13 @@ pub struct LosRestrictions {
 impl OtaHotelAvailNotifRQ {
     /// Convert to OTA XML format using quick-xml (namespace-aware).
     pub fn to_xml(&self) -> String {
-        ota_xml::build_avail_notif_rq(&self.hotel_code, &self.avail_status_messages)
-            .unwrap_or_else(|e| {
+        ota_xml::build_avail_notif_rq(&self.hotel_code, &self.avail_status_messages).unwrap_or_else(
+            |e| {
                 tracing::error!(error = %e, "Failed to build OTA_HotelAvailNotifRQ XML");
                 // Fallback to legacy format on unexpected serialisation error.
                 self.to_xml_legacy()
-            })
+            },
+        )
     }
 
     /// Legacy string-template fallback (kept for emergency use only).
@@ -1434,34 +1446,32 @@ impl BookingClient {
         if !self.credentials.hotel_id.is_empty() {
             match self.fetch_property(&self.credentials.hotel_id).await {
                 Ok(property) => Ok(vec![property]),
-                Err(_) => {
-                    Ok(vec![BookingProperty {
-                        hotel_id: self.credentials.hotel_id.clone(),
-                        name: format!("Property {}", self.credentials.hotel_id),
-                        description: None,
-                        star_rating: None,
-                        property_type: "hotel".to_string(),
-                        address: BookingAddress {
-                            street: String::new(),
-                            city: String::new(),
-                            state: None,
-                            postal_code: String::new(),
-                            country_code: String::new(),
-                            latitude: None,
-                            longitude: None,
-                        },
-                        contact: BookingContact {
-                            email: None,
-                            phone: None,
-                            website: None,
-                        },
-                        room_types: Vec::new(),
-                        facilities: Vec::new(),
-                        check_in_time: None,
-                        check_out_time: None,
-                        synced_at: Some(Utc::now()),
-                    }])
-                }
+                Err(_) => Ok(vec![BookingProperty {
+                    hotel_id: self.credentials.hotel_id.clone(),
+                    name: format!("Property {}", self.credentials.hotel_id),
+                    description: None,
+                    star_rating: None,
+                    property_type: "hotel".to_string(),
+                    address: BookingAddress {
+                        street: String::new(),
+                        city: String::new(),
+                        state: None,
+                        postal_code: String::new(),
+                        country_code: String::new(),
+                        latitude: None,
+                        longitude: None,
+                    },
+                    contact: BookingContact {
+                        email: None,
+                        phone: None,
+                        website: None,
+                    },
+                    room_types: Vec::new(),
+                    facilities: Vec::new(),
+                    check_in_time: None,
+                    check_out_time: None,
+                    synced_at: Some(Utc::now()),
+                }]),
             }
         } else {
             Ok(Vec::new())
@@ -1581,17 +1591,28 @@ impl BookingClient {
                     .unwrap_or_else(|| "Room".to_string());
                 let description = Self::extract_xml_element(room_xml, "DescriptiveText");
                 let max_occupancy = Self::extract_xml_attr(room_xml, "MaxOccupancy")
-                    .and_then(|s| s.parse().ok()).unwrap_or(2);
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(2);
                 let bed_count = Self::extract_xml_attr(room_xml, "NumberOfBeds")
-                    .and_then(|s| s.parse().ok()).unwrap_or(1);
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(1);
                 let bed_type = Self::extract_xml_attr(room_xml, "BedType");
-                let room_size = Self::extract_xml_attr(room_xml, "RoomSize").and_then(|s| s.parse().ok());
+                let room_size =
+                    Self::extract_xml_attr(room_xml, "RoomSize").and_then(|s| s.parse().ok());
                 let total_rooms = Self::extract_xml_attr(room_xml, "Quantity")
-                    .and_then(|s| s.parse().ok()).unwrap_or(1);
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(1);
 
                 room_types.push(BookingRoomType {
-                    id, name, description, max_occupancy, bed_count, bed_type, room_size,
-                    amenities: Vec::new(), total_rooms,
+                    id,
+                    name,
+                    description,
+                    max_occupancy,
+                    bed_count,
+                    bed_type,
+                    room_size,
+                    amenities: Vec::new(),
+                    total_rooms,
                 });
                 search_pos = abs_start + end + 12;
             } else {
@@ -1710,7 +1731,10 @@ impl BookingClient {
     ) -> Result<Vec<BookingReservation>, BookingError> {
         tracing::info!("Syncing Booking.com reservations for hotel: {}", hotel_id);
         let reservations = self.fetch_reservations(hotel_id).await?;
-        tracing::info!("Synced {} reservations from Booking.com", reservations.len());
+        tracing::info!(
+            "Synced {} reservations from Booking.com",
+            reservations.len()
+        );
         Ok(reservations)
     }
 
@@ -1763,7 +1787,10 @@ impl BookingClient {
         let parsed = OtaHotelAvailNotifRS::from_xml(&body)?;
 
         if parsed.success {
-            tracing::info!("Pushed {} availability updates to Booking.com", updates.len());
+            tracing::info!(
+                "Pushed {} availability updates to Booking.com",
+                updates.len()
+            );
             Ok(())
         } else {
             Err(BookingError::PushFailed(
@@ -1793,7 +1820,16 @@ impl BookingClient {
         // Build OTA_HotelRateAmountNotifRQ using quick-xml
         let rate_entries: Vec<(NaiveDate, NaiveDate, &str, &str, &Decimal, &str)> = updates
             .iter()
-            .map(|u| (u.date, u.date, u.room_type_id.as_str(), u.rate_plan_code.as_str(), &u.base_rate, u.currency.as_str()))
+            .map(|u| {
+                (
+                    u.date,
+                    u.date,
+                    u.room_type_id.as_str(),
+                    u.rate_plan_code.as_str(),
+                    &u.base_rate,
+                    u.currency.as_str(),
+                )
+            })
             .collect();
 
         let request_xml = ota_xml::build_rate_amount_notif_rq(hotel_id, &rate_entries)?;
