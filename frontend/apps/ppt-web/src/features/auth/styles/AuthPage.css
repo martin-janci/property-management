@@ -46,7 +46,8 @@
 }
 
 .auth-error-banner,
-.auth-success-banner {
+.auth-success-banner,
+.auth-warning-banner {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -65,6 +66,37 @@
   background-color: var(--ppt-color-success-light);
   border: 1px solid var(--ppt-color-success);
   color: var(--ppt-color-success-dark);
+}
+
+.auth-warning-banner {
+  background-color: var(--ppt-color-warning-light, #fff8e1);
+  border: 1px solid var(--ppt-color-warning, #f0ad4e);
+  color: var(--ppt-color-warning-dark, #8a6d3b);
+}
+
+/* Recovery (backup) codes grid + actions */
+.auth-recovery-codes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: var(--ppt-color-surface-muted, #f5f5f5);
+  border-radius: 6px;
+  list-style: none;
+}
+
+.auth-recovery-codes li {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
+.auth-recovery-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
 }
 
 .auth-field {
