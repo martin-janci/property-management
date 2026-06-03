@@ -984,33 +984,6 @@
       "statusSkipped": "Pominięte"
     }
   },
-  "leases": {
-    "esign": {
-      "requestSignature": "Poproś o podpis",
-      "modal": {
-        "title": "Poproś o podpis",
-        "selectSigners": "Wybierz podpisujących",
-        "subject": "Temat (opcjonalnie)",
-        "subjectPlaceholder": "np. Podpis umowy najmu",
-        "message": "Wiadomość do podpisujących (opcjonalnie)",
-        "messagePlaceholder": "Proszę przejrzeć i podpisać załączoną umowę najmu.",
-        "sending": "Wysyłanie…",
-        "send": "Wyślij do podpisu"
-      },
-      "role": {
-        "tenant": "Najemca",
-        "manager": "Zarządca"
-      },
-      "status": {
-        "pending": "Oczekuje na podpis",
-        "in_progress": "Podpisywanie w toku",
-        "completed": "Podpisane",
-        "declined": "Odrzucone",
-        "expired": "Wygasłe",
-        "cancelled": "Anulowane"
-      }
-    }
-  },
   "settings": {
     "sessions": {
       "title": "Active sessions",
