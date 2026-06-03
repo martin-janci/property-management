@@ -3,7 +3,7 @@
 //! Real SQLx implementation backed by the `report_schedules` and
 //! `report_executions` tables added in migration
 //! `00162_create_report_schedules_executions.sql`. The `cron_expression`
-//! column is added by `00163_report_schedules_add_cron_expression.sql`.
+//! column is added by `00166_report_schedules_add_cron_expression.sql`.
 
 use crate::models::report_schedule::{
     report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
@@ -13,6 +13,30 @@ use crate::DbPool;
 use chrono::{Duration, Utc};
 use common::errors::AppError;
 use uuid::Uuid;
+
+/// Canonical projection for `report_schedules` rows.
+///
+/// Every `SELECT` / `RETURNING` that maps into [`ReportScheduleRow`] must list
+/// exactly these columns — `query_as` resolves `FromRow` fields by name at
+/// runtime, so omitting one (historically `cron_expression`, issue #616) makes
+/// the query fail with "no column found for name: …" only when a live DB is
+/// hit. Defined with `concat!` so it is a compile-time `&'static str`
+/// (required by sqlx 0.9's `SqlSafeStr` bound) and so every query below shares
+/// the same column list. The tests at the bottom of this module guard the
+/// projection without needing a database.
+macro_rules! report_schedule_columns {
+    () => {
+        "id, report_id, organization_id, name, frequency, \
+         day_of_week, day_of_month, time, timezone, format, \
+         recipients, is_active, status, \
+         last_run_at, next_run_at, created_at, updated_at, \
+         cron_expression"
+    };
+}
+
+/// The bare column projection, used by the parity tests below.
+#[cfg(test)]
+const REPORT_SCHEDULE_COLUMNS: &str = report_schedule_columns!();
 
 /// Repository for report schedule and execution operations.
 #[derive(Clone)]
@@ -35,17 +59,11 @@ impl ReportScheduleRepository {
     /// Prefer `get_by_id_scoped` in request handlers so the caller's
     /// `organization_id` is enforced in the WHERE clause.
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<ReportSchedule>, AppError> {
-        let row = sqlx::query_as::<_, ReportScheduleRow>(
-            r#"
-            SELECT id, report_id, organization_id, name, frequency,
-                   day_of_week, day_of_month, time, timezone, format,
-                   recipients, is_active, status,
-                   last_run_at, next_run_at, created_at, updated_at,
-                   cron_expression
-            FROM report_schedules
-            WHERE id = $1
-            "#,
-        )
+        let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "SELECT ",
+            report_schedule_columns!(),
+            " FROM report_schedules WHERE id = $1"
+        ))
         .bind(id)
         .fetch_optional(&self.pool)
         .await
@@ -66,17 +84,11 @@ impl ReportScheduleRepository {
         id: Uuid,
         caller_org_id: Uuid,
     ) -> Result<Option<ReportSchedule>, AppError> {
-        let row = sqlx::query_as::<_, ReportScheduleRow>(
-            r#"
-            SELECT id, report_id, organization_id, name, frequency,
-                   day_of_week, day_of_month, time, timezone, format,
-                   recipients, is_active, status,
-                   last_run_at, next_run_at, created_at, updated_at
-            FROM report_schedules
-            WHERE id              = $1
-              AND organization_id = $2
-            "#,
-        )
+        let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "SELECT ",
+            report_schedule_columns!(),
+            " FROM report_schedules WHERE id = $1 AND organization_id = $2"
+        ))
         .bind(id)
         .bind(caller_org_id)
         .fetch_optional(&self.pool)
@@ -100,21 +112,13 @@ impl ReportScheduleRepository {
     /// Returns `NotFound` when the `id` does not exist **or** belongs to a
     /// different organisation, giving the same opaque response in both cases.
     pub async fn pause(&self, id: Uuid, caller_org_id: Uuid) -> Result<ReportSchedule, AppError> {
-        let row = sqlx::query_as::<_, ReportScheduleRow>(
-            r#"
-            UPDATE report_schedules
-            SET is_active  = false,
-                status     = $1,
-                updated_at = NOW()
-            WHERE id              = $2
-              AND organization_id = $3
-            RETURNING id, report_id, organization_id, name, frequency,
-                      day_of_week, day_of_month, time, timezone, format,
-                      recipients, is_active, status,
-                      last_run_at, next_run_at, created_at, updated_at,
-                      cron_expression
-            "#,
-        )
+        let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "UPDATE report_schedules \
+             SET is_active = false, status = $1, updated_at = NOW() \
+             WHERE id = $2 AND organization_id = $3 \
+             RETURNING ",
+            report_schedule_columns!()
+        ))
         .bind(report_schedule_status::PAUSED)
         .bind(id)
         .bind(caller_org_id)
@@ -140,21 +144,13 @@ impl ReportScheduleRepository {
     /// Returns `NotFound` when the `id` does not exist **or** belongs to a
     /// different organisation, giving the same opaque response in both cases.
     pub async fn resume(&self, id: Uuid, caller_org_id: Uuid) -> Result<ReportSchedule, AppError> {
-        let row = sqlx::query_as::<_, ReportScheduleRow>(
-            r#"
-            UPDATE report_schedules
-            SET is_active  = true,
-                status     = $1,
-                updated_at = NOW()
-            WHERE id              = $2
-              AND organization_id = $3
-            RETURNING id, report_id, organization_id, name, frequency,
-                      day_of_week, day_of_month, time, timezone, format,
-                      recipients, is_active, status,
-                      last_run_at, next_run_at, created_at, updated_at,
-                      cron_expression
-            "#,
-        )
+        let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "UPDATE report_schedules \
+             SET is_active = true, status = $1, updated_at = NOW() \
+             WHERE id = $2 AND organization_id = $3 \
+             RETURNING ",
+            report_schedule_columns!()
+        ))
         .bind(report_schedule_status::ACTIVE)
         .bind(id)
         .bind(caller_org_id)
@@ -473,7 +469,7 @@ impl ReportScheduleRepository {
     ///
     /// All parameters are optional; only non-`None` values are applied. The
     /// cron expression is persisted to the dedicated `cron_expression` column
-    /// added by migration `00163_report_schedules_add_cron_expression.sql`
+    /// added by migration `00166_report_schedules_add_cron_expression.sql`
     /// (NOT the legacy `time` HH:MM column).
     ///
     /// # Cross-tenant safety (closes #624)
@@ -505,23 +501,17 @@ impl ReportScheduleRepository {
             serde_json::Value::Array(v.into_iter().map(serde_json::Value::String).collect())
         });
 
-        let row = sqlx::query_as::<_, ReportScheduleRow>(
-            r#"
-            UPDATE report_schedules
-            SET cron_expression = COALESCE($3, cron_expression),
-                recipients      = COALESCE($4, recipients),
-                is_active       = COALESCE($5, is_active),
-                status          = COALESCE($6, status),
-                updated_at      = NOW()
-            WHERE id              = $1
-              AND organization_id = $2
-            RETURNING id, report_id, organization_id, name, frequency,
-                      day_of_week, day_of_month, time, timezone, format,
-                      recipients, is_active, status,
-                      last_run_at, next_run_at, created_at, updated_at,
-                      cron_expression
-            "#,
-        )
+        let row = sqlx::query_as::<_, ReportScheduleRow>(concat!(
+            "UPDATE report_schedules \
+             SET cron_expression = COALESCE($3, cron_expression), \
+                 recipients      = COALESCE($4, recipients), \
+                 is_active       = COALESCE($5, is_active), \
+                 status          = COALESCE($6, status), \
+                 updated_at      = NOW() \
+             WHERE id = $1 AND organization_id = $2 \
+             RETURNING ",
+            report_schedule_columns!()
+        ))
         .bind(id)
         .bind(caller_org_id)
         .bind(cron_expression.as_deref())
@@ -547,5 +537,67 @@ impl ReportScheduleRepository {
         })?;
 
         Ok(ReportSchedule::from(row))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::REPORT_SCHEDULE_COLUMNS;
+
+    /// Every column that [`super::ReportScheduleRow`] maps from `FromRow` must
+    /// appear in the canonical projection. `query_as` resolves fields by name
+    /// at runtime, so a missing column only surfaces as a DB error in
+    /// production. This test is the no-DB guard for issue #616, where the
+    /// `cron_expression` column was added to the row struct but dropped from
+    /// the `get_by_id_scoped` SELECT — making cron edits silently fail to
+    /// round-trip through the dedicated column.
+    #[test]
+    fn column_projection_covers_every_row_field() {
+        // Field list mirrors `ReportScheduleRow`. If a field is added there,
+        // add it here and to REPORT_SCHEDULE_COLUMNS — the test fails loudly
+        // until both are in sync.
+        let expected = [
+            "id",
+            "report_id",
+            "organization_id",
+            "name",
+            "frequency",
+            "day_of_week",
+            "day_of_month",
+            "time",
+            "timezone",
+            "format",
+            "recipients",
+            "is_active",
+            "status",
+            "last_run_at",
+            "next_run_at",
+            "created_at",
+            "updated_at",
+            "cron_expression",
+        ];
+
+        let actual: Vec<&str> = REPORT_SCHEDULE_COLUMNS
+            .split(',')
+            .map(|c| c.trim())
+            .collect();
+
+        assert_eq!(
+            actual, expected,
+            "REPORT_SCHEDULE_COLUMNS must list every ReportScheduleRow field, \
+             in order, including cron_expression (issue #616)"
+        );
+    }
+
+    /// Explicit guard for the exact regression in issue #616.
+    #[test]
+    fn projection_includes_cron_expression() {
+        assert!(
+            REPORT_SCHEDULE_COLUMNS
+                .split(',')
+                .any(|c| c.trim() == "cron_expression"),
+            "cron_expression must be selected so report-schedule edits round-trip \
+             through the dedicated column, not the legacy `time` field (issue #616)"
+        );
     }
 }
