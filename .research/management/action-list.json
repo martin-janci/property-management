@@ -1,1 +1,61 @@
-PLACEHOLDER
+{
+  "generated": "2026-05-29T03:18:00Z",
+  "items": [
+    {
+      "id": "pm-frontend-schedule-followup-test-batch",
+      "action": "Slot post-merge follow-up issues #480-#487 (test gaps + minor security/UX follow-ups on messaging realtime, document share-flow, OAuth UI, MFA) into the sprint as a single test-hardening batch; do not promote dependent stories to done until each follow-up is closed or deferred",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-25",
+      "depends_on": []
+    },
+    {
+      "id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
+      "action": "Add ai.rs (3142 LOC), platform_admin.rs (2762), announcements.rs (2722) to the module-split backlog; add a CI grep/clippy lint that flags mutating handlers binding `_principal` (discarded principal) — the pattern behind the ai.rs IDOR cluster",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-25",
+      "depends_on": []
+    },
+    {
+      "id": "pm-frontend-verify-epic81-schedule-execution",
+      "action": "Verify Epic 81 report-schedule pause/resume + execution-history work end-to-end as PRs #488/#489 land; confirm frontend calls no longer 404 and promote 81-1/81-2 from partial",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-25",
+      "depends_on": []
+    },
+    {
+      "id": "pm-tech-lead-split-churn-hot-routes",
+      "action": "Split churn-hot route modules (integrations.rs, organizations.rs, documents.rs) by surface (install/oauth/sync/webhook)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-23",
+      "depends_on": []
+    },
+    {
+      "id": "pm-tech-lead-define-oauth-provider-design",
+      "action": "Define OAuth provider (10A) token/storage/rotation design before 10a-1 pickup to avoid rework",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-23",
+      "depends_on": []
+    },
+    {PLACEHOLDER_REMAINDER}
+  ]
+}
