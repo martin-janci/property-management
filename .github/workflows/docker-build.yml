@@ -114,6 +114,8 @@ jobs:
             core.setOutput('token', token);
 
       - name: POST /api/deploy
+        # #950: deploy-trigger is best-effort; a 403 from the OIDC->scope mapping must not red the image build. Real fix = release:deploy scope grant on the deploy host.
+        continue-on-error: true
         env:
           DEPLOY_URL: https://onyx.rlt.sk
           # We deploy by BRANCH tag (e.g. `main`, `dev`), not by short SHA.
