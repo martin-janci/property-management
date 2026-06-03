@@ -905,13 +905,13 @@ pub async fn sync_booking(
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
-    // Sync a window spanning recent past through near future (mirrors sync.rs defaults).
-    let now = chrono::Utc::now().date_naive();
-    let start_date = now - chrono::Duration::days(30);
-    let end_date = now + chrono::Duration::days(90);
-
+    // Sync window: today through one year out (matches the prior
+    // `sync_reservations` default before the OTA-XML refactor moved the date
+    // range to the caller).
+    let sync_start = chrono::Utc::now().date_naive();
+    let sync_end = sync_start + chrono::Duration::days(365);
     let reservations = client
-        .fetch_reservations(&hotel_id, start_date, end_date)
+        .fetch_reservations(&hotel_id, sync_start, sync_end)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to sync Booking.com reservations");

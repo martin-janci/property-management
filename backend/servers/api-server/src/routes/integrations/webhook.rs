@@ -23,7 +23,8 @@ use db::models::{
     WebhookDeliveryLog, WebhookDeliveryQuery, WebhookStatistics, WebhookSubscription,
 };
 use hmac::{Hmac, KeyInit, Mac};
-use integrations::{AirbnbClient, AirbnbWebhookEventType, OtaHotelResNotifRQ, OtaHotelResNotifRS};
+use integrations::booking::ota_xml;
+use integrations::{AirbnbClient, AirbnbWebhookEventType};
 use serde::Deserialize;
 use sha2::Sha256;
 use uuid::Uuid;
@@ -842,7 +843,7 @@ pub async fn booking_push_notification(
 ) -> Result<Response<Body>, (StatusCode, Json<ErrorResponse>)> {
     tracing::info!("Received Booking.com push notification");
 
-    let _notification = OtaHotelResNotifRQ::from_xml(&body).map_err(|e| {
+    let _notifications = ota_xml::parse_res_notif_rq_raw(&body).map_err(|e| {
         tracing::error!(error = %e, "Failed to parse Booking.com notification");
         (
             StatusCode::BAD_REQUEST,
@@ -853,7 +854,16 @@ pub async fn booking_push_notification(
         )
     })?;
 
-    let response_xml = OtaHotelResNotifRS::success().to_xml();
+    let response_xml = ota_xml::build_res_notif_rs(true, None).map_err(|e| {
+        tracing::error!(error = %e, "Failed to build Booking.com response");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "RESPONSE_ERROR",
+                "Failed to build response",
+            )),
+        )
+    })?;
 
     Response::builder()
         .status(StatusCode::OK)
