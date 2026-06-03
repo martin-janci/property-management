@@ -146,9 +146,7 @@ export function MoveDocumentSheet({
 
   // Derive selected folder name for the destination preview
   const selectedFolder = flatFolders.find((f) => f.id === selectedId);
-  const destinationLabel = selectedFolder
-    ? selectedFolder.name
-    : t('documents.move.rootLabel');
+  const destinationLabel = selectedFolder ? selectedFolder.name : t('documents.move.rootLabel');
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
@@ -216,9 +214,7 @@ export function MoveDocumentSheet({
                     onPress={() => setSelectedId(folder.id)}
                   >
                     {/* Indent by depth */}
-                    {folder.depth > 0 && (
-                      <View style={{ width: folder.depth * 16 }} />
-                    )}
+                    {folder.depth > 0 && <View style={{ width: folder.depth * 16 }} />}
                     <Text style={styles.folderIcon}>📁</Text>
                     <Text
                       style={[styles.folderName, isSelected && styles.folderNameSelected]}
@@ -274,7 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.bgOverlay,
   },
   sheet: {

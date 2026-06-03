@@ -1,8 +1,4 @@
 export { DocumentDetailScreen } from './DocumentDetailScreen';
-export type { MoveDocumentSheetProps } from './MoveDocumentSheet';
-export { MoveDocumentSheet } from './MoveDocumentSheet';
-export type { NewFolderSheetProps } from './NewFolderSheet';
-export { NewFolderSheet } from './NewFolderSheet';
 export type { DocumentPermissionsScreenProps } from './DocumentPermissionsScreen';
 export { DocumentPermissionsScreen } from './DocumentPermissionsScreen';
 export { DocumentPreviewScreen } from './DocumentPreviewScreen';
@@ -11,3 +7,7 @@ export { DocumentShareSheet } from './DocumentShareSheet';
 export type { Document, DocumentStatus, DocumentType } from './DocumentsScreen';
 export { DocumentsScreen } from './DocumentsScreen';
 export { DocumentUploadScreen } from './DocumentUploadScreen';
+export type { MoveDocumentSheetProps } from './MoveDocumentSheet';
+export { MoveDocumentSheet } from './MoveDocumentSheet';
+export type { NewFolderSheetProps } from './NewFolderSheet';
+export { NewFolderSheet } from './NewFolderSheet';
