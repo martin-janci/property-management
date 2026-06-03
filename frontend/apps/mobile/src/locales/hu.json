@@ -149,6 +149,7 @@
     "noDocuments": "Nincsenek elerheto dokumentumok",
     "share": "Megosztás",
     "searchPlaceholder": "Search documents…",
+    "folderItemCount": "{{count}} elem",
     "filter": {
       "all": "All",
       "audience": "Audience"
