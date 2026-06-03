@@ -10,6 +10,7 @@
 
 import type React from 'react';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useWebSocketState } from '../hooks/useWebSocket';
 import './ConnectionStatus.css';
 
@@ -30,7 +31,7 @@ export interface ConnectionStatusProps {
 
   /**
    * Aria label for the status indicator.
-   * @default 'Connection status'
+   * Defaults to the translated `connectionStatus.ariaLabel` string.
    */
   ariaLabel?: string;
 }
@@ -48,28 +49,31 @@ export interface ConnectionStatusProps {
 export function ConnectionStatus({
   showLabel = false,
   className = '',
-  ariaLabel = 'Connection status',
+  ariaLabel,
 }: ConnectionStatusProps): React.ReactElement {
+  const { t } = useTranslation();
   const { isConnected, isConnecting, error, reconnect } = useWebSocketState();
   const [showTooltip, setShowTooltip] = useState(false);
+
+  const resolvedAriaLabel = ariaLabel ?? t('connectionStatus.ariaLabel');
 
   const status = isConnected ? 'connected' : isConnecting ? 'connecting' : 'disconnected';
 
   const statusLabel = isConnected
-    ? 'Connected'
+    ? t('connectionStatus.connected')
     : isConnecting
-      ? 'Connecting...'
+      ? t('connectionStatus.connecting')
       : error
-        ? 'Connection Error'
-        : 'Disconnected';
+        ? t('connectionStatus.error')
+        : t('connectionStatus.disconnected');
 
   const statusDescription = isConnected
-    ? 'Real-time updates are active'
+    ? t('connectionStatus.connectedDescription')
     : isConnecting
-      ? 'Establishing connection...'
+      ? t('connectionStatus.connectingDescription')
       : error
-        ? `Error: ${error.message}`
-        : 'Real-time updates are not available';
+        ? t('connectionStatus.errorDescription', { message: error.message })
+        : t('connectionStatus.disconnectedDescription');
 
   const handleMouseEnter = useCallback(() => {
     setShowTooltip(true);
@@ -105,7 +109,7 @@ export function ConnectionStatus({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       role="status"
-      aria-label={`${ariaLabel}: ${statusLabel}`}
+      aria-label={`${resolvedAriaLabel}: ${statusLabel}`}
       tabIndex={!isConnected && !isConnecting ? 0 : -1}
     >
       <span
@@ -120,7 +124,9 @@ export function ConnectionStatus({
           <div className="connection-status__tooltip-header">{statusLabel}</div>
           <div className="connection-status__tooltip-description">{statusDescription}</div>
           {!isConnected && !isConnecting && (
-            <div className="connection-status__tooltip-action">Click to reconnect</div>
+            <div className="connection-status__tooltip-action">
+              {t('connectionStatus.clickToReconnect')}
+            </div>
           )}
         </div>
       )}
