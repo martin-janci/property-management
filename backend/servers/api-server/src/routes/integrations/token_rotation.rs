@@ -7,8 +7,8 @@
 //!   window, and retries once on `401 Unauthorized` from the Airbnb API.
 //!
 //! * Revocation endpoint: `POST /organizations/{org_id}/airbnb/token/revoke` —
-//!   clears stored tokens locally and attempts a best-effort revocation call to
-//!   Airbnb's token endpoint.
+//!   clears stored tokens locally (Airbnb's Partner API exposes no remote
+//!   token-revocation endpoint, so revocation is local-only).
 //!
 //! # Refresh algorithm
 //!
@@ -274,10 +274,10 @@ pub struct AirbnbTokenRevokeResponse {
 
 /// Revoke Airbnb OAuth tokens for an organisation.
 ///
-/// Clears the stored access/refresh tokens in the database **and** makes a
-/// best-effort call to Airbnb's token revocation endpoint. The local record is
-/// always cleared; a failure on the Airbnb side is logged but does not cause
-/// an error response (Airbnb tokens expire naturally within their TTL).
+/// Clears the stored access/refresh tokens in the database. Airbnb's Partner
+/// API exposes no remote token-revocation endpoint, so this is local-only; the
+/// access token expires naturally within its TTL. `remote_revoked` is therefore
+/// always `false`.
 #[utoipa::path(
     post,
     path = "/api/v1/integrations/organizations/{org_id}/airbnb/token/revoke",
@@ -331,24 +331,18 @@ pub async fn revoke_airbnb_token(
             )
         })?;
 
-    // Best-effort: attempt remote revocation using the stored access token.
+    // Airbnb's Partner API does not expose a token-revocation endpoint, so
+    // revocation is local-only: we clear the stored tokens below and the
+    // access token expires naturally within its TTL. `remote_revoked` is
+    // therefore always false; we keep the field for forward-compatibility.
     let crypto = IntegrationCrypto::try_from_env();
     let remote_revoked = if let Some(enc_token) = connection.canonical_encrypted_token() {
         let plaintext = decrypt_if_available(crypto.as_ref(), enc_token);
         if !plaintext.starts_with('[') {
-            // Airbnb does not expose a dedicated token revocation API endpoint
-            // in their partner program documentation. We make a best-effort
-            // POST to the token endpoint with grant_type=revoke if the client
-            // supports it — otherwise this is a no-op and the access token
-            // expires naturally within its TTL.
-            //
-            // The local DB record is always cleared regardless of this outcome.
             tracing::info!(
                 connection_id = %connection.id,
                 "Airbnb token revocation: local-only (no remote revoke API)"
             );
-            // Remote revocation is best-effort — always false since Airbnb
-            // Partner API does not expose a /revoke endpoint.
             false
         } else {
             tracing::warn!(
@@ -399,9 +393,11 @@ mod tests {
 
     #[test]
     fn test_refresh_buffer_secs_is_positive() {
-        const { assert!(REFRESH_BUFFER_SECS > 0) };
-        // Must be at least the minimum enforced by TokenRefreshConfig.
-        const { assert!(REFRESH_BUFFER_SECS >= integrations::MIN_REFRESH_BUFFER_SECS) };
+        const {
+            assert!(REFRESH_BUFFER_SECS > 0);
+            // Must be at least the minimum enforced by TokenRefreshConfig.
+            assert!(REFRESH_BUFFER_SECS >= integrations::MIN_REFRESH_BUFFER_SECS);
+        }
     }
 
     #[test]
