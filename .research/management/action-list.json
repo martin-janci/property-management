@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-29T03:18:00Z",
+  "generated": "2026-06-03T15:25:01Z",
   "items": [
     {
       "id": "pm-frontend-schedule-followup-test-batch",
@@ -30,11 +30,17 @@
       "action": "Wire the React Native DocumentsScreen folder navigation to the real backend folder hierarchy: fetch GET /api/v1/documents/folders/tree (get_folder_tree) via @ppt/api-client and render nested folders per breadcrumb level instead of the current root-only scaffold.",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-03",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 | gc1-reconcile 2026-06-03T15:25:11Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1019,
+        "merged_at": "2026-06-03T15:21:48Z",
+        "at": "2026-06-03T15:25:11Z"
+      }
     },
     {
       "id": "gap-7a-2-mobile-folder-manage-ui",
@@ -43,6 +49,270 @@
       "priority": "medium",
       "status": "open",
       "source": "dispatcher-tier1-refill 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-922-ppt",
+      "action": "Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-874-portal-webhooks",
+      "action": "Portal webhook fail-closed fix (PR #874) shipped without a regression test for unverified-signature rejection",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-918-mobile-dev-review",
+      "action": "Mobile dev-review batch (PR #918, 5 files under frontend/apps/mobile/src) shipped without a regression test",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-921-sso-consumer",
+      "action": "Reality-server SSO consumer review fix (PR #921, closes #820) shipped without a regression test",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-923-branch-protection-rebase",
+      "action": "CI branch-protection + auto-rebase workflow change (PR #923) shipped without an integration test",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-839-ppt",
+      "action": "Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-booking-push-validation-untested",
+      "action": "Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-943-mobile-dev-review-tail",
+      "action": "Mobile RN dev-review tail (#943) shipped without test coverage",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-939-deploy-server-scopes",
+      "action": "deploy-server OIDC scope mapping (#939) shipped without unit test for derive_oidc_scopes",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-992-mobile-doc-detail",
+      "action": "Mobile document-detail wiring (PR #992) shipped without a regression test for the deep-link payload path",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-990-frontend-gap-sweep",
+      "action": "Frontend gap-sweep (PR #990, 34 files across Epics 1/6/7B/9/10B/11/15/17/18) shipped without a regression test",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
+      "action": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-963-security-headers",
+      "action": "API + SPA security-headers middleware (PR #963) shipped without an assertion test for HSTS/nosniff/CSP",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-mobile-voting-transforms",
+      "action": "Mobile VotingScreen pure transforms toUiStatus/toUiVote have no tests",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-webhook-airbnb-dup-sync-jobs",
+      "action": "Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-reality-web-realtor-invite-silent-error",
+      "action": "Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-mediation-page-no-error-state",
+      "action": "MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-mobile-voting-unsafe-cast",
+      "action": "Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-reality-web-listing-metadata-ssr-throw",
+      "action": "Reality-web listing generateMetadata can throw during SSR on malformed 200 body",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-mobile-voting-hardcoded-locale",
+      "action": "Mobile VotingScreen hardcodes en-US in toLocaleDateString — vote dates never localize",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-announcer-stale-message",
+      "action": "Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "dx-documentsbrowse-folder-preselect",
+      "action": "DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "refactor-ppt-web-untranslated-strings",
+      "action": "ppt-web status/auth components hardcode English in an otherwise i18n'd app",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "security-pkce-oauth-authcode-pr-908-closed",
+      "action": "PR #908 (fix(security): require PKCE on OAuth authorization-code flow, closes #823) was closed unmerged — verify whether PKCE enforcement still pending",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
       "depends_on": []
