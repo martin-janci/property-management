@@ -9,7 +9,7 @@ implementations:
     component: FinancialDashboardPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: partial
 endpoints: []
 relatedScreens: []
 sharedComponents: []
@@ -31,3 +31,4 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
+- 2026-06-03 — agent: confirmed FinancialDashboardPageRoute wired to getARAgingReport/getOverdueInvoices/listInvoices via TanStack Query (#975.1); apiStatus -> partial (no org-wide payments endpoint).

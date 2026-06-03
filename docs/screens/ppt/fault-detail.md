@@ -9,7 +9,7 @@ implementations:
     component: FaultDetailPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: complete
 endpoints: []
 relatedScreens:
   - id: ppt/faults-list
@@ -33,3 +33,4 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
+- 2026-06-03 — agent: confirmed FaultDetailPageRoute wired to useFault + triage/resolve/confirm/reopen/comment/attachment hooks (#970.1); apiStatus -> complete.
