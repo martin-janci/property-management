@@ -184,6 +184,7 @@ impl RentalRepository {
             SELECT
                 id, organization_id, unit_id, platform::text AS platform,
                 access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
                 external_property_id, external_listing_url,
                 is_active, last_sync_at, sync_error,
                 sync_calendar, sync_interval_minutes, block_other_platforms,
@@ -275,6 +276,7 @@ impl RentalRepository {
             RETURNING
                 id, organization_id, unit_id, platform::text AS platform,
                 access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
                 external_property_id, external_listing_url,
                 is_active, last_sync_at, sync_error,
                 sync_calendar, sync_interval_minutes, block_other_platforms,
