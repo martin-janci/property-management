@@ -316,6 +316,149 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "gap-7a-4-mobile-document-preview",
+      "action": "Implement the mobile (React Native) document download + preview slice for story 7a-4: an RN screen wired to the existing backend download/presign routes; web slice shipped, mobile is the remaining gap.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-8a-3-notification-realtime-sync",
+      "action": "Add backend tests for realtime notification-preference sync (WebSocket leg landed PR #472) covering the #480-#487 follow-up cluster for story 8a-3.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-79-1-announcements-faults-api-wiring",
+      "action": "Fully wire AnnouncementsPage and FaultsPage in ppt-web to their TanStack Query API hooks (story 79-1) — infra exists but feature integration is incomplete.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-79-2-auth-callback-e2e",
+      "action": "Add e2e/integration verification for the SSO /auth/callback token-storage + refresh flow (story 79-2; landed PRs #568/#609/#642).",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-report-schedule-update-no-cron-column",
+      "action": "Report schedule cron edits round-trip through the overloaded `time` field; add a dedicated cron_expression column + migration and route schedule update through it (issue #616, story 81-1).",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-81-2-report-exec-history-download-e2e",
+      "action": "Verify presigned download + retry end-to-end on the report execution-history surface (story 81-2; API #611, UI #547/#623) with a regression test.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-83-2-ota-xml-transport",
+      "action": "Implement the OTA XML parsing/generation transport for Booking.com rate/availability push (story 83-2, AC-5) — validation guards landed PR #607, XML transport still missing.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-esignature-webhook-idempotency-guard",
+      "action": "Add a terminal-state idempotency guard to the e-signature webhook handler (story 84-2) so duplicate webhook deliveries cannot re-transition an already-finalized signature.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-85-1-mobile-env-config",
+      "action": "Add Expo app.config.ts + environment configuration (API_BASE_URL/ENVIRONMENT) for the React Native app and document env setup (story 85-1).",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-85-2-mobile-build-scripts",
+      "action": "Create mobile build scripts (scripts/build-mobile|android|ios.sh) and DEV/STG app-icon variant generation for the React Native app (story 85-2).",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-80-2-dispute-filing-ac-coverage",
+      "action": "Verify full acceptance-criteria coverage for the dispute-filing flow (story 80-2) and add missing regression tests for the filing surface.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-82-3-reality-mobile-search-filters",
+      "action": "Reality mobile (KMP) home/search screen: debounced search, infinite scroll and FilterSheet wiring (story 82-3, AC-2/AC-4) on the Android target.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-82-2-reality-mobile-nav-state",
+      "action": "Add tests for reality-mobile navigation state preservation and deep-linking URL schemes (story 82-2, AC-4) on the Android target.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
     }
   ]
 }
