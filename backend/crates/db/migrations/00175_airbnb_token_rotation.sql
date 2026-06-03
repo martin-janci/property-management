@@ -9,8 +9,8 @@
 --   1. Add columns as nullable.
 --   2. Backfill from the generic columns for Airbnb rows (data unchanged, same
 --      ciphertext — no re-encryption required).
---   3. Mark the columns NOT NULL with a default of NULL retained for non-Airbnb
---      rows (Booking.com and future platforms do not use these).
+--   The columns intentionally remain nullable: they are NULL for non-Airbnb
+--   rows (Booking.com and future platforms do not use these).
 --
 -- After this migration the application writes both columns for Airbnb
 -- connections: the generic columns are kept for backward-compat until a
