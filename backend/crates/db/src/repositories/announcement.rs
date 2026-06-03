@@ -36,6 +36,49 @@ use chrono::{DateTime, Utc};
 use sqlx::{Connection, Error as SqlxError, Executor, FromRow, Postgres};
 use uuid::Uuid;
 
+/// Issue #920 / #999: the single source of truth for "is the RLS-context user
+/// targeted by this announcement?".
+///
+/// `target_type = 'all'` is org-wide; otherwise the published announcement is
+/// visible only when the user (`app.current_user_id`) matches its building /
+/// unit residencies or org role. This predicate is shared **verbatim** between
+/// [`AnnouncementRepository::list_published_rls`] and
+/// [`AnnouncementRepository::count_published_rls`] so the feed and its count can
+/// never silently diverge (the previous two hand-copied predicates were a known
+/// drift hazard).
+///
+/// It references `$1` for the organization id (the `roles` arm), so callers must
+/// bind the org id as the first parameter. Expanded via `concat!` at compile
+/// time, so the resulting query string stays a `'static str`.
+macro_rules! announcement_targeting_predicate {
+    () => {
+        r#"
+                target_type = 'all'
+                OR (target_type = 'building' AND EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    JOIN units u ON u.id = ur.unit_id
+                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND ur.end_date IS NULL
+                      AND u.building_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+                OR (target_type = 'units' AND EXISTS (
+                    SELECT 1 FROM unit_residents ur
+                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND ur.end_date IS NULL
+                      AND ur.unit_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+                OR (target_type = 'roles' AND EXISTS (
+                    SELECT 1 FROM user_memberships m
+                    WHERE m.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                      AND m.organization_id = $1
+                      AND m.revoked_at IS NULL
+                      AND (m.expires_at IS NULL OR m.expires_at > NOW())
+                      AND m.role IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                ))
+"#
+    };
+}
+
 /// Row struct for announcement with details query.
 #[derive(Debug, FromRow)]
 struct AnnouncementDetailsRow {
@@ -327,45 +370,23 @@ impl AnnouncementRepository {
         let offset = offset.unwrap_or(0);
 
         // Issue #920: published announcements are visible to a user only when
-        // the announcement's targeting includes them. `target_type = 'all'` is
-        // org-wide; otherwise match the RLS-context user
-        // (`app.current_user_id`) against their building / unit residencies and
-        // org role. Keep this predicate in sync with `count_published_rls`.
-        let announcements = sqlx::query_as::<_, AnnouncementSummary>(
+        // the announcement's targeting includes them. The targeting predicate
+        // is shared with `count_published_rls` via
+        // `announcement_targeting_predicate!` so the two can never diverge.
+        let announcements = sqlx::query_as::<_, AnnouncementSummary>(concat!(
             r#"
             SELECT
                 id, title, status::text as status, target_type::text as target_type,
                 published_at, pinned, comments_enabled, acknowledgment_required
             FROM announcements
             WHERE organization_id = $1 AND status = 'published'
-              AND (
-                target_type = 'all'
-                OR (target_type = 'building' AND EXISTS (
-                    SELECT 1 FROM unit_residents ur
-                    JOIN units u ON u.id = ur.unit_id
-                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-                      AND ur.end_date IS NULL
-                      AND u.building_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
-                ))
-                OR (target_type = 'units' AND EXISTS (
-                    SELECT 1 FROM unit_residents ur
-                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-                      AND ur.end_date IS NULL
-                      AND ur.unit_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
-                ))
-                OR (target_type = 'roles' AND EXISTS (
-                    SELECT 1 FROM user_memberships m
-                    WHERE m.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-                      AND m.organization_id = $1
-                      AND m.revoked_at IS NULL
-                      AND (m.expires_at IS NULL OR m.expires_at > NOW())
-                      AND m.role IN (SELECT jsonb_array_elements_text(announcements.target_ids))
-                ))
-              )
+              AND ("#,
+            announcement_targeting_predicate!(),
+            r#")
             ORDER BY pinned DESC, published_at DESC
             LIMIT $2 OFFSET $3
             "#,
-        )
+        ))
         .bind(org_id)
         .bind(limit)
         .bind(offset)
@@ -457,38 +478,18 @@ impl AnnouncementRepository {
         E: Executor<'e, Database = Postgres>,
     {
         // Issue #920: count only announcements the RLS-context user is targeted
-        // by. Keep this predicate in sync with `list_published_rls`.
-        let count = sqlx::query_scalar::<_, i64>(
+        // by, using the same `announcement_targeting_predicate!` as
+        // `list_published_rls` so list and count agree.
+        let count = sqlx::query_scalar::<_, i64>(concat!(
             r#"
             SELECT COUNT(*)
             FROM announcements
             WHERE organization_id = $1 AND status = 'published'
-              AND (
-                target_type = 'all'
-                OR (target_type = 'building' AND EXISTS (
-                    SELECT 1 FROM unit_residents ur
-                    JOIN units u ON u.id = ur.unit_id
-                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-                      AND ur.end_date IS NULL
-                      AND u.building_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
-                ))
-                OR (target_type = 'units' AND EXISTS (
-                    SELECT 1 FROM unit_residents ur
-                    WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-                      AND ur.end_date IS NULL
-                      AND ur.unit_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
-                ))
-                OR (target_type = 'roles' AND EXISTS (
-                    SELECT 1 FROM user_memberships m
-                    WHERE m.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-                      AND m.organization_id = $1
-                      AND m.revoked_at IS NULL
-                      AND (m.expires_at IS NULL OR m.expires_at > NOW())
-                      AND m.role IN (SELECT jsonb_array_elements_text(announcements.target_ids))
-                ))
-              )
+              AND ("#,
+            announcement_targeting_predicate!(),
+            r#")
             "#,
-        )
+        ))
         .bind(org_id)
         .fetch_one(executor)
         .await?;
