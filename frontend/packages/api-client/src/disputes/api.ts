@@ -17,11 +17,14 @@ import type {
   DisputeWithDetails,
   EscalateDisputeRequest,
   MediationNote,
+  MediationSession,
   PaginatedDisputes,
   ResolveDisputeRequest,
+  ScheduleSessionRequest,
   TimelineEvent,
   TimelineQuery,
   UpdateDisputeStatusRequest,
+  UpdateSessionRequest,
 } from './types';
 
 const API_BASE = '/api/v1/disputes';
@@ -203,6 +206,48 @@ export async function addMediationNote(
 
 export async function listMediationNotes(disputeId: string): Promise<MediationNote[]> {
   return apiRequest<MediationNote[]>(`${API_BASE}/${disputeId}/notes`);
+}
+
+// ============================================
+// Mediation Sessions (Story 80.3)
+// ============================================
+
+/** List all mediation sessions for a dispute. */
+export async function listSessions(disputeId: string): Promise<MediationSession[]> {
+  return apiRequest<MediationSession[]>(`${API_BASE}/${disputeId}/sessions`);
+}
+
+/** Schedule a new mediation session. */
+export async function scheduleSession(
+  disputeId: string,
+  data: ScheduleSessionRequest
+): Promise<MediationSession> {
+  return apiRequest<MediationSession>(`${API_BASE}/${disputeId}/sessions`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/** Update an existing session — used for rescheduling and relocating. */
+export async function updateSession(
+  disputeId: string,
+  sessionId: string,
+  data: UpdateSessionRequest
+): Promise<MediationSession> {
+  return apiRequest<MediationSession>(`${API_BASE}/${disputeId}/sessions/${sessionId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+/** Cancel a scheduled session. */
+export async function cancelSession(
+  disputeId: string,
+  sessionId: string
+): Promise<MediationSession> {
+  return apiRequest<MediationSession>(`${API_BASE}/${disputeId}/sessions/${sessionId}/cancel`, {
+    method: 'POST',
+  });
 }
 
 // ============================================

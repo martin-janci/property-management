@@ -14,8 +14,10 @@ import type {
   DisputeListQuery,
   EscalateDisputeRequest,
   ResolveDisputeRequest,
+  ScheduleSessionRequest,
   TimelineQuery,
   UpdateDisputeStatusRequest,
+  UpdateSessionRequest,
 } from './types';
 
 // ============================================
@@ -32,6 +34,7 @@ export const disputeKeys = {
   timeline: (id: string) => [...disputeKeys.detail(id), 'timeline'] as const,
   evidence: (id: string) => [...disputeKeys.detail(id), 'evidence'] as const,
   notes: (id: string) => [...disputeKeys.detail(id), 'notes'] as const,
+  sessions: (id: string) => [...disputeKeys.detail(id), 'sessions'] as const,
   statistics: (orgId: string) => [...disputeKeys.all, 'statistics', orgId] as const,
 };
 
@@ -89,6 +92,53 @@ export function useMediationNotes(disputeId: string) {
     queryKey: disputeKeys.notes(disputeId),
     queryFn: () => api.listMediationNotes(disputeId),
     enabled: !!disputeId,
+  });
+}
+
+// ============================================
+// Mediation Session Queries & Mutations (Story 80.3)
+// ============================================
+
+export function useMediationSessions(disputeId: string) {
+  return useQuery({
+    queryKey: disputeKeys.sessions(disputeId),
+    queryFn: () => api.listSessions(disputeId),
+    enabled: !!disputeId,
+    staleTime: 30_000,
+  });
+}
+
+export function useScheduleSession(disputeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ScheduleSessionRequest) => api.scheduleSession(disputeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: disputeKeys.sessions(disputeId) });
+      queryClient.invalidateQueries({ queryKey: disputeKeys.timeline(disputeId) });
+    },
+  });
+}
+
+export function useUpdateSession(disputeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, data }: { sessionId: string; data: UpdateSessionRequest }) =>
+      api.updateSession(disputeId, sessionId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: disputeKeys.sessions(disputeId) });
+      queryClient.invalidateQueries({ queryKey: disputeKeys.timeline(disputeId) });
+    },
+  });
+}
+
+export function useCancelSession(disputeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => api.cancelSession(disputeId, sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: disputeKeys.sessions(disputeId) });
+      queryClient.invalidateQueries({ queryKey: disputeKeys.timeline(disputeId) });
+    },
   });
 }
 
