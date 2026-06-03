@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-03T14:16:30Z",
+  "generated": "2026-06-03T14:26:29Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-sync-sprint-status-10b",
@@ -219,6 +219,28 @@
       "implementer_summary": null,
       "reviewer_summary": "verdict=approve head_oid=cbd9dea0a6338fcd30508b75b099a2a199101a2b note=presigned download path safe: RLS+access-gate, no IDOR, bounded 15min TTL, no secret logging; CI green",
       "last_reviewed_oid": "cbd9dea0a6338fcd30508b75b099a2a199101a2b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-7a-2-mobile-folder-tree-wiring",
+      "branch": "auto-impl/gap-7a-2-mobile-folder-tree-wiring",
+      "status": "in-progress",
+      "claimed_at": "2026-06-03T14:26:29Z",
+      "last_updated": "2026-06-03T14:26:29Z",
+      "status_changed_at": "2026-06-03T14:26:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
