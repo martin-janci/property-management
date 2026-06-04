@@ -1,4 +1,11 @@
-import { type ApiAnnouncementSummary, extractItems, toUiAnnouncement } from './AnnouncementsScreen';
+import {
+  type Announcement,
+  type ApiAnnouncementSummary,
+  derivePinnedItems,
+  extractItems,
+  filterMainList,
+  toUiAnnouncement,
+} from './AnnouncementsScreen';
 
 // Regression for PR #918 (High #3 + Critical #1): the screen moved off the
 // manager-only `/api/v1/announcements` endpoint (403 for residents) to the
@@ -53,5 +60,77 @@ describe('extractItems (PR #918 reads `announcements`, not `items`)', () => {
     // `items` is not in the response type; cast to confirm it is NOT read.
     const legacy = { items: [summary] } as unknown as Parameters<typeof extractItems>[0];
     expect(extractItems(legacy)).toEqual([]);
+  });
+});
+
+// Regression for PR #943 (#767 dev-review tail): the screen dropped the
+// dedicated `?pinned=true` query and now derives the sticky pinned band
+// client-side from the single published list, and partitions the main feed
+// from that same list. These behaviours used to be inlined in the component
+// body (untested); PR #943 shipped without pinning them. The two helpers
+// below pin the client-side derivation so it cannot silently regress.
+
+const ui = (over: Partial<Announcement> & Pick<Announcement, 'id'>): Announcement => ({
+  title: over.title ?? over.id,
+  category: 'general',
+  createdAt: '2026-05-01T00:00:00Z',
+  author: 'Building Management',
+  isRead: false,
+  isPinned: false,
+  attachments: [],
+  commentsCount: 0,
+  ...over,
+});
+
+describe('derivePinnedItems (PR #943 client-side pinned band)', () => {
+  it('keeps only pinned rows', () => {
+    const items = [
+      ui({ id: 'a', isPinned: true }),
+      ui({ id: 'b', isPinned: false }),
+      ui({ id: 'c', isPinned: true }),
+    ];
+    expect(derivePinnedItems(items).map((a) => a.id)).toEqual(['a', 'c']);
+  });
+
+  it('returns [] when nothing is pinned', () => {
+    expect(derivePinnedItems([ui({ id: 'a' }), ui({ id: 'b' })])).toEqual([]);
+  });
+});
+
+describe('filterMainList (PR #943 main feed partitioning)', () => {
+  const items = [
+    ui({ id: 'pin', isPinned: true, createdAt: '2026-05-05T00:00:00Z' }),
+    ui({
+      id: 'old',
+      title: 'Lift maintenance',
+      category: 'maintenance',
+      createdAt: '2026-05-01T00:00:00Z',
+    }),
+    ui({
+      id: 'new',
+      title: 'Garden event',
+      category: 'event',
+      createdAt: '2026-05-03T00:00:00Z',
+    }),
+  ];
+
+  it('excludes pinned items from the main feed', () => {
+    expect(filterMainList(items, 'all', '').map((a) => a.id)).not.toContain('pin');
+  });
+
+  it('sorts the remaining items newest-first', () => {
+    expect(filterMainList(items, 'all', '').map((a) => a.id)).toEqual(['new', 'old']);
+  });
+
+  it('applies the active category filter', () => {
+    expect(filterMainList(items, 'maintenance', '').map((a) => a.id)).toEqual(['old']);
+  });
+
+  it('matches the search query against the TITLE only (no content body since #943)', () => {
+    expect(filterMainList(items, 'all', 'garden').map((a) => a.id)).toEqual(['new']);
+    // Case-insensitive.
+    expect(filterMainList(items, 'all', 'LIFT').map((a) => a.id)).toEqual(['old']);
+    // A term that matched the old `content` body must NOT match now.
+    expect(filterMainList(items, 'all', 'no-such-title')).toEqual([]);
   });
 });
