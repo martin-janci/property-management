@@ -7,8 +7,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
 import { useOfflineSupport, usePushNotifications } from './hooks';
-import { deepLinkManager, type ParsedDeepLink } from './qrcode';
+import { deepLinkManager } from './qrcode';
 import { colors } from './screens/shared/screenStyles';
+import { resolveDeepLinkTarget, type Screen } from './services/deepLinkRouting';
 import './i18n'; // Initialize i18n
 import {
   AnnouncementDetailScreen,
@@ -53,76 +54,6 @@ const queryClient = new QueryClient({
 });
 
 const API_BASE_URL = (Constants.expoConfig?.extra?.apiUrl as string) || 'http://localhost:8080';
-
-type Screen =
-  | 'Dashboard'
-  | 'Faults'
-  | 'ReportFault'
-  | 'Announcements'
-  | 'AnnouncementDetail'
-  | 'Voting'
-  | 'VoteDetail'
-  | 'Documents'
-  | 'DocumentDetail'
-  | 'DocumentPreview'
-  | 'DocumentUpload'
-  | 'DocumentPermissions'
-  | 'Messages'
-  | 'ThreadDetail'
-  | 'Settings'
-  | 'MeterReading'
-  | 'Meters'
-  | 'MeterDetail'
-  | 'Profile'
-  | 'TwoFactor'
-  | 'Neighbors'
-  | 'Notifications'
-  | 'PersonMonths'
-  | 'Outages'
-  | 'News'
-  | 'Forms'
-  | 'Buildings'
-  | 'Leases'
-  | 'LeaseDetail'
-  | 'More';
-
-/**
- * gap-85-3: translate a parsed deep link (custom scheme OR universal link)
- * into the in-app screen name + params understood by `handleNavigate`.
- *
- * The DeepLinkHandler route table keys detail params as `id`; the App screens
- * expect domain-specific param names (`announcementId`, `voteId`,
- * `documentId`). When an `:id` is present we route to the matching *Detail
- * screen; otherwise we land on the list screen.
- */
-function resolveDeepLinkTarget(
-  link: ParsedDeepLink
-): { screen: Screen; params?: Record<string, unknown> } | null {
-  if (!link.success || !link.screen) {
-    return null;
-  }
-  const id = link.params?.id;
-  switch (link.screen) {
-    case 'Announcements':
-      return id
-        ? { screen: 'AnnouncementDetail', params: { announcementId: id } }
-        : { screen: 'Announcements' };
-    case 'Voting':
-      return id ? { screen: 'VoteDetail', params: { voteId: id } } : { screen: 'Voting' };
-    case 'Documents':
-      return id
-        ? { screen: 'DocumentDetail', params: { documentId: id } }
-        : { screen: 'Documents' };
-    case 'Messages':
-      return id ? { screen: 'ThreadDetail', params: { threadId: id } } : { screen: 'Messages' };
-    case 'WidgetSettings':
-      return { screen: 'Settings' };
-    default:
-      // Faults, ReportFault, Outages, Settings, Dashboard map 1:1. Pass any
-      // remaining route params through verbatim.
-      return { screen: link.screen as Screen, params: link.params };
-  }
-}
 
 function MainApp() {
   const { t } = useTranslation();
