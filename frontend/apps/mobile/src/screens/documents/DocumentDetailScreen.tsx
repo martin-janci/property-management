@@ -15,6 +15,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { apiRequest, useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
+import { isPreviewUnsupportedError } from './DocumentPreviewScreen';
 import { DocumentShareSheet } from './DocumentShareSheet';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -101,12 +102,7 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
           `/api/v1/documents/${documentId}/preview`
         );
       } catch (err) {
-        const message = err instanceof Error ? err.message : '';
-        const isUnsupported =
-          message.includes('PREVIEW_NOT_SUPPORTED') ||
-          message.includes('not supported') ||
-          message.includes('HTTP 400');
-        if (!isUnsupported) throw err;
+        if (!isPreviewUnsupportedError(err)) throw err;
         presigned = await apiRequest<PresignedUrlResponse>(
           `/api/v1/documents/${documentId}/download`
         );
