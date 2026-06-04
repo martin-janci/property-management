@@ -46,10 +46,7 @@ fn validate_push_availability(
     request: &BookingPushAvailabilityRequest,
 ) -> Result<(), (&'static str, &'static str)> {
     if request.updates.is_empty() {
-        return Err((
-            "NO_UPDATES",
-            "At least one availability update is required",
-        ));
+        return Err(("NO_UPDATES", "At least one availability update is required"));
     }
 
     if request.updates.len() > MAX_BATCH_SIZE {
@@ -81,10 +78,7 @@ fn validate_push_rates(
     request: &BookingPushRatesRequest,
 ) -> Result<(), (&'static str, &'static str)> {
     if request.updates.is_empty() {
-        return Err((
-            "NO_UPDATES",
-            "At least one rate update is required",
-        ));
+        return Err(("NO_UPDATES", "At least one rate update is required"));
     }
 
     if request.updates.len() > MAX_BATCH_SIZE {
@@ -1305,12 +1299,8 @@ pub async fn push_booking_availability(
         ));
     }
 
-    validate_push_availability(&request).map_err(|(code, msg)| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(code, msg)),
-        )
-    })?;
+    validate_push_availability(&request)
+        .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1448,12 +1438,8 @@ pub async fn push_booking_rates(
         ));
     }
 
-    validate_push_rates(&request).map_err(|(code, msg)| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(code, msg)),
-        )
-    })?;
+    validate_push_rates(&request)
+        .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
 
