@@ -695,6 +695,28 @@ pub async fn handle_webhook(
             )
         })?;
 
+    // Idempotency guard (bug-esignature-webhook-idempotency-guard, Story 84.2):
+    // e-signature providers deliver webhooks at-least-once, so a `completed` /
+    // `declined` event can arrive more than once. If the request is already in
+    // a terminal state, replaying the webhook must be a no-op — otherwise we
+    // would re-store the signed document, re-fire the requester completion /
+    // decline emails, and churn signer status on every duplicate delivery.
+    // Acknowledge with 200 so the provider stops retrying.
+    if signature_request.status.is_terminal() {
+        info!(
+            provider = %provider,
+            provider_request_id = %event.provider_request_id,
+            signature_request_id = %signature_request.id,
+            status = %signature_request.status,
+            event_type = %event.event_type,
+            "Ignoring duplicate webhook for already-finalized signature request"
+        );
+        return Ok(Json(WebhookResponse {
+            success: true,
+            message: "Signature request already finalized; webhook ignored".into(),
+        }));
+    }
+
     // Process signer-specific events and send appropriate email notifications (Story 84.2).
     let updated_request = if let (Some(signer_email), Some(signer_status)) =
         (&event.signer_email, &event.signer_status)

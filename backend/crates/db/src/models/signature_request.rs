@@ -44,6 +44,25 @@ impl std::fmt::Display for SignatureRequestStatus {
     }
 }
 
+impl SignatureRequestStatus {
+    /// Whether this status is terminal (finalized) — the request has reached
+    /// an outcome that must never be re-transitioned.
+    ///
+    /// E-signature providers deliver webhooks at-least-once, so a single
+    /// `completed` / `declined` event may arrive multiple times. Once a
+    /// request is in a terminal state, replaying a webhook must be a no-op:
+    /// it must not re-store the signed document, re-fire requester emails, or
+    /// flip signer status back and forth. Webhook handlers consult this guard
+    /// before applying any side effect (bug-esignature-webhook-idempotency-guard,
+    /// Story 84.2).
+    pub fn is_terminal(self) -> bool {
+        matches!(
+            self,
+            Self::Completed | Self::Declined | Self::Expired | Self::Cancelled
+        )
+    }
+}
+
 /// Status of an individual signer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -423,6 +442,19 @@ mod tests {
         signer.status = SignerStatus::Declined;
         assert!(signer.is_complete());
         assert!(!signer.has_signed());
+    }
+
+    #[test]
+    fn test_status_is_terminal() {
+        // Terminal (finalized) states — webhook replays must be no-ops.
+        assert!(SignatureRequestStatus::Completed.is_terminal());
+        assert!(SignatureRequestStatus::Declined.is_terminal());
+        assert!(SignatureRequestStatus::Expired.is_terminal());
+        assert!(SignatureRequestStatus::Cancelled.is_terminal());
+
+        // Non-terminal states — still progressing, webhooks may transition.
+        assert!(!SignatureRequestStatus::Pending.is_terminal());
+        assert!(!SignatureRequestStatus::InProgress.is_terminal());
     }
 
     #[test]
