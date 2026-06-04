@@ -239,12 +239,11 @@ async fn preference_update_publishes_realtime_event(pool: PgPool) {
     let (access_token, _refresh) = create_authenticated_user(&app, &user).await;
 
     // Resolve the user's id from the DB so we can subscribe to their channel.
-    let user_id: uuid::Uuid =
-        sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
-            .bind(&user.email)
-            .fetch_one(&app.pool)
-            .await
-            .expect("lookup user id");
+    let user_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("lookup user id");
 
     // Independent subscriber (distinct instance_id) — observes cross-instance publish.
     let observer = PubSubService::new(
