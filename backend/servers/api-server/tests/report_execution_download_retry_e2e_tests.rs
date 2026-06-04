@@ -335,7 +335,10 @@ async fn get_execution_download_url_without_file_returns_422(pool: PgPool) {
         response.text(),
     );
     let body = response.json_value();
-    let code = body.get("code").and_then(|c| c.as_str()).unwrap_or_default();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
     assert_eq!(
         code, "NO_FILE_YET",
         "#611: file-less download must carry NO_FILE_YET, body={}",
@@ -438,7 +441,10 @@ async fn retry_non_failed_execution_returns_400(pool: PgPool) {
         response.text(),
     );
     let body = response.json_value();
-    let code = body.get("code").and_then(|c| c.as_str()).unwrap_or_default();
+    let code = body
+        .get("code")
+        .and_then(|c| c.as_str())
+        .unwrap_or_default();
     assert_eq!(
         code, "INVALID_STATE",
         "#611: non-failed retry must carry INVALID_STATE, body={}",
