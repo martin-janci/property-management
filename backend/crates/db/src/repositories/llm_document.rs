@@ -438,6 +438,31 @@ impl LlmDocumentRepository {
         .await
     }
 
+    /// List descriptions for a listing — tenant-scoped (issue #766 / #816).
+    ///
+    /// `org_id` must originate from the verified request principal. The
+    /// `organization_id = $2` guard ensures a caller in org B cannot read the
+    /// generated listing descriptions owned by org A by enumerating a
+    /// `listing_id`. Returns an empty vec for both "no descriptions" and
+    /// "listing belongs to another tenant", so existence is never leaked.
+    pub async fn list_listing_descriptions_for_org(
+        &self,
+        listing_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Vec<GeneratedListingDescription>, SqlxError> {
+        sqlx::query_as::<_, GeneratedListingDescription>(
+            r#"
+            SELECT * FROM generated_listing_descriptions
+            WHERE listing_id = $1 AND organization_id = $2
+            ORDER BY generated_at DESC
+            "#,
+        )
+        .bind(listing_id)
+        .bind(org_id)
+        .fetch_all(&self.pool)
+        .await
+    }
+
     /// Update edited description.
     pub async fn update_edited_description(
         &self,

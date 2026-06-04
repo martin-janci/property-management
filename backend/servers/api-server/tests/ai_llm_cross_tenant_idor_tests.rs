@@ -6,12 +6,13 @@
 //! row id and applied NO `organization_id` predicate, so a caller in org B
 //! could read/mutate org A's rows by guessing (or enumerating) the UUID:
 //!
-//! - `get_lease_template`     → `find_prompt_template(id)`     (template leak)
-//! - `get_generation_request` → `find_generation_request(id)`  (prompt/result/cost leak)
-//! - `get_photo_enhancement`  → `find_photo_enhancement(id)`   (photo record leak)
-//! - `publish_description`    → `publish_description(id)`       (cross-tenant mutate)
-//! - `provide_feedback`       → `add_feedback(user_id, …)`     (cross-tenant write / training poison)
-//! - `generate_lease`         → no `unit_id` ↔ tenant validation
+//! - `get_lease_template`       → `find_prompt_template(id)`     (template leak)
+//! - `get_generation_request`   → `find_generation_request(id)`  (prompt/result/cost leak)
+//! - `get_photo_enhancement`    → `find_photo_enhancement(id)`   (photo record leak)
+//! - `publish_description`      → `publish_description(id)`       (cross-tenant mutate)
+//! - `list_listing_descriptions`→ `list_listing_descriptions(listing_id)` (cross-tenant read)
+//! - `provide_feedback`         → `add_feedback(user_id, …)`     (cross-tenant write / training poison)
+//! - `generate_lease`           → no `unit_id` ↔ tenant validation
 //!
 //! The fix adds `_for_org` repository variants (and a `unit_belongs_to_org`
 //! check) that thread the principal's `effective_org` into the SQL WHERE
@@ -32,7 +33,7 @@
 //! so they run against `db::MIGRATOR` deterministically.
 
 use db::models::ProvideFeedback;
-use db::repositories::AiChatRepository;
+use db::repositories::{AiChatRepository, LlmDocumentRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -219,5 +220,106 @@ async fn add_feedback_for_org_blocks_cross_tenant_write(pool: PgPool) {
     assert_eq!(
         count_after_same, 1,
         "exactly one feedback row exists after the same-org write"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (3) Listing-description list read is tenant-scoped — org B cannot read org
+//     A's generated listing descriptions by enumerating a listing id.
+//
+// `generated_listing_descriptions` does not ship a migration in `db::MIGRATOR`
+// (the LLM-document tables are provisioned out-of-band), so we create the
+// minimal shape the repository's `SELECT *` maps onto. This pins the IDOR
+// contract on `list_listing_descriptions_for_org` directly at the repo layer,
+// matching the rationale documented at the top of this file.
+// ---------------------------------------------------------------------------
+
+async fn create_generated_listing_descriptions_table(pool: &PgPool) {
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS generated_listing_descriptions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            organization_id UUID NOT NULL,
+            listing_id UUID,
+            user_id UUID NOT NULL,
+            language TEXT NOT NULL,
+            original_description TEXT NOT NULL,
+            property_details JSONB NOT NULL DEFAULT '{}'::jsonb,
+            photo_analysis JSONB,
+            generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            edited_description TEXT,
+            edited_at TIMESTAMPTZ,
+            edited_by UUID,
+            is_published BOOLEAN NOT NULL DEFAULT FALSE,
+            generation_request_id UUID NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await
+    .expect("create generated_listing_descriptions");
+}
+
+async fn seed_listing_description(pool: &PgPool, org_id: Uuid, listing_id: Uuid, user_id: Uuid) {
+    sqlx::query(
+        r#"
+        INSERT INTO generated_listing_descriptions (
+            organization_id, listing_id, user_id, language,
+            original_description, property_details, generation_request_id
+        )
+        VALUES ($1, $2, $3, 'sk', 'secret copy', '{}'::jsonb, gen_random_uuid())
+        "#,
+    )
+    .bind(org_id)
+    .bind(listing_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed listing description");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_listing_descriptions_for_org_blocks_cross_tenant_read(pool: PgPool) {
+    create_generated_listing_descriptions_table(&pool).await;
+    let repo = LlmDocumentRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "desc-a").await;
+    let org_b = seed_org(&pool, "desc-b").await;
+    let user_a = seed_user(&pool, "desc-a@ai-idor.test").await;
+    let listing_in_a = Uuid::new_v4();
+    seed_listing_description(&pool, org_a, listing_in_a, user_a).await;
+
+    // Same-org read returns the row.
+    let same_org = repo
+        .list_listing_descriptions_for_org(listing_in_a, org_a)
+        .await
+        .expect("query ok");
+    assert_eq!(
+        same_org.len(),
+        1,
+        "org A must be able to read its own listing descriptions"
+    );
+
+    // Cross-org read returns nothing (the IDOR is blocked).
+    let cross_org = repo
+        .list_listing_descriptions_for_org(listing_in_a, org_b)
+        .await
+        .expect("query ok");
+    assert!(
+        cross_org.is_empty(),
+        "org B must NOT be able to read org A's listing descriptions"
+    );
+
+    // Demonstrate the leak the org predicate closes: the unscoped lookup the
+    // pre-fix handler performed returns the row regardless of org.
+    let unscoped = repo
+        .list_listing_descriptions(listing_in_a)
+        .await
+        .expect("query ok");
+    assert_eq!(
+        unscoped.len(),
+        1,
+        "sanity: the unscoped query (the vulnerable pre-fix path) does leak the row"
     );
 }
