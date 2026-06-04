@@ -45,6 +45,11 @@ FROM nginx:alpine AS production
 RUN apk add --no-cache gettext
 
 COPY docker/nginx/admin-web.nginx.conf.template /etc/nginx/conf.d/default.conf.template
+# Shared, `include`d partials (relative redirects, gzip, common security
+# headers). Kept OUTSIDE /etc/nginx/conf.d so the base image's
+# `include /etc/nginx/conf.d/*.conf` does not load them as standalone configs;
+# the template pulls them in by absolute path. No envsubst needed.
+COPY docker/nginx/partials/ /etc/nginx/partials/
 COPY docker/nginx/render-template.sh /docker-entrypoint.d/10-render-template.sh
 RUN chmod +x /docker-entrypoint.d/10-render-template.sh
 
