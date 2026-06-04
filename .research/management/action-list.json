@@ -209,10 +209,10 @@
     },
     {
       "id": "bug-webhook-airbnb-dup-sync-jobs",
-      "action": "Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
+      "action": "[DROPPED: semantic-dup, already merged on dev] Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "dropped",
       "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
@@ -220,10 +220,10 @@
     },
     {
       "id": "bug-reality-web-realtor-invite-silent-error",
-      "action": "Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI",
+      "action": "[DROPPED: semantic-dup, already merged on dev] Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "dropped",
       "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
@@ -286,10 +286,10 @@
     },
     {
       "id": "dx-documentsbrowse-folder-preselect",
-      "action": "DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
+      "action": "[DROPPED: semantic-dup, already merged on dev] DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "dropped",
       "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
@@ -322,11 +322,17 @@
       "action": "Implement the mobile (React Native) document download + preview slice for story 7a-4: an RN screen wired to the existing backend download/presign routes; web slice shipped, mobile is the remaining gap.",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T04:05:05Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1039,
+        "merged_at": "2026-06-04T00:08:03Z",
+        "at": "2026-06-04T04:05:05Z"
+      }
     },
     {
       "id": "test-gap-8a-3-notification-realtime-sync",
@@ -344,11 +350,17 @@
       "action": "Fully wire AnnouncementsPage and FaultsPage in ppt-web to their TanStack Query API hooks (story 79-1) — infra exists but feature integration is incomplete.",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T04:05:05Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1033,
+        "merged_at": "2026-06-04T00:08:01Z",
+        "at": "2026-06-04T04:05:05Z"
+      }
     },
     {
       "id": "test-gap-79-2-auth-callback-e2e",
