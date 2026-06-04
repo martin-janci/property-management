@@ -34,7 +34,7 @@
     "react-router-dom": "^6.21.0",
     "react-hook-form": "^7.54.0",
     "@hookform/resolvers": "^5.4.0",
-    "zod": "^3.23.8"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@axe-core/react": "^4.10.0",
