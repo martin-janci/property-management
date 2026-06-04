@@ -349,6 +349,14 @@
       "deleteErrorMessage": "A mappa törlése nem sikerült",
       "createError": "Létrehozás sikertelen",
       "createErrorMessage": "A mappa létrehozása nem sikerült"
+    },
+    "versionHistory": {
+      "title": "Verziótörténet",
+      "loading": "Verziók betöltése…",
+      "loadError": "A verziótörténet betöltése nem sikerült.",
+      "empty": "Ehhez a dokumentumhoz nincsenek elérhető verziók.",
+      "version": "{{n}}. verzió",
+      "current": "Aktuális"
     }
   },
   "disputes": {
@@ -1012,5 +1020,100 @@
     "errorDescription": "Hiba: {{message}}",
     "disconnectedDescription": "A valós idejű frissítések nem érhetők el",
     "clickToReconnect": "Kattintson az újracsatlakozáshoz"
+  },
+  "submissionStatus": {
+    "status": {
+      "draft": "Vázlat",
+      "pending_validation": "Ellenőrzésre vár",
+      "validated": "Ellenőrizve",
+      "submitted": "Beküldve",
+      "acknowledged": "Visszaigazolva",
+      "processing": "Feldolgozás alatt",
+      "accepted": "Elfogadva",
+      "rejected": "Elutasítva",
+      "requires_correction": "Javítás szükséges",
+      "cancelled": "Visszavonva"
+    },
+    "description": {
+      "draft": "A beküldés előkészítés alatt áll, és még nem került ellenőrzésre.",
+      "pending_validation": "A beküldést a portál követelményei alapján ellenőrzik.",
+      "validated": "A beküldés átment az ellenőrzésen, és készen áll a küldésre.",
+      "submitted": "A beküldést elküldték a kormányzati portálra.",
+      "acknowledged": "A portál visszaigazolta a beküldés átvételét.",
+      "processing": "A portál feldolgozza a beküldést.",
+      "accepted": "A beküldést a portál elfogadta.",
+      "rejected": "A beküldést elutasították. Tekintse át a hiba részleteit, és próbálja újra.",
+      "requires_correction": "A beküldés elfogadás előtt javításokat igényel.",
+      "cancelled": "A beküldést visszavonták."
+    },
+    "page": {
+      "backToDashboard": "Vissza az irányítópultra",
+      "title": "Beküldés állapota",
+      "reference": "Hivatkozás: {{reference}}",
+      "errorDetails": "Hiba részletei",
+      "validationErrors": "Ellenőrzési hibák:",
+      "warnings": "Figyelmeztetések:",
+      "submissionDetails": "Beküldés részletei",
+      "reportType": "Jelentés típusa",
+      "reportPeriod": "Jelentési időszak",
+      "externalReference": "Külső hivatkozás",
+      "created": "Létrehozva",
+      "validated": "Ellenőrizve",
+      "submitted": "Beküldve",
+      "acknowledged": "Visszaigazolva",
+      "processed": "Feldolgozva",
+      "submissionAttempts": "Beküldési kísérletek",
+      "nextRetry": "Következő automatikus újrapróbálkozás ütemezve: {{date}}",
+      "reportDocument": "Jelentés dokumentuma",
+      "viewReportPdf": "Jelentés PDF megtekintése",
+      "attachments": "Mellékletek ({{count}})",
+      "auditTrail": "Naplózás ({{count}} esemény)",
+      "noAuditEvents": "Nincs rögzített naplóesemény.",
+      "cancelSubmission": "Beküldés visszavonása",
+      "validating": "Ellenőrzés...",
+      "validate": "Ellenőrzés",
+      "retrying": "Újrapróbálkozás...",
+      "retrySubmission": "Beküldés újrapróbálása",
+      "retryFailed": "Az újrapróbálkozás sikertelen",
+      "validationFailed": "Az ellenőrzés sikertelen",
+      "cancelFailed": "A visszavonás sikertelen"
+    }
+  },
+  "ocrStatus": {
+    "compact": {
+      "completed": "OCR",
+      "processing": "Feldolgozás",
+      "pending": "Függőben",
+      "failed": "Sikertelen",
+      "not_applicable": "N/A"
+    },
+    "full": {
+      "completed": "Szöveg kinyerve",
+      "processing": "OCR feldolgozása...",
+      "pending": "OCR függőben",
+      "failed": "OCR sikertelen",
+      "not_applicable": "Nem alkalmazható"
+    },
+    "reprocessing": "Ismételt feldolgozás...",
+    "retry": "Újra",
+    "retryTitle": "OCR feldolgozás újrapróbálása",
+    "processingTitle": "OCR feldolgozás",
+    "extractingText": "Szöveg kinyerése a dokumentumból... Ez eltarthat egy ideig.",
+    "textExtractedOn": "Szöveg kinyerve: {{date}}",
+    "processingFailed": "Az OCR feldolgozás sikertelen. A dokumentum nem támogatott vagy sérült lehet.",
+    "clickRetry": "Kattintson az „Újra” gombra az ismételt próbálkozáshoz.",
+    "queuedForExtraction": "A dokumentum sorban áll a szövegkinyeréshez."
+  },
+  "competitiveStatus": {
+    "features": {
+      "tours": "Virtuális túrák",
+      "pricing": "Árelemzés",
+      "neighborhood": "Környék",
+      "comparables": "Összehasonlíthatók"
+    },
+    "competitive": "Versenyképes",
+    "title": "Versenyképességi funkciók",
+    "percentComplete": "{{percent}}% kész",
+    "viewAnalysis": "Elemzés megtekintése"
   }
 }

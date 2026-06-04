@@ -4,6 +4,7 @@
  */
 
 import type { SubmissionStatus } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface SubmissionStatusBadgeProps {
   status: SubmissionStatus;
@@ -13,14 +14,15 @@ interface SubmissionStatusBadgeProps {
 }
 
 interface StatusConfig {
-  label: string;
+  /** i18n key under `submissionStatus.status` for the badge label */
+  labelKey: string;
   className: string;
   icon: React.ReactNode;
 }
 
 const statusConfig: Record<SubmissionStatus, StatusConfig> = {
   draft: {
-    label: 'Draft',
+    labelKey: 'draft',
     className: 'bg-gray-100 text-gray-700',
     icon: (
       <svg
@@ -40,7 +42,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   pending_validation: {
-    label: 'Pending Validation',
+    labelKey: 'pending_validation',
     className: 'bg-blue-100 text-blue-700',
     icon: (
       <svg
@@ -60,7 +62,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   validated: {
-    label: 'Validated',
+    labelKey: 'validated',
     className: 'bg-cyan-100 text-cyan-700',
     icon: (
       <svg
@@ -80,7 +82,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   submitted: {
-    label: 'Submitted',
+    labelKey: 'submitted',
     className: 'bg-indigo-100 text-indigo-700',
     icon: (
       <svg
@@ -100,7 +102,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   acknowledged: {
-    label: 'Acknowledged',
+    labelKey: 'acknowledged',
     className: 'bg-purple-100 text-purple-700',
     icon: (
       <svg
@@ -115,7 +117,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   processing: {
-    label: 'Processing',
+    labelKey: 'processing',
     className: 'bg-yellow-100 text-yellow-700',
     icon: (
       <svg
@@ -135,7 +137,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   accepted: {
-    label: 'Accepted',
+    labelKey: 'accepted',
     className: 'bg-green-100 text-green-700',
     icon: (
       <svg
@@ -155,7 +157,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   rejected: {
-    label: 'Rejected',
+    labelKey: 'rejected',
     className: 'bg-red-100 text-red-700',
     icon: (
       <svg
@@ -175,7 +177,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   requires_correction: {
-    label: 'Needs Correction',
+    labelKey: 'requires_correction',
     className: 'bg-orange-100 text-orange-700',
     icon: (
       <svg
@@ -195,7 +197,7 @@ const statusConfig: Record<SubmissionStatus, StatusConfig> = {
     ),
   },
   cancelled: {
-    label: 'Cancelled',
+    labelKey: 'cancelled',
     className: 'bg-gray-100 text-gray-500',
     icon: (
       <svg
@@ -221,6 +223,7 @@ export function SubmissionStatusBadge({
   showIcon = true,
   size = 'md',
 }: SubmissionStatusBadgeProps) {
+  const { t } = useTranslation();
   const config = statusConfig[status];
 
   const sizeClasses = {
@@ -234,7 +237,7 @@ export function SubmissionStatusBadge({
       className={`inline-flex items-center rounded-full font-medium ${config.className} ${sizeClasses[size]}`}
     >
       {showIcon && config.icon}
-      {config.label}
+      {t(`submissionStatus.status.${config.labelKey}`)}
     </span>
   );
 }

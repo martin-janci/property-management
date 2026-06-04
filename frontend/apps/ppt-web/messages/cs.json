@@ -350,6 +350,14 @@
       "deleteErrorMessage": "Nepodařilo se smazat složku",
       "createError": "Vytvoření selhalo",
       "createErrorMessage": "Nepodařilo se vytvořit složku"
+    },
+    "versionHistory": {
+      "title": "Historie verzí",
+      "loading": "Načítání verzí…",
+      "loadError": "Historii verzí se nepodařilo načíst.",
+      "empty": "Pro tento dokument nejsou k dispozici žádné verze.",
+      "version": "Verze {{n}}",
+      "current": "Aktuální"
     }
   },
   "disputes": {
@@ -1044,5 +1052,100 @@
     "errorDescription": "Chyba: {{message}}",
     "disconnectedDescription": "Aktualizace v reálném čase nejsou dostupné",
     "clickToReconnect": "Kliknutím se znovu připojíte"
+  },
+  "submissionStatus": {
+    "status": {
+      "draft": "Koncept",
+      "pending_validation": "Čeká na ověření",
+      "validated": "Ověřeno",
+      "submitted": "Odesláno",
+      "acknowledged": "Potvrzeno",
+      "processing": "Zpracovává se",
+      "accepted": "Přijato",
+      "rejected": "Zamítnuto",
+      "requires_correction": "Vyžaduje opravu",
+      "cancelled": "Zrušeno"
+    },
+    "description": {
+      "draft": "Podání se připravuje a dosud nebylo ověřeno.",
+      "pending_validation": "Podání se ověřuje vůči požadavkům portálu.",
+      "validated": "Podání prošlo ověřením a je připraveno k odeslání.",
+      "submitted": "Podání bylo odesláno na státní portál.",
+      "acknowledged": "Portál potvrdil přijetí podání.",
+      "processing": "Portál zpracovává podání.",
+      "accepted": "Podání bylo portálem přijato.",
+      "rejected": "Podání bylo zamítnuto. Zkontrolujte podrobnosti chyby a zkuste to znovu.",
+      "requires_correction": "Podání před přijetím vyžaduje opravy.",
+      "cancelled": "Podání bylo zrušeno."
+    },
+    "page": {
+      "backToDashboard": "Zpět na nástěnku",
+      "title": "Stav podání",
+      "reference": "Reference: {{reference}}",
+      "errorDetails": "Podrobnosti chyby",
+      "validationErrors": "Chyby ověření:",
+      "warnings": "Upozornění:",
+      "submissionDetails": "Podrobnosti podání",
+      "reportType": "Typ výkazu",
+      "reportPeriod": "Období výkazu",
+      "externalReference": "Externí reference",
+      "created": "Vytvořeno",
+      "validated": "Ověřeno",
+      "submitted": "Odesláno",
+      "acknowledged": "Potvrzeno",
+      "processed": "Zpracováno",
+      "submissionAttempts": "Počet pokusů o podání",
+      "nextRetry": "Naplánován další automatický pokus: {{date}}",
+      "reportDocument": "Dokument výkazu",
+      "viewReportPdf": "Zobrazit PDF výkazu",
+      "attachments": "Přílohy ({{count}})",
+      "auditTrail": "Audit ({{count}} událostí)",
+      "noAuditEvents": "Nezaznamenány žádné události auditu.",
+      "cancelSubmission": "Zrušit podání",
+      "validating": "Ověřuje se...",
+      "validate": "Ověřit",
+      "retrying": "Opakuje se...",
+      "retrySubmission": "Opakovat podání",
+      "retryFailed": "Opakování selhalo",
+      "validationFailed": "Ověření selhalo",
+      "cancelFailed": "Zrušení selhalo"
+    }
+  },
+  "ocrStatus": {
+    "compact": {
+      "completed": "OCR",
+      "processing": "Zpracovává se",
+      "pending": "Čeká",
+      "failed": "Selhalo",
+      "not_applicable": "N/A"
+    },
+    "full": {
+      "completed": "Text extrahován",
+      "processing": "Zpracovává se OCR...",
+      "pending": "OCR čeká",
+      "failed": "OCR selhalo",
+      "not_applicable": "Nepoužitelné"
+    },
+    "reprocessing": "Opakované zpracování...",
+    "retry": "Opakovat",
+    "retryTitle": "Opakovat zpracování OCR",
+    "processingTitle": "Zpracování OCR",
+    "extractingText": "Extrahuje se text z dokumentu... Může to chvíli trvat.",
+    "textExtractedOn": "Text extrahován {{date}}",
+    "processingFailed": "Zpracování OCR selhalo. Dokument může být nepodporovaný nebo poškozený.",
+    "clickRetry": "Klikněte na „Opakovat“ pro nový pokus.",
+    "queuedForExtraction": "Dokument je zařazen k extrakci textu."
+  },
+  "competitiveStatus": {
+    "features": {
+      "tours": "Virtuální prohlídky",
+      "pricing": "Cenová analýza",
+      "neighborhood": "Okolí",
+      "comparables": "Srovnatelné"
+    },
+    "competitive": "Konkurenční",
+    "title": "Konkurenční funkce",
+    "percentComplete": "Dokončeno {{percent}} %",
+    "viewAnalysis": "Zobrazit analýzu"
   }
 }

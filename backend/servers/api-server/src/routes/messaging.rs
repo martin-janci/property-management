@@ -1067,10 +1067,11 @@ async fn get_other_participant(
             )
         })?;
 
-    // Get user info
+    // Get user info. Issue #1008: `users` has a single `name` column — map it
+    // into first_name and leave last_name empty to keep the ParticipantInfo shape.
     let user = sqlx::query_as::<_, (Uuid, String, String, String)>(
         r#"
-        SELECT id, first_name, last_name, email FROM users WHERE id = $1
+        SELECT id, name AS first_name, '' AS last_name, email FROM users WHERE id = $1
         "#,
     )
     .bind(other_user_id)

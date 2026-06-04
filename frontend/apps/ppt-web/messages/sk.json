@@ -351,6 +351,14 @@
       "deleteErrorMessage": "Nepodarilo sa vymazať priečinok",
       "createError": "Vytvorenie zlyhalo",
       "createErrorMessage": "Nepodarilo sa vytvoriť priečinok"
+    },
+    "versionHistory": {
+      "title": "História verzií",
+      "loading": "Načítavam verzie…",
+      "loadError": "Históriu verzií sa nepodarilo načítať.",
+      "empty": "Pre tento dokument nie sú dostupné žiadne verzie.",
+      "version": "Verzia {{n}}",
+      "current": "Aktuálna"
     }
   },
   "disputes": {
@@ -1045,5 +1053,100 @@
     "errorDescription": "Chyba: {{message}}",
     "disconnectedDescription": "Aktualizácie v reálnom čase nie sú dostupné",
     "clickToReconnect": "Kliknutím sa znova pripojíte"
+  },
+  "submissionStatus": {
+    "status": {
+      "draft": "Koncept",
+      "pending_validation": "Čaká na overenie",
+      "validated": "Overené",
+      "submitted": "Odoslané",
+      "acknowledged": "Potvrdené",
+      "processing": "Spracúva sa",
+      "accepted": "Prijaté",
+      "rejected": "Zamietnuté",
+      "requires_correction": "Vyžaduje opravu",
+      "cancelled": "Zrušené"
+    },
+    "description": {
+      "draft": "Podanie sa pripravuje a zatiaľ nebolo overené.",
+      "pending_validation": "Podanie sa overuje voči požiadavkám portálu.",
+      "validated": "Podanie prešlo overením a je pripravené na odoslanie.",
+      "submitted": "Podanie bolo odoslané na štátny portál.",
+      "acknowledged": "Portál potvrdil prijatie podania.",
+      "processing": "Portál spracúva podanie.",
+      "accepted": "Podanie bolo portálom prijaté.",
+      "rejected": "Podanie bolo zamietnuté. Skontrolujte podrobnosti chyby a skúste znova.",
+      "requires_correction": "Podanie pred prijatím vyžaduje opravy.",
+      "cancelled": "Podanie bolo zrušené."
+    },
+    "page": {
+      "backToDashboard": "Späť na nástenku",
+      "title": "Stav podania",
+      "reference": "Referencia: {{reference}}",
+      "errorDetails": "Podrobnosti chyby",
+      "validationErrors": "Chyby overenia:",
+      "warnings": "Upozornenia:",
+      "submissionDetails": "Podrobnosti podania",
+      "reportType": "Typ výkazu",
+      "reportPeriod": "Obdobie výkazu",
+      "externalReference": "Externá referencia",
+      "created": "Vytvorené",
+      "validated": "Overené",
+      "submitted": "Odoslané",
+      "acknowledged": "Potvrdené",
+      "processed": "Spracované",
+      "submissionAttempts": "Počet pokusov o podanie",
+      "nextRetry": "Naplánovaný ďalší automatický pokus: {{date}}",
+      "reportDocument": "Dokument výkazu",
+      "viewReportPdf": "Zobraziť PDF výkazu",
+      "attachments": "Prílohy ({{count}})",
+      "auditTrail": "Audit ({{count}} udalostí)",
+      "noAuditEvents": "Nezaznamenané žiadne udalosti auditu.",
+      "cancelSubmission": "Zrušiť podanie",
+      "validating": "Overuje sa...",
+      "validate": "Overiť",
+      "retrying": "Opakuje sa...",
+      "retrySubmission": "Opakovať podanie",
+      "retryFailed": "Opakovanie zlyhalo",
+      "validationFailed": "Overenie zlyhalo",
+      "cancelFailed": "Zrušenie zlyhalo"
+    }
+  },
+  "ocrStatus": {
+    "compact": {
+      "completed": "OCR",
+      "processing": "Spracúva sa",
+      "pending": "Čaká",
+      "failed": "Zlyhalo",
+      "not_applicable": "N/A"
+    },
+    "full": {
+      "completed": "Text extrahovaný",
+      "processing": "Spracúva sa OCR...",
+      "pending": "OCR čaká",
+      "failed": "OCR zlyhalo",
+      "not_applicable": "Neaplikovateľné"
+    },
+    "reprocessing": "Opakované spracovanie...",
+    "retry": "Opakovať",
+    "retryTitle": "Opakovať spracovanie OCR",
+    "processingTitle": "Spracovanie OCR",
+    "extractingText": "Extrahuje sa text z dokumentu... Môže to chvíľu trvať.",
+    "textExtractedOn": "Text extrahovaný {{date}}",
+    "processingFailed": "Spracovanie OCR zlyhalo. Dokument môže byť nepodporovaný alebo poškodený.",
+    "clickRetry": "Kliknite na „Opakovať“ pre opätovný pokus.",
+    "queuedForExtraction": "Dokument je zaradený na extrakciu textu."
+  },
+  "competitiveStatus": {
+    "features": {
+      "tours": "Virtuálne prehliadky",
+      "pricing": "Cenová analýza",
+      "neighborhood": "Okolie",
+      "comparables": "Porovnateľné"
+    },
+    "competitive": "Konkurenčné",
+    "title": "Konkurenčné funkcie",
+    "percentComplete": "Dokončené {{percent}} %",
+    "viewAnalysis": "Zobraziť analýzu"
   }
 }

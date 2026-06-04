@@ -5,6 +5,7 @@
  */
 
 import type { OcrStatus } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 
 interface OcrStatusBadgeProps {
   status: OcrStatus;
@@ -19,36 +20,38 @@ export function OcrStatusBadge({
   onReprocess,
   isReprocessing = false,
 }: OcrStatusBadgeProps) {
+  const { t } = useTranslation();
   // Get status configuration
   const getStatusConfig = (s: OcrStatus) => {
+    const variant = compact ? 'compact' : 'full';
     switch (s) {
       case 'completed':
         return {
-          label: compact ? 'OCR' : 'Text Extracted',
+          label: t(`ocrStatus.${variant}.completed`),
           className: 'status-completed',
           icon: '✓',
         };
       case 'processing':
         return {
-          label: compact ? 'Processing' : 'Processing OCR...',
+          label: t(`ocrStatus.${variant}.processing`),
           className: 'status-processing',
           icon: '⟳',
         };
       case 'pending':
         return {
-          label: compact ? 'Pending' : 'OCR Pending',
+          label: t(`ocrStatus.${variant}.pending`),
           className: 'status-pending',
           icon: '○',
         };
       case 'failed':
         return {
-          label: compact ? 'Failed' : 'OCR Failed',
+          label: t(`ocrStatus.${variant}.failed`),
           className: 'status-failed',
           icon: '✕',
         };
       case 'not_applicable':
         return {
-          label: compact ? 'N/A' : 'Not Applicable',
+          label: t(`ocrStatus.${variant}.not_applicable`),
           className: 'status-na',
           icon: '—',
         };
@@ -68,7 +71,9 @@ export function OcrStatusBadge({
       <span className={`status-icon ${isReprocessing ? 'spinning' : ''}`}>
         {isReprocessing ? '⟳' : config.icon}
       </span>
-      <span className="status-label">{isReprocessing ? 'Reprocessing...' : config.label}</span>
+      <span className="status-label">
+        {isReprocessing ? t('ocrStatus.reprocessing') : config.label}
+      </span>
 
       {/* Reprocess button for failed status */}
       {status === 'failed' && onReprocess && !isReprocessing && (
@@ -79,9 +84,9 @@ export function OcrStatusBadge({
             onReprocess();
           }}
           className="reprocess-button"
-          title="Retry OCR processing"
+          title={t('ocrStatus.retryTitle')}
         >
-          Retry
+          {t('ocrStatus.retry')}
         </button>
       )}
 
@@ -182,6 +187,7 @@ export function OcrProcessingStatus({
   onReprocess,
   isReprocessing,
 }: OcrProcessingStatusProps) {
+  const { t } = useTranslation();
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
@@ -196,7 +202,7 @@ export function OcrProcessingStatus({
   return (
     <div className="ocr-processing-status">
       <div className="status-header">
-        <h4 className="status-title">OCR Processing</h4>
+        <h4 className="status-title">{t('ocrStatus.processingTitle')}</h4>
         <OcrStatusBadge status={status} onReprocess={onReprocess} isReprocessing={isReprocessing} />
       </div>
 
@@ -205,26 +211,24 @@ export function OcrProcessingStatus({
           <div className="progress-bar">
             <div className="progress-bar-fill" />
           </div>
-          <p className="processing-text">
-            Extracting text from document... This may take a few moments.
-          </p>
+          <p className="processing-text">{t('ocrStatus.extractingText')}</p>
         </div>
       )}
 
       {status === 'completed' && processedAt && (
-        <p className="processed-date">Text extracted on {formatDate(processedAt)}</p>
+        <p className="processed-date">
+          {t('ocrStatus.textExtractedOn', { date: formatDate(processedAt) })}
+        </p>
       )}
 
       {status === 'failed' && (
         <p className="error-text">
-          OCR processing failed. The document may be unsupported or corrupted.
-          {onReprocess && ' Click "Retry" to try again.'}
+          {t('ocrStatus.processingFailed')}
+          {onReprocess && ` ${t('ocrStatus.clickRetry')}`}
         </p>
       )}
 
-      {status === 'pending' && (
-        <p className="pending-text">Document is queued for text extraction.</p>
-      )}
+      {status === 'pending' && <p className="pending-text">{t('ocrStatus.queuedForExtraction')}</p>}
 
       <style>{`
         .ocr-processing-status {

@@ -13,6 +13,7 @@ import type {
   SubmissionStatus,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SubmissionStatusBadge } from '../components/SubmissionStatusBadge';
 
 interface SubmissionStatusPageProps {
@@ -50,6 +51,7 @@ export function SubmissionStatusPage({
   onCancel,
   onBack,
 }: SubmissionStatusPageProps) {
+  const { t } = useTranslation();
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [showAuditTrail, setShowAuditTrail] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export function SubmissionStatusPage({
     try {
       await onRetry(submission.id);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Retry failed');
+      setActionError(err instanceof Error ? err.message : t('submissionStatus.page.retryFailed'));
     }
   };
 
@@ -92,7 +94,9 @@ export function SubmissionStatusPage({
     try {
       await onValidate(submission.id);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Validation failed');
+      setActionError(
+        err instanceof Error ? err.message : t('submissionStatus.page.validationFailed')
+      );
     }
   };
 
@@ -101,25 +105,12 @@ export function SubmissionStatusPage({
     try {
       await onCancel(submission.id);
     } catch (err) {
-      setCancelError(err instanceof Error ? err.message : 'Cancel failed');
+      setCancelError(err instanceof Error ? err.message : t('submissionStatus.page.cancelFailed'));
     }
   };
 
-  const getStatusDescription = (status: SubmissionStatus): string => {
-    const descriptions: Record<SubmissionStatus, string> = {
-      draft: 'The submission is being prepared and has not been validated yet.',
-      pending_validation: 'The submission is being validated against portal requirements.',
-      validated: 'The submission passed validation and is ready to be sent.',
-      submitted: 'The submission has been sent to the government portal.',
-      acknowledged: 'The portal has acknowledged receipt of the submission.',
-      processing: 'The portal is processing the submission.',
-      accepted: 'The submission has been accepted by the portal.',
-      rejected: 'The submission was rejected. Review the error details and retry.',
-      requires_correction: 'The submission requires corrections before it can be accepted.',
-      cancelled: 'The submission has been cancelled.',
-    };
-    return descriptions[status];
-  };
+  const getStatusDescription = (status: SubmissionStatus): string =>
+    t(`submissionStatus.description.${status}`);
 
   if (isLoading) {
     return (
@@ -160,13 +151,17 @@ export function SubmissionStatusPage({
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Back to Dashboard
+          {t('submissionStatus.page.backToDashboard')}
         </button>
 
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Submission Status</h1>
-            <p className="mt-1 text-gray-500">Reference: {submission.submissionReference}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('submissionStatus.page.title')}</h1>
+            <p className="mt-1 text-gray-500">
+              {t('submissionStatus.page.reference', {
+                reference: submission.submissionReference,
+              })}
+            </p>
           </div>
           <SubmissionStatusBadge status={submission.status} size="lg" />
         </div>
@@ -224,7 +219,9 @@ export function SubmissionStatusPage({
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                   />
                 </svg>
-                <span className="font-medium text-red-900">Error Details</span>
+                <span className="font-medium text-red-900">
+                  {t('submissionStatus.page.errorDetails')}
+                </span>
               </div>
               <svg
                 className={`h-5 w-5 text-red-500 transition-transform ${showErrorDetails ? 'rotate-180' : ''}`}
@@ -249,7 +246,9 @@ export function SubmissionStatusPage({
                 </pre>
                 {submission.validationResult && !submission.validationResult.isValid && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-medium text-red-900 mb-2">Validation Errors:</h4>
+                    <h4 className="text-sm font-medium text-red-900 mb-2">
+                      {t('submissionStatus.page.validationErrors')}
+                    </h4>
                     <ul className="space-y-2">
                       {submission.validationResult.errors.map((error) => (
                         <li
@@ -283,7 +282,9 @@ export function SubmissionStatusPage({
                 {submission.validationResult?.warnings &&
                   submission.validationResult.warnings.length > 0 && (
                     <div className="mt-4">
-                      <h4 className="text-sm font-medium text-yellow-900 mb-2">Warnings:</h4>
+                      <h4 className="text-sm font-medium text-yellow-900 mb-2">
+                        {t('submissionStatus.page.warnings')}
+                      </h4>
                       <ul className="space-y-2">
                         {submission.validationResult.warnings.map((warning) => (
                           <li
@@ -321,45 +322,65 @@ export function SubmissionStatusPage({
 
       {/* Submission Details */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Submission Details</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          {t('submissionStatus.page.submissionDetails')}
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           <div>
-            <p className="text-sm font-medium text-gray-500">Report Type</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.reportType')}
+            </p>
             <p className="text-gray-900">{submission.reportType}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Report Period</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.reportPeriod')}
+            </p>
             <p className="text-gray-900">
               {formatShortDate(submission.reportPeriodStart)} -{' '}
               {formatShortDate(submission.reportPeriodEnd)}
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">External Reference</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.externalReference')}
+            </p>
             <p className="text-gray-900">{submission.externalReference || '—'}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Created</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.created')}
+            </p>
             <p className="text-gray-900">{formatDate(submission.createdAt)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Validated</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.validated')}
+            </p>
             <p className="text-gray-900">{formatDate(submission.validatedAt)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Submitted</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.submitted')}
+            </p>
             <p className="text-gray-900">{formatDate(submission.submittedAt)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Acknowledged</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.acknowledged')}
+            </p>
             <p className="text-gray-900">{formatDate(submission.acknowledgedAt)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Processed</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.processed')}
+            </p>
             <p className="text-gray-900">{formatDate(submission.processedAt)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Submission Attempts</p>
+            <p className="text-sm font-medium text-gray-500">
+              {t('submissionStatus.page.submissionAttempts')}
+            </p>
             <p className="text-gray-900">{submission.submissionAttempts}</p>
           </div>
         </div>
@@ -368,7 +389,9 @@ export function SubmissionStatusPage({
         {submission.nextRetryAt && (
           <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
             <p className="text-sm text-yellow-800">
-              Next automatic retry scheduled: {formatDate(submission.nextRetryAt)}
+              {t('submissionStatus.page.nextRetry', {
+                date: formatDate(submission.nextRetryAt),
+              })}
             </p>
           </div>
         )}
@@ -377,7 +400,9 @@ export function SubmissionStatusPage({
       {/* Report PDF */}
       {submission.reportPdfUrl && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Report Document</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {t('submissionStatus.page.reportDocument')}
+          </h2>
           <a
             href={submission.reportPdfUrl}
             target="_blank"
@@ -398,7 +423,7 @@ export function SubmissionStatusPage({
                 d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
               />
             </svg>
-            View Report PDF
+            {t('submissionStatus.page.viewReportPdf')}
           </a>
         </div>
       )}
@@ -407,7 +432,7 @@ export function SubmissionStatusPage({
       {attachments.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Attachments ({attachments.length})
+            {t('submissionStatus.page.attachments', { count: attachments.length })}
           </h2>
           <div className="space-y-2">
             {attachments.map((attachment) => (
@@ -468,7 +493,7 @@ export function SubmissionStatusPage({
           className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
         >
           <h2 className="text-lg font-semibold text-gray-900">
-            Audit Trail ({auditTrail.length} events)
+            {t('submissionStatus.page.auditTrail', { count: auditTrail.length })}
           </h2>
           <svg
             className={`h-5 w-5 text-gray-400 transition-transform ${showAuditTrail ? 'rotate-180' : ''}`}
@@ -484,7 +509,9 @@ export function SubmissionStatusPage({
         {showAuditTrail && (
           <div className="border-t border-gray-200">
             {auditTrail.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No audit events recorded.</div>
+              <div className="p-4 text-center text-gray-500">
+                {t('submissionStatus.page.noAuditEvents')}
+              </div>
             ) : (
               <div className="divide-y divide-gray-100">
                 {auditTrail.map((event) => (
@@ -523,7 +550,7 @@ export function SubmissionStatusPage({
               onClick={handleCancel}
               className="px-4 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
             >
-              Cancel Submission
+              {t('submissionStatus.page.cancelSubmission')}
             </button>
           )}
         </div>
@@ -558,7 +585,7 @@ export function SubmissionStatusPage({
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  Validating...
+                  {t('submissionStatus.page.validating')}
                 </>
               ) : (
                 <>
@@ -576,7 +603,7 @@ export function SubmissionStatusPage({
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  Validate
+                  {t('submissionStatus.page.validate')}
                 </>
               )}
             </button>
@@ -611,7 +638,7 @@ export function SubmissionStatusPage({
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  Retrying...
+                  {t('submissionStatus.page.retrying')}
                 </>
               ) : (
                 <>
@@ -629,7 +656,7 @@ export function SubmissionStatusPage({
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
-                  Retry Submission
+                  {t('submissionStatus.page.retrySubmission')}
                 </>
               )}
             </button>

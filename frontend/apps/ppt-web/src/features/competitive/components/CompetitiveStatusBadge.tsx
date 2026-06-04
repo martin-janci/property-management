@@ -5,6 +5,8 @@
  * Shows the status of competitive features for a listing.
  */
 
+import { useTranslation } from 'react-i18next';
+
 export interface CompetitiveFeaturesStatus {
   listingId: string;
   hasVirtualTours: boolean;
@@ -33,10 +35,11 @@ export function CompetitiveStatusBadge({
   compact = false,
   className = '',
 }: CompetitiveStatusBadgeProps) {
+  const { t } = useTranslation();
   const features = [
     {
       key: 'tours',
-      label: 'Virtual Tours',
+      label: t('competitiveStatus.features.tours'),
       active: status.hasVirtualTours,
       count: status.virtualTourCount,
       icon: (
@@ -52,7 +55,7 @@ export function CompetitiveStatusBadge({
     },
     {
       key: 'pricing',
-      label: 'Pricing Analysis',
+      label: t('competitiveStatus.features.pricing'),
       active: status.hasPricingAnalysis && status.pricingAnalysisValid,
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +70,7 @@ export function CompetitiveStatusBadge({
     },
     {
       key: 'neighborhood',
-      label: 'Neighborhood',
+      label: t('competitiveStatus.features.neighborhood'),
       active: status.hasNeighborhoodInsights && status.neighborhoodInsightsValid,
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +91,7 @@ export function CompetitiveStatusBadge({
     },
     {
       key: 'comparables',
-      label: 'Comparables',
+      label: t('competitiveStatus.features.comparables'),
       active: status.hasComparables,
       count: status.comparablesCount,
       icon: (
@@ -119,7 +122,7 @@ export function CompetitiveStatusBadge({
         } ${className}`}
       >
         <span className="font-medium">{completionPercent}%</span>
-        <span className="text-xs">Competitive</span>
+        <span className="text-xs">{t('competitiveStatus.competitive')}</span>
       </button>
     );
   }
@@ -128,7 +131,7 @@ export function CompetitiveStatusBadge({
     <div className={`bg-white rounded-lg shadow-sm border p-4 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900">Competitive Features</h3>
+        <h3 className="text-sm font-semibold text-gray-900">{t('competitiveStatus.title')}</h3>
         <span
           className={`px-2 py-1 text-xs font-medium rounded-full ${
             completionPercent === 100
@@ -138,7 +141,7 @@ export function CompetitiveStatusBadge({
                 : 'bg-gray-100 text-gray-600'
           }`}
         >
-          {completionPercent}% Complete
+          {t('competitiveStatus.percentComplete', { percent: completionPercent })}
         </span>
       </div>
 
@@ -204,7 +207,7 @@ export function CompetitiveStatusBadge({
           onClick={onViewDetails}
           className="w-full mt-4 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
         >
-          View Analysis
+          {t('competitiveStatus.viewAnalysis')}
         </button>
       )}
     </div>

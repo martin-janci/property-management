@@ -113,19 +113,17 @@ impl FormRepository {
         .await?;
 
         let created_by_name = sqlx::query_scalar::<_, String>(
-            "SELECT COALESCE(first_name || ' ' || last_name, email) FROM users WHERE id = $1",
+            "SELECT COALESCE(name, email) FROM users WHERE id = $1",
         )
         .bind(form.created_by)
         .fetch_optional(&self.pool)
         .await?;
 
         let published_by_name = if let Some(published_by) = form.published_by {
-            sqlx::query_scalar::<_, String>(
-                "SELECT COALESCE(first_name || ' ' || last_name, email) FROM users WHERE id = $1",
-            )
-            .bind(published_by)
-            .fetch_optional(&self.pool)
-            .await?
+            sqlx::query_scalar::<_, String>("SELECT COALESCE(name, email) FROM users WHERE id = $1")
+                .bind(published_by)
+                .fetch_optional(&self.pool)
+                .await?
         } else {
             None
         };
@@ -182,7 +180,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -196,7 +194,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -210,7 +208,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -224,7 +222,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -238,7 +236,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -252,7 +250,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -266,7 +264,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -280,7 +278,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -295,7 +293,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -310,7 +308,7 @@ impl FormRepository {
                 SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
-                       u.first_name || ' ' || u.last_name as created_by_name
+                       u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
                   AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
@@ -705,8 +703,8 @@ impl FormRepository {
             SELECT
                 s.*,
                 f.title as form_title,
-                u.first_name || ' ' || u.last_name as submitted_by_name,
-                r.first_name || ' ' || r.last_name as reviewed_by_name,
+                u.name as submitted_by_name,
+                r.name as reviewed_by_name,
                 un.unit_number,
                 b.name as building_name
             FROM form_submissions s
@@ -796,7 +794,7 @@ impl FormRepository {
                 s.form_id,
                 f.title as form_title,
                 s.submitted_by,
-                u.first_name || ' ' || u.last_name as submitted_by_name,
+                u.name as submitted_by_name,
                 s.submitted_at,
                 s.status,
                 s.signature_data IS NOT NULL as has_signature,
@@ -979,7 +977,7 @@ impl FormRepository {
                     (SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id),
                     0
                 ) as submission_count,
-                u.first_name || ' ' || u.last_name as created_by_name
+                u.name as created_by_name
             FROM forms f
             LEFT JOIN users u ON u.id = f.created_by
             WHERE f.organization_id = $1

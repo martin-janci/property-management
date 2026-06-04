@@ -626,6 +626,51 @@ impl StorageService {
         Ok(key.to_string())
     }
 
+    /// Upload a **system-generated** artifact (e.g. an organization data export
+    /// or tenant backup tarball) to S3.
+    ///
+    /// Unlike [`upload`](Self::upload), this does NOT enforce the user-content
+    /// MIME allowlist — the bytes are produced by the server itself, not
+    /// uploaded by an end user, so the allowlist (which exists to constrain
+    /// user uploads) does not apply. The size cap is still enforced. Use this
+    /// ONLY for trusted, server-produced content (issue #979).
+    pub async fn upload_system_artifact(
+        &self,
+        key: &str,
+        content: Vec<u8>,
+        content_type: &str,
+    ) -> Result<String, StorageError> {
+        let client = self.get_s3_client()?;
+        let size = content.len();
+
+        if size as i64 > MAX_UPLOAD_SIZE_BYTES {
+            return Err(StorageError::FileTooLarge(
+                size as i64,
+                MAX_UPLOAD_SIZE_BYTES,
+            ));
+        }
+
+        let body = ByteStream::from(content);
+        client
+            .put_object()
+            .bucket(&self.config.bucket)
+            .key(key)
+            .body(body)
+            .content_type(content_type)
+            .send()
+            .await
+            .map_err(|e| StorageError::UploadError(format!("S3 PutObject failed: {}", e)))?;
+
+        tracing::info!(
+            key = %key,
+            content_type = %content_type,
+            size_bytes = %size,
+            "Uploaded system artifact to S3"
+        );
+
+        Ok(key.to_string())
+    }
+
     /// Download a file from S3 (Story 103.1).
     ///
     /// # Arguments
