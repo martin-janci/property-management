@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "gap-7a",
-  "selected_at": "2026-06-03T22:05:27Z",
-  "last_action": "repick",
-  "reason": "prior target 'pm-scrum' exhausted; closest-to-done is 'gap-7a' (open=2 claimable=1)",
+  "epic_prefix": "NONE",
+  "selected_at": "2026-06-04T02:09:19Z",
+  "last_action": "repick-none",
+  "reason": "picker emitted bare-task-id epic 'security-pkce-oauth-authcode-pr-908-closed' (single backlog item, not a multi-task epic; violates self-test T21 gap-N/pm-<role> shape) — reset to NONE, claimed via normal path",
   "stats_at_selection": {
-    "open": 2,
-    "claimable": 1
+    "open": 0,
+    "claimable": 0
   }
 }
