@@ -5,6 +5,7 @@
  */
 
 import type { OcrStatus } from '@ppt/api-client';
+import { formatDateTime } from '@ppt/shared';
 import { useTranslation } from 'react-i18next';
 
 interface OcrStatusBadgeProps {
@@ -187,17 +188,9 @@ export function OcrProcessingStatus({
   onReprocess,
   isReprocessing,
 }: OcrProcessingStatusProps) {
-  const { t } = useTranslation();
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const { t, i18n } = useTranslation();
+  const formatDate = (dateString: string): string =>
+    formatDateTime(dateString, { locale: i18n.language });
 
   return (
     <div className="ocr-processing-status">
