@@ -18,7 +18,9 @@ import {
   createNeighborHooks,
   createNeighborsApi,
   getToken,
+  messagingKeys,
 } from '@ppt/api-client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type {
   Message,
@@ -206,6 +208,28 @@ export function useSendMessage() {
 export function useMarkThreadRead() {
   const hooks = useMessagingApi();
   return hooks.useMarkThreadRead();
+}
+
+/**
+ * Mutation to delete (soft-delete) a message in a thread (UC-05.6).
+ *
+ * The generated messaging hooks factory does not expose a delete mutation, so
+ * we build it here against the raw messaging API client (re-created when the
+ * token rotates) and invalidate the affected thread + thread list on success.
+ */
+export function useDeleteMessage() {
+  const token = getToken() ?? undefined;
+  const api = useMemo(() => getMessagingApi(token), [token]);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ threadId, messageId }: { threadId: string; messageId: string }) =>
+      api.deleteMessage(threadId, messageId),
+    onSuccess: (_data, { threadId }) => {
+      queryClient.invalidateQueries({ queryKey: messagingKeys.threadDetail(threadId) });
+      queryClient.invalidateQueries({ queryKey: messagingKeys.threads() });
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------

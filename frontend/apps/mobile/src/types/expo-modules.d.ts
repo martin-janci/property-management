@@ -222,6 +222,26 @@ declare module 'expo-notifications' {
     data: string;
   }
   export function getDevicePushTokenAsync(): Promise<DevicePushToken>;
+
+  /**
+   * Returns the notification response that launched the app from a killed
+   * (cold-start) state, or `null` when the app was launched normally. The
+   * runtime-listener `addNotificationResponseReceivedListener` does NOT fire
+   * for the cold-start case, so this must be polled once on startup.
+   */
+  export function getLastNotificationResponseAsync(): Promise<NotificationResponse | null>;
+
+  /**
+   * Registers a background task (defined via `expo-task-manager`'s
+   * `defineTask`) to be invoked by the OS when a data notification is
+   * delivered while the app is backgrounded or killed.
+   */
+  export function registerTaskAsync(taskName: string): Promise<void>;
+
+  /**
+   * Unregisters a previously-registered background notification task.
+   */
+  export function unregisterTaskAsync(taskName: string): Promise<void>;
 }
 
 declare module '@react-native-async-storage/async-storage' {

@@ -7,7 +7,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
 import { useOfflineSupport, usePushNotifications } from './hooks';
+import { deepLinkManager } from './qrcode';
 import { colors } from './screens/shared/screenStyles';
+import { resolveDeepLinkTarget, type Screen } from './services/deepLinkRouting';
 import './i18n'; // Initialize i18n
 import {
   AnnouncementDetailScreen,
@@ -53,38 +55,6 @@ const queryClient = new QueryClient({
 
 const API_BASE_URL = (Constants.expoConfig?.extra?.apiUrl as string) || 'http://localhost:8080';
 
-type Screen =
-  | 'Dashboard'
-  | 'Faults'
-  | 'ReportFault'
-  | 'Announcements'
-  | 'AnnouncementDetail'
-  | 'Voting'
-  | 'VoteDetail'
-  | 'Documents'
-  | 'DocumentDetail'
-  | 'DocumentPreview'
-  | 'DocumentUpload'
-  | 'DocumentPermissions'
-  | 'Messages'
-  | 'ThreadDetail'
-  | 'Settings'
-  | 'MeterReading'
-  | 'Meters'
-  | 'MeterDetail'
-  | 'Profile'
-  | 'TwoFactor'
-  | 'Neighbors'
-  | 'Notifications'
-  | 'PersonMonths'
-  | 'Outages'
-  | 'News'
-  | 'Forms'
-  | 'Buildings'
-  | 'Leases'
-  | 'LeaseDetail'
-  | 'More';
-
 function MainApp() {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
@@ -120,6 +90,26 @@ function MainApp() {
     setCurrentScreen(screen as Screen);
     setScreenParams(params);
   }, []);
+
+  // gap-85-3: route incoming deep links (custom scheme + universal/App Links).
+  // The manager handles the cold-start initial URL, runtime `url` events, and
+  // queues auth-required links until the user is authenticated.
+  useEffect(() => {
+    const unsubscribe = deepLinkManager.addHandler((link) => {
+      const target = resolveDeepLinkTarget(link);
+      if (target) {
+        handleNavigate(target.screen, target.params);
+      }
+    });
+    void deepLinkManager.initialize();
+    return unsubscribe;
+  }, [handleNavigate]);
+
+  // Keep the manager's auth gate in sync so auth-required links queued while
+  // logged out are dispatched the moment the user authenticates.
+  useEffect(() => {
+    deepLinkManager.setAuthenticated(isAuthenticated);
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -173,7 +163,12 @@ function MainApp() {
       case 'Documents':
         return <DocumentsScreen onNavigate={handleNavigate} />;
       case 'DocumentDetail':
-        return <DocumentDetailScreen onBack={() => handleNavigate('Documents')} />;
+        return (
+          <DocumentDetailScreen
+            documentId={screenParams?.documentId as string | undefined}
+            onBack={() => handleNavigate('Documents')}
+          />
+        );
       case 'DocumentPreview':
         return screenParams?.document ? (
           <DocumentPreviewScreen

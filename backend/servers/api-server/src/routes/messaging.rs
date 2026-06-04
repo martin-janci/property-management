@@ -102,6 +102,8 @@ pub struct SendMessageRequest {
 pub struct ListThreadsQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
+    /// Optional case-insensitive filter on the other participant's name.
+    pub search: Option<String>,
 }
 
 /// Query for listing messages.
@@ -123,6 +125,10 @@ pub fn router() -> Router<AppState> {
         .route("/threads", post(start_thread))
         .route("/threads/{id}", get(get_thread))
         .route("/threads/{id}/messages", post(send_message))
+        .route(
+            "/threads/{id}/messages/{message_id}",
+            delete(delete_message),
+        )
         .route("/threads/{id}/read", post(mark_thread_read))
         // Block endpoints
         .route("/users/blocked", get(list_blocked_users))
@@ -156,6 +162,13 @@ async fn list_threads(
     let user_id = rls.user_id();
     let tenant_id = rls.tenant_id();
 
+    // Treat an empty/whitespace-only search string as no filter.
+    let search = query
+        .search
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty());
+
     let threads = repo
         .list_threads_rls(
             &mut **rls.conn(),
@@ -163,6 +176,7 @@ async fn list_threads(
             tenant_id,
             query.limit,
             query.offset,
+            search,
         )
         .await
         .map_err(|e| {
@@ -174,7 +188,7 @@ async fn list_threads(
         })?;
 
     let total = repo
-        .count_threads_rls(&mut **rls.conn(), user_id, tenant_id)
+        .count_threads_rls(&mut **rls.conn(), user_id, tenant_id, search)
         .await
         .map_err(|e| {
             tracing::error!("Failed to count threads: {:?}", e);
@@ -648,6 +662,127 @@ async fn send_message(
     }))
 }
 
+/// Delete a message in a thread (soft delete).
+///
+/// Only the sender of a message may delete it. The message must belong to the
+/// given thread, the thread must belong to the caller's tenant, and the caller
+/// must be a participant.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/messages/threads/{id}/messages/{message_id}",
+    params(
+        ("id" = Uuid, Path, description = "Thread ID"),
+        ("message_id" = Uuid, Path, description = "Message ID"),
+    ),
+    responses(
+        (status = 200, description = "Message deleted successfully", body = MessageSuccessResponse),
+        (status = 403, description = "Not a participant or not the sender", body = ErrorResponse),
+        (status = 404, description = "Thread or message not found", body = ErrorResponse),
+    ),
+    tag = "messaging"
+)]
+pub async fn delete_message(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path((id, message_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<MessageSuccessResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let repo = MessagingRepository::new(state.db.clone());
+    let user_id = rls.user_id();
+    let tenant_id = rls.tenant_id();
+
+    // Get thread and verify it exists
+    let thread = repo
+        .get_thread_rls(&mut **rls.conn(), id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    let thread = thread.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Thread not found")),
+        )
+    })?;
+
+    // Security: Verify thread belongs to current tenant (Critical 1.1 fix)
+    if thread.organization_id != tenant_id {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Access denied to this thread",
+            )),
+        ));
+    }
+
+    if !thread.participant_ids.contains(&user_id) {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_PARTICIPANT",
+                "You are not a participant in this thread",
+            )),
+        ));
+    }
+
+    // Fetch the target message and verify it belongs to this thread and that
+    // the caller is its sender.
+    let target: Option<(Uuid, Uuid)> = sqlx::query_as(
+        r#"
+        SELECT thread_id, sender_id FROM messages WHERE id = $1
+        "#,
+    )
+    .bind(message_id)
+    .fetch_optional(&mut **rls.conn())
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+        )
+    })?;
+
+    let (msg_thread_id, msg_sender_id) = target.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Message not found")),
+        )
+    })?;
+
+    if msg_thread_id != id || msg_sender_id != user_id {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You can only delete your own messages",
+            )),
+        ));
+    }
+
+    repo.delete_message_rls(&mut **rls.conn(), message_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete message: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+            )
+        })?;
+
+    rls.release().await;
+
+    Ok(Json(MessageSuccessResponse {
+        message: "Message deleted successfully".to_string(),
+    }))
+}
+
 /// Mark all messages in a thread as read.
 #[utoipa::path(
     post,
@@ -932,10 +1067,11 @@ async fn get_other_participant(
             )
         })?;
 
-    // Get user info
+    // Get user info. Issue #1008: `users` has a single `name` column — map it
+    // into first_name and leave last_name empty to keep the ParticipantInfo shape.
     let user = sqlx::query_as::<_, (Uuid, String, String, String)>(
         r#"
-        SELECT id, first_name, last_name, email FROM users WHERE id = $1
+        SELECT id, name AS first_name, '' AS last_name, email FROM users WHERE id = $1
         "#,
     )
     .bind(other_user_id)

@@ -13,7 +13,7 @@ use db::models::infrastructure::{job_type, queue, CreateBackgroundJob};
 use integrations::{
     encrypt_optional_required, encrypt_required, AirbnbClient, AirbnbOAuthConfig,
     AvailabilityUpdate, BookingClient, BookingCredentials, IntegrationCrypto, PortalType,
-    PropertyMapping, RateUpdate, RoomTypeMapping,
+    RateUpdate,
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
@@ -23,6 +23,73 @@ use super::sync::{verify_org_access, OrgIdPath, ResourceIdPath};
 use common::errors::ErrorResponse;
 
 const MAX_BATCH_SIZE: usize = 500;
+
+// ==================== Booking.com Push Validation ====================
+//
+// Pure request-shape guards for the legacy Booking.com push handlers
+// (issue #572, PR #607). Extracted from the inline handler bodies so the
+// batch-cap and non-negative `available_count` guards have a DB-free
+// regression test (see the `tests` module). The unified OTA `listing-push`
+// surface has its own equivalent guard in `booking_channel::validate_listing_push`
+// (PR #1045) — these are the *legacy* push-availability / push-rates guards.
+//
+// On failure each returns `(error_code, human_message)` so the caller can
+// build a `400` [`ErrorResponse`]; on success returns `Ok(())`.
+
+/// Validate a Booking.com push-availability request body.
+///
+/// Rejects:
+/// * an empty `updates` list (`NO_UPDATES`),
+/// * more than [`MAX_BATCH_SIZE`] updates (`BATCH_TOO_LARGE`),
+/// * any negative `available_count` (`INVALID_AVAILABLE_COUNT`).
+fn validate_push_availability(
+    request: &BookingPushAvailabilityRequest,
+) -> Result<(), (&'static str, &'static str)> {
+    if request.updates.is_empty() {
+        return Err(("NO_UPDATES", "At least one availability update is required"));
+    }
+
+    if request.updates.len() > MAX_BATCH_SIZE {
+        return Err((
+            "BATCH_TOO_LARGE",
+            "A maximum of 500 updates per request is allowed",
+        ));
+    }
+
+    if request.updates.iter().any(|u| u.available_count < 0) {
+        return Err((
+            "INVALID_AVAILABLE_COUNT",
+            "available_count must be non-negative",
+        ));
+    }
+
+    Ok(())
+}
+
+/// Validate a Booking.com push-rates request body.
+///
+/// Rejects:
+/// * an empty `updates` list (`NO_UPDATES`),
+/// * more than [`MAX_BATCH_SIZE`] updates (`BATCH_TOO_LARGE`).
+///
+/// Rate updates carry no `available_count`, so the non-negative guard does
+/// not apply here.
+fn validate_push_rates(
+    request: &BookingPushRatesRequest,
+) -> Result<(), (&'static str, &'static str)> {
+    if request.updates.is_empty() {
+        return Err(("NO_UPDATES", "At least one rate update is required"));
+    }
+
+    if request.updates.len() > MAX_BATCH_SIZE {
+        return Err((
+            "BATCH_TOO_LARGE",
+            "A maximum of 500 updates per request is allowed",
+        ));
+    }
+
+    Ok(())
+}
 
 // ==================== Airbnb Types ====================
 
@@ -477,6 +544,9 @@ pub async fn connect_airbnb(
 }
 
 /// Trigger Airbnb sync.
+///
+/// Gap 83-1: Uses `with_token_refresh` so the stored OAuth access token is
+/// proactively refreshed before expiry and automatically rotated on 401.
 #[utoipa::path(
     post,
     path = "/api/v1/integrations/organizations/{org_id}/airbnb/sync",
@@ -484,6 +554,7 @@ pub async fn connect_airbnb(
     responses(
         (status = 200, description = "Sync initiated", body = SyncResponse),
         (status = 403, description = "Forbidden"),
+        (status = 404, description = "No Airbnb connection found"),
         (status = 500, description = "Internal server error")
     ),
     security(("bearer_auth" = [])),
@@ -503,87 +574,143 @@ pub async fn sync_airbnb(
     // Issue #765: prevent cross-org IDOR — caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
 
-    let rental_repo = &state.rental_repo;
-
-    let connection = rental_repo
-        .find_airbnb_connection_by_org(path.org_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to find Airbnb connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to check connection",
-                )),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "NOT_FOUND",
-                    "No Airbnb connection found",
-                )),
-            )
-        })?;
-
-    let access_token = connection.access_token.ok_or_else(|| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "NOT_AUTHORIZED",
-                "Airbnb not authorized",
-            )),
-        )
-    })?;
-
-    // Issue #711: read cached config from AppState rather than the env.
+    // Issue #711 + Gap 83-1: use cached config; wrap the Airbnb API calls in
+    // `with_token_refresh` so the access token is proactively renewed near
+    // expiry and auto-rotated on 401.
     let oauth_config = AirbnbOAuthConfig {
         client_id: state.airbnb_config.client_id.clone(),
         client_secret: state.airbnb_config.client_secret.clone(),
         redirect_uri: state.airbnb_config.redirect_uri.clone(),
     };
-    let client = AirbnbClient::new(oauth_config);
+    let state_ref = &state;
+    let org_id = path.org_id;
 
-    let listings = client.fetch_listings(&access_token).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to fetch Airbnb listings");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "SYNC_ERROR",
-                format!("Failed to sync: {}", e),
-            )),
-        )
-    })?;
+    let (listings, connection_id) =
+        match super::token_rotation::with_token_refresh(state_ref, org_id, |access_token| {
+            let client = AirbnbClient::new(oauth_config.clone());
+            async move {
+                let listings = client.fetch_listings(&access_token).await?;
+                Ok(listings)
+            }
+        })
+        .await
+        {
+            super::token_rotation::TokenRotationOutcome::Ok(listings) => {
+                // We need the connection_id for the last_sync update below.
+                // Re-fetch the (now-updated) connection briefly.
+                let conn_id = state
+                    .rental_repo
+                    .find_airbnb_connection_by_org(org_id)
+                    .await
+                    .ok()
+                    .flatten()
+                    .map(|c| c.id);
+                (listings, conn_id)
+            }
+            super::token_rotation::TokenRotationOutcome::NoConnection => {
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new(
+                        "NOT_FOUND",
+                        "No Airbnb connection found",
+                    )),
+                ));
+            }
+            super::token_rotation::TokenRotationOutcome::ExpiredNoRefresh => {
+                return Err((
+                    StatusCode::UNAUTHORIZED,
+                    Json(ErrorResponse::new(
+                        "TOKEN_EXPIRED",
+                        "Airbnb token expired and no refresh token available",
+                    )),
+                ));
+            }
+            super::token_rotation::TokenRotationOutcome::DecryptionFailed(e) => {
+                tracing::error!(org_id = %org_id, error = %e, "Token decryption failed");
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DECRYPTION_ERROR",
+                        "Failed to decrypt Airbnb credentials",
+                    )),
+                ));
+            }
+            super::token_rotation::TokenRotationOutcome::RefreshFailed(e) => {
+                tracing::error!(org_id = %org_id, error = %e, "Token refresh failed");
+                return Err((
+                    StatusCode::UNAUTHORIZED,
+                    Json(ErrorResponse::new(
+                        "TOKEN_REFRESH_FAILED",
+                        "Failed to refresh Airbnb token",
+                    )),
+                ));
+            }
+            super::token_rotation::TokenRotationOutcome::CallFailed(e) => {
+                tracing::error!(org_id = %org_id, error = %e, "Airbnb API call failed");
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "SYNC_ERROR",
+                        format!("Failed to sync: {}", e),
+                    )),
+                ));
+            }
+        };
+
+    // Fetch reservations for each listing (best-effort; errors are warnings).
+    let client_for_res = AirbnbClient::new(AirbnbOAuthConfig {
+        client_id: state.airbnb_config.client_id.clone(),
+        client_secret: state.airbnb_config.client_secret.clone(),
+        redirect_uri: state.airbnb_config.redirect_uri.clone(),
+    });
+
+    // We need the plaintext token again for reservation fetches.  Rather than
+    // calling with_token_refresh again (double refresh risk), decrypt the now-
+    // current token from the connection.
+    let current_access_token = state
+        .rental_repo
+        .find_airbnb_connection_by_org(org_id)
+        .await
+        .ok()
+        .flatten()
+        .and_then(|c| {
+            let crypto = integrations::IntegrationCrypto::try_from_env();
+            c.canonical_encrypted_token()
+                .map(|t| integrations::decrypt_if_available(crypto.as_ref(), t))
+        });
 
     let mut total_items = listings.len();
-    for listing in &listings {
-        match client
-            .fetch_reservations(&access_token, &listing.id, None, None)
-            .await
-        {
-            Ok(reservations) => {
-                total_items += reservations.len();
-                tracing::info!(
-                    listing_id = %listing.id,
-                    reservation_count = reservations.len(),
-                    "Fetched reservations for listing"
-                );
-            }
-            Err(e) => {
-                tracing::warn!(
-                    listing_id = %listing.id,
-                    error = %e,
-                    "Failed to fetch reservations for listing"
-                );
+    if let Some(ref token) = current_access_token {
+        for listing in &listings {
+            match client_for_res
+                .fetch_reservations(token, &listing.id, None, None)
+                .await
+            {
+                Ok(reservations) => {
+                    total_items += reservations.len();
+                    tracing::info!(
+                        listing_id = %listing.id,
+                        reservation_count = reservations.len(),
+                        "Fetched reservations for listing"
+                    );
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        listing_id = %listing.id,
+                        error = %e,
+                        "Failed to fetch reservations for listing"
+                    );
+                }
             }
         }
     }
 
-    let _ = rental_repo
-        .update_connection_last_sync(connection.id, chrono::Utc::now())
-        .await;
+    if let Some(cid) = connection_id {
+        let _ = state
+            .rental_repo
+            .update_connection_last_sync(cid, chrono::Utc::now())
+            .await;
+    }
 
     tracing::info!(
         org_id = %path.org_id,
@@ -905,16 +1032,24 @@ pub async fn sync_booking(
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
-    let reservations = client.sync_reservations(&hotel_id).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to sync Booking.com reservations");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "SYNC_ERROR",
-                format!("Failed to sync: {}", e),
-            )),
-        )
-    })?;
+    // Sync window: today through one year out (matches the prior
+    // `sync_reservations` default before the OTA-XML refactor moved the date
+    // range to the caller).
+    let sync_start = chrono::Utc::now().date_naive();
+    let sync_end = sync_start + chrono::Duration::days(365);
+    let reservations = client
+        .fetch_reservations(&hotel_id, sync_start, sync_end)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to sync Booking.com reservations");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "SYNC_ERROR",
+                    format!("Failed to sync: {}", e),
+                )),
+            )
+        })?;
 
     let pulled_count = reservations.len() as i32;
     let mut persisted_count = 0i32;
@@ -1164,35 +1299,8 @@ pub async fn push_booking_availability(
         ));
     }
 
-    if request.updates.is_empty() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "NO_UPDATES",
-                "At least one availability update is required",
-            )),
-        ));
-    }
-
-    if request.updates.len() > MAX_BATCH_SIZE {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "BATCH_TOO_LARGE",
-                "A maximum of 500 updates per request is allowed",
-            )),
-        ));
-    }
-
-    if request.updates.iter().any(|u| u.available_count < 0) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "INVALID_AVAILABLE_COUNT",
-                "available_count must be non-negative",
-            )),
-        ));
-    }
+    validate_push_availability(&request)
+        .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1235,24 +1343,6 @@ pub async fn push_booking_availability(
     let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
-    // Build property mapping from the request room mappings
-    let mapping = PropertyMapping {
-        internal_property_id: path.org_id,
-        external_property_id: hotel_id.clone(),
-        external_property_name: None,
-        room_mappings: request
-            .room_mappings
-            .iter()
-            .map(|rm| RoomTypeMapping {
-                internal_unit_id: rm.internal_unit_id,
-                external_room_type_id: rm.external_room_type_id.clone(),
-                external_room_type_name: rm.external_room_type_name.clone(),
-            })
-            .collect(),
-        sync_enabled: true,
-        last_sync_at: None,
-    };
-
     let items_count = request.updates.len() as i32;
 
     // Convert DTOs to integration types
@@ -1272,7 +1362,7 @@ pub async fn push_booking_availability(
         .collect();
 
     match client
-        .push_availability(&mapping, availability_updates)
+        .push_availability(&hotel_id, &availability_updates)
         .await
     {
         Ok(()) => {
@@ -1348,25 +1438,8 @@ pub async fn push_booking_rates(
         ));
     }
 
-    if request.updates.is_empty() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "NO_UPDATES",
-                "At least one rate update is required",
-            )),
-        ));
-    }
-
-    if request.updates.len() > MAX_BATCH_SIZE {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "BATCH_TOO_LARGE",
-                "A maximum of 500 updates per request is allowed",
-            )),
-        ));
-    }
+    validate_push_rates(&request)
+        .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1426,7 +1499,7 @@ pub async fn push_booking_rates(
         })
         .collect();
 
-    match client.push_rates(&hotel_id, rate_updates).await {
+    match client.push_rates(&hotel_id, &rate_updates).await {
         Ok(()) => {
             tracing::info!(
                 org_id = %path.org_id,
@@ -2021,4 +2094,133 @@ pub async fn enqueue_airbnb_availability_sync(
             message: "Availability sync job queued successfully".to_string(),
         }),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    //! Regression tests for the legacy Booking.com push request guards
+    //! (issue #572, PR #607): the `MAX_BATCH_SIZE` batch-cap and the
+    //! non-negative `available_count` validation on the `push-availability`
+    //! / `push-rates` endpoints. These guards previously had no coverage —
+    //! the unified `listing-push` surface (PR #1045) tests its own
+    //! `booking_channel::validate_listing_push`, not these handlers.
+    use super::*;
+    use chrono::NaiveDate;
+
+    /// Build `avail` availability-update DTOs, all with a non-negative count.
+    fn avail_updates(avail: usize) -> Vec<AvailabilityUpdateDto> {
+        (0..avail)
+            .map(|i| AvailabilityUpdateDto {
+                room_type_id: "DBL".to_string(),
+                date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
+                    + chrono::Duration::days(i as i64),
+                available_count: 1,
+                stop_sell: false,
+                cta: false,
+                ctd: false,
+                min_los: None,
+                max_los: None,
+            })
+            .collect()
+    }
+
+    /// Build a minimal availability push request with `avail` updates.
+    fn make_availability_request(avail: usize) -> BookingPushAvailabilityRequest {
+        BookingPushAvailabilityRequest {
+            room_mappings: Vec::new(),
+            updates: avail_updates(avail),
+        }
+    }
+
+    /// Build a minimal rates push request with `rates` updates.
+    fn make_rates_request(rates: usize) -> BookingPushRatesRequest {
+        BookingPushRatesRequest {
+            updates: (0..rates)
+                .map(|i| RateUpdateDto {
+                    room_type_id: "DBL".to_string(),
+                    rate_plan_code: "STD".to_string(),
+                    date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
+                        + chrono::Duration::days(i as i64),
+                    base_rate: rust_decimal::Decimal::new(10000, 2),
+                    currency: "EUR".to_string(),
+                    extra_person_rate: None,
+                    extra_child_rate: None,
+                })
+                .collect(),
+        }
+    }
+
+    // ---- push-availability guards ----
+
+    #[test]
+    fn availability_accepts_valid_batch() {
+        let req = make_availability_request(10);
+        assert!(validate_push_availability(&req).is_ok());
+    }
+
+    #[test]
+    fn availability_accepts_max_batch_boundary() {
+        // Exactly MAX_BATCH_SIZE updates must be allowed (boundary).
+        let req = make_availability_request(MAX_BATCH_SIZE);
+        assert!(validate_push_availability(&req).is_ok());
+    }
+
+    #[test]
+    fn availability_rejects_empty_updates() {
+        let req = make_availability_request(0);
+        let err = validate_push_availability(&req).unwrap_err();
+        assert_eq!(err.0, "NO_UPDATES");
+    }
+
+    #[test]
+    fn availability_rejects_oversized_batch() {
+        // One over the cap -> BATCH_TOO_LARGE (400).
+        let req = make_availability_request(MAX_BATCH_SIZE + 1);
+        let err = validate_push_availability(&req).unwrap_err();
+        assert_eq!(err.0, "BATCH_TOO_LARGE");
+    }
+
+    #[test]
+    fn availability_rejects_negative_available_count() {
+        let mut req = make_availability_request(3);
+        req.updates[2].available_count = -1;
+        let err = validate_push_availability(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_AVAILABLE_COUNT");
+    }
+
+    #[test]
+    fn availability_zero_available_count_is_allowed() {
+        // Zero (sold out) is non-negative and must pass the guard.
+        let mut req = make_availability_request(1);
+        req.updates[0].available_count = 0;
+        assert!(validate_push_availability(&req).is_ok());
+    }
+
+    // ---- push-rates guards ----
+
+    #[test]
+    fn rates_accepts_valid_batch() {
+        let req = make_rates_request(10);
+        assert!(validate_push_rates(&req).is_ok());
+    }
+
+    #[test]
+    fn rates_accepts_max_batch_boundary() {
+        let req = make_rates_request(MAX_BATCH_SIZE);
+        assert!(validate_push_rates(&req).is_ok());
+    }
+
+    #[test]
+    fn rates_rejects_empty_updates() {
+        let req = make_rates_request(0);
+        let err = validate_push_rates(&req).unwrap_err();
+        assert_eq!(err.0, "NO_UPDATES");
+    }
+
+    #[test]
+    fn rates_rejects_oversized_batch() {
+        let req = make_rates_request(MAX_BATCH_SIZE + 1);
+        let err = validate_push_rates(&req).unwrap_err();
+        assert_eq!(err.0, "BATCH_TOO_LARGE");
+    }
 }

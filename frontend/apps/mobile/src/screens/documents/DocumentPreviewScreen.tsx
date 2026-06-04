@@ -62,6 +62,24 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/**
+ * Decide whether a failed /preview request means "this file type can't be
+ * previewed, fall back to /download" (true) versus a genuine error to surface
+ * (false). The backend signals an unsupported preview with PREVIEW_NOT_SUPPORTED
+ * / HTTP 400; anything else (auth, network, 5xx) is a hard failure.
+ *
+ * Exported so the fallback decision can be unit-tested independently of the
+ * RN render tree, and reused by DocumentDetailScreen's open action.
+ */
+export function isPreviewUnsupportedError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : '';
+  return (
+    message.includes('PREVIEW_NOT_SUPPORTED') ||
+    message.includes('not supported') ||
+    message.includes('HTTP 400')
+  );
+}
+
 function getFileIcon(type: Document['type']): string {
   switch (type) {
     case 'pdf':
@@ -111,13 +129,7 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
       });
     } catch (err) {
       // PREVIEW_NOT_SUPPORTED (400) → fall back to download endpoint
-      const message = err instanceof Error ? err.message : '';
-      const isUnsupported =
-        message.includes('PREVIEW_NOT_SUPPORTED') ||
-        message.includes('not supported') ||
-        message.includes('HTTP 400');
-
-      if (isUnsupported) {
+      if (isPreviewUnsupportedError(err)) {
         try {
           const fallback = await apiRequest<PresignedUrlResponse>(
             `/api/v1/documents/${document.id}/download`

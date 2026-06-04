@@ -119,6 +119,12 @@ pub struct AgencyDetailResponse {
     pub name: String,
     pub slug: String,
     pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+    pub member_count: i64,
+    pub active_member_count: i64,
+    pub building_count: i64,
+    pub unit_count: i64,
 }
 
 /// GET /admin/agencies/:id
@@ -139,6 +145,12 @@ async fn get_agency(
         name: detail.name,
         slug: detail.slug,
         status: detail.status,
+        created_at: detail.created_at,
+        updated_at: detail.updated_at,
+        member_count: detail.metrics.member_count,
+        active_member_count: detail.metrics.active_member_count,
+        building_count: detail.metrics.building_count,
+        unit_count: detail.metrics.unit_count,
     }))
 }
 
@@ -164,6 +176,32 @@ async fn suspend_agency(
         .suspend_organization(id, principal.user_id, &body.reason)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Cascade the suspension: revoke every org member's sessions so the block
+    // takes effect immediately rather than waiting for token expiry. Mirrors
+    // the cascade in `platform_admin::suspend_organization`. Failures here are
+    // logged but do not fail the request — the org is already suspended and the
+    // auth path also drops suspended-org memberships at login/refresh.
+    let user_ids = state
+        .platform_admin_repo
+        .get_org_member_user_ids(id)
+        .await
+        .unwrap_or_default();
+
+    for user_id in &user_ids {
+        if let Err(e) = state
+            .session_repo
+            .revoke_all_user_tokens(*user_id, None)
+            .await
+        {
+            tracing::warn!(
+                user_id = %user_id,
+                error = %e,
+                "Failed to revoke sessions for suspended org member"
+            );
+        }
+    }
+
     Ok(StatusCode::NO_CONTENT)
 }
 

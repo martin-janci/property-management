@@ -32,6 +32,7 @@ pub mod extractors;
 mod handlers;
 mod observability;
 mod routes;
+mod services;
 pub mod state;
 mod util;
 
@@ -415,6 +416,15 @@ async fn main() -> anyhow::Result<()> {
     let tenant_resolution_cache = host_tenant_config.cache.clone();
     let tenant_rate_limiters = host_tenant_config.rate_limiters.clone();
 
+    // Story 16.3 / #983: start the saved-search alert matching engine. It polls
+    // alert-enabled saved searches against newly published listings and enqueues
+    // alerts. Disabled-safe via SAVED_SEARCH_ALERT_* env.
+    let alert_worker = services::SavedSearchAlertWorker::new(
+        db.clone(),
+        services::SavedSearchAlertConfig::from_env(),
+    );
+    let _alert_worker_handle = alert_worker.start();
+
     // Create application state
     let state = AppState::new(db, tenant_resolution_cache, tenant_rate_limiters);
 
@@ -476,6 +486,11 @@ async fn main() -> anyhow::Result<()> {
         // and accepts no large uploads; 4 MiB is more than enough for
         // JSON+forms.
         .layer(DefaultBodyLimit::max(4 * 1024 * 1024))
+        // Baseline security headers (HSTS, nosniff, frame-deny, referrer) on
+        // every response — the API edge previously shipped none (#954).
+        .layer(axum::middleware::from_fn(
+            api_core::middleware::security_headers,
+        ))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var

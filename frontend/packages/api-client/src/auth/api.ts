@@ -10,6 +10,7 @@ import type {
   AuthErrorCode,
   AuthErrorResponse,
   ChangePasswordRequest,
+  ListSessionsResponse,
   LoginRequest,
   LoginResponse,
   LogoutRequest,
@@ -19,8 +20,11 @@ import type {
   RegisterResponse,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
+  RevokeAllSessionsResponse,
+  RevokeSessionResponse,
   SsoCallbackRequest,
   SsoCallbackResponse,
+  UpdateProfileRequest,
 } from './types';
 
 /**
@@ -219,6 +223,63 @@ export const createAuthApi = (config: ApiConfig) => {
     getCurrentUser: async (): Promise<LoginResponse['user']> => {
       const response = await fetch(`${baseUrl}/me`, {
         method: 'GET',
+        headers: buildHeaders(config, true),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Update the current authenticated user's profile.
+     *
+     * Endpoint: PATCH /api/v1/auth/me
+     *
+     * The backend only persists `displayName`, `phone`, and `avatarUrl`;
+     * other fields are ignored. Returns the full updated user.
+     */
+    updateProfile: async (request: UpdateProfileRequest): Promise<LoginResponse['user']> => {
+      const response = await fetch(`${baseUrl}/me`, {
+        method: 'PATCH',
+        headers: buildHeaders(config, true),
+        body: JSON.stringify(request),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * List the current user's active sessions.
+     *
+     * Endpoint: GET /api/v1/auth/sessions
+     */
+    listSessions: async (): Promise<ListSessionsResponse> => {
+      const response = await fetch(`${baseUrl}/sessions`, {
+        method: 'GET',
+        headers: buildHeaders(config, true),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Revoke a specific session by ID.
+     *
+     * Endpoint: POST /api/v1/auth/sessions/revoke
+     */
+    revokeSession: async (sessionId: string): Promise<RevokeSessionResponse> => {
+      const response = await fetch(`${baseUrl}/sessions/revoke`, {
+        method: 'POST',
+        headers: buildHeaders(config, true),
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Revoke all sessions other than the current one.
+     *
+     * Endpoint: POST /api/v1/auth/sessions/revoke-all
+     */
+    revokeAllOtherSessions: async (): Promise<RevokeAllSessionsResponse> => {
+      const response = await fetch(`${baseUrl}/sessions/revoke-all`, {
+        method: 'POST',
         headers: buildHeaders(config, true),
       });
       return handleResponse(response);

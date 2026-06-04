@@ -31,7 +31,8 @@ use api_server::{observability, routes, services, state};
 
 use db::repositories::AnnouncementRepository;
 use services::{
-    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, Scheduler, SchedulerConfig,
+    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, QuietHoursDrainConfig,
+    QuietHoursDrainWorker, Scheduler, SchedulerConfig,
 };
 use state::AppState;
 
@@ -152,6 +153,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::organizations::get_organization_branding,
         routes::organizations::update_organization_branding,
         routes::organizations::export_organization_data,
+        routes::messaging::delete_message,
     ),
     components(schemas(
         routes::health::HealthResponse,
@@ -403,6 +405,34 @@ async fn main() -> anyhow::Result<()> {
         tenant_rate_limiters,
     );
 
+    // gap-84-1: Wire the S3 / MinIO storage service so document download &
+    // preview endpoints can mint short-lived presigned URLs. The constructor
+    // (`from_env_async`) initialises the real aws-sdk-s3 client — for an
+    // S3-compatible endpoint like MinIO it picks up S3_ENDPOINT and uses
+    // path-style addressing. Fail-soft: a missing/invalid config logs a
+    // warning and leaves `storage_service = None`, in which case the download
+    // endpoint returns 503 STORAGE_NOT_CONFIGURED rather than crashing the
+    // whole server (mirrors the optional-service pattern used elsewhere).
+    let state = match integrations::StorageService::from_env_async().await {
+        Ok(storage) => {
+            tracing::info!(
+                bucket = %storage.bucket(),
+                region = %storage.region(),
+                download_ttl_secs = storage.download_ttl_secs(),
+                "S3 storage service initialised — document downloads enabled"
+            );
+            state.with_storage(storage)
+        }
+        Err(e) => {
+            tracing::warn!(
+                error = %e,
+                "S3 storage not configured — document download/preview endpoints \
+                 will return 503 until S3_BUCKET / AWS_* env vars are set"
+            );
+            state
+        }
+    };
+
     // Start background scheduler for scheduled announcements
     let scheduler_enabled = std::env::var("SCHEDULER_ENABLED")
         .map(|v| v != "false" && v != "0")
@@ -429,6 +459,10 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(3),
+        pin_max_age_days: std::env::var("PIN_MAX_AGE_DAYS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(30),
     };
     let scheduler_pool = state.db.clone();
     let announcement_repo = AnnouncementRepository::new(scheduler_pool.clone());
@@ -452,6 +486,17 @@ async fn main() -> anyhow::Result<()> {
         push_fanout_config,
     );
     let _push_fanout_handle = push_fanout_worker.start();
+
+    // Story 8B.3 / #980: release notifications held during quiet hours once the
+    // user's quiet-hours window ends. Polls `held_notifications` on an interval;
+    // disabled-safe (no crash when env vars are unset).
+    let quiet_hours_drain_worker = QuietHoursDrainWorker::new(
+        db_pool.clone(),
+        email_service.clone(),
+        state.pubsub_service.clone(),
+        QuietHoursDrainConfig::from_env(),
+    );
+    let _quiet_hours_drain_handle = quiet_hours_drain_worker.start();
 
     // Phase 5 — admin dependency injection (B7).
     //
@@ -524,6 +569,11 @@ async fn main() -> anyhow::Result<()> {
         // this per-route via `DefaultBodyLimit::max(...)` and stream
         // chunks instead of buffering full payloads. Cap here: 16 MiB.
         .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+        // Baseline security headers (HSTS, nosniff, frame-deny, referrer) on
+        // every response — the API edge previously shipped none (#954).
+        .layer(axum::middleware::from_fn(
+            api_core::middleware::security_headers,
+        ))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST

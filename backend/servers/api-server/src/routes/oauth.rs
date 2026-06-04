@@ -465,6 +465,12 @@ pub async fn token(
 // ==================== Token Revocation ====================
 
 /// Revoke a token (RFC 7009).
+///
+/// Requires client authentication (RFC 7009 §2.1): confidential clients must
+/// present a valid `client_secret`, public clients authenticate by `client_id`
+/// alone. The token is only revoked if it was issued to the authenticating
+/// client — this prevents an unauthenticated caller (or another client) from
+/// revoking arbitrary tokens, which would otherwise be a trivial DoS.
 #[utoipa::path(
     post,
     path = "/api/v1/oauth/revoke",
@@ -472,20 +478,99 @@ pub async fn token(
     request_body = RevokeTokenRequest,
     responses(
         (status = 200, description = "Token revoked"),
-        (status = 400, description = "Invalid request", body = OAuthError)
+        (status = 400, description = "Invalid request", body = OAuthError),
+        (status = 401, description = "Invalid client", body = OAuthError)
     )
 )]
 pub async fn revoke(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Form(request): Form<RevokeTokenRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<OAuthError>)> {
+    let client_id = authenticate_revocation_client(
+        &state,
+        &headers,
+        &request.client_id,
+        &request.client_secret,
+    )
+    .await?;
+
     state
         .oauth_service
-        .revoke_token(&request.token, request.token_type_hint.as_deref())
+        .revoke_token(
+            &request.token,
+            request.token_type_hint.as_deref(),
+            &client_id,
+        )
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, Json(e.into())))?;
 
     Ok(StatusCode::OK)
+}
+
+/// Authenticate the client calling the revocation endpoint and return its
+/// `client_id`. Mirrors the `/token` endpoint policy: confidential clients must
+/// supply a valid secret; public clients authenticate by `client_id` only.
+async fn authenticate_revocation_client(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+    form_client_id: &Option<String>,
+    form_client_secret: &Option<String>,
+) -> Result<String, (StatusCode, Json<OAuthError>)> {
+    // Basic-auth credentials take precedence over form fields, matching
+    // `/introspect` and `extract_client_credentials`.
+    let creds = extract_client_credentials(headers, form_client_id, form_client_secret);
+    let (client_id, supplied_secret) = match creds {
+        Some((id, secret)) => (id, Some(secret)),
+        None => {
+            let id = form_client_id.clone().ok_or_else(|| {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    Json(OAuthError::invalid_client("client authentication required")),
+                )
+            })?;
+            (id, None)
+        }
+    };
+
+    let client = state
+        .oauth_service
+        .get_client(&client_id)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, Json(e.into())))?
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(OAuthError::invalid_client("unknown or inactive client")),
+            )
+        })?;
+
+    if client.is_confidential {
+        let secret = supplied_secret.ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(OAuthError::invalid_client(
+                    "client_secret required for confidential clients",
+                )),
+            )
+        })?;
+        state
+            .oauth_service
+            .validate_client_credentials(&client_id, &secret)
+            .await
+            .map_err(|e| (StatusCode::UNAUTHORIZED, Json(e.into())))?;
+    } else if let Some(secret) = supplied_secret {
+        // Public client that supplied a secret anyway — validate it so a
+        // misconfigured client surfaces the mismatch instead of silently
+        // succeeding.
+        state
+            .oauth_service
+            .validate_client_credentials(&client_id, &secret)
+            .await
+            .map_err(|e| (StatusCode::UNAUTHORIZED, Json(e.into())))?;
+    }
+
+    Ok(client_id)
 }
 
 // ==================== Token Introspection ====================
@@ -540,9 +625,12 @@ pub async fn introspect(
             )
         })?;
 
+    // Bind the response to the authenticated client: a token belonging to a
+    // different client is reported as inactive (RFC 7662 §2.2), so a client
+    // cannot enumerate another client's token metadata.
     let response = state
         .oauth_service
-        .introspect_token(&request.token)
+        .introspect_token(&request.token, &client_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(e.into())))?;
 

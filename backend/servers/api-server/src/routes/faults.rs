@@ -360,6 +360,42 @@ async fn create_fault(
         idempotency_key: req.idempotency_key,
     };
 
+    // Idempotent offline create (#970): if the client supplied an idempotency
+    // key and a fault with that key already exists in this tenant, return the
+    // existing fault instead of inserting a duplicate. The lookup runs on the
+    // RLS-scoped connection (NOT the org-unscoped pool-based finder) so a key
+    // collision across organizations cannot leak another tenant's fault.
+    if let Some(ref key) = data.idempotency_key {
+        match state
+            .fault_repo
+            .find_by_idempotency_key_rls(&mut **rls.conn(), key)
+            .await
+        {
+            Ok(Some(existing)) => {
+                rls.release().await;
+                return Ok((
+                    StatusCode::OK,
+                    Json(CreateFaultResponse {
+                        id: existing.id,
+                        message: "Fault already exists".to_string(),
+                    }),
+                ));
+            }
+            Ok(None) => {}
+            Err(e) => {
+                tracing::error!("Failed to check fault idempotency key: {}", e);
+                rls.release().await;
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to create fault",
+                    )),
+                ));
+            }
+        }
+    }
+
     let fault = state
         .fault_repo
         .create_rls(&mut **rls.conn(), data)
@@ -570,10 +606,13 @@ async fn get_fault(
 )]
 async fn update_fault(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
     // Check fault exists and can be edited
     let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
         Ok(Some(f)) => f,
@@ -593,6 +632,15 @@ async fn update_fault(
             ));
         }
     };
+
+    // SECURITY (#970): only the reporter who filed the fault or a manager in
+    // the tenant may edit it. Any other tenant member must be rejected.
+    if existing.reporter_id != principal.user_id {
+        if let Err(e) = require_manager(&state, principal.user_id, tenant_id).await {
+            rls.release().await;
+            return Err(e);
+        }
+    }
 
     if !existing.can_reporter_edit() {
         rls.release().await;
@@ -1285,9 +1333,14 @@ async fn delete_attachment(
 )]
 async fn get_ai_suggestion(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AiSuggestionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (#970): AI triage suggestions are a manager-tier workflow action.
+    let tenant_id = require_tenant_id(&principal)?;
+    require_manager(&state, principal.user_id, tenant_id).await?;
+
     // Get fault to analyze
     let fault = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
         Ok(Some(f)) => f,

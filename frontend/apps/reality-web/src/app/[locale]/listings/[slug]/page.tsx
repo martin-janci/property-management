@@ -12,6 +12,7 @@ import type { ListingDetail } from '@ppt/reality-api-client';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { ListingDetailContent, ListingNotFound } from '@/components/listings';
+import { buildListingMetadata } from './metadata';
 
 function inferApiBaseFromHost(host: string): string | null {
   const bareHost = host.split(':')[0]?.toLowerCase();
@@ -83,25 +84,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const host = await resolveHost();
   const listing = await getListing(slug, host);
 
-  if (!listing) {
-    return {
-      title: 'Listing Not Found - Reality Portal',
-    };
-  }
-
-  const title = `${listing.title} - ${listing.address.city} | Reality Portal`;
-  const description = listing.description.slice(0, 160);
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      images: listing.primaryPhoto ? [listing.primaryPhoto.url] : [],
-    },
-  };
+  return buildListingMetadata(listing);
 }
 
 export default async function ListingDetailPage({ params }: PageProps) {

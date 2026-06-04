@@ -11,6 +11,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
+use common::notifications::{Notification, NotificationCategory};
 use db::models::{
     target_type, AcknowledgmentStats, Announcement, AnnouncementAttachment, AnnouncementComment,
     AnnouncementListQuery, AnnouncementStatistics, AnnouncementSummary, AnnouncementWithDetails,
@@ -953,11 +954,7 @@ async fn publish_announcement(
         .await
     {
         Ok(announcement) => {
-            rls.release().await;
-            // Story 84.4: Trigger notification event for announcement publish
-            let target_type = parse_target_type(&announcement.target_type);
-
-            // Parse target_ids from JSON value
+            // Parse target_ids from JSON value.
             let target_ids: Vec<Uuid> = announcement
                 .target_ids
                 .as_array()
@@ -968,6 +965,32 @@ async fn publish_announcement(
                 })
                 .unwrap_or_default();
 
+            // Resolve the recipient user ids WHILE the manager's RLS context is
+            // still set (they can read their org's memberships / units /
+            // residents). Resolution failure must not fail the publish — it has
+            // already succeeded — so we log and fall back to no recipients.
+            let recipients = match resolve_announcement_recipients(
+                rls.conn(),
+                announcement.organization_id,
+                &announcement.target_type,
+                &target_ids,
+            )
+            .await
+            {
+                Ok(ids) => ids,
+                Err(e) => {
+                    tracing::error!(
+                        announcement_id = %announcement.id,
+                        error = %e,
+                        "Failed to resolve announcement recipients; published without fan-out"
+                    );
+                    Vec::new()
+                }
+            };
+            rls.release().await;
+
+            // Story 84.4 / Epic 2B: build the notification event + payload.
+            let target_type = parse_target_type(&announcement.target_type);
             let notification_event = common::NotificationEvent::AnnouncementPublished {
                 announcement_id: announcement.id,
                 organization_id: announcement.organization_id,
@@ -976,19 +999,39 @@ async fn publish_announcement(
                 title: announcement.title.clone(),
             };
 
-            // Log the notification event for observability and downstream processing
-            // The notification service (Epic 2B) can subscribe to these log events via log aggregation
-            // or implement direct Redis pub/sub integration when available
+            // Epic 2B: real fan-out through the notification pipeline. The
+            // pipeline applies PreferenceRouter per recipient and respects
+            // urgency (Urgent announcements bypass preferences); the in-app DB
+            // record is written for every recipient regardless of preference.
+            let notification = Notification::new(
+                Uuid::nil(),
+                NotificationCategory::Announcements,
+                notification_event.title(),
+                announcement.content.clone(),
+            )
+            .with_priority(notification_event.priority())
+            .with_action_url(format!("/announcements/{}", announcement.id))
+            .with_data(serde_json::json!({
+                "announcement_id": announcement.id,
+                "organization_id": announcement.organization_id,
+                "target_type": announcement.target_type,
+            }));
+
+            let (sent, skipped, failed) = state
+                .notification_pipeline
+                .broadcast(&recipients, &notification, Some(announcement.id))
+                .await;
+
             tracing::info!(
                 announcement_id = %announcement.id,
                 organization_id = %announcement.organization_id,
                 target_type = %announcement.target_type,
-                target_ids_count = %target_ids.len(),
-                notification_title = %notification_event.title(),
-                notification_category = %notification_event.category(),
-                notification_priority = ?notification_event.priority(),
-                notification_event = ?serde_json::to_string(&notification_event).ok(),
-                "Announcement published - notification event dispatched"
+                recipients = recipients.len(),
+                priority = ?notification_event.priority(),
+                channels_sent = sent,
+                channels_skipped = skipped,
+                channels_failed = failed,
+                "Announcement published — notifications dispatched via pipeline"
             );
 
             Ok(Json(AnnouncementActionResponse {
@@ -1790,6 +1833,97 @@ async fn get_acknowledgments(
 // Helper Functions
 // ============================================================================
 
+/// Resolve an announcement's targeting into the concrete set of recipient
+/// user ids (Epic 2B / Epic 6 publish fan-out).
+///
+/// Must be called on a connection whose RLS context is the publishing
+/// manager's org, so the membership / unit / resident reads are authorised.
+///
+/// | target_type | recipients |
+/// |-------------|------------|
+/// | `all`       | every active org member (`user_memberships`, not revoked) |
+/// | `building`  | active residents of units in the target buildings |
+/// | `units`     | active residents of the target units |
+/// | `roles`     | active org members holding one of the target roles |
+///
+/// De-duplicated (a user in two targeted units is notified once).
+async fn resolve_announcement_recipients(
+    conn: &mut sqlx::PgConnection,
+    org_id: Uuid,
+    target_type_str: &str,
+    target_ids: &[Uuid],
+) -> Result<Vec<Uuid>, sqlx::Error> {
+    // Non-`all` targets with no ids resolve to nobody (validated upstream).
+    if target_type_str != target_type::ALL && target_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let rows: Vec<(Uuid,)> = match target_type_str {
+        target_type::ALL => {
+            sqlx::query_as(
+                r#"
+                SELECT DISTINCT user_id FROM user_memberships
+                WHERE organization_id = $1 AND revoked_at IS NULL
+                "#,
+            )
+            .bind(org_id)
+            .fetch_all(&mut *conn)
+            .await?
+        }
+        target_type::BUILDING => {
+            sqlx::query_as(
+                r#"
+                SELECT DISTINCT ur.user_id
+                FROM unit_residents ur
+                JOIN units u ON u.id = ur.unit_id
+                WHERE u.building_id = ANY($1)
+                  AND ur.end_date IS NULL
+                  AND ur.receives_notifications = TRUE
+                "#,
+            )
+            .bind(target_ids)
+            .fetch_all(&mut *conn)
+            .await?
+        }
+        target_type::UNITS => {
+            sqlx::query_as(
+                r#"
+                SELECT DISTINCT ur.user_id
+                FROM unit_residents ur
+                WHERE ur.unit_id = ANY($1)
+                  AND ur.end_date IS NULL
+                  AND ur.receives_notifications = TRUE
+                "#,
+            )
+            .bind(target_ids)
+            .fetch_all(&mut *conn)
+            .await?
+        }
+        target_type::ROLES => {
+            // Roles are stored as text in `user_memberships.role`; the
+            // announcement carries them as the textual role names cast to the
+            // UUID-typed `target_ids` only when a role-mapping table exists.
+            // This system uses enum role names, so match on the string form.
+            let role_names: Vec<String> = target_ids.iter().map(|id| id.to_string()).collect();
+            sqlx::query_as(
+                r#"
+                SELECT DISTINCT user_id FROM user_memberships
+                WHERE organization_id = $1
+                  AND revoked_at IS NULL
+                  AND role = ANY($2)
+                "#,
+            )
+            .bind(org_id)
+            .bind(&role_names)
+            .fetch_all(&mut *conn)
+            .await?
+        }
+        _ => Vec::new(),
+    };
+
+    Ok(rows.into_iter().map(|(id,)| id).collect())
+}
+
 /// Validate that target_ids exist within the organization.
 ///
 /// Security fix (Critical 1.3): Ensures managers can only target buildings/units
@@ -2208,7 +2342,10 @@ async fn create_comment(
         ));
     }
 
-    // If parent_id is provided, verify it exists and belongs to same announcement
+    // If parent_id is provided, verify it exists and belongs to same announcement.
+    // Capture the parent comment's author so we can notify them about the reply
+    // before `parent` drops at the end of this block (Story 6.3 AC).
+    let mut parent_author: Option<Uuid> = None;
     if let Some(parent_id) = req.parent_id {
         match state
             .announcement_repo
@@ -2237,6 +2374,7 @@ async fn create_comment(
                         )),
                     ));
                 }
+                parent_author = Some(parent.user_id);
             }
             Ok(None) => {
                 rls.release().await;
@@ -2283,6 +2421,52 @@ async fn create_comment(
                 user_id = %auth.user_id,
                 "Comment created"
             );
+
+            // Story 6.3 AC: notify the announcement author and, for replies,
+            // the parent comment's author. Exclude the actor (commenter). The
+            // RLS connection is released above; the pipeline does not need it
+            // (matches the publish_announcement ordering).
+            let mut recipients: Vec<Uuid> = Vec::new();
+            for candidate in [Some(announcement.author_id), parent_author]
+                .into_iter()
+                .flatten()
+            {
+                if candidate != auth.user_id && !recipients.contains(&candidate) {
+                    recipients.push(candidate);
+                }
+            }
+
+            if !recipients.is_empty() {
+                // Short snippet of the comment body for the notification preview.
+                let snippet: String = comment.content.chars().take(140).collect();
+                let notification = Notification::new(
+                    Uuid::nil(),
+                    NotificationCategory::Announcements,
+                    format!("New comment on {}", announcement.title),
+                    snippet,
+                )
+                .with_action_url(format!("/announcements/{}", id))
+                .with_data(serde_json::json!({
+                    "announcement_id": id,
+                    "comment_id": comment.id,
+                }));
+
+                let (sent, skipped, failed) = state
+                    .notification_pipeline
+                    .broadcast(&recipients, &notification, Some(id))
+                    .await;
+
+                tracing::info!(
+                    comment_id = %comment.id,
+                    announcement_id = %id,
+                    recipients = recipients.len(),
+                    sent,
+                    skipped,
+                    failed,
+                    "Dispatched comment notifications"
+                );
+            }
+
             Ok((StatusCode::CREATED, Json(comment)))
         }
         Err(e) => {

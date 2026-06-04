@@ -18,13 +18,18 @@ export type FaultCategory =
 /** Fault priority levels */
 export type FaultPriority = 'low' | 'medium' | 'high' | 'urgent';
 
-/** Fault status values */
+/**
+ * Fault status values.
+ *
+ * Mirrors the backend `fault_status` enum (`db/src/models/fault.rs`). The
+ * backend emits `new` (not `reported`) and `waiting_parts` (not `on_hold`).
+ */
 export type FaultStatus =
-  | 'reported'
+  | 'new'
   | 'triaged'
   | 'in_progress'
+  | 'waiting_parts'
   | 'scheduled'
-  | 'on_hold'
   | 'resolved'
   | 'closed'
   | 'reopened';
@@ -51,15 +56,58 @@ export interface FaultSummary {
   ai_confidence?: number;
 }
 
-/** Full fault details */
-export interface FaultWithDetails extends FaultSummary {
-  location_description?: string;
-  resolution_notes?: string;
-  resolved_at?: string;
-  resolved_by?: string;
-  scheduled_date?: string;
-  work_notes?: WorkNote[];
-  comments?: FaultComment[];
+/**
+ * Full fault details returned by `GET /api/v1/faults/{id}` (the `fault` field
+ * of {@link FaultDetailResponse}).
+ *
+ * Mirrors the backend `FaultWithDetails` model (`db/src/models/fault.rs`):
+ * the inner `Fault` is `#[serde(flatten)]`-ed (snake_case, no `rename_all`),
+ * then joined display fields are appended. Comments and the timeline are NOT
+ * embedded here — the timeline arrives in {@link FaultDetailResponse.timeline}.
+ */
+export interface FaultWithDetails {
+  // --- Flattened Fault fields ---
+  id: string;
+  organization_id: string;
+  building_id: string;
+  unit_id?: string | null;
+  reporter_id: string;
+  title: string;
+  description: string;
+  location_description?: string | null;
+  category: FaultCategory;
+  priority: FaultPriority;
+  status: FaultStatus;
+  ai_category?: FaultCategory | null;
+  ai_priority?: FaultPriority | null;
+  /** AI confidence (backend `rust_decimal::Decimal` serialized as a number/string). */
+  ai_confidence?: number | string | null;
+  ai_processed_at?: string | null;
+  assigned_to?: string | null;
+  assigned_at?: string | null;
+  triaged_by?: string | null;
+  triaged_at?: string | null;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
+  resolution_notes?: string | null;
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
+  rating?: number | null;
+  feedback?: string | null;
+  scheduled_date?: string | null;
+  estimated_completion?: string | null;
+  idempotency_key?: string | null;
+  created_at: string;
+  updated_at: string;
+  // --- Joined display fields ---
+  reporter_name: string;
+  reporter_email: string;
+  building_name: string;
+  building_address: string;
+  unit_designation?: string | null;
+  assigned_to_name?: string | null;
+  attachment_count: number;
+  comment_count: number;
 }
 
 /** Work note on a fault */
@@ -96,16 +144,36 @@ export interface FaultAttachment {
   created_at: string;
 }
 
-/** Timeline entry for fault history */
+/**
+ * Timeline entry for fault history, returned in
+ * {@link FaultDetailResponse.timeline} by `GET /api/v1/faults/{id}`.
+ *
+ * Mirrors the backend `FaultTimelineEntryWithUser` model
+ * (`db/src/models/fault.rs`): the inner `FaultTimelineEntry` is
+ * `#[serde(flatten)]`-ed (snake_case), then `user_name`/`user_email` are
+ * appended from the joined user row.
+ */
 export interface FaultTimelineEntry {
   id: string;
   fault_id: string;
-  event_type: string;
-  description: string;
-  actor_id: string;
-  actor_name?: string;
-  created_at: string;
+  user_id: string;
+  /** Machine action key, e.g. `created`, `status_changed`, `assigned`, `comment`. */
+  action: string;
+  /** Free-text note / comment body (null for value-only transitions). */
+  note?: string | null;
+  /** Previous value for transitions (e.g. old status). */
+  old_value?: string | null;
+  /** New value for transitions (e.g. new status). */
+  new_value?: string | null;
+  /** Arbitrary structured metadata attached to the event. */
   metadata?: Record<string, unknown>;
+  /** Whether this entry is manager-only (internal note). */
+  is_internal: boolean;
+  created_at: string;
+  /** Display name of the acting user (joined). */
+  user_name: string;
+  /** Email of the acting user (joined). */
+  user_email: string;
 }
 
 /** AI suggestion response */

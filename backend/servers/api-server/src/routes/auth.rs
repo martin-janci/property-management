@@ -52,14 +52,22 @@ pub struct RegisterRequest {
 }
 
 /// Register response.
+///
+/// Intentionally generic and identical for both a fresh registration and an
+/// attempt to register an already-existing email (#956). It carries no
+/// account-specific data (notably no user id), so the response cannot be used
+/// to enumerate registered accounts.
 #[derive(Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RegisterResponse {
-    /// Success message
+    /// Generic success message
     pub message: String,
-    /// User ID
-    pub user_id: String,
 }
+
+/// Generic, account-agnostic message returned by `register` regardless of
+/// whether the email was already registered. Keeps the success and
+/// already-exists paths byte-for-byte identical (#956).
+const REGISTER_GENERIC_MESSAGE: &str = "Check your email to verify your account";
 
 /// Register endpoint.
 #[utoipa::path(
@@ -68,9 +76,10 @@ pub struct RegisterResponse {
     tag = "Authentication",
     request_body = RegisterRequest,
     responses(
-        (status = 201, description = "Registration successful", body = RegisterResponse),
-        (status = 400, description = "Invalid input", body = ErrorResponse),
-        (status = 409, description = "Email already exists", body = ErrorResponse)
+        // A 201 with a generic body is returned whether or not the email is
+        // already registered, to avoid account enumeration (#956).
+        (status = 201, description = "Registration accepted", body = RegisterResponse),
+        (status = 400, description = "Invalid input", body = ErrorResponse)
     )
 )]
 pub async fn register(
@@ -112,16 +121,23 @@ pub async fn register(
         ));
     }
 
-    // Check if email already exists
+    // Check if email already exists. We must NOT signal this back to the
+    // caller (no 409 / EMAIL_EXISTS) — a distinct response for an existing
+    // address is an account-enumeration oracle. Instead we short-circuit with
+    // the exact same generic 201 a fresh registration returns, and notify the
+    // real account holder out-of-band (logged here; an out-of-band "someone
+    // tried to register with your email" notification is a future enhancement).
     match state.user_repo.email_exists(&req.email).await {
         Ok(true) => {
-            // Don't reveal whether account is verified or not
-            return Err((
-                StatusCode::CONFLICT,
-                Json(ErrorResponse::new(
-                    "EMAIL_EXISTS",
-                    "An account with this email already exists",
-                )),
+            tracing::info!(
+                email_hash = %common::email_log_hash(&req.email),
+                "Registration attempted for an already-registered email; returning generic response"
+            );
+            return Ok((
+                StatusCode::CREATED,
+                Json(RegisterResponse {
+                    message: REGISTER_GENERIC_MESSAGE.to_string(),
+                }),
             ));
         }
         Ok(false) => {}
@@ -218,8 +234,7 @@ pub async fn register(
     Ok((
         StatusCode::CREATED,
         Json(RegisterResponse {
-            message: "Check your email to verify your account".to_string(),
-            user_id: user.id.to_string(),
+            message: REGISTER_GENERIC_MESSAGE.to_string(),
         }),
     ))
 }
@@ -609,20 +624,6 @@ pub async fn login(
         ));
     }
 
-    if !user.is_verified() {
-        let _ = state
-            .session_repo
-            .record_login_attempt(&req.email, &ip_address, false)
-            .await;
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "EMAIL_NOT_VERIFIED",
-                "Please verify your email first",
-            )),
-        ));
-    }
-
     // Verify password
     let password_valid = match state
         .auth_service
@@ -656,6 +657,26 @@ pub async fn login(
             Json(ErrorResponse::new(
                 "INVALID_CREDENTIALS",
                 "Invalid email or password",
+            )),
+        ));
+    }
+
+    // Email-verification gate. This MUST come *after* the password check:
+    // returning EMAIL_NOT_VERIFIED before verifying the password turns login
+    // into an account-enumeration oracle (an attacker learns an email is
+    // registered-but-unverified without knowing the password). With a wrong
+    // password the caller already got the generic INVALID_CREDENTIALS above
+    // regardless of verification state (#956).
+    if !user.is_verified() {
+        let _ = state
+            .session_repo
+            .record_login_attempt(&req.email, &ip_address, false)
+            .await;
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "EMAIL_NOT_VERIFIED",
+                "Please verify your email first",
             )),
         ));
     }

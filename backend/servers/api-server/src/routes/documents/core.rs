@@ -1184,7 +1184,9 @@ async fn get_download_url(
             &document.file_key,
             &document.file_name,
             &document.mime_type,
-            None, // Default: 15-minute expiration
+            // Short-lived TTL driven by the S3_PRESIGNED_URL_TTL_SECS config
+            // knob (defaults to 15 minutes). gap-84-1.
+            Some(storage.download_ttl_secs()),
         )
         .await
         .map_err(|e| {

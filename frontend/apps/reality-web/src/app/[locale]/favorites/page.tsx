@@ -8,6 +8,7 @@
 
 import { useFavorites, useRemoveFavorite } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { ListingCard } from '@/components/listings';
@@ -195,12 +196,13 @@ function FavoritesContent() {
 }
 
 export default function FavoritesPage() {
+  const t = useTranslations('pages.favorites');
   return (
     <div className="page-container">
       <Header />
       <main className="main">
         <div className="container">
-          <h1 className="page-title">My Favorites</h1>
+          <h1 className="page-title">{t('h1')}</h1>
           <ProtectedRoute>
             <FavoritesContent />
           </ProtectedRoute>

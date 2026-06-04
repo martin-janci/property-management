@@ -62,6 +62,9 @@ pub fn router() -> Router<AppState> {
         .route("/viewing/{listing_id}", post(request_viewing))
         // Authenticated routes
         .route("/", get(list_my_inquiries))
+        // Buyer-axis listing: inquiries the authenticated buyer submitted.
+        // Must be registered before `/{id}` so `mine` is not captured as an id.
+        .route("/mine", get(list_buyer_inquiries))
         .route("/{id}", get(get_inquiry))
         .route("/{id}/read", put(mark_as_read))
         .route("/{id}/respond", post(respond_to_inquiry))
@@ -489,6 +492,56 @@ pub async fn list_my_inquiries(
             .count_realtor_inquiries(principal.user_id, status_filter),
     )
     .map_err(|e| crate::util::errors::db_error("list inquiries", e))?;
+
+    Ok(Json(InquiryListResponse {
+        inquiries,
+        total,
+        page,
+        limit,
+    }))
+}
+
+/// List inquiries the authenticated buyer submitted.
+///
+/// Buyer-axis counterpart to [`list_my_inquiries`] (which is realtor-scoped):
+/// returns only inquiries whose `user_id` matches the calling principal, so a
+/// buyer sees the inquiries they sent and never another buyer's. `total` is the
+/// FULL filtered count (not the current page length) so clients can paginate —
+/// the page-length-as-total bug fixed for the realtor axis in PR #919.
+#[utoipa::path(
+    get,
+    path = "/api/v1/inquiries/mine",
+    tag = "Inquiries",
+    params(InquiryListQuery),
+    responses(
+        (status = 200, description = "Buyer's inquiry list", body = InquiryListResponse),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+pub async fn list_buyer_inquiries(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Query(query): Query<InquiryListQuery>,
+) -> Result<Json<InquiryListResponse>, (axum::http::StatusCode, String)> {
+    let page = query.page.unwrap_or(1).max(1);
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * limit;
+
+    // Page query and matching COUNT run in parallel; both use the same filter
+    // so `total / limit` paginates correctly.
+    let status_filter = query.status.clone();
+    let (inquiries, total) = tokio::try_join!(
+        state.reality_portal_repo.get_buyer_inquiries(
+            principal.user_id,
+            query.status,
+            limit,
+            offset,
+        ),
+        state
+            .reality_portal_repo
+            .count_buyer_inquiries(principal.user_id, status_filter),
+    )
+    .map_err(|e| crate::util::errors::db_error("list buyer inquiries", e))?;
 
     Ok(Json(InquiryListResponse {
         inquiries,

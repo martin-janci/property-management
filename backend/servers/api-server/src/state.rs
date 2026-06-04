@@ -2,7 +2,10 @@
 
 use std::time::Instant;
 
-use crate::services::{AuthService, EmailService, JwtService, OAuthService, TotpService};
+use crate::services::{
+    AuthService, EmailService, JwtService, NotificationPipeline, OAuthService, PipelineConfig,
+    TotpService,
+};
 use api_core::TenantMembershipProvider;
 use db::{
     repositories::{
@@ -220,6 +223,10 @@ pub struct AppState {
     pub llm_client: LlmClient,
     pub auth_service: AuthService,
     pub email_service: EmailService,
+    /// Epic 2B: notification delivery pipeline (preference routing + transport
+    /// adapters + delivery tracking). Wired here so publish paths
+    /// (announcements, critical notifications) can fan out instead of logging.
+    pub notification_pipeline: NotificationPipeline,
     pub jwt_service: JwtService,
     pub totp_service: TotpService,
     pub oauth_service: OAuthService,
@@ -394,6 +401,19 @@ impl AppState {
         let oauth_service =
             OAuthService::new(oauth_repo.clone(), user_repo.clone(), auth_service.clone());
 
+        // Epic 2B: build the notification pipeline from shared resources.
+        // `pubsub` is `None` here — Redis is wired post-construction (see
+        // `with_redis`), and in-app delivery (the mandatory per-recipient DB
+        // record) does not depend on it; only the real-time WebSocket fan-out
+        // (Story 8A.3) does. FCM is read from env: when unconfigured the push
+        // channel fails closed to `Skipped` rather than a fake `Sent`.
+        let notification_pipeline = NotificationPipeline::new(
+            db.clone(),
+            email_service.clone(),
+            None,
+            PipelineConfig::default(),
+        );
+
         Self {
             boot_time: Instant::now(),
             db,
@@ -487,6 +507,7 @@ impl AppState {
             llm_client,
             auth_service,
             email_service,
+            notification_pipeline,
             jwt_service,
             totp_service,
             oauth_service,

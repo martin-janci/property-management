@@ -446,6 +446,20 @@ pub mod esignature_status {
     pub const DECLINED: &str = "declined";
     pub const VOIDED: &str = "voided";
     pub const EXPIRED: &str = "expired";
+
+    /// Terminal statuses — once a workflow reaches one of these it must not be
+    /// mutated by a (possibly re-delivered) provider webhook event.
+    pub const TERMINAL: [&str; 3] = [COMPLETED, VOIDED, DECLINED];
+
+    /// Returns `true` when `status` is a terminal e-signature workflow status.
+    ///
+    /// Terminal statuses (`completed`, `voided`, `declined`) represent a final
+    /// outcome of the signing process. Provider webhooks can be re-delivered,
+    /// so any status transition that would overwrite a terminal state must be
+    /// treated as a safe no-op for idempotency.
+    pub fn is_terminal(status: &str) -> bool {
+        TERMINAL.contains(&status)
+    }
 }
 
 /// E-signature workflow entity.
@@ -1040,5 +1054,41 @@ mod tests {
         let result = validate_webhook_url("not-a-url", true);
         assert!(!result.is_valid);
         assert!(result.error.unwrap().contains("Invalid URL"));
+    }
+
+    #[test]
+    fn test_esignature_terminal_statuses() {
+        use esignature_status::*;
+        // Terminal: a re-delivered webhook for these must be a no-op.
+        assert!(is_terminal(COMPLETED));
+        assert!(is_terminal(VOIDED));
+        assert!(is_terminal(DECLINED));
+        assert!(is_terminal("completed"));
+        assert!(is_terminal("voided"));
+        assert!(is_terminal("declined"));
+    }
+
+    #[test]
+    fn test_esignature_non_terminal_statuses() {
+        use esignature_status::*;
+        // Non-terminal: webhook updates may still transition these.
+        assert!(!is_terminal(DRAFT));
+        assert!(!is_terminal(SENT));
+        assert!(!is_terminal(VIEWED));
+        assert!(!is_terminal(SIGNED));
+        // `expired` is a final state but is NOT in the webhook idempotency
+        // guard set (the task scopes the guard to completed/voided/declined).
+        assert!(!is_terminal(EXPIRED));
+        assert!(!is_terminal("unknown"));
+    }
+
+    #[test]
+    fn test_esignature_terminal_set_matches_predicate() {
+        // The array used for the SQL `status <> ALL($3)` guard and the
+        // `is_terminal` predicate must never drift apart.
+        for s in esignature_status::TERMINAL {
+            assert!(esignature_status::is_terminal(s));
+        }
+        assert_eq!(esignature_status::TERMINAL.len(), 3);
     }
 }

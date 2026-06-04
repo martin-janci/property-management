@@ -368,12 +368,17 @@ impl PushTransport for FcmHttpAdapter {
         notification: &Notification,
     ) -> TransportResult {
         if !self.fcm_config.is_configured() {
+            // Fail closed, do NOT silently succeed. Returning `Ok(())` here
+            // made the pipeline record the push as `Sent` even though nothing
+            // was delivered — a lie that inflated delivery metrics. Surfacing
+            // `PushNotConfigured` makes the pipeline record `Skipped`, the
+            // honest outcome (in-app remains the mandatory delivery channel).
             tracing::info!(
                 user_id = %user_id,
                 title = %notification.title,
                 "[8A-3] Push skipped — FCM not configured (set FCM_PROJECT_ID or FCM_SERVER_KEY)"
             );
-            return Ok(());
+            return Err(NotificationError::PushNotConfigured);
         }
 
         // Fetch all registered device tokens for this user (service-role query,

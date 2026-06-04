@@ -13,6 +13,10 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Emit relative redirects (#957) — see ppt-web template. Avoids leaking the
+    # internal :8080 port / https->http downgrade in implicit slash redirects.
+    absolute_redirect off;
+
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
@@ -36,6 +40,12 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Cache-Control "no-store" always;
+    # HSTS — was missing (#954). The super-admin console is served TLS-only.
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+    # CSP — was missing (#954). frame-ancestors 'none' mirrors X-Frame-Options
+    # DENY (admin must never be framed); connect-src kept permissive (https:/wss:)
+    # for same-origin /api proxying and external telemetry.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
 
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         expires 1y;
@@ -44,6 +54,7 @@ server {
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-XSS-Protection "1; mode=block" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     }
 
     location /health {

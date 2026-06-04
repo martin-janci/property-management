@@ -3,6 +3,8 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getToken } from '../auth';
+import { DocumentsService } from '../generated';
 import * as api from './api';
 import type {
   ClassificationFeedback,
@@ -29,6 +31,7 @@ export const documentKeys = {
   folderTree: (buildingId?: string) => [...documentKeys.folders(), 'tree', buildingId] as const,
   stats: () => [...documentKeys.all, 'stats'] as const,
   shares: (documentId: string) => [...documentKeys.all, documentId, 'shares'] as const,
+  versions: (documentId: string) => [...documentKeys.all, documentId, 'versions'] as const,
 };
 
 // List documents
@@ -264,5 +267,31 @@ export function useRevokeDocumentShare(documentId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) });
     },
+  });
+}
+
+// --- Document Versions hook (#974, list-only) ---
+
+/**
+ * List the version history for a document (`GET /api/v1/documents/{id}/versions`).
+ *
+ * Wraps the generated `DocumentsService.documentsApiListVersions`. The Bearer
+ * token is sourced from the registered token provider (same source the rest of
+ * the client uses); the tenant is derived server-side from the JWT, so an empty
+ * `xTenantId` is passed for the generated header parameter.
+ *
+ * LIST-ONLY: there is no generated restore method, so restore is not exposed.
+ */
+export function useDocumentVersions(documentId: string) {
+  return useQuery({
+    queryKey: documentKeys.versions(documentId),
+    queryFn: () =>
+      DocumentsService.documentsApiListVersions({
+        authorization: `Bearer ${getToken() ?? ''}`,
+        xTenantId: '',
+        id: documentId,
+      }),
+    enabled: !!documentId,
+    staleTime: 30_000,
   });
 }

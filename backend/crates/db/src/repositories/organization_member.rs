@@ -429,7 +429,10 @@ impl OrganizationMemberRepository {
             FROM organization_members om
             INNER JOIN organizations o ON o.id = om.organization_id
             LEFT JOIN roles r ON r.id = om.role_id
-            WHERE om.user_id = $1 AND om.status != 'removed' AND o.status != 'deleted'
+            WHERE om.user_id = $1
+              AND om.status != 'removed'
+              AND o.status != 'deleted'
+              AND o.status != 'suspended'
             ORDER BY om.joined_at DESC
             "#,
         )

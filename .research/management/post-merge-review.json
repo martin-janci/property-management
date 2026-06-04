@@ -1,9 +1,90 @@
 {
-  "generated": "2026-05-28T16:24:12Z",
-  "window": "14d",
+  "generated": "2026-06-04T21:02:36Z",
+  "window": "2026-06-04 (today's 13 merges)",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-06-04T21:02:36Z",
+      "prs_scanned": 13,
+      "clean": [
+        1072,
+        1076,
+        1026
+      ],
+      "with_issues": [
+        {
+          "pr": 1044,
+          "issue": 1089,
+          "findings": 3,
+          "specialist": "rust",
+          "note": "FALSE POSITIVE (reviewer read stale local dev) \u2014 CLOSED. PKCE challenge-less guard exists on origin/dev oauth.rs:466; #1044 test passed in CI."
+        },
+        {
+          "pr": 1073,
+          "issue": 1091,
+          "findings": 2,
+          "specialist": "generic",
+          "note": "core throughput change sound; 2 prose refill-threshold literals (<18 ~L503, Tier-2 <12 ~L810) not scaled with BUFFER_FLOOR 18->36."
+        },
+        {
+          "pr": 1074,
+          "issue": 1088,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "Playwright e2e specs never run in CI (frontend.yml = vitest only); inaccurate setReturnUrl-sanitizes comments. vitest itself solid."
+        },
+        {
+          "pr": 1075,
+          "issue": 1095,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "FileDisputePageRoute partial-fail orchestration (apiUploadEvidence/toast/failedEvidence nav) untested at any level; extract+test."
+        },
+        {
+          "pr": 1077,
+          "issue": 1090,
+          "findings": 1,
+          "specialist": "rust",
+          "note": "tests correct; promote ~duplicated seed_org/seed_membership/authed_member into common/mod.rs create_authenticated_user_with_org."
+        },
+        {
+          "pr": 1078,
+          "issue": 1096,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "locale keys clean; 3 hardcoded date locales (en-US OcrStatusBadge + 2x en-GB SubmissionStatusPage) ignore UI language."
+        },
+        {
+          "pr": 1080,
+          "issue": 1092,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "low: announcement category filter inert end-to-end (toUiAnnouncement hardcodes general; no API category field); test exercises unreachable path."
+        },
+        {
+          "pr": 1081,
+          "issue": 1094,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "minor: test pins #990 normalization well, but docblock claims loading-state coverage while only empty+error asserted."
+        },
+        {
+          "pr": 1082,
+          "issue": 1093,
+          "findings": 3,
+          "specialist": "frontend",
+          "note": "FALSE POSITIVE (reviewer read stale local dev) \u2014 CLOSED. origin/dev App.tsx:167 forwards documentId; DocumentDetailScreen consumes it."
+        },
+        {
+          "pr": 1022,
+          "issue": 1097,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "low: type-drift cleanup \u2014 inaccurate MoveDocumentResponse type + duplicated ApiFolderTreeNode interface. Contract/i18n/invalidation all correct."
+        }
+      ]
+    },
     {
       "run_at": "2026-05-28T16:24:12Z",
       "prs_scanned": 15,

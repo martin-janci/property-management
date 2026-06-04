@@ -4,12 +4,12 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../../../contexts';
+import { gdprFetch } from '../gdprClient';
 
 interface PrivacySettings {
   profile_visibility: 'visible' | 'hidden' | 'contacts_only';
   show_contact_info: boolean;
-  marketing_consent: boolean;
-  analytics_consent: boolean;
 }
 
 interface DataExportRequest {
@@ -21,6 +21,7 @@ interface DataExportRequest {
 }
 
 export function PrivacySettingsPage() {
+  const { user } = useAuth();
   const [settings, setSettings] = useState<PrivacySettings | null>(null);
   const [exportRequests, setExportRequests] = useState<DataExportRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,8 +35,8 @@ export function PrivacySettingsPage() {
 
     try {
       const [settingsRes, historyRes] = await Promise.all([
-        fetch('/api/v1/gdpr/privacy'),
-        fetch('/api/v1/gdpr/export/history'),
+        gdprFetch('/api/v1/gdpr/privacy'),
+        gdprFetch('/api/v1/gdpr/export/history'),
       ]);
 
       if (!settingsRes.ok) {
@@ -66,10 +67,16 @@ export function PrivacySettingsPage() {
     setSuccess(null);
 
     try {
-      const response = await fetch('/api/v1/gdpr/privacy', {
+      // Backend (UpdatePrivacySettingsRequest) only persists these two fields;
+      // sending the full `settings` object silently drops marketing/analytics
+      // consent. Send only the supported fields so the request is honest.
+      const response = await gdprFetch('/api/v1/gdpr/privacy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify({
+          profile_visibility: settings.profile_visibility,
+          show_contact_info: settings.show_contact_info,
+        }),
       });
 
       if (!response.ok) {
@@ -88,7 +95,7 @@ export function PrivacySettingsPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/v1/gdpr/export/request', {
+      const response = await gdprFetch('/api/v1/gdpr/export/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ format: 'json' }),
@@ -107,34 +114,41 @@ export function PrivacySettingsPage() {
   }, [loadSettings]);
 
   const handleRequestDeletion = useCallback(async () => {
-    if (
-      !confirm(
-        'Are you sure you want to request account deletion? ' +
-          'This will schedule your account and all associated data for deletion. ' +
-          'This action cannot be undone after the grace period.'
-      )
-    ) {
+    // The backend (RequestDataDeletion) requires a `confirmation` string that
+    // must match the account email — an empty body always 400s. Ask the user
+    // to retype their email as the GDPR-grade confirmation step.
+    const confirmation = window.prompt(
+      'This will schedule your account and all associated data for permanent ' +
+        'deletion after a 30-day grace period. This cannot be undone after the ' +
+        'grace period.\n\nType your account email address to confirm:'
+    );
+    if (!confirmation) {
+      return;
+    }
+    if (user?.email && confirmation.trim().toLowerCase() !== user.email.toLowerCase()) {
+      setError('The email you entered does not match your account email.');
       return;
     }
 
     setError(null);
 
     try {
-      const response = await fetch('/api/v1/gdpr/deletion/request', {
+      const response = await gdprFetch('/api/v1/gdpr/deletion/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ confirmation: confirmation.trim() }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to request account deletion');
+        const errorData = await response.text();
+        throw new Error(errorData || 'Failed to request account deletion');
       }
 
       setSuccess('Account deletion requested. You have 30 days to cancel this request.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to request deletion');
     }
-  }, []);
+  }, [user]);
 
   if (loading) {
     return <div className="privacy-loading">Loading privacy settings...</div>;
@@ -213,42 +227,6 @@ export function PrivacySettingsPage() {
               </label>
               <p className="field-description">
                 When enabled, your email and phone will be visible on your profile.
-              </p>
-            </div>
-
-            <div className="form-field">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={settings.marketing_consent}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      marketing_consent: e.target.checked,
-                    })
-                  }
-                />
-                Receive marketing communications
-              </label>
-              <p className="field-description">Opt-in to receive promotional emails and updates.</p>
-            </div>
-
-            <div className="form-field">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={settings.analytics_consent}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      analytics_consent: e.target.checked,
-                    })
-                  }
-                />
-                Allow analytics tracking
-              </label>
-              <p className="field-description">
-                Help us improve the platform by sharing usage data.
               </p>
             </div>
 

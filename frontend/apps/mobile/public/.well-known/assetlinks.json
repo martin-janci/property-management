@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "three.two.bit.ppt.management",
+      "sha256_cert_fingerprints": ["__ANDROID_SIGNING_SHA256__"]
+    }
+  }
+]

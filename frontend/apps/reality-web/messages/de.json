@@ -3,6 +3,7 @@
     "allListings": "Alle Angebote",
     "branding": "Branding",
     "dashboard": "Agentur-Dashboard",
+    "inviteError": "Fehler beim Senden der Einladung. Bitte versuchen Sie es erneut.",
     "inviteRealtor": "Makler einladen",
     "manageRealtors": "Makler verwalten",
     "performanceOverview": "Leistungsübersicht",
@@ -310,17 +311,17 @@
       "pricing": "Preispläne",
       "subtitle": "Verkaufen Sie mehr mit Reality Portal",
       "title": "Für Makler & Agenturen",
-      "heroTitle": "Sell more with Reality Portal",
-      "heroBadge": "For agents & agencies",
-      "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
+      "heroTitle": "Verkaufen Sie mehr mit Reality Portal",
+      "heroBadge": "Für Makler & Agenturen",
+      "heroIntro": "Werkzeuge, Analysen und Reichweite zu Millionen von Käufern und Mietern an einem Ort."
     },
     "help": {
       "categories": "Kategorien",
       "faq": "Häufig gestellte Fragen",
       "searchPlaceholder": "Im Hilfe-Center suchen...",
       "title": "Hilfe-Center",
-      "subtitle": "How can we help?",
-      "intro": "Search our help centre or contact us directly."
+      "subtitle": "Wie können wir helfen?",
+      "intro": "Durchsuchen Sie unser Hilfe-Center oder kontaktieren Sie uns direkt."
     },
     "journal": {
       "editorsPicks": "Redaktionsauswahl",
@@ -346,7 +347,7 @@
       "clickHint": "Klicken Sie auf einen Bezirk für detaillierte Statistiken.",
       "subtitle": "Bratislava – Übersicht",
       "title": "Preiskarte",
-      "h1": "Price map"
+      "h1": "Preiskarte"
     },
     "privacy": {
       "description": "Wir sind verpflichtet, Ihre personenbezogenen Daten gemäß DSGVO und geltendem Recht zu schützen. Die vollständigen Datenschutzbestimmungen werden hier veröffentlicht.",
@@ -370,10 +371,11 @@
     },
     "security": {
       "reportCta": "Inserat melden",
-      "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.",
-      "title": "Security",
-      "h1": "Your security is our priority",
-      "scenariosHeading": "Common fraud scenarios"
+      "subtitle": "Wir helfen Ihnen, Betrug zu erkennen und Immobilien in einer sicheren Umgebung zu handeln.",
+      "title": "Sicherheit",
+      "h1": "Ihre Sicherheit ist unsere Priorität",
+      "scenariosHeading": "Häufige Betrugsszenarien",
+      "description": "Erfahren Sie, wie wir Inserate, Zahlungen und Ihre Daten auf Reality Portal schützen."
     },
     "sell": {
       "steps": {
@@ -399,7 +401,7 @@
         }
       },
       "submit": "Inserat veröffentlichen",
-      "title": "Add listing",
+      "title": "Inserat hinzufügen",
       "stepLabel": "Step {step} of {total}: {stepTitle}",
       "asideTitle": "Steps",
       "back": "← Back",
@@ -497,15 +499,16 @@
     },
     "favorites": {
       "title": "Meine Favoriten",
-      "description": "Immobilien, die Sie gespeichert haben."
+      "description": "Immobilien, die Sie gespeichert haben.",
+      "h1": "Meine Favoriten"
     },
     "login": {
-      "title": "Sign in",
-      "description": "Sign in to your Reality Portal account."
+      "title": "Anmelden",
+      "description": "Melden Sie sich bei Ihrem Reality-Portal-Konto an."
     },
     "register": {
-      "title": "Create your account",
-      "description": "Save listings, set alerts and contact agents.",
+      "title": "Konto erstellen",
+      "description": "Speichern Sie Inserate, richten Sie Benachrichtigungen ein und kontaktieren Sie Makler.",
       "termsLabel": "I agree to the {termsLink} and the {privacyLink}.",
       "termsRequired": "You must accept the Terms of Service and Privacy Policy to register.",
       "termsLinkText": "Terms of Service",
@@ -566,6 +569,12 @@
       "requestNew": "Request a new reset link",
       "goToSignIn": "Go to sign in",
       "genericError": "Could not reset password. Please try again."
+    },
+    "compare": {
+      "title": "Immobilien vergleichen",
+      "description": "Vergleichen Sie Immobilien nebeneinander und finden Sie Ihr perfektes Zuhause.",
+      "h1": "Immobilien vergleichen",
+      "subtitle": "Sehen Sie, wie sich Ihre ausgewählten Immobilien im Vergleich schlagen."
     }
   },
   "search": {

@@ -8,7 +8,7 @@ use std::sync::LazyLock;
 
 use api_core::{AuthUser, RlsConnection};
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     routing::{get, post},
     Json, Router,
@@ -17,12 +17,15 @@ use common::errors::ErrorResponse;
 use db::models::{
     CancelSignatureRequestRequest, CancelSignatureRequestResponse, CreateDocument,
     CreateSignatureRequest, CreateSignatureRequestResponse, ListSignatureRequestsResponse, Locale,
-    SendReminderRequest, SendReminderResponse, SignatureRequestResponse, SignatureWebhookEvent,
-    WebhookResponse,
+    SendReminderRequest, SendReminderResponse, SignatureRequestResponse, SignatureRequestStatus,
+    SignatureWebhookEvent, SignerStatus, WebhookResponse,
 };
-use integrations::{generate_storage_key, LightweightProvider};
+use db::repositories::{ConsumeOutcome, NonceState};
+use integrations::{generate_storage_key, ESignatureError, LightweightProvider};
+use serde::{Deserialize, Serialize};
 use subtle::ConstantTimeEq;
 use tracing::{error, info, warn};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::state::AppState;
@@ -692,6 +695,28 @@ pub async fn handle_webhook(
             )
         })?;
 
+    // Idempotency guard (bug-esignature-webhook-idempotency-guard, Story 84.2):
+    // e-signature providers deliver webhooks at-least-once, so a `completed` /
+    // `declined` event can arrive more than once. If the request is already in
+    // a terminal state, replaying the webhook must be a no-op — otherwise we
+    // would re-store the signed document, re-fire the requester completion /
+    // decline emails, and churn signer status on every duplicate delivery.
+    // Acknowledge with 200 so the provider stops retrying.
+    if signature_request.status.is_terminal() {
+        info!(
+            provider = %provider,
+            provider_request_id = %event.provider_request_id,
+            signature_request_id = %signature_request.id,
+            status = %signature_request.status,
+            event_type = %event.event_type,
+            "Ignoring duplicate webhook for already-finalized signature request"
+        );
+        return Ok(Json(WebhookResponse {
+            success: true,
+            message: "Signature request already finalized; webhook ignored".into(),
+        }));
+    }
+
     // Process signer-specific events and send appropriate email notifications (Story 84.2).
     let updated_request = if let (Some(signer_email), Some(signer_status)) =
         (&event.signer_email, &event.signer_status)
@@ -1054,6 +1079,363 @@ async fn store_signed_document(
     }
 
     Ok(signed_doc.id)
+}
+
+// ===========================================================================
+// Signer-facing /sign consumer endpoint (Epic 84.2, issue #761 part 2)
+// ===========================================================================
+//
+// The invitation/reminder emails embed a HMAC-signed URL of the form
+// `{BASE_URL}/sign?token=<v1...>` (see `LightweightProvider::build_signing_url`).
+// The frontend signing page lifts that `token` and calls these endpoints:
+//
+//   GET  /api/v1/signatures/sign?token=...  -> render context (no mutation)
+//   POST /api/v1/signatures/sign?token=...  -> record the signature (consumes)
+//
+// Both are PUBLIC (no `AuthUser`): the signer is typically not a platform
+// user. ALL authority comes from the verifiable token. Defence in depth:
+//   1. HMAC + expiry          (`verify_token`)
+//   2. org binding            (token.org_id == request.organization_id)
+//   3. request lifecycle      (must be pending / in_progress)
+//   4. signer not yet complete (no re-sign after signed/declined)
+//   5. nonce single-use        (issued & unconsumed; POST consumes atomically)
+
+/// Query string carrying the HMAC signing token. Only `Deserialize` is needed
+/// (the `Query` extractor); these signer-facing routes are not registered in
+/// `ApiDoc`, mirroring the other inquiry/sign handlers.
+#[derive(Debug, Deserialize)]
+pub struct SignTokenQuery {
+    /// The `v1.` HMAC signing token from the emailed `/sign?token=` link.
+    pub token: String,
+}
+
+/// Render context returned by `GET /sign` so the frontend can show the
+/// document + signer details before the signer commits.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SignRenderContext {
+    /// The signature request id (envelope).
+    pub request_id: Uuid,
+    /// The document being signed.
+    pub document_id: Uuid,
+    /// Human-facing subject/title of the request (document title at creation).
+    pub subject: Option<String>,
+    /// Optional message the requester attached for signers.
+    pub message: Option<String>,
+    /// The signer's display name (from the request roster).
+    pub signer_name: String,
+    /// The signer's email (echoed from the verified token).
+    pub signer_email: String,
+    /// The signer's current status (e.g. `pending`, `viewed`).
+    pub signer_status: String,
+}
+
+/// Body for `POST /sign`. All fields optional so a bare `{}` is accepted;
+/// `typed_name` is captured as lightweight signing evidence in the log trail.
+#[derive(Debug, Default, Deserialize, ToSchema)]
+#[serde(default)]
+pub struct SubmitSignatureRequest {
+    /// The full name the signer typed to adopt their signature (evidence).
+    pub typed_name: Option<String>,
+}
+
+/// Response from `POST /sign`.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SubmitSignatureResponse {
+    /// The request status AFTER recording this signature (`in_progress` while
+    /// other signers remain, `completed` once everyone has signed).
+    pub status: String,
+    /// Human-facing confirmation message.
+    pub message: String,
+}
+
+/// Public router for the signer-facing `/sign` endpoint. Merged at
+/// `/api/v1/signatures` in `route_table()`; carries NO auth extractor.
+pub fn public_sign_router() -> Router<AppState> {
+    Router::new().route("/sign", get(get_sign_context).post(submit_signature))
+}
+
+/// Map a token-verification error to a public HTTP status. We deliberately
+/// keep the body generic — never echo which check failed in a way that helps
+/// an attacker distinguish "bad MAC" from "unknown request".
+fn token_error_response(e: ESignatureError) -> (StatusCode, Json<ErrorResponse>) {
+    match e {
+        ESignatureError::TokenExpired => (
+            StatusCode::GONE,
+            Json(ErrorResponse::new(
+                "SIGNING_LINK_EXPIRED",
+                "This signing link has expired. Ask the sender for a new one.",
+            )),
+        ),
+        _ => (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "INVALID_SIGNING_LINK",
+                "This signing link is invalid.",
+            )),
+        ),
+    }
+}
+
+/// Shared verification for both GET and POST: verify the token's HMAC/expiry,
+/// load the request, and run the org / lifecycle / signer-state checks that
+/// do NOT mutate. Returns the verified token, the loaded request, and the
+/// matched signer's index so the caller can act on it.
+async fn verify_and_load(
+    state: &AppState,
+    token_str: &str,
+) -> Result<
+    (
+        integrations::SigningToken,
+        db::models::SignatureRequest,
+        usize,
+    ),
+    (StatusCode, Json<ErrorResponse>),
+> {
+    // (1) HMAC + expiry. `None` skips the explicit org arg here — we bind the
+    // org below against the loaded request, which is strictly stronger.
+    let token = ESIGN_PROVIDER
+        .verify_token(token_str, None)
+        .map_err(token_error_response)?;
+
+    // (2) Parse the embedded request id.
+    let request_id = Uuid::parse_str(&token.request_id).map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "INVALID_SIGNING_LINK",
+                "This signing link is invalid.",
+            )),
+        )
+    })?;
+
+    // (3) Load the request on the bare pool (public endpoint — no user RLS
+    // context). `signature_requests` is ENABLE (not FORCE) RLS, so the
+    // service path reads it directly, exactly like the webhook handler.
+    let request = state
+        .signature_request_repo
+        .find_by_id(request_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new(
+                    "INVALID_SIGNING_LINK",
+                    "This signing link is invalid.",
+                )),
+            )
+        })?;
+
+    // (4) Org binding: the token's org must match the loaded request's org.
+    // Defends against a token minted for org A being used against a request
+    // whose id collides in org B (belt-and-braces; the HMAC already binds it).
+    if token.org_id != request.organization_id.to_string() {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "INVALID_SIGNING_LINK",
+                "This signing link is invalid.",
+            )),
+        ));
+    }
+
+    // (5) Request lifecycle: only an open request may be signed.
+    if !matches!(
+        request.status,
+        SignatureRequestStatus::Pending | SignatureRequestStatus::InProgress
+    ) {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "REQUEST_NOT_OPEN",
+                "This signature request is no longer open for signing.",
+            )),
+        ));
+    }
+
+    // (6) Locate the signer by the token's (verified) email, case-insensitive.
+    let signer_idx = request
+        .signers
+        .iter()
+        .position(|s| s.email.eq_ignore_ascii_case(&token.signer_email))
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new(
+                    "INVALID_SIGNING_LINK",
+                    "This signing link is invalid.",
+                )),
+            )
+        })?;
+
+    // (7) The signer must not have already completed (signed or declined).
+    // This is the invariant that makes a stale-but-unconsumed reminder nonce
+    // harmless: once the signer is complete, every /sign attempt is refused
+    // regardless of which reminder link is replayed.
+    if request.signers[signer_idx].is_complete() {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "ALREADY_SIGNED",
+                "You have already responded to this signature request.",
+            )),
+        ));
+    }
+
+    Ok((token, request, signer_idx))
+}
+
+/// `GET /api/v1/signatures/sign?token=...` — render context for the signing
+/// page. Read-only: validates everything but does NOT consume the nonce, so
+/// the signer can load the page, reload it, and only spend the nonce on POST.
+pub async fn get_sign_context(
+    State(state): State<AppState>,
+    Query(query): Query<SignTokenQuery>,
+) -> Result<Json<SignRenderContext>, (StatusCode, Json<ErrorResponse>)> {
+    let (token, request, signer_idx) = verify_and_load(&state, &query.token).await?;
+
+    // Nonce must be issued and not yet consumed. A consumed nonce on an
+    // otherwise-open request means this exact link was already used.
+    match state
+        .e_signature_nonce_repo
+        .nonce_state(request.id, token.nonce)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })? {
+        NonceState::Pending => {}
+        NonceState::Consumed => {
+            return Err((
+                StatusCode::CONFLICT,
+                Json(ErrorResponse::new(
+                    "LINK_ALREADY_USED",
+                    "This signing link has already been used.",
+                )),
+            ));
+        }
+        NonceState::NotIssued => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new(
+                    "INVALID_SIGNING_LINK",
+                    "This signing link is invalid.",
+                )),
+            ));
+        }
+    }
+
+    let signer = &request.signers[signer_idx];
+    Ok(Json(SignRenderContext {
+        request_id: request.id,
+        document_id: request.document_id,
+        subject: request.subject.clone(),
+        message: request.message.clone(),
+        signer_name: signer.name.clone(),
+        signer_email: signer.email.clone(),
+        signer_status: signer.status.to_string(),
+    }))
+}
+
+/// `POST /api/v1/signatures/sign?token=...` — record the signature.
+///
+/// Atomically consumes the nonce (single-use) BEFORE mutating signer status,
+/// so a replay or a concurrent double-submit is rejected with 409 and never
+/// double-counts a signature.
+pub async fn submit_signature(
+    State(state): State<AppState>,
+    Query(query): Query<SignTokenQuery>,
+    body: Option<Json<SubmitSignatureRequest>>,
+) -> Result<Json<SubmitSignatureResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let (token, request, signer_idx) = verify_and_load(&state, &query.token).await?;
+    let typed_name = body.and_then(|b| b.0.typed_name);
+
+    // Single-use gate: flip the nonce NULL -> NOW() atomically. The winner of
+    // any race proceeds; everyone else (and every replay) is rejected here.
+    match state
+        .e_signature_nonce_repo
+        .consume_nonce(request.id, token.nonce)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })? {
+        ConsumeOutcome::Consumed => {}
+        ConsumeOutcome::AlreadyConsumed => {
+            warn!(
+                signature_request_id = %request.id,
+                signer_email = %token.signer_email,
+                "Rejected /sign replay: nonce already consumed"
+            );
+            return Err((
+                StatusCode::CONFLICT,
+                Json(ErrorResponse::new(
+                    "LINK_ALREADY_USED",
+                    "This signing link has already been used.",
+                )),
+            ));
+        }
+        ConsumeOutcome::NotIssued => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new(
+                    "INVALID_SIGNING_LINK",
+                    "This signing link is invalid.",
+                )),
+            ));
+        }
+    }
+
+    // Nonce is spent — record the signature. `update_signer_status` recomputes
+    // the request status (in_progress / completed) and the document's
+    // signature_status under the request's org context.
+    let signer_email = request.signers[signer_idx].email.clone();
+    let updated = state
+        .signature_request_repo
+        .update_signer_status(request.id, &signer_email, SignerStatus::Signed, None)
+        .await
+        .map_err(|e| {
+            error!(
+                signature_request_id = %request.id,
+                error = %e,
+                "Nonce consumed but failed to record signer status"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to record signature",
+                )),
+            )
+        })?;
+
+    info!(
+        signature_request_id = %request.id,
+        signer_email = %signer_email,
+        typed_name = ?typed_name,
+        new_status = %updated.status,
+        "Recorded signature via /sign"
+    );
+
+    let message = if matches!(updated.status, SignatureRequestStatus::Completed) {
+        "Thank you — all signatures have been collected.".to_string()
+    } else {
+        "Thank you — your signature has been recorded.".to_string()
+    };
+
+    Ok(Json(SubmitSignatureResponse {
+        status: updated.status.to_string(),
+        message,
+    }))
 }
 
 // Helper function to create document-scoped signature routes

@@ -10,6 +10,7 @@ import { MfaWindowProvider } from './components/MfaWindowChip';
 import { MfaWrapper } from './components/MfaWrapper';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
+import AgencyDetailPage from './pages/AgencyDetailPage';
 import AgenciesPage from './pages/agencies';
 import AuditPage from './pages/audit';
 import CapabilitiesAdminPage from './pages/CapabilitiesAdminPage';
@@ -73,6 +74,14 @@ export function App() {
                   element={
                     <ProtectedRoute requiredCapability="agencies_read">
                       <AgenciesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="tenants/agencies/:id"
+                  element={
+                    <ProtectedRoute requiredCapability="agencies_read">
+                      <AgencyDetailPage />
                     </ProtectedRoute>
                   }
                 />

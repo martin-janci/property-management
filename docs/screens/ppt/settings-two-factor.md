@@ -23,6 +23,7 @@ useCases:
   - UC-14.10
 epics:
   - Epic-9-1
+  - Epic-9-2
 designSources: []
 owner: pm-security
 ---
@@ -36,9 +37,11 @@ hooks from @ppt/api-client.
 ## Notes
 
 ### Specific (recent)
+- 2026-06-03 — agent: recovery-codes UI (Story 9.2) — codes now shown once after enable (from the verify response, which carries `recoveryCodes`), reusable RecoveryCodesPanel with "Copy all"; exhausted (0) + low (≤3) warning banners; setup response no longer returns codes (api-client `MfaSetupResponse.backupCodes` dropped, `VerifyMfaResponse.recoveryCodes` added).
 - 2026-05-24 — agent: wired all five MFA hooks; removed local-state-only scaffold; apiStatus promoted to complete.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:377`.
 
 ## Agent Log
+- 2026-06-03 — agent: gap-9-2-mfa-recovery-codes-ui — recovery-codes management UI (show 10 codes, copy-all, regenerate, exhausted/low warnings); realigned @ppt/api-client MFA types to the live backend contract (setup → {secret,qrUri}; verify → +recoveryCodes).
 - 2026-05-24 — agent: gap-9-1-mfa-frontend-integration — wired TwoFactorAuthPage to /api/v1/auth/mfa/* via useMfa* hooks; added mfa module to @ppt/api-client; removed feature-not-exposed scaffold.
 - 2026-05-18 — agent: created stub for unmapped route.

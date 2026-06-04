@@ -3,10 +3,11 @@
 //! Repository for agencies, realtors, inquiries, and property import.
 
 use crate::models::reality_portal::*;
+use crate::models::PublicListingQuery;
 use crate::DbPool;
-use chrono::{NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
-use sqlx::{Error as SqlxError, Row};
+use sqlx::{Error as SqlxError, Executor, Postgres, Row};
 use uuid::Uuid;
 
 /// Repository for Reality Portal Professional operations.
@@ -19,6 +20,142 @@ impl RealityPortalRepository {
     /// Create a new RealityPortalRepository.
     pub fn new(pool: DbPool) -> Self {
         Self { pool }
+    }
+
+    // ========================================================================
+    // Saved-search alert engine (Story 16.3, issue #983)
+    //
+    // These run on a caller-supplied connection so the background worker can
+    // set the global-read RLS context (`set_global_read_context`) once and
+    // read published listings across all orgs on the same connection.
+    // `portal_saved_searches` and `search_alert_queue` are not RLS-gated.
+    // ========================================================================
+
+    /// All alert-enabled saved searches, oldest-checked first.
+    pub async fn list_alertable_saved_searches<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<PortalSavedSearch>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, PortalSavedSearch>(
+            r#"
+            SELECT * FROM portal_saved_searches
+            WHERE alerts_enabled = true
+            ORDER BY last_matched_at ASC NULLS FIRST
+            LIMIT 5000
+            "#,
+        )
+        .fetch_all(executor)
+        .await
+    }
+
+    /// IDs of published listings matching a saved search's criteria, optionally
+    /// only those published after `since`. Mirrors the public `search_listings`
+    /// filter set so on-demand and alert matching agree. Requires the executor's
+    /// connection to be in global-read context to see cross-org published rows.
+    pub async fn find_new_match_listing_ids<'e, E>(
+        &self,
+        executor: E,
+        q: &PublicListingQuery,
+        since: Option<DateTime<Utc>>,
+        limit: i64,
+    ) -> Result<Vec<Uuid>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            SELECT l.id
+            FROM listings l
+            WHERE l.status = 'active'
+                AND ($1::text IS NULL OR l.title ILIKE '%' || $1 || '%' OR l.description ILIKE '%' || $1 || '%' OR l.city ILIKE '%' || $1 || '%')
+                AND ($2::text IS NULL OR l.property_type = $2)
+                AND ($3::text IS NULL OR l.transaction_type = $3)
+                AND ($4::bigint IS NULL OR l.price >= $4)
+                AND ($5::bigint IS NULL OR l.price <= $5)
+                AND ($6::int IS NULL OR l.size_sqm >= $6)
+                AND ($7::int IS NULL OR l.size_sqm <= $7)
+                AND ($8::int IS NULL OR l.rooms >= $8)
+                AND ($9::int IS NULL OR l.rooms <= $9)
+                AND ($10::text IS NULL OR l.city ILIKE '%' || $10 || '%')
+                AND ($11::text IS NULL OR l.country = $11)
+                AND ($12::timestamptz IS NULL OR l.published_at > $12)
+            ORDER BY l.published_at DESC
+            LIMIT $13
+            "#,
+        )
+        .bind(&q.q)
+        .bind(&q.property_type)
+        .bind(&q.transaction_type)
+        .bind(q.price_min)
+        .bind(q.price_max)
+        .bind(q.area_min)
+        .bind(q.area_max)
+        .bind(q.rooms_min)
+        .bind(q.rooms_max)
+        .bind(&q.city)
+        .bind(&q.country)
+        .bind(since)
+        .bind(limit)
+        .fetch_all(executor)
+        .await
+    }
+
+    /// Enqueue a pending alert for later delivery.
+    pub async fn enqueue_search_alert<'e, E>(
+        &self,
+        executor: E,
+        saved_search_id: Uuid,
+        user_id: Uuid,
+        listing_ids: &[Uuid],
+        alert_type: &str,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            INSERT INTO search_alert_queue
+                (saved_search_id, user_id, matching_listing_ids, alert_type, status)
+            VALUES ($1, $2, $3, $4, 'pending')
+            "#,
+        )
+        .bind(saved_search_id)
+        .bind(user_id)
+        .bind(listing_ids)
+        .bind(alert_type)
+        .execute(executor)
+        .await?;
+        Ok(())
+    }
+
+    /// Advance a saved search's match watermark (`last_matched_at = now()`) and
+    /// add `new_matches` to its running `match_count`.
+    pub async fn mark_saved_search_matched<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        new_matches: i64,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            UPDATE portal_saved_searches
+            SET last_matched_at = now(),
+                match_count = match_count + $2,
+                updated_at = now()
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .bind(new_matches as i32)
+        .execute(executor)
+        .await?;
+        Ok(())
     }
 
     // ========================================================================
@@ -739,6 +876,54 @@ impl RealityPortalRepository {
             "#,
         )
         .bind(realtor_id)
+        .bind(&status)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Get inquiries submitted by a buyer (the authenticated `user_id` that
+    /// created them). This is the buyer-axis counterpart to
+    /// [`get_realtor_inquiries`](Self::get_realtor_inquiries): the realtor view
+    /// scopes on `realtor_id`, the buyer view scopes on `user_id`.
+    pub async fn get_buyer_inquiries(
+        &self,
+        user_id: Uuid,
+        status: Option<String>,
+        limit: i32,
+        offset: i32,
+    ) -> Result<Vec<ListingInquiry>, SqlxError> {
+        sqlx::query_as::<_, ListingInquiry>(
+            r#"
+            SELECT * FROM listing_inquiries
+            WHERE user_id = $1 AND ($2::text IS NULL OR status = $2)
+            ORDER BY created_at DESC
+            LIMIT $3 OFFSET $4
+            "#,
+        )
+        .bind(user_id)
+        .bind(&status)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Count inquiries submitted by a buyer (matching the same filter as
+    /// [`get_buyer_inquiries`](Self::get_buyer_inquiries)). Exposes the true
+    /// `total` to paginated routes instead of the current page's `len()`
+    /// (the bug fixed for the realtor axis in PR #919).
+    pub async fn count_buyer_inquiries(
+        &self,
+        user_id: Uuid,
+        status: Option<String>,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM listing_inquiries
+            WHERE user_id = $1 AND ($2::text IS NULL OR status = $2)
+            "#,
+        )
+        .bind(user_id)
         .bind(&status)
         .fetch_one(&self.pool)
         .await

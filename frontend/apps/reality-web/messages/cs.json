@@ -3,6 +3,7 @@
     "allListings": "Všechny nabídky",
     "branding": "Branding",
     "dashboard": "Panel agentury",
+    "inviteError": "Chyba při odesílání pozvánky. Zkuste to znovu.",
     "inviteRealtor": "Pozvat makléře",
     "manageRealtors": "Spravovat makléře",
     "performanceOverview": "Přehled výkonnosti",
@@ -310,17 +311,17 @@
       "pricing": "Cenové plány",
       "subtitle": "Prodávejte více s Reality Portálem",
       "title": "Pro makléře a agentury",
-      "heroTitle": "Sell more with Reality Portal",
-      "heroBadge": "For agents & agencies",
-      "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
+      "heroTitle": "Prodávejte více s Reality Portálem",
+      "heroBadge": "Pro makléře a agentury",
+      "heroIntro": "Nástroje, analytika a dosah na miliony kupujících a nájemců na jednom místě."
     },
     "help": {
       "categories": "Kategorie",
       "faq": "Často kladené otázky",
       "searchPlaceholder": "Vyhledávejte v centru nápovědy...",
       "title": "Centrum nápovědy",
-      "subtitle": "How can we help?",
-      "intro": "Search our help centre or contact us directly."
+      "subtitle": "Jak vám můžeme pomoci?",
+      "intro": "Prohledejte naše centrum nápovědy nebo nás kontaktujte přímo."
     },
     "journal": {
       "editorsPicks": "Výběr redakce",
@@ -346,7 +347,7 @@
       "clickHint": "Klikněte na čtvrť pro detailní statistiky.",
       "subtitle": "Bratislava – přehled",
       "title": "Mapa cen",
-      "h1": "Price map"
+      "h1": "Mapa cen"
     },
     "privacy": {
       "description": "Zavazujeme se chránit vaše osobní údaje v souladu s GDPR a platnými zákony. Úplné podmínky ochrany osobních údajů budou zveřejněny zde.",
@@ -370,10 +371,11 @@
     },
     "security": {
       "reportCta": "Nahlásit inzerát",
-      "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.",
-      "title": "Security",
-      "h1": "Your security is our priority",
-      "scenariosHeading": "Common fraud scenarios"
+      "subtitle": "Pomáháme vám odhalit podvody a obchodovat s nemovitostmi v bezpečném prostředí.",
+      "title": "Bezpečnost",
+      "h1": "Vaše bezpečnost je naše priorita",
+      "scenariosHeading": "Časté podvodné scénáře",
+      "description": "Zjistěte, jak chráníme inzeráty, platby a vaše údaje na Reality Portálu."
     },
     "sell": {
       "steps": {
@@ -399,7 +401,7 @@
         }
       },
       "submit": "Zveřejnit inzerát",
-      "title": "Add listing",
+      "title": "Přidat inzerát",
       "stepLabel": "Step {step} of {total}: {stepTitle}",
       "asideTitle": "Steps",
       "back": "← Back",
@@ -497,15 +499,16 @@
     },
     "favorites": {
       "title": "Moje oblíbené",
-      "description": "Nemovitosti, které jste si uložili."
+      "description": "Nemovitosti, které jste si uložili.",
+      "h1": "Moje oblíbené"
     },
     "login": {
-      "title": "Sign in",
-      "description": "Sign in to your Reality Portal account."
+      "title": "Přihlášení",
+      "description": "Přihlaste se ke svému účtu na Reality Portálu."
     },
     "register": {
-      "title": "Create your account",
-      "description": "Save listings, set alerts and contact agents.",
+      "title": "Vytvoření účtu",
+      "description": "Ukládejte si inzeráty, nastavte upozornění a kontaktujte makléře.",
       "termsLabel": "I agree to the {termsLink} and the {privacyLink}.",
       "termsRequired": "You must accept the Terms of Service and Privacy Policy to register.",
       "termsLinkText": "Terms of Service",
@@ -566,6 +569,12 @@
       "requestNew": "Request a new reset link",
       "goToSignIn": "Go to sign in",
       "genericError": "Could not reset password. Please try again."
+    },
+    "compare": {
+      "title": "Porovnat nemovitosti",
+      "description": "Porovnejte nemovitosti vedle sebe a najděte ten správný domov.",
+      "h1": "Porovnat nemovitosti",
+      "subtitle": "Podívejte se, jak si vaše vybrané nemovitosti stojí vedle sebe."
     }
   },
   "search": {

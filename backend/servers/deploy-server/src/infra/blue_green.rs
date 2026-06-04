@@ -102,6 +102,28 @@ impl BlueGreenSpec {
     }
 }
 
+/// The env-var KEYS the `api-server` container requires at startup outside
+/// `RUST_ENV=development`. Mirrors the panics in `api-server/src/main.rs`:
+/// `DATABASE_URL` and `JWT_SECRET` (the core bootstrap), the two encryption
+/// keys (`TOTP_ENCRYPTION_KEY`, `INTEGRATION_ENCRYPTION_KEY`), and the
+/// e-signature secrets (`ESIGN_TOKEN_SECRET`, `ESIGN_WEBHOOK_SECRET`).
+///
+/// This is the shared contract between api-server's startup config and the
+/// deploy-server's [`build_service_envs`] (issue #951): `build_service_envs`
+/// MUST inject every one of these onto the `api` service, or the container
+/// crash-loops on deploy (which is exactly what bit the ESIGN rollout). The
+/// `api_env_contains_all_required_startup_vars` test guards the contract so a
+/// newly-required secret can't silently reach a deploy un-injected — add the
+/// var here and the test fails until `build_service_envs` templates it.
+pub const API_REQUIRED_STARTUP_ENV: &[&str] = &[
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "TOTP_ENCRYPTION_KEY",
+    "INTEGRATION_ENCRYPTION_KEY",
+    "ESIGN_TOKEN_SECRET",
+    "ESIGN_WEBHOOK_SECRET",
+];
+
 /// Build the per-service environment map for a target deploy.
 ///
 /// Reads shared secrets from the deploy-server's own environment
@@ -162,6 +184,24 @@ pub fn build_service_envs(
     if pm_client_secret.len() < 32 {
         return Err(crate::DeployError::Config(
             "PPT_PM_CLIENT_SECRET must be at least 32 characters".into(),
+        ));
+    }
+    // E-signature secrets. api-server refuses to boot outside
+    // `RUST_ENV=development` without BOTH of these (see
+    // api-server/src/main.rs: `LightweightProvider::from_env()` panics
+    // without `ESIGN_TOKEN_SECRET`, and the next check panics without
+    // `ESIGN_WEBHOOK_SECRET`). Treat both as required so a deploy never
+    // crash-loops the api container on a fresh feature rollout.
+    let esign_token_secret = require("PPT_ESIGN_TOKEN_SECRET")?;
+    if esign_token_secret.len() < 32 {
+        return Err(crate::DeployError::Config(
+            "PPT_ESIGN_TOKEN_SECRET must be at least 32 characters".into(),
+        ));
+    }
+    let esign_webhook_secret = require("PPT_ESIGN_WEBHOOK_SECRET")?;
+    if esign_webhook_secret.is_empty() {
+        return Err(crate::DeployError::Config(
+            "PPT_ESIGN_WEBHOOK_SECRET must not be empty".into(),
         ));
     }
 
@@ -240,6 +280,8 @@ pub fn build_service_envs(
     let mut api_env = backend_env.clone();
     api_env.push(format!("TOTP_ENCRYPTION_KEY={totp_key}"));
     api_env.push(format!("INTEGRATION_ENCRYPTION_KEY={integration_key}"));
+    api_env.push(format!("ESIGN_TOKEN_SECRET={esign_token_secret}"));
+    api_env.push(format!("ESIGN_WEBHOOK_SECRET={esign_webhook_secret}"));
     api_env.push(format!("PLATFORM_HOST={platform_hosts}"));
 
     let mut reality_env = std::mem::take(&mut backend_env);
@@ -296,6 +338,71 @@ pub fn build_service_envs(
     // `BlueGreenDeployer::deploy` once the next color is known.
     envs.insert("admin-web".into(), vec![]);
     Ok(envs)
+}
+
+#[cfg(test)]
+mod build_service_envs_tests {
+    use super::*;
+
+    fn test_target() -> crate::config::Target {
+        crate::config::Target {
+            docker_socket: "/var/run/docker.sock".into(),
+            caddy_url: "http://localhost:2019".into(),
+            reality_apex: "staging.rlt.sk".into(),
+            ppt_apex: "staging.ppt.rlt.sk".into(),
+            idle_timeout: None,
+            promote_strategy: None,
+            rollback_mode: "manual".into(),
+            health_grace: None,
+        }
+    }
+
+    fn set_all_required_secrets() {
+        // Deploy-server-side secrets `build_service_envs` reads, satisfying its
+        // length/hex validation.
+        std::env::set_var("POSTGRES_PASSWORD", "test-postgres-password");
+        std::env::set_var("PPT_JWT_SECRET", "x".repeat(32));
+        std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "a".repeat(64));
+        std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "b".repeat(64));
+        std::env::set_var("PPT_PM_CLIENT_SECRET", "c".repeat(32));
+        std::env::set_var("PPT_ESIGN_TOKEN_SECRET", "d".repeat(32));
+        std::env::set_var("PPT_ESIGN_WEBHOOK_SECRET", "webhook-secret");
+    }
+
+    /// Issue #951: every secret the api-server requires at startup
+    /// (`API_REQUIRED_STARTUP_ENV`) must be injected onto the `api` container by
+    /// `build_service_envs`, or the container crash-loops on deploy — and when
+    /// any required deploy-server secret is absent, `build_service_envs` must
+    /// fail fast with a `Config` error rather than start empty-valued containers.
+    ///
+    /// Both halves are in one test because they mutate process-wide env vars and
+    /// would race if run as separate (parallel) tests.
+    #[test]
+    fn build_service_envs_enforces_api_startup_contract() {
+        set_all_required_secrets();
+
+        let envs = build_service_envs("staging", &test_target())
+            .expect("build_service_envs should succeed with all secrets set");
+        let api_env = envs.get("api").expect("`api` service env must exist");
+
+        for key in API_REQUIRED_STARTUP_ENV {
+            assert!(
+                api_env.iter().any(|kv| kv.starts_with(&format!("{key}="))),
+                "the `api` container env is missing `{key}`, which api-server requires at \
+                 startup (issue #951). Add it to `build_service_envs` so the deploy doesn't \
+                 crash-loop the api container."
+            );
+        }
+
+        // Missing required secret -> fail fast with a Config error.
+        std::env::remove_var("PPT_ESIGN_TOKEN_SECRET");
+        let err = build_service_envs("staging", &test_target())
+            .expect_err("must error when a required secret is missing");
+        assert!(
+            matches!(err, crate::DeployError::Config(_)),
+            "expected a Config error, got {err:?}"
+        );
+    }
 }
 
 impl BlueGreenDeployer {

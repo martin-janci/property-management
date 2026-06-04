@@ -44,6 +44,56 @@ interface ApiVoteSummary {
   quorum_met?: boolean | null;
 }
 
+/** Narrow an unknown value to a well-formed `ApiVoteSummary`.
+ *
+ *  The list endpoint is consumed without a generated client, so the response
+ *  shape is `unknown` at runtime. A blind cast (previously
+ *  `data as unknown as ApiVoteSummary[]`) made `.map(toUiVote)` crash the
+ *  whole screen the moment the backend returned an unexpected shape — a
+ *  non-array, an array of nulls, or summaries missing `id`/`title`/`status`.
+ *  Validate the required string fields here and drop anything malformed. */
+function isApiVoteSummary(value: unknown): value is ApiVoteSummary {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === 'string' &&
+    typeof v.title === 'string' &&
+    typeof v.status === 'string' &&
+    typeof v.end_at === 'string'
+  );
+}
+
+/** Safely normalise the `/api/v1/voting` response into a validated summary
+ *  list. Accepts either a bare array or `{ votes: [...] }` (the shape varies
+ *  by backend version) and tolerates any other/garbage shape by returning an
+ *  empty list rather than throwing. Malformed individual entries are dropped
+ *  so one bad row can't take down the whole screen. */
+export function parseVoteSummaries(data: unknown): ApiVoteSummary[] {
+  const candidates: unknown[] = Array.isArray(data)
+    ? data
+    : typeof data === 'object' &&
+        data !== null &&
+        Array.isArray((data as { votes?: unknown }).votes)
+      ? (data as { votes: unknown[] }).votes
+      : [];
+  return candidates.filter(isApiVoteSummary);
+}
+
+/** Format a vote date for display using the app's active i18n locale.
+ *
+ *  Previously hardcoded `'en-US'`, so vote dates never localised regardless of
+ *  the user's selected language. Pass `i18n.language` (the react-i18next active
+ *  language, e.g. `'sk'`, `'cs'`, `'de'`, `'en'`) so the rendered date matches
+ *  the rest of the UI. Exported so the formatting can be unit-tested without
+ *  rendering the screen. */
+export function formatVoteDate(dateString: string, locale: string): string {
+  return new Date(dateString).toLocaleDateString(locale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 /** Map the api-server's status string onto the UI's narrowed enum. */
 function toUiStatus(status: string): VoteStatus {
   switch (status) {
@@ -84,30 +134,24 @@ interface VotingScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
-interface ApiVoteListResponse {
-  votes: ApiVoteSummary[];
-  total?: number;
-}
-
 export function VotingScreen({ onNavigate }: VotingScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
 
   // Voting routes use `RlsConnection` and require both Authorization and
   // X-Tenant-ID — both are sent by `useApiQuery` (the latter pulled from
   // the JWT's `tenant_id` claim).
-  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiVoteListResponse>(
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
     ['voting', 'list'],
     '/api/v1/voting',
     { staleTime: 30_000 }
   );
 
   // The list endpoint may return either an array or `{ votes: [...] }`
-  // depending on backend version — accept both.
-  const apiVotes: ApiVoteSummary[] = Array.isArray(data)
-    ? (data as unknown as ApiVoteSummary[])
-    : (data?.votes ?? []);
-  const votes: Vote[] = apiVotes.map(toUiVote);
+  // depending on backend version — accept both, and reject anything else
+  // (or any malformed row) so an unexpected response shape renders the empty
+  // state instead of crashing the screen at `.map()` time.
+  const votes: Vote[] = parseVoteSummaries(data).map(toUiVote);
 
   const onRefresh = useCallback(async () => {
     await refetch();
@@ -126,10 +170,7 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
     }
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
+  const formatDate = (dateString: string): string => formatVoteDate(dateString, i18n.language);
 
   const getTimeRemaining = (endsAt: string): string => {
     const end = new Date(endsAt);

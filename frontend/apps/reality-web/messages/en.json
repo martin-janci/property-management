@@ -3,6 +3,7 @@
     "allListings": "All Listings",
     "branding": "Branding",
     "dashboard": "Agency Dashboard",
+    "inviteError": "Failed to send the invitation. Please try again.",
     "inviteRealtor": "Invite Realtor",
     "manageRealtors": "Manage Realtors",
     "performanceOverview": "Performance Overview",
@@ -373,7 +374,8 @@
       "subtitle": "We help you spot fraud and trade properties in a safe environment.",
       "title": "Security",
       "h1": "Your security is our priority",
-      "scenariosHeading": "Common fraud scenarios"
+      "scenariosHeading": "Common fraud scenarios",
+      "description": "Learn how we keep listings, payments and your data safe on Reality Portal."
     },
     "sell": {
       "steps": {
@@ -497,7 +499,8 @@
     },
     "favorites": {
       "title": "My Favorites",
-      "description": "Properties you have saved for later."
+      "description": "Properties you have saved for later.",
+      "h1": "My Favorites"
     },
     "login": {
       "title": "Sign in",
@@ -566,6 +569,12 @@
       "requestNew": "Request a new reset link",
       "goToSignIn": "Go to sign in",
       "genericError": "Could not reset password. Please try again."
+    },
+    "compare": {
+      "title": "Compare properties",
+      "description": "Compare properties side by side to find your perfect home.",
+      "h1": "Compare properties",
+      "subtitle": "See how your selected properties stack up against each other."
     }
   },
   "search": {

@@ -13,6 +13,26 @@ use sqlx::FromRow;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+/// Default page size for listing search when no `limit` is supplied.
+const DEFAULT_LISTINGS_LIMIT: i32 = 20;
+/// Maximum page size accepted for listing search. Larger requests are clamped
+/// to this cap to avoid resource exhaustion once the table grows.
+const MAX_LISTINGS_LIMIT: i32 = 100;
+
+/// Clamp raw `page`/`limit` query params to safe bounds before they reach SQL.
+///
+/// A negative `limit` would otherwise surface a raw DB error
+/// ("LIMIT must not be negative") as a 500, and an unbounded `limit`/`page` is a
+/// latent resource-exhaustion vector. Returns `(page, limit)` with
+/// `page >= 1` and `1 <= limit <= MAX_LISTINGS_LIMIT`.
+fn clamp_pagination(page: Option<i32>, limit: Option<i32>) -> (i32, i32) {
+    let page = page.unwrap_or(1).max(1);
+    let limit = limit
+        .unwrap_or(DEFAULT_LISTINGS_LIMIT)
+        .clamp(1, MAX_LISTINGS_LIMIT);
+    (page, limit)
+}
+
 /// Create listings router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -237,9 +257,12 @@ pub async fn search(
     State(state): State<AppState>,
     Query(req): Query<ListingSearchRequest>,
 ) -> Result<Json<ListingSearchResponse>, (axum::http::StatusCode, String)> {
-    let page = req.page.unwrap_or(1);
-    let limit = req.limit.unwrap_or(20);
-    let query: PublicListingQuery = req.into();
+    // Clamp pagination at the handler before it reaches SQL (mirrors the
+    // articles handler pattern).
+    let (page, limit) = clamp_pagination(req.page, req.limit);
+    let mut query: PublicListingQuery = req.into();
+    query.page = Some(page);
+    query.limit = Some(limit);
 
     // Search listings
     let listings = state
@@ -834,4 +857,52 @@ pub async fn record_view(
         tracing::warn!(%id, error = %e, "Failed to track listing view (non-fatal)");
     }
     Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Regression for #953: pagination params must be clamped before they reach
+    // SQL. A negative `limit` previously surfaced a raw DB error
+    // ("LIMIT must not be negative") as a 500; an unbounded limit/page was a
+    // latent resource-exhaustion vector.
+
+    #[test]
+    fn defaults_when_unset() {
+        assert_eq!(
+            clamp_pagination(None, None),
+            (1, DEFAULT_LISTINGS_LIMIT),
+            "missing params should default to page 1 and the default limit"
+        );
+    }
+
+    #[test]
+    fn negative_limit_is_floored_to_one() {
+        let (_, limit) = clamp_pagination(None, Some(-1));
+        assert_eq!(limit, 1, "negative limit must never reach SQL");
+    }
+
+    #[test]
+    fn zero_limit_is_floored_to_one() {
+        let (_, limit) = clamp_pagination(None, Some(0));
+        assert_eq!(limit, 1, "zero limit must be raised to the minimum of 1");
+    }
+
+    #[test]
+    fn oversized_limit_is_capped() {
+        let (_, limit) = clamp_pagination(None, Some(100_000));
+        assert_eq!(limit, MAX_LISTINGS_LIMIT, "limit must be capped at the max");
+    }
+
+    #[test]
+    fn negative_page_is_floored_to_one() {
+        let (page, _) = clamp_pagination(Some(-5), None);
+        assert_eq!(page, 1, "negative page must be raised to 1");
+    }
+
+    #[test]
+    fn valid_values_pass_through() {
+        assert_eq!(clamp_pagination(Some(3), Some(50)), (3, 50));
+    }
 }

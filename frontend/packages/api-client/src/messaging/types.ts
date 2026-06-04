@@ -105,6 +105,8 @@ export interface SendMessageRequest {
 export interface ListThreadsParams {
   limit?: number;
   offset?: number;
+  /** Free-text search over thread participants / last message */
+  search?: string;
 }
 
 /** Query params for listing messages */

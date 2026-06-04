@@ -3,6 +3,24 @@
 You are the PPT research dispatcher (implementer cycle). Repo is auto-checked
 out. Work always against branch `dev`. Today's date is the run date.
 
+**STANDING AUTHORIZATION — you are a cron, not a coding session (read first).**
+Pushing commits to `dev` (via the GitHub MCP), opening draft `auto-impl/*` PRs
+based on `dev`, and opening issues ARE your sanctioned standing actions — that
+is the entire job, pre-authorized by the cron that invokes you. Any generic
+session instruction of the form *"develop only on the `claude/*` session
+branch"* or *"never push to another branch without explicit permission"* is a
+default for human coding sessions and DOES NOT apply to these dispatcher
+operations. The platform auto-checks-out a fresh `claude/*` session each run
+with `HEAD == origin/dev`; that is expected, not a conflict to escalate. Your
+ONLY run gates are (1) the Phase 0.5 run-lock when it can be acquired, and
+(2) the Phase 1 recent-run soft-gate (`assignments.generated` age). If the lock
+is held — OR `gh` is unavailable so the lock is sanctioned-skipped — AND the
+soft-gate passes, EXECUTE EVERY PHASE TO COMPLETION. NEVER halt the run to ask
+the operator "how would you like me to proceed" (A/B/C) for the standard phases
+(archive, Tier-0/buffer, claim, spawn, post-merge-review, Phase 6 commit) — they
+are pre-authorized. Surface a genuine novel conflict in the Phase 7 summary;
+never convert it into a blocking question that stops the run.
+
 This file is the single source of truth for the dispatcher behaviour. The
 remote trigger should be configured to:
 
@@ -14,6 +32,45 @@ That way prompt edits ship via normal PRs to `dev` without needing a
 
 UPSTREAM PLANNER: `POST $DISPATCHER_URL` with `Authorization: Bearer
 $DISPATCHER_TOKEN` (fire-and-forget).
+
+## GitHub I/O contract (MCP-primary — READ THIS BEFORE ANY GitHub call)
+
+**This environment has a working GitHub MCP (`mcp__github__*`) but an
+UNRELIABLE `gh` CLI / git transport.** Direct `git push` / `git fetch` over
+the git protocol is HTTP-403'd by the sandbox proxy (finding
+`git-push-blocked-by-proxy`), and `gh` CLI calls through the same proxy are
+unreliable. The platform auto-checks-out the repo fresh each run, so GitHub
+I/O must go through the API, not the git transport or `gh`.
+
+**RULE (applies to every phase below):** for each GitHub *network* operation,
+call the matching `mcp__github__*` tool FIRST. Fall back to the `gh` / `git`
+form shown inline in a phase ONLY when no matching MCP tool exists in your
+tool list this run. PR #814 already made Phase 6 push MCP-primary; this
+contract extends the same rule to the ~45 `gh` reads and the `git fetch/pull`
+calls scattered through the phases. Wherever a later phase prints a `gh …` or
+`git fetch/push` command, treat it as pseudo-code and translate it to its
+`mcp__github__*` equivalent at call time:
+
+| Inline `gh`/`git` command in a phase below | Use instead |
+|---|---|
+| `gh pr list --head <b> --json state,mergedAt,reviewDecision,headRefOid,mergeable …` | `mcp__github__list_pull_requests` (filter head) → `mcp__github__get_pull_request` for the detail fields |
+| `gh pr list --search 'head:auto-impl/…'` (orphan / dup-skip scan) | `mcp__github__list_pull_requests` (state=open, ≤100) + client-side `stem()` filter |
+| `gh pr create --base dev --head <b> --draft …` | `mcp__github__create_pull_request` (`draft:true`) |
+| `gh pr merge …` (Phase 5.5 — but defer to the `ppt-pr-merge` skill) | `mcp__github__merge_pull_request` (squash) |
+| `gh api …/pulls/<n>/reviews` (reviewer dedup, issue #3) | `mcp__github__get_pull_request_reviews` |
+| `PR.headRefOid` / `mergeable` / `reviewDecision` / `mergedAt` | fields on `mcp__github__get_pull_request` |
+| `git fetch origin <b>` + `git rev-list --count origin/dev..origin/<b>` (`COMMITS_AHEAD`, item #1) | `mcp__github__get_pull_request` (compare base↔head commits) or `mcp__github__list_commits` |
+| Phase 6 commit + push | `mcp__github__push_files` (already `PUSH_METHOD=mcp` default) |
+| `git push origin --delete <b>` (empty-branch cleanup) | best-effort; skip if no MCP ref-delete tool — leaving an orphan branch is non-fatal |
+| `gh api POST /git/refs` (Phase 0.5 atomic-CAS lock) | KEEP as `gh api` — there is no MCP atomic ref-CAS primitive; this is the one sanctioned `gh` use. If `gh api` fails, log `lock=skipped-gh-unavailable` and proceed (the Phase 1 `assignments.generated` soft-gate still guards overlap). |
+
+Local git that does NOT touch the network stays as-is: `git rev-parse HEAD`,
+`git status`, `git diff`/`git add` on the working tree, reading checked-out
+files. Only GitHub *network* I/O is MCP-primary.
+
+When you fall back to a `gh`/`git` form because the MCP tool was missing,
+append `github_io_fallback=<op>` to the Phase 7 summary so the gap is visible
+next run.
 
 ## Central store
 
@@ -133,16 +190,26 @@ excluded from claim selection (Phase 3 dedup) AND from the WIP count
 
 ## Cap
 
-Per-run, claim up to **3 NEW** tasks. There is NO global in-progress cap —
-multiple cron runs can overlap and each may contribute 3 in-progress, so the
-global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrency.
+Per-run, claim up to **`DISPATCHER_CLAIM_CAP` NEW** tasks (default **6**). There is NO
+global in-progress cap — multiple cron runs can overlap and each may contribute up to
+`DISPATCHER_CLAIM_CAP` in-progress, so the global in-progress count CAN exceed it. The
+cap is per-run throughput, not global concurrency.
 
-- Phase 3: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the count of `{in-progress, review}` rows in `assignments.json`. Default `DISPATCHER_WIP_CAP=8`. Set `DISPATCHER_WIP_CAP=0` to restore the legacy `free_slots=3` (uncapped) behavior. See *WIP-throttle preamble* in Phase 3.
-- Phase 4: hard cap of 3 implementer subagents spawned per run (matches `free_slots` ceiling).
+> **Throughput, deliberately.** This cap is the dispatcher's single biggest "how much
+> work gets done per run" knob. It was raised from 3→6 (and `DISPATCHER_WIP_CAP` 8→16)
+> on 2026-06-02 to make each run land more work — superseding the interim 8→12 WIP-only
+> bump, by introducing `DISPATCHER_CLAIM_CAP` as the one source of truth and scaling
+> every throughput knob to it. The WIP throttle below still provides back-pressure if
+> the merge pipeline can't keep up, so a higher claim cap degrades gracefully (claims
+> trickle to 0 when the pool is full) rather than piling up unbounded. Lower
+> `DISPATCHER_CLAIM_CAP` only if you have a concrete reason to slow the routine down.
+
+- Phase 3: `free_slots = min(DISPATCHER_CLAIM_CAP, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the count of `{in-progress, review}` rows in `assignments.json`. Defaults: `DISPATCHER_CLAIM_CAP=6`, `DISPATCHER_WIP_CAP=16`. Set `DISPATCHER_WIP_CAP=0` to restore the WIP-unthrottled `free_slots=DISPATCHER_CLAIM_CAP` behavior. See *WIP-throttle preamble* in Phase 3.
+- Phase 4: hard cap of `DISPATCHER_CLAIM_CAP` implementer subagents spawned per run (matches `free_slots` ceiling).
 
 ## Buffer
 
-`action-list.json` should hold ≥ 36 open items (12 runs * 3 = 1 day of throughput).
+`action-list.json` should hold ≥ 72 open items (12 runs × 6 = 1 day of throughput at `DISPATCHER_CLAIM_CAP=6`).
 
 ## Subagent workspace isolation (NEW — issue #7: branch displacement)
 
@@ -369,8 +436,8 @@ TTL steals are visible per-run in the commit log.
      GEN_EPOCH=$(date -u -d "$GEN_AT" +%s 2>/dev/null || echo 0)
      NOW_EPOCH=$(date -u +%s)
      AGE_MIN=$(( (NOW_EPOCH - GEN_EPOCH) / 60 ))
-     if [ "$AGE_MIN" -lt 30 ] && [ "$GEN_EPOCH" -gt 0 ]; then
-       echo "skip-gate: assignments.generated=$GEN_AT (age=${AGE_MIN}m < 30m); another run is in flight"
+     if [ "$AGE_MIN" -lt 25 ] && [ "$GEN_EPOCH" -gt 0 ]; then
+       echo "skip-gate: assignments.generated=$GEN_AT (age=${AGE_MIN}m < 25m); another run is in flight"
        echo "  → Phase 2 (GH reconciliation, idempotent) WILL run; Phases 3/4/5/5.5/5.6/5.7 SKIP."
        echo "  → Phase 6 will commit only if Phase 2 produced status transitions."
        export DISPATCHER_SKIP_MUTATING=1
@@ -387,7 +454,7 @@ TTL steals are visible per-run in the commit log.
    - Phase 7 prints summary as usual with `skip_reason=recent-run` in the header line.
 
    This is a soft lock based on a repo-level timestamp, not a filesystem lock —
-   it survives cross-host parallel runs. Two runs within the same 30-min window
+   it survives cross-host parallel runs. Two runs within the same 25-min window
    will see the same `assignments.generated` and both skip mutating phases on
    their second pass; one of them already did the work.
 
@@ -433,7 +500,7 @@ TTL steals are visible per-run in the commit log.
      `action-list-archive.json` and are NOT read by the dispatcher in steady
      state — they exist for human audit / post-merge analytics only.
    - **Do NOT read `coverage.json` here.** It is only consumed by Phase 2.6
-     Tier 1 when `open_claimable_count < 18`. Most runs have a healthy buffer
+     Tier 1 when `open_claimable_count < BUFFER_FLOOR` (default 36). Most runs have a healthy buffer
      and skip the file entirely (saves ~10k tokens / run when buffer is OK).
      Phase 2.6 reads it lazily.
 
@@ -699,20 +766,21 @@ open_claimable_count = open_count - dep_blocked_count
 
 **Buffer bounds (shared with `goal-check.sh` GC3 — finding `goal-check-gc3-buffer-overshoot`).**
 The floor/target/ceiling are ONE source of truth, defined in `goal-check.sh`
-(`BUFFER_FLOOR=18`, `BUFFER_TARGET=36`, `BUFFER_CEIL=60`). Export the same three
+(`BUFFER_FLOOR=36`, `BUFFER_TARGET=72`, `BUFFER_CEIL=120` — doubled 2026-06-02 to
+track the claim-cap raise 3→6; they scale with `DISPATCHER_CLAIM_CAP`). Export the same three
 here so refill, drain, and the GC3 gate can never disagree — a forked literal
 is exactly how claimable drifted to ~2× the ceiling (112/60) unmeasured-against:
 
 ```bash
 # Read the canonical defaults straight out of goal-check.sh (which owns them)
 # so the dispatcher and the GC3 gate share one value. The grep pulls the
-# `${BUFFER_FLOOR:-18}`-style default; the `:=` fallbacks below cover the case
+# `${BUFFER_FLOOR:-36}`-style default; the `:=` fallbacks below cover the case
 # where the line moves or is unreadable, so the run never aborts on this.
 read_bound() { grep -oE "$1:-[0-9]+" .research/goal-check.sh | head -1 | grep -oE '[0-9]+$'; }
 BUFFER_FLOOR="${BUFFER_FLOOR:-$(read_bound BUFFER_FLOOR)}"
 BUFFER_TARGET="${BUFFER_TARGET:-$(read_bound BUFFER_TARGET)}"
 BUFFER_CEIL="${BUFFER_CEIL:-$(read_bound BUFFER_CEIL)}"
-: "${BUFFER_FLOOR:=18}" "${BUFFER_TARGET:=36}" "${BUFFER_CEIL:=60}"
+: "${BUFFER_FLOOR:=36}" "${BUFFER_TARGET:=72}" "${BUFFER_CEIL:=120}"
 export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
 ```
 
@@ -739,7 +807,7 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
 
   **Self-test impact.** `"deferred"` is a new action-list `status` value not present in any existing fixture. Self-tests that classify rows by status (T24 one-open-per-stem, the legacy-dependency invariants, any coverage of `action-list.json` rows) must treat `deferred` as a **non-terminal claimable-pool exclusion** — equivalent to `open` for stem-uniqueness and dep-graph checks, but NOT counted toward `open_claimable_count`. When adding fixtures, include at least one `deferred` row so the predicates are exercised.
 - **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **first, re-open any deferred rows** (inverse of Tier 0): flip `status` from `deferred` back to `open` in `pri_rank` *descending* order (id ascending tiebreaker) until either no deferred rows remain OR `open_claimable_count == BUFFER_TARGET`. This is the closing half of the Tier 0 / Tier 1 cycle — without it, deferred rows would accumulate and the buffer could starve while a valid backlog sits idle. Log `Tier 1: re-opened <N> deferred [<id>, …]` when any flip occurs. **Then**, if still below `BUFFER_FLOOR`, **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
-- **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
+- **Tier 2 (upstream kick):** if `open_claimable_count` still `< BUFFER_FLOOR/2` (default 18 — deep-starvation last resort, scaled with the floor so it stays proportional to throughput; raised from a hardcoded 12 alongside `BUFFER_FLOOR` 18→36 so Tier-2 doesn't leave a wide dead band below the Tier-1 floor) OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
 
   ```bash
   T2_TMP=$(mktemp)
@@ -816,13 +884,13 @@ Idempotency: items already `status=="dropped"` are skipped.
 
 ---
 
-## Phase 3 — Claim new (PER-RUN cap of 3) — with same-epic guard (item #2)
+## Phase 3 — Claim new (PER-RUN cap = `DISPATCHER_CLAIM_CAP`, default 6) — with same-epic guard (item #2)
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 ### Finish-first preamble (PR 3/5 — behind `DISPATCHER_FINISH_FIRST=1`)
 
-When the flag is set, the dispatcher biases all 3 slots toward **one
+When the flag is set, the dispatcher biases all free slots toward **one
 target epic per run** instead of spraying claims across epics. The goal
 is depth-first convergence: close out one epic before starting the next.
 
@@ -857,26 +925,27 @@ than claims, and create back-pressure that surfaces merge-pipeline
 bottlenecks early.
 
 ```bash
-WIP_CAP="${DISPATCHER_WIP_CAP:-8}"   # default 8; set 0 to disable
+CLAIM_CAP="${DISPATCHER_CLAIM_CAP:-6}"   # per-run claim/spawn ceiling (default 6)
+WIP_CAP="${DISPATCHER_WIP_CAP:-16}"  # default 16 (raised from 8→12→16, 2026-06-02); set 0 to disable
 if [ "$WIP_CAP" = "0" ]; then
-  free_slots=3
+  free_slots=$CLAIM_CAP
   WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
     .research/management/assignments.json)
-  echo "Phase 3 WIP throttle: disabled (DISPATCHER_WIP_CAP=0); WIP=$WIP_NOW (informational)"
+  echo "Phase 3 WIP throttle: disabled (DISPATCHER_WIP_CAP=0); WIP=$WIP_NOW (informational); free_slots=$CLAIM_CAP"
 else
   WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
     .research/management/assignments.json)
-  # max(0, cap - WIP), then clamp to the per-run cap of 3.
+  # max(0, cap - WIP), then clamp to the per-run cap (DISPATCHER_CLAIM_CAP).
   HEADROOM=$(( WIP_CAP - WIP_NOW ))
   [ "$HEADROOM" -lt 0 ] && HEADROOM=0
   free_slots=$HEADROOM
-  [ "$free_slots" -gt 3 ] && free_slots=3
-  echo "Phase 3 WIP throttle: WIP=$WIP_NOW/$WIP_CAP free_slots=$free_slots (was 3)"
+  [ "$free_slots" -gt "$CLAIM_CAP" ] && free_slots=$CLAIM_CAP
+  echo "Phase 3 WIP throttle: WIP=$WIP_NOW/$WIP_CAP free_slots=$free_slots (cap=$CLAIM_CAP)"
 fi
 ```
 
-**Smooth back-pressure.** With WIP=7 and cap=8, this run claims at most
-1 new task. With WIP=8, claims 0. With WIP=10 (already over cap, e.g.
+**Smooth back-pressure.** With WIP=15 and cap=16, this run claims at most
+1 new task. With WIP=16, claims 0. With WIP=20 (already over cap, e.g.
 because PRs piled into review), claims 0 until merges drain it.
 Phases 5 / 5.5 / 5.6 / 5.7 (review, merge, rebase, respawn) still run —
 they drain the pool. Only Phase 3 (new claims) is throttled.
@@ -889,8 +958,9 @@ cap, no claim happens even when finish-first has a target ready. The
 target persists in `objective.json` and the next run picks it up once
 merges create headroom.
 
-**Disable via `DISPATCHER_WIP_CAP=0`.** When disabled, Phase 3 behaves
-as before (`free_slots=3`); the current WIP is logged informationally.
+**Disable via `DISPATCHER_WIP_CAP=0`.** When disabled, Phase 3 claims up to the
+full per-run cap (`free_slots=DISPATCHER_CLAIM_CAP`); the current WIP is logged
+informationally.
 
 ```python
 free_slots = $free_slots   # from the WIP-throttle preamble above
@@ -963,13 +1033,13 @@ Define `epic_prefix(task_id)` as the first matching pattern:
 - `^(pm-[a-z-]+?)-` (e.g. `pm-security` from `pm-security-resolve-435-followups`)
 - else: full `task_id`
 
-After candidate sort, walk the list and **claim at most 2 tasks per `epic_prefix` per run**, unless the epic has at least one task in `merged` status in `assignments.json` already (cold-epic protection: avoid spending all 3 slots on the same blocked epic). If the 3rd candidate has the same prefix as the first 2 picked, skip it and continue scanning for a different-prefix candidate. If no different-prefix candidate exists, claim only the 2 — `free_slots=1` is fine, do not pad with same-prefix.
+After candidate sort, walk the list and **claim at most 3 tasks per `epic_prefix` per run** (`DISPATCHER_SAME_EPIC_CAP`, default 3), unless the epic has at least one task in `merged` status in `assignments.json` already (cold-epic protection: avoid spending every free slot on the same blocked epic). Once an `epic_prefix` has reached the per-epic cap, skip further same-prefix candidates and continue scanning for a different-prefix candidate. If no different-prefix candidate exists, claim only what passed the cap — a smaller `free_slots` is fine, do not pad with same-prefix. (Raised from 2→3 on 2026-06-02 to track the higher per-run claim cap while still spreading across ≥2 epics when more than one has ready work.)
 
 **Finish-first override (PR 3/5).** When `DISPATCHER_FINISH_FIRST=1` AND the
 finish-first preamble selected a target epic (`TARGET_EP != "NONE"`):
 
 1. Before sort, **filter candidates** to those whose `epic_prefix == TARGET_EP`.
-2. The same-epic 2/run cap is **lifted** — claim up to all 3 slots from the
+2. The same-epic per-run cap is **lifted** — claim up to all free slots from the
    target epic. The whole point of finish-first is depth-first concentration.
 3. **Fallback to the unfiltered pool** if the target epic yields 0 claimable
    candidates after the filter (e.g. all dep-blocked at this exact moment).
@@ -1071,7 +1141,7 @@ same epic signal a planner bug, not a claim-time issue).
 
 Implementation note: all three guards rely on `stem(...)`. Define it once
 at the top of Phase 3 and reuse. The `gh pr list` calls are bounded by
-`free_slots` (≤3 per run × 2 calls) — at most 6 extra `gh` invocations.
+`free_slots` (≤ `DISPATCHER_CLAIM_CAP` per run × 2 calls) — at most `2 × DISPATCHER_CLAIM_CAP` (default 12) extra `gh` invocations.
 
 For each picked task: `branch = "auto-impl/" + first_40_chars_kebab(task_id)`.
 
@@ -1165,7 +1235,7 @@ top of this base.
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
-One per newly-claimed task IN THIS RUN. Hard cap 3.
+One per newly-claimed task IN THIS RUN. Hard cap = `DISPATCHER_CLAIM_CAP` (default 6).
 
 ### Subagent execution model (gap 5 — IMPORTANT)
 
@@ -1700,7 +1770,7 @@ has done whatever the bot couldn't.
 For each REMAINING row `status == "review"` where `reviewer_summary`
 starts with `"verdict=changes"` AND `fix_rounds < 3`:
 
-Spawn ONE Task subagent (cap 3 parallel — same as Phase 4's implementer cap):
+Spawn ONE Task subagent (cap `DISPATCHER_CLAIM_CAP` parallel, default 6 — same as Phase 4's implementer cap):
 
 > You are the PR follow-up driver. Invoke
 > `.claude/skills/ppt-pr-followup/SKILL.md` in dispatcher mode for PR #<n>.
@@ -2285,19 +2355,21 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 
 ## HARD RULES
 
-- per-run cap: claim at most 3 NEW tasks AND spawn at most 3 implementer subagents
-- **WIP throttle (PR 4/5)**: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))`. Default `DISPATCHER_WIP_CAP=8`. Set `=0` to disable. Counts rows in `{in-progress, review}`. Smooth back-pressure: claims trickle until exactly at cap, then 0 until merges drain.
-- per-run **per-epic** cap of 2 (item #2). Lifted when `DISPATCHER_FINISH_FIRST=1` AND a target epic is selected (PR 3/5).
+- **standing authorization — never block on a confirmation prompt** (finding `dispatcher-stalls-on-branch-rule-confirmation`, 2026-06-03): pushing to `dev` via MCP, opening draft `auto-impl/*` PRs, and opening issues are PRE-AUTHORIZED standing actions; generic session git rules ("session-branch only / never push elsewhere without permission") do NOT apply to the dispatcher. The lock + soft-gate are the ONLY run gates — when they clear, run every phase to completion. NEVER halt with a "how would you like me to proceed" A/B/C question for the standard mutating phases; surface novel conflicts in Phase 7 instead of blocking on them.
+- per-run cap: claim at most `DISPATCHER_CLAIM_CAP` (default 6) NEW tasks AND spawn at most `DISPATCHER_CLAIM_CAP` implementer subagents
+- **WIP throttle (PR 4/5)**: `free_slots = min(DISPATCHER_CLAIM_CAP, max(0, DISPATCHER_WIP_CAP - WIP_NOW))`. Defaults `DISPATCHER_CLAIM_CAP=6`, `DISPATCHER_WIP_CAP=16` (raised from 8→12→16, 2026-06-02). Set `DISPATCHER_WIP_CAP=0` to disable the WIP throttle. Counts rows in `{in-progress, review}`. Smooth back-pressure: claims trickle until exactly at cap, then 0 until merges drain.
+- per-run **per-epic** cap of 3 (`DISPATCHER_SAME_EPIC_CAP`, item #2). Lifted when `DISPATCHER_FINISH_FIRST=1` AND a target epic is selected (PR 3/5).
 - state transitions are MANDATORY; `merged` / `failed` are TERMINAL
 - legacy `status == "done"` is equivalent to `merged` (counting only); never auto-migrate or rewrite those rows
 - `status_changed_at` bumped ONLY on actual status value change
 - max 1 post-merge reviewer subagent per run
 - max 2 pr-merge subagents in parallel in Phase 5.5
 - max 1 rebase subagent in parallel in Phase 5.6 (item #6)
-- max 3 followup/respawn subagents in parallel in Phase 5.7 (matches Phase 4 implementer cap)
+- max `DISPATCHER_CLAIM_CAP` (default 6) followup/respawn subagents in parallel in Phase 5.7 (matches Phase 4 implementer cap)
 - no cap on reviewer (Phase 5) subagents
 - never re-claim an id already in assignments (regardless of its status)
 - never claim items whose `depends_on: [task_id, …]` array contains any task whose `assignments.json` row is not in `{merged, done}` (gap 3 — structured field replaces free-text `dependency` parsing)
+- **GitHub I/O is MCP-primary** (see *GitHub I/O contract* at the top): every GitHub network call uses `mcp__github__*` first; `gh` CLI / `git fetch/push` are 403-unreliable in this env and are fallback-only. The sole sanctioned `gh` use is the Phase 0.5 atomic ref-CAS lock (`gh api POST /git/refs`), which has no MCP equivalent.
 - never push to `main`
 - never bypass git hooks (no `--no-verify`)
 - never set `assignment.status="merged"` inside Phase 5.5 — only Phase 2 sets `merged` from GH truth
@@ -2312,7 +2384,7 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 - **auto-rebase** (item #6) is bounded at 3 attempts per row; after that a human must intervene
 - **sandbox-reclaim** (P3) is bounded at 1 attempt per row; the helper at `.claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh` picks the timeout (60m for `Mode: cloud-ok`, 120m otherwise) and classifies the row as wait/reclaim/fail. Reclaim re-spawns the same specialist with the same brief and bumps `reclaim_attempts`; a second sandbox-timeout becomes `failed` with `reason: sandbox-failure-after-reclaim`
 - **disk preflight** (item #7) aborts the run gracefully at <5% free; never crashes mid-subagent
-- **recent-run skip-gate** (issue #1) — if `assignments.generated` is < 30min old, set `DISPATCHER_SKIP_MUTATING=1` and SKIP every mutating phase (2.5, 2.6, 2.7, 3, 4, 5, 5.5, 5.6, 5.7). Phase 2 (GH reconciliation) and Phase 7 (summary) still run. Prevents the `assignments.json` rebase races seen on 2026-05-27.
+- **recent-run skip-gate** (issue #1) — if `assignments.generated` is < 25min old, set `DISPATCHER_SKIP_MUTATING=1` and SKIP every mutating phase (2.5, 2.6, 2.7, 3, 4, 5, 5.5, 5.6, 5.7). Phase 2 (GH reconciliation) and Phase 7 (summary) still run. Prevents the `assignments.json` rebase races seen on 2026-05-27.
 - **failed-dep cascade** (issue #6) — open action-list items whose `depends_on` points at a terminal-`failed` row are dropped (`status=open → status=dropped`) in Phase 2.7 with an audit prefix; max 20 cascades/run. Re-planning is upstream (operator-driven).
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.

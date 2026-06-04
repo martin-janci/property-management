@@ -165,6 +165,13 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/templates", routes::templates::router())
         // E-Signature routes
         .nest("/api/v1/signature-requests", routes::signatures::router())
+        // Signer-facing public consumer endpoint (issue #761 part 2): the
+        // emailed HMAC link lands the signer here. No auth — all authority is
+        // in the verified token. GET render-context + POST record-signature.
+        .nest(
+            "/api/v1/signatures",
+            routes::signatures::public_sign_router(),
+        )
         // Messaging routes
         .nest("/api/v1/messages", routes::messaging::router())
         // Neighbor routes

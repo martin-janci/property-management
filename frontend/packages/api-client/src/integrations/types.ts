@@ -475,3 +475,69 @@ export interface VideoMeetingQuery {
   status?: MeetingStatus;
   limit?: number;
 }
+
+// ============================================
+// Gap 83.2: Booking.com Channel Integration
+// ============================================
+//
+// NOTE: the Booking.com backend handlers (api-server
+// routes/integrations/{install,booking_channel}.rs) serialize with the
+// default serde casing (snake_case), so these wire types deliberately use
+// snake_case field names to match the JSON on the wire.
+
+/** Connection + sync status for a Booking.com channel connection. */
+export interface BookingChannelStatus {
+  connected: boolean;
+  hotel_id?: string | null;
+  last_sync_at?: string | null;
+  sync_error?: string | null;
+  properties_count: number;
+  reservations_count: number;
+}
+
+/** Request body for connecting a Booking.com hotel via Supply XML credentials. */
+export interface BookingConnectRequest {
+  hotel_id: string;
+  username: string;
+  password: string;
+}
+
+/** Response returned by the Booking.com connect endpoint. */
+export interface BookingConnectResponse {
+  success: boolean;
+  message: string;
+  hotel_id?: string;
+}
+
+/** Response returned by the Booking.com disconnect endpoint. */
+export interface BookingDisconnectResponse {
+  success: boolean;
+  message: string;
+}
+
+/** Result of a Booking.com sync operation. */
+export interface BookingSyncResult {
+  success: boolean;
+  items_synced: number;
+  synced_at: string;
+  error?: string | null;
+}
+
+/** A single cross-platform booking conflict (overlapping reservations). */
+export interface BookingConflict {
+  unit_id: string;
+  booking_reservation_id: string;
+  conflicting_platform: string;
+  conflicting_booking_id: string;
+  overlap_start: string;
+  overlap_end: string;
+}
+
+/** Response from the Booking.com conflict-detection endpoint. */
+export interface BookingConflictCheck {
+  conflicts_found: number;
+  conflicts: BookingConflict[];
+  checked_at: string;
+  /** True when the upstream query hit its reservation cap (results incomplete). */
+  truncated: boolean;
+}

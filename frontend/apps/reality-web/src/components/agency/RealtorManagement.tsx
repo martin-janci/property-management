@@ -16,6 +16,7 @@ import {
   useUpdateRealtor,
 } from '@ppt/reality-api-client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 type TabType = 'all' | 'active' | 'invited' | 'inactive';
@@ -519,15 +520,24 @@ function RealtorCard({
   );
 }
 
-function InviteRealtorModal({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
+export function InviteRealtorModal({
+  agencyId,
+  onClose,
+}: {
+  agencyId: string;
+  onClose: () => void;
+}) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const inviteRealtor = useInviteRealtor();
+  const t = useTranslations('agency');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setInviteError(null);
     try {
       await inviteRealtor.mutateAsync({
         agencyId,
@@ -536,6 +546,7 @@ function InviteRealtorModal({ agencyId, onClose }: { agencyId: string; onClose: 
       onClose();
     } catch (error) {
       console.error('Failed to invite realtor:', error);
+      setInviteError(t('inviteError'));
     }
   };
 
@@ -572,6 +583,12 @@ function InviteRealtorModal({ agencyId, onClose }: { agencyId: string; onClose: 
         </div>
 
         <form onSubmit={handleSubmit}>
+          {inviteError && (
+            <div className="invite-error" role="alert" aria-live="assertive">
+              {inviteError}
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="invite-email">Email *</label>
             <input
@@ -674,6 +691,16 @@ function InviteRealtorModal({ agencyId, onClose }: { agencyId: string; onClose: 
 
           form {
             padding: 24px;
+          }
+
+          .invite-error {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--ppt-color-danger-light);
+            color: var(--ppt-color-danger);
+            border: 1px solid var(--ppt-color-danger);
+            border-radius: 8px;
+            font-size: 14px;
           }
 
           .form-group {

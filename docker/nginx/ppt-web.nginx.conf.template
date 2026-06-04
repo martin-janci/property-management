@@ -11,6 +11,13 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Emit relative redirects (#957). Without this, nginx's implicit
+    # trailing-slash redirect for `/api` -> `/api/` builds an ABSOLUTE Location
+    # from the listen socket (`http://host:8080/api/`), leaking the internal
+    # port and downgrading https->http. A relative `Location: /api/` is resolved
+    # by the browser against the original scheme+host.
+    absolute_redirect off;
+
     # Gzip compression
     gzip on;
     gzip_vary on;
@@ -34,6 +41,12 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    # HSTS — was missing (#954). This host is served TLS-only behind Caddy.
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+    # CSP — was missing (#954). frame-ancestors 'self' mirrors the SAMEORIGIN
+    # policy above; connect-src is kept permissive (https:/wss:) so same-origin
+    # /api + /ws proxying and any external uploads/telemetry keep working.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
 
     # Cache static assets (include security headers since add_header in location overrides parent)
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
@@ -43,6 +56,7 @@ server {
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-XSS-Protection "1; mode=block" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     }
 
     # Health check endpoint

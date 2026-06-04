@@ -85,7 +85,9 @@ pub use delegation::DelegationRepository;
 pub use device_push_token::DevicePushTokenRepository;
 pub use document::DocumentRepository;
 pub use document_template::DocumentTemplateRepository;
-pub use e_signature_nonce::{ESignatureNonceRepository, RecordNonceError};
+pub use e_signature_nonce::{
+    ConsumeOutcome, ESignatureNonceRepository, NonceState, RecordNonceError,
+};
 pub use facility::FacilityRepository;
 pub use fault::FaultRepository;
 pub use feature_flag::{

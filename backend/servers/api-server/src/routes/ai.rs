@@ -2665,12 +2665,16 @@ Format your response with clear sections for each component."#,
 
 async fn list_listing_descriptions(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's generated listing descriptions by
+    // enumerating a listing id.
+    let org_id = require_tenant_id(&principal)?;
     match state
         .llm_document_repo
-        .list_listing_descriptions(listing_id)
+        .list_listing_descriptions_for_org(listing_id, org_id)
         .await
     {
         Ok(descriptions) => Ok(Json(serde_json::json!({ "descriptions": descriptions }))),

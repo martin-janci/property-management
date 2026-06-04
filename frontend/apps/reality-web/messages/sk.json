@@ -3,6 +3,7 @@
     "allListings": "Všetky ponuky",
     "branding": "Branding",
     "dashboard": "Panel agentúry",
+    "inviteError": "Chyba pri odosielaní pozvánky. Skúste to znova.",
     "inviteRealtor": "Pozvať makléra",
     "manageRealtors": "Spravovať maklérov",
     "performanceOverview": "Prehľad výkonnosti",
@@ -373,7 +374,8 @@
       "subtitle": "Pomáhame vám rozpoznať podvody a obchodovať s nehnuteľnosťami v bezpečnom prostredí.",
       "title": "Bezpečnosť",
       "h1": "Vaša bezpečnosť je naša priorita",
-      "scenariosHeading": "Časté podvodné scenáre"
+      "scenariosHeading": "Časté podvodné scenáre",
+      "description": "Zistite, ako chránime ponuky, platby a vaše údaje na Reality Portáli."
     },
     "sell": {
       "steps": {
@@ -497,7 +499,8 @@
     },
     "favorites": {
       "title": "Moje obľúbené",
-      "description": "Nehnuteľnosti, ktoré ste si uložili."
+      "description": "Nehnuteľnosti, ktoré ste si uložili.",
+      "h1": "Moje obľúbené"
     },
     "login": {
       "title": "Prihlásenie",
@@ -566,6 +569,12 @@
       "requestNew": "Vyžiadať nový odkaz",
       "goToSignIn": "Prejsť na prihlásenie",
       "genericError": "Nepodarilo sa obnoviť heslo. Skúste znova."
+    },
+    "compare": {
+      "title": "Porovnať nehnuteľnosti",
+      "description": "Porovnajte nehnuteľnosti vedľa seba a nájdite ten správny domov.",
+      "h1": "Porovnať nehnuteľnosti",
+      "subtitle": "Pozrite sa, ako si vaše vybrané nehnuteľnosti stoja vedľa seba."
     }
   },
   "search": {

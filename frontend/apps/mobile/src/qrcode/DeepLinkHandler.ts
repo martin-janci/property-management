@@ -2,8 +2,11 @@
  * Deep link handling for QR codes and external links.
  *
  * Epic 49 - Story 49.3: QR Code Scanning
+ * gap-85-3: extended to accept HTTPS universal links (iOS) / App Links
+ *           (Android) in addition to the legacy `ppt://` custom scheme.
  */
 import { Linking } from 'react-native';
+import { normalizeLinkUrl } from './universalLinks';
 
 /**
  * Deep link route configuration.
@@ -64,13 +67,17 @@ export interface ParsedDeepLink {
  */
 export function parseDeepLink(url: string): ParsedDeepLink {
   try {
-    if (!url.startsWith('ppt://')) {
+    // Accept both the legacy `ppt://` custom scheme and HTTPS universal links
+    // (iOS) / App Links (Android). `normalizeLinkUrl` returns the canonical
+    // `<path>?<query>` form, or null when the URL is not one this app owns.
+    const normalized = normalizeLinkUrl(url);
+    if (normalized === null) {
       return { success: false, error: 'Not a PPT deep link' };
     }
 
-    const parsed = new URL(url);
-    const pathParts = parsed.pathname.replace(/^\//, '').split('/').filter(Boolean);
-    const path = pathParts.join('/');
+    const [rawPath, rawQuery] = normalized.split('?', 2);
+    const path = rawPath.split('/').filter(Boolean).join('/');
+    const searchParams = new URLSearchParams(rawQuery ?? '');
 
     // Find matching route
     for (const route of DEEP_LINK_ROUTES) {
@@ -78,7 +85,7 @@ export function parseDeepLink(url: string): ParsedDeepLink {
       if (match) {
         // Extract query parameters
         const query: Record<string, string> = {};
-        parsed.searchParams.forEach((value, key) => {
+        searchParams.forEach((value, key) => {
           query[key] = value;
         });
 
@@ -141,8 +148,18 @@ export function createDeepLink(
   params?: Record<string, string>,
   query?: Record<string, string>
 ): string {
-  // Find route for screen
-  const route = DEEP_LINK_ROUTES.find((r) => r.screen === screen);
+  // Find a route for the screen. When the caller supplies params (e.g. an
+  // entity `id` from a tapped push), prefer the route whose `params` cover
+  // those keys so we build the *detail* path (`announcements/:id`) rather than
+  // the bare list path (`announcements`) — otherwise the id is silently
+  // dropped and the tap always lands on the list screen.
+  const paramKeys = params ? Object.keys(params).filter((k) => params[k]) : [];
+  const route =
+    (paramKeys.length > 0
+      ? DEEP_LINK_ROUTES.find(
+          (r) => r.screen === screen && paramKeys.every((k) => r.params?.includes(k))
+        )
+      : undefined) ?? DEEP_LINK_ROUTES.find((r) => r.screen === screen);
 
   if (!route) {
     // Default to simple path

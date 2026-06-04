@@ -9,7 +9,7 @@ implementations:
     component: CreateFaultPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: partial
 endpoints: []
 relatedScreens:
   - id: ppt/faults-list
@@ -35,3 +35,4 @@ Note: a `ppt/report-fault` screen-map already exists (mobile-oriented). This stu
 
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
+- 2026-06-02 — agent (gap-sweep): wired CreateFaultPageRoute to `useCreateFault` + `useBuildings` in App.tsx (was a no-op toast). Maps FaultFormData→CreateFaultRequest. apiStatus stub→partial — photo upload (File[]→useAddAttachment) still TODO.

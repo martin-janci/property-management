@@ -37,7 +37,7 @@ pub mod report_execution_status {
 ///
 /// Maps to the `report_schedules` table created by migration
 /// `00162_create_report_schedules_executions.sql`, with the
-/// `cron_expression` column added by `00163_report_schedules_add_cron_expression.sql`.
+/// `cron_expression` column added by `00166_report_schedules_add_cron_expression.sql`.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ReportSchedule {
     pub id: Uuid,
@@ -146,7 +146,13 @@ pub struct ReportExecution {
     ///
     /// Set to `Some("/api/v1/reports/executions/{id}/download")` when `file_key`
     /// is present; `None` for pending/running/failed executions.
+    ///
+    /// Computed in the handler layer — it is **not** a `report_executions`
+    /// column, so `FromRow` must skip it (`#[sqlx(default)]`) or every
+    /// `query_as::<_, ReportExecution>` that returns a real row fails to decode
+    /// with "no column found for name: download_url".
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(default)]
     pub download_url: Option<String>,
 }
 

@@ -93,6 +93,10 @@ const nextConfig = {
   // Standalone output for Docker deployment
   output: 'standalone',
 
+  // Don't advertise the framework via `X-Powered-By: Next.js` (#957). No
+  // version is leaked, but the Rust API hosts omit any banner — match them.
+  poweredByHeader: false,
+
   // Enable React strict mode
   reactStrictMode: true,
 

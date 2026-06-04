@@ -89,18 +89,7 @@ pub async fn auth_and_audit(
     } else {
         match state.oidc.validate(&token).await {
             Ok(claims) => {
-                // OIDC scope derivation is intentionally simple — we map common GitHub
-                // ref patterns to the minimum scopes needed by the matching CI workflow.
-                // Refine when CI patterns stabilize.
-                let mut scopes = vec![];
-                if claims.git_ref == "refs/heads/main" {
-                    scopes.push("release:deploy".to_string());
-                } else if claims.git_ref.starts_with("refs/tags/v") {
-                    scopes.push("release:register".to_string());
-                } else if claims.git_ref.starts_with("refs/heads/feature/") {
-                    scopes.push("worktree:open".to_string());
-                    scopes.push("worktree:close".to_string());
-                }
+                let scopes = derive_oidc_scopes(&claims.git_ref);
                 CallerIdentity {
                     kind: "oidc".into(),
                     id: format!("{}@{}", claims.repository, claims.git_ref),
@@ -160,4 +149,77 @@ fn error_resp(status: StatusCode, msg: &str) -> Response {
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap()
+}
+
+/// Derive the scope set granted to a GitHub Actions OIDC caller from its
+/// `git_ref` claim. Intentionally simple — each CI workflow's ref pattern maps
+/// to the minimum scopes that workflow needs (see docker-build.yml,
+/// docker-frontend.yml, release.yml, worktree open/close workflows).
+///
+/// `refs/heads/dev` is granted `release:deploy` so the dev→staging auto-deploy
+/// (`trigger-deploy` in docker-build.yml / docker-frontend.yml) is authorized,
+/// mirroring `refs/heads/main`→prod. Without this, dev pushes authenticated
+/// (dev is in `allowed_refs`) but received an empty scope set, so
+/// `require_scope("release:deploy")` rejected every dev auto-deploy with 403.
+///
+/// NOTE: `release:deploy` is target-agnostic, so a `dev` token could request
+/// `target: prod` (same latent property `main` already has). Tightening to
+/// target-scoped permissions is tracked as a follow-up.
+fn derive_oidc_scopes(git_ref: &str) -> Vec<String> {
+    if git_ref == "refs/heads/main" || git_ref == "refs/heads/dev" {
+        vec!["release:deploy".to_string()]
+    } else if git_ref.starts_with("refs/tags/v") {
+        vec!["release:register".to_string()]
+    } else if git_ref.starts_with("refs/heads/feature/") {
+        vec!["worktree:open".to_string(), "worktree:close".to_string()]
+    } else {
+        vec![]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::derive_oidc_scopes;
+
+    #[test]
+    fn main_and_dev_get_release_deploy() {
+        assert_eq!(
+            derive_oidc_scopes("refs/heads/main"),
+            vec!["release:deploy".to_string()]
+        );
+        // Regression (deploy-403): dev previously fell through to an empty
+        // scope set, so docker-build.yml/docker-frontend.yml trigger-deploy
+        // always 403'd on the dev→staging auto-deploy.
+        assert_eq!(
+            derive_oidc_scopes("refs/heads/dev"),
+            vec!["release:deploy".to_string()]
+        );
+    }
+
+    #[test]
+    fn version_tags_get_release_register() {
+        assert_eq!(
+            derive_oidc_scopes("refs/tags/v0.3.0"),
+            vec!["release:register".to_string()]
+        );
+        assert_eq!(
+            derive_oidc_scopes("refs/tags/v1.2.3"),
+            vec!["release:register".to_string()]
+        );
+    }
+
+    #[test]
+    fn feature_branches_get_worktree_scopes() {
+        assert_eq!(
+            derive_oidc_scopes("refs/heads/feature/epic-1-auth"),
+            vec!["worktree:open".to_string(), "worktree:close".to_string()]
+        );
+    }
+
+    #[test]
+    fn unknown_refs_get_no_scope() {
+        assert!(derive_oidc_scopes("refs/heads/random").is_empty());
+        assert!(derive_oidc_scopes("refs/heads/bugfix/x").is_empty());
+        assert!(derive_oidc_scopes("refs/tags/not-a-version").is_empty());
+    }
 }

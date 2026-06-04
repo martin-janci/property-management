@@ -124,6 +124,7 @@ impl MessagingRepository {
         organization_id: Uuid,
         limit: Option<i64>,
         offset: Option<i64>,
+        search: Option<&str>,
     ) -> Result<Vec<ThreadWithPreview>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -161,8 +162,11 @@ impl MessagingRepository {
                 t.updated_at,
                 -- Other participant (the one that's not the current user)
                 u.id as other_user_id,
-                u.first_name as other_first_name,
-                u.last_name as other_last_name,
+                -- Issue #1008: `users` has a single `name` column, not
+                -- first_name/last_name. Map the full name into *_first_name and
+                -- leave *_last_name empty to preserve the ParticipantInfo shape.
+                u.name as other_first_name,
+                '' as other_last_name,
                 u.email as other_email,
                 -- Last message
                 tm.message_id as last_message_id,
@@ -173,7 +177,7 @@ impl MessagingRepository {
                 COALESCE(uc.unread, 0) as unread_count
             FROM message_threads t
             CROSS JOIN LATERAL (
-                SELECT id, first_name, last_name, email
+                SELECT id, name, email
                 FROM users
                 WHERE id = ANY(t.participant_ids) AND id != $1
                 LIMIT 1
@@ -182,12 +186,14 @@ impl MessagingRepository {
             LEFT JOIN unread_counts uc ON uc.thread_id = t.id
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
+              AND ($3::text IS NULL OR u.name ILIKE '%'||$3||'%')
             ORDER BY t.last_message_at DESC NULLS LAST, t.created_at DESC
-            LIMIT $3 OFFSET $4
+            LIMIT $4 OFFSET $5
             "#,
         )
         .bind(user_id)
         .bind(organization_id)
+        .bind(search)
         .bind(limit)
         .bind(offset)
         .fetch_all(executor)
@@ -207,19 +213,29 @@ impl MessagingRepository {
         executor: E,
         user_id: Uuid,
         organization_id: Uuid,
+        search: Option<&str>,
     ) -> Result<i64, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
         let (count,): (i64,) = sqlx::query_as(
             r#"
-            SELECT COUNT(*) FROM message_threads
-            WHERE $1 = ANY(participant_ids)
-              AND organization_id = $2
+            SELECT COUNT(*)
+            FROM message_threads t
+            CROSS JOIN LATERAL (
+                SELECT id, name, email
+                FROM users
+                WHERE id = ANY(t.participant_ids) AND id != $1
+                LIMIT 1
+            ) u
+            WHERE $1 = ANY(t.participant_ids)
+              AND t.organization_id = $2
+              AND ($3::text IS NULL OR u.name ILIKE '%'||$3||'%')
             "#,
         )
         .bind(user_id)
         .bind(organization_id)
+        .bind(search)
         .fetch_one(executor)
         .await?;
 
@@ -304,8 +320,8 @@ impl MessagingRepository {
                 m.read_at,
                 m.deleted_at,
                 m.created_at,
-                u.first_name as sender_first_name,
-                u.last_name as sender_last_name,
+                u.name as sender_first_name, -- #1008: users has only `name`
+                '' as sender_last_name,
                 u.email as sender_email
             FROM messages m
             JOIN users u ON u.id = m.sender_id
@@ -555,8 +571,8 @@ impl MessagingRepository {
                 b.blocker_id,
                 b.blocked_id,
                 b.created_at,
-                u.first_name as blocked_first_name,
-                u.last_name as blocked_last_name,
+                u.name as blocked_first_name, -- #1008: users has only `name`
+                '' as blocked_last_name,
                 u.email as blocked_email
             FROM user_blocks b
             JOIN users u ON u.id = b.blocked_id
@@ -687,7 +703,7 @@ impl MessagingRepository {
         limit: Option<i64>,
         offset: Option<i64>,
     ) -> Result<Vec<ThreadWithPreview>, SqlxError> {
-        self.list_threads_rls(&self.pool, user_id, organization_id, limit, offset)
+        self.list_threads_rls(&self.pool, user_id, organization_id, limit, offset, None)
             .await
     }
 
@@ -703,7 +719,7 @@ impl MessagingRepository {
         user_id: Uuid,
         organization_id: Uuid,
     ) -> Result<i64, SqlxError> {
-        self.count_threads_rls(&self.pool, user_id, organization_id)
+        self.count_threads_rls(&self.pool, user_id, organization_id, None)
             .await
     }
 

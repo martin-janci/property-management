@@ -71,10 +71,12 @@ Intermediate page in the SSO login flow. The user never navigates here directly 
 - **State nonce lifecycle**: `setSsoState(crypto.randomUUID())` must be called by the SSO initiation path (Login page SSO buttons) before the provider redirect. `getAndClearSsoState()` in this page consumes and removes the nonce atomically so it cannot be replayed.
 - **`redirectUri` must match exactly** what the backend registered with the SSO provider. Derived from `window.location.origin + '/auth/callback'`.
 - **`biome-ignore lint/correctness/useExhaustiveDependencies`** on the mount-only `useEffect` is intentional — `loginWithSsoCode` and `navigate` are stable refs; `searchParams` changes every render but the exchange must run only once.
+- **Return-URL is open-redirect hardened** (PR #922, dev-review round 2): the post-exchange redirect via `getAndClearReturnUrl()` now passes through `sanitizeReturnUrl()` in `@ppt/shared` (same-origin rooted paths only; absolute/protocol-relative/scheme/control-char values are dropped to `null` → falls back to `/dashboard`). This complements the state-nonce check as a second open-redirect guard on the SSO return path.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-06-03 — agent: test-gap-screen-map-drift-pr-922-ppt — noted PR #922 (dev-review round 2) return-URL hardening: post-SSO redirect via `getAndClearReturnUrl()` now sanitized by `sanitizeReturnUrl` in `@ppt/shared`, a second open-redirect guard alongside the state nonce. No frontmatter change (still in-progress/stub — backend endpoint pending).
 - 2026-05-27 — agent: gap-79-2 review fixes — created screen-map (ppt/auth-callback); buildStatus=in-progress, apiStatus=stub (backend endpoint not yet implemented); added state nonce validation (OIDC §3.1.2.7) and loginWithSsoCode catch block (partial write rollback) per reviewer findings on PR#568
 - 2026-05-27 — agent: gap-79-2-login-flow-impl-v2 — new route /auth/callback; AuthCallbackPage wired; loginWithSsoCode added to AuthContext
