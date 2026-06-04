@@ -8,12 +8,14 @@
     "build": "tsc && vite build",
     "build:analyze": "tsc && vite build && echo 'Bundle analysis available at dist/stats.html'",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && pnpm typecheck:e2e",
+    "typecheck:e2e": "tsc --noEmit -p tsconfig.e2e.json",
     "lint": "eslint . --ext ts,tsx",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:a11y": "vitest run src/**/*.a11y.test.tsx"
+    "test:a11y": "vitest run src/**/*.a11y.test.tsx",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ppt/admin-ui": "workspace:*",
@@ -38,6 +40,7 @@
   },
   "devDependencies": {
     "@axe-core/react": "^4.10.0",
+    "@playwright/test": "^1.51.1",
     "@ppt/dev-panel": "workspace:*",
     "@ppt/vite-plugin-worktree": "workspace:*",
     "@tailwindcss/postcss": "^4.3.0",
