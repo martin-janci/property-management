@@ -146,11 +146,16 @@ test.describe('Token Refresh Flow (AuthProvider)', () => {
 
     // Land directly on a protected route. If the silent refresh works the user
     // stays authenticated and the route renders rather than bouncing to /login.
-    await page.goto('/dashboard/manager');
+    await page.goto('/documents');
     await page.waitForLoadState('networkidle');
 
-    // Must NOT have been redirected to /login.
+    // The protected route rendered rather than bouncing to /login — the silent
+    // refresh kept the session authenticated. ProtectedRoute redirects to /login
+    // BEFORE rendering children when unauthenticated, so staying on /documents is
+    // a real positive signal (not vacuous): if the refresh-on-mount had failed,
+    // this would be /login instead.
     expect(page.url()).not.toContain('/login');
+    expect(page.url()).toContain('/documents');
 
     // The refresh endpoint was hit exactly once.
     expect(refreshCallCount).toBe(1);
@@ -190,7 +195,7 @@ test.describe('Token Refresh Flow (AuthProvider)', () => {
       { rtKey: REFRESH_TOKEN_KEY, rt: staleRefresh }
     );
 
-    await page.goto('/dashboard/manager');
+    await page.goto('/documents');
     await page.waitForURL('**/login', { timeout: 8000 });
 
     // Stale tokens must have been cleared by initializeAuth()'s catch branch.
@@ -222,7 +227,7 @@ test.describe('Token Refresh Flow (AuthProvider)', () => {
 
     await seedRefreshableSession(page, oldRefresh);
 
-    await page.goto('/dashboard/manager');
+    await page.goto('/documents');
     await page.waitForLoadState('networkidle');
 
     const storedRefresh = await page.evaluate((k) => localStorage.getItem(k), REFRESH_TOKEN_KEY);
@@ -244,7 +249,7 @@ test.describe('Token Refresh Flow (AuthProvider)', () => {
     await stubOtherApis(page);
 
     // beforeEach already cleared storage — go straight to a protected route.
-    await page.goto('/dashboard/manager');
+    await page.goto('/documents');
     await page.waitForURL('**/login', { timeout: 8000 });
 
     expect(refreshCallMade).toBe(false);
