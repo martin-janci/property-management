@@ -508,7 +508,7 @@ fi
 # throttle is first enabled, so being-over-cap is a `note`, not a `fail`.
 # Hard-fail only when WIP exceeds 2 × cap (clear runaway).
 echo "T22 WIP throttle bounds (PR 4/5)"
-WIP_CAP_FOR_TEST="${DISPATCHER_WIP_CAP:-8}"
+WIP_CAP_FOR_TEST="${DISPATCHER_WIP_CAP:-16}"
 WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' "$ASSIGN")
 if [ "$WIP_CAP_FOR_TEST" = "0" ]; then
   note "WIP throttle disabled (DISPATCHER_WIP_CAP=0); current WIP=$WIP_NOW"

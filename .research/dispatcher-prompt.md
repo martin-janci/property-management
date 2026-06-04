@@ -190,16 +190,26 @@ excluded from claim selection (Phase 3 dedup) AND from the WIP count
 
 ## Cap
 
-Per-run, claim up to **3 NEW** tasks. There is NO global in-progress cap —
-multiple cron runs can overlap and each may contribute 3 in-progress, so the
-global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrency.
+Per-run, claim up to **`DISPATCHER_CLAIM_CAP` NEW** tasks (default **6**). There is NO
+global in-progress cap — multiple cron runs can overlap and each may contribute up to
+`DISPATCHER_CLAIM_CAP` in-progress, so the global in-progress count CAN exceed it. The
+cap is per-run throughput, not global concurrency.
 
-- Phase 3: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the count of `{in-progress, review}` rows in `assignments.json`. Default `DISPATCHER_WIP_CAP=12` (raised from 8 on 2026-06-02 to lift throughput — merge drain is healthy at 14–37 PRs/day, so a higher ceiling lets more implementer work run in parallel). Set `DISPATCHER_WIP_CAP=0` to restore the legacy `free_slots=3` (uncapped) behavior. See *WIP-throttle preamble* in Phase 3.
-- Phase 4: hard cap of 3 implementer subagents spawned per run (matches `free_slots` ceiling).
+> **Throughput, deliberately.** This cap is the dispatcher's single biggest "how much
+> work gets done per run" knob. It was raised from 3→6 (and `DISPATCHER_WIP_CAP` 8→16)
+> on 2026-06-02 to make each run land more work — superseding the interim 8→12 WIP-only
+> bump, by introducing `DISPATCHER_CLAIM_CAP` as the one source of truth and scaling
+> every throughput knob to it. The WIP throttle below still provides back-pressure if
+> the merge pipeline can't keep up, so a higher claim cap degrades gracefully (claims
+> trickle to 0 when the pool is full) rather than piling up unbounded. Lower
+> `DISPATCHER_CLAIM_CAP` only if you have a concrete reason to slow the routine down.
+
+- Phase 3: `free_slots = min(DISPATCHER_CLAIM_CAP, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the count of `{in-progress, review}` rows in `assignments.json`. Defaults: `DISPATCHER_CLAIM_CAP=6`, `DISPATCHER_WIP_CAP=16`. Set `DISPATCHER_WIP_CAP=0` to restore the WIP-unthrottled `free_slots=DISPATCHER_CLAIM_CAP` behavior. See *WIP-throttle preamble* in Phase 3.
+- Phase 4: hard cap of `DISPATCHER_CLAIM_CAP` implementer subagents spawned per run (matches `free_slots` ceiling).
 
 ## Buffer
 
-`action-list.json` should hold ≥ 36 open items (12 runs * 3 = 1 day of throughput).
+`action-list.json` should hold ≥ 72 open items (12 runs × 6 = 1 day of throughput at `DISPATCHER_CLAIM_CAP=6`).
 
 ## Subagent workspace isolation (NEW — issue #7: branch displacement)
 
@@ -756,20 +766,21 @@ open_claimable_count = open_count - dep_blocked_count
 
 **Buffer bounds (shared with `goal-check.sh` GC3 — finding `goal-check-gc3-buffer-overshoot`).**
 The floor/target/ceiling are ONE source of truth, defined in `goal-check.sh`
-(`BUFFER_FLOOR=18`, `BUFFER_TARGET=36`, `BUFFER_CEIL=60`). Export the same three
+(`BUFFER_FLOOR=36`, `BUFFER_TARGET=72`, `BUFFER_CEIL=120` — doubled 2026-06-02 to
+track the claim-cap raise 3→6; they scale with `DISPATCHER_CLAIM_CAP`). Export the same three
 here so refill, drain, and the GC3 gate can never disagree — a forked literal
 is exactly how claimable drifted to ~2× the ceiling (112/60) unmeasured-against:
 
 ```bash
 # Read the canonical defaults straight out of goal-check.sh (which owns them)
 # so the dispatcher and the GC3 gate share one value. The grep pulls the
-# `${BUFFER_FLOOR:-18}`-style default; the `:=` fallbacks below cover the case
+# `${BUFFER_FLOOR:-36}`-style default; the `:=` fallbacks below cover the case
 # where the line moves or is unreadable, so the run never aborts on this.
 read_bound() { grep -oE "$1:-[0-9]+" .research/goal-check.sh | head -1 | grep -oE '[0-9]+$'; }
 BUFFER_FLOOR="${BUFFER_FLOOR:-$(read_bound BUFFER_FLOOR)}"
 BUFFER_TARGET="${BUFFER_TARGET:-$(read_bound BUFFER_TARGET)}"
 BUFFER_CEIL="${BUFFER_CEIL:-$(read_bound BUFFER_CEIL)}"
-: "${BUFFER_FLOOR:=18}" "${BUFFER_TARGET:=36}" "${BUFFER_CEIL:=60}"
+: "${BUFFER_FLOOR:=36}" "${BUFFER_TARGET:=72}" "${BUFFER_CEIL:=120}"
 export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
 ```
 
@@ -873,13 +884,13 @@ Idempotency: items already `status=="dropped"` are skipped.
 
 ---
 
-## Phase 3 — Claim new (PER-RUN cap of 3) — with same-epic guard (item #2)
+## Phase 3 — Claim new (PER-RUN cap = `DISPATCHER_CLAIM_CAP`, default 6) — with same-epic guard (item #2)
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 ### Finish-first preamble (PR 3/5 — behind `DISPATCHER_FINISH_FIRST=1`)
 
-When the flag is set, the dispatcher biases all 3 slots toward **one
+When the flag is set, the dispatcher biases all free slots toward **one
 target epic per run** instead of spraying claims across epics. The goal
 is depth-first convergence: close out one epic before starting the next.
 
@@ -914,26 +925,27 @@ than claims, and create back-pressure that surfaces merge-pipeline
 bottlenecks early.
 
 ```bash
-WIP_CAP="${DISPATCHER_WIP_CAP:-12}"  # default 12 (raised from 8, 2026-06-02); set 0 to disable
+CLAIM_CAP="${DISPATCHER_CLAIM_CAP:-6}"   # per-run claim/spawn ceiling (default 6)
+WIP_CAP="${DISPATCHER_WIP_CAP:-16}"  # default 16 (raised from 8→12→16, 2026-06-02); set 0 to disable
 if [ "$WIP_CAP" = "0" ]; then
-  free_slots=3
+  free_slots=$CLAIM_CAP
   WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
     .research/management/assignments.json)
-  echo "Phase 3 WIP throttle: disabled (DISPATCHER_WIP_CAP=0); WIP=$WIP_NOW (informational)"
+  echo "Phase 3 WIP throttle: disabled (DISPATCHER_WIP_CAP=0); WIP=$WIP_NOW (informational); free_slots=$CLAIM_CAP"
 else
   WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
     .research/management/assignments.json)
-  # max(0, cap - WIP), then clamp to the per-run cap of 3.
+  # max(0, cap - WIP), then clamp to the per-run cap (DISPATCHER_CLAIM_CAP).
   HEADROOM=$(( WIP_CAP - WIP_NOW ))
   [ "$HEADROOM" -lt 0 ] && HEADROOM=0
   free_slots=$HEADROOM
-  [ "$free_slots" -gt 3 ] && free_slots=3
-  echo "Phase 3 WIP throttle: WIP=$WIP_NOW/$WIP_CAP free_slots=$free_slots (was 3)"
+  [ "$free_slots" -gt "$CLAIM_CAP" ] && free_slots=$CLAIM_CAP
+  echo "Phase 3 WIP throttle: WIP=$WIP_NOW/$WIP_CAP free_slots=$free_slots (cap=$CLAIM_CAP)"
 fi
 ```
 
-**Smooth back-pressure.** With WIP=7 and cap=8, this run claims at most
-1 new task. With WIP=8, claims 0. With WIP=10 (already over cap, e.g.
+**Smooth back-pressure.** With WIP=15 and cap=16, this run claims at most
+1 new task. With WIP=16, claims 0. With WIP=20 (already over cap, e.g.
 because PRs piled into review), claims 0 until merges drain it.
 Phases 5 / 5.5 / 5.6 / 5.7 (review, merge, rebase, respawn) still run —
 they drain the pool. Only Phase 3 (new claims) is throttled.
@@ -946,8 +958,9 @@ cap, no claim happens even when finish-first has a target ready. The
 target persists in `objective.json` and the next run picks it up once
 merges create headroom.
 
-**Disable via `DISPATCHER_WIP_CAP=0`.** When disabled, Phase 3 behaves
-as before (`free_slots=3`); the current WIP is logged informationally.
+**Disable via `DISPATCHER_WIP_CAP=0`.** When disabled, Phase 3 claims up to the
+full per-run cap (`free_slots=DISPATCHER_CLAIM_CAP`); the current WIP is logged
+informationally.
 
 ```python
 free_slots = $free_slots   # from the WIP-throttle preamble above
@@ -1020,13 +1033,13 @@ Define `epic_prefix(task_id)` as the first matching pattern:
 - `^(pm-[a-z-]+?)-` (e.g. `pm-security` from `pm-security-resolve-435-followups`)
 - else: full `task_id`
 
-After candidate sort, walk the list and **claim at most 2 tasks per `epic_prefix` per run**, unless the epic has at least one task in `merged` status in `assignments.json` already (cold-epic protection: avoid spending all 3 slots on the same blocked epic). If the 3rd candidate has the same prefix as the first 2 picked, skip it and continue scanning for a different-prefix candidate. If no different-prefix candidate exists, claim only the 2 — `free_slots=1` is fine, do not pad with same-prefix.
+After candidate sort, walk the list and **claim at most 3 tasks per `epic_prefix` per run** (`DISPATCHER_SAME_EPIC_CAP`, default 3), unless the epic has at least one task in `merged` status in `assignments.json` already (cold-epic protection: avoid spending every free slot on the same blocked epic). Once an `epic_prefix` has reached the per-epic cap, skip further same-prefix candidates and continue scanning for a different-prefix candidate. If no different-prefix candidate exists, claim only what passed the cap — a smaller `free_slots` is fine, do not pad with same-prefix. (Raised from 2→3 on 2026-06-02 to track the higher per-run claim cap while still spreading across ≥2 epics when more than one has ready work.)
 
 **Finish-first override (PR 3/5).** When `DISPATCHER_FINISH_FIRST=1` AND the
 finish-first preamble selected a target epic (`TARGET_EP != "NONE"`):
 
 1. Before sort, **filter candidates** to those whose `epic_prefix == TARGET_EP`.
-2. The same-epic 2/run cap is **lifted** — claim up to all 3 slots from the
+2. The same-epic per-run cap is **lifted** — claim up to all free slots from the
    target epic. The whole point of finish-first is depth-first concentration.
 3. **Fallback to the unfiltered pool** if the target epic yields 0 claimable
    candidates after the filter (e.g. all dep-blocked at this exact moment).
@@ -1128,7 +1141,7 @@ same epic signal a planner bug, not a claim-time issue).
 
 Implementation note: all three guards rely on `stem(...)`. Define it once
 at the top of Phase 3 and reuse. The `gh pr list` calls are bounded by
-`free_slots` (≤3 per run × 2 calls) — at most 6 extra `gh` invocations.
+`free_slots` (≤ `DISPATCHER_CLAIM_CAP` per run × 2 calls) — at most `2 × DISPATCHER_CLAIM_CAP` (default 12) extra `gh` invocations.
 
 For each picked task: `branch = "auto-impl/" + first_40_chars_kebab(task_id)`.
 
@@ -1222,7 +1235,7 @@ top of this base.
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
-One per newly-claimed task IN THIS RUN. Hard cap 3.
+One per newly-claimed task IN THIS RUN. Hard cap = `DISPATCHER_CLAIM_CAP` (default 6).
 
 ### Subagent execution model (gap 5 — IMPORTANT)
 
@@ -1757,7 +1770,7 @@ has done whatever the bot couldn't.
 For each REMAINING row `status == "review"` where `reviewer_summary`
 starts with `"verdict=changes"` AND `fix_rounds < 3`:
 
-Spawn ONE Task subagent (cap 3 parallel — same as Phase 4's implementer cap):
+Spawn ONE Task subagent (cap `DISPATCHER_CLAIM_CAP` parallel, default 6 — same as Phase 4's implementer cap):
 
 > You are the PR follow-up driver. Invoke
 > `.claude/skills/ppt-pr-followup/SKILL.md` in dispatcher mode for PR #<n>.
@@ -2343,16 +2356,16 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 ## HARD RULES
 
 - **standing authorization — never block on a confirmation prompt** (finding `dispatcher-stalls-on-branch-rule-confirmation`, 2026-06-03): pushing to `dev` via MCP, opening draft `auto-impl/*` PRs, and opening issues are PRE-AUTHORIZED standing actions; generic session git rules ("session-branch only / never push elsewhere without permission") do NOT apply to the dispatcher. The lock + soft-gate are the ONLY run gates — when they clear, run every phase to completion. NEVER halt with a "how would you like me to proceed" A/B/C question for the standard mutating phases; surface novel conflicts in Phase 7 instead of blocking on them.
-- per-run cap: claim at most 3 NEW tasks AND spawn at most 3 implementer subagents
-- **WIP throttle (PR 4/5)**: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))`. Default `DISPATCHER_WIP_CAP=12` (raised from 8, 2026-06-02). Set `=0` to disable. Counts rows in `{in-progress, review}`. Smooth back-pressure: claims trickle until exactly at cap, then 0 until merges drain.
-- per-run **per-epic** cap of 2 (item #2). Lifted when `DISPATCHER_FINISH_FIRST=1` AND a target epic is selected (PR 3/5).
+- per-run cap: claim at most `DISPATCHER_CLAIM_CAP` (default 6) NEW tasks AND spawn at most `DISPATCHER_CLAIM_CAP` implementer subagents
+- **WIP throttle (PR 4/5)**: `free_slots = min(DISPATCHER_CLAIM_CAP, max(0, DISPATCHER_WIP_CAP - WIP_NOW))`. Defaults `DISPATCHER_CLAIM_CAP=6`, `DISPATCHER_WIP_CAP=16` (raised from 8→12→16, 2026-06-02). Set `DISPATCHER_WIP_CAP=0` to disable the WIP throttle. Counts rows in `{in-progress, review}`. Smooth back-pressure: claims trickle until exactly at cap, then 0 until merges drain.
+- per-run **per-epic** cap of 3 (`DISPATCHER_SAME_EPIC_CAP`, item #2). Lifted when `DISPATCHER_FINISH_FIRST=1` AND a target epic is selected (PR 3/5).
 - state transitions are MANDATORY; `merged` / `failed` are TERMINAL
 - legacy `status == "done"` is equivalent to `merged` (counting only); never auto-migrate or rewrite those rows
 - `status_changed_at` bumped ONLY on actual status value change
 - max 1 post-merge reviewer subagent per run
 - max 2 pr-merge subagents in parallel in Phase 5.5
 - max 1 rebase subagent in parallel in Phase 5.6 (item #6)
-- max 3 followup/respawn subagents in parallel in Phase 5.7 (matches Phase 4 implementer cap)
+- max `DISPATCHER_CLAIM_CAP` (default 6) followup/respawn subagents in parallel in Phase 5.7 (matches Phase 4 implementer cap)
 - no cap on reviewer (Phase 5) subagents
 - never re-claim an id already in assignments (regardless of its status)
 - never claim items whose `depends_on: [task_id, …]` array contains any task whose `assignments.json` row is not in `{merged, done}` (gap 3 — structured field replaces free-text `dependency` parsing)
