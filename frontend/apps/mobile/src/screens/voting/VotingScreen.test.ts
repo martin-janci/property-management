@@ -1,4 +1,4 @@
-import { parseVoteSummaries } from './VotingScreen';
+import { formatVoteDate, parseVoteSummaries } from './VotingScreen';
 
 const validSummary = {
   id: 'vote-1',
@@ -40,5 +40,33 @@ describe('parseVoteSummaries', () => {
       { ...validSummary, id: 123 }, // wrong field type
     ];
     expect(parseVoteSummaries(mixed)).toEqual([validSummary]);
+  });
+});
+
+describe('formatVoteDate', () => {
+  const iso = '2026-07-01T00:00:00Z';
+
+  // Regression: the screen hardcoded 'en-US', so vote dates never localised.
+  // The formatter must honour the locale it is handed (i18n.language at the
+  // call site) rather than a fixed locale.
+  it('formats using the locale it is passed', () => {
+    const enUS = formatVoteDate(iso, 'en-US');
+    const de = formatVoteDate(iso, 'de-DE');
+
+    // Both produce a non-empty, parseable string for the same instant…
+    expect(enUS).toBeTruthy();
+    expect(de).toBeTruthy();
+    // …and locale-specific month abbreviations differ between en and de
+    // (e.g. "Jul" vs "Juli"), proving the locale argument is actually used.
+    expect(de).not.toBe(enUS);
+  });
+
+  it.each([
+    ['en-US', /2026/],
+    ['sk', /2026/],
+    ['cs', /2026/],
+    ['de', /2026/],
+  ])('includes the year for locale %s', (locale, yearMatcher) => {
+    expect(formatVoteDate(iso, locale as string)).toMatch(yearMatcher as RegExp);
   });
 });

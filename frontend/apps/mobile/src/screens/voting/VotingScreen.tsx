@@ -79,6 +79,21 @@ export function parseVoteSummaries(data: unknown): ApiVoteSummary[] {
   return candidates.filter(isApiVoteSummary);
 }
 
+/** Format a vote date for display using the app's active i18n locale.
+ *
+ *  Previously hardcoded `'en-US'`, so vote dates never localised regardless of
+ *  the user's selected language. Pass `i18n.language` (the react-i18next active
+ *  language, e.g. `'sk'`, `'cs'`, `'de'`, `'en'`) so the rendered date matches
+ *  the rest of the UI. Exported so the formatting can be unit-tested without
+ *  rendering the screen. */
+export function formatVoteDate(dateString: string, locale: string): string {
+  return new Date(dateString).toLocaleDateString(locale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 /** Map the api-server's status string onto the UI's narrowed enum. */
 function toUiStatus(status: string): VoteStatus {
   switch (status) {
@@ -120,7 +135,7 @@ interface VotingScreenProps {
 }
 
 export function VotingScreen({ onNavigate }: VotingScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
 
   // Voting routes use `RlsConnection` and require both Authorization and
@@ -155,10 +170,7 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
     }
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
+  const formatDate = (dateString: string): string => formatVoteDate(dateString, i18n.language);
 
   const getTimeRemaining = (endsAt: string): string => {
     const end = new Date(endsAt);
