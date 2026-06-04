@@ -146,7 +146,13 @@ pub struct ReportExecution {
     ///
     /// Set to `Some("/api/v1/reports/executions/{id}/download")` when `file_key`
     /// is present; `None` for pending/running/failed executions.
+    ///
+    /// Computed in the handler layer — it is **not** a `report_executions`
+    /// column, so `FromRow` must skip it (`#[sqlx(default)]`) or every
+    /// `query_as::<_, ReportExecution>` that returns a real row fails to decode
+    /// with "no column found for name: download_url".
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(default)]
     pub download_url: Option<String>,
 }
 
