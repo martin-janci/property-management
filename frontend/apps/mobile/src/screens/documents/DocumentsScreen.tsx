@@ -86,7 +86,7 @@ interface ApiDocumentListResponse {
  * id of the containing folder (null for root-level folders) and
  * `document_count` is the number of documents directly in the folder.
  */
-interface ApiFolderTreeNode {
+export interface ApiFolderTreeNode {
   id: string;
   name: string;
   parent_id?: string | null;

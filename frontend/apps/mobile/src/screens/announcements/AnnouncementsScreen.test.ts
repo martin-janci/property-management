@@ -31,7 +31,6 @@ describe('toUiAnnouncement (PR #918 published-summary mapping)', () => {
     expect(ui).toMatchObject({
       id: 'a-1',
       title: 'Lift maintenance Friday',
-      category: 'general',
       createdAt: '2026-05-20T08:00:00Z', // from published_at
       isPinned: true,
     });
@@ -72,7 +71,6 @@ describe('extractItems (PR #918 reads `announcements`, not `items`)', () => {
 
 const ui = (over: Partial<Announcement> & Pick<Announcement, 'id'>): Announcement => ({
   title: over.title ?? over.id,
-  category: 'general',
   createdAt: '2026-05-01T00:00:00Z',
   author: 'Building Management',
   isRead: false,
@@ -103,34 +101,28 @@ describe('filterMainList (PR #943 main feed partitioning)', () => {
     ui({
       id: 'old',
       title: 'Lift maintenance',
-      category: 'maintenance',
       createdAt: '2026-05-01T00:00:00Z',
     }),
     ui({
       id: 'new',
       title: 'Garden event',
-      category: 'event',
       createdAt: '2026-05-03T00:00:00Z',
     }),
   ];
 
   it('excludes pinned items from the main feed', () => {
-    expect(filterMainList(items, 'all', '').map((a) => a.id)).not.toContain('pin');
+    expect(filterMainList(items, '').map((a) => a.id)).not.toContain('pin');
   });
 
   it('sorts the remaining items newest-first', () => {
-    expect(filterMainList(items, 'all', '').map((a) => a.id)).toEqual(['new', 'old']);
-  });
-
-  it('applies the active category filter', () => {
-    expect(filterMainList(items, 'maintenance', '').map((a) => a.id)).toEqual(['old']);
+    expect(filterMainList(items, '').map((a) => a.id)).toEqual(['new', 'old']);
   });
 
   it('matches the search query against the TITLE only (no content body since #943)', () => {
-    expect(filterMainList(items, 'all', 'garden').map((a) => a.id)).toEqual(['new']);
+    expect(filterMainList(items, 'garden').map((a) => a.id)).toEqual(['new']);
     // Case-insensitive.
-    expect(filterMainList(items, 'all', 'LIFT').map((a) => a.id)).toEqual(['old']);
+    expect(filterMainList(items, 'LIFT').map((a) => a.id)).toEqual(['old']);
     // A term that matched the old `content` body must NOT match now.
-    expect(filterMainList(items, 'all', 'no-such-title')).toEqual([]);
+    expect(filterMainList(items, 'no-such-title')).toEqual([]);
   });
 });
