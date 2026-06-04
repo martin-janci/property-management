@@ -1929,6 +1929,145 @@ mod provider_security {
         assert_eq!(err["error"], "invalid_grant");
     }
 
+    /// Defense-in-depth regression (issue #823 / superseded PR #908, landed in
+    /// #1025): PKCE is enforced at the *authorize* stage, but the token endpoint
+    /// must independently refuse to exchange any stored authorization code that
+    /// has **no** `code_challenge` bound to it — see the comment in
+    /// `OAuthService::exchange_code_for_tokens`. Such a challenge-less code can
+    /// only exist if it was minted before PKCE enforcement, or via a future bug
+    /// that bypasses `validate_authorize_request`. Because the live authorize
+    /// path now always requires a `code_challenge`, the only way to exercise
+    /// this second layer is to insert the row directly.
+    ///
+    /// Both attempts — with and without a `code_verifier` — must be rejected
+    /// with `invalid_grant`, and no tokens must be issued.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_challengeless_stored_code_not_exchangeable(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (_access_token, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        // Look up the freshly-created user's id so the seeded code references a
+        // real principal (FK on oauth_authorization_codes.user_id).
+        let user_id: Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+            .bind(&user.email)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch seeded user id");
+
+        // Mint a raw authorization code and store its SHA-256 hash with a NULL
+        // code_challenge — i.e. a code with no PKCE binding. This mirrors how
+        // OAuthService hashes codes (`hash_token` = hex(sha256(code))).
+        let raw_code = format!("legacy-code-{}", Uuid::new_v4());
+        let code_hash = {
+            let mut hasher = Sha256::new();
+            hasher.update(raw_code.as_bytes());
+            hex::encode(hasher.finalize())
+        };
+
+        sqlx::query(
+            r#"
+            INSERT INTO oauth_authorization_codes
+                (user_id, client_id, code_hash, scopes, redirect_uri,
+                 code_challenge, code_challenge_method, expires_at)
+            VALUES
+                ($1, $2, $3, '["profile"]'::jsonb, $4,
+                 NULL, NULL, NOW() + INTERVAL '10 minutes')
+            "#,
+        )
+        .bind(user_id)
+        .bind(&client_id)
+        .bind(&code_hash)
+        .bind(&redirect_uri)
+        .execute(&pool)
+        .await
+        .expect("seed challenge-less authorization code");
+
+        // Attempt 1: exchange WITHOUT a code_verifier.
+        let token_form_no_verifier = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &raw_code),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &token_form_no_verifier))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::BAD_REQUEST,
+            "challenge-less code must not be exchangeable (no verifier). body={}",
+            resp.text()
+        );
+        assert_eq!(resp.json_value()["error"], "invalid_grant");
+
+        // The first exchange attempt atomically consumed the code, so a re-seed
+        // is needed to prove the second (with-verifier) path independently.
+        let raw_code2 = format!("legacy-code-{}", Uuid::new_v4());
+        let code_hash2 = {
+            let mut hasher = Sha256::new();
+            hasher.update(raw_code2.as_bytes());
+            hex::encode(hasher.finalize())
+        };
+        sqlx::query(
+            r#"
+            INSERT INTO oauth_authorization_codes
+                (user_id, client_id, code_hash, scopes, redirect_uri,
+                 code_challenge, code_challenge_method, expires_at)
+            VALUES
+                ($1, $2, $3, '["profile"]'::jsonb, $4,
+                 NULL, NULL, NOW() + INTERVAL '10 minutes')
+            "#,
+        )
+        .bind(user_id)
+        .bind(&client_id)
+        .bind(&code_hash2)
+        .bind(&redirect_uri)
+        .execute(&pool)
+        .await
+        .expect("re-seed challenge-less authorization code");
+
+        // Attempt 2: exchange WITH an arbitrary code_verifier. A challenge-less
+        // stored code must still be rejected — the verifier has nothing valid to
+        // match against, so the token endpoint refuses it rather than treating
+        // "no challenge" as "PKCE not required".
+        let token_form_with_verifier = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &raw_code2),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+            ("code_verifier", "any-verifier-the-attacker-supplies"),
+        ]);
+        let resp2 = app
+            .execute(form_request(
+                "/api/v1/oauth/token",
+                &token_form_with_verifier,
+            ))
+            .await;
+        assert_eq!(
+            resp2.status,
+            StatusCode::BAD_REQUEST,
+            "challenge-less code must not be exchangeable (with verifier). body={}",
+            resp2.text()
+        );
+        assert_eq!(resp2.json_value()["error"], "invalid_grant");
+
+        // And no access tokens may have been minted for this user as a result.
+        let issued: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM oauth_access_tokens WHERE user_id = $1")
+                .bind(user_id)
+                .fetch_one(&pool)
+                .await
+                .expect("count access tokens");
+        assert_eq!(
+            issued, 0,
+            "no access token must be issued from a challenge-less authorization code"
+        );
+    }
+
     // ── B. Revoked-token introspection ───────────────────────────────────────
 
     /// Introspecting a revoked access token must return active=false.
