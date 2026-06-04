@@ -167,6 +167,17 @@ describe('DocumentDetail version history (PR #990)', () => {
     expect(screen.getByText('1.5 KB')).toBeInTheDocument();
   });
 
+  it('shows the loading state while versions are fetching', () => {
+    setVersions({ data: undefined, isLoading: true });
+
+    render(<DocumentDetail documentId="doc-1" />);
+
+    expect(screen.getByText('Loading versions…')).toBeInTheDocument();
+    expect(
+      screen.queryByText('No versions are available for this document.')
+    ).not.toBeInTheDocument();
+  });
+
   it('shows the empty state when there are no versions', () => {
     setVersions({ data: [] });
 

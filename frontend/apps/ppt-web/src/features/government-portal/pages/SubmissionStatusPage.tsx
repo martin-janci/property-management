@@ -12,6 +12,7 @@ import type {
   RegulatorySubmissionAudit,
   SubmissionStatus,
 } from '@ppt/api-client';
+import { formatDate as formatDateShared, formatDateTime } from '@ppt/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SubmissionStatusBadge } from '../components/SubmissionStatusBadge';
@@ -51,7 +52,7 @@ export function SubmissionStatusPage({
   onCancel,
   onBack,
 }: SubmissionStatusPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [showAuditTrail, setShowAuditTrail] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -59,22 +60,11 @@ export function SubmissionStatusPage({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return formatDateTime(dateString, { locale: i18n.language });
   };
 
-  const formatShortDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
+  const formatShortDate = (dateString: string) =>
+    formatDateShared(dateString, { locale: i18n.language });
 
   const canRetry = submission.status === 'rejected' || submission.status === 'requires_correction';
   const canValidate = submission.status === 'draft' || submission.status === 'requires_correction';
