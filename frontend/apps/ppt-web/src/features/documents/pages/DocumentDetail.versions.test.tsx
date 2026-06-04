@@ -96,11 +96,7 @@ function loadedDocument() {
   };
 }
 
-function setVersions(value: {
-  data?: unknown;
-  isLoading?: boolean;
-  error?: unknown;
-}) {
+function setVersions(value: { data?: unknown; isLoading?: boolean; error?: unknown }) {
   useDocumentVersionsMock.mockReturnValue({
     data: value.data,
     isLoading: value.isLoading ?? false,
@@ -171,9 +167,7 @@ describe('DocumentDetail version history (PR #990)', () => {
 
     render(<DocumentDetail documentId="doc-1" />);
 
-    expect(
-      screen.getByText('No versions are available for this document.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('No versions are available for this document.')).toBeInTheDocument();
     expect(screen.queryByText('Current')).not.toBeInTheDocument();
   });
 
@@ -182,8 +176,6 @@ describe('DocumentDetail version history (PR #990)', () => {
 
     render(<DocumentDetail documentId="doc-1" />);
 
-    expect(
-      screen.getByText('Failed to load version history.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Failed to load version history.')).toBeInTheDocument();
   });
 });
