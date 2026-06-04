@@ -349,6 +349,14 @@
       "deleteErrorMessage": "Ordner konnte nicht gelöscht werden",
       "createError": "Erstellen fehlgeschlagen",
       "createErrorMessage": "Ordner konnte nicht erstellt werden"
+    },
+    "versionHistory": {
+      "title": "Versionsverlauf",
+      "loading": "Versionen werden geladen…",
+      "loadError": "Versionsverlauf konnte nicht geladen werden.",
+      "empty": "Für dieses Dokument sind keine Versionen verfügbar.",
+      "version": "Version {{n}}",
+      "current": "Aktuell"
     }
   },
   "disputes": {

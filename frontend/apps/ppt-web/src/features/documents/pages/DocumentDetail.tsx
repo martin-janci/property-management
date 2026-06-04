@@ -12,6 +12,7 @@ import {
   useReprocessOcr,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ClassificationUI } from '../components/ClassificationBadge';
 import { DocumentSharePanel } from '../components/DocumentSharePanel';
 import { DocumentSummary } from '../components/DocumentSummary';
@@ -72,6 +73,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   const versions = useDocumentVersions(documentId);
   const reprocessOcr = useReprocessOcr();
   const [showSharePanel, setShowSharePanel] = useState(false);
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
@@ -362,14 +364,24 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
 
       {/* Version History (Story 7B.1) — list-only timeline */}
       <div className="version-history-section">
-        <h3 className="section-title">História verzií</h3>
+        <h3 className="section-title">{t('documents.versionHistory.title', 'Version history')}</h3>
 
-        {versions.isLoading && <p className="version-empty">Načítavam verzie…</p>}
+        {versions.isLoading && (
+          <p className="version-empty">
+            {t('documents.versionHistory.loading', 'Loading versions…')}
+          </p>
+        )}
 
-        {versions.error && <p className="version-empty">Históriu verzií sa nepodarilo načítať.</p>}
+        {versions.error && (
+          <p className="version-empty">
+            {t('documents.versionHistory.loadError', 'Failed to load version history.')}
+          </p>
+        )}
 
         {!versions.isLoading && !versions.error && versionRows.length === 0 && (
-          <p className="version-empty">Pre tento dokument nie sú dostupné žiadne verzie.</p>
+          <p className="version-empty">
+            {t('documents.versionHistory.empty', 'No versions are available for this document.')}
+          </p>
         )}
 
         {versionRows.length > 0 && (
@@ -379,8 +391,17 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
                 <div className="version-marker" aria-hidden="true" />
                 <div className="version-body">
                   <div className="version-head">
-                    <span className="version-number">Verzia {v.versionNumber}</span>
-                    {v.isCurrent && <span className="version-current-badge">Aktuálna</span>}
+                    <span className="version-number">
+                      {t('documents.versionHistory.version', {
+                        defaultValue: 'Version {{n}}',
+                        n: v.versionNumber,
+                      })}
+                    </span>
+                    {v.isCurrent && (
+                      <span className="version-current-badge">
+                        {t('documents.versionHistory.current', 'Current')}
+                      </span>
+                    )}
                   </div>
                   <div className="version-meta">
                     {v.uploader && <span className="version-meta-item">{v.uploader}</span>}

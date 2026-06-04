@@ -411,6 +411,14 @@
       "deleteErrorMessage": "Failed to delete folder",
       "createError": "Create failed",
       "createErrorMessage": "Failed to create folder"
+    },
+    "versionHistory": {
+      "title": "Version history",
+      "loading": "Loading versions…",
+      "loadError": "Failed to load version history.",
+      "empty": "No versions are available for this document.",
+      "version": "Version {{n}}",
+      "current": "Current"
     }
   },
   "disputes": {
