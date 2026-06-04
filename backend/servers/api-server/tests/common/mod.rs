@@ -151,6 +151,11 @@ impl TestApp {
     pub fn delete(&self, uri: &str) -> RequestBuilder {
         RequestBuilder::new(Method::DELETE, uri)
     }
+
+    /// Create a JSON PATCH request.
+    pub fn patch(&self, uri: &str) -> RequestBuilder {
+        RequestBuilder::new(Method::PATCH, uri)
+    }
 }
 
 /// Request builder for test requests.
