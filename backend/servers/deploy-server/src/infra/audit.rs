@@ -240,9 +240,11 @@ mod tests {
         assert!(derive_oidc_scopes("refs/heads/develop").is_empty());
         assert!(derive_oidc_scopes("refs/heads/main-backup").is_empty());
         // A nested ref that ends in `/main` is also not the protected branch.
-        assert!(derive_oidc_scopes("refs/heads/feature/main").is_empty()
-            || derive_oidc_scopes("refs/heads/feature/main")
-                == vec!["worktree:open".to_string(), "worktree:close".to_string()]);
+        assert!(
+            derive_oidc_scopes("refs/heads/feature/main").is_empty()
+                || derive_oidc_scopes("refs/heads/feature/main")
+                    == vec!["worktree:open".to_string(), "worktree:close".to_string()]
+        );
     }
 
     #[test]
