@@ -3338,5 +3338,100 @@
     "errorDescription": "Error: {{message}}",
     "disconnectedDescription": "Real-time updates are not available",
     "clickToReconnect": "Click to reconnect"
+  },
+  "submissionStatus": {
+    "status": {
+      "draft": "Draft",
+      "pending_validation": "Pending Validation",
+      "validated": "Validated",
+      "submitted": "Submitted",
+      "acknowledged": "Acknowledged",
+      "processing": "Processing",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "requires_correction": "Needs Correction",
+      "cancelled": "Cancelled"
+    },
+    "description": {
+      "draft": "The submission is being prepared and has not been validated yet.",
+      "pending_validation": "The submission is being validated against portal requirements.",
+      "validated": "The submission passed validation and is ready to be sent.",
+      "submitted": "The submission has been sent to the government portal.",
+      "acknowledged": "The portal has acknowledged receipt of the submission.",
+      "processing": "The portal is processing the submission.",
+      "accepted": "The submission has been accepted by the portal.",
+      "rejected": "The submission was rejected. Review the error details and retry.",
+      "requires_correction": "The submission requires corrections before it can be accepted.",
+      "cancelled": "The submission has been cancelled."
+    },
+    "page": {
+      "backToDashboard": "Back to Dashboard",
+      "title": "Submission Status",
+      "reference": "Reference: {{reference}}",
+      "errorDetails": "Error Details",
+      "validationErrors": "Validation Errors:",
+      "warnings": "Warnings:",
+      "submissionDetails": "Submission Details",
+      "reportType": "Report Type",
+      "reportPeriod": "Report Period",
+      "externalReference": "External Reference",
+      "created": "Created",
+      "validated": "Validated",
+      "submitted": "Submitted",
+      "acknowledged": "Acknowledged",
+      "processed": "Processed",
+      "submissionAttempts": "Submission Attempts",
+      "nextRetry": "Next automatic retry scheduled: {{date}}",
+      "reportDocument": "Report Document",
+      "viewReportPdf": "View Report PDF",
+      "attachments": "Attachments ({{count}})",
+      "auditTrail": "Audit Trail ({{count}} events)",
+      "noAuditEvents": "No audit events recorded.",
+      "cancelSubmission": "Cancel Submission",
+      "validating": "Validating...",
+      "validate": "Validate",
+      "retrying": "Retrying...",
+      "retrySubmission": "Retry Submission",
+      "retryFailed": "Retry failed",
+      "validationFailed": "Validation failed",
+      "cancelFailed": "Cancel failed"
+    }
+  },
+  "ocrStatus": {
+    "compact": {
+      "completed": "OCR",
+      "processing": "Processing",
+      "pending": "Pending",
+      "failed": "Failed",
+      "not_applicable": "N/A"
+    },
+    "full": {
+      "completed": "Text Extracted",
+      "processing": "Processing OCR...",
+      "pending": "OCR Pending",
+      "failed": "OCR Failed",
+      "not_applicable": "Not Applicable"
+    },
+    "reprocessing": "Reprocessing...",
+    "retry": "Retry",
+    "retryTitle": "Retry OCR processing",
+    "processingTitle": "OCR Processing",
+    "extractingText": "Extracting text from document... This may take a few moments.",
+    "textExtractedOn": "Text extracted on {{date}}",
+    "processingFailed": "OCR processing failed. The document may be unsupported or corrupted.",
+    "clickRetry": "Click \"Retry\" to try again.",
+    "queuedForExtraction": "Document is queued for text extraction."
+  },
+  "competitiveStatus": {
+    "features": {
+      "tours": "Virtual Tours",
+      "pricing": "Pricing Analysis",
+      "neighborhood": "Neighborhood",
+      "comparables": "Comparables"
+    },
+    "competitive": "Competitive",
+    "title": "Competitive Features",
+    "percentComplete": "{{percent}}% Complete",
+    "viewAnalysis": "View Analysis"
   }
 }

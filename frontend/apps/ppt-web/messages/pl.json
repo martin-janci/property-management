@@ -1026,5 +1026,100 @@
     "errorDescription": "Błąd: {{message}}",
     "disconnectedDescription": "Aktualizacje w czasie rzeczywistym są niedostępne",
     "clickToReconnect": "Kliknij, aby połączyć ponownie"
+  },
+  "submissionStatus": {
+    "status": {
+      "draft": "Wersja robocza",
+      "pending_validation": "Oczekuje na weryfikację",
+      "validated": "Zweryfikowano",
+      "submitted": "Wysłano",
+      "acknowledged": "Potwierdzono",
+      "processing": "Przetwarzanie",
+      "accepted": "Zaakceptowano",
+      "rejected": "Odrzucono",
+      "requires_correction": "Wymaga poprawy",
+      "cancelled": "Anulowano"
+    },
+    "description": {
+      "draft": "Zgłoszenie jest przygotowywane i nie zostało jeszcze zweryfikowane.",
+      "pending_validation": "Zgłoszenie jest weryfikowane pod kątem wymagań portalu.",
+      "validated": "Zgłoszenie przeszło weryfikację i jest gotowe do wysłania.",
+      "submitted": "Zgłoszenie zostało wysłane do portalu rządowego.",
+      "acknowledged": "Portal potwierdził otrzymanie zgłoszenia.",
+      "processing": "Portal przetwarza zgłoszenie.",
+      "accepted": "Zgłoszenie zostało zaakceptowane przez portal.",
+      "rejected": "Zgłoszenie zostało odrzucone. Sprawdź szczegóły błędu i spróbuj ponownie.",
+      "requires_correction": "Zgłoszenie wymaga poprawek przed zaakceptowaniem.",
+      "cancelled": "Zgłoszenie zostało anulowane."
+    },
+    "page": {
+      "backToDashboard": "Powrót do panelu",
+      "title": "Status zgłoszenia",
+      "reference": "Numer referencyjny: {{reference}}",
+      "errorDetails": "Szczegóły błędu",
+      "validationErrors": "Błędy weryfikacji:",
+      "warnings": "Ostrzeżenia:",
+      "submissionDetails": "Szczegóły zgłoszenia",
+      "reportType": "Typ raportu",
+      "reportPeriod": "Okres raportu",
+      "externalReference": "Zewnętrzny numer referencyjny",
+      "created": "Utworzono",
+      "validated": "Zweryfikowano",
+      "submitted": "Wysłano",
+      "acknowledged": "Potwierdzono",
+      "processed": "Przetworzono",
+      "submissionAttempts": "Liczba prób zgłoszenia",
+      "nextRetry": "Zaplanowano kolejną automatyczną próbę: {{date}}",
+      "reportDocument": "Dokument raportu",
+      "viewReportPdf": "Wyświetl PDF raportu",
+      "attachments": "Załączniki ({{count}})",
+      "auditTrail": "Dziennik audytu ({{count}} zdarzeń)",
+      "noAuditEvents": "Brak zarejestrowanych zdarzeń audytu.",
+      "cancelSubmission": "Anuluj zgłoszenie",
+      "validating": "Weryfikowanie...",
+      "validate": "Zweryfikuj",
+      "retrying": "Ponawianie...",
+      "retrySubmission": "Ponów zgłoszenie",
+      "retryFailed": "Ponowienie nie powiodło się",
+      "validationFailed": "Weryfikacja nie powiodła się",
+      "cancelFailed": "Anulowanie nie powiodło się"
+    }
+  },
+  "ocrStatus": {
+    "compact": {
+      "completed": "OCR",
+      "processing": "Przetwarzanie",
+      "pending": "Oczekuje",
+      "failed": "Niepowodzenie",
+      "not_applicable": "Nd."
+    },
+    "full": {
+      "completed": "Tekst wyodrębniony",
+      "processing": "Przetwarzanie OCR...",
+      "pending": "OCR oczekuje",
+      "failed": "OCR nie powiódł się",
+      "not_applicable": "Nie dotyczy"
+    },
+    "reprocessing": "Ponowne przetwarzanie...",
+    "retry": "Ponów",
+    "retryTitle": "Ponów przetwarzanie OCR",
+    "processingTitle": "Przetwarzanie OCR",
+    "extractingText": "Wyodrębnianie tekstu z dokumentu... Może to chwilę potrwać.",
+    "textExtractedOn": "Tekst wyodrębniono {{date}}",
+    "processingFailed": "Przetwarzanie OCR nie powiodło się. Dokument może być nieobsługiwany lub uszkodzony.",
+    "clickRetry": "Kliknij „Ponów”, aby spróbować ponownie.",
+    "queuedForExtraction": "Dokument oczekuje w kolejce na wyodrębnienie tekstu."
+  },
+  "competitiveStatus": {
+    "features": {
+      "tours": "Wirtualne spacery",
+      "pricing": "Analiza cenowa",
+      "neighborhood": "Okolica",
+      "comparables": "Porównywalne"
+    },
+    "competitive": "Konkurencyjne",
+    "title": "Funkcje konkurencyjne",
+    "percentComplete": "Ukończono {{percent}}%",
+    "viewAnalysis": "Wyświetl analizę"
   }
 }
