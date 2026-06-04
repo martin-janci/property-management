@@ -69,11 +69,18 @@
       "action": "Portal webhook fail-closed fix (PR #874) shipped without a regression test for unverified-signature rejection",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     },
     {
       "id": "test-gap-hotfix-no-test-pr-918-mobile-dev-review",
@@ -102,33 +109,54 @@
       "action": "CI branch-protection + auto-rebase workflow change (PR #923) shipped without an integration test",
       "owner_role": "pm-devops",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1057,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     },
     {
       "id": "test-gap-screen-map-drift-pr-839-ppt",
       "action": "Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1056,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     },
     {
       "id": "test-gap-booking-push-validation-untested",
       "action": "Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1068,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     },
     {
       "id": "test-gap-hotfix-no-test-pr-943-mobile-dev-review-tail",
@@ -378,22 +406,36 @@
       "action": "Report schedule cron edits round-trip through the overloaded `time` field; add a dedicated cron_expression column + migration and route schedule update through it (issue #616, story 81-1).",
       "owner_role": "pm-backend",
       "priority": "high",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill-coverage 2026-06-03",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     },
     {
       "id": "test-gap-81-2-report-exec-history-download-e2e",
       "action": "Verify presigned download + retry end-to-end on the report execution-history surface (story 81-2; API #611, UI #547/#623) with a regression test.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill-coverage 2026-06-03",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     },
     {
       "id": "gap-83-2-ota-xml-transport",
@@ -417,11 +459,18 @@
       "action": "Add a terminal-state idempotency guard to the e-signature webhook handler (story 84-2) so duplicate webhook deliveries cannot re-transition an already-finalized signature.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill-coverage 2026-06-03",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1034,
+        "merged_at": "2026-06-04T00:05:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     },
     {
       "id": "gap-85-1-mobile-env-config",
