@@ -31,6 +31,43 @@ use common::{create_authenticated_user, TestApp, TestUser};
 use serde_json::json;
 use sqlx::PgPool;
 
+/// Seed an organization and grant the user (looked up by `user_email`) an active
+/// `org_admin` membership, returning the org id as a string for the
+/// `X-Tenant-ID` header. Every `/api/v1` route runs behind tenant-resolution
+/// middleware that rejects requests (400 "Missing or invalid X-Tenant-ID
+/// header") without a header backed by a real `organization_members` row — so
+/// these preference requests must carry it even though they are `/users/me`.
+async fn seed_tenant_membership(pool: &PgPool, user_email: &str) -> String {
+    let user_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+        .bind(user_email)
+        .fetch_one(pool)
+        .await
+        .expect("lookup user id for tenant membership");
+    let org_id: uuid::Uuid = sqlx::query_scalar(
+        r#"
+        INSERT INTO organizations (name, slug, contact_email, status)
+        VALUES ('Notif Sync Test Org', 'notif-sync-test-org', 'admin@notif-sync-test-org.internal', 'active')
+        RETURNING id
+        "#,
+    )
+    .fetch_one(pool)
+    .await
+    .expect("seed org");
+    sqlx::query(
+        r#"
+        INSERT INTO organization_members
+            (organization_id, user_id, role_type, status, joined_at)
+        VALUES ($1, $2, 'org_admin', 'active', NOW())
+        "#,
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed membership");
+    org_id.to_string()
+}
+
 // ============================================================================
 // S1 — preference update succeeds with NO Redis configured (best-effort sync)
 // ============================================================================
@@ -45,12 +82,14 @@ async fn preference_update_succeeds_without_redis(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
     let (access_token, _refresh) = create_authenticated_user(&app, &user).await;
+    let tenant = seed_tenant_membership(&app.pool, &user.email).await;
 
     // Disable the email channel — push + in_app remain enabled so this is not a
     // "disable all" case (that path is exercised in S3).
     let req = app
         .patch("/api/v1/users/me/notification-preferences/email")
         .bearer(&access_token)
+        .header("X-Tenant-ID", &tenant)
         .json(json!({ "enabled": false, "confirmDisableAll": false }))
         .build();
     let resp = app.execute(req).await;
@@ -73,11 +112,13 @@ async fn preference_update_persists_independently_of_sync(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
     let (access_token, _refresh) = create_authenticated_user(&app, &user).await;
+    let tenant = seed_tenant_membership(&app.pool, &user.email).await;
 
     // Disable push.
     let patch = app
         .patch("/api/v1/users/me/notification-preferences/push")
         .bearer(&access_token)
+        .header("X-Tenant-ID", &tenant)
         .json(json!({ "enabled": false, "confirmDisableAll": false }))
         .build();
     app.execute(patch).await.assert_status(StatusCode::OK);
@@ -86,6 +127,7 @@ async fn preference_update_persists_independently_of_sync(pool: PgPool) {
     let get = app
         .get("/api/v1/users/me/notification-preferences")
         .bearer(&access_token)
+        .header("X-Tenant-ID", &tenant)
         .build();
     let resp = app.execute(get).await;
     resp.assert_status(StatusCode::OK);
@@ -118,6 +160,7 @@ async fn disable_all_guard_blocks_before_publish(pool: PgPool) {
     let app = TestApp::new(pool).await;
     let user = TestUser::new();
     let (access_token, _refresh) = create_authenticated_user(&app, &user).await;
+    let tenant = seed_tenant_membership(&app.pool, &user.email).await;
 
     // Disable every channel except in_app, without confirmation each time.
     for channel in ["email", "push"] {
@@ -126,6 +169,7 @@ async fn disable_all_guard_blocks_before_publish(pool: PgPool) {
                 "/api/v1/users/me/notification-preferences/{channel}"
             ))
             .bearer(&access_token)
+            .header("X-Tenant-ID", &tenant)
             .json(json!({ "enabled": false, "confirmDisableAll": false }))
             .build();
         app.execute(req).await.assert_status(StatusCode::OK);
@@ -136,6 +180,7 @@ async fn disable_all_guard_blocks_before_publish(pool: PgPool) {
     let req = app
         .patch("/api/v1/users/me/notification-preferences/in_app")
         .bearer(&access_token)
+        .header("X-Tenant-ID", &tenant)
         .json(json!({ "enabled": false, "confirmDisableAll": false }))
         .build();
     let resp = app.execute(req).await;
@@ -146,6 +191,7 @@ async fn disable_all_guard_blocks_before_publish(pool: PgPool) {
     let get = app
         .get("/api/v1/users/me/notification-preferences")
         .bearer(&access_token)
+        .header("X-Tenant-ID", &tenant)
         .build();
     let body = app.execute(get).await.json_value();
     let in_app = body["preferences"]
@@ -237,6 +283,7 @@ async fn preference_update_publishes_realtime_event(pool: PgPool) {
 
     let user = TestUser::new();
     let (access_token, _refresh) = create_authenticated_user(&app, &user).await;
+    let tenant = seed_tenant_membership(&app.pool, &user.email).await;
 
     // Resolve the user's id from the DB so we can subscribe to their channel.
     let user_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
@@ -267,6 +314,7 @@ async fn preference_update_publishes_realtime_event(pool: PgPool) {
     let req = app
         .patch("/api/v1/users/me/notification-preferences/email")
         .bearer(&access_token)
+        .header("X-Tenant-ID", &tenant)
         .json(json!({ "enabled": false, "confirmDisableAll": false }))
         .build();
     app.execute(req).await.assert_status(StatusCode::OK);
