@@ -19,7 +19,9 @@
  * Covered guarantees:
  *   1. Happy path: code+state → exchangeSsoCode → access/refresh/user/tenants
  *      written to localStorage → redirect to /dashboard.
- *   2. Return URL: a stored return URL wins over the /dashboard default.
+ *   2. Return URL: a return URL stored under the `auth_return_url`
+ *      sessionStorage key (the key getAndClearReturnUrl reads) wins over the
+ *      /dashboard default.
  *   3. Refresh flow: after callback stores a refresh token, a subsequent
  *      AuthProvider mount rehydrates the session and a refreshToken() call
  *      rotates the access token (token-storage + refresh integration).
@@ -223,7 +225,10 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
 
   it('redirects to the stored return URL when present', async () => {
     setSsoState(STATE_NONCE);
-    // setReturnUrl sanitizes; write directly to the sanitized key it reads.
+    // Write the value directly under the 'auth_return_url' key that
+    // getAndClearReturnUrl reads (no key transformation). '/settings' is a
+    // same-origin relative path, so the read-side re-validation passes it
+    // through unchanged.
     sessionStorage.setItem('auth_return_url', '/settings');
     exchangeSsoCodeSpy.mockResolvedValue(makeLoginResponse());
 
