@@ -80,6 +80,38 @@ export function extractItems(
   return data.announcements ?? [];
 }
 
+/**
+ * Derive the pinned sticky-band items from the published list (PR #943).
+ *
+ * PR #943 dropped the dedicated `?pinned=true` query and now derives pinned
+ * items client-side from the same published list, keeping only `isPinned`
+ * rows. This is the band shown above the main feed.
+ */
+export function derivePinnedItems(items: Announcement[]): Announcement[] {
+  return items.filter((a) => a.isPinned);
+}
+
+/**
+ * Build the main (non-pinned) feed from the published list (PR #943).
+ *
+ * Excludes pinned items (they live in the sticky band), applies the active
+ * category filter, matches the search query against the TITLE only (the
+ * published summary has no `content` body since PR #943), and sorts
+ * newest-first by `createdAt`.
+ */
+export function filterMainList(
+  items: Announcement[],
+  filter: 'all' | AnnouncementCategory,
+  searchQuery: string
+): Announcement[] {
+  const q = searchQuery.toLowerCase();
+  return items
+    .filter((a) => !a.isPinned)
+    .filter((a) => (filter === 'all' ? true : a.category === filter))
+    .filter((a) => q === '' || a.title.toLowerCase().includes(q))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
 interface AnnouncementsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
@@ -107,10 +139,11 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
     .map(toUiAnnouncement)
     .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }));
 
-  const pinnedItems: Announcement[] = extractItems(pinnedData)
-    .map(toUiAnnouncement)
-    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }))
-    .filter((a) => a.isPinned);
+  const pinnedItems: Announcement[] = derivePinnedItems(
+    extractItems(pinnedData)
+      .map(toUiAnnouncement)
+      .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }))
+  );
 
   const onRefresh = useCallback(async () => {
     await refetch();
@@ -173,11 +206,7 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   };
 
   // Main list excludes pinned items (they appear in the sticky band above)
-  const filteredAnnouncements = allRaw
-    .filter((a) => !a.isPinned)
-    .filter((a) => (filter === 'all' ? true : a.category === filter))
-    .filter((a) => searchQuery === '' || a.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const filteredAnnouncements = filterMainList(allRaw, filter, searchQuery);
 
   const unreadCount = allRaw.filter((a) => !a.isRead).length;
 
