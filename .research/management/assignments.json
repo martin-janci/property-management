@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-04T19:38:00Z",
+  "generated": "2026-06-04T20:06:57Z",
   "assignments": [
     {
       "task_id": "gap-83-1-airbnb-integration-ui",
@@ -218,28 +218,6 @@
     {
       "task_id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
       "branch": "auto-impl/test-gap-hotfix-no-test-pr-959-reality-l",
-      "status": "in-progress",
-      "claimed_at": "2026-06-04T19:38:00Z",
-      "last_updated": "2026-06-04T19:38:00Z",
-      "status_changed_at": "2026-06-04T19:38:00Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "test-gap-hotfix-no-test-pr-963-security-headers",
-      "branch": "auto-impl/test-gap-hotfix-no-test-pr-963-security",
       "status": "in-progress",
       "claimed_at": "2026-06-04T19:38:00Z",
       "last_updated": "2026-06-04T19:38:00Z",
