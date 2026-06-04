@@ -133,11 +133,13 @@ UC-14 single sign-in entry point. Email + password is primary; magic-link, TOTP,
 - Service-status link in network-error banner ("<a>Stav služby</a>") should point to a public statuspage URL — TBD at deploy.
 - DE strings: "Anmeldung läuft…" is longer than "Prihlasujeme…" — submit button must wrap or use icon-only spinner on narrow widths.
 - Mobile (RN) login is `n/a` per current screen-map — flag if a mobile login UI gets requested; this design is web-only.
+- Post-login return-URL handling is now open-redirect hardened (PR #922, dev-review round 2). The `getAndClearReturnUrl()` / `setReturnUrl()` helpers in `@ppt/shared` both run `sanitizeReturnUrl()` — same-origin rooted paths only; absolute (`https://evil.com`), protocol-relative (`//host`, `/\host`), scheme (`javascript:`), and control-char URLs are rejected on BOTH write and read (defense in depth catches tampered/old stored values). The login redirect target fed into `navigate()` can no longer bounce a freshly-authenticated user off-site.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-06-03 — agent: test-gap-screen-map-drift-pr-922-ppt — reconciled drift from PR #922 (dev-review round 2): `@ppt/shared` `setReturnUrl`/`getAndClearReturnUrl` now sanitize via new `sanitizeReturnUrl` (same-origin rooted paths only; rejects absolute/protocol-relative/scheme/control-char URLs on write AND read) — closes post-login open-redirect. No frontmatter change (shipped/complete).
 - 2026-05-27 — agent: gap-79-2-login-flow-wiring — wired TanStack Query cache clear (queryClient.clear()) into logout() for session cleanup; loginWithSsoCode already present; apiStatus promoted to complete
 - 2026-05-24 — agent: gap-79-2 login-flow-wiring — removed local RETURN_URL_KEY constant and inline getAndClearReturnUrl; now imports getAndClearReturnUrl from @ppt/shared for consistent return-URL handling across auth flows
 - 2026-05-09 — agent: design analyzed (pages/ppt-login.html — 4 rows: loaded+magic / TOTP+SMS / loading+empty / 3 errors); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (12 sections covering 6 distinct UI states), all states with full variants, design-specific notes; declared 6 sharedComponents; added 1 relatedScreen

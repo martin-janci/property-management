@@ -192,6 +192,27 @@
       "sharingUnavailableTitle": "Sharing unavailable",
       "shareFailed": "Failed to share document."
     },
+    "folder": {
+      "newTitle": "New Folder",
+      "insideFolder": "Inside \"{{name}}\"",
+      "atRoot": "At root level",
+      "nameLabel": "Folder name",
+      "namePlaceholder": "e.g. Contracts 2024",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Brief description of this folder",
+      "nameRequired": "Folder name is required",
+      "nameTooLong": "Folder name must be 255 characters or less",
+      "createButton": "Create Folder",
+      "createError": "Could not create folder"
+    },
+    "move": {
+      "title": "Move Document",
+      "destination": "DESTINATION",
+      "rootLabel": "Root (no folder)",
+      "noFolders": "No folders available",
+      "confirm": "Move Here",
+      "errorTitle": "Could not move document"
+    },
     "upload": {
       "title": "Upload Document",
       "buttonLabel": "+ Upload",

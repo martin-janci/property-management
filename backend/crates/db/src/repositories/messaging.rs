@@ -162,8 +162,11 @@ impl MessagingRepository {
                 t.updated_at,
                 -- Other participant (the one that's not the current user)
                 u.id as other_user_id,
-                u.first_name as other_first_name,
-                u.last_name as other_last_name,
+                -- Issue #1008: `users` has a single `name` column, not
+                -- first_name/last_name. Map the full name into *_first_name and
+                -- leave *_last_name empty to preserve the ParticipantInfo shape.
+                u.name as other_first_name,
+                '' as other_last_name,
                 u.email as other_email,
                 -- Last message
                 tm.message_id as last_message_id,
@@ -174,7 +177,7 @@ impl MessagingRepository {
                 COALESCE(uc.unread, 0) as unread_count
             FROM message_threads t
             CROSS JOIN LATERAL (
-                SELECT id, first_name, last_name, email
+                SELECT id, name, email
                 FROM users
                 WHERE id = ANY(t.participant_ids) AND id != $1
                 LIMIT 1
@@ -183,7 +186,7 @@ impl MessagingRepository {
             LEFT JOIN unread_counts uc ON uc.thread_id = t.id
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
-              AND ($3::text IS NULL OR (u.first_name ILIKE '%'||$3||'%' OR u.last_name ILIKE '%'||$3||'%'))
+              AND ($3::text IS NULL OR u.name ILIKE '%'||$3||'%')
             ORDER BY t.last_message_at DESC NULLS LAST, t.created_at DESC
             LIMIT $4 OFFSET $5
             "#,
@@ -220,14 +223,14 @@ impl MessagingRepository {
             SELECT COUNT(*)
             FROM message_threads t
             CROSS JOIN LATERAL (
-                SELECT id, first_name, last_name, email
+                SELECT id, name, email
                 FROM users
                 WHERE id = ANY(t.participant_ids) AND id != $1
                 LIMIT 1
             ) u
             WHERE $1 = ANY(t.participant_ids)
               AND t.organization_id = $2
-              AND ($3::text IS NULL OR (u.first_name ILIKE '%'||$3||'%' OR u.last_name ILIKE '%'||$3||'%'))
+              AND ($3::text IS NULL OR u.name ILIKE '%'||$3||'%')
             "#,
         )
         .bind(user_id)
@@ -317,8 +320,8 @@ impl MessagingRepository {
                 m.read_at,
                 m.deleted_at,
                 m.created_at,
-                u.first_name as sender_first_name,
-                u.last_name as sender_last_name,
+                u.name as sender_first_name, -- #1008: users has only `name`
+                '' as sender_last_name,
                 u.email as sender_email
             FROM messages m
             JOIN users u ON u.id = m.sender_id
@@ -568,8 +571,8 @@ impl MessagingRepository {
                 b.blocker_id,
                 b.blocked_id,
                 b.created_at,
-                u.first_name as blocked_first_name,
-                u.last_name as blocked_last_name,
+                u.name as blocked_first_name, -- #1008: users has only `name`
+                '' as blocked_last_name,
                 u.email as blocked_email
             FROM user_blocks b
             JOIN users u ON u.id = b.blocked_id
