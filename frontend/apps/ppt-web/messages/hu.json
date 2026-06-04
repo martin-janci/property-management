@@ -58,7 +58,8 @@
     "profile": "Profil",
     "accessibility": "Akadálymentesítés",
     "privacy": "Adatvédelem",
-    "admin": "Adminisztráció"
+    "admin": "Adminisztráció",
+    "aiChat": "AI asszisztens"
   },
   "auth": {
     "signIn": "Bejelentkezés",

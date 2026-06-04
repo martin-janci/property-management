@@ -212,6 +212,56 @@ export const ScheduleDetailPage = lazy(() =>
   import('../features/reports').then((m) => ({ default: m.ScheduleDetailPage }))
 );
 
+// Buildings feature (Epic 3, Story 3.1) — built + API-wired, now routed (gap-sweep)
+export const BuildingsPage = lazy(() =>
+  import('../features/buildings').then((m) => ({ default: m.BuildingsPage }))
+);
+export const BuildingDetailPage = lazy(() =>
+  import('../features/buildings').then((m) => ({ default: m.BuildingDetailPage }))
+);
+
+// Facilities & bookings feature (Epic 3, Story 3.7) — API-wired, now routed (gap-sweep)
+export const FacilitiesPage = lazy(() =>
+  import('../features/facilities').then((m) => ({ default: m.FacilitiesPage }))
+);
+export const CreateFacilityPage = lazy(() =>
+  import('../features/facilities').then((m) => ({ default: m.CreateFacilityPage }))
+);
+export const EditFacilityPage = lazy(() =>
+  import('../features/facilities').then((m) => ({ default: m.EditFacilityPage }))
+);
+export const BookFacilityPage = lazy(() =>
+  import('../features/facilities').then((m) => ({ default: m.BookFacilityPage }))
+);
+export const MyBookingsPage = lazy(() =>
+  import('../features/facilities').then((m) => ({ default: m.MyBookingsPage }))
+);
+export const PendingBookingsPage = lazy(() =>
+  import('../features/facilities').then((m) => ({ default: m.PendingBookingsPage }))
+);
+
+// AI Assistant chat (Epic 13, Story 13.1) — built, now routed (gap-sweep)
+export const AiChatPage = lazy(() =>
+  import('../features/ai-chat').then((m) => ({ default: m.AiChatPage }))
+);
+
+// Workflow Automation (Epic 13) — built + API-wired, now routed (gap-sweep)
+export const AutomationRulesPage = lazy(() =>
+  import('../features/workflow-automation').then((m) => ({ default: m.AutomationRulesPage }))
+);
+export const CreateRulePage = lazy(() =>
+  import('../features/workflow-automation').then((m) => ({ default: m.CreateRulePage }))
+);
+export const EditRulePage = lazy(() =>
+  import('../features/workflow-automation').then((m) => ({ default: m.EditRulePage }))
+);
+export const TemplateLibraryPage = lazy(() =>
+  import('../features/workflow-automation').then((m) => ({ default: m.TemplateLibraryPage }))
+);
+export const ExecutionMonitoringPage = lazy(() =>
+  import('../features/workflow-automation').then((m) => ({ default: m.ExecutionMonitoringPage }))
+);
+
 // Command Palette (Epic 129) - loaded eagerly since it's used globally
 // CommandPaletteDialog and CommandPaletteProvider are NOT lazy loaded
 // because they need to be available immediately for keyboard shortcuts

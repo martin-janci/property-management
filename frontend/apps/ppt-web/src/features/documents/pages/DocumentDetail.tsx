@@ -11,12 +11,20 @@ import {
   useDocumentVersions,
   useReprocessOcr,
 } from '@ppt/api-client';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ClassificationUI } from '../components/ClassificationBadge';
 import { DocumentSharePanel } from '../components/DocumentSharePanel';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { OcrProcessingStatus } from '../components/OcrStatusBadge';
+import { useDocumentDownload } from '../hooks/useDocumentDownload';
+
+// Lazy-loaded so PDF.js (react-pdf, references DOMMatrix at module load) is
+// only pulled in when the preview actually opens — keeps it out of the initial
+// bundle and out of the jsdom module graph for tests that render this page.
+const DocumentPreviewModal = lazy(() =>
+  import('../components/DocumentPreviewModal').then((m) => ({ default: m.DocumentPreviewModal }))
+);
 
 /** Human-readable labels for the access_scope values returned by the backend (7a-3). */
 const AUDIENCE_LABELS: Record<AccessScope, string> = {
@@ -74,6 +82,13 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   const reprocessOcr = useReprocessOcr();
   const [showSharePanel, setShowSharePanel] = useState(false);
   const { t } = useTranslation();
+  const [showPreview, setShowPreview] = useState(false);
+  // Hook order must stay unconditional (called before the early returns); the
+  // file name is resolved lazily inside the hook when download() runs.
+  const { download, isDownloading } = useDocumentDownload(
+    documentId,
+    data?.document?.file_name ?? ''
+  );
 
   if (isLoading) {
     return (
@@ -232,10 +247,10 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
 
         {/* Document Actions */}
         <div className="document-actions">
-          <a
-            href={`/api/v1/documents/${doc.id}/download`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => download()}
+            disabled={isDownloading}
             className="action-btn primary"
           >
             <svg
@@ -251,14 +266,9 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            Download
-          </a>
-          <a
-            href={`/api/v1/documents/${doc.id}/preview`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="action-btn"
-          >
+            {isDownloading ? 'Downloading…' : 'Download'}
+          </button>
+          <button type="button" onClick={() => setShowPreview(true)} className="action-btn">
             <svg
               width="16"
               height="16"
@@ -272,7 +282,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
               <circle cx="12" cy="12" r="3" />
             </svg>
             Preview
-          </a>
+          </button>
           <button
             type="button"
             className={`action-btn${showSharePanel ? ' active' : ''}`}
@@ -303,6 +313,18 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
           <div id="doc-share-panel" className="share-panel-wrapper">
             <DocumentSharePanel documentId={doc.id} documentTitle={doc.title} />
           </div>
+        )}
+
+        {showPreview && (
+          <Suspense fallback={null}>
+            <DocumentPreviewModal
+              documentId={doc.id}
+              title={doc.title}
+              fileName={doc.file_name}
+              mimeType={doc.mime_type}
+              onClose={() => setShowPreview(false)}
+            />
+          </Suspense>
         )}
       </div>
 

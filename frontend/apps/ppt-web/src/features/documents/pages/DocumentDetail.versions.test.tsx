@@ -48,6 +48,11 @@ vi.mock('../components/DocumentSummary', () => ({
 vi.mock('../components/OcrStatusBadge', () => ({
   OcrProcessingStatus: () => null,
 }));
+// Download hook calls useToast (needs a ToastProvider) and is unrelated to the
+// version-history logic under test — mock it like the other leaf dependencies.
+vi.mock('../hooks/useDocumentDownload', () => ({
+  useDocumentDownload: () => ({ download: vi.fn(), isDownloading: false }),
+}));
 
 // Minimal i18next-compatible `t`: honours `defaultValue` and the second-arg
 // fallback string, and interpolates `{{name}}` placeholders — matching the

@@ -59,7 +59,8 @@
     "profile": "Profil",
     "accessibility": "Prístupnosť",
     "privacy": "Súkromie",
-    "admin": "Administrácia"
+    "admin": "Administrácia",
+    "aiChat": "AI asistent"
   },
   "auth": {
     "signIn": "Prihlásiť sa",

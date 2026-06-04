@@ -58,7 +58,8 @@
     "profile": "Profil",
     "accessibility": "Dostępność",
     "privacy": "Prywatność",
-    "admin": "Administracja"
+    "admin": "Administracja",
+    "aiChat": "Asystent AI"
   },
   "auth": {
     "signIn": "Zaloguj się",

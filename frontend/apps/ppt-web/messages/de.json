@@ -58,7 +58,8 @@
     "profile": "Profil",
     "accessibility": "Barrierefreiheit",
     "privacy": "Datenschutz",
-    "admin": "Administration"
+    "admin": "Administration",
+    "aiChat": "KI-Assistent"
   },
   "auth": {
     "signIn": "Anmelden",
