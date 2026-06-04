@@ -100,9 +100,7 @@ function makeEvidence(
   };
 }
 
-function makePayload(
-  evidence: FileDisputeSubmitPayload['evidence']
-): FileDisputeSubmitPayload {
+function makePayload(evidence: FileDisputeSubmitPayload['evidence']): FileDisputeSubmitPayload {
   return {
     values: {
       type: 'noise',
@@ -180,9 +178,7 @@ describe('FileDisputePageRoute', () => {
     // Only the non-errored file is uploaded.
     expect(mockUploadEvidence).toHaveBeenCalledTimes(1);
     expect(mockUploadEvidence).toHaveBeenCalledWith('dsp-99', good.file, 'good.jpg');
-    expect(mockShowToast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' })
-    );
+    expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('(d) create-dispute failure → error toast and no navigate / upload', async () => {
