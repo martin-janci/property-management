@@ -55,6 +55,7 @@ argon2 = "=0.6.0-rc.8"
 # Utilities
 uuid = { version = "1.6", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.10"
 thiserror = "2.0"
 anyhow = "1.0"
 tracing = "0.1"

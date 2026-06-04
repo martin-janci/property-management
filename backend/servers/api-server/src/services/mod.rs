@@ -11,6 +11,8 @@ pub mod notification;
 pub mod notification_pipeline;
 pub mod oauth;
 pub mod push_fanout;
+pub mod quiet_hours;
+pub mod quiet_hours_drain;
 pub mod scheduler;
 pub mod syndication;
 pub mod totp;
@@ -33,6 +35,8 @@ pub use notification_pipeline::{
 pub use oauth::{OAuthService, OAuthServiceError};
 #[allow(unused_imports)]
 pub use push_fanout::{FcmConfig, FcmHttpAdapter, PushFanoutConfig, PushFanoutWorker};
+#[allow(unused_imports)]
+pub use quiet_hours_drain::{QuietHoursDrainConfig, QuietHoursDrainWorker};
 pub use scheduler::{Scheduler, SchedulerConfig};
 pub use syndication::SyndicationService;
 pub use totp::TotpService;

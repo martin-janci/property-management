@@ -31,7 +31,8 @@ use api_server::{observability, routes, services, state};
 
 use db::repositories::AnnouncementRepository;
 use services::{
-    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, Scheduler, SchedulerConfig,
+    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, QuietHoursDrainConfig,
+    QuietHoursDrainWorker, Scheduler, SchedulerConfig,
 };
 use state::AppState;
 
@@ -485,6 +486,17 @@ async fn main() -> anyhow::Result<()> {
         push_fanout_config,
     );
     let _push_fanout_handle = push_fanout_worker.start();
+
+    // Story 8B.3 / #980: release notifications held during quiet hours once the
+    // user's quiet-hours window ends. Polls `held_notifications` on an interval;
+    // disabled-safe (no crash when env vars are unset).
+    let quiet_hours_drain_worker = QuietHoursDrainWorker::new(
+        db_pool.clone(),
+        email_service.clone(),
+        state.pubsub_service.clone(),
+        QuietHoursDrainConfig::from_env(),
+    );
+    let _quiet_hours_drain_handle = quiet_hours_drain_worker.start();
 
     // Phase 5 — admin dependency injection (B7).
     //
