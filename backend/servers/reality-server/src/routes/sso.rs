@@ -122,6 +122,27 @@ pub async fn sso_login(
 /// is malformed, missing a host, or whose origin is not in the allowlist
 /// (including the empty/None case, which means "no redirects accepted").
 fn ensure_redirect_uri_allowed(state: &AppState, raw: &str) -> Result<(), String> {
+    let allowed = state
+        .config
+        .allowed_redirect_origins
+        .as_deref()
+        .unwrap_or(&[]);
+    check_redirect_uri_allowed(raw, allowed)
+}
+
+/// Pure open-redirect guard for SSO redirect URIs (issue #820, P2).
+///
+/// Split out of [`ensure_redirect_uri_allowed`] so the security policy can be
+/// exercised without constructing a full (DB-backed) `AppState`:
+///
+/// - Same-origin **relative** paths (`/dashboard`) are allowed unconditionally;
+///   the browser resolves them against the trusted reality-web origin. Note
+///   that protocol-relative URLs (`//evil.com`) are NOT relative paths and fall
+///   through to allowlist matching.
+/// - Absolute URLs must use `http`/`https` (blocks `javascript:`, `data:`,
+///   `file:`, …) and their origin (`scheme://host[:port]`) must appear in
+///   `allowed_origins`.
+fn check_redirect_uri_allowed(raw: &str, allowed_origins: &[String]) -> Result<(), String> {
     // Allow same-origin relative paths (e.g. "/dashboard") unconditionally —
     // the browser will resolve them against the reality-web origin that
     // initiated the flow, which by definition the user already trusts.
@@ -143,12 +164,7 @@ fn ensure_redirect_uri_allowed(state: &AppState, raw: &str) -> Result<(), String
         None => format!("{}://{}", parsed.scheme(), host),
     };
 
-    let allowed = state
-        .config
-        .allowed_redirect_origins
-        .as_deref()
-        .unwrap_or(&[]);
-    if allowed.iter().any(|o| o == &origin) {
+    if allowed_origins.iter().any(|o| o == &origin) {
         Ok(())
     } else {
         Err(format!("origin '{}' is not in the allowlist", origin))
@@ -1461,5 +1477,209 @@ mod cookie_security_tests {
             result.is_none(),
             "No portal_session cookie in SSO callback request — expected None: {result:?}"
         );
+    }
+}
+
+// ==================== SSO consumer security tests (issue #820 / PR #921) ====================
+//
+// PR #921 ("fix(security): SSO consumer review findings", closes #820) confirmed
+// the SSO-consumer open-redirect guard and the PM->portal role boundary as
+// in-scope security properties, but only the in-memory mobile-token store fix
+// shipped with regression tests. These cover the two consumer behaviors that
+// the review relied on but that had no regression test:
+//
+//   1. `check_redirect_uri_allowed` — open-redirect prevention (P2): relative
+//      paths pass, non-http(s) schemes are blocked, protocol-relative and
+//      off-allowlist origins are rejected, allowlisted origins (incl. port)
+//      pass.
+//   2. `role_mapping` — the portal/PM boundary (P2): PM roles map only to
+//      portal roles, unknown roles fall back to the least-privileged `user`,
+//      and portal permissions never leak PM-tenant scopes.
+#[cfg(test)]
+mod sso_consumer_security_tests {
+    use super::check_redirect_uri_allowed;
+    use super::role_mapping::{self, portal_roles};
+
+    fn origins() -> Vec<String> {
+        vec![
+            "https://portal.example.com".to_string(),
+            "http://localhost:3000".to_string(),
+        ]
+    }
+
+    // ---- open-redirect guard (issue #820 P2) ----
+
+    /// Same-origin relative paths are always allowed (browser resolves them
+    /// against the trusted reality-web origin).
+    #[test]
+    fn redirect_relative_path_is_allowed() {
+        assert!(check_redirect_uri_allowed("/dashboard", &origins()).is_ok());
+        assert!(check_redirect_uri_allowed("/", &origins()).is_ok());
+    }
+
+    /// An absolute URL whose origin is on the allowlist is accepted, including
+    /// an explicit port.
+    #[test]
+    fn redirect_allowlisted_origin_is_allowed() {
+        assert!(
+            check_redirect_uri_allowed("https://portal.example.com/welcome", &origins()).is_ok()
+        );
+        assert!(check_redirect_uri_allowed("http://localhost:3000/cb", &origins()).is_ok());
+    }
+
+    /// Regression (issue #820 open-redirect): an absolute URL to an origin NOT
+    /// on the allowlist must be rejected — the core open-redirect defense.
+    #[test]
+    fn redirect_off_allowlist_origin_is_rejected() {
+        let res = check_redirect_uri_allowed("https://evil.com/phish", &origins());
+        assert!(
+            res.is_err(),
+            "off-allowlist origin must be rejected: {res:?}"
+        );
+    }
+
+    /// A scheme/host match must still require the matching port — a different
+    /// port is a different origin and must be rejected.
+    #[test]
+    fn redirect_wrong_port_is_rejected() {
+        // localhost:3000 is allowed; localhost:9999 is a different origin.
+        let res = check_redirect_uri_allowed("http://localhost:9999/cb", &origins());
+        assert!(
+            res.is_err(),
+            "different port is a different origin: {res:?}"
+        );
+    }
+
+    /// Regression (issue #820): protocol-relative URLs (`//evil.com`) are not
+    /// relative paths — they must fall through to allowlist matching and be
+    /// rejected, not silently treated as same-origin.
+    #[test]
+    fn redirect_protocol_relative_is_not_treated_as_relative() {
+        let res = check_redirect_uri_allowed("//evil.com/phish", &origins());
+        assert!(
+            res.is_err(),
+            "protocol-relative URL must not bypass the allowlist: {res:?}"
+        );
+    }
+
+    /// Regression (issue #820): dangerous non-http(s) schemes (`javascript:`,
+    /// `data:`, `file:`) must be blocked outright.
+    #[test]
+    fn redirect_dangerous_schemes_are_blocked() {
+        for raw in [
+            "javascript:alert(1)",
+            "data:text/html,<script>alert(1)</script>",
+            "file:///etc/passwd",
+        ] {
+            let res = check_redirect_uri_allowed(raw, &origins());
+            assert!(res.is_err(), "scheme must be blocked: {raw} -> {res:?}");
+        }
+    }
+
+    /// With no allowlist configured, every absolute origin is rejected
+    /// (fail-closed), while relative paths still work.
+    #[test]
+    fn redirect_empty_allowlist_rejects_absolute_allows_relative() {
+        let empty: Vec<String> = Vec::new();
+        assert!(check_redirect_uri_allowed("/home", &empty).is_ok());
+        assert!(check_redirect_uri_allowed("https://portal.example.com/x", &empty).is_err());
+    }
+
+    // ---- PM -> portal role boundary (issue #820 P2) ----
+
+    /// PM roles map only to portal roles (never carry PM-tenant scopes through).
+    #[test]
+    fn pm_roles_map_to_expected_portal_roles() {
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("real_estate_agent"),
+            portal_roles::AGENT
+        );
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("property_manager"),
+            portal_roles::AGENT
+        );
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("manager"),
+            portal_roles::PROPERTY_OWNER
+        );
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("owner"),
+            portal_roles::PROPERTY_OWNER
+        );
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("technical_manager"),
+            portal_roles::VERIFIED_USER
+        );
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("tenant"),
+            portal_roles::USER
+        );
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("resident"),
+            portal_roles::USER
+        );
+    }
+
+    /// Regression (issue #820 boundary): an unknown / unexpected PM role must
+    /// fall back to the least-privileged portal role, never to an elevated one.
+    #[test]
+    fn unknown_pm_role_falls_back_to_least_privilege() {
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("super_admin"),
+            portal_roles::USER
+        );
+        assert_eq!(role_mapping::map_pm_role_to_portal(""), portal_roles::USER);
+        assert_eq!(
+            role_mapping::map_pm_role_to_portal("administrator"),
+            portal_roles::USER
+        );
+    }
+
+    /// Only management-capable PM roles grant listing management.
+    #[test]
+    fn can_manage_listings_only_for_management_roles() {
+        for role in ["real_estate_agent", "property_manager", "manager", "owner"] {
+            assert!(
+                role_mapping::can_manage_listings(role),
+                "{role} should manage listings"
+            );
+        }
+        for role in ["technical_manager", "tenant", "resident", "super_admin", ""] {
+            assert!(
+                !role_mapping::can_manage_listings(role),
+                "{role} must NOT manage listings"
+            );
+        }
+    }
+
+    /// Regression (issue #820 boundary): portal permissions are scoped to portal
+    /// actions only — a basic `user` gets the minimum, and no portal role leaks
+    /// PM-tenant management scopes.
+    #[test]
+    fn portal_permissions_do_not_leak_pm_scopes() {
+        // Basic user is least-privileged.
+        assert_eq!(
+            role_mapping::get_portal_permissions(portal_roles::USER),
+            vec!["favorites:manage"]
+        );
+        // Unknown portal role gets nothing.
+        assert!(role_mapping::get_portal_permissions("super_admin").is_empty());
+
+        // No portal role grants anything outside the listings/inquiries/
+        // analytics/favorites portal surface (e.g. tenant/org/billing scopes).
+        for role in [
+            portal_roles::AGENT,
+            portal_roles::PROPERTY_OWNER,
+            portal_roles::VERIFIED_USER,
+            portal_roles::USER,
+        ] {
+            for perm in role_mapping::get_portal_permissions(role) {
+                let prefix = perm.split(':').next().unwrap_or("");
+                assert!(
+                    matches!(prefix, "listings" | "inquiries" | "analytics" | "favorites"),
+                    "portal role {role} leaked non-portal scope: {perm}"
+                );
+            }
+        }
     }
 }
