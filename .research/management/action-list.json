@@ -419,10 +419,10 @@
     },
     {
       "id": "gap-85-1-mobile-env-config",
-      "action": "Add Expo app.config.ts + environment configuration (API_BASE_URL/ENVIRONMENT) for the React Native app and document env setup (story 85-1).",
+      "action": "[ALREADY-SHIPPED: story 85-1 app.config.ts+.env.* present in dev; implementer empty-diff, pr=none] Add Expo app.config.ts + environment configuration (API_BASE_URL/ENVIRONMENT) for the React Native app and document env setup (story 85-1).",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "dropped",
       "source": "dispatcher-tier1-refill-coverage 2026-06-03",
       "deadline": null,
       "dependency": null,
