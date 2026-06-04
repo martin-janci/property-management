@@ -29,6 +29,17 @@ use crate::state::AppState;
 use common::errors::ErrorResponse;
 use common::TenantRole;
 
+/// Maximum number of availability/rate updates accepted in a single
+/// `listing-push` request.
+///
+/// Each entry becomes one `AvailStatusMessage` / `RateAmountMessage` in the
+/// generated OTA XML. Without a cap, an arbitrarily large list lets a caller
+/// build an unbounded XML body, risking OOM locally and timeouts upstream.
+/// Mirrors the `MAX_BATCH_SIZE` guard PR #607 added to the legacy
+/// `install.rs` push endpoints (issue #572) — applied here to the unified
+/// gap-83-2 OTA push surface, which had no such guard.
+pub const MAX_BATCH_SIZE: usize = 500;
+
 // ============================================================
 // Types
 // ============================================================
@@ -117,6 +128,33 @@ pub struct ConflictCheckResponse {
     pub checked_at: chrono::DateTime<chrono::Utc>,
     /// True if the query hit the 500-reservation cap — results may be incomplete.
     pub truncated: bool,
+}
+
+// ============================================================
+// Request validation
+// ============================================================
+
+/// Validate a [`ListingPushRequest`] before it is turned into OTA XML and
+/// pushed to Booking.com.
+///
+/// These guards protect the OTA XML transport from producing malformed or
+/// unbounded payloads:
+///
+/// * **Batch size** — the combined availability + rate update count must not
+///   exceed [`MAX_BATCH_SIZE`]. Each entry maps to one OTA message element;
+///   an unbounded list could OOM the encoder or time out upstream.
+/// * **Non-negative availability** — a negative `available_count` serialises
+///   to an invalid `BookingLimit` attribute in `OTA_HotelAvailNotifRQ`, which
+///   Booking.com rejects. This mirrors the `available_count >= 0` guard from
+///   PR #607.
+///
+/// On failure, returns `(error_code, human_message)` so the caller can build
+/// a `400` [`ErrorResponse`]. On success, returns `Ok(())`.
+fn validate_listing_push(
+    _request: &ListingPushRequest,
+) -> Result<(), (&'static str, &'static str)> {
+    // TODO(gap-83-2): no guards yet — see the failing tests below.
+    Ok(())
 }
 
 // ============================================================
@@ -635,6 +673,81 @@ mod tests {
         let json = serde_json::to_value(&response).unwrap();
         assert_eq!(json["conflicts_found"], 1);
         assert_eq!(json["conflicts"][0]["conflicting_platform"], "airbnb");
+    }
+
+    /// Build a minimal valid `ListingPushRequest` with the given counts of
+    /// availability and rate entries (all entries non-negative).
+    fn make_request(avail: usize, rates: usize) -> ListingPushRequest {
+        ListingPushRequest {
+            unit_id: Uuid::new_v4(),
+            room_type_id: "DBL".to_string(),
+            availability: (0..avail)
+                .map(|i| RoomAvailabilityEntry {
+                    room_type_id: "DBL".to_string(),
+                    date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
+                        + chrono::Duration::days(i as i64),
+                    available_count: 1,
+                    stop_sell: false,
+                })
+                .collect(),
+            rates: (0..rates)
+                .map(|i| RoomRateEntry {
+                    room_type_id: "DBL".to_string(),
+                    rate_plan_code: "STD".to_string(),
+                    date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
+                        + chrono::Duration::days(i as i64),
+                    base_rate: rust_decimal::Decimal::new(10000, 2),
+                    currency: "EUR".to_string(),
+                })
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn test_validate_listing_push_accepts_valid_batch() {
+        let req = make_request(10, 10);
+        assert!(validate_listing_push(&req).is_ok());
+    }
+
+    #[test]
+    fn test_validate_listing_push_accepts_max_batch_boundary() {
+        // Exactly MAX_BATCH_SIZE combined entries is allowed.
+        let req = make_request(MAX_BATCH_SIZE, 0);
+        assert!(validate_listing_push(&req).is_ok());
+        let req = make_request(MAX_BATCH_SIZE / 2, MAX_BATCH_SIZE - MAX_BATCH_SIZE / 2);
+        assert!(validate_listing_push(&req).is_ok());
+    }
+
+    #[test]
+    fn test_validate_listing_push_rejects_oversized_batch() {
+        // availability + rates combined exceeding the cap -> BATCH_TOO_LARGE.
+        let req = make_request(MAX_BATCH_SIZE, 1);
+        let err = validate_listing_push(&req).unwrap_err();
+        assert_eq!(err.0, "BATCH_TOO_LARGE");
+    }
+
+    #[test]
+    fn test_validate_listing_push_rejects_negative_available_count() {
+        let mut req = make_request(2, 0);
+        req.availability[1].available_count = -1;
+        let err = validate_listing_push(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_AVAILABLE_COUNT");
+    }
+
+    #[test]
+    fn test_validate_listing_push_zero_available_count_is_valid() {
+        // 0 means sold out — a valid OTA `BookingLimit`, not a rejection.
+        let mut req = make_request(1, 0);
+        req.availability[0].available_count = 0;
+        assert!(validate_listing_push(&req).is_ok());
+    }
+
+    #[test]
+    fn test_validate_listing_push_empty_request_is_valid() {
+        // No availability and no rates is a no-op push, not an error here;
+        // the handler simply pushes nothing.
+        let req = make_request(0, 0);
+        assert!(validate_listing_push(&req).is_ok());
     }
 
     #[test]
