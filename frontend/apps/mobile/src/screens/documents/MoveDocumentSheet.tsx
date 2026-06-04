@@ -35,29 +35,15 @@ import {
 } from 'react-native';
 import { useApiMutation } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
+// `ApiFolderTreeNode` is the canonical folder-tree node shape owned by
+// DocumentsScreen. This is a type-only import — erased at compile time, so it
+// does not introduce a runtime circular dependency.
+import type { ApiFolderTreeNode } from './DocumentsScreen';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
 interface MoveDocumentRequest {
   folder_id: string | null;
-}
-
-interface MoveDocumentResponse {
-  message: string;
-  document: {
-    id: string;
-    folder_id: string | null;
-  };
-}
-
-// ─── Folder tree node (re-declared locally to avoid circular imports) ─────────────────
-
-interface ApiFolderTreeNode {
-  id: string;
-  name: string;
-  parent_id?: string | null;
-  document_count: number;
-  children?: ApiFolderTreeNode[] | null;
 }
 
 // ─── Flatten tree to a depth-first list for the scrollable folder picker ─────────
@@ -110,7 +96,10 @@ export function MoveDocumentSheet({
 
   const [selectedId, setSelectedId] = useState<string | null>(currentFolderId);
 
-  const moveMutation = useApiMutation<MoveDocumentResponse, MoveDocumentRequest>(
+  // The move endpoint returns the full updated Document, but the result is
+  // never read here (we just invalidate the affected queries on success), so
+  // the response is typed as `void` rather than a hand-rolled shape.
+  const moveMutation = useApiMutation<void, MoveDocumentRequest>(
     `/api/v1/documents/${documentId}/move`,
     'POST'
   );
