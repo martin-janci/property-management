@@ -12,6 +12,8 @@ import {
 import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
 import type { AccessScope } from './DocumentPermissionsScreen';
+import { MoveDocumentSheet } from './MoveDocumentSheet';
+import { NewFolderSheet } from './NewFolderSheet';
 
 export type DocumentType = 'folder' | 'pdf' | 'image' | 'document' | 'spreadsheet';
 export type DocumentStatus = 'published' | 'draft' | 'archived';
@@ -192,9 +194,13 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
   /** Folder drill-down path from root → current folder (gap-7a-2). */
   const [currentPath, setCurrentPath] = useState<FolderCrumb[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloading, _setDownloading] = useState<string | null>(null);
   /** Active access_scope audience filter (gap-7a-3). Undefined = no filter. */
   const [selectedScope, setSelectedScope] = useState<AccessScope | undefined>(undefined);
+  /** Controls the NewFolderSheet visibility (gap-7a-2). */
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  /** Document targeted for a move operation (gap-7a-2). Null = sheet closed. */
+  const [moveTarget, setMoveTarget] = useState<Document | null>(null);
 
   const currentFolder = currentPath.length > 0 ? currentPath[currentPath.length - 1] : null;
 
@@ -320,16 +326,25 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
               <Text style={styles.headerTitle} numberOfLines={1}>
                 {currentPath[currentPath.length - 1].name}
               </Text>
+              {/* New-folder action available inside a folder too */}
+              <Pressable style={styles.newFolderButton} onPress={() => setShowNewFolder(true)}>
+                <Text style={styles.newFolderButtonText}>📁+</Text>
+              </Pressable>
             </>
           ) : (
             <>
               <Text style={styles.headerTitle}>{t('documents.title')}</Text>
-              <Pressable
-                style={styles.uploadButton}
-                onPress={() => _onNavigate?.('DocumentUpload')}
-              >
-                <Text style={styles.uploadButtonText}>{t('documents.upload.buttonLabel')}</Text>
-              </Pressable>
+              <View style={styles.headerActions}>
+                <Pressable style={styles.newFolderButton} onPress={() => setShowNewFolder(true)}>
+                  <Text style={styles.newFolderButtonText}>📁+</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.uploadButton}
+                  onPress={() => _onNavigate?.('DocumentUpload')}
+                >
+                  <Text style={styles.uploadButtonText}>{t('documents.upload.buttonLabel')}</Text>
+                </Pressable>
+              </View>
             </>
           )}
         </View>
@@ -474,13 +489,24 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
                     {/* Permissions detail button — documents only (folders
                         have no per-document RLS scope to inspect). */}
                     {doc.type !== 'folder' ? (
-                      <Pressable
-                        style={styles.permissionsButton}
-                        onPress={() => _onNavigate?.('DocumentPermissions', { documentId: doc.id })}
-                        hitSlop={8}
-                      >
-                        <Text style={styles.permissionsIcon}>🔒</Text>
-                      </Pressable>
+                      <>
+                        <Pressable
+                          style={styles.moveButton}
+                          onPress={() => setMoveTarget(doc)}
+                          hitSlop={8}
+                        >
+                          <Text style={styles.moveIcon}>↗</Text>
+                        </Pressable>
+                        <Pressable
+                          style={styles.permissionsButton}
+                          onPress={() =>
+                            _onNavigate?.('DocumentPermissions', { documentId: doc.id })
+                          }
+                          hitSlop={8}
+                        >
+                          <Text style={styles.permissionsIcon}>🔒</Text>
+                        </Pressable>
+                      </>
                     ) : null}
                     {doc.type === 'folder' ? (
                       <Text style={styles.arrowIcon}>›</Text>
@@ -499,6 +525,32 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* New-folder sheet (gap-7a-2) */}
+      <NewFolderSheet
+        visible={showNewFolder}
+        parentId={currentFolder?.id ?? null}
+        parentName={currentFolder?.name ?? null}
+        onClose={() => setShowNewFolder(false)}
+        onCreated={() => {
+          void refetchFolders();
+        }}
+      />
+
+      {/* Move-document sheet (gap-7a-2) */}
+      {moveTarget !== null && (
+        <MoveDocumentSheet
+          visible={moveTarget !== null}
+          documentId={moveTarget.id}
+          documentTitle={moveTarget.name}
+          currentFolderId={moveTarget.parentId}
+          folderTree={folderTree}
+          onClose={() => setMoveTarget(null)}
+          onMoved={() => {
+            void onRefresh();
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -643,6 +695,31 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 100,
+  },
+  // ── Header actions ──────────────────────────────────────────────────────
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  newFolderButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  newFolderButtonText: {
+    fontSize: 16,
+  },
+  // ── Move button ──────────────────────────────────────────────────────────
+  moveButton: {
+    padding: 4,
+  },
+  moveIcon: {
+    fontSize: 16,
+    color: colors.textMuted,
   },
   // ── Audience filter strip (gap-7a-3) ──────────────────────────────────────
   audienceFilterContainer: {
