@@ -150,10 +150,22 @@ pub struct ConflictCheckResponse {
 ///
 /// On failure, returns `(error_code, human_message)` so the caller can build
 /// a `400` [`ErrorResponse`]. On success, returns `Ok(())`.
-fn validate_listing_push(
-    _request: &ListingPushRequest,
-) -> Result<(), (&'static str, &'static str)> {
-    // TODO(gap-83-2): no guards yet — see the failing tests below.
+fn validate_listing_push(request: &ListingPushRequest) -> Result<(), (&'static str, &'static str)> {
+    let total = request.availability.len() + request.rates.len();
+    if total > MAX_BATCH_SIZE {
+        return Err((
+            "BATCH_TOO_LARGE",
+            "A maximum of 500 availability + rate updates per request is allowed",
+        ));
+    }
+
+    if request.availability.iter().any(|a| a.available_count < 0) {
+        return Err((
+            "INVALID_AVAILABLE_COUNT",
+            "available_count must be non-negative",
+        ));
+    }
+
     Ok(())
 }
 
@@ -240,6 +252,21 @@ pub async fn push_booking_listing(
                 "FORBIDDEN",
                 "Insufficient permissions to manage integrations",
             )),
+        ));
+    }
+
+    // Validate the payload before any DB lookup or OTA XML generation so a
+    // malformed batch fails fast with a 400 instead of producing invalid XML.
+    if let Err((code, message)) = validate_listing_push(&request) {
+        tracing::warn!(
+            org_id = %path.org_id,
+            error_code = code,
+            "Rejecting Booking.com listing push: {}",
+            message
+        );
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(code, message)),
         ));
     }
 
