@@ -1047,5 +1047,100 @@
     "errorDescription": "Fehler: {{message}}",
     "disconnectedDescription": "Echtzeit-Updates sind nicht verfügbar",
     "clickToReconnect": "Zum erneuten Verbinden klicken"
+  },
+  "submissionStatus": {
+    "status": {
+      "draft": "Entwurf",
+      "pending_validation": "Validierung ausstehend",
+      "validated": "Validiert",
+      "submitted": "Eingereicht",
+      "acknowledged": "Bestätigt",
+      "processing": "In Bearbeitung",
+      "accepted": "Akzeptiert",
+      "rejected": "Abgelehnt",
+      "requires_correction": "Korrektur erforderlich",
+      "cancelled": "Storniert"
+    },
+    "description": {
+      "draft": "Die Einreichung wird vorbereitet und wurde noch nicht validiert.",
+      "pending_validation": "Die Einreichung wird anhand der Portalanforderungen validiert.",
+      "validated": "Die Einreichung hat die Validierung bestanden und ist versandbereit.",
+      "submitted": "Die Einreichung wurde an das Behördenportal gesendet.",
+      "acknowledged": "Das Portal hat den Eingang der Einreichung bestätigt.",
+      "processing": "Das Portal verarbeitet die Einreichung.",
+      "accepted": "Die Einreichung wurde vom Portal akzeptiert.",
+      "rejected": "Die Einreichung wurde abgelehnt. Prüfen Sie die Fehlerdetails und versuchen Sie es erneut.",
+      "requires_correction": "Die Einreichung erfordert Korrekturen, bevor sie akzeptiert werden kann.",
+      "cancelled": "Die Einreichung wurde storniert."
+    },
+    "page": {
+      "backToDashboard": "Zurück zum Dashboard",
+      "title": "Einreichungsstatus",
+      "reference": "Referenz: {{reference}}",
+      "errorDetails": "Fehlerdetails",
+      "validationErrors": "Validierungsfehler:",
+      "warnings": "Warnungen:",
+      "submissionDetails": "Einreichungsdetails",
+      "reportType": "Berichtstyp",
+      "reportPeriod": "Berichtszeitraum",
+      "externalReference": "Externe Referenz",
+      "created": "Erstellt",
+      "validated": "Validiert",
+      "submitted": "Eingereicht",
+      "acknowledged": "Bestätigt",
+      "processed": "Verarbeitet",
+      "submissionAttempts": "Einreichungsversuche",
+      "nextRetry": "Nächster automatischer Versuch geplant: {{date}}",
+      "reportDocument": "Berichtsdokument",
+      "viewReportPdf": "Bericht-PDF anzeigen",
+      "attachments": "Anhänge ({{count}})",
+      "auditTrail": "Prüfprotokoll ({{count}} Ereignisse)",
+      "noAuditEvents": "Keine Prüfereignisse aufgezeichnet.",
+      "cancelSubmission": "Einreichung stornieren",
+      "validating": "Wird validiert...",
+      "validate": "Validieren",
+      "retrying": "Wird wiederholt...",
+      "retrySubmission": "Einreichung wiederholen",
+      "retryFailed": "Wiederholung fehlgeschlagen",
+      "validationFailed": "Validierung fehlgeschlagen",
+      "cancelFailed": "Stornierung fehlgeschlagen"
+    }
+  },
+  "ocrStatus": {
+    "compact": {
+      "completed": "OCR",
+      "processing": "In Bearbeitung",
+      "pending": "Ausstehend",
+      "failed": "Fehlgeschlagen",
+      "not_applicable": "N/V"
+    },
+    "full": {
+      "completed": "Text extrahiert",
+      "processing": "OCR wird verarbeitet...",
+      "pending": "OCR ausstehend",
+      "failed": "OCR fehlgeschlagen",
+      "not_applicable": "Nicht zutreffend"
+    },
+    "reprocessing": "Erneute Verarbeitung...",
+    "retry": "Wiederholen",
+    "retryTitle": "OCR-Verarbeitung wiederholen",
+    "processingTitle": "OCR-Verarbeitung",
+    "extractingText": "Text wird aus dem Dokument extrahiert... Dies kann einen Moment dauern.",
+    "textExtractedOn": "Text extrahiert am {{date}}",
+    "processingFailed": "OCR-Verarbeitung fehlgeschlagen. Das Dokument wird möglicherweise nicht unterstützt oder ist beschädigt.",
+    "clickRetry": "Klicken Sie auf „Wiederholen“, um es erneut zu versuchen.",
+    "queuedForExtraction": "Das Dokument ist für die Textextraktion eingereiht."
+  },
+  "competitiveStatus": {
+    "features": {
+      "tours": "Virtuelle Touren",
+      "pricing": "Preisanalyse",
+      "neighborhood": "Nachbarschaft",
+      "comparables": "Vergleichsobjekte"
+    },
+    "competitive": "Wettbewerb",
+    "title": "Wettbewerbsfunktionen",
+    "percentComplete": "{{percent}} % abgeschlossen",
+    "viewAnalysis": "Analyse anzeigen"
   }
 }
