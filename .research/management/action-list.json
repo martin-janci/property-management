@@ -1,1 +1,625 @@
-__ACTION_LIST_PLACEHOLDER__
+{
+  "generated": "2026-06-04T16:08:41Z",
+  "items": [
+    {
+      "id": "pm-frontend-schedule-followup-test-batch",
+      "action": "Slot post-merge follow-up issues #480-#487 (test gaps + minor security/UX follow-ups on messaging realtime, document share-flow, OAuth UI, MFA) into the sprint as a single test-hardening batch; do not promote dependent stories to done until each follow-up is closed or deferred",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-25",
+      "depends_on": [],
+      "gc1_closed": "merged PR#491; closed 2026-06-03T14:26:29Z archive-terminal-leak non-stem id"
+    },
+    {
+      "id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
+      "action": "Add ai.rs (3142 LOC), platform_admin.rs (2762), announcements.rs (2722) to the module-split backlog; add a CI grep/clippy lint that flags mutating handlers binding `_principal` (discarded principal) — the pattern behind the ai.rs IDOR cluster",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-25",
+      "depends_on": [],
+      "gc1_closed": "merged PR#494; closed 2026-06-03T14:26:29Z archive-terminal-leak non-stem id"
+    },
+    {
+      "id": "gap-7a-2-mobile-folder-tree-wiring",
+      "action": "Wire the React Native DocumentsScreen folder navigation to the real backend folder hierarchy: fetch GET /api/v1/documents/folders/tree (get_folder_tree) via @ppt/api-client and render nested folders per breadcrumb level instead of the current root-only scaffold.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 | gc1-reconcile 2026-06-03T15:25:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1019,
+        "merged_at": "2026-06-03T15:21:48Z",
+        "at": "2026-06-03T15:25:11Z"
+      }
+    },
+    {
+      "id": "gap-7a-2-mobile-folder-manage-ui",
+      "action": "Add folder create + document-move management to the React Native documents feature: a NewFolderSheet (POST /api/v1/documents/folders) and a MoveDocumentSheet that PATCHes a document folder_id, mirroring the web FolderTree/MoveFolderDialog.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 | gc1-reconcile 2026-06-04T16:06:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1022,
+        "merged_at": "2026-06-04T15:12:40Z",
+        "at": "2026-06-04T16:06:40Z"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-922-ppt",
+      "action": "Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-874-portal-webhooks",
+      "action": "Portal webhook fail-closed fix (PR #874) shipped without a regression test for unverified-signature rejection",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-918-mobile-dev-review",
+      "action": "Mobile dev-review batch (PR #918, 5 files under frontend/apps/mobile/src) shipped without a regression test",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-921-sso-consumer",
+      "action": "Reality-server SSO consumer review fix (PR #921, closes #820) shipped without a regression test",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-923-branch-protection-rebase",
+      "action": "CI branch-protection + auto-rebase workflow change (PR #923) shipped without an integration test",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1057,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-839-ppt",
+      "action": "Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1056,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-booking-push-validation-untested",
+      "action": "Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1068,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-943-mobile-dev-review-tail",
+      "action": "Mobile RN dev-review tail (#943) shipped without test coverage",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-939-deploy-server-scopes",
+      "action": "deploy-server OIDC scope mapping (#939) shipped without unit test for derive_oidc_scopes",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-992-mobile-doc-detail",
+      "action": "Mobile document-detail wiring (PR #992) shipped without a regression test for the deep-link payload path",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-990-frontend-gap-sweep",
+      "action": "Frontend gap-sweep (PR #990, 34 files across Epics 1/6/7B/9/10B/11/15/17/18) shipped without a regression test",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
+      "action": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-963-security-headers",
+      "action": "API + SPA security-headers middleware (PR #963) shipped without an assertion test for HSTS/nosniff/CSP",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-mobile-voting-transforms",
+      "action": "Mobile VotingScreen pure transforms toUiStatus/toUiVote have no tests",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-webhook-airbnb-dup-sync-jobs",
+      "action": "[DROPPED: semantic-dup, already merged on dev] Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-reality-web-realtor-invite-silent-error",
+      "action": "[DROPPED: semantic-dup, already merged on dev] Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-mediation-page-no-error-state",
+      "action": "[DROPPED: already implemented+merged via PR #1029 (6e0460e)] MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-mobile-voting-unsafe-cast",
+      "action": "[DROPPED: already fixed+merged via PR #1028 (f811559)] Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-reality-web-listing-metadata-ssr-throw",
+      "action": "Reality-web listing generateMetadata can throw during SSR on malformed 200 body",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-mobile-voting-hardcoded-locale",
+      "action": "Mobile VotingScreen hardcodes en-US in toLocaleDateString — vote dates never localize",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-announcer-stale-message",
+      "action": "Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "dx-documentsbrowse-folder-preselect",
+      "action": "[DROPPED: semantic-dup, already merged on dev] DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "refactor-ppt-web-untranslated-strings",
+      "action": "ppt-web status/auth components hardcode English in an otherwise i18n'd app",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "security-pkce-oauth-authcode-pr-908-closed",
+      "action": "PR #908 (fix(security): require PKCE on OAuth authorization-code flow, closes #823) was closed unmerged — verify whether PKCE enforcement still pending",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-7a-4-mobile-document-preview",
+      "action": "Implement the mobile (React Native) document download + preview slice for story 7a-4: an RN screen wired to the existing backend download/presign routes; web slice shipped, mobile is the remaining gap.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T04:05:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1039,
+        "merged_at": "2026-06-04T00:08:03Z",
+        "at": "2026-06-04T04:05:05Z"
+      }
+    },
+    {
+      "id": "test-gap-8a-3-notification-realtime-sync",
+      "action": "Add backend tests for realtime notification-preference sync (WebSocket leg landed PR #472) covering the #480-#487 follow-up cluster for story 8a-3.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-79-1-announcements-faults-api-wiring",
+      "action": "Fully wire AnnouncementsPage and FaultsPage in ppt-web to their TanStack Query API hooks (story 79-1) — infra exists but feature integration is incomplete.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T04:05:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1033,
+        "merged_at": "2026-06-04T00:08:01Z",
+        "at": "2026-06-04T04:05:05Z"
+      }
+    },
+    {
+      "id": "test-gap-79-2-auth-callback-e2e",
+      "action": "Add e2e/integration verification for the SSO /auth/callback token-storage + refresh flow (story 79-2; landed PRs #568/#609/#642).",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-report-schedule-update-no-cron-column",
+      "action": "Report schedule cron edits round-trip through the overloaded `time` field; add a dedicated cron_expression column + migration and route schedule update through it (issue #616, story 81-1).",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-81-2-report-exec-history-download-e2e",
+      "action": "Verify presigned download + retry end-to-end on the report execution-history surface (story 81-2; API #611, UI #547/#623) with a regression test.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "gap-83-2-ota-xml-transport",
+      "action": "Implement the OTA XML parsing/generation transport for Booking.com rate/availability push (story 83-2, AC-5) — validation guards landed PR #607, XML transport still missing.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T09:44:03Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1045,
+        "merged_at": "2026-06-04T07:15:34Z",
+        "at": "2026-06-04T09:44:03Z"
+      }
+    },
+    {
+      "id": "bug-esignature-webhook-idempotency-guard",
+      "action": "Add a terminal-state idempotency guard to the e-signature webhook handler (story 84-2) so duplicate webhook deliveries cannot re-transition an already-finalized signature.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1034,
+        "merged_at": "2026-06-04T00:05:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "gap-85-1-mobile-env-config",
+      "action": "[ALREADY-SHIPPED: story 85-1 app.config.ts+.env.* present in dev; implementer empty-diff, pr=none] Add Expo app.config.ts + environment configuration (API_BASE_URL/ENVIRONMENT) for the React Native app and document env setup (story 85-1).",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-85-2-mobile-build-scripts",
+      "action": "Create mobile build scripts (scripts/build-mobile|android|ios.sh) and DEV/STG app-icon variant generation for the React Native app (story 85-2).",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-80-2-dispute-filing-ac-coverage",
+      "action": "Verify full acceptance-criteria coverage for the dispute-filing flow (story 80-2) and add missing regression tests for the filing surface.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-82-3-reality-mobile-search-filters",
+      "action": "Reality mobile (KMP) home/search screen: debounced search, infinite scroll and FilterSheet wiring (story 82-3, AC-2/AC-4) on the Android target.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-82-2-reality-mobile-nav-state",
+      "action": "Add tests for reality-mobile navigation state preservation and deep-linking URL schemes (story 82-2, AC-4) on the Android target.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-6-2-announcement-web-viewing-ack",
+      "action": "Web announcement viewing & acknowledgment UI in ppt-web (story 6-2): wire mark_read / acknowledge to existing backend routes, render AcknowledgmentStats / UserAcknowledgmentStatus; supersede stale draft PRs #474/#475/#479 which never merged. Mobile screen already shipped.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-ui",
+      "action": "Pinned announcements (story 6-4): pin/unpin action for managers + pinned section ordering at the top of the announcements list in ppt-web and mobile, wired to the backend pin flag.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    },
+    {
+      "id": "gap-8a-3-notification-preference-sync",
+      "action": "Notification preference sync (story 8a-3): persist per-channel notification preferences to the backend and sync them across devices on login; distinct from the realtime delivery pipeline already covered by test-gap-8a-3-notification-realtime-sync.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    },
+    {
+      "id": "gap-82-1-swiftui-project-setup-verify",
+      "action": "Verify/complete SwiftUI project setup for the Reality iOS app under mobile-native/iosApp (story 82-1): app entry point, DI wiring, Ktor networking bootstrap, and a smoke build target so downstream 82-x screen work has a compiling base.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    },
+    {
+      "id": "gap-82-4-reality-mobile-listing-detail-favorites",
+      "action": "Reality mobile listing-detail screen + favorites toggle (story 82-4): render full listing detail from the reality API and wire a favorite/unfavorite action to the favorites endpoint with optimistic UI.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    },
+    {
+      "id": "gap-82-5-reality-mobile-inquiries-account",
+      "action": "Reality mobile inquiries list + account screen (story 82-5): wire the inquiries feed and the account/profile screen to their reality-server endpoints, including auth state.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-6-2-announcement-ack-coverage",
+      "action": "AC test coverage for the announcement acknowledgment flow (story 6-2): mark_read, acknowledge, and acknowledgment-stats rendering paths in ppt-web.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-79-1-api-client-integration-coverage",
+      "action": "Test coverage for the core-features API client integration (story 79-1): assert announcements/faults api-client wiring against the generated client contract.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    }
+  ]
+}
