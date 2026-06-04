@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-04T10:05:02Z",
+  "archived_at": "2026-06-04T11:53:03Z",
   "assignments": [
     {
       "task_id": "bug-esignature-webhook-idempotency-guard",
@@ -22,6 +22,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-06-04T00:08:32Z"
+    },
+    {
+      "task_id": "bug-report-schedule-update-no-cron-column",
+      "branch": "auto-impl/bug-report-schedule-update-no-cron-colum",
+      "status": "done",
+      "claimed_at": "2026-06-04T11:42:00Z",
+      "last_updated": "2026-06-04T11:52:21Z",
+      "status_changed_at": "2026-06-04T11:52:21Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "db-migration",
+      "implementer_summary": "pr=none status=done specialist=db-migration scope_drift=false code_reuse_warn=none note=already merged in PR #1035 (aa3b9d7e0); migration 00166 + cron_expression routing + tests present on dev; no diff to ship [row closed — duplicate of shipped work]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
