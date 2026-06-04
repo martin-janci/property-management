@@ -37,7 +37,7 @@ pub mod report_execution_status {
 ///
 /// Maps to the `report_schedules` table created by migration
 /// `00162_create_report_schedules_executions.sql`, with the
-/// `cron_expression` column added by `00163_report_schedules_add_cron_expression.sql`.
+/// `cron_expression` column added by `00166_report_schedules_add_cron_expression.sql`.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ReportSchedule {
     pub id: Uuid,
