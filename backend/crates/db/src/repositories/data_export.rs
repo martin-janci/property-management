@@ -348,9 +348,14 @@ impl DataExportRepository {
             chrono::DateTime<Utc>,
         )> = sqlx::query_as(
             r#"
-            SELECT id, email, first_name, last_name, phone_number,
-                   COALESCE(language, 'en') as language,
-                   profile_visibility, show_contact_info, email_verified,
+            -- Issue #1008: `users` has a single `name` column (no first/last),
+            -- `phone` (not phone_number), `locale` (not language), and
+            -- `email_verified_at` (not a bool email_verified). Map them onto the
+            -- ProfileExport shape: full name in first_name, last_name NULL.
+            SELECT id, email, name AS first_name, NULL::text AS last_name, phone AS phone_number,
+                   COALESCE(locale, 'en') as language,
+                   profile_visibility, show_contact_info,
+                   (email_verified_at IS NOT NULL) AS email_verified,
                    created_at, updated_at
             FROM users WHERE id = $1
             "#,

@@ -1647,7 +1647,7 @@ impl DocumentRepository {
                 d.mime_type,
                 d.size_bytes,
                 d.created_by,
-                CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
+                u.name as created_by_name,
                 d.created_at,
                 doc.root_id,
                 doc.title
@@ -1722,7 +1722,7 @@ impl DocumentRepository {
                 d.mime_type,
                 d.size_bytes,
                 d.created_by,
-                CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
+                u.name as created_by_name,
                 d.created_at
             FROM documents d
             JOIN users u ON u.id = d.created_by
@@ -1865,7 +1865,7 @@ impl DocumentRepository {
                 d.mime_type,
                 d.size_bytes,
                 d.created_by,
-                CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
+                u.name as created_by_name,
                 d.created_at
             FROM documents d
             JOIN users u ON u.id = d.created_by
@@ -1920,7 +1920,7 @@ impl DocumentRepository {
                 d.mime_type,
                 d.size_bytes,
                 d.created_by,
-                CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
+                u.name as created_by_name,
                 d.created_at
             FROM documents d
             JOIN users u ON u.id = d.created_by

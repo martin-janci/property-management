@@ -66,7 +66,7 @@ impl DocumentTemplateRepository {
             r#"
             SELECT
                 t.*,
-                CONCAT(u.first_name, ' ', u.last_name) as created_by_name
+                u.name as created_by_name
             FROM document_templates t
             JOIN users u ON u.id = t.created_by
             WHERE t.id = $1 AND t.deleted_at IS NULL

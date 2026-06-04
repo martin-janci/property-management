@@ -292,9 +292,11 @@ impl PlatformAdminRepository {
 
         if query.is_some() {
             param_idx += 1;
+            // Issue #1008: `users` has a single `name` column (no
+            // display_name/first_name/last_name); search email + name.
             conditions.push(format!(
-                "(LOWER(u.email) LIKE '%' || LOWER(${}::text) || '%' OR LOWER(u.display_name) LIKE '%' || LOWER(${}::text) || '%' OR LOWER(u.first_name) LIKE '%' || LOWER(${}::text) || '%' OR LOWER(u.last_name) LIKE '%' || LOWER(${}::text) || '%')",
-                param_idx, param_idx, param_idx, param_idx
+                "(LOWER(u.email) LIKE '%' || LOWER(${}::text) || '%' OR LOWER(u.name) LIKE '%' || LOWER(${}::text) || '%')",
+                param_idx, param_idx
             ));
         }
 
@@ -308,8 +310,10 @@ impl PlatformAdminRepository {
 
         let data_query = format!(
             r#"
-            SELECT u.id, u.email, u.display_name, u.first_name, u.last_name, u.status,
-                   u.email_verified, u.created_at, u.updated_at, u.last_login_at
+            SELECT u.id, u.email, u.name AS display_name, NULL::text AS first_name,
+                   NULL::text AS last_name, u.status,
+                   (u.email_verified_at IS NOT NULL) AS email_verified,
+                   u.created_at, u.updated_at, NULL::timestamptz AS last_login_at
             FROM users u
             WHERE {}
             ORDER BY u.created_at DESC
@@ -350,8 +354,10 @@ impl PlatformAdminRepository {
     ) -> Result<Option<SupportUserInfo>, SqlxError> {
         let user = sqlx::query_as::<_, SupportUserInfo>(
             r#"
-            SELECT id, email, display_name, first_name, last_name, status,
-                   email_verified, created_at, updated_at, last_login_at
+            SELECT id, email, name AS display_name, NULL::text AS first_name,
+                   NULL::text AS last_name, status,
+                   (email_verified_at IS NOT NULL) AS email_verified,
+                   created_at, updated_at, NULL::timestamptz AS last_login_at
             FROM users
             WHERE id = $1
             "#,
