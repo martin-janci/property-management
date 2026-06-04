@@ -2845,10 +2845,10 @@ function EditFaultPageRoute() {
       faultId={faultId}
       initialData={{
         buildingId: fault.building_id,
-        unitId: fault.unit_id,
+        unitId: fault.unit_id ?? undefined,
         title: fault.title,
         description: fault.description,
-        locationDescription: fault.location_description,
+        locationDescription: fault.location_description ?? undefined,
         category: fault.category,
         priority: fault.priority,
       }}

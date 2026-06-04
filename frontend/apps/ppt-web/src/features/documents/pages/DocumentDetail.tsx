@@ -11,14 +11,20 @@ import {
   useDocumentVersions,
   useReprocessOcr,
 } from '@ppt/api-client';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ClassificationUI } from '../components/ClassificationBadge';
-import { DocumentPreviewModal } from '../components/DocumentPreviewModal';
 import { DocumentSharePanel } from '../components/DocumentSharePanel';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { OcrProcessingStatus } from '../components/OcrStatusBadge';
 import { useDocumentDownload } from '../hooks/useDocumentDownload';
+
+// Lazy-loaded so PDF.js (react-pdf, references DOMMatrix at module load) is
+// only pulled in when the preview actually opens — keeps it out of the initial
+// bundle and out of the jsdom module graph for tests that render this page.
+const DocumentPreviewModal = lazy(() =>
+  import('../components/DocumentPreviewModal').then((m) => ({ default: m.DocumentPreviewModal }))
+);
 
 /** Human-readable labels for the access_scope values returned by the backend (7a-3). */
 const AUDIENCE_LABELS: Record<AccessScope, string> = {
@@ -310,13 +316,15 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
         )}
 
         {showPreview && (
-          <DocumentPreviewModal
-            documentId={doc.id}
-            title={doc.title}
-            fileName={doc.file_name}
-            mimeType={doc.mime_type}
-            onClose={() => setShowPreview(false)}
-          />
+          <Suspense fallback={null}>
+            <DocumentPreviewModal
+              documentId={doc.id}
+              title={doc.title}
+              fileName={doc.file_name}
+              mimeType={doc.mime_type}
+              onClose={() => setShowPreview(false)}
+            />
+          </Suspense>
         )}
       </div>
 
