@@ -39,7 +39,7 @@ export interface Announcement {
  * intentionally lightweight: no `content` body, no author, no category. The
  * full body is fetched lazily by `AnnouncementDetailScreen`.
  */
-interface ApiAnnouncementSummary {
+export interface ApiAnnouncementSummary {
   id: string;
   title: string;
   status: string;
@@ -58,7 +58,7 @@ interface ApiAnnouncementListResponse {
 }
 
 /** Coerce a published-list summary into the UI's Announcement shape. */
-function toUiAnnouncement(a: ApiAnnouncementSummary): Announcement {
+export function toUiAnnouncement(a: ApiAnnouncementSummary): Announcement {
   return {
     id: a.id,
     title: a.title,
@@ -73,7 +73,9 @@ function toUiAnnouncement(a: ApiAnnouncementSummary): Announcement {
 }
 
 /** Extract the summary list from the published-list response. */
-function extractItems(data: ApiAnnouncementListResponse | undefined): ApiAnnouncementSummary[] {
+export function extractItems(
+  data: ApiAnnouncementListResponse | undefined
+): ApiAnnouncementSummary[] {
   if (!data) return [];
   return data.announcements ?? [];
 }
