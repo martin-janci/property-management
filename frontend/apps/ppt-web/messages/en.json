@@ -260,6 +260,7 @@
   },
   "faults": {
     "title": "Fault Reports",
+    "failedToLoad": "Failed to load faults",
     "newFault": "New Fault",
     "reportFault": "Report Fault",
     "description": "Description",
