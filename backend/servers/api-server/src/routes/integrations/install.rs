@@ -24,6 +24,73 @@ use common::errors::ErrorResponse;
 
 const MAX_BATCH_SIZE: usize = 500;
 
+// ==================== Booking.com Push Validation ====================
+//
+// Pure request-shape guards for the legacy Booking.com push handlers
+// (issue #572, PR #607). Extracted from the inline handler bodies so the
+// batch-cap and non-negative `available_count` guards have a DB-free
+// regression test (see the `tests` module). The unified OTA `listing-push`
+// surface has its own equivalent guard in `booking_channel::validate_listing_push`
+// (PR #1045) — these are the *legacy* push-availability / push-rates guards.
+//
+// On failure each returns `(error_code, human_message)` so the caller can
+// build a `400` [`ErrorResponse`]; on success returns `Ok(())`.
+
+/// Validate a Booking.com push-availability request body.
+///
+/// Rejects:
+/// * an empty `updates` list (`NO_UPDATES`),
+/// * more than [`MAX_BATCH_SIZE`] updates (`BATCH_TOO_LARGE`),
+/// * any negative `available_count` (`INVALID_AVAILABLE_COUNT`).
+fn validate_push_availability(
+    request: &BookingPushAvailabilityRequest,
+) -> Result<(), (&'static str, &'static str)> {
+    if request.updates.is_empty() {
+        return Err(("NO_UPDATES", "At least one availability update is required"));
+    }
+
+    if request.updates.len() > MAX_BATCH_SIZE {
+        return Err((
+            "BATCH_TOO_LARGE",
+            "A maximum of 500 updates per request is allowed",
+        ));
+    }
+
+    if request.updates.iter().any(|u| u.available_count < 0) {
+        return Err((
+            "INVALID_AVAILABLE_COUNT",
+            "available_count must be non-negative",
+        ));
+    }
+
+    Ok(())
+}
+
+/// Validate a Booking.com push-rates request body.
+///
+/// Rejects:
+/// * an empty `updates` list (`NO_UPDATES`),
+/// * more than [`MAX_BATCH_SIZE`] updates (`BATCH_TOO_LARGE`).
+///
+/// Rate updates carry no `available_count`, so the non-negative guard does
+/// not apply here.
+fn validate_push_rates(
+    request: &BookingPushRatesRequest,
+) -> Result<(), (&'static str, &'static str)> {
+    if request.updates.is_empty() {
+        return Err(("NO_UPDATES", "At least one rate update is required"));
+    }
+
+    if request.updates.len() > MAX_BATCH_SIZE {
+        return Err((
+            "BATCH_TOO_LARGE",
+            "A maximum of 500 updates per request is allowed",
+        ));
+    }
+
+    Ok(())
+}
+
 // ==================== Airbnb Types ====================
 
 /// Airbnb connection status response.
@@ -1232,35 +1299,8 @@ pub async fn push_booking_availability(
         ));
     }
 
-    if request.updates.is_empty() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "NO_UPDATES",
-                "At least one availability update is required",
-            )),
-        ));
-    }
-
-    if request.updates.len() > MAX_BATCH_SIZE {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "BATCH_TOO_LARGE",
-                "A maximum of 500 updates per request is allowed",
-            )),
-        ));
-    }
-
-    if request.updates.iter().any(|u| u.available_count < 0) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "INVALID_AVAILABLE_COUNT",
-                "available_count must be non-negative",
-            )),
-        ));
-    }
+    validate_push_availability(&request)
+        .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
 
@@ -1398,25 +1438,8 @@ pub async fn push_booking_rates(
         ));
     }
 
-    if request.updates.is_empty() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "NO_UPDATES",
-                "At least one rate update is required",
-            )),
-        ));
-    }
-
-    if request.updates.len() > MAX_BATCH_SIZE {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "BATCH_TOO_LARGE",
-                "A maximum of 500 updates per request is allowed",
-            )),
-        ));
-    }
+    validate_push_rates(&request)
+        .map_err(|(code, msg)| (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg))))?;
 
     let rental_repo = &state.rental_repo;
 
@@ -2071,4 +2094,133 @@ pub async fn enqueue_airbnb_availability_sync(
             message: "Availability sync job queued successfully".to_string(),
         }),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    //! Regression tests for the legacy Booking.com push request guards
+    //! (issue #572, PR #607): the `MAX_BATCH_SIZE` batch-cap and the
+    //! non-negative `available_count` validation on the `push-availability`
+    //! / `push-rates` endpoints. These guards previously had no coverage —
+    //! the unified `listing-push` surface (PR #1045) tests its own
+    //! `booking_channel::validate_listing_push`, not these handlers.
+    use super::*;
+    use chrono::NaiveDate;
+
+    /// Build `avail` availability-update DTOs, all with a non-negative count.
+    fn avail_updates(avail: usize) -> Vec<AvailabilityUpdateDto> {
+        (0..avail)
+            .map(|i| AvailabilityUpdateDto {
+                room_type_id: "DBL".to_string(),
+                date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
+                    + chrono::Duration::days(i as i64),
+                available_count: 1,
+                stop_sell: false,
+                cta: false,
+                ctd: false,
+                min_los: None,
+                max_los: None,
+            })
+            .collect()
+    }
+
+    /// Build a minimal availability push request with `avail` updates.
+    fn make_availability_request(avail: usize) -> BookingPushAvailabilityRequest {
+        BookingPushAvailabilityRequest {
+            room_mappings: Vec::new(),
+            updates: avail_updates(avail),
+        }
+    }
+
+    /// Build a minimal rates push request with `rates` updates.
+    fn make_rates_request(rates: usize) -> BookingPushRatesRequest {
+        BookingPushRatesRequest {
+            updates: (0..rates)
+                .map(|i| RateUpdateDto {
+                    room_type_id: "DBL".to_string(),
+                    rate_plan_code: "STD".to_string(),
+                    date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
+                        + chrono::Duration::days(i as i64),
+                    base_rate: rust_decimal::Decimal::new(10000, 2),
+                    currency: "EUR".to_string(),
+                    extra_person_rate: None,
+                    extra_child_rate: None,
+                })
+                .collect(),
+        }
+    }
+
+    // ---- push-availability guards ----
+
+    #[test]
+    fn availability_accepts_valid_batch() {
+        let req = make_availability_request(10);
+        assert!(validate_push_availability(&req).is_ok());
+    }
+
+    #[test]
+    fn availability_accepts_max_batch_boundary() {
+        // Exactly MAX_BATCH_SIZE updates must be allowed (boundary).
+        let req = make_availability_request(MAX_BATCH_SIZE);
+        assert!(validate_push_availability(&req).is_ok());
+    }
+
+    #[test]
+    fn availability_rejects_empty_updates() {
+        let req = make_availability_request(0);
+        let err = validate_push_availability(&req).unwrap_err();
+        assert_eq!(err.0, "NO_UPDATES");
+    }
+
+    #[test]
+    fn availability_rejects_oversized_batch() {
+        // One over the cap -> BATCH_TOO_LARGE (400).
+        let req = make_availability_request(MAX_BATCH_SIZE + 1);
+        let err = validate_push_availability(&req).unwrap_err();
+        assert_eq!(err.0, "BATCH_TOO_LARGE");
+    }
+
+    #[test]
+    fn availability_rejects_negative_available_count() {
+        let mut req = make_availability_request(3);
+        req.updates[2].available_count = -1;
+        let err = validate_push_availability(&req).unwrap_err();
+        assert_eq!(err.0, "INVALID_AVAILABLE_COUNT");
+    }
+
+    #[test]
+    fn availability_zero_available_count_is_allowed() {
+        // Zero (sold out) is non-negative and must pass the guard.
+        let mut req = make_availability_request(1);
+        req.updates[0].available_count = 0;
+        assert!(validate_push_availability(&req).is_ok());
+    }
+
+    // ---- push-rates guards ----
+
+    #[test]
+    fn rates_accepts_valid_batch() {
+        let req = make_rates_request(10);
+        assert!(validate_push_rates(&req).is_ok());
+    }
+
+    #[test]
+    fn rates_accepts_max_batch_boundary() {
+        let req = make_rates_request(MAX_BATCH_SIZE);
+        assert!(validate_push_rates(&req).is_ok());
+    }
+
+    #[test]
+    fn rates_rejects_empty_updates() {
+        let req = make_rates_request(0);
+        let err = validate_push_rates(&req).unwrap_err();
+        assert_eq!(err.0, "NO_UPDATES");
+    }
+
+    #[test]
+    fn rates_rejects_oversized_batch() {
+        let req = make_rates_request(MAX_BATCH_SIZE + 1);
+        let err = validate_push_rates(&req).unwrap_err();
+        assert_eq!(err.0, "BATCH_TOO_LARGE");
+    }
 }

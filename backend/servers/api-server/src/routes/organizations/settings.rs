@@ -11,6 +11,7 @@ use axum::{
 use common::errors::ErrorResponse;
 use db::models::UpdateOrganization;
 use serde::{Deserialize, Serialize};
+use tenant_ops::{export_tenant, TenantDataManifest};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -654,9 +655,16 @@ pub struct ExportRole {
 /// Organization export query parameters.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct ExportQuery {
-    /// Export format (json or csv)
+    /// Export format (json or csv) for the synchronous response.
     #[serde(default = "default_format")]
     pub format: String,
+    /// Issue #979: when true, runs a **full** multi-table export as a
+    /// background job (reusing the tenant-ops exporter), uploads the resulting
+    /// `.tar.gz` to S3, and emails the requester a 7-day download link.
+    /// Returns `202 Accepted` immediately. When false/absent, the legacy
+    /// synchronous members+roles JSON/CSV body is returned unchanged.
+    #[serde(default)]
+    pub background: bool,
 }
 
 fn default_format() -> String {
@@ -784,6 +792,133 @@ pub async fn export_organization_data(
                 "You do not have permission to export organization data",
             )),
         ));
+    }
+
+    // Issue #979: full async export. Spawn a detached background job that
+    // produces a complete per-table `.tar.gz` (via the tenant-ops exporter),
+    // uploads it to S3, and emails the requester a 7-day presigned link. We
+    // return 202 immediately rather than blocking the request. The permission
+    // check above has already authorised this user to export this org, so the
+    // job runs against the service-role pool (RLS-bypassing) for the same org.
+    if query.background {
+        // Release the RLS connection before the long-running work.
+        rls.release().await;
+
+        let pool = state.db.clone();
+        let storage = state.storage_service.clone();
+        let email = state.email_service.clone();
+        let user_repo = state.user_repo.clone();
+        let org_id = id;
+
+        tokio::spawn(async move {
+            let to_email = match user_repo.find_by_id(user_id).await {
+                Ok(Some(u)) => u.email,
+                _ => {
+                    tracing::error!(user_id = %user_id, "[#979] org export: requester not found; aborting");
+                    return;
+                }
+            };
+            let Some(storage) = storage else {
+                tracing::error!("[#979] org export: storage not configured; cannot deliver export");
+                return;
+            };
+
+            // Load the tenant-data manifest (env-overridable, mirrors the
+            // admin tenant-lifecycle export path).
+            let manifest_path = std::env::var("PPT_TENANT_MANIFEST_PATH")
+                .map(std::path::PathBuf::from)
+                .unwrap_or_else(|_| TenantDataManifest::default_path());
+            let manifest = match TenantDataManifest::load(&manifest_path) {
+                Ok(m) => m,
+                Err(e) => {
+                    tracing::error!(error = %e, path = ?manifest_path, "[#979] org export: manifest load failed");
+                    return;
+                }
+            };
+
+            let out_dir = std::env::temp_dir().join(format!("ppt-org-export-{}", Uuid::new_v4()));
+            let export = match export_tenant(&pool, org_id, &manifest, &out_dir).await {
+                Ok(e) => e,
+                Err(e) => {
+                    tracing::error!(error = %e, org = %org_id, "[#979] org export: export_tenant failed");
+                    let _ = std::fs::remove_dir_all(&out_dir);
+                    return;
+                }
+            };
+
+            let bytes = match std::fs::read(&export.tarball_path) {
+                Ok(b) => b,
+                Err(e) => {
+                    tracing::error!(error = %e, "[#979] org export: reading tarball failed");
+                    let _ = std::fs::remove_dir_all(&out_dir);
+                    return;
+                }
+            };
+
+            let key = format!("exports/org-{}/{}-export.tar.gz", org_id, Uuid::new_v4());
+            let upload = storage
+                .upload_system_artifact(&key, bytes, "application/gzip")
+                .await;
+            let _ = std::fs::remove_dir_all(&out_dir);
+            if let Err(e) = upload {
+                tracing::error!(error = %e, "[#979] org export: S3 upload failed");
+                return;
+            }
+
+            // 7-day presigned download link.
+            let presigned = match storage
+                .generate_download_url(
+                    &key,
+                    "organization-export.tar.gz",
+                    "application/gzip",
+                    Some(7 * 24 * 3600),
+                )
+                .await
+            {
+                Ok(p) => p,
+                Err(e) => {
+                    tracing::error!(error = %e, "[#979] org export: presign failed");
+                    return;
+                }
+            };
+
+            let expires = presigned.expires_at.to_rfc3339();
+            let html = format!(
+                "<p>Your organization data export is ready.</p>\
+                 <p><a href=\"{url}\">Download the export</a> — link valid until {expires}.</p>",
+                url = presigned.url,
+            );
+            let text = format!(
+                "Your organization data export is ready.\nDownload (valid until {expires}): {url}",
+                url = presigned.url,
+            );
+            match email
+                .send_html_email(
+                    &to_email,
+                    "Your organization data export is ready",
+                    &html,
+                    &text,
+                )
+                .await
+            {
+                Ok(()) => tracing::info!(
+                    org = %org_id,
+                    rows = export.rows_exported,
+                    tables = export.tables_exported,
+                    "[#979] org export delivered via emailed link"
+                ),
+                Err(e) => tracing::error!(error = %e, "[#979] org export: email send failed"),
+            }
+        });
+
+        return Ok((
+            StatusCode::ACCEPTED,
+            Json(serde_json::json!({
+                "status": "accepted",
+                "message": "Export started. A download link will be emailed when it is ready."
+            })),
+        )
+            .into_response());
     }
 
     // Get organization using RLS

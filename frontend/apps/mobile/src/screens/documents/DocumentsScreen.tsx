@@ -61,7 +61,7 @@ const AUDIENCE_OPTIONS: ReadonlyArray<{
  * `access_scope` or `status` — those live on the document detail/permissions
  * endpoints, not the list.
  */
-interface ApiDocument {
+export interface ApiDocument {
   id: string;
   title: string;
   category: string;
@@ -136,7 +136,7 @@ function folderNodeToDocument(node: ApiFolderTreeNode): Document {
   };
 }
 
-function pickDocumentType(d: ApiDocument): DocumentType {
+export function pickDocumentType(d: ApiDocument): DocumentType {
   const mime = (d.mime_type ?? '').toLowerCase();
   const fileName = (d.file_name ?? d.title).toLowerCase();
   if (mime.includes('pdf') || fileName.endsWith('.pdf')) return 'pdf';
@@ -146,7 +146,7 @@ function pickDocumentType(d: ApiDocument): DocumentType {
   return 'document';
 }
 
-function toUiDocument(d: ApiDocument): Document {
+export function toUiDocument(d: ApiDocument): Document {
   return {
     id: d.id,
     name: d.title,

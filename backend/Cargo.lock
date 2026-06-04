@@ -167,7 +167,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "admin-core"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "api-core",
  "async-trait",
@@ -340,7 +340,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "async-trait",
  "axum",
@@ -367,7 +367,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "admin-core",
  "aes-gcm",
@@ -1472,9 +1472,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.44"
+version = "0.4.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c673075a2e0e5f4a1dde27ce9dee1ea4558c7ffe648f576438a20ca1d2acc4b0"
+checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
 dependencies = [
  "iana-time-zone",
  "js-sys",
@@ -1581,7 +1581,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "async-trait",
  "axum",
@@ -2009,7 +2009,7 @@ checksum = "a4ae5f15dda3c708c0ade84bfee31ccab44a3da4f88015ed22f63732abe300c8"
 
 [[package]]
 name = "db"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "argon2",
  "async-trait",
@@ -2062,7 +2062,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3539,7 +3539,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -3849,9 +3849,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.31"
+version = "0.4.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "113b30b4cd05f7c06868fdb2854f66a7b9fece9a48425351cd532e810d74024f"
+checksum = "953f07c43838f8e6f9758cab68bf5bed85465e7587ebe0b823f1bcd81978ad3a"
 
 [[package]]
 name = "lru"
@@ -5316,7 +5316,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "anyhow",
  "api-core",
@@ -6159,9 +6159,9 @@ dependencies = [
 
 [[package]]
 name = "serde_regex"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8136f1a4ea815d7eac4101cfd0b16dc0cb5e1fe1b8609dfd728058656b7badf"
+checksum = "bafc8d0c5330cecff10f16b459b479fd9acaa5b4acd7167301414e21b0057012"
 dependencies = [
  "regex",
  "serde",
@@ -6798,7 +6798,7 @@ dependencies = [
 
 [[package]]
 name = "tenant-ops"
-version = "0.3.39"
+version = "0.3.44"
 dependencies = [
  "chrono",
  "common",
@@ -8282,9 +8282,9 @@ checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
 
 [[package]]
 name = "yoke"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abe8c5fda708d9ca3df187cae8bfb9ceda00dd96231bed36e445a1a48e66f9ca"
+checksum = "709fe23a0424b6a435d82152b1bd3fdfb0833487d5fa90d05d42762a9891fef5"
 dependencies = [
  "stable_deref_trait",
  "yoke-derive",

@@ -400,11 +400,17 @@
       "action": "Implement the OTA XML parsing/generation transport for Booking.com rate/availability push (story 83-2, AC-5) — validation guards landed PR #607, XML transport still missing.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T09:44:03Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1045,
+        "merged_at": "2026-06-04T07:15:34Z",
+        "at": "2026-06-04T09:44:03Z"
+      }
     },
     {
       "id": "bug-esignature-webhook-idempotency-guard",
