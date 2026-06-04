@@ -55,14 +55,21 @@ docker/
 │   ├── ppt-web.Dockerfile      # Property Management SPA
 │   └── reality-web.Dockerfile  # Reality Portal SSR
 ├── nginx/
-│   ├── ppt-web.nginx.conf.template  # Nginx config template for SPA
-│   │                                # (rendered at container startup —
-│   │                                # /api and /ws proxy upstreams are
-│   │                                # filled from BG_TARGET + BG_COLOR
-│   │                                # so the SPA fetches reach the
-│   │                                # api-server container in the same
-│   │                                # blue/green color)
-│   └── render-template.sh           # envsubst entrypoint hook
+│   ├── ppt-web.nginx.conf.template   # Nginx config template for the ppt-web SPA
+│   │                                 # (rendered at container startup —
+│   │                                 # /api and /ws proxy upstreams are
+│   │                                 # filled from BG_TARGET + BG_COLOR
+│   │                                 # so the SPA fetches reach the
+│   │                                 # api-server container in the same
+│   │                                 # blue/green color)
+│   ├── admin-web.nginx.conf.template # Same, for the admin-web SPA
+│   ├── partials/                     # Shared `include`d snippets, copied to
+│   │   │                             # /etc/nginx/partials/ (NOT conf.d, so the
+│   │   │                             # base image's conf.d/*.conf glob ignores
+│   │   │                             # them); both templates pull them in
+│   │   ├── server-common.conf            # relative redirects + gzip
+│   │   └── security-headers-common.conf  # headers identical across both SPAs
+│   └── render-template.sh            # envsubst entrypoint hook
 └── scripts/
     ├── docker-build.sh         # Multi-arch build script
     └── synology-setup.sh       # Synology setup helper
