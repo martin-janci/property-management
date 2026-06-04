@@ -1,0 +1,163 @@
+{
+  "generated_at": "2026-06-04T07:48:01Z",
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-1033-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1033",
+      "score_delta": 2,
+      "evidence": "PR #1033 modified frontend/apps/ppt-web/src/App.tsx (AnnouncementsPageRoute + FaultsPageRoute) without updating docs/screens/ppt/announcements.md or docs/screens/ppt/faults-list.md to reflect the new inline error/retry state",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
+      "type": "churn-hotspot",
+      "source": "PR #1047",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/e2e/auth-refresh.spec.ts NEW (+252 lines) — Playwright integration for SSO silent token-refresh path, story 79-2",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs",
+      "type": "churn-hotspot",
+      "source": "PR #1034",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs NEW (+228 lines) — terminal-state webhook regression for e-signature idempotency, UC-84",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #1048",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx NEW (+202 lines) — dispute-filing AC-2 evidence-uploader regression",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-04.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emitted non-cumulative signal with non-zero score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay rules",
+      "observed": "cap=true, 0 decay violations",
+      "expected": "true + 0 violations"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "≤2 with adversarial-pass annotations"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans this run",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-.research/ paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures this run",
+      "observed": "all phases completed",
+      "expected": "no orphan failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plan slug present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run ≥ HEAD",
+      "observed": "7=7",
+      "expected": "NEW≥OLD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length+caps",
+      "observed": "no auto-fix actions this run",
+      "expected": "≤3 actions, ≤1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 not run (pm_cursor unchanged) → gate is no-op",
+      "observed": "pm_cursor=0 unchanged",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

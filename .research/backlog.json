@@ -762,12 +762,13 @@
       "title": "ppt-web status/auth components hardcode English in an otherwise i18n'd app",
       "vector": "refactor",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "confidence": "medium",
       "sources": [
         "code-review ppt-web-ui 2026-05-24",
         "rotating-expert-review",
-        "PR #549"
+        "PR #549",
+        "PR #1046"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:58 — status labels/descriptions ('Connected','Connecting...','Connection Error','Real-time updates are active','Click to reconnect') hardcoded; component never imports useTranslation",
@@ -775,7 +776,8 @@
         "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105,124 — 'Checking authentication','Loading...','Access Denied','You do not have permission to access this page.' hardcoded on auth/loading paths",
         "peers (LoginPage, Toast, ErrorBoundary, AuthRequiredGate, PageLoading, LanguageSwitcher) route all user-facing text through react-i18next (sk/cs/de/en) — these three diverge; low severity (text renders, just in English)",
         "App.tsx:971-995 — Dispute detail UI hardcodes 'Dispute: '/'Description'/'Timeline'/'No timeline events yet.' (not wrapped in t()) [code-review ppt-web-core]",
-        "PR #549 added partial i18n during SystemAnnouncementsPage split and PR #547 added reports messages; remaining inline English strings in the cited components still untranslated"
+        "PR #549 added partial i18n during SystemAnnouncementsPage split and PR #547 added reports messages; remaining inline English strings in the cited components still untranslated",
+        "resolved: PR #1046 merged 2026-06-04 — refactor-ppt-web-untranslated-strings: i18n auth + connectionStatus strings in ppt-web"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx",
@@ -784,7 +786,7 @@
         "frontend/apps/ppt-web/src/App.tsx"
       ],
       "created_at": "2026-05-24",
-      "updated_at": "2026-05-26",
+      "updated_at": "2026-06-04",
       "plan": null
     },
     {
@@ -2485,8 +2487,8 @@
       "id": "dx-portfolio-dashboard-stubs",
       "title": "Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs",
       "vector": "dx",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #328",
         "commit 254f01d"
@@ -2495,13 +2497,96 @@
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:329 — `TODO: wire to alerts API (mark-read mutation)`",
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:332 — `TODO: wire to alerts API (resolve mutation)`",
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:366 — `TODO: navigate to property detail route`",
-        "decayed: -1 (no new signals in 14 days)"
+        "decayed: -1 (no new signals in 14 days)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-20",
+      "updated_at": "2026-06-04",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1033-ppt",
+      "title": "Screen-map drift: PR #1033 wired error/retry into AnnouncementsPage+FaultsPage via App.tsx without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1033"
+      ],
+      "evidence": [
+        "PR #1033 (gap-79-1-announcements-faults-api-wiring) modified frontend/apps/ppt-web/src/App.tsx (AnnouncementsPageRoute + FaultsPageRoute now feed isError/refetch from useAnnouncements/useFaults) without updating docs/screens/ppt/announcements.md or docs/screens/ppt/faults-list.md to reflect the new inline error/retry state — drift signal on ppt product"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "docs/screens/ppt/announcements.md",
+        "docs/screens/ppt/faults-list.md"
+      ],
+      "created_at": "2026-06-04",
+      "updated_at": "2026-06-04",
+      "plan": null
+    },
+    {
+      "id": "refactor-auth-refresh-spec-churn-2026-06-04",
+      "title": "ppt-web e2e auth-refresh.spec.ts added (+252 lines, story 79-2 token-refresh coverage)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1047"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/e2e/auth-refresh.spec.ts NEWLY added (+252 lines) via PR #1047 — Playwright integration coverage for the silent token-refresh path (4 scenarios). One-shot test addition, not instability; backlog row exists for hotspot tracking and will decay if no further churn."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/e2e/auth-refresh.spec.ts"
+      ],
+      "created_at": "2026-06-04",
+      "updated_at": "2026-06-04",
+      "plan": null
+    },
+    {
+      "id": "refactor-esignature-webhook-idempotency-tests-churn-2026-06-04",
+      "title": "api-server esignature_webhook_idempotency_tests.rs added (+228 lines, terminal-state regression)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1034"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs NEWLY added (+228 lines) via PR #1034 — HTTP regression coverage for the e-signature webhook idempotency guard (Completed/Declined/Expired/Cancelled). One-shot test addition, not instability."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs"
+      ],
+      "created_at": "2026-06-04",
+      "updated_at": "2026-06-04",
+      "plan": null
+    },
+    {
+      "id": "refactor-evidenceuploader-test-tsx-churn-2026-06-04",
+      "title": "ppt-web EvidenceUploader.test.tsx added (+202 lines, dispute-filing AC-2 regression)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1048"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx NEWLY added (+202 lines) via PR #1048 — accepted types, per-file type+size, MAX_FILES cap, remove + object-URL revoke, description editing, status indicators. One-shot test addition, not instability."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx"
+      ],
+      "created_at": "2026-06-04",
+      "updated_at": "2026-06-04",
       "plan": null
     }
   ]
