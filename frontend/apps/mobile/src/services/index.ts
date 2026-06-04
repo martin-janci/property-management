@@ -4,3 +4,5 @@ export {
   extractNotificationData,
   syncBadgeFromData,
 } from './backgroundNotifications';
+export type { Screen } from './deepLinkRouting';
+export { resolveDeepLinkTarget } from './deepLinkRouting';
