@@ -24,13 +24,32 @@
 mod common;
 
 use axum::http::StatusCode;
-use common::TestApp;
-use serde_json::json;
+use common::{seed_org, TestApp, TestResponse};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Shared webhook secret pinned for the duration of the test process.
 const TEST_WEBHOOK_SECRET: &str = "esign-webhook-idempotency-test-secret-0123456789";
+
+/// Provider slug used for the seeded requests. The `lightweight` provider is the
+/// in-tree default and needs no external configuration.
+const PROVIDER: &str = "lightweight";
+
+/// Idempotent-ack message the terminal-state guard returns. Pinned here so the
+/// assertion drifts loudly if `routes/signatures.rs` changes the copy.
+const ALREADY_FINALIZED_MSG: &str = "Signature request already finalized; webhook ignored";
+
+/// A seeded terminal signature request plus the identifiers a webhook payload
+/// must carry to address it.
+struct TerminalRequest {
+    /// `signature_requests.id` — used to read back state after the webhook.
+    id: Uuid,
+    /// Provider-side request id the webhook references.
+    provider_request_id: String,
+    /// Email of the single seeded signer.
+    signer_email: String,
+}
 
 /// Ensure `ESIGN_WEBHOOK_SECRET` is set before the handler reads it.
 fn ensure_webhook_secret() {
@@ -40,24 +59,15 @@ fn ensure_webhook_secret() {
     });
 }
 
-/// Seed org + user + document + a signature request in the given status with a
-/// single signer in the given signer status. Returns
-/// (request_id, provider, provider_request_id, signer_email).
+/// Seed user + document + a signature request in the given status with a single
+/// signer in the given signer status. The org is provisioned via the shared
+/// `common::seed_org` helper so this file no longer carries its own org insert.
 async fn seed_terminal_request(
     pool: &PgPool,
     status: &str,
     signer_status: &str,
-) -> (Uuid, String, String, String) {
-    let slug = format!("esign-wh-{}", Uuid::new_v4());
-    let org_id = sqlx::query_scalar::<_, Uuid>(
-        r#"INSERT INTO organizations (name, slug, contact_email, status)
-           VALUES ('ESign WH Org', $1, 'esign-wh@example.com', 'active')
-           RETURNING id"#,
-    )
-    .bind(&slug)
-    .fetch_one(pool)
-    .await
-    .expect("seed org");
+) -> TerminalRequest {
+    let org_id = seed_org(pool, "esign-wh").await;
 
     let user_id = sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO users (email, password_hash, name, status, email_verified_at)
@@ -91,7 +101,6 @@ async fn seed_terminal_request(
         "status": signer_status
     }]);
 
-    let provider = "lightweight".to_string();
     let provider_request_id = format!("prov-req-{}", Uuid::new_v4());
 
     let request_id = sqlx::query_scalar::<_, Uuid>(
@@ -106,14 +115,29 @@ async fn seed_terminal_request(
     .bind(org_id)
     .bind(status)
     .bind(&signers)
-    .bind(&provider)
+    .bind(PROVIDER)
     .bind(&provider_request_id)
     .bind(user_id)
     .fetch_one(pool)
     .await
     .expect("seed signature_request");
 
-    (request_id, provider, provider_request_id, signer_email)
+    TerminalRequest {
+        id: request_id,
+        provider_request_id,
+        signer_email,
+    }
+}
+
+/// POST a webhook delivery for `PROVIDER` with the pinned secret header.
+async fn post_webhook(app: &TestApp, payload: Value) -> TestResponse {
+    app.execute(
+        app.post(&format!("/api/v1/signature-requests/webhook/{PROVIDER}"))
+            .header("x-webhook-secret", TEST_WEBHOOK_SECRET)
+            .json(payload)
+            .build(),
+    )
+    .await
 }
 
 /// Read the current signer status for the single seeded signer.
@@ -127,6 +151,16 @@ async fn signer_status(pool: &PgPool, request_id: Uuid) -> String {
     .expect("read signer status")
 }
 
+/// Read the `signed_document_id` linked to a request (None when no signed
+/// document has been stored).
+async fn signed_document_id(pool: &PgPool, request_id: Uuid) -> Option<Uuid> {
+    sqlx::query_scalar(r#"SELECT signed_document_id FROM signature_requests WHERE id = $1"#)
+        .bind(request_id)
+        .fetch_one(pool)
+        .await
+        .expect("read signed_document_id")
+}
+
 // ===========================================================================
 // W1 — duplicate `completed` webhook on a completed request is a no-op
 // ===========================================================================
@@ -137,26 +171,24 @@ async fn duplicate_completed_webhook_on_terminal_request_is_noop(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
 
     // Request already finalized as `completed`, signer already `signed`.
-    let (request_id, provider, provider_request_id, signer_email) =
-        seed_terminal_request(&pool, "completed", "signed").await;
+    let req = seed_terminal_request(&pool, "completed", "signed").await;
+    assert_eq!(
+        signer_status(&pool, req.id).await,
+        "signed",
+        "precondition: signer is already signed"
+    );
 
-    let before = signer_status(&pool, request_id).await;
-    assert_eq!(before, "signed", "precondition: signer is already signed");
-
-    let resp = app
-        .execute(
-            app.post(&format!("/api/v1/signature-requests/webhook/{}", provider))
-                .header("x-webhook-secret", TEST_WEBHOOK_SECRET)
-                .json(json!({
-                    "event_type": "completed",
-                    "provider_request_id": provider_request_id,
-                    "signer_email": signer_email,
-                    "signer_status": "signed",
-                    "signed_document_url": "https://provider.example/signed.pdf"
-                }))
-                .build(),
-        )
-        .await;
+    let resp = post_webhook(
+        &app,
+        json!({
+            "event_type": "completed",
+            "provider_request_id": req.provider_request_id,
+            "signer_email": req.signer_email,
+            "signer_status": "signed",
+            "signed_document_url": "https://provider.example/signed.pdf"
+        }),
+    )
+    .await;
 
     // Idempotent acknowledgement: 200, success, and the guard message so the
     // provider stops retrying.
@@ -165,26 +197,18 @@ async fn duplicate_completed_webhook_on_terminal_request_is_noop(pool: PgPool) {
     assert_eq!(body.get("success"), Some(&json!(true)));
     assert_eq!(
         body.get("message"),
-        Some(&json!(
-            "Signature request already finalized; webhook ignored"
-        )),
+        Some(&json!(ALREADY_FINALIZED_MSG)),
         "expected the terminal-state guard message, got: {body}"
     );
 
     // No side effects: signer status unchanged, no signed document linked.
     assert_eq!(
-        signer_status(&pool, request_id).await,
+        signer_status(&pool, req.id).await,
         "signed",
         "duplicate webhook must not mutate signer status"
     );
-    let signed_doc: Option<Uuid> =
-        sqlx::query_scalar(r#"SELECT signed_document_id FROM signature_requests WHERE id = $1"#)
-            .bind(request_id)
-            .fetch_one(&pool)
-            .await
-            .expect("read signed_document_id");
     assert!(
-        signed_doc.is_none(),
+        signed_document_id(&pool, req.id).await.is_none(),
         "duplicate webhook must not store a signed document on a terminal request"
     );
 }
@@ -200,28 +224,24 @@ async fn signer_event_on_terminal_request_does_not_retransition(pool: PgPool) {
 
     // Request finalized as `completed`; signer recorded as `signed`. A late /
     // duplicate `declined` event must not flip the signer back.
-    let (request_id, provider, provider_request_id, signer_email) =
-        seed_terminal_request(&pool, "completed", "signed").await;
+    let req = seed_terminal_request(&pool, "completed", "signed").await;
 
-    let resp = app
-        .execute(
-            app.post(&format!("/api/v1/signature-requests/webhook/{}", provider))
-                .header("x-webhook-secret", TEST_WEBHOOK_SECRET)
-                .json(json!({
-                    "event_type": "signer_declined",
-                    "provider_request_id": provider_request_id,
-                    "signer_email": signer_email,
-                    "signer_status": "declined",
-                    "decline_reason": "changed my mind"
-                }))
-                .build(),
-        )
-        .await;
+    let resp = post_webhook(
+        &app,
+        json!({
+            "event_type": "signer_declined",
+            "provider_request_id": req.provider_request_id,
+            "signer_email": req.signer_email,
+            "signer_status": "declined",
+            "decline_reason": "changed my mind"
+        }),
+    )
+    .await;
 
     resp.assert_status(StatusCode::OK);
 
     assert_eq!(
-        signer_status(&pool, request_id).await,
+        signer_status(&pool, req.id).await,
         "signed",
         "terminal request must not re-transition signer status on a late event"
     );
