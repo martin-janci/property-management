@@ -48,6 +48,10 @@
     "search": "Keresés",
     "success": "Siker"
   },
+  "comparison": {
+    "loadError": "A megosztott összehasonlítás betöltése sikertelen. Egyes ingatlanok már nem érhetők el.",
+    "loading": "Megosztott összehasonlítás betöltése..."
+  },
   "contact": {
     "askQuestion": "Kérdést feltenni",
     "checkAvailability": "Elérhetőséget ellenőrizni",
