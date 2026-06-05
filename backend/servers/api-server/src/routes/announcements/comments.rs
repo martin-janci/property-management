@@ -440,7 +440,10 @@ pub(super) async fn delete_comment(
             tracing::error!("Failed to find comment: {}", e);
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to find comment")),
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to find comment",
+                )),
             ));
         }
     };
