@@ -16,7 +16,9 @@ sealed class DeepLinkTarget {
 
     data object Inquiries : DeepLinkTarget()
 
-    /** SSO callback: `reality://sso?token=…`. Handled by validating the token, not by navigation. */
+    /**
+     * SSO callback: `reality://sso?token=…`. Handled by validating the token, not by navigation.
+     */
     data class Sso(val token: String) : DeepLinkTarget()
 }
 
@@ -24,10 +26,9 @@ sealed class DeepLinkTarget {
  * Platform-agnostic deep-link parsing and nav-route resolution for Reality Portal mobile.
  *
  * Story 82-2, AC-4 — owns two things the Compose nav graph and `MainActivity` depend on:
- *
- *  - **Deep-link URL schemes**: turning a `reality://…` URI into a stable [DeepLinkTarget].
- *  - **Navigation state preservation**: the set of top-level tab routes whose back-stack state is
- *    saved/restored when switching tabs (vs. detail/auth routes that are not).
+ * - **Deep-link URL schemes**: turning a `reality://…` URI into a stable [DeepLinkTarget].
+ * - **Navigation state preservation**: the set of top-level tab routes whose back-stack state is
+ *   saved/restored when switching tabs (vs. detail/auth routes that are not).
  *
  * The string parsing here is intentionally framework-free (no `android.net.Uri`) so it is unit
  * testable on the JVM and reusable from iOS.
@@ -46,8 +47,8 @@ object DeepLinkRouter {
     /**
      * The five bottom-bar tab destinations. Switching between these saves and restores back-stack
      * state (`popUpTo(home){ saveState = true }; restoreState = true`), so a user who drills into a
-     * tab and switches away returns to where they left off. Every other route (listing detail, auth,
-     * realtor surfaces) is excluded and does not preserve state.
+     * tab and switches away returns to where they left off. Every other route (listing detail,
+     * auth, realtor surfaces) is excluded and does not preserve state.
      */
     val TOP_LEVEL_ROUTES: Set<String> =
         setOf(ROUTE_HOME, ROUTE_SEARCH, ROUTE_FAVORITES, ROUTE_INQUIRIES, ROUTE_ACCOUNT)

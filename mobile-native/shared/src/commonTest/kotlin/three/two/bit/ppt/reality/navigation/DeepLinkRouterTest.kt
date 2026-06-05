@@ -11,11 +11,10 @@ import kotlin.test.assertTrue
  *
  * These tests pin the platform-agnostic contract behind the Android `MainActivity` deep-link
  * handler and the Compose nav graph:
- *
  * 1. Deep-link URL schemes (`reality://...`) parse into a stable [DeepLinkTarget].
  * 2. Each target resolves to the exact nav-graph route string used by the Compose graph.
- * 3. The set of top-level tab routes (the ones whose back-stack state must be saved/restored
- *    when switching tabs) is well-defined and matches what the bottom bar drives.
+ * 3. The set of top-level tab routes (the ones whose back-stack state must be saved/restored when
+ *    switching tabs) is well-defined and matches what the bottom bar drives.
  */
 class DeepLinkRouterTest {
 
