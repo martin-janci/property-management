@@ -40,15 +40,10 @@ class ProfileStatsLoader(
     private val inquiryRepository: InquiryRepository,
 ) {
     suspend fun load(): ProfileStats {
-        val favorites =
-            favoritesRepository.getFavorites().getOrNull()?.total?.toIntClampedOrNull()
+        val favorites = favoritesRepository.getFavorites().getOrNull()?.total?.toIntClampedOrNull()
         val searches = favoritesRepository.getSavedSearches().getOrNull()?.total
         val inquiries = inquiryRepository.getInquiries().getOrNull()?.total
-        return ProfileStats(
-            favorites = favorites,
-            searches = searches,
-            inquiries = inquiries,
-        )
+        return ProfileStats(favorites = favorites, searches = searches, inquiries = inquiries)
     }
 }
 

@@ -54,8 +54,7 @@ class ProfileStatsLoaderTest {
                         respond(
                             content = ByteReadChannel(savedSearchesBody),
                             status = savedSearchesStatus,
-                            headers =
-                                headersOf(HttpHeaders.ContentType, "application/json"),
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
                         )
                     } else {
                         respondError(savedSearchesStatus)
@@ -65,8 +64,7 @@ class ProfileStatsLoaderTest {
                         respond(
                             content = ByteReadChannel(favoritesBody),
                             status = favoritesStatus,
-                            headers =
-                                headersOf(HttpHeaders.ContentType, "application/json"),
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
                         )
                     } else {
                         respondError(favoritesStatus)
@@ -76,8 +74,7 @@ class ProfileStatsLoaderTest {
                         respond(
                             content = ByteReadChannel(inquiriesBody),
                             status = inquiriesStatus,
-                            headers =
-                                headersOf(HttpHeaders.ContentType, "application/json"),
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
                         )
                     } else {
                         respondError(inquiriesStatus)
@@ -87,8 +84,7 @@ class ProfileStatsLoaderTest {
         }
         val client = HttpClient(engine) { install(ContentNegotiation) { json(json) } }
         return ProfileStatsLoader(
-            favoritesRepository =
-                FavoritesRepository("https://example.test", "tok", client),
+            favoritesRepository = FavoritesRepository("https://example.test", "tok", client),
             inquiryRepository = InquiryRepository("https://example.test", "tok", client),
         )
     }
@@ -123,8 +119,7 @@ class ProfileStatsLoaderTest {
 
     @Test
     fun load_clamps_oversized_favorites_total_to_int_max() = runTest {
-        val loader =
-            loaderWith(favoritesBody = """{"favorites":[],"total":3000000000}""")
+        val loader = loaderWith(favoritesBody = """{"favorites":[],"total":3000000000}""")
         val stats = loader.load()
         assertEquals(Int.MAX_VALUE, stats.favorites)
     }
