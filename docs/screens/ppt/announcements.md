@@ -91,9 +91,9 @@ owner: pm-frontend
 
 ## States
 
-- **Empty (list)**: megaphone-icon tile + "Žiadne oznamy" + body + primary "+ Nový oznam" + secondary "Importovať z Faults" link
-- **Loading (list)**: 8 skeleton cards (pin skel + 2 line skels + meta skels + progress-bar skel)
-- **Error 503 (list)**: danger tile + retry; toolbar + sidebar interactive
+- **Empty (list)**: megaphone-icon tile + "Žiadne oznamy" + body + primary "+ Nový oznam" + secondary "Importovať z Faults" link. **Implemented** (PR #1033): `AnnouncementList` shows "No announcements found." when not loading, not error, and the list is empty.
+- **Loading (list)**: 8 skeleton cards (pin skel + 2 line skels + meta skels + progress-bar skel). Code currently renders a single spinner while `isLoading` (skeleton-card treatment still TBD).
+- **Error 503 (list)**: danger tile + retry; toolbar + sidebar interactive. **Implemented** (PR #1033): `AnnouncementList` renders an inline `role="alert"` danger tile (red-50 bg / red-200 border) with `announcements.failedToLoad` ("Failed to load announcements") + a `common.retry` button calling `onRetry` (route wrapper `refetch()`). Threaded `AnnouncementsPageRoute → AnnouncementsPage → AnnouncementList` via `isError`/`onRetry` props; mutually exclusive with loading/empty/loaded.
 - **Loaded (list)**: 8 cards covering 5 states; 2 selected with bulk bar; 1 pinned at top
 - **Detail (existing)**: as designed — published with delivery + ack stats
 
@@ -115,10 +115,13 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 - Audience meta currently free text ("All residents") — must become a tokenized chip set (All residents / Owners only / By unit / By role) tied to the audience-selector when composing.
 - Multi-language announcements (`Slovak · English` in details kv) — implementation must support per-language body editing + per-language read receipts; v1 may ship single-language only.
 - Mobile bottom-nav must drop the legacy 📢 emoji per SKILL.md non-negotiable.
+- **List error/retry wired (PR #1033):** the designed `error-503` artboard now has a code counterpart — `AnnouncementList` owns the loading/error/empty triad and the error tile carries a retry button (`onRetry → refetch()`, i18n `announcements.failedToLoad` + shared `common.retry`). Skeleton-card loading treatment (8 cards per design) is still TBD; code shows a single spinner.
 
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-06-05 — agent: test-gap-screen-map-drift-pr-1033-ppt — screen-map sync for PR #1033: AnnouncementsPageRoute now threads `isError`/`onRetry` (from `useAnnouncements` error + `refetch`) through AnnouncementsPage → AnnouncementList; AnnouncementList renders the designed error-503 tile as a `role="alert"` inline error + retry button (i18n `announcements.failedToLoad` + `common.retry`), mutually exclusive with loading/empty/loaded; added AnnouncementsPage.test.tsx regression (gap-79-1). Updated States (Empty/Loading/Error → Implemented) + Notes; docs-only, no code change here
 
 - 2026-05-27 — agent: gap-6-2-announcement-read-receipt-retry — Story 6.2 retry: added AnnouncementDetailScreen (mobile) with auto-fire POST /read on mount + acknowledge button; wired AnnouncementDetail case in mobile App.tsx; added auto-mark-read useEffect in ppt-web ViewAnnouncementPageInner (fire-and-forget on announcement load); ppt-web & mobile typecheck + biome clean; mobile component: AnnouncementsScreen + AnnouncementDetailScreen
 
