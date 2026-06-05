@@ -325,12 +325,14 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1082",
         "PR #992"
       ],
       "evidence": [
-        "fix(epic-7a): wire mobile document detail + notify document-share recipients (#973) — 4 files changed (backend/crates/common/src/notifications/mod.rs, backend/servers/api-server/src/routes/documents/shares.rs, frontend/apps/mobile/src/App.tsx, frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx), no *test* file in diff"
+        "fix(epic-7a): wire mobile document detail + notify document-share recipients (#973) — 4 files changed (backend/crates/common/src/notifications/mod.rs, backend/servers/api-server/src/routes/documents/shares.rs, frontend/apps/mobile/src/App.tsx, frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx), no *test* file in diff",
+        "resolved: PR #1082 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx",
@@ -338,7 +340,7 @@
         "backend/servers/api-server/src/routes/documents/shares.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -347,12 +349,14 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1081",
         "PR #990"
       ],
       "evidence": [
-        "fix(frontend): close frontend gap-sweep remainder (Epics 1/6/7B/9/10B/11/15/17/18) — 34 files changed across ppt-web, admin-web, reality-web, api-client, reality-api-client (ProfileEditPage, DocumentDetail, SessionsPage, PrivacySettingsPage, useMessaging, agency/[slug]/page etc.), no *test* file in diff"
+        "fix(frontend): close frontend gap-sweep remainder (Epics 1/6/7B/9/10B/11/15/17/18) — 34 files changed across ppt-web, admin-web, reality-web, api-client, reality-api-client (ProfileEditPage, DocumentDetail, SessionsPage, PrivacySettingsPage, useMessaging, agency/[slug]/page etc.), no *test* file in diff",
+        "resolved: PR #1081 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/auth/pages/ProfileEditPage.tsx",
@@ -362,7 +366,7 @@
         "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -415,20 +419,22 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #992",
-        "PR #962"
+        "PR #1103",
+        "PR #962",
+        "PR #992"
       ],
       "evidence": [
         "PR #992 (fix) modified frontend/apps/mobile/src/App.tsx — a top-churn file this run — with no test diff; the navigation/deep-link wiring path that resolves a DocumentSharePayload into screen.push is now changing in back-to-back PRs (#962 deep-link handler, #992 doc-detail param shape) without coverage",
-        "best-effort risky-churn signal — fix-PR-on-hotspot-no-test heuristic; treat as a review candidate, not a hard regression"
+        "best-effort risky-churn signal — fix-PR-on-hotspot-no-test heuristic; treat as a review candidate, not a hard regression",
+        "resolved: PR #1103 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/mobile/src/App.tsx"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -458,13 +464,15 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1080",
         "PR #943",
         "issue #767"
       ],
       "evidence": [
-        "PR #943 fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, screens/announcements/AnnouncementsScreen.tsx, screens/documents/DocumentsScreen.tsx, screens/neighbors/NeighborsScreen.tsx) merged with no jest/RN Testing Library tests in diff. Second hotfix-no-test on the same mobile RN files in 14 days (cf. test-gap-hotfix-no-test-pr-918-mobile-dev-review)."
+        "PR #943 fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, screens/announcements/AnnouncementsScreen.tsx, screens/documents/DocumentsScreen.tsx, screens/neighbors/NeighborsScreen.tsx) merged with no jest/RN Testing Library tests in diff. Second hotfix-no-test on the same mobile RN files in 14 days (cf. test-gap-hotfix-no-test-pr-918-mobile-dev-review).",
+        "resolved: PR #1080 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/mobile/src/App.tsx",
@@ -474,7 +482,7 @@
         "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx"
       ],
       "created_at": "2026-06-02",
-      "updated_at": "2026-06-02",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -483,19 +491,21 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1106",
         "PR #939"
       ],
       "evidence": [
         "PR #939 fix(deploy-server): grant refs/heads/dev the release:deploy scope — extracted derive_oidc_scopes() in backend/servers/deploy-server/src/infra/audit.rs and added a new branch for refs/heads/dev with no rustdoc-test or unit test exercising the mapping table. PR body itself flags: dev token now target-agnostic for release:deploy → can request target: prod; tightening tracked as follow-up.",
-        "Latent scope-escalation note from PR body: derive_oidc_scopes is target-agnostic for release:deploy; dev/main can call any target. Hardening tracked as follow-up."
+        "Latent scope-escalation note from PR body: derive_oidc_scopes is target-agnostic for release:deploy; dev/main can call any target. Hardening tracked as follow-up.",
+        "resolved: PR #1106 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "backend/servers/deploy-server/src/infra/audit.rs"
       ],
       "created_at": "2026-06-02",
-      "updated_at": "2026-06-02",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -552,18 +562,20 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1052",
         "PR #874"
       ],
       "evidence": [
-        "fix(security): fail closed on unverified portal webhooks (closes #833) — 1 file changed (backend/servers/api-server/src/routes/portal_webhooks.rs), no *test* file in diff"
+        "fix(security): fail closed on unverified portal webhooks (closes #833) — 1 file changed (backend/servers/api-server/src/routes/portal_webhooks.rs), no *test* file in diff",
+        "resolved: PR #1052 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "backend/servers/api-server/src/routes/portal_webhooks.rs"
       ],
       "created_at": "2026-06-01",
-      "updated_at": "2026-06-01",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -572,12 +584,14 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1072",
         "PR #918"
       ],
       "evidence": [
-        "fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, 3 screens), no *test* file in diff"
+        "fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, 3 screens), no *test* file in diff",
+        "resolved: PR #1072 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/mobile/src/App.tsx",
@@ -587,7 +601,7 @@
         "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx"
       ],
       "created_at": "2026-06-01",
-      "updated_at": "2026-06-01",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -596,18 +610,20 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1076",
         "PR #921"
       ],
       "evidence": [
-        "fix(security): SSO consumer review findings (closes #820) — 1 file changed (backend/servers/reality-server/src/state.rs), no *test* file in diff"
+        "fix(security): SSO consumer review findings (closes #820) — 1 file changed (backend/servers/reality-server/src/state.rs), no *test* file in diff",
+        "resolved: PR #1076 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "backend/servers/reality-server/src/state.rs"
       ],
       "created_at": "2026-06-01",
-      "updated_at": "2026-06-01",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -616,19 +632,21 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1057",
         "PR #923"
       ],
       "evidence": [
-        "fix(ci): don't weaken branch protection; rebase lockfiles from base (closes #771) — 2 .yml files (.github/workflows/auto-rebase-stale-drafts.yml, branch-protection-setup.yml), no *test* file in diff (CI-config-only, test would be CI-integration)"
+        "fix(ci): don't weaken branch protection; rebase lockfiles from base (closes #771) — 2 .yml files (.github/workflows/auto-rebase-stale-drafts.yml, branch-protection-setup.yml), no *test* file in diff (CI-config-only, test would be CI-integration)",
+        "resolved: PR #1057 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         ".github/workflows/auto-rebase-stale-drafts.yml",
         ".github/workflows/branch-protection-setup.yml"
       ],
       "created_at": "2026-06-01",
-      "updated_at": "2026-06-01",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -664,20 +682,22 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1056",
         "PR #839"
       ],
       "evidence": [
         "PR #839 (fix(ppt-web): localize evidence-upload partial-fail toast + pass list via router state) touched frontend/apps/ppt-web/src/App.tsx (FileDisputePageRoute internal logic) without updating any docs/screens/ppt/*.md screen doc",
-        "heuristic caveat: this PR changes internal handler logic (i18n string + router state threading), not route topology — the docs/screens drift signal is best-effort and may not require a doc update; review whether docs/screens/ppt/file-dispute.md (or equivalent) needs a refreshed `agent log`"
+        "heuristic caveat: this PR changes internal handler logic (i18n string + router state threading), not route topology — the docs/screens drift signal is best-effort and may not require a doc update; review whether docs/screens/ppt/file-dispute.md (or equivalent) needs a refreshed `agent log`",
+        "resolved: PR #1056 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx",
         "docs/screens/ppt/"
       ],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -740,21 +760,23 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1068",
         "PR #607",
         "issue #572"
       ],
       "evidence": [
         "PR #607 (fix(api): booking push endpoints) added MAX_BATCH_SIZE=500 and available_count<0 guards to push_booking_availability and push_booking_rates in backend/servers/api-server/src/routes/integrations/install.rs (BATCH_TOO_LARGE / INVALID_AVAILABLE_COUNT 400s) with no test file in the diff",
         "classic hotfix-no-test: input validation on two reachable Airbnb push endpoints shipped without a regression test that would 400 on >500 updates or a negative count",
-        "test plan: a backend integration test posting 501 updates -> 400 BATCH_TOO_LARGE and one update with available_count=-1 -> 400 INVALID_AVAILABLE_COUNT, mirroring backend/servers/api-server/tests/document_upload_tests.rs structure"
+        "test plan: a backend integration test posting 501 updates -> 400 BATCH_TOO_LARGE and one update with available_count=-1 -> 400 INVALID_AVAILABLE_COUNT, mirroring backend/servers/api-server/tests/document_upload_tests.rs structure",
+        "resolved: PR #1068 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "backend/servers/api-server/src/routes/integrations/install.rs"
       ],
       "created_at": "2026-05-27",
-      "updated_at": "2026-05-27",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -1179,12 +1201,13 @@
       "title": "Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation",
       "vector": "dx",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1105",
         "PR #282",
         "PR #328",
-        "commit c97781a",
-        "commit 254f01d"
+        "commit 254f01d",
+        "commit c97781a"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:234 — `TODO: Implement installation flow (Epic API-marketplace install)`",
@@ -1192,14 +1215,15 @@
         "backend/servers/api-server/src/routes/integrations.rs — `TODO: Generate OAuth URL based on integration type`",
         "backend/servers/api-server/src/routes/integrations.rs — `TODO: Full implementation needs building/unit context from TenantContext`",
         "PR #328 explicitly downgraded the UI handlers from `console.log` placeholders to no-op TODOs but did not wire the real endpoints",
-        "[partial] 2026-05-23: the two integrations.rs OAuth TODO patterns are no longer present, but both IntegrationMarketplacePage.tsx TODOs (lines 234/238) remain — item stays open on the UI side"
+        "[partial] 2026-05-23: the two integrations.rs OAuth TODO patterns are no longer present, but both IntegrationMarketplacePage.tsx TODOs (lines 234/238) remain — item stays open on the UI side",
+        "resolved: PR #1105 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx",
         "backend/servers/api-server/src/routes/integrations.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-23",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -2316,19 +2340,21 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1085",
         "code-review reality-web 2026-05-28",
         "rotating-expert-review"
       ],
       "evidence": [
-        "app/[locale]/listings/[slug]/page.tsx:75 getListing returns response.json() typed as ListingDetail with no runtime validation; generateMetadata:93 calls listing.description.slice(0,160) and listing.address.city guarded only by the !listing null-check at :86, so a 200 body with null description / missing address from reality-server throws during SSR instead of degrading to the existing 'Listing Not Found' fallback"
+        "app/[locale]/listings/[slug]/page.tsx:75 getListing returns response.json() typed as ListingDetail with no runtime validation; generateMetadata:93 calls listing.description.slice(0,160) and listing.address.city guarded only by the !listing null-check at :86, so a 200 body with null description / missing address from reality-server throws during SSR instead of degrading to the existing 'Listing Not Found' fallback",
+        "resolved: PR #1085 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
       ],
       "created_at": "2026-05-28",
-      "updated_at": "2026-05-28",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -2380,19 +2406,21 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
+        "PR #1083",
         "code-review mobile-rn 2026-05-27",
         "rotating-expert-review"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:131 — toLocaleDateString('en-US', ...) hardcodes the en-US locale so vote dates never localize for sk/cs/de users; sibling AnnouncementDetailScreen.tsx:119 correctly passes i18n.language for the same call"
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:131 — toLocaleDateString('en-US', ...) hardcodes the en-US locale so vote dates never localize for sk/cs/de users; sibling AnnouncementDetailScreen.tsx:119 correctly passes i18n.language for the same call",
+        "resolved: PR #1083 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
       ],
       "created_at": "2026-05-27",
-      "updated_at": "2026-05-27",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -2587,6 +2615,136 @@
       ],
       "created_at": "2026-06-04",
       "updated_at": "2026-06-04",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1100-ppt",
+      "title": "Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1100"
+      ],
+      "evidence": [
+        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1085-reality",
+      "title": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1085"
+      ],
+      "evidence": [
+        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-1061-dispatcher-archive-corruption",
+      "title": "Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Issue #1061"
+      ],
+      "evidence": [
+        "Open issue #1061 untriaged (no labels) — dispatcher MCP push corrupted assignments-archive.json on the dev branch, dropping 195 historical rows; needs operator triage to decide rebuild vs accept"
+      ],
+      "files": [
+        ".research/management/assignments-archive.json"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements-test",
+      "title": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1101",
+        "PR #1077",
+        "PR #1083",
+        "PR #1098"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements",
+      "title": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1101",
+        "PR #1077",
+        "PR #1083",
+        "PR #1098"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-documents",
+      "title": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1101",
+        "PR #1081",
+        "PR #1082"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
       "plan": null
     }
   ]

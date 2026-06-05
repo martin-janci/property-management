@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-06-04 08:00 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-05 03:15 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -8,6 +8,7 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
+| 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061 | 2026-06-05 | open |
 | 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | #952 | 2026-06-03 | open |
 | 1 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) | #951 | 2026-06-03 | open |
 | 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | #950 | 2026-06-03 | open |

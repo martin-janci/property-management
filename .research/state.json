@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-04T07:47:41Z",
-  "last_run_ms": 5500,
-  "last_pr_seen": 1048,
-  "last_issue_seen": 1014,
-  "last_commit_sha": "fbe551150685f936ba92db40f969863f930204d6",
+  "last_run_iso": "2026-06-05T03:15:03Z",
+  "last_run_ms": 35000,
+  "last_pr_seen": 1106,
+  "last_issue_seen": 1097,
+  "last_commit_sha": "8c1a34d7be59dc42a8e6927b95b83167767c8641",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -48,9 +48,9 @@
       "recent_churn": 122
     },
     "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-26",
-      "recent_churn": 139
+      "runs_seen": 2,
+      "last_seen": "2026-06-05",
+      "recent_churn": 4
     },
     "backend/servers/api-server/src/routes/integrations/install.rs": {
       "runs_seen": 1,
@@ -201,6 +201,16 @@
       "runs_seen": 1,
       "last_seen": "2026-06-04",
       "recent_churn": 202
+    },
+    "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-05",
+      "recent_churn": 4
+    },
+    "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-05",
+      "recent_churn": 3
     }
   },
   "seen_signals": [
@@ -221,6 +231,7 @@
     "churn-hotspot-backend/servers/api-server/src/services/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
     "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
+    "churn-hotspot-backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/insurance_cross_tenant_idor_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/integration/document_folder_tests.rs",
     "churn-hotspot-backend/servers/api-server/tests/oauth_integration_tests.rs",
@@ -233,8 +244,12 @@
     "churn-hotspot-frontend/apps/admin-web/src/pages/SupportDataPage.tsx",
     "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
     "churn-hotspot-frontend/apps/mobile/src/App.tsx",
+    "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts",
     "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+    "churn-hotspot-frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
@@ -256,6 +271,7 @@
     "code-review-api-core-ssrf-outbound-fetch",
     "code-review-api-core-voice-device-idor",
     "code-review-api-handlers-dead-dup-auth-bldg-handlers",
+    "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-mobile-native-kmp-ios-deeplink-sso",
     "code-review-mobile-rn-hardcoded-locale",
     "code-review-mobile-rn-vote-list-cast",
@@ -276,6 +292,7 @@
     "dep-update-noise-2026-05-23",
     "dep-update-noise-2026-05-28",
     "dep-update-noise-2026-05-29",
+    "dep-update-noise-2026-06-05",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -306,6 +323,9 @@
     "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
     "risky-churn-pr-963-main-rs",
     "risky-churn-pr-992-app-tsx",
+    "screen-map-drift-pr-1033-ppt",
+    "screen-map-drift-pr-1085-reality",
+    "screen-map-drift-pr-1100-ppt",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -318,6 +338,8 @@
     "unchecked-todo-pr-497",
     "unchecked-todo-pr-718",
     "unchecked-todo-rls-migration-residual",
+    "untriaged-issue-1014",
+    "untriaged-issue-1061",
     "untriaged-issue-749",
     "untriaged-issue-750",
     "untriaged-issue-751",
@@ -364,13 +386,7 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952",
-    "code-review-finding-cross-cutting-schema-drift-1008",
-    "untriaged-issue-1014",
-    "screen-map-drift-pr-1033-ppt",
-    "churn-hotspot-frontend/apps/ppt-web/e2e/auth-refresh.spec.ts",
-    "churn-hotspot-backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs",
-    "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx"
+    "untriaged-issue-952"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -378,14 +394,14 @@
     "api-core": "2026-05-29",
     "reality-server": "2026-05-26",
     "ppt-web-ui": "2026-05-27",
-    "ppt-web-core": "2026-05-25",
+    "ppt-web-core": "2026-06-05",
     "reality-web": "2026-05-28",
     "mobile-rn": "2026-06-03",
     "mobile-native-kmp": "2026-05-26"
   },
   "stats": {
-    "runs": 21,
-    "vectors_created": 114,
+    "runs": 22,
+    "vectors_created": 120,
     "plans_created": 7,
     "quiet_days": 0,
     "auto_fix_count": 0
@@ -401,9 +417,9 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 0,
+    "next_index": 1,
     "role_last_run": {
-      "pm-tech-lead": "2026-05-23",
+      "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-05-24",
       "pm-frontend": "2026-05-25",
       "pm-qa": "2026-05-25",
@@ -414,6 +430,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }
