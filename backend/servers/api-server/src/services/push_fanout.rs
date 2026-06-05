@@ -853,14 +853,21 @@ mod tests {
         .with_priority(common::notifications::NotificationPriority::High);
 
         let payload = serde_json::to_string(&original).expect("serialize notification");
-        let decoded: Notification = serde_json::from_str(&payload).expect("deserialize notification");
+        let decoded: Notification =
+            serde_json::from_str(&payload).expect("deserialize notification");
 
         assert_eq!(decoded.id, original.id);
         assert_eq!(decoded.user_id, user_id);
         assert_eq!(decoded.title, "Building update");
         assert_eq!(decoded.body, "The lift will be serviced tomorrow.");
-        assert_eq!(decoded.category, common::notifications::NotificationCategory::Announcements);
-        assert_eq!(decoded.priority, common::notifications::NotificationPriority::High);
+        assert_eq!(
+            decoded.category,
+            common::notifications::NotificationCategory::Announcements
+        );
+        assert_eq!(
+            decoded.priority,
+            common::notifications::NotificationPriority::High
+        );
     }
 
     #[test]
