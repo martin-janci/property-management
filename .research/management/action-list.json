@@ -786,11 +786,12 @@
       "action": "Duplicated animate-spin spinner markup across mediation page + chat thread (no shared Spinner) (files: frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx) [src: PR #555, code-review 2026-05-27]",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-04 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": "merged #1118 @ 2026-06-05T05:48:05Z; closed by dispatcher 2026-06-05T12:30:29Z (archive-terminal leak, refactor-* id not caught by gc1-reconcile stem match)"
     },
     {
       "id": "refactor-mediation-ref-number-full-uuid",

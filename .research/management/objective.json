@@ -1,1 +1,1 @@
-{"epic_prefix":"gap-82","last_action":"repick","reason":"prior target 'NONE' exhausted; closest-to-done is 'gap-82' (open=4 claimable=1)","schema_version":1,"selected_at":"2026-06-05T10:08:11Z","stats_at_selection":{"claimable":1,"open":4}}
+{"schema_version":1,"epic_prefix":"NONE","selected_at":"2026-06-05T12:25:10Z","last_action":"repick","reason":"finish-first picker returned invalid loose-task epic (refactor-ai-rs-hot); no gap-N/pm- epic has claimable work (gap-8a-3 failed); set NONE to satisfy objective invariant","stats_at_selection":{"open":0,"claimable":0}}
