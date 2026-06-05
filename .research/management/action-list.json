@@ -552,11 +552,11 @@
     },
     {
       "id": "gap-6-4-pinned-announcements-ui",
-      "action": "Pinned announcements (story 6-4): pin/unpin action for managers + pinned section ordering at the top of the announcements list in ppt-web and mobile, wired to the backend pin flag.",
+      "action": "[ALREADY-SHIPPED: merged on dev PR#511/#512; empty diff] Pinned announcements (story 6-4): pin/unpin action for managers + pinned section ordering at the top of the announcements list in ppt-web and mobile, wired to the backend pin flag.",
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "in-progress",
+      "status": "dropped",
       "deadline": null,
       "source": "dispatcher-tier1-refill-coverage 2026-06-04",
       "depends_on": []

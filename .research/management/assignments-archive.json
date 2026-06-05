@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-05T02:07:29Z",
+  "archived_at": "2026-06-05T02:09:10Z",
   "assignments": [
     {
       "task_id": "bug-announcer-stale-message",
@@ -224,6 +224,28 @@
       "merge_attempted_at": "2026-06-04T23:59:16Z",
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "gap-6-4-pinned-announcements-ui",
+      "branch": "auto-impl/gap-6-4-pinned-announcements-ui",
+      "status": "failed",
+      "claimed_at": "2026-06-05T01:41:03Z",
+      "last_updated": "2026-06-05T02:09:10Z",
+      "status_changed_at": "2026-06-05T02:09:10Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done(already-shipped) note=feature already merged on dev (PR#511/#512); ppt-web+mobile pin UI present; empty diff, no PR opened",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-7a-2-mobile-folder-manage-ui",
@@ -540,28 +562,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-06-04T13:49:46Z"
-    },
-    {
-      "task_id": "test-gap-hotfix-no-test-pr-939-deploy-server-scopes",
-      "branch": "auto-impl/test-gap-hotfix-no-test-pr-939-deploy-se",
-      "status": "merged",
-      "claimed_at": "2026-06-04T19:38:00Z",
-      "last_updated": "2026-06-05T02:07:23Z",
-      "status_changed_at": "2026-06-05T02:07:23Z",
-      "pr_number": 1106,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1106",
-      "merged_at": "2026-06-05T01:45:27Z",
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=84720b9a11ff7cbf2c24d9165ec5c7504ffc6b0b note=self-approval-blocked-posted-as-comment;tests-real-cover-939-gap;ci-green",
-      "last_reviewed_oid": "84720b9a11ff7cbf2c24d9165ec5c7504ffc6b0b",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 1,
-      "merge_attempted_at": null
     },
     {
       "task_id": "test-gap-hotfix-no-test-pr-943-mobile-dev-review-tail",
