@@ -1,5 +1,6 @@
 import { type TimelineEventType, useDisputeTimeline } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '../../../components/Spinner';
 import { formatTime } from '../utils/formatTime';
 
 interface MediationTimelineViewProps {
@@ -52,11 +53,7 @@ export function MediationTimelineView({ disputeId }: MediationTimelineViewProps)
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div
-          role="status"
-          aria-label={t('common.loading')}
-          className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"
-        />
+        <Spinner size="md" />
       </div>
     );
   }

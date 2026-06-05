@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { Spinner } from '../../../components/Spinner';
 import { type ActionItem, ActionItemCard } from '../components/ActionItemCard';
 import type { DisputeCategory, DisputePriority, DisputeStatus } from '../components/DisputeCard';
 import { categoryLabels, priorityLabels, statusLabels } from '../components/DisputeCard';
@@ -194,7 +195,7 @@ export function DisputeDetailPage({
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        <Spinner size="lg" color="blue" />
       </div>
     );
   }

@@ -6,6 +6,7 @@
 
 import type { MediationSession, SessionStatus, SessionType } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '../../../components/Spinner';
 
 const sessionTypeLabelKeys: Record<SessionType, string> = {
   in_person: 'disputes.mediation.sessions.typeInPerson',
@@ -97,11 +98,7 @@ export function MediationSessionsPanel({
 
       {isLoading ? (
         <div className="flex justify-center py-4">
-          <div
-            role="status"
-            aria-label={t('common.loading')}
-            className="animate-spin rounded-full h-5 w-5 border-b-2 border-violet-600"
-          />
+          <Spinner size="sm" />
         </div>
       ) : ordered.length === 0 ? (
         <p className="text-xs text-gray-400">{t('disputes.mediation.sessions.empty')}</p>

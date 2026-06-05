@@ -12,6 +12,7 @@
 import { useTranslation } from 'react-i18next';
 
 export type SpinnerSize = 'sm' | 'md' | 'lg';
+export type SpinnerColor = 'violet' | 'blue';
 
 const sizeClasses: Record<SpinnerSize, string> = {
   sm: 'h-5 w-5',
@@ -19,23 +20,30 @@ const sizeClasses: Record<SpinnerSize, string> = {
   lg: 'h-10 w-10',
 };
 
+const colorClasses: Record<SpinnerColor, string> = {
+  violet: 'border-violet-600',
+  blue: 'border-blue-600',
+};
+
 export interface SpinnerProps {
   /** Visual size. Defaults to `md` (h-8 w-8). */
   size?: SpinnerSize;
+  /** Border color. Defaults to `violet`. */
+  color?: SpinnerColor;
   /** Accessible label. Defaults to the `common.loading` translation. */
   label?: string;
   /** Extra classes appended after the base spinner classes. */
   className?: string;
 }
 
-export function Spinner({ size = 'md', label, className }: SpinnerProps) {
+export function Spinner({ size = 'md', color = 'violet', label, className }: SpinnerProps) {
   const { t } = useTranslation();
 
   return (
     <div
       role="status"
       aria-label={label ?? t('common.loading')}
-      className={`animate-spin rounded-full ${sizeClasses[size]} border-b-2 border-violet-600${
+      className={`animate-spin rounded-full ${sizeClasses[size]} border-b-2 ${colorClasses[color]}${
         className ? ` ${className}` : ''
       }`}
     />
