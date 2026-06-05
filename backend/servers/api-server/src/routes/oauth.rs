@@ -49,33 +49,25 @@ pub fn router() -> Router<AppState> {
 /// re-derives the platform principal from the trusted `users` table on every
 /// request, checks an active grant, and enforces recent MFA.
 pub fn admin_router() -> Router<AppState> {
+    // All admin routes require OauthClientWrite — hoist the layer to the router
+    // rather than repeating it on every individual route.
     Router::new()
+        .route("/clients", post(register_client))
+        .route("/clients", get(list_clients))
+        .route("/clients/{id}", get(get_client))
         .route(
-            "/clients",
-            post(register_client).layer(require_capability(Capability::OauthClientWrite)),
-        )
-        .route(
-            "/clients",
-            get(list_clients).layer(require_capability(Capability::OauthClientWrite)),
+            "/clients/{id}",
+            axum::routing::patch(update_client),
         )
         .route(
             "/clients/{id}",
-            get(get_client).layer(require_capability(Capability::OauthClientWrite)),
-        )
-        .route(
-            "/clients/{id}",
-            axum::routing::patch(update_client)
-                .layer(require_capability(Capability::OauthClientWrite)),
-        )
-        .route(
-            "/clients/{id}",
-            axum::routing::delete(revoke_client)
-                .layer(require_capability(Capability::OauthClientWrite)),
+            axum::routing::delete(revoke_client),
         )
         .route(
             "/clients/{id}/regenerate-secret",
-            post(regenerate_client_secret).layer(require_capability(Capability::OauthClientWrite)),
+            post(regenerate_client_secret),
         )
+        .layer(require_capability(Capability::OauthClientWrite))
 }
 
 // ==================== Authorization Endpoint ====================
@@ -348,44 +340,28 @@ pub async fn token(
             .map_err(|e| (StatusCode::UNAUTHORIZED, Json(e.into())))?;
     }
 
+    // Phase 6 C17 + review R5: audit the principal_kind rejection as a real
+    // audit_log row (not just a tracing line) so it surfaces in the unified
+    // audit viewer and triggers any platform-admin alerts (leak #21 defense).
+    // Both grant branches share this error shape — handled via the helper.
+    use crate::services::OAuthServiceError;
+
     let response = match request.grant_type.as_str() {
         "authorization_code" => {
             match state.oauth_service.exchange_code_for_tokens(&request).await {
                 Ok(r) => r,
                 Err(e) => {
-                    use crate::services::OAuthServiceError;
                     let status = match &e {
                         OAuthServiceError::PrincipalKindNotAllowed => StatusCode::FORBIDDEN,
                         _ => StatusCode::BAD_REQUEST,
                     };
-                    // Phase 6 C17 + review R5: audit the principal_kind rejection
-                    // as a real audit_log row (not just a tracing line) so it
-                    // surfaces in the unified audit viewer and triggers any
-                    // platform-admin alerts (leak #21 defense).
                     if matches!(e, OAuthServiceError::PrincipalKindNotAllowed) {
-                        let _ = state
-                            .audit_log_repo
-                            .create(CreateAuditLog {
-                                user_id: None,
-                                action: AuditAction::OAuthTokenDeniedPrincipalKind,
-                                resource_type: Some("oauth_token".to_string()),
-                                resource_id: None,
-                                org_id: None,
-                                details: Some(serde_json::json!({
-                                    "client_id": request.client_id,
-                                    "grant_type": "authorization_code",
-                                    "reason": "principal_kind_not_allowed_for_client",
-                                })),
-                                old_values: None,
-                                new_values: None,
-                                ip_address: None,
-                                user_agent: None,
-                            })
-                            .await;
-                        tracing::warn!(
-                            client_id = ?request.client_id,
-                            "OAuth token denied: principal_kind_not_allowed_for_client"
-                        );
+                        audit_token_denied_principal_kind(
+                            &state,
+                            request.client_id.as_deref().unwrap_or("<unknown>"),
+                            "authorization_code",
+                        )
+                        .await;
                     }
                     return Err((status, Json(e.into())));
                 }
@@ -407,35 +383,17 @@ pub async fn token(
             {
                 Ok(r) => r,
                 Err(e) => {
-                    use crate::services::OAuthServiceError;
                     let status = match &e {
                         OAuthServiceError::PrincipalKindNotAllowed => StatusCode::FORBIDDEN,
                         _ => StatusCode::BAD_REQUEST,
                     };
                     if matches!(e, OAuthServiceError::PrincipalKindNotAllowed) {
-                        let _ = state
-                            .audit_log_repo
-                            .create(CreateAuditLog {
-                                user_id: None,
-                                action: AuditAction::OAuthTokenDeniedPrincipalKind,
-                                resource_type: Some("oauth_token".to_string()),
-                                resource_id: None,
-                                org_id: None,
-                                details: Some(serde_json::json!({
-                                    "client_id": client_id,
-                                    "grant_type": "refresh_token",
-                                    "reason": "principal_kind_not_allowed_for_client",
-                                })),
-                                old_values: None,
-                                new_values: None,
-                                ip_address: None,
-                                user_agent: None,
-                            })
-                            .await;
-                        tracing::warn!(
-                            client_id = %client_id,
-                            "OAuth refresh denied: principal_kind_not_allowed_for_client"
-                        );
+                        audit_token_denied_principal_kind(
+                            &state,
+                            client_id,
+                            "refresh_token",
+                        )
+                        .await;
                     }
                     return Err((status, Json(e.into())));
                 }
@@ -654,15 +612,7 @@ pub async fn list_user_grants(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    let user_id: Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
+    let user_id = require_bearer_user_id(&state, &headers)?;
 
     let grants = state
         .oauth_service
@@ -700,15 +650,7 @@ pub async fn revoke_user_grant(
     headers: axum::http::HeaderMap,
     axum::extract::Path(client_id): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    let user_id: Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
+    let user_id = require_bearer_user_id(&state, &headers)?;
 
     let revoked = state
         .oauth_service
@@ -1178,16 +1120,15 @@ fn extract_client_credentials(
     None
 }
 
-/// JWT claims structure.
-#[derive(Debug, serde::Deserialize)]
+/// JWT claims structure (only the `sub` field is used in this module; the
+/// struct is kept minimal to avoid carrying stale copies of email/roles that
+/// no handler in this file ever reads).
+#[derive(Debug)]
 struct JwtClaims {
     sub: String,
-    email: String,
-    #[serde(default)]
-    roles: Vec<String>,
 }
 
-/// Validate access token and extract claims.
+/// Validate access token and return minimal claims.
 fn validate_access_token(
     state: &AppState,
     token: &str,
@@ -1204,9 +1145,63 @@ fn validate_access_token(
                 )),
             )
         })
-        .map(|claims| JwtClaims {
-            sub: claims.sub,
-            email: claims.email,
-            roles: claims.roles.unwrap_or_default(),
+        .map(|claims| JwtClaims { sub: claims.sub })
+}
+
+/// Extract and validate the bearer token, then parse the caller's `Uuid`.
+///
+/// This three-step sequence (extract -> validate -> parse sub as Uuid) appears in
+/// every user-authenticated handler in this module. Centralising it ensures the
+/// error messages and HTTP statuses stay consistent and that future changes only
+/// need to land in one place.
+fn require_bearer_user_id(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    let token = extract_bearer_token(headers)?;
+    let claims = validate_access_token(state, &token)?;
+    claims.sub.parse::<Uuid>().map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
+        )
+    })
+}
+
+/// Emit an audit log row for a `PrincipalKindNotAllowed` token denial and log a
+/// structured warning.
+///
+/// The `token` handler's two grant branches (`authorization_code` and
+/// `refresh_token`) both need this identical block. Extracting it keeps the
+/// hot-path error path in one place so future policy changes (e.g. adding
+/// `ip_address` or changing the audit action) require a single edit.
+async fn audit_token_denied_principal_kind(
+    state: &AppState,
+    client_id: &str,
+    grant_type: &str,
+) {
+    let _ = state
+        .audit_log_repo
+        .create(CreateAuditLog {
+            user_id: None,
+            action: AuditAction::OAuthTokenDeniedPrincipalKind,
+            resource_type: Some("oauth_token".to_string()),
+            resource_id: None,
+            org_id: None,
+            details: Some(serde_json::json!({
+                "client_id": client_id,
+                "grant_type": grant_type,
+                "reason": "principal_kind_not_allowed_for_client",
+            })),
+            old_values: None,
+            new_values: None,
+            ip_address: None,
+            user_agent: None,
         })
+        .await;
+    tracing::warn!(
+        client_id = %client_id,
+        grant_type = %grant_type,
+        "OAuth token denied: principal_kind_not_allowed_for_client"
+    );
 }
