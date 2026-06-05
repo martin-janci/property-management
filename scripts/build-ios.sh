@@ -73,23 +73,39 @@ echo ""
 mkdir -p "$OUT_DIR"
 
 # --- Step 1: Build KMP shared framework (required before xcodebuild) ---
+# The :shared module exposes a plain `binaries.framework {}` (NOT the
+# kotlin-cocoapods plugin), so the correct task is `link<Build>Framework<Target>`
+# — `linkPodReleaseFrameworkIosArm64` is a cocoapods-only task and does not
+# exist here (it would fail before xcodebuild ever ran). xcodegen's per-target
+# pre-build script (iosApp/project.yml) also builds the framework on demand;
+# this step keeps the standalone CI path working for device archives.
 echo -e "${BLUE}[1/3] Building KMP shared framework...${NC}"
 (
     cd "$ROOT_DIR/mobile-native"
-    ./gradlew :shared:linkPodReleaseFrameworkIosArm64
+    ./gradlew :shared:linkReleaseFrameworkIosArm64
 )
 echo -e "${GREEN}  KMP framework built.${NC}"
 
 # --- Step 2: xcodebuild ---
 echo -e "${BLUE}[2/3] Running xcodebuild (${CONFIG})...${NC}"
 
-# The Xcode project is generated, not committed. Fail fast with a clear message
-# instead of letting xcodebuild emit a cryptic error (previously masked by
-# `|| true`, which let CI go green on a build that never produced an artifact).
+# The Xcode project is generated, not committed (see iosApp/project.yml). Try to
+# generate it with xcodegen; fail fast with a clear message if that is not
+# possible, instead of letting xcodebuild emit a cryptic error (previously
+# masked by `|| true`, which let CI go green on a build that never produced an
+# artifact).
+if [ ! -d "$IOS_DIR/iosApp.xcodeproj" ]; then
+    if command -v xcodegen >/dev/null 2>&1; then
+        echo -e "${YELLOW}  iosApp.xcodeproj missing — generating from project.yml via xcodegen...${NC}"
+        ( cd "$IOS_DIR" && xcodegen generate )
+    fi
+fi
+
 if [ ! -d "$IOS_DIR/iosApp.xcodeproj" ]; then
     echo -e "${RED}ERROR: Xcode project not found at $IOS_DIR/iosApp.xcodeproj${NC}" >&2
     echo "  The iosApp.xcodeproj is generated and is not committed to the repo." >&2
-    echo "  Generate it (e.g. via the KMP/Xcode project setup) before running this script." >&2
+    echo "  Install xcodegen (brew install xcodegen) and run:" >&2
+    echo "    cd mobile-native/iosApp && xcodegen generate" >&2
     exit 1
 fi
 
