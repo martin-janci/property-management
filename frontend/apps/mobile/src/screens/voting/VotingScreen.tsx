@@ -32,7 +32,7 @@ export interface Vote {
 }
 
 /** Subset of `VoteSummary` from `GET /api/v1/voting`. */
-interface ApiVoteSummary {
+export interface ApiVoteSummary {
   id: string;
   building_id: string;
   title: string;
@@ -94,8 +94,11 @@ export function formatVoteDate(dateString: string, locale: string): string {
   });
 }
 
-/** Map the api-server's status string onto the UI's narrowed enum. */
-function toUiStatus(status: string): VoteStatus {
+/** Map the api-server's status string onto the UI's narrowed enum.
+ *
+ *  Exported so the pure status mapping can be unit-tested without rendering
+ *  the screen. */
+export function toUiStatus(status: string): VoteStatus {
   switch (status) {
     case 'active':
     case 'open':
@@ -110,8 +113,12 @@ function toUiStatus(status: string): VoteStatus {
 
 /** The list endpoint only returns summaries — no questions/options/results
  *  detail. The screen still renders, but inline voting is disabled until
- *  the user navigates into the (future) detail screen. */
-function toUiVote(s: ApiVoteSummary): Vote {
+ *  the user navigates into the (future) detail screen.
+ *
+ *  Exported so the summary→UI mapping (including the numeric `?? 0` fallbacks
+ *  and the `currentQuorum === participation_count` invariant) can be
+ *  unit-tested without rendering the screen. */
+export function toUiVote(s: ApiVoteSummary): Vote {
   const total = s.participation_count ?? 0;
   return {
     id: s.id,
