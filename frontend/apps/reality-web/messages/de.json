@@ -48,6 +48,10 @@
     "search": "Suchen",
     "success": "Erfolg"
   },
+  "comparison": {
+    "loadError": "Der geteilte Vergleich konnte nicht geladen werden. Einige Immobilien sind möglicherweise nicht mehr verfügbar.",
+    "loading": "Geteilter Vergleich wird geladen..."
+  },
   "contact": {
     "askQuestion": "Eine Frage stellen",
     "checkAvailability": "Verfügbarkeit prüfen",

@@ -48,6 +48,10 @@
     "search": "Hľadať",
     "success": "Úspech"
   },
+  "comparison": {
+    "loadError": "Nepodarilo sa načítať zdieľané porovnanie. Niektoré nehnuteľnosti už nemusia byť dostupné.",
+    "loading": "Načítava sa zdieľané porovnanie..."
+  },
   "contact": {
     "askQuestion": "Položiť otázku",
     "checkAvailability": "Overiť dostupnosť",

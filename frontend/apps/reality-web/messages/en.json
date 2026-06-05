@@ -48,6 +48,10 @@
     "search": "Search",
     "success": "Success"
   },
+  "comparison": {
+    "loadError": "Failed to load shared comparison. Some properties may no longer be available.",
+    "loading": "Loading shared comparison..."
+  },
   "contact": {
     "askQuestion": "Ask a question",
     "checkAvailability": "Check availability",
