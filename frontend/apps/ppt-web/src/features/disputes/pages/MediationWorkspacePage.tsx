@@ -22,6 +22,7 @@ import { MediationResolutionForm } from '../components/MediationResolutionForm';
 import { MediationSessionDialog } from '../components/MediationSessionDialog';
 import { MediationSessionsPanel } from '../components/MediationSessionsPanel';
 import { MediationTimelineView } from '../components/MediationTimelineView';
+import { formatDisputeReference } from '../utils/formatReference';
 
 type Tab = 'timeline' | 'chat' | 'resolve';
 
@@ -242,7 +243,7 @@ export function MediationWorkspacePage({
   }
 
   const disputeStatus = dispute?.status ?? 'unknown';
-  const referenceNumber = dispute ? `DSP-${dispute.id.toUpperCase()}` : disputeId;
+  const referenceNumber = dispute ? formatDisputeReference(dispute.id) : disputeId;
   const disputeTitle = dispute?.subject ?? t('disputes.title');
   const statusLabel = statusLabelKeys[disputeStatus]
     ? t(statusLabelKeys[disputeStatus])
