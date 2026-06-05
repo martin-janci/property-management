@@ -5,11 +5,10 @@ package three.two.bit.ppt.reality.listing
  *
  * These functions hold the non-UI logic the Reality home/search screen needs so it can be unit
  * tested without a Compose (or SwiftUI) runtime and reused by the iOS target later:
- *
  * - [buildSearchRequest] — assembles a [ListingSearchRequest] from the screen's filter inputs.
  * - [activeFilterCount] — the badge count shown on the "Filtre" chip.
- * - [shouldLoadNextPage] — the infinite-scroll trigger (AC-4): given the currently loaded count, the
- *   reported total, and whether a load is in flight, decide whether to fetch the next page.
+ * - [shouldLoadNextPage] — the infinite-scroll trigger (AC-4): given the currently loaded count,
+ *   the reported total, and whether a load is in flight, decide whether to fetch the next page.
  * - [mergePage] — append-or-replace semantics for paginated results (page 1 replaces, later pages
  *   append).
  *
@@ -72,7 +71,8 @@ object SearchState {
      * Returns true when the list of currently-loaded items is within [PREFETCH_THRESHOLD] of the
      * last visible index, more results exist on the server, and no load is already in flight.
      *
-     * @param lastVisibleIndex index of the last item currently visible (null when the list is empty)
+     * @param lastVisibleIndex index of the last item currently visible (null when the list is
+     *   empty)
      * @param loadedCount number of items already loaded
      * @param total total result count reported by the server
      * @param isLoading whether a page request is in flight

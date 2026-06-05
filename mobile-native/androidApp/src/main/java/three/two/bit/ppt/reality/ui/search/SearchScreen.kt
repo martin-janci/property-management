@@ -128,7 +128,8 @@ fun SearchScreen(
                 .searchListings(request)
                 .fold(
                     onSuccess = { response ->
-                        searchResults = SearchState.mergePage(searchResults, response.listings, page)
+                        searchResults =
+                            SearchState.mergePage(searchResults, response.listings, page)
                         totalResults = response.total
                         currentPage = page
                     },
@@ -537,9 +538,7 @@ private fun FilterSheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
         ) {
             Text(
                 text = stringResource(R.string.filters),
