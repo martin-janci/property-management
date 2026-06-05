@@ -14,6 +14,7 @@ import {
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '../../../components/Spinner';
 import { MediationAssignDialog } from '../components/MediationAssignDialog';
 import { MediationChatThread } from '../components/MediationChatThread';
 import { MediationEscalateDialog } from '../components/MediationEscalateDialog';
@@ -190,11 +191,7 @@ export function MediationWorkspacePage({
   if (disputeLoading && !dispute) {
     return (
       <div className="flex justify-center py-16">
-        <div
-          role="status"
-          aria-label={t('common.loading')}
-          className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600"
-        />
+        <Spinner size="lg" />
       </div>
     );
   }
