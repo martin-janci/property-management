@@ -530,7 +530,7 @@ pub(crate) fn sanitize_markdown(content: &str) -> String {
 }
 
 // ============================================================================
-// Tests (Story 6.3 — comment validation)
+// Tests (Story 6.3 - comment validation)
 // ============================================================================
 
 #[cfg(test)]
@@ -579,7 +579,7 @@ mod tests {
 
     #[test]
     fn sanitize_markdown_strips_javascript_href() {
-        let input = r#"<a href=\"javascript:alert(1)\">click</a>"#;
+        let input = r#"<a href="javascript:alert(1)">click</a>"#;
         let output = sanitize_markdown(input);
         assert!(
             !output.contains("javascript:"),
@@ -591,7 +591,7 @@ mod tests {
 
     #[test]
     fn create_comment_request_defaults_ai_consent_to_false() {
-        let json = r#"{\"content\":\"Hello world\"}"#;
+        let json = r#"{"content":"Hello world"}"#;
         let req: CreateCommentRequest = serde_json::from_str(json).unwrap();
         assert!(
             !req.ai_training_consent,
@@ -605,7 +605,7 @@ mod tests {
     fn create_comment_request_accepts_parent_id() {
         let parent = Uuid::new_v4();
         let json = format!(
-            r#"{{\"content\":\"Reply\",\"parent_id\":\"{}\",\"ai_training_consent\":true}}"#,
+            r#"{{"content":"Reply","parent_id":"{}","ai_training_consent":true}}"#,
             parent
         );
         let req: CreateCommentRequest = serde_json::from_str(&json).unwrap();
