@@ -10,9 +10,8 @@ import three.two.bit.ppt.reality.inquiry.InquiryRepository
  * renders a dash rather than a misleading `0`. The reality-server has no single `/me/stats`
  * endpoint, so the counts are derived from the `total` field returned by the three list endpoints
  * the app already calls:
- *
  * - favorites - `GET /api/v1/favorites` -> `FavoritesResponse.total`
- * - searches  - `GET /api/v1/saved-searches` -> `SavedSearchesResponse.total`
+ * - searches - `GET /api/v1/saved-searches` -> `SavedSearchesResponse.total`
  * - inquiries - `GET /api/v1/inquiries` -> `InquiriesResponse.total`
  *
  * Epic 48 - Story 48.5: Portal Mobile Account.
