@@ -189,18 +189,18 @@
     {
       "task_id": "refactor-mobile-app-tsx-churn-2026-06-03",
       "branch": "auto-impl/refactor-mobile-app-tsx-churn-2026-06-03",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-05T18:17:31Z",
-      "last_updated": "2026-06-05T18:17:31Z",
-      "status_changed_at": "2026-06-05T18:17:31Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-05T18:29:44Z",
+      "status_changed_at": "2026-06-05T18:29:44Z",
+      "pr_number": 1131,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1131",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=1131 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=extracted deep-link wiring into useDeepLinkRouting hook + renderer-free test; typecheck/biome/jest(5) green; renderScreen registry left as follow-up to avoid PR #1011 conflict",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -209,5 +209,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-06-05T18:25:03Z"
+  "generated": "2026-06-05T18:29:44Z"
 }
