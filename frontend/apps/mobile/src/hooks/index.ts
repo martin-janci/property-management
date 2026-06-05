@@ -1,3 +1,4 @@
+export { useDeepLinkRouting } from './useDeepLinkRouting';
 export type {
   CacheOptions,
   OfflineState,
