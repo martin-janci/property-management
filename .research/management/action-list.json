@@ -494,7 +494,7 @@
       "action": "Create mobile build scripts (scripts/build-mobile|android|ios.sh) and DEV/STG app-icon variant generation for the React Native app (story 85-2).",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-tier1-refill-coverage 2026-06-03",
       "deadline": null,
       "dependency": null,
@@ -539,10 +539,16 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
-      "depends_on": []
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04 | gc1-reconcile 2026-06-05T01:38:43Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1104,
+        "merged_at": "2026-06-04T23:54:41Z",
+        "at": "2026-06-05T01:38:43Z"
+      }
     },
     {
       "id": "gap-6-4-pinned-announcements-ui",
@@ -550,7 +556,7 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "dispatcher-tier1-refill-coverage 2026-06-04",
       "depends_on": []
@@ -703,7 +709,7 @@
       "action": "Screen-map drift: PR #1033 wired error/retry into AnnouncementsPage+FaultsPage via App.tsx without a docs/screens/ppt update (files: frontend/apps/ppt-web/src/App.tsx) [src: PR #1033]",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-tier1-refill 2026-06-04 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
@@ -736,7 +742,7 @@
       "action": "ppt-web e2e auth-refresh.spec.ts added (+252 lines, story 79-2 token-refresh coverage) (files: frontend/apps/ppt-web/e2e/auth-refresh.spec.ts) [src: PR #1047]",
       "owner_role": "pm-security",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-tier1-refill 2026-06-04 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
