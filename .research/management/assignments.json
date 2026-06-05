@@ -75,10 +75,10 @@
       "claimed_at": "2026-06-05T10:09:56Z",
       "code_reuse_warn": null,
       "empty_branch": null,
-      "fix_rounds": 1,
+      "fix_rounds": 2,
       "implementer_summary": "pr=1126 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=screens already auth-wired; closed account stats gap via commonMain ProfileStatsLoader + commonTest; gradle verify env-blocked (AGP/dl.google.com), draft pending mobile-native.yml CI",
       "last_reviewed_oid": "f6c353beedd3969d3949f3d0b069178fcc99cde7",
-      "last_updated": "2026-06-05T16:27:14Z",
+      "last_updated": "2026-06-05T18:17:31Z",
       "merge_attempted_at": null,
       "merged_at": null,
       "pr_number": 1126,
@@ -87,11 +87,11 @@
       "quarantined_at": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "reviewer_summary": "verdict=changes head_oid=f6c353beedd3969d3949f3d0b069178fcc99cde7 note=spotlessKotlinCheck still FAILING (KtDoc wrap + em-dash in ProfileStats.kt + ProfileStatsLoaderTest.kt); prior reformat did not match CI config; needs another fix round (fix_rounds=1)",
+      "reviewer_summary": null,
       "scope_drift": false,
       "specialist": "kotlin-mp",
-      "status": "review",
-      "status_changed_at": "2026-06-05T10:26:34Z",
+      "status": "in-progress",
+      "status_changed_at": "2026-06-05T18:17:31Z",
       "task_id": "gap-82-5-reality-mobile-inquiries-account"
     },
     {
@@ -169,8 +169,30 @@
       "branch": "auto-impl/refactor-ai-rs-hot",
       "status": "in-progress",
       "claimed_at": "2026-06-05T14:13:38Z",
-      "last_updated": "2026-06-05T16:27:14Z",
-      "status_changed_at": "2026-06-05T14:13:38Z",
+      "last_updated": "2026-06-05T18:17:31Z",
+      "status_changed_at": "2026-06-05T18:17:31Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "refactor-mobile-app-tsx-churn-2026-06-03",
+      "branch": "auto-impl/refactor-mobile-app-tsx-churn-2026-06-03",
+      "status": "in-progress",
+      "claimed_at": "2026-06-05T18:17:31Z",
+      "last_updated": "2026-06-05T18:17:31Z",
+      "status_changed_at": "2026-06-05T18:17:31Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -187,5 +209,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-06-05T16:27:14Z"
+  "generated": "2026-06-05T18:17:31Z"
 }
