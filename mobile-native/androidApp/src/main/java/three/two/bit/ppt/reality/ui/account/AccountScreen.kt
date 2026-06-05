@@ -97,8 +97,7 @@ fun AccountScreen(
             val token = (authState as? AuthState.Authenticated)?.sessionToken
             val baseUrl = ApiConfig.requireBaseUrl()
             ProfileStatsLoader(
-                favoritesRepository =
-                    FavoritesRepository(baseUrl = baseUrl, sessionToken = token),
+                favoritesRepository = FavoritesRepository(baseUrl = baseUrl, sessionToken = token),
                 inquiryRepository = InquiryRepository(baseUrl = baseUrl, sessionToken = token),
             )
         }
@@ -230,7 +229,7 @@ fun AccountScreen(
     }
 }
 
-// ─── Top bar ──────────────────────────────────────────────
+// ─── Top bar ───────────────────────────────────────────────
 
 @Composable
 private fun ProfileTopBar(onEditProfileClick: () -> Unit) {
@@ -551,7 +550,7 @@ private fun SectionDivider() {
     )
 }
 
-// ─── Notification preferences (collapsible) ───────────────────────────
+// ─── Notification preferences (collapsible) ──────────────────────
 
 @Composable
 private fun NotificationPreferencesCard(
@@ -633,7 +632,7 @@ private fun NotificationPreferenceItem(
     }
 }
 
-// ─── App settings + About (preserved, restyled) ─────────────────────────
+// ─── App settings + About (preserved, restyled) ────────────────────────
 
 @Composable
 private fun AppSettingsCard() {
@@ -797,7 +796,7 @@ private fun AboutRow(icon: ImageVector, title: String, onClick: () -> Unit) {
     }
 }
 
-// ─── Sign out card ──────────────────────────────────────────
+// ─── Sign out card ─────────────────────────────────────────
 
 @Composable
 private fun SignOutCard(onClick: () -> Unit) {
@@ -843,7 +842,7 @@ private fun SignOutCard(onClick: () -> Unit) {
     }
 }
 
-// ─── Not signed in ──────────────────────────────────────────
+// ─── Not signed in ─────────────────────────────────────────
 
 @Composable
 private fun NotSignedInContent(onSignInClick: () -> Unit) {
