@@ -321,6 +321,64 @@ impl RedisClient {
         tracing::debug!(pattern = %full_pattern, deleted = deleted, "Cache DEL pattern");
         Ok(deleted)
     }
+
+    // =========================================================================
+    // List / Queue Operations (used by background fan-out workers)
+    // =========================================================================
+
+    /// Append a raw string value to the tail of a Redis list (`RPUSH`).
+    ///
+    /// Used as a simple FIFO job queue: producers `RPUSH` and consumers
+    /// `BLPOP` from the head. Returns the new length of the list.
+    pub async fn queue_push(&self, key: &str, value: &str) -> Result<u64, CacheError> {
+        let full_key = self.build_key(key);
+        let mut conn = self.connection_manager.clone();
+
+        let len: u64 = conn.rpush(&full_key, value).await?;
+        tracing::trace!(key = %full_key, len = len, "Queue RPUSH");
+        Ok(len)
+    }
+
+    /// Block until an element is available at the head of a Redis list, or the
+    /// timeout elapses (`BLPOP`).
+    ///
+    /// `timeout_secs == 0` blocks indefinitely (standard Redis semantics).
+    /// Returns `Ok(Some(value))` when an element was popped, or `Ok(None)` when
+    /// the timeout elapsed with no element available.
+    ///
+    /// NOTE: `BLPOP` holds the underlying connection for up to `timeout_secs`.
+    /// `ConnectionManager` multiplexes a single connection, so callers should
+    /// use a modest timeout (a few seconds) rather than blocking forever, to
+    /// avoid starving other commands that share the manager.
+    pub async fn queue_pop_blocking(
+        &self,
+        key: &str,
+        timeout_secs: f64,
+    ) -> Result<Option<String>, CacheError> {
+        let full_key = self.build_key(key);
+        let mut conn = self.connection_manager.clone();
+
+        // BLPOP returns `[key, value]` on success or nil (→ None) on timeout.
+        let popped: Option<(String, String)> = conn.blpop(&full_key, timeout_secs).await?;
+        match popped {
+            Some((_popped_key, value)) => {
+                tracing::trace!(key = %full_key, "Queue BLPOP hit");
+                Ok(Some(value))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Return the current length of a Redis list (`LLEN`).
+    ///
+    /// Useful for queue-depth metrics / alerting.
+    pub async fn queue_len(&self, key: &str) -> Result<u64, CacheError> {
+        let full_key = self.build_key(key);
+        let mut conn = self.connection_manager.clone();
+
+        let len: u64 = conn.llen(&full_key).await?;
+        Ok(len)
+    }
 }
 
 // ============================================================================
@@ -776,6 +834,16 @@ impl PubSubService {
     /// Get the instance ID.
     pub fn instance_id(&self) -> &str {
         &self.instance_id
+    }
+
+    /// Borrow the underlying [`RedisClient`].
+    ///
+    /// Exposes the raw client so callers that hold a `PubSubService` (the only
+    /// Redis handle threaded into the background workers) can run list/queue
+    /// commands (`RPUSH` / `BLPOP` / `LLEN`) for fan-out job queues without a
+    /// second connection handle.
+    pub fn client(&self) -> &RedisClient {
+        &self.client
     }
 }
 
