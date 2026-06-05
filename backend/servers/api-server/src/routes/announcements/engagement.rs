@@ -237,7 +237,10 @@ pub(super) async fn mark_read(
             tracing::error!("Failed to mark as read: {}", e);
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to mark as read")),
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to mark as read",
+                )),
             ))
         }
     }
@@ -280,7 +283,10 @@ pub(super) async fn acknowledge(
             tracing::error!("Failed to acknowledge: {}", e);
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to acknowledge")),
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to acknowledge",
+                )),
             ))
         }
     }
