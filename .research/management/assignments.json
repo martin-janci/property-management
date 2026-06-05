@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-04T23:59:16Z",
+  "generated": "2026-06-05T00:06:09Z",
   "assignments": [
     {
       "task_id": "gap-83-1-airbnb-integration-ui",
@@ -69,33 +69,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
-      "task_id": "bug-risky-churn-pr-992-mobile-app-tsx",
-      "branch": "auto-impl/bug-risky-churn-pr-992-mobile-app-tsx",
-      "status": "review",
-      "claimed_at": "2026-06-04T17:45:53Z",
-      "last_updated": "2026-06-04T23:59:16Z",
-      "status_changed_at": "2026-06-04T23:59:16Z",
-      "pr_number": 1103,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1103",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=d8316684df831ff8d8ed681dddb16c9cf68355ff note=clean test-only regression guard verified; posted as COMMENT (self-approval blocked); MERGED on GH this run (squash d9d96059) - Phase2 next run will archive",
-      "last_reviewed_oid": "d8316684df831ff8d8ed681dddb16c9cf68355ff",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-04T23:59:16Z",
-      "quarantined_at": null,
-      "quarantine_reason": null
+      "merge_attempted_at": null
     },
     {
       "task_id": "bug-schema-drift-runtime-sql-issue-1008",
@@ -117,33 +91,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
-      "task_id": "gap-6-2-announcement-web-viewing-ack",
-      "branch": "auto-impl/gap-6-2-announcement-web-viewing-ack",
-      "status": "review",
-      "claimed_at": "2026-06-04T17:45:53Z",
-      "last_updated": "2026-06-04T23:59:16Z",
-      "status_changed_at": "2026-06-04T23:59:16Z",
-      "pr_number": 1104,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1104",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=e41313181f8b00e5f502db60d697d226ae89aa5f note=test-only backfill; clean scope; CI green; posted as COMMENT; MERGED on GH this run (squash 76cd7711) - Phase2 next run will archive",
-      "last_reviewed_oid": "e41313181f8b00e5f502db60d697d226ae89aa5f",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-04T23:59:16Z",
-      "quarantined_at": null,
-      "quarantine_reason": null
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-8a-3-notification-preference-sync",
@@ -165,17 +113,15 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
+      "merge_attempted_at": null
     },
     {
       "task_id": "test-gap-hotfix-no-test-pr-939-deploy-server-scopes",
       "branch": "auto-impl/test-gap-hotfix-no-test-pr-939-deploy-se",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-04T19:38:00Z",
-      "last_updated": "2026-06-04T23:59:16Z",
-      "status_changed_at": "2026-06-04T23:59:16Z",
+      "last_updated": "2026-06-05T00:05:39Z",
+      "status_changed_at": "2026-06-05T00:05:39Z",
       "pr_number": 1106,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1106",
       "merged_at": null,
@@ -212,28 +158,6 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "dx-integration-marketplace-stubs",
-      "branch": "auto-impl/dx-integration-marketplace-stubs",
-      "status": "review",
-      "claimed_at": "2026-06-04T21:45:08Z",
-      "last_updated": "2026-06-04T23:59:16Z",
-      "status_changed_at": "2026-06-04T23:59:16Z",
-      "pr_number": 1105,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1105",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": "verdict=approve head_oid=39d8d5a341cf9ec472004913cc8d63b5bb3132a3 note=clean ecosystem wiring; types match backend snake_case; CI green; posted as COMMENT; MERGED on GH this run (squash 4fa9e35b) - Phase2 next run will archive",
-      "last_reviewed_oid": "39d8d5a341cf9ec472004913cc8d63b5bb3132a3",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-04T23:59:16Z"
     },
     {
       "task_id": "dx-push-fanout-blpop-drain",
