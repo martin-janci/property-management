@@ -19,10 +19,11 @@ import three.two.bit.ppt.reality.favorites.FavoritesRepository
 import three.two.bit.ppt.reality.inquiry.InquiryRepository
 
 /**
- * Unit tests for [ProfileStatsLoader] — the Account-screen stat-strip aggregator.
+ * Unit tests for [ProfileStatsLoader] - the Account-screen stat-strip aggregator.
  *
- * Lives in `commonMain` / `commonTest` so the derivation logic (read `total` off each list endpoint,
- * fall back to `null` on failure) is verifiable on the JVM without an Android/Gradle device build.
+ * Lives in `commonMain` / `commonTest` so the derivation logic (read `total` off each list
+ * endpoint, fall back to `null` on failure) is verifiable on the JVM without an Android/Gradle
+ * device build.
  *
  * Epic 48 - Story 48.5 (gap-82-5): wire Account stats to reality-server list endpoints.
  */
