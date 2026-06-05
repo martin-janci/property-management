@@ -85,12 +85,15 @@ describe('toUiStatus', () => {
 
   // …and every other/unknown status falls through to 'pending' (the safe
   // default) rather than leaking an unmapped backend string into the UI enum.
-  it.each([['draft'], ['scheduled'], ['archived'], ['unknown'], ['']])(
-    'maps unrecognised status %s to "pending"',
-    (status) => {
-      expect(toUiStatus(status)).toBe('pending');
-    }
-  );
+  it.each([
+    ['draft'],
+    ['scheduled'],
+    ['archived'],
+    ['unknown'],
+    [''],
+  ])('maps unrecognised status %s to "pending"', (status) => {
+    expect(toUiStatus(status)).toBe('pending');
+  });
 
   it('returns a value in the VoteStatus union for any input', () => {
     const allowed = new Set(['active', 'closed', 'pending']);
