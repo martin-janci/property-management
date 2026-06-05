@@ -556,25 +556,49 @@ impl PushFanoutConfig {
     }
 }
 
+/// Redis list key the notification pipeline enqueues push jobs onto.
+///
+/// Producers `RPUSH` a JSON-serialized [`Notification`] onto this list; the
+/// worker `BLPOP`s from the head and delivers each one via [`FcmHttpAdapter`].
+pub const PUSH_FANOUT_QUEUE_KEY: &str = "push_fanout_queue";
+
+/// BLPOP block timeout (seconds) used when draining the queue.
+///
+/// Kept short so the single multiplexed `ConnectionManager` connection is not
+/// held for long and other Redis commands are not starved. When the queue is
+/// empty, BLPOP returns after this timeout and the drain yields back to the
+/// poll ticker.
+const BLPOP_TIMEOUT_SECS: f64 = 2.0;
+
+/// Safety cap on the number of jobs drained per poll tick, so a flooded queue
+/// can't make a single tick run unbounded.
+const MAX_JOBS_PER_TICK: usize = 256;
+
 /// Background worker that fans out pending push notifications.
 ///
 /// ## Delivery model
 ///
-/// The worker polls a Redis list (`push_fanout_queue`) for pending job payloads
-/// enqueued by the notification pipeline.  Each payload is a JSON object:
+/// The worker drains a Redis list ([`PUSH_FANOUT_QUEUE_KEY`]) for pending job
+/// payloads enqueued by the notification pipeline.  Each payload is a
+/// JSON-serialized [`Notification`]:
 /// ```json
 /// {
+///   "id": "<uuid>",
 ///   "user_id": "<uuid>",
-///   "notification_id": "<uuid>",
+///   "category": "announcements",
 ///   "title": "...",
 ///   "body": "...",
-///   "category": "announcements",
 ///   "priority": "normal"
 /// }
 /// ```
 ///
+/// On each tick the worker `BLPOP`s from the head of the list (short timeout)
+/// and delivers each job via [`FcmHttpAdapter::send`], up to
+/// [`MAX_JOBS_PER_TICK`] jobs per tick.
+///
 /// When Redis is not available (or the worker is disabled) the worker falls
-/// through to a no-op heartbeat loop so the server always starts cleanly.
+/// through to a no-op heartbeat loop so the server always starts cleanly — the
+/// in-process pipeline still delivers push synchronously in that mode.
 pub struct PushFanoutWorker {
     adapter: Arc<FcmHttpAdapter>,
     config: PushFanoutConfig,
@@ -629,12 +653,14 @@ impl PushFanoutWorker {
         )
     }
 
-    /// Process all pending push jobs from the queue.
+    /// Process pending push jobs from the queue.
     ///
-    /// When Redis pubsub is available we pop messages from `push_fanout_queue`.
-    /// When Redis is not available we just log a heartbeat.
+    /// When Redis is available we `BLPOP` jobs off [`PUSH_FANOUT_QUEUE_KEY`] and
+    /// deliver each one via [`FcmHttpAdapter::send`], up to
+    /// [`MAX_JOBS_PER_TICK`] jobs per tick. When Redis is not available we just
+    /// log a heartbeat (the in-process pipeline delivers push synchronously).
     async fn process_pending_jobs(&self) {
-        let Some(ref _pubsub) = self.pubsub else {
+        let Some(ref pubsub) = self.pubsub else {
             // No Redis — nothing to drain; log at trace to avoid spam
             tracing::trace!(
                 "[8A-3] PushFanoutWorker heartbeat (no Redis; in-process pipeline handles push)"
@@ -642,17 +668,85 @@ impl PushFanoutWorker {
             return;
         };
 
-        // TODO: wire BLPOP drain in follow-up PR; real delivery happens synchronously via FcmHttpAdapter::send in the pipeline
-        // When Redis is available: drain the push_fanout_queue.
-        // The `PubSubService` abstraction in `integrations` is pub/sub-oriented;
-        // a proper queue-drain would use `BLPOP` / `LPOP` on the raw Redis client.
-        // We log a debug message here and leave the BLPOP wiring for the follow-up
-        // that adds the dedicated Redis queue — the real delivery happens
-        // synchronously inside `FcmHttpAdapter::send` which is called by
-        // `NotificationPipeline::dispatch` (see notification_pipeline.rs).
-        tracing::debug!(
-            "[8A-3] PushFanoutWorker tick — in-process push delivery active via FcmHttpAdapter"
-        );
+        let redis = pubsub.client();
+        let mut drained = 0usize;
+
+        // Drain up to MAX_JOBS_PER_TICK jobs. BLPOP with a short timeout means
+        // an empty queue ends the drain promptly and yields back to the ticker;
+        // a backed-up queue is bounded by MAX_JOBS_PER_TICK per tick.
+        for _ in 0..MAX_JOBS_PER_TICK {
+            let payload = match redis
+                .queue_pop_blocking(PUSH_FANOUT_QUEUE_KEY, BLPOP_TIMEOUT_SECS)
+                .await
+            {
+                Ok(Some(payload)) => payload,
+                // Timed out with an empty queue — nothing more to do this tick.
+                Ok(None) => break,
+                Err(e) => {
+                    tracing::warn!(
+                        error = %e,
+                        "[8A-3] PushFanoutWorker: BLPOP on push_fanout_queue failed; backing off until next tick"
+                    );
+                    break;
+                }
+            };
+
+            self.deliver_job(&payload).await;
+            drained += 1;
+        }
+
+        if drained > 0 {
+            tracing::info!(
+                drained = drained,
+                "[8A-3] PushFanoutWorker drained push_fanout_queue"
+            );
+        }
+    }
+
+    /// Deliver a single queued job payload.
+    ///
+    /// The payload is a JSON-serialized [`Notification`]. A malformed payload is
+    /// logged and dropped (it has already been popped off the list, so it is not
+    /// retried — re-queuing a poison message would loop forever).
+    async fn deliver_job(&self, payload: &str) {
+        let notification: Notification = match serde_json::from_str(payload) {
+            Ok(n) => n,
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "[8A-3] PushFanoutWorker: dropping malformed push_fanout_queue payload"
+                );
+                return;
+            }
+        };
+
+        // `device_tokens` is unused by `FcmHttpAdapter::send` (it re-fetches the
+        // user's tokens from the DB), so an empty slice is fine here.
+        match self
+            .adapter
+            .send(notification.user_id, &[], &notification)
+            .await
+        {
+            Ok(()) => {
+                tracing::debug!(
+                    notification_id = %notification.id,
+                    user_id = %notification.user_id,
+                    "[8A-3] PushFanoutWorker delivered queued push job"
+                );
+            }
+            Err(e) => {
+                // Delivery failed (FCM not configured, DB error, or all sends
+                // failed). The in-app channel remains the mandatory record, so
+                // we log and move on rather than re-queue (avoids hot-looping on
+                // a permanently failing job).
+                tracing::warn!(
+                    notification_id = %notification.id,
+                    user_id = %notification.user_id,
+                    error = %e,
+                    "[8A-3] PushFanoutWorker: push delivery failed for queued job"
+                );
+            }
+        }
     }
 }
 
@@ -735,5 +829,45 @@ mod tests {
         let config = PushFanoutConfig::default();
         assert!(config.enabled);
         assert_eq!(config.poll_interval_secs, 30);
+    }
+
+    #[test]
+    fn push_fanout_queue_key_is_stable() {
+        // The producer (notification pipeline) and the worker must agree on the
+        // list key. Pin it so a rename can't silently split producer/consumer.
+        assert_eq!(PUSH_FANOUT_QUEUE_KEY, "push_fanout_queue");
+    }
+
+    #[test]
+    fn queued_job_payload_roundtrips_to_notification() {
+        // A push job on the queue is a JSON-serialized `Notification`. The
+        // worker's `deliver_job` deserializes exactly this shape, so a
+        // round-trip here pins the queue contract.
+        let user_id = Uuid::new_v4();
+        let original = Notification::new(
+            user_id,
+            common::notifications::NotificationCategory::Announcements,
+            "Building update",
+            "The lift will be serviced tomorrow.",
+        )
+        .with_priority(common::notifications::NotificationPriority::High);
+
+        let payload = serde_json::to_string(&original).expect("serialize notification");
+        let decoded: Notification = serde_json::from_str(&payload).expect("deserialize notification");
+
+        assert_eq!(decoded.id, original.id);
+        assert_eq!(decoded.user_id, user_id);
+        assert_eq!(decoded.title, "Building update");
+        assert_eq!(decoded.body, "The lift will be serviced tomorrow.");
+        assert_eq!(decoded.category, common::notifications::NotificationCategory::Announcements);
+        assert_eq!(decoded.priority, common::notifications::NotificationPriority::High);
+    }
+
+    #[test]
+    fn malformed_queue_payload_fails_to_deserialize() {
+        // `deliver_job` drops payloads that don't parse as a `Notification`
+        // rather than re-queuing them (a poison message must not hot-loop).
+        let err = serde_json::from_str::<Notification>("{\"not\":\"a notification\"}");
+        assert!(err.is_err());
     }
 }
