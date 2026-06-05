@@ -76,9 +76,9 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "fix_rounds": 2,
-      "implementer_summary": "pr=1126 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=screens already auth-wired; closed account stats gap via commonMain ProfileStatsLoader + commonTest; gradle verify env-blocked (AGP/dl.google.com), draft pending mobile-native.yml CI",
+      "implementer_summary": "pr=1126 status=done specialist=kotlin-mp note=fix-round2: ascii punctuation + ktdoc reflow to 100col (spotless ktfmt kotlinlangStyle); pushed 3bb5b14; gradle offline-blocked, verified manually",
       "last_reviewed_oid": "f6c353beedd3969d3949f3d0b069178fcc99cde7",
-      "last_updated": "2026-06-05T18:17:31Z",
+      "last_updated": "2026-06-05T18:25:03Z",
       "merge_attempted_at": null,
       "merged_at": null,
       "pr_number": 1126,
@@ -90,8 +90,8 @@
       "reviewer_summary": null,
       "scope_drift": false,
       "specialist": "kotlin-mp",
-      "status": "in-progress",
-      "status_changed_at": "2026-06-05T18:17:31Z",
+      "status": "review",
+      "status_changed_at": "2026-06-05T18:25:03Z",
       "task_id": "gap-82-5-reality-mobile-inquiries-account"
     },
     {
@@ -169,13 +169,13 @@
       "branch": "auto-impl/refactor-ai-rs-hot",
       "status": "in-progress",
       "claimed_at": "2026-06-05T14:13:38Z",
-      "last_updated": "2026-06-05T18:17:31Z",
+      "last_updated": "2026-06-05T18:24:39Z",
       "status_changed_at": "2026-06-05T18:17:31Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "reclaim returned pr=none: STALE DUP - ai.rs already split into routes/ai/ by MERGED PR #1114; no work left. Recommend dropping action-list item 'refactor-ai-rs-hot' to prevent re-claim. (will fail+archive next run via reclaim cap)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -209,5 +209,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-06-05T18:17:31Z"
+  "generated": "2026-06-05T18:25:03Z"
 }
