@@ -1,7 +1,640 @@
 {
   "generated": "2026-05-28T04:35:00Z",
-  "archived_at": "2026-05-28T09:07:16Z",
+  "archived_at": "2026-06-06T14:13:34Z",
   "items": [
+    {
+      "id": "bug-esignature-webhook-idempotency-guard",
+      "action": "Add a terminal-state idempotency guard to the e-signature webhook handler (story 84-2) so duplicate webhook deliveries cannot re-transition an already-finalized signature.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1034,
+        "merged_at": "2026-06-04T00:05:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "bug-mediation-page-no-error-state",
+      "action": "[DROPPED: already implemented+merged via PR #1029 (6e0460e)] MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-mobile-voting-unsafe-cast",
+      "action": "[DROPPED: already fixed+merged via PR #1028 (f811559)] Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-reality-web-realtor-invite-silent-error",
+      "action": "[DROPPED: semantic-dup, already merged on dev] Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "bug-report-schedule-update-no-cron-column",
+      "action": "Report schedule cron edits round-trip through the overloaded `time` field; add a dedicated cron_expression column + migration and route schedule update through it (issue #616, story 81-1).",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "bug-webhook-airbnb-dup-sync-jobs",
+      "action": "[DROPPED: semantic-dup, already merged on dev] Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "dx-documentsbrowse-folder-preselect",
+      "action": "[DROPPED: semantic-dup, already merged on dev] DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "fix-579-helpsidebar-a11y",
+      "action": "HelpSidebar (PR #541): add focus-trap, dialog role + aria-modal, tooltips on remaining 11/13 pages, component tests, remove ensureStyles on every render, replace inline topbar button styles. Tracking issue #579.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
+      "resolved": "PR #637 merged 2026-05-28 — HelpSidebar a11y (focus-trap, dialog role, tooltips on 11 admin-web pages) + HelpSidebar.test.tsx (+490/-51)",
+      "depends_on": []
+    },
+    {
+      "id": "fix-580-document-folder-tests",
+      "action": "document_folder tests (PR #551): add 7 missing test cases — PUT/DELETE 401, non-manager 403, cross-org IDOR, depth-limit trigger, GET-by-id 401. Tracking issue #580.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
+      "resolved": "PR #636 merged 2026-05-28 — 7 backend integration test cases in document_folder_tests.rs (+331/-98); CLOSES issue #580",
+      "depends_on": []
+    },
+    {
+      "id": "gap-10a-2-oauth-admin-ui",
+      "action": "Build OAuth client management admin UI in admin-web — backend client CRUD fully implemented (register/list/update/revoke/regenerate_secret); scope management console missing (10a-2 OAuth Client Registration)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-24",
+      "resolved": "2026-05-25 — OAuth provider client-management admin UI PRs #468/#469/#471 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-10a-3-user-grants-ui",
+      "action": "Build user OAuth grants management page in ppt-web so users can revoke third-party app access — backend list_user_grants/revoke_user_grant and introspection implemented (10a-3 OAuth Token Management)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-24",
+      "resolved": "2026-05-25 — user OAuth grants management UI PRs #468/#469/#471 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-10b-4-system-announcements-backend",
+      "action": "Implement platform_admin.rs system announcement SQLx handler bodies (create/list/get/update/delete system_announcements table); add migration for system_announcements table; backend counterpart to admin UI merged in PR#503 (story 10b-4)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "source": "gap-scan 2026-05-27",
+      "depends_on": [],
+      "resolved": "Implementation verified on dev — migration 00032, SystemAnnouncementRepository, platform_admin.rs handlers 1738-2415. PR #601 review record.",
+      "pr": 601
+    },
+    {
+      "id": "gap-10b-4-system-announcements-impl",
+      "action": "Implement system announcements handler bodies in platform_admin.rs — CRUD routes mounted but handlers return 501; add SQLx queries, schedule_maintenance table operations (10b-4 System Announcements)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-24",
+      "depends_on": [],
+      "resolved": "Implementation verified on dev — migration 00032, SystemAnnouncementRepository, platform_admin.rs handlers 1738-2415. PR #601 review record.",
+      "pr": 601
+    },
+    {
+      "id": "gap-10b-5-support-data-admin-ui",
+      "action": "Build Support Data admin page in admin-web wired to GET /api/v1/platform-admin/support-data; show tenant diagnostics table: user counts, active session stats, fault summary; ProtectedRoute with platform-admin capability",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "gap-10b-5-support-data-api-retry",
+      "status": "done",
+      "source": "gap-scan 2026-05-27",
+      "resolved": "PR #635 merged 2026-05-28 — SupportDataPage.tsx (useSupportData hook + FaultByStatusTable, audit_read gated) +395/-0; 10b-5 frontend surface now exists",
+      "depends_on": [
+        "gap-10b-5-support-data-api-retry"
+      ]
+    },
+    {
+      "id": "gap-10b-5-support-data-ui",
+      "action": "[CASCADED-DROP: depends_on gap-10b-5-support-data-api terminal-failed] Build Support Data page in admin-web calling /api/v1/platform-admin/support-data; show tenant diagnostics table",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "gap-10b-5-support-data-api",
+      "status": "dropped",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "depends_on": [
+        "gap-10b-5-support-data-api"
+      ]
+    },
+    {
+      "id": "gap-10b-6-onboarding-tour-ui",
+      "action": "[CASCADED-DROP: depends_on gap-10b-6-onboarding-tour-api terminal-failed] Build step-by-step onboarding tour overlay in admin-web using onboarding config API",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "gap-10b-6-onboarding-tour-api",
+      "status": "dropped",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "depends_on": [
+        "gap-10b-6-onboarding-tour-api"
+      ]
+    },
+    {
+      "id": "gap-10b-stub-handlers",
+      "action": "Implement handler bodies for 10b-4 system announcements, 10b-5 support data access, 10b-6 user onboarding tour, 10b-7 contextual help — routes mounted but handlers are stubs (return 501 until real)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan",
+      "note": "Already implemented in feat(epic-10b) commit cf533ae4; all four handler groups have real sqlx SQL implementations in platform_admin.rs, help.rs, onboarding.rs — no stubs found. cargo check -p api-server exit 0.",
+      "depends_on": [],
+      "pr": 596
+    },
+    {
+      "id": "gap-2b-notification-pipeline",
+      "action": "Implement Epic 2B core notification delivery pipeline (stories 2b-1 through 2b-5): channel infrastructure, preference routing, delivery tracking, email/push/in-app transport adapters — unblocks 6-2/6-3/6-4/6-5 announcements, 8A.2 dispatch, 8A.3 sync",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-24",
+      "resolved": "2026-05-25 — Epic 2B notification pipeline PR #463 merged; WebSocket realtime sync PR #472 merged (DEC-001 unblock triggers fired)",
+      "depends_on": []
+    },
+    {
+      "id": "gap-6-2-announcement-web-viewing-ack",
+      "action": "Web announcement viewing & acknowledgment UI in ppt-web (story 6-2): wire mark_read / acknowledge to existing backend routes, render AcknowledgmentStats / UserAcknowledgmentStatus; supersede stale draft PRs #474/#475/#479 which never merged. Mobile screen already shipped.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04 | gc1-reconcile 2026-06-05T01:38:43Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1104,
+        "merged_at": "2026-06-04T23:54:41Z",
+        "at": "2026-06-05T01:38:43Z"
+      }
+    },
+    {
+      "id": "gap-6-3-announcement-comments-ui",
+      "action": "Build comment thread UI in ppt-web announcement detail view (list + post comment)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "gap-6-3-announcement-comments-api",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "resolved": "PR #475 merged 2026-05-25",
+      "depends_on": [
+        "gap-6-3-announcement-comments-api"
+      ]
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-ui",
+      "action": "[ALREADY-SHIPPED: merged on dev PR#511/#512; empty diff] Pinned announcements (story 6-4): pin/unpin action for managers + pinned section ordering at the top of the announcements list in ppt-web and mobile, wired to the backend pin flag.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "dropped",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
+      "depends_on": []
+    },
+    {
+      "id": "gap-6-5-direct-messaging-apistatus",
+      "action": "Promote direct messaging screens (messages, message-thread, messages-new) from apiStatus: stub to integrated (6-5 Direct Messaging)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan",
+      "resolved": "2026-05-25 — messaging screens wired PR #449 + WebSocket realtime sync PR #472 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-6-6-neighbor-listing-verify",
+      "action": "Verify and wire neighbor listing frontend with privacy-aware filtering to backend list_neighbors + privacy_settings routes; confirm mobile NeighborsScreen.tsx integration and promote sprint-status (6-6 Neighbor Information)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-24",
+      "resolved": "2026-05-25 — neighbor listing UI with privacy-aware filtering PR #464 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-79-1-announcements-faults-api-wiring",
+      "action": "Fully wire AnnouncementsPage and FaultsPage in ppt-web to their TanStack Query API hooks (story 79-1) — infra exists but feature integration is incomplete.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T04:05:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1033,
+        "merged_at": "2026-06-04T00:08:01Z",
+        "at": "2026-06-04T04:05:05Z"
+      }
+    },
+    {
+      "id": "gap-7a-1-mobile-document-upload",
+      "action": "Implement mobile (React Native) document upload UI with metadata against existing backend (7a-1 Document Upload with Metadata)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan",
+      "resolved": "2026-05-25 — mobile document upload UI PR #447 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-7a-2-folder-api",
+      "action": "[CASCADED-DROP: depends_on gap-7a-1-backend-multipart-upload terminal-failed] Add CRUD endpoints for document folders: POST/GET /api/v1/documents/folders with folder_id FK on documents",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "gap-7a-1-backend-multipart-upload",
+      "status": "dropped",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "depends_on": [
+        "gap-7a-1-backend-multipart-upload"
+      ]
+    },
+    {
+      "id": "gap-7a-2-mobile-folder-manage-ui",
+      "action": "Add folder create + document-move management to the React Native documents feature: a NewFolderSheet (POST /api/v1/documents/folders) and a MoveDocumentSheet that PATCHes a document folder_id, mirroring the web FolderTree/MoveFolderDialog.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 | gc1-reconcile 2026-06-04T16:06:40Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1022,
+        "merged_at": "2026-06-04T15:12:40Z",
+        "at": "2026-06-04T16:06:40Z"
+      }
+    },
+    {
+      "id": "gap-7a-2-mobile-folder-tree-wiring",
+      "action": "Wire the React Native DocumentsScreen folder navigation to the real backend folder hierarchy: fetch GET /api/v1/documents/folders/tree (get_folder_tree) via @ppt/api-client and render nested folders per breadcrumb level instead of the current root-only scaffold.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 | gc1-reconcile 2026-06-03T15:25:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1019,
+        "merged_at": "2026-06-03T15:21:48Z",
+        "at": "2026-06-03T15:25:11Z"
+      }
+    },
+    {
+      "id": "gap-7a-3-frontend-api-integration",
+      "action": "Complete frontend API integration for documents permission-based access — promote screen apiStatus from partial to complete; surface RLS-aware filtering in UI (7a-3 Permission-Based Document Access)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan",
+      "resolved": "2026-05-25 — web access-scope UI PR #443 + mobile permission UI PRs #462/#465 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-7a-3-mobile-rls-ui",
+      "action": "Implement mobile document permission/RLS UI — web access-scope filtering wired in PR #443; mobile DocumentPermissionsScreen or equivalent pending (7a-3 Permission-Based Document Access)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-24",
+      "resolved": "2026-05-25 — mobile document permission/RLS UI PRs #462/#465 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-7a-4-document-download-api",
+      "action": "[CASCADED-DROP: depends_on gap-7a-1-backend-multipart-upload terminal-failed] Add GET /api/v1/documents/{id}/download returning presigned S3 URL; add GET /api/v1/documents/{id}/preview for inline view",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "gap-7a-1-backend-multipart-upload",
+      "status": "dropped",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "depends_on": [
+        "gap-7a-1-backend-multipart-upload"
+      ]
+    },
+    {
+      "id": "gap-7a-4-mobile-document-preview",
+      "action": "Implement the mobile (React Native) document download + preview slice for story 7a-4: an RN screen wired to the existing backend download/presign routes; web slice shipped, mobile is the remaining gap.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T04:05:05Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1039,
+        "merged_at": "2026-06-04T00:08:03Z",
+        "at": "2026-06-04T04:05:05Z"
+      }
+    },
+    {
+      "id": "gap-7a-4-pdf-preview",
+      "action": "Implement PDF.js client-side rendering for document preview — backend presigned URLs already wired (7a-4 Document Download & Preview)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan",
+      "depends_on": []
+    },
+    {
+      "id": "gap-7a-5-mobile-share-ui",
+      "action": "Implement mobile document sharing UI (user/role/public link/password) — backend share workflows already exist (7a-5 Document Sharing)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan",
+      "resolved": "2026-05-25 — mobile DocumentShareSheet PR #445 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-7a-5-web-share-ui",
+      "action": "Implement web document sharing UI (user/role/building targeting) in DocumentDetail — backend share workflows complete; mobile DocumentShareSheet shipped in PR #445; web UI panel missing (7a-5 Document Sharing)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-24",
+      "resolved": "2026-05-25 — web document sharing UI PRs #451/#467 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-80-3-mediation-ui",
+      "action": "Build mediation workspace in ppt-web: dispute timeline, resolution form, manager/tenant chat thread",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "gap-80-3-mediation-api",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "resolved": "PR #555 merged 2026-05-27 (mediation workspace UI + App.tsx route wiring + dispute-detail screen-map); story 80-3 promoted partial->done",
+      "depends_on": [
+        "gap-80-3-mediation-api"
+      ]
+    },
+    {
+      "id": "gap-81-1-report-schedule-edit-ui",
+      "action": "Build report schedule editor modal in ppt-web: cron picker, recipient list, enabled toggle",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "gap-81-1-report-schedule-edit-api",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "depends_on": [
+        "gap-81-1-report-schedule-edit-api"
+      ],
+      "resolved": "PR #623 merged 2026-05-27 (report schedule editor UI)"
+    },
+    {
+      "id": "gap-81-2-report-execution-history-ui",
+      "action": "[CASCADED-DROP: depends_on gap-81-2-report-execution-history-api terminal-failed] Show execution history table in ppt-web report schedule detail page",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "gap-81-2-report-execution-history-api",
+      "status": "dropped",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "depends_on": [
+        "gap-81-2-report-execution-history-api"
+      ]
+    },
+    {
+      "id": "gap-82-3-reality-mobile-search-filters",
+      "action": "Reality mobile (KMP) home/search screen: debounced search, infinite scroll and FilterSheet wiring (story 82-3, AC-2/AC-4) on the Android target.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-06T00:20:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1125,
+        "merged_at": "2026-06-05T10:21:36Z",
+        "at": "2026-06-06T00:20:04Z"
+      }
+    },
+    {
+      "id": "gap-82-4-reality-mobile-listing-detail-favorites",
+      "action": "Reality mobile listing-detail screen + favorites toggle (story 82-4): render full listing detail from the reality API and wire a favorite/unfavorite action to the favorites endpoint with optimistic UI.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04 | gc1-reconcile 2026-06-06T00:20:04Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1121,
+        "merged_at": "2026-06-05T08:24:57Z",
+        "at": "2026-06-06T00:20:04Z"
+      }
+    },
+    {
+      "id": "gap-82-7-kmp-android-detail",
+      "action": "[CASCADED-DROP: depends_on gap-82-6-kmp-android-home terminal-failed] Wire ListingDetailScreen and FavoritesScreen in KMP Android Compose UI to reality-server endpoints",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "gap-82-6-kmp-android-home",
+      "status": "dropped",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "depends_on": [
+        "gap-82-6-kmp-android-home"
+      ]
+    },
+    {
+      "id": "gap-83-2-ota-xml-transport",
+      "action": "Implement the OTA XML parsing/generation transport for Booking.com rate/availability push (story 83-2, AC-5) — validation guards landed PR #607, XML transport still missing.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-04T09:44:03Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1045,
+        "merged_at": "2026-06-04T07:15:34Z",
+        "at": "2026-06-04T09:44:03Z"
+      }
+    },
+    {
+      "id": "gap-84-2-esignature-email-backend",
+      "action": "Integrate e-signature provider (DocuSign/HelloSign) for lease agreements: POST /api/v1/leases/{id}/sign-request, webhook status callback",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-25",
+      "resolved": "PR #495 merged 2026-05-25 (HMAC provider)",
+      "depends_on": []
+    },
+    {
+      "id": "gap-85-1-mobile-env-config",
+      "action": "[ALREADY-SHIPPED: story 85-1 app.config.ts+.env.* present in dev; implementer empty-diff, pr=none] Add Expo app.config.ts + environment configuration (API_BASE_URL/ENVIRONMENT) for the React Native app and document env setup (story 85-1).",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-85-2-ios-ci-fix",
+      "action": "Fix GH Actions version pins in eas-build-ios.yml: checkout@v6/setup-node@v6/pnpm-action-setup@v6 do not exist; downgrade all to @v4; remove unused submit.staging profile; guard updates.url against missing EXPO_PROJECT_ID (blocking from PR#535 reviewer verdict=changes)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "source": "pm-analysis 2026-05-27",
+      "resolved": "PR #638 merged 2026-05-28 — mobile EAS config: removed submit.staging, guarded updates.url against missing EXPO_PROJECT_ID",
+      "depends_on": []
+    },
+    {
+      "id": "gap-9-1-mfa-e2e-verify",
+      "action": "Verify TOTP MFA works end-to-end after gap-9-1-mfa-frontend-integration (PR #441) merge: QR scan → TOTP verify → login 2FA prompt → disable flow → backup-codes regeneration (9-1 TOTP Two-Factor Authentication Setup)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-05-24",
+      "resolved": "2026-05-25 — MFA e2e test coverage PR #473 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-9-1-mfa-frontend-integration",
+      "action": "Wire TwoFactorAuthPage to /api/v1/auth/mfa/* — add useMfa hooks (setup/verify/disable/status/backup-codes) to @ppt/api-client and remove 'feature not exposed' scaffold (9-1 TOTP Two-Factor Authentication Setup)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan",
+      "resolved": "2026-05-25 — PR #441 merged (MFA frontend integration); e2e coverage PR #473 merged",
+      "depends_on": []
+    },
+    {
+      "id": "gap-security-435-cookie-scope",
+      "action": "Fix P0-12 cookie scope from post-merge security findings on PR#435: ensure session cookies use SameSite=Strict and Secure flags, HttpOnly enforced, scope limited to API path prefix",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "source": "pm-analysis 2026-05-27",
+      "resolved": "PR #565 merged (session cookie scope hardening, P0-12) — but introduced cookie Path breaking change tracked as follow-up #617; see pm-security-617-cookie-path-reconcile",
+      "depends_on": []
+    },
     {
       "id": "pm-backend-fix-ai-equipment-idor",
       "action": "Fix cross-tenant IDOR cluster in ai.rs: thread tenant_id into equipment_repo.update/delete/update_maintenance and scope the WHERE clauses (or route through the RLS connection) for update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), update_maintenance (ai.rs:1192) — all currently discard `_principal`; add a cross-tenant regression test",
@@ -15,6 +648,42 @@
       "depends_on": []
     },
     {
+      "id": "pm-backend-fix-ssrf-outbound",
+      "action": "Fix P1-05 SSRF: extract validate_external_url into a shared module and apply it before signatures.rs:628 client.get(signed_url) and integrations.rs:2743 client.post(subscription.url) (plan: security-ssrf-outbound-url-validation)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-24",
+      "resolved": "2026-05-25 — PR #450 merged (SSRF outbound URL validation)",
+      "depends_on": []
+    },
+    {
+      "id": "pm-frontend-protectedroute-failopen",
+      "action": "Harden ProtectedRoute.tsx:117 to deny on missing role instead of skipping the role check, and populate user.role in AuthContext — before role-gating goes live (fold into 79-2 PR #444)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-24",
+      "resolved": "2026-05-25 — PR #459 merged (ProtectedRoute fail-open fix)",
+      "depends_on": []
+    },
+    {
+      "id": "pm-frontend-schedule-followup-test-batch",
+      "action": "Slot post-merge follow-up issues #480-#487 (test gaps + minor security/UX follow-ups on messaging realtime, document share-flow, OAuth UI, MFA) into the sprint as a single test-hardening batch; do not promote dependent stories to done until each follow-up is closed or deferred",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-25",
+      "depends_on": [],
+      "gc1_closed": "merged PR#491; closed 2026-06-03T14:26:29Z archive-terminal-leak non-stem id"
+    },
+    {
       "id": "pm-frontend-sequence-epic6-announcement-drafts",
       "action": "Sequence and land the Epic 6 announcement web UI draft PRs in dependency order: #474 (viewing/ack) → #475 (comments) → #479 (pin), avoiding shared-AnnouncementsPage conflicts; promote out of draft once apiStatus wiring is verified against the now-live notification pipeline",
       "owner_role": "pm-frontend",
@@ -24,6 +693,18 @@
       "deadline": null,
       "source": "pm-analysis 2026-05-25",
       "resolved": "PR #492 merged 2026-05-25",
+      "depends_on": []
+    },
+    {
+      "id": "pm-scrum-master-land-voice-device-idor",
+      "action": "Land the security-voice-device-idor plan (ready in .research/plans/)",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-23",
+      "resolved": "2026-05-25 — voice device IDOR fix PR #461 merged",
       "depends_on": []
     },
     {
@@ -74,16 +755,29 @@
       ]
     },
     {
-      "id": "pm-scrum-master-land-voice-device-idor",
-      "action": "Land the security-voice-device-idor plan (ready in .research/plans/)",
-      "owner_role": "pm-scrum-master",
-      "priority": "low",
+      "id": "pm-security-reconcile-cookie-path-565",
+      "action": "Reconcile the cookie Path breaking change (#617) introduced by PR #565 session-cookie scope hardening (P0-12): confirm the new Path does not silently log existing sessions out or break the SSO /auth/callback cookie read; document the migration.",
+      "owner_role": "pm-security",
+      "priority": "high",
       "dependency": "none",
       "status": "done",
       "deadline": null,
+      "source": "pm-analysis 2026-05-27",
+      "resolved": "PR #642 merged 2026-05-28 — auth.rs + sso.rs cookie Path reconciliation + runbook, WITH inline tests (+370/-0); closes the #617 cookie-Path regression class"
+    },
+    {
+      "id": "pm-tech-lead-confirm-websocket-infra-ownership",
+      "action": "Confirm WebSocket infra ownership for 8A.3 sync (ADR-008) is scheduled, not implicitly assumed",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "dependency": "pm-scrum-master",
+      "status": "done",
+      "deadline": null,
       "source": "pm-analysis 2026-05-23",
-      "resolved": "2026-05-25 — voice device IDOR fix PR #461 merged",
-      "depends_on": []
+      "resolved": "2026-05-25 — WS infra ownership confirmed: delivered as Epic 2B story 2B-C.1 (PR #472, owner: pm-backend); ADR-008 updated to status Implemented with explicit owner + delivery note; 8A.3 WS half unblocked, mobile-push leg tracked separately as gap-8a-3-mobile-push",
+      "depends_on": [
+        "pm-scrum-master"
+      ]
     },
     {
       "id": "pm-tech-lead-decide-2b-build-order",
@@ -111,437 +805,118 @@
       "depends_on": []
     },
     {
-      "id": "pm-tech-lead-confirm-websocket-infra-ownership",
-      "action": "Confirm WebSocket infra ownership for 8A.3 sync (ADR-008) is scheduled, not implicitly assumed",
+      "id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
+      "action": "Add ai.rs (3142 LOC), platform_admin.rs (2762), announcements.rs (2722) to the module-split backlog; add a CI grep/clippy lint that flags mutating handlers binding `_principal` (discarded principal) — the pattern behind the ai.rs IDOR cluster",
       "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "dependency": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
       "status": "done",
       "deadline": null,
-      "source": "pm-analysis 2026-05-23",
-      "resolved": "2026-05-25 — WS infra ownership confirmed: delivered as Epic 2B story 2B-C.1 (PR #472, owner: pm-backend); ADR-008 updated to status Implemented with explicit owner + delivery note; 8A.3 WS half unblocked, mobile-push leg tracked separately as gap-8a-3-mobile-push",
-      "depends_on": [
-        "pm-scrum-master"
-      ]
-    },
-    {
-      "id": "gap-9-1-mfa-frontend-integration",
-      "action": "Wire TwoFactorAuthPage to /api/v1/auth/mfa/* — add useMfa hooks (setup/verify/disable/status/backup-codes) to @ppt/api-client and remove 'feature not exposed' scaffold (9-1 TOTP Two-Factor Authentication Setup)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "dependency": null,
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan",
-      "resolved": "2026-05-25 — PR #441 merged (MFA frontend integration); e2e coverage PR #473 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-7a-3-frontend-api-integration",
-      "action": "Complete frontend API integration for documents permission-based access — promote screen apiStatus from partial to complete; surface RLS-aware filtering in UI (7a-3 Permission-Based Document Access)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan",
-      "resolved": "2026-05-25 — web access-scope UI PR #443 + mobile permission UI PRs #462/#465 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-7a-1-mobile-document-upload",
-      "action": "Implement mobile (React Native) document upload UI with metadata against existing backend (7a-1 Document Upload with Metadata)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": null,
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan",
-      "resolved": "2026-05-25 — mobile document upload UI PR #447 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-7a-5-mobile-share-ui",
-      "action": "Implement mobile document sharing UI (user/role/public link/password) — backend share workflows already exist (7a-5 Document Sharing)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": null,
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan",
-      "resolved": "2026-05-25 — mobile DocumentShareSheet PR #445 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-7a-4-pdf-preview",
-      "action": "Implement PDF.js client-side rendering for document preview — backend presigned URLs already wired (7a-4 Document Download & Preview)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": null,
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan",
-      "depends_on": []
-    },
-    {
-      "id": "gap-6-5-direct-messaging-apistatus",
-      "action": "Promote direct messaging screens (messages, message-thread, messages-new) from apiStatus: stub to integrated (6-5 Direct Messaging)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": null,
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan",
-      "resolved": "2026-05-25 — messaging screens wired PR #449 + WebSocket realtime sync PR #472 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-10b-stub-handlers",
-      "action": "Implement handler bodies for 10b-4 system announcements, 10b-5 support data access, 10b-6 user onboarding tour, 10b-7 contextual help — routes mounted but handlers are stubs (return 501 until real)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": null,
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan",
-      "note": "Already implemented in feat(epic-10b) commit cf533ae4; all four handler groups have real sqlx SQL implementations in platform_admin.rs, help.rs, onboarding.rs — no stubs found. cargo check -p api-server exit 0.",
+      "source": "pm-analysis 2026-05-25",
       "depends_on": [],
-      "pr": 596
+      "gc1_closed": "merged PR#494; closed 2026-06-03T14:26:29Z archive-terminal-leak non-stem id"
     },
     {
-      "id": "pm-backend-fix-ssrf-outbound",
-      "action": "Fix P1-05 SSRF: extract validate_external_url into a shared module and apply it before signatures.rs:628 client.get(signed_url) and integrations.rs:2743 client.post(subscription.url) (plan: security-ssrf-outbound-url-validation)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-24",
-      "resolved": "2026-05-25 — PR #450 merged (SSRF outbound URL validation)",
-      "depends_on": []
-    },
-    {
-      "id": "pm-frontend-protectedroute-failopen",
-      "action": "Harden ProtectedRoute.tsx:117 to deny on missing role instead of skipping the role check, and populate user.role in AuthContext — before role-gating goes live (fold into 79-2 PR #444)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-24",
-      "resolved": "2026-05-25 — PR #459 merged (ProtectedRoute fail-open fix)",
-      "depends_on": []
-    },
-    {
-      "id": "gap-2b-notification-pipeline",
-      "action": "Implement Epic 2B core notification delivery pipeline (stories 2b-1 through 2b-5): channel infrastructure, preference routing, delivery tracking, email/push/in-app transport adapters — unblocks 6-2/6-3/6-4/6-5 announcements, 8A.2 dispatch, 8A.3 sync",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "resolved": "2026-05-25 — Epic 2B notification pipeline PR #463 merged; WebSocket realtime sync PR #472 merged (DEC-001 unblock triggers fired)",
-      "depends_on": []
-    },
-    {
-      "id": "gap-6-6-neighbor-listing-verify",
-      "action": "Verify and wire neighbor listing frontend with privacy-aware filtering to backend list_neighbors + privacy_settings routes; confirm mobile NeighborsScreen.tsx integration and promote sprint-status (6-6 Neighbor Information)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "resolved": "2026-05-25 — neighbor listing UI with privacy-aware filtering PR #464 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-7a-5-web-share-ui",
-      "action": "Implement web document sharing UI (user/role/building targeting) in DocumentDetail — backend share workflows complete; mobile DocumentShareSheet shipped in PR #445; web UI panel missing (7a-5 Document Sharing)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "resolved": "2026-05-25 — web document sharing UI PRs #451/#467 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-7a-3-mobile-rls-ui",
-      "action": "Implement mobile document permission/RLS UI — web access-scope filtering wired in PR #443; mobile DocumentPermissionsScreen or equivalent pending (7a-3 Permission-Based Document Access)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "resolved": "2026-05-25 — mobile document permission/RLS UI PRs #462/#465 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-10a-2-oauth-admin-ui",
-      "action": "Build OAuth client management admin UI in admin-web — backend client CRUD fully implemented (register/list/update/revoke/regenerate_secret); scope management console missing (10a-2 OAuth Client Registration)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "resolved": "2026-05-25 — OAuth provider client-management admin UI PRs #468/#469/#471 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-10a-3-user-grants-ui",
-      "action": "Build user OAuth grants management page in ppt-web so users can revoke third-party app access — backend list_user_grants/revoke_user_grant and introspection implemented (10a-3 OAuth Token Management)",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "resolved": "2026-05-25 — user OAuth grants management UI PRs #468/#469/#471 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-9-1-mfa-e2e-verify",
-      "action": "Verify TOTP MFA works end-to-end after gap-9-1-mfa-frontend-integration (PR #441) merge: QR scan → TOTP verify → login 2FA prompt → disable flow → backup-codes regeneration (9-1 TOTP Two-Factor Authentication Setup)",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "resolved": "2026-05-25 — MFA e2e test coverage PR #473 merged",
-      "depends_on": []
-    },
-    {
-      "id": "gap-10b-4-system-announcements-impl",
-      "action": "Implement system announcements handler bodies in platform_admin.rs — CRUD routes mounted but handlers return 501; add SQLx queries, schedule_maintenance table operations (10b-4 System Announcements)",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-24",
-      "depends_on": [],
-      "resolved": "Implementation verified on dev — migration 00032, SystemAnnouncementRepository, platform_admin.rs handlers 1738-2415. PR #601 review record.",
-      "pr": 601
-    },
-    {
-      "id": "gap-6-3-announcement-comments-ui",
-      "action": "Build comment thread UI in ppt-web announcement detail view (list + post comment)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "gap-6-3-announcement-comments-api",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "resolved": "PR #475 merged 2026-05-25",
-      "depends_on": [
-        "gap-6-3-announcement-comments-api"
-      ]
-    },
-    {
-      "id": "gap-7a-2-folder-api",
-      "action": "[CASCADED-DROP: depends_on gap-7a-1-backend-multipart-upload terminal-failed] Add CRUD endpoints for document folders: POST/GET /api/v1/documents/folders with folder_id FK on documents",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": "gap-7a-1-backend-multipart-upload",
-      "status": "dropped",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": [
-        "gap-7a-1-backend-multipart-upload"
-      ]
-    },
-    {
-      "id": "gap-7a-4-document-download-api",
-      "action": "[CASCADED-DROP: depends_on gap-7a-1-backend-multipart-upload terminal-failed] Add GET /api/v1/documents/{id}/download returning presigned S3 URL; add GET /api/v1/documents/{id}/preview for inline view",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": "gap-7a-1-backend-multipart-upload",
-      "status": "dropped",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": [
-        "gap-7a-1-backend-multipart-upload"
-      ]
-    },
-    {
-      "id": "gap-10b-6-onboarding-tour-ui",
-      "action": "[CASCADED-DROP: depends_on gap-10b-6-onboarding-tour-api terminal-failed] Build step-by-step onboarding tour overlay in admin-web using onboarding config API",
+      "id": "refactor-mediation-duplicated-spinner",
+      "action": "Duplicated animate-spin spinner markup across mediation page + chat thread (no shared Spinner) (files: frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx) [src: PR #555, code-review 2026-05-27]",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "dependency": "gap-10b-6-onboarding-tour-api",
-      "status": "dropped",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": [
-        "gap-10b-6-onboarding-tour-api"
-      ]
-    },
-    {
-      "id": "gap-80-3-mediation-ui",
-      "action": "Build mediation workspace in ppt-web: dispute timeline, resolution form, manager/tenant chat thread",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "gap-80-3-mediation-api",
       "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-04 (backlog.json promote)",
       "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "resolved": "PR #555 merged 2026-05-27 (mediation workspace UI + App.tsx route wiring + dispute-detail screen-map); story 80-3 promoted partial->done",
-      "depends_on": [
-        "gap-80-3-mediation-api"
-      ]
-    },
-    {
-      "id": "gap-81-1-report-schedule-edit-ui",
-      "action": "Build report schedule editor modal in ppt-web: cron picker, recipient list, enabled toggle",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "gap-81-1-report-schedule-edit-api",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": [
-        "gap-81-1-report-schedule-edit-api"
-      ],
-      "resolved": "PR #623 merged 2026-05-27 (report schedule editor UI)"
-    },
-    {
-      "id": "gap-81-2-report-execution-history-ui",
-      "action": "[CASCADED-DROP: depends_on gap-81-2-report-execution-history-api terminal-failed] Show execution history table in ppt-web report schedule detail page",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "gap-81-2-report-execution-history-api",
-      "status": "dropped",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": [
-        "gap-81-2-report-execution-history-api"
-      ]
-    },
-    {
-      "id": "gap-84-2-esignature-email-backend",
-      "action": "Integrate e-signature provider (DocuSign/HelloSign) for lease agreements: POST /api/v1/leases/{id}/sign-request, webhook status callback",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "resolved": "PR #495 merged 2026-05-25 (HMAC provider)",
-      "depends_on": []
-    },
-    {
-      "id": "gap-10b-5-support-data-ui",
-      "action": "[CASCADED-DROP: depends_on gap-10b-5-support-data-api terminal-failed] Build Support Data page in admin-web calling /api/v1/platform-admin/support-data; show tenant diagnostics table",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "gap-10b-5-support-data-api",
-      "status": "dropped",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": [
-        "gap-10b-5-support-data-api"
-      ]
-    },
-    {
-      "id": "gap-82-7-kmp-android-detail",
-      "action": "[CASCADED-DROP: depends_on gap-82-6-kmp-android-home terminal-failed] Wire ListingDetailScreen and FavoritesScreen in KMP Android Compose UI to reality-server endpoints",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "dependency": "gap-82-6-kmp-android-home",
-      "status": "dropped",
-      "deadline": null,
-      "source": "gap-scan 2026-05-25",
-      "depends_on": [
-        "gap-82-6-kmp-android-home"
-      ]
-    },
-    {
-      "id": "gap-security-435-cookie-scope",
-      "action": "Fix P0-12 cookie scope from post-merge security findings on PR#435: ensure session cookies use SameSite=Strict and Secure flags, HttpOnly enforced, scope limited to API path prefix",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "dependency": "none",
-      "status": "done",
-      "source": "pm-analysis 2026-05-27",
-      "resolved": "PR #565 merged (session cookie scope hardening, P0-12) — but introduced cookie Path breaking change tracked as follow-up #617; see pm-security-617-cookie-path-reconcile",
-      "depends_on": []
-    },
-    {
-      "id": "gap-85-2-ios-ci-fix",
-      "action": "Fix GH Actions version pins in eas-build-ios.yml: checkout@v6/setup-node@v6/pnpm-action-setup@v6 do not exist; downgrade all to @v4; remove unused submit.staging profile; guard updates.url against missing EXPO_PROJECT_ID (blocking from PR#535 reviewer verdict=changes)",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "done",
-      "source": "pm-analysis 2026-05-27",
-      "resolved": "PR #638 merged 2026-05-28 — mobile EAS config: removed submit.staging, guarded updates.url against missing EXPO_PROJECT_ID",
-      "depends_on": []
-    },
-    {
-      "id": "gap-10b-4-system-announcements-backend",
-      "action": "Implement platform_admin.rs system announcement SQLx handler bodies (create/list/get/update/delete system_announcements table); add migration for system_announcements table; backend counterpart to admin UI merged in PR#503 (story 10b-4)",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "done",
-      "source": "gap-scan 2026-05-27",
+      "dependency": null,
       "depends_on": [],
-      "resolved": "Implementation verified on dev — migration 00032, SystemAnnouncementRepository, platform_admin.rs handlers 1738-2415. PR #601 review record.",
-      "pr": 601
+      "gc1_closed": "merged #1118 @ 2026-06-05T05:48:05Z; closed by dispatcher 2026-06-05T12:30:29Z (archive-terminal leak, refactor-* id not caught by gc1-reconcile stem match)"
     },
     {
-      "id": "gap-10b-5-support-data-admin-ui",
-      "action": "Build Support Data admin page in admin-web wired to GET /api/v1/platform-admin/support-data; show tenant diagnostics table: user counts, active session stats, fault summary; ProtectedRoute with platform-admin capability",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "gap-10b-5-support-data-api-retry",
-      "status": "done",
-      "source": "gap-scan 2026-05-27",
-      "resolved": "PR #635 merged 2026-05-28 — SupportDataPage.tsx (useSupportData hook + FaultByStatusTable, audit_read gated) +395/-0; 10b-5 frontend surface now exists",
-      "depends_on": [
-        "gap-10b-5-support-data-api-retry"
-      ]
-    },
-    {
-      "id": "fix-579-helpsidebar-a11y",
-      "action": "HelpSidebar (PR #541): add focus-trap, dialog role + aria-modal, tooltips on remaining 11/13 pages, component tests, remove ensureStyles on every render, replace inline topbar button styles. Tracking issue #579.",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "done",
-      "deadline": null,
-      "source": "post-merge-review 2026-05-27",
-      "resolved": "PR #637 merged 2026-05-28 — HelpSidebar a11y (focus-trap, dialog role, tooltips on 11 admin-web pages) + HelpSidebar.test.tsx (+490/-51)",
-      "depends_on": []
-    },
-    {
-      "id": "fix-580-document-folder-tests",
-      "action": "document_folder tests (PR #551): add 7 missing test cases — PUT/DELETE 401, non-manager 403, cross-org IDOR, depth-limit trigger, GET-by-id 401. Tracking issue #580.",
+      "id": "test-gap-81-2-report-exec-history-download-e2e",
+      "action": "Verify presigned download + retry end-to-end on the report execution-history surface (story 81-2; API #611, UI #547/#623) with a regression test.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "dependency": "none",
       "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
       "deadline": null,
-      "source": "post-merge-review 2026-05-27",
-      "resolved": "PR #636 merged 2026-05-28 — 7 backend integration test cases in document_folder_tests.rs (+331/-98); CLOSES issue #580",
-      "depends_on": []
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     },
     {
-      "id": "pm-security-reconcile-cookie-path-565",
-      "action": "Reconcile the cookie Path breaking change (#617) introduced by PR #565 session-cookie scope hardening (P0-12): confirm the new Path does not silently log existing sessions out or break the SSO /auth/callback cookie read; document the migration.",
-      "owner_role": "pm-security",
-      "priority": "high",
-      "dependency": "none",
+      "id": "test-gap-booking-push-validation-untested",
+      "action": "Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test",
+      "owner_role": "pm-backend",
+      "priority": "medium",
       "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
       "deadline": null,
-      "source": "pm-analysis 2026-05-27",
-      "resolved": "PR #642 merged 2026-05-28 — auth.rs + sso.rs cookie Path reconciliation + runbook, WITH inline tests (+370/-0); closes the #617 cookie-Path regression class"
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1068,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-874-portal-webhooks",
+      "action": "Portal webhook fail-closed fix (PR #874) shipped without a regression test for unverified-signature rejection",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-923-branch-protection-rebase",
+      "action": "CI branch-protection + auto-rebase workflow change (PR #923) shipped without an integration test",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1057,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-839-ppt",
+      "action": "Screen-map drift: PR #839 modified ppt-web App.tsx (FileDisputePageRoute) without a docs/screens/ppt update",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-03 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1056,
+        "merged_at": "2026-06-04T13:49:46Z",
+        "at": "2026-06-04T15:42:46Z",
+        "note": "non-gap- prefix; gc1-reconcile glob (startswith gap-) misses this"
+      }
     }
   ]
 }
