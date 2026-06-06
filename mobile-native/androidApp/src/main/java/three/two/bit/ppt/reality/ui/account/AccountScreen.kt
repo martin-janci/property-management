@@ -33,10 +33,14 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.BuildConfig
 import three.two.bit.ppt.reality.R
+import three.two.bit.ppt.reality.account.ProfileStats
+import three.two.bit.ppt.reality.account.ProfileStatsLoader
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.auth.SsoUserInfo
+import three.two.bit.ppt.reality.favorites.FavoritesRepository
+import three.two.bit.ppt.reality.inquiry.InquiryRepository
 import three.two.bit.ppt.reality.notifications.NotificationPreferences
 import three.two.bit.ppt.reality.notifications.NotificationRepository
 import three.two.bit.ppt.reality.ui.theme.Brand500
@@ -81,11 +85,21 @@ fun AccountScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var notificationPrefs by remember { mutableStateOf<NotificationPreferences?>(null) }
     var notificationsExpanded by remember { mutableStateOf(false) }
+    var profileStats by remember { mutableStateOf(ProfileStats.UNKNOWN) }
 
     val notificationRepository =
         remember(authState) {
             val token = (authState as? AuthState.Authenticated)?.sessionToken
             NotificationRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = token)
+        }
+    val statsLoader =
+        remember(authState) {
+            val token = (authState as? AuthState.Authenticated)?.sessionToken
+            val baseUrl = ApiConfig.requireBaseUrl()
+            ProfileStatsLoader(
+                favoritesRepository = FavoritesRepository(baseUrl = baseUrl, sessionToken = token),
+                inquiryRepository = InquiryRepository(baseUrl = baseUrl, sessionToken = token),
+            )
         }
 
     LaunchedEffect(authState) {
@@ -98,6 +112,9 @@ fun AccountScreen(
                         Log.e(TAG, "Failed to load notification preferences", error)
                     },
                 )
+            profileStats = statsLoader.load()
+        } else {
+            profileStats = ProfileStats.UNKNOWN
         }
     }
 
@@ -120,10 +137,17 @@ fun AccountScreen(
                     item { ProfileTopBar(onEditProfileClick = onProfileEditClick) }
                     item { ProfileHero(user = state.user) }
                     item { Spacer(modifier = Modifier.height(8.dp)) }
-                    // Stats counts will come from /me/stats once the endpoint exists.
-                    // Until then we pass nulls — StatCard renders an em-dash to
-                    // signal "unknown" rather than a fake number.
-                    item { StatsRow(favorites = null, searches = null, inquiries = null) }
+                    // Stats are derived from the `total` field of the favorites,
+                    // saved-searches, and inquiries list endpoints (reality-server has
+                    // no single /me/stats endpoint). A failed call leaves that field
+                    // null so StatCard renders an em-dash instead of a fake 0.
+                    item {
+                        StatsRow(
+                            favorites = profileStats.favorites,
+                            searches = profileStats.searches,
+                            inquiries = profileStats.inquiries,
+                        )
+                    }
                     item { Spacer(modifier = Modifier.height(24.dp)) }
                     item {
                         SectionList(
@@ -205,7 +229,7 @@ fun AccountScreen(
     }
 }
 
-// ─── Top bar ────────────────────────────────────────────────────────────────
+// ─── Top bar ───────────────────────────────────────────────
 
 @Composable
 private fun ProfileTopBar(onEditProfileClick: () -> Unit) {
@@ -231,7 +255,7 @@ private fun ProfileTopBar(onEditProfileClick: () -> Unit) {
     }
 }
 
-// ─── Hero ────────────────────────────────────────────────────────────────────
+// ─── Hero ────────────────────────────────────────────────
 
 @Composable
 private fun ProfileHero(user: SsoUserInfo) {
@@ -333,7 +357,7 @@ private fun VerifiedPill() {
     }
 }
 
-// ─── Stats row ──────────────────────────────────────────────────────────────
+// ─── Stats row ─────────────────────────────────────────────
 
 @Composable
 private fun StatsRow(favorites: Int?, searches: Int?, inquiries: Int?) {
@@ -391,7 +415,7 @@ private fun StatCard(value: String, label: String, modifier: Modifier = Modifier
     }
 }
 
-// ─── Section list ───────────────────────────────────────────────────────────
+// ─── Section list ──────────────────────────────────────────
 
 @Composable
 private fun SectionList(
@@ -526,7 +550,7 @@ private fun SectionDivider() {
     )
 }
 
-// ─── Notification preferences (collapsible) ─────────────────────────────────
+// ─── Notification preferences (collapsible) ──────────────────────
 
 @Composable
 private fun NotificationPreferencesCard(
@@ -608,7 +632,7 @@ private fun NotificationPreferenceItem(
     }
 }
 
-// ─── App settings + About (preserved, restyled) ──────────────────────────────
+// ─── App settings + About (preserved, restyled) ────────────────────────
 
 @Composable
 private fun AppSettingsCard() {
@@ -772,7 +796,7 @@ private fun AboutRow(icon: ImageVector, title: String, onClick: () -> Unit) {
     }
 }
 
-// ─── Sign out card ───────────────────────────────────────────────────────────
+// ─── Sign out card ─────────────────────────────────────────
 
 @Composable
 private fun SignOutCard(onClick: () -> Unit) {
@@ -818,7 +842,7 @@ private fun SignOutCard(onClick: () -> Unit) {
     }
 }
 
-// ─── Not signed in ──────────────────────────────────────────────────────────
+// ─── Not signed in ─────────────────────────────────────────
 
 @Composable
 private fun NotSignedInContent(onSignInClick: () -> Unit) {
