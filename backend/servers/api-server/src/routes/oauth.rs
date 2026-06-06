@@ -55,14 +55,8 @@ pub fn admin_router() -> Router<AppState> {
         .route("/clients", post(register_client))
         .route("/clients", get(list_clients))
         .route("/clients/{id}", get(get_client))
-        .route(
-            "/clients/{id}",
-            axum::routing::patch(update_client),
-        )
-        .route(
-            "/clients/{id}",
-            axum::routing::delete(revoke_client),
-        )
+        .route("/clients/{id}", axum::routing::patch(update_client))
+        .route("/clients/{id}", axum::routing::delete(revoke_client))
         .route(
             "/clients/{id}/regenerate-secret",
             post(regenerate_client_secret),
@@ -388,12 +382,7 @@ pub async fn token(
                         _ => StatusCode::BAD_REQUEST,
                     };
                     if matches!(e, OAuthServiceError::PrincipalKindNotAllowed) {
-                        audit_token_denied_principal_kind(
-                            &state,
-                            client_id,
-                            "refresh_token",
-                        )
-                        .await;
+                        audit_token_denied_principal_kind(&state, client_id, "refresh_token").await;
                     }
                     return Err((status, Json(e.into())));
                 }
@@ -1175,11 +1164,7 @@ fn require_bearer_user_id(
 /// `refresh_token`) both need this identical block. Extracting it keeps the
 /// hot-path error path in one place so future policy changes (e.g. adding
 /// `ip_address` or changing the audit action) require a single edit.
-async fn audit_token_denied_principal_kind(
-    state: &AppState,
-    client_id: &str,
-    grant_type: &str,
-) {
+async fn audit_token_denied_principal_kind(state: &AppState, client_id: &str, grant_type: &str) {
     let _ = state
         .audit_log_repo
         .create(CreateAuditLog {
