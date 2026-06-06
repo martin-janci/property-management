@@ -299,12 +299,17 @@ pub fn build_service_envs(
     reality_env.push(format!("PM_API_URL={api_base_url}"));
     // `SSO_CALLBACK_URL` defaults to `http://localhost:8081/api/v1/sso/callback`
     // — that endpoint is on reality-server itself, exposed publicly at
-    // `<reality_apex>/api/v1/sso/callback` so the user's browser can reach
-    // it after the OAuth redirect from api-server. Without overriding the
-    // default, the redirect from PM SSO would point at localhost in the
-    // user's browser → broken login.
+    // `api.<reality_apex>/api/v1/sso/callback`. The reality apex host only
+    // reverse-proxies to reality-web (Next.js :3000), which has no
+    // `/api/v1/sso/*` handler; using the bare apex as the callback produces
+    // a Next.js 404 after the OAuth redirect instead of a code exchange
+    // (fix for #952). The `api.<apex>` subdomain is already provisioned by
+    // `BlueGreenDeployer::deploy` → `register_route("api.{reality_apex}", …)`
+    // pointing at reality-server :8081, so this is the correct public URL.
+    // Without overriding the default, the redirect from PM SSO would point at
+    // localhost in the user's browser → broken login.
     reality_env.push(format!(
-        "SSO_CALLBACK_URL=https://{}/api/v1/sso/callback",
+        "SSO_CALLBACK_URL=https://api.{}/api/v1/sso/callback",
         target.reality_apex
     ));
     reality_env.push(format!("PLATFORM_HOST={platform_hosts}"));
