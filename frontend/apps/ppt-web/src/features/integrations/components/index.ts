@@ -8,6 +8,8 @@
 export { AccountingExportsList } from './AccountingExportsList';
 // Gap 83-1: Airbnb Integration
 export { AirbnbConnectionPanel } from './AirbnbConnectionPanel';
+// Gap 83.2: Booking.com channel integration
+export { BookingChannelPanel } from './BookingChannelPanel';
 export { CalendarConnectDialog } from './CalendarConnectDialog';
 // Story 61.1: Calendar Integration
 export { CalendarConnectionsList } from './CalendarConnectionsList';

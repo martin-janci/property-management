@@ -3,9 +3,13 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Platform } from 'react-native';
-import { createDeepLink } from '../qrcode/DeepLinkHandler';
 import { colors } from '../screens/shared/screenStyles';
-import { consumeLaunchNotification, syncBadgeFromData } from '../services/backgroundNotifications';
+import {
+  consumeLaunchNotification,
+  deepLinkForNotification,
+  type PushNotificationData,
+  syncBadgeFromData,
+} from '../services/backgroundNotifications';
 import { apiRequest } from './useApi';
 
 // Configure notification handling
@@ -19,7 +23,7 @@ Notifications.setNotificationHandler({
 
 // -- Types matching backend RegisterPushTokenRequest / PushTokenResponse -------
 
-interface RegisterPushTokenRequest {
+export interface RegisterPushTokenRequest {
   token: string;
   platform: 'fcm' | 'apns';
   appId?: string;
@@ -33,6 +37,45 @@ interface PushTokenResponse {
   deviceName?: string;
   lastSeenAt: string;
   createdAt: string;
+}
+
+/**
+ * Build the `RegisterPushTokenRequest` body for a device's native push token.
+ *
+ * Extracted as a pure function so the registration payload can be unit-tested
+ * without rendering the hook. `platform` is `fcm` on Android and `apns`
+ * elsewhere; `app_id` lets the backend fan out to the right FCM project /
+ * APNs topic.
+ */
+export function buildPushTokenRegistration(opts: {
+  token: string;
+  os: typeof Platform.OS;
+  appId?: string;
+  deviceName?: string;
+}): RegisterPushTokenRequest {
+  return {
+    token: opts.token,
+    platform: opts.os === 'android' ? 'fcm' : 'apns',
+    appId: opts.appId,
+    deviceName: opts.deviceName,
+  };
+}
+
+/**
+ * POST a device's native push token to the api-server.
+ *
+ * Critical: pass the body as an OBJECT, not a pre-stringified JSON string.
+ * `apiRequest` serialises the body itself (`JSON.stringify(init.body)`), so a
+ * pre-encoded string would be JSON-encoded twice and the server would see a
+ * quoted string instead of an object (regression fixed in PR #918).
+ */
+export async function sendPushTokenToBackend(
+  body: RegisterPushTokenRequest
+): Promise<PushTokenResponse> {
+  return apiRequest<PushTokenResponse>('/api/v1/users/me/push-tokens', {
+    method: 'POST',
+    body,
+  });
 }
 
 export interface PushNotificationState {
@@ -114,44 +157,12 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   };
 
   const handleNotificationNavigation = (data: Record<string, unknown>) => {
-    // Handle deep linking based on notification data
-    const { type, id } = data;
-    const idString = id ? String(id) : undefined;
-
-    // Map notification types to screen names and create deep links
-    let deepLinkUrl: string;
-
-    switch (type) {
-      case 'announcement':
-        deepLinkUrl = idString
-          ? createDeepLink('Announcements', { id: idString })
-          : createDeepLink('Announcements');
-        break;
-      case 'fault':
-        deepLinkUrl = idString
-          ? createDeepLink('Faults', { id: idString })
-          : createDeepLink('Faults');
-        break;
-      case 'vote':
-        deepLinkUrl = idString
-          ? createDeepLink('Voting', { id: idString })
-          : createDeepLink('Voting');
-        break;
-      case 'message':
-        deepLinkUrl = idString
-          ? createDeepLink('Messages', { id: idString })
-          : createDeepLink('Messages');
-        break;
-      case 'outage':
-        deepLinkUrl = idString
-          ? createDeepLink('Outages', { id: idString })
-          : createDeepLink('Outages');
-        break;
-      default:
-        deepLinkUrl = createDeepLink('Dashboard');
-    }
-
-    Linking.openURL(deepLinkUrl);
+    // Map the notification's {type, id} payload to a `ppt://` deep link and
+    // hand it to the OS Linking layer; `deepLinkManager` (initialised in
+    // App.tsx) picks up the `url` event and routes to the screen. Mapping
+    // logic lives in `backgroundNotifications.deepLinkForNotification` so the
+    // foreground, runtime-tap, and cold-start paths route identically.
+    Linking.openURL(deepLinkForNotification(data as PushNotificationData));
   };
 
   const registerForPushNotifications = async (): Promise<string | null> => {
@@ -229,27 +240,23 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       console.log('[push] registering native device token with backend');
     }
 
-    const platform: 'fcm' | 'apns' = Platform.OS === 'android' ? 'fcm' : 'apns';
     // app_id helps the backend fan-out to the right FCM project / APNs topic.
     const appId =
       Platform.OS === 'android'
         ? (Constants.expoConfig?.android as { package?: string })?.package
         : (Constants.expoConfig?.ios as { bundleIdentifier?: string })?.bundleIdentifier;
 
-    const body: RegisterPushTokenRequest = {
+    const body = buildPushTokenRegistration({
       token,
-      platform,
+      os: Platform.OS,
       appId,
       deviceName: Device.deviceName ?? undefined,
-    };
-
-    // `apiRequest` serialises the body itself — pass the object, not a string,
-    // otherwise the payload is JSON-encoded twice and the server sees a quoted
-    // string instead of an object.
-    await apiRequest<PushTokenResponse>('/api/v1/users/me/push-tokens', {
-      method: 'POST',
-      body,
     });
+
+    // `sendPushTokenToBackend` passes the body object straight to `apiRequest`,
+    // which serialises it once — passing a pre-stringified string here would
+    // double-encode the payload (regression fixed in PR #918).
+    await sendPushTokenToBackend(body);
   };
 
   const unregisterPushNotifications = async (): Promise<void> => {

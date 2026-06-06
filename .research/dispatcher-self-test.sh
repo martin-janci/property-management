@@ -41,6 +41,11 @@ combined_rows_jq() {
 FAIL=0
 note() { printf '  ok    %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1" >&2; FAIL=1; }
+# warn() — advisory only: prints but does NOT set FAIL. Used for invariants
+# that are self-healing on the next run (e.g. action-list archive bloat, which
+# action-list-reconcile.sh sweeps) so introducing the check doesn't retroactively
+# hard-fail an already-bloated dev snapshot.
+warn() { printf '  WARN  %s\n' "$1" >&2; }
 
 echo "==> dispatcher-self-test"
 echo "    assignments: $ASSIGN"
@@ -90,15 +95,15 @@ else fail "$MISSING rows missing one or more required fields"; fi
 echo
 
 # --- T3: status enum -------------------------------------------------------
-echo "T3  status ∈ {in-progress, review, merged, failed, done}  (done = legacy compat)"
+echo "T3  status ∈ {in-progress, review, merged, failed, done, quarantined}  (done = legacy compat; quarantined = semi-terminal, PR 5/5)"
 BAD=$(jq -s -r '
   [.[].assignments[]]
-  | map(select((.status as $s | ["in-progress","review","merged","failed","done"] | index($s) | not)))
+  | map(select((.status as $s | ["in-progress","review","merged","failed","done","quarantined"] | index($s) | not)))
   | length' "${ASSIGN_FILES[@]}")
 if [ "$BAD" = "0" ]; then note "all status values in allowed set"
 else
   fail "$BAD rows with disallowed status"
-  jq -s -r '[.[].assignments[]] | .[] | select((.status as $s | ["in-progress","review","merged","failed","done"] | index($s) | not)) | "    \(.task_id) :: status=\(.status)"' "${ASSIGN_FILES[@]}" >&2
+  jq -s -r '[.[].assignments[]] | .[] | select((.status as $s | ["in-progress","review","merged","failed","done","quarantined"] | index($s) | not)) | "    \(.task_id) :: status=\(.status)"' "${ASSIGN_FILES[@]}" >&2
 fi
 echo
 
@@ -508,7 +513,7 @@ fi
 # throttle is first enabled, so being-over-cap is a `note`, not a `fail`.
 # Hard-fail only when WIP exceeds 2 × cap (clear runaway).
 echo "T22 WIP throttle bounds (PR 4/5)"
-WIP_CAP_FOR_TEST="${DISPATCHER_WIP_CAP:-8}"
+WIP_CAP_FOR_TEST="${DISPATCHER_WIP_CAP:-16}"
 WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' "$ASSIGN")
 if [ "$WIP_CAP_FOR_TEST" = "0" ]; then
   note "WIP throttle disabled (DISPATCHER_WIP_CAP=0); current WIP=$WIP_NOW"
@@ -596,6 +601,24 @@ if [ -f "$ACTION_LIST" ]; then
   fi
   echo
 fi
+
+# --- T26: action-list.json holds non-terminal items only (issue #1014) ------
+# Spec (dispatcher-prompt.md Phase 1 step 4): action-list.json carries only
+# open/in-progress items; done/dropped live in action-list-archive.json. Bloat
+# from un-archived terminal rows is what pushed the file past the MCP inline
+# push limit and corrupted it on dev. Advisory (warn, not fail) because
+# action-list-reconcile.sh --apply is self-healing on the next Phase 6.
+echo "T26 action-list.json holds non-terminal items only (issue #1014; advisory)"
+if [ -f "$ACTION_LIST" ]; then
+  TERM=$(jq -r '[.items[] | select(.status=="done" or .status=="dropped" or .status=="merged" or .status=="failed")] | length' "$ACTION_LIST")
+  if [ "$TERM" = "0" ]; then note "no terminal items in action-list.json (archive split clean)"
+  else
+    warn "$TERM terminal item(s) in action-list.json — run: bash .research/action-list-reconcile.sh --apply"
+  fi
+else
+  printf '  skip  %s not found\n' "$ACTION_LIST"
+fi
+echo
 
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then

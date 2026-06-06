@@ -15,6 +15,12 @@ import type {
   AirbnbReservationFeed,
   AirbnbStatus,
   AirbnbSyncResponse,
+  BookingChannelStatus,
+  BookingConflictCheck,
+  BookingConnectRequest,
+  BookingConnectResponse,
+  BookingDisconnectResponse,
+  BookingSyncResult,
   CalendarConnection,
   CalendarEvent,
   CalendarEventsQuery,
@@ -463,4 +469,50 @@ export async function listAirbnbListingMappings(): Promise<AirbnbListingMapping[
 export async function listAirbnbReservations(limit = 50): Promise<AirbnbReservationFeed> {
   const qs = buildQueryString({ platform: 'airbnb', limit });
   return authenticatedFetchJson<AirbnbReservationFeed>(`${RENTALS_BASE}/bookings${qs}`);
+}
+
+// ============================================
+// Booking.com Channel (Gap 83.2)
+// ============================================
+
+export async function getBookingStatus(organizationId: string): Promise<BookingChannelStatus> {
+  return apiRequest<BookingChannelStatus>(
+    `${API_BASE}/organizations/${organizationId}/booking/status`
+  );
+}
+
+export async function connectBooking(
+  organizationId: string,
+  data: BookingConnectRequest
+): Promise<BookingConnectResponse> {
+  return apiRequest<BookingConnectResponse>(
+    `${API_BASE}/organizations/${organizationId}/booking/connect`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+export async function disconnectBooking(
+  organizationId: string
+): Promise<BookingDisconnectResponse> {
+  return apiRequest<BookingDisconnectResponse>(
+    `${API_BASE}/organizations/${organizationId}/booking`,
+    {
+      method: 'DELETE',
+    }
+  );
+}
+
+export async function syncBooking(organizationId: string): Promise<BookingSyncResult> {
+  return apiRequest<BookingSyncResult>(`${API_BASE}/organizations/${organizationId}/booking/sync`, {
+    method: 'POST',
+  });
+}
+
+export async function getBookingConflicts(organizationId: string): Promise<BookingConflictCheck> {
+  return apiRequest<BookingConflictCheck>(
+    `${API_BASE}/organizations/${organizationId}/booking/conflicts`
+  );
 }

@@ -23,7 +23,8 @@ use db::models::{
     WebhookDeliveryLog, WebhookDeliveryQuery, WebhookStatistics, WebhookSubscription,
 };
 use hmac::{Hmac, KeyInit, Mac};
-use integrations::{AirbnbClient, AirbnbWebhookEventType, BookingClient};
+use integrations::booking::ota_xml;
+use integrations::{AirbnbClient, AirbnbWebhookEventType};
 use serde::Deserialize;
 use sha2::Sha256;
 use uuid::Uuid;
@@ -842,7 +843,7 @@ pub async fn booking_push_notification(
 ) -> Result<Response<Body>, (StatusCode, Json<ErrorResponse>)> {
     tracing::info!("Received Booking.com push notification");
 
-    let _notification = BookingClient::parse_push_notification(&body).map_err(|e| {
+    let _notifications = ota_xml::parse_res_notif_rq_raw(&body).map_err(|e| {
         tracing::error!(error = %e, "Failed to parse Booking.com notification");
         (
             StatusCode::BAD_REQUEST,
@@ -853,7 +854,16 @@ pub async fn booking_push_notification(
         )
     })?;
 
-    let response_xml = BookingClient::generate_push_response(true, None);
+    let response_xml = ota_xml::build_res_notif_rs(true, None).map_err(|e| {
+        tracing::error!(error = %e, "Failed to build Booking.com response");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "RESPONSE_ERROR",
+                "Failed to build response",
+            )),
+        )
+    })?;
 
     Response::builder()
         .status(StatusCode::OK)
@@ -915,6 +925,31 @@ pub async fn handle_portal_webhook(
 }
 
 // ==================== Gap 83-1: Airbnb Inbound Webhook ====================
+
+/// Compute the idempotency key for an inbound Airbnb webhook delivery.
+///
+/// Prefers the Airbnb-assigned `event_id`. When absent (older webhook schema
+/// versions omit it), derives a deterministic synthetic key from the stable,
+/// HMAC-signed fields of the delivery so that an at-least-once redelivery of
+/// the same payload maps to the same key and is suppressed by the dedup
+/// ledger. The `synthetic:` prefix keeps these keys from ever colliding with
+/// a real Airbnb `event_id`.
+fn airbnb_dedup_key(event: &integrations::AirbnbWebhookEvent) -> String {
+    if let Some(event_id) = event.event_id.as_deref() {
+        return event_id.to_string();
+    }
+
+    use sha2::Digest;
+    let mut hasher = Sha256::new();
+    hasher.update(format!("{:?}", event.event_type).as_bytes());
+    hasher.update(b"|");
+    hasher.update(event.listing_id.as_deref().unwrap_or("").as_bytes());
+    hasher.update(b"|");
+    hasher.update(event.confirmation_code.as_deref().unwrap_or("").as_bytes());
+    hasher.update(b"|");
+    hasher.update(event.timestamp.to_rfc3339().as_bytes());
+    format!("synthetic:{}", hex::encode(hasher.finalize()))
+}
 
 /// Receive and dispatch an inbound Airbnb webhook event.
 ///
@@ -992,65 +1027,63 @@ pub async fn handle_airbnb_webhook(
         )
     })?;
 
-    // 4. Persistent deduplication via Airbnb event_id (issue #711).
+    // 4. Persistent deduplication (issue #711, bug-webhook-airbnb-dup-sync-jobs).
     //
     // Airbnb guarantees at-least-once delivery. Without persistent dedup,
     // duplicate ReservationCreated/Updated deliveries enqueue racing
     // SYNC_EXTERNAL jobs, and ReservationCancelled deliveries hammer the
     // booking-status guard. Migration 00169 created
     // `airbnb_webhook_events(event_id PRIMARY KEY, event_type, received_at)`;
-    // we attempt to insert the event_id and bail out with 200 on conflict.
+    // we attempt to insert the delivery's dedup key and bail out with 200 on
+    // conflict (idempotent acknowledgement, no side effects).
     //
-    // If `event_id` is absent we cannot dedup; fall through to processing
-    // as before — Airbnb sends event_id on first-class events, and lower-
-    // priority types (MessageReceived / ReviewReceived) are not the
-    // high-stakes paths.
-    if let Some(ref event_id) = event.event_id {
-        let event_type_label = format!("{:?}", event.event_type);
-        let insert = sqlx::query(
-            "INSERT INTO airbnb_webhook_events (event_id, event_type) \
-             VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING",
-        )
-        .bind(event_id)
-        .bind(&event_type_label)
-        .execute(&state.db)
-        .await;
+    // The dedup key is the Airbnb-assigned `event_id` when present. Older
+    // webhook schema versions omit it; in that case we derive a *synthetic*
+    // key from the stable, signed fields of the delivery (event type +
+    // listing id + confirmation code + timestamp). Airbnb redelivers the
+    // byte-identical signed payload, so a redelivery yields the same
+    // synthetic key and is suppressed — closing the previously-unguarded
+    // event_id-absent path that could still double-enqueue SYNC_EXTERNAL.
+    let dedup_key = airbnb_dedup_key(&event);
+    let event_type_label = format!("{:?}", event.event_type);
+    let insert = sqlx::query(
+        "INSERT INTO airbnb_webhook_events (event_id, event_type) \
+         VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING",
+    )
+    .bind(&dedup_key)
+    .bind(&event_type_label)
+    .execute(&state.db)
+    .await;
 
-        match insert {
-            Ok(result) if result.rows_affected() == 0 => {
-                tracing::info!(
-                    event_id = %event_id,
-                    event_type = %event_type_label,
-                    "Airbnb webhook: duplicate delivery suppressed by dedup ledger"
-                );
-                return Ok(StatusCode::OK);
-            }
-            Ok(_) => {
-                tracing::debug!(
-                    event_id = %event_id,
-                    event_type = %event_type_label,
-                    "Airbnb webhook: event_id recorded in dedup ledger"
-                );
-            }
-            Err(e) => {
-                // Best-effort: if the ledger insert fails (DB blip, table
-                // not yet migrated on a stale env, etc.) we degrade to the
-                // pre-#711 behaviour and process the event. Failing closed
-                // here would let a transient DB issue silently drop real
-                // reservation updates, which is worse than a rare double-
-                // processing (downstream handlers are idempotent upserts).
-                tracing::warn!(
-                    error = %e,
-                    event_id = %event_id,
-                    "Airbnb webhook: dedup ledger insert failed, processing anyway"
-                );
-            }
+    match insert {
+        Ok(result) if result.rows_affected() == 0 => {
+            tracing::info!(
+                dedup_key = %dedup_key,
+                event_type = %event_type_label,
+                "Airbnb webhook: duplicate delivery suppressed by dedup ledger"
+            );
+            return Ok(StatusCode::OK);
         }
-    } else {
-        tracing::debug!(
-            event_type = ?event.event_type,
-            "Airbnb webhook: event without event_id, dedup skipped"
-        );
+        Ok(_) => {
+            tracing::debug!(
+                dedup_key = %dedup_key,
+                event_type = %event_type_label,
+                "Airbnb webhook: delivery recorded in dedup ledger"
+            );
+        }
+        Err(e) => {
+            // Best-effort: if the ledger insert fails (DB blip, table
+            // not yet migrated on a stale env, etc.) we degrade to the
+            // pre-#711 behaviour and process the event. Failing closed
+            // here would let a transient DB issue silently drop real
+            // reservation updates, which is worse than a rare double-
+            // processing (downstream handlers are idempotent upserts).
+            tracing::warn!(
+                error = %e,
+                dedup_key = %dedup_key,
+                "Airbnb webhook: dedup ledger insert failed, processing anyway"
+            );
+        }
     }
 
     // 5. Dispatch by event type.
@@ -1070,11 +1103,12 @@ pub async fn handle_airbnb_webhook(
                             "trigger": "webhook",
                             "event_id": event.event_id,
                         });
-                        // TODO: Airbnb delivers webhooks at-least-once; a rapid sequence of
-                        // events for the same listing will enqueue duplicate sync jobs.
-                        // Deduplication should be handled at the worker level (idempotent
-                        // upsert) or by checking for an already-queued SYNC_EXTERNAL job
-                        // for this (org_id, connection_id) before inserting.
+                        // Idempotency note: at-least-once redeliveries are
+                        // suppressed up-front by the dedup ledger in step 4
+                        // (Airbnb event_id, or a synthetic key for legacy
+                        // deliveries that omit it), so reaching this point
+                        // means a first-seen delivery and the SYNC_EXTERNAL
+                        // job is enqueued exactly once per delivery.
                         let job_data = CreateBackgroundJob {
                             job_type: job_type::SYNC_EXTERNAL.to_string(),
                             priority: Some(1),
@@ -1265,5 +1299,83 @@ mod airbnb_webhook_tests {
         assert!(event.is_ok(), "parse failed: {:?}", event.err());
         let ev = event.unwrap();
         assert!(ev.event_id.is_none());
+    }
+
+    // ---- Dedup-key regression tests (bug-webhook-airbnb-dup-sync-jobs) ----
+    //
+    // The dedup key is what makes the `airbnb_webhook_events` ledger
+    // (INSERT ... ON CONFLICT DO NOTHING) suppress at-least-once
+    // redeliveries before any SYNC_EXTERNAL job is enqueued. A redelivery
+    // MUST map to the same key as the original delivery, otherwise the
+    // ledger lets it through and a duplicate sync job is created.
+
+    fn parse(body: &str) -> integrations::AirbnbWebhookEvent {
+        AirbnbClient::parse_webhook_event(body).expect("valid event")
+    }
+
+    const RESERVATION_WITH_ID: &str = r#"{
+        "event_type": "reservation_created",
+        "event_id": "evt_abc123",
+        "listing_id": "listing_42",
+        "confirmation_code": "HMABC123",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "payload": {}
+    }"#;
+
+    const RESERVATION_NO_ID: &str = r#"{
+        "event_type": "reservation_created",
+        "listing_id": "listing_42",
+        "confirmation_code": "HMABC123",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "payload": {}
+    }"#;
+
+    #[test]
+    fn dedup_key_uses_event_id_verbatim_when_present() {
+        let key = super::airbnb_dedup_key(&parse(RESERVATION_WITH_ID));
+        assert_eq!(key, "evt_abc123");
+    }
+
+    #[test]
+    fn dedup_key_redelivery_with_event_id_is_stable() {
+        // Same event_id redelivered => identical key => ledger conflict =>
+        // no second SYNC_EXTERNAL enqueue.
+        let first = super::airbnb_dedup_key(&parse(RESERVATION_WITH_ID));
+        let redelivery = super::airbnb_dedup_key(&parse(RESERVATION_WITH_ID));
+        assert_eq!(first, redelivery);
+    }
+
+    #[test]
+    fn dedup_key_synthetic_when_event_id_absent() {
+        let key = super::airbnb_dedup_key(&parse(RESERVATION_NO_ID));
+        assert!(
+            key.starts_with("synthetic:"),
+            "expected synthetic key, got {key}"
+        );
+        // Synthetic keys can never collide with a real Airbnb event_id.
+        assert_ne!(key, "evt_abc123");
+    }
+
+    #[test]
+    fn dedup_key_synthetic_redelivery_is_stable() {
+        // The previously-unguarded path: an event WITHOUT event_id, redelivered
+        // byte-for-byte, must still produce the same key so the duplicate
+        // SYNC_EXTERNAL enqueue is suppressed.
+        let first = super::airbnb_dedup_key(&parse(RESERVATION_NO_ID));
+        let redelivery = super::airbnb_dedup_key(&parse(RESERVATION_NO_ID));
+        assert_eq!(first, redelivery);
+    }
+
+    #[test]
+    fn dedup_key_synthetic_differs_for_distinct_deliveries() {
+        let a = super::airbnb_dedup_key(&parse(RESERVATION_NO_ID));
+        // Different listing => different delivery => different key.
+        let other = RESERVATION_NO_ID.replace("listing_42", "listing_99");
+        let b = super::airbnb_dedup_key(&parse(&other));
+        assert_ne!(a, b);
+        // Different timestamp => different delivery => different key.
+        let later = RESERVATION_NO_ID.replace("00:00:00Z", "00:05:00Z");
+        let c = super::airbnb_dedup_key(&parse(&later));
+        assert_ne!(a, c);
     }
 }

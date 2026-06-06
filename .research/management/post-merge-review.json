@@ -1,9 +1,119 @@
 {
-  "generated": "2026-05-28T16:24:12Z",
+  "generated": "2026-06-06T02:17:25Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-06-06T02:17:25Z",
+      "prs_scanned": 15,
+      "clean": [
+        1135,
+        1129,
+        1131,
+        1130,
+        1128,
+        1127,
+        1124,
+        1125,
+        1059,
+        1064,
+        1065,
+        1122,
+        1121,
+        1118
+      ],
+      "with_issues": [
+        {
+          "pr": 1132,
+          "issue": 1137,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "behavior-preserving oauth.rs dedup is sound; test-quality nit only: test_pkce_verification positive assertion became a tautology (pkce_challenge(v)==pkce_challenge(v)) and dropped the plain-rejection path. Suggest RFC7636 known-answer vector."
+        }
+      ]
+    },
+    {
+      "run_at": "2026-06-04T21:02:36Z",
+      "prs_scanned": 13,
+      "clean": [
+        1072,
+        1076,
+        1026
+      ],
+      "with_issues": [
+        {
+          "pr": 1044,
+          "issue": 1089,
+          "findings": 3,
+          "specialist": "rust",
+          "note": "FALSE POSITIVE (reviewer read stale local dev) — CLOSED. PKCE challenge-less guard exists on origin/dev oauth.rs:466; #1044 test passed in CI."
+        },
+        {
+          "pr": 1073,
+          "issue": 1091,
+          "findings": 2,
+          "specialist": "generic",
+          "note": "core throughput change sound; 2 prose refill-threshold literals (<18 ~L503, Tier-2 <12 ~L810) not scaled with BUFFER_FLOOR 18->36."
+        },
+        {
+          "pr": 1074,
+          "issue": 1088,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "Playwright e2e specs never run in CI (frontend.yml = vitest only); inaccurate setReturnUrl-sanitizes comments. vitest itself solid."
+        },
+        {
+          "pr": 1075,
+          "issue": 1095,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "FileDisputePageRoute partial-fail orchestration (apiUploadEvidence/toast/failedEvidence nav) untested at any level; extract+test."
+        },
+        {
+          "pr": 1077,
+          "issue": 1090,
+          "findings": 1,
+          "specialist": "rust",
+          "note": "tests correct; promote ~duplicated seed_org/seed_membership/authed_member into common/mod.rs create_authenticated_user_with_org."
+        },
+        {
+          "pr": 1078,
+          "issue": 1096,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "locale keys clean; 3 hardcoded date locales (en-US OcrStatusBadge + 2x en-GB SubmissionStatusPage) ignore UI language."
+        },
+        {
+          "pr": 1080,
+          "issue": 1092,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "low: announcement category filter inert end-to-end (toUiAnnouncement hardcodes general; no API category field); test exercises unreachable path."
+        },
+        {
+          "pr": 1081,
+          "issue": 1094,
+          "findings": 1,
+          "specialist": "frontend",
+          "note": "minor: test pins #990 normalization well, but docblock claims loading-state coverage while only empty+error asserted."
+        },
+        {
+          "pr": 1082,
+          "issue": 1093,
+          "findings": 3,
+          "specialist": "frontend",
+          "note": "FALSE POSITIVE (reviewer read stale local dev) — CLOSED. origin/dev App.tsx:167 forwards documentId; DocumentDetailScreen consumes it."
+        },
+        {
+          "pr": 1022,
+          "issue": 1097,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "low: type-drift cleanup — inaccurate MoveDocumentResponse type + duplicated ApiFolderTreeNode interface. Contract/i18n/invalidation all correct."
+        }
+      ]
+    },
     {
       "run_at": "2026-05-28T16:24:12Z",
       "prs_scanned": 15,
@@ -93,7 +203,7 @@
           "issue": 696,
           "findings": 3,
           "specialist": "rust-backend",
-          "note": "tests only hit JWT gate (401) \u2014 RBAC extractor and cross-tenant WHERE clause never exercised; .sqlx cache likely stale after SQL stub replacement; seed helpers use sqlx::query not sqlx::query!"
+          "note": "tests only hit JWT gate (401) — RBAC extractor and cross-tenant WHERE clause never exercised; .sqlx cache likely stale after SQL stub replacement; seed helpers use sqlx::query not sqlx::query!"
         },
         {
           "pr": 688,
@@ -121,7 +231,7 @@
           "issue": 700,
           "findings": 1,
           "specialist": "generic",
-          "note": "GC2 silently passes when HEAD baseline missing \u2014 shallow clone will defeat PR2 hard fail"
+          "note": "GC2 silently passes when HEAD baseline missing — shallow clone will defeat PR2 hard fail"
         },
         {
           "pr": 640,
@@ -163,7 +273,7 @@
           "issue": 692,
           "findings": 1,
           "specialist": "generic",
-          "note": "admin-web missing from pm-frontend owner-areas.json \u2014 scope_drift=true on every future admin-web task"
+          "note": "admin-web missing from pm-frontend owner-areas.json — scope_drift=true on every future admin-web task"
         },
         {
           "pr": 660,
@@ -209,42 +319,42 @@
           "issue": 673,
           "findings": 1,
           "specialist": "pm-security",
-          "note": "e-sig nonce not persisted \u2014 replay still possible for full 7-day TTL; no tracking issue filed before PR merged"
+          "note": "e-sig nonce not persisted — replay still possible for full 7-day TTL; no tracking issue filed before PR merged"
         },
         {
           "pr": 632,
           "issue": 676,
           "findings": 1,
           "specialist": "pm-frontend",
-          "note": "ppt_tenants localStorage not refreshed on token refresh \u2014 stale role persists after server-side membership removal"
+          "note": "ppt_tenants localStorage not refreshed on token refresh — stale role persists after server-side membership removal"
         },
         {
           "pr": 645,
           "issue": 677,
           "findings": 1,
           "specialist": "pm-security",
-          "note": "audit-hash domain changed (PascalCase\u2192snake_case) without backfill \u2014 existing rows will fail verify_integrity"
+          "note": "audit-hash domain changed (PascalCase→snake_case) without backfill — existing rows will fail verify_integrity"
         },
         {
           "pr": 636,
           "issue": 679,
           "findings": 1,
           "specialist": "pm-qa",
-          "note": "IDOR test uses unauthenticated request \u2014 doesn't exercise authenticated cross-org RLS path"
+          "note": "IDOR test uses unauthenticated request — doesn't exercise authenticated cross-org RLS path"
         },
         {
           "pr": 650,
           "issue": 681,
           "findings": 1,
           "specialist": "pm-qa",
-          "note": "Redis pub/sub fanout test is #[ignore] with no CI path \u2014 core WS delivery guarantee untested"
+          "note": "Redis pub/sub fanout test is #[ignore] with no CI path — core WS delivery guarantee untested"
         },
         {
           "pr": 658,
           "issue": 683,
           "findings": 1,
           "specialist": "pm-devops",
-          "note": "branch-protection-setup.yml post-merge action may not have been run \u2014 security-gate-conclusion still advisory"
+          "note": "branch-protection-setup.yml post-merge action may not have been run — security-gate-conclusion still advisory"
         }
       ]
     },
@@ -263,7 +373,7 @@
           "issue": 614,
           "findings": 3,
           "specialist": "rust-backend",
-          "note": "update_schedule bypasses RequireCapability; list_schedule_executions has no RBAC; cron stored in time column \u2014 schema debt"
+          "note": "update_schedule bypasses RequireCapability; list_schedule_executions has no RBAC; cron stored in time column — schema debt"
         },
         {
           "pr": 612,
@@ -305,14 +415,14 @@
           "issue": 620,
           "findings": 2,
           "specialist": "react-native",
-          "note": "production safety guard removed \u2014 placeholder URL ships silently; EXPO_PUBLIC_ prefix inconsistency"
+          "note": "production safety guard removed — placeholder URL ships silently; EXPO_PUBLIC_ prefix inconsistency"
         },
         {
           "pr": 606,
           "issue": 621,
           "findings": 1,
           "specialist": "react-web",
-          "note": "STATUS_OPTIONS recreated on every render \u2014 needs useMemo"
+          "note": "STATUS_OPTIONS recreated on every render — needs useMemo"
         }
       ]
     },
@@ -368,14 +478,14 @@
           "issue": 578,
           "findings": 4,
           "specialist": "ios-swiftui",
-          "note": "beginSsoFlow() never called from LoginView \u2014 CSRF nonce always nil, SSO login broken in production; placeholder allow-list hosts; missing CSRF/auth/allow-list tests; Base.xcconfig version fallback gap"
+          "note": "beginSsoFlow() never called from LoginView — CSRF nonce always nil, SSO login broken in production; placeholder allow-list hosts; missing CSRF/auth/allow-list tests; Base.xcconfig version fallback gap"
         },
         {
           "pr": 552,
           "issue": 575,
           "findings": 1,
           "specialist": "generic",
-          "note": "detect-test-file.sh missing Kotlin/KMP patterns \u2014 security-test-gate wrongly fails mobile-native *Test.kt PRs"
+          "note": "detect-test-file.sh missing Kotlin/KMP patterns — security-test-gate wrongly fails mobile-native *Test.kt PRs"
         },
         {
           "pr": 551,
@@ -432,7 +542,7 @@
           {
             "pr": 598,
             "issue": 576,
-            "note": "dispatcher verdict/note regex fix \u2014 verdict=changes loop restored"
+            "note": "dispatcher verdict/note regex fix — verdict=changes loop restored"
           },
           {
             "pr": 600,
@@ -447,7 +557,7 @@
           {
             "pr": 606,
             "issue": 570,
-            "note": "HistoryFilters i18n \u2014 hardcoded English strings replaced"
+            "note": "HistoryFilters i18n — hardcoded English strings replaced"
           },
           {
             "pr": 607,
@@ -469,7 +579,7 @@
               571,
               574
             ],
-            "note": "SSO beginSsoFlow + IDOR access_scope + scheduler fail-closed + FolderTree i18n \u2014 CI running"
+            "note": "SSO beginSsoFlow + IDOR access_scope + scheduler fail-closed + FolderTree i18n — CI running"
           }
         ],
         "added_to_action_list": [
@@ -559,21 +669,21 @@
           "issue": 525,
           "findings": 6,
           "specialist": "ios-swiftui",
-          "note": "Info.plist hardcodes CFBundleIdentifier + version literals \u2014 per-env bundle suffix and VERSION-file sync silently broken; self-referential DEVELOPMENT_TEAM; no macOS CI smoke"
+          "note": "Info.plist hardcodes CFBundleIdentifier + version literals — per-env bundle suffix and VERSION-file sync silently broken; self-referential DEVELOPMENT_TEAM; no macOS CI smoke"
         },
         {
           "pr": 497,
           "issue": 519,
           "findings": 1,
           "specialist": "rust-backend",
-          "note": "sister handler routes/realtors.rs::mark_inquiry_read still IDOR-able on dev; #497 shape correct but migration incomplete \u2014 commented on existing #519 instead of duplicate"
+          "note": "sister handler routes/realtors.rs::mark_inquiry_read still IDOR-able on dev; #497 shape correct but migration incomplete — commented on existing #519 instead of duplicate"
         },
         {
           "pr": 496,
           "issue": 526,
           "findings": 5,
           "specialist": "generic",
-          "note": "massive scope creep \u2014 22 files / 1088 LOC shipped for 15-LOC ADR doc task; stop-hook auto-commit bundled gap-85-1 (PR #499) + gap-85-2 (PR #498) WIP from parallel agents"
+          "note": "massive scope creep — 22 files / 1088 LOC shipped for 15-LOC ADR doc task; stop-hook auto-commit bundled gap-85-1 (PR #499) + gap-85-2 (PR #498) WIP from parallel agents"
         },
         {
           "pr": 495,
@@ -617,7 +727,7 @@
           "issue": 481,
           "findings": 2,
           "specialist": "rust-backend",
-          "note": "CRITICAL: AND revoked_at IS NULL removed from refresh-token lookup \u2014 revoked tokens reusable; no negative revocation test"
+          "note": "CRITICAL: AND revoked_at IS NULL removed from refresh-token lookup — revoked tokens reusable; no negative revocation test"
         },
         {
           "pr": 459,
@@ -638,7 +748,7 @@
           "issue": 484,
           "findings": 3,
           "specialist": "rust-backend",
-          "note": "dispatch_to_users is serial \u2014 N+1 latency for broadcast; FCM stub marks failed pushes as Sent"
+          "note": "dispatch_to_users is serial — N+1 latency for broadcast; FCM stub marks failed pushes as Sent"
         },
         {
           "pr": 467,

@@ -3,6 +3,7 @@
     "allListings": "Všetky ponuky",
     "branding": "Branding",
     "dashboard": "Panel agentúry",
+    "inviteError": "Chyba pri odosielaní pozvánky. Skúste to znova.",
     "inviteRealtor": "Pozvať makléra",
     "manageRealtors": "Spravovať maklérov",
     "performanceOverview": "Prehľad výkonnosti",
@@ -46,6 +47,10 @@
     "save": "Uložiť",
     "search": "Hľadať",
     "success": "Úspech"
+  },
+  "comparison": {
+    "loadError": "Nepodarilo sa načítať zdieľané porovnanie. Niektoré nehnuteľnosti už nemusia byť dostupné.",
+    "loading": "Načítava sa zdieľané porovnanie..."
   },
   "contact": {
     "askQuestion": "Položiť otázku",

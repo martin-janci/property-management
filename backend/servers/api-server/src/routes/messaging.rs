@@ -163,11 +163,7 @@ async fn list_threads(
     let tenant_id = rls.tenant_id();
 
     // Treat an empty/whitespace-only search string as no filter.
-    let search = query
-        .search
-        .as_deref()
-        .map(str::trim)
-        .filter(|s| !s.is_empty());
+    let search = normalize_thread_search(query.search.as_deref());
 
     let threads = repo
         .list_threads_rls(
@@ -1046,6 +1042,16 @@ async fn get_unread_count(
 // Helper Functions
 // ============================================================================
 
+/// Normalize the optional thread-list `search` query parameter into the
+/// `Option<&str>` filter passed to the messaging repository.
+///
+/// An absent, empty, or whitespace-only value is treated as "no filter"
+/// (`None`); otherwise the trimmed string is returned so a leading/trailing
+/// space typed by the client does not change the ILIKE match.
+fn normalize_thread_search(search: Option<&str>) -> Option<&str> {
+    search.map(str::trim).filter(|s| !s.is_empty())
+}
+
 /// Get the other participant's info from a thread.
 async fn get_other_participant(
     rls: &mut RlsConnection,
@@ -1067,10 +1073,11 @@ async fn get_other_participant(
             )
         })?;
 
-    // Get user info
+    // Get user info. Issue #1008: `users` has a single `name` column — map it
+    // into first_name and leave last_name empty to keep the ParticipantInfo shape.
     let user = sqlx::query_as::<_, (Uuid, String, String, String)>(
         r#"
-        SELECT id, first_name, last_name, email FROM users WHERE id = $1
+        SELECT id, name AS first_name, '' AS last_name, email FROM users WHERE id = $1
         "#,
     )
     .bind(other_user_id)
@@ -1192,5 +1199,24 @@ mod tests {
         assert_eq!(preview.chars().count(), MESSAGE_PREVIEW_LEN);
         // Must not leak the full body over the wire.
         assert!(preview.len() < long.len());
+    }
+
+    #[test]
+    fn thread_search_none_when_absent_or_blank() {
+        assert_eq!(normalize_thread_search(None), None);
+        assert_eq!(normalize_thread_search(Some("")), None);
+        assert_eq!(normalize_thread_search(Some("   ")), None);
+        assert_eq!(normalize_thread_search(Some("\t \n")), None);
+    }
+
+    #[test]
+    fn thread_search_trims_and_keeps_nonblank() {
+        assert_eq!(normalize_thread_search(Some("alice")), Some("alice"));
+        assert_eq!(normalize_thread_search(Some("  alice  ")), Some("alice"));
+        // Interior whitespace is preserved; only the edges are trimmed.
+        assert_eq!(
+            normalize_thread_search(Some("  van der  ")),
+            Some("van der")
+        );
     }
 }

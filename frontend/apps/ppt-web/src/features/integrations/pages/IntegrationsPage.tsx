@@ -8,6 +8,7 @@ import { useState } from 'react';
 import {
   AccountingExportsList,
   AirbnbConnectionPanel,
+  BookingChannelPanel,
   CalendarConnectionsList,
   ESignatureWorkflowsList,
   IntegrationsDashboard,
@@ -19,7 +20,14 @@ interface IntegrationsPageProps {
   organizationId: string;
 }
 
-type TabValue = 'airbnb' | 'calendars' | 'accounting' | 'esignatures' | 'video' | 'webhooks';
+type TabValue =
+  | 'airbnb'
+  | 'calendars'
+  | 'accounting'
+  | 'esignatures'
+  | 'video'
+  | 'webhooks'
+  | 'booking';
 
 const tabs: { value: TabValue; label: string }[] = [
   { value: 'airbnb', label: 'Airbnb' },
@@ -28,6 +36,7 @@ const tabs: { value: TabValue; label: string }[] = [
   { value: 'esignatures', label: 'E-Signatures' },
   { value: 'video', label: 'Video' },
   { value: 'webhooks', label: 'Webhooks' },
+  { value: 'booking', label: 'Booking.com' },
 ];
 
 export function IntegrationsPage({ organizationId }: IntegrationsPageProps) {
@@ -74,6 +83,8 @@ export function IntegrationsPage({ organizationId }: IntegrationsPageProps) {
           {activeTab === 'video' && <VideoMeetingsList organizationId={organizationId} />}
 
           {activeTab === 'webhooks' && <WebhookSubscriptionsList organizationId={organizationId} />}
+
+          {activeTab === 'booking' && <BookingChannelPanel organizationId={organizationId} />}
         </div>
       </div>
     </div>

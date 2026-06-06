@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "pm-scrum",
-  "selected_at": "2026-06-03T09:56:55Z",
-  "last_action": "repick",
-  "reason": "prior target 'gap-85' exhausted; closest-to-done is 'pm-scrum' (open=7 claimable=3)",
+  "epic_prefix": "gap-82",
+  "selected_at": "2026-06-06T00:19:24Z",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
-    "open": 7,
-    "claimable": 3
+    "open": 2,
+    "claimable": 1
   }
 }

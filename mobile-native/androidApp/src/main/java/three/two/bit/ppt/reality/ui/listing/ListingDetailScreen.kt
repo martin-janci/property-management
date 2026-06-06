@@ -168,15 +168,20 @@ fun ListingDetailScreen(
                         onShareClick = { showShareSheet = true },
                         onFavoriteClick = {
                             if (authState is AuthState.Authenticated && !isFavoriteLoading) {
+                                val previousFav = isFavorite
                                 val newFav = !isFavorite
+                                // Optimistic UI: flip the heart immediately, then reconcile with
+                                // the server response. On failure we roll the state back to
+                                // `previousFav` so the icon never lies about persisted state.
+                                isFavorite = newFav
                                 isFavoriteLoading = true
                                 scope.launch {
                                     val result =
                                         if (newFav) favoritesRepository.addFavorite(listingId)
                                         else favoritesRepository.removeFavorite(listingId)
                                     result.fold(
-                                        onSuccess = { isFavorite = newFav },
-                                        onFailure = { /* revert silently */ },
+                                        onSuccess = { /* optimistic value already applied */ },
+                                        onFailure = { isFavorite = previousFav },
                                     )
                                     isFavoriteLoading = false
                                 }

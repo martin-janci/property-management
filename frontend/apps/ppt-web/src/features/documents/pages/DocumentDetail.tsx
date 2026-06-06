@@ -11,11 +11,20 @@ import {
   useDocumentVersions,
   useReprocessOcr,
 } from '@ppt/api-client';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ClassificationUI } from '../components/ClassificationBadge';
 import { DocumentSharePanel } from '../components/DocumentSharePanel';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { OcrProcessingStatus } from '../components/OcrStatusBadge';
+import { useDocumentDownload } from '../hooks/useDocumentDownload';
+
+// Lazy-loaded so PDF.js (react-pdf, references DOMMatrix at module load) is
+// only pulled in when the preview actually opens — keeps it out of the initial
+// bundle and out of the jsdom module graph for tests that render this page.
+const DocumentPreviewModal = lazy(() =>
+  import('../components/DocumentPreviewModal').then((m) => ({ default: m.DocumentPreviewModal }))
+);
 
 /** Human-readable labels for the access_scope values returned by the backend (7a-3). */
 const AUDIENCE_LABELS: Record<AccessScope, string> = {
@@ -32,16 +41,23 @@ interface DocumentDetailProps {
 
 /**
  * Raw shape of a version row as returned by the list-versions endpoint.
- * The generated client returns camelCase (`version`, `createdAt`, `createdBy`,
- * `file.sizeBytes`), but we read snake_case aliases too for resilience.
+ *
+ * The real backend (`VersionHistoryResponse`) returns snake_case rows with
+ * `version_number`, `is_current_version`, `created_by_name`, `size_bytes` and
+ * `created_at`. The generated OpenAPI client instead models the endpoint as a
+ * camelCase array, so we tolerate both spellings for resilience.
  */
 interface VersionRecord {
   id?: string;
   version?: number;
   version_number?: number;
   versionNumber?: number;
+  is_current_version?: boolean;
+  isCurrentVersion?: boolean;
   uploader?: string;
   uploaderName?: string;
+  created_by_name?: string;
+  createdByName?: string;
   createdBy?: string;
   created_by?: string;
   createdAt?: string;
@@ -72,6 +88,14 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   const versions = useDocumentVersions(documentId);
   const reprocessOcr = useReprocessOcr();
   const [showSharePanel, setShowSharePanel] = useState(false);
+  const { t } = useTranslation();
+  const [showPreview, setShowPreview] = useState(false);
+  // Hook order must stay unconditional (called before the early returns); the
+  // file name is resolved lazily inside the hook when download() runs.
+  const { download, isDownloading } = useDocumentDownload(
+    documentId,
+    data?.document?.file_name ?? ''
+  );
 
   if (isLoading) {
     return (
@@ -161,10 +185,21 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   // Estimate word count from OCR text
   const wordCount = doc.ocr_text ? doc.ocr_text.split(/\s+/).filter((w) => w.length > 0).length : 0;
 
-  // Normalise version rows from the (generated, camelCase) list-versions
-  // response into a small UI shape, tolerating both camelCase and snake_case
-  // field names. Newest version first; the highest version number is current.
-  const rawVersions = (versions.data ?? []) as unknown as VersionRecord[];
+  // Normalise version rows into a small UI shape, tolerating both the real
+  // backend response (the `VersionHistoryResponse` envelope: snake_case rows
+  // under `history.versions`) and the generated client's bare camelCase array.
+  // Newest version first; prefer the server's `is_current_version` flag and
+  // fall back to "highest version number" only when no row is flagged current.
+  const versionsData = versions.data as
+    | { history?: { versions?: VersionRecord[] } }
+    | VersionRecord[]
+    | undefined;
+  const rawVersions: VersionRecord[] = Array.isArray(versionsData)
+    ? versionsData
+    : (versionsData?.history?.versions ?? []);
+  const anyFlaggedCurrent = rawVersions.some(
+    (v) => v.is_current_version ?? v.isCurrentVersion ?? false
+  );
   const maxVersion = rawVersions.reduce((max, v) => {
     const n = versionNumberOf(v);
     return n > max ? n : max;
@@ -172,13 +207,22 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   const versionRows: VersionRow[] = rawVersions
     .map((v) => {
       const versionNumber = versionNumberOf(v);
+      const flaggedCurrent = v.is_current_version ?? v.isCurrentVersion;
       return {
         id: v.id ?? `version-${versionNumber}`,
         versionNumber,
-        uploader: v.uploaderName ?? v.uploader ?? v.createdBy ?? v.created_by,
+        uploader:
+          v.created_by_name ??
+          v.createdByName ??
+          v.uploaderName ??
+          v.uploader ??
+          v.createdBy ??
+          v.created_by,
         createdAt: v.createdAt ?? v.created_at ?? '',
         sizeBytes: v.file?.sizeBytes ?? v.file?.size_bytes ?? v.sizeBytes ?? v.size_bytes,
-        isCurrent: versionNumber === maxVersion && maxVersion > 0,
+        isCurrent: anyFlaggedCurrent
+          ? (flaggedCurrent ?? false)
+          : versionNumber === maxVersion && maxVersion > 0,
       };
     })
     .sort((a, b) => b.versionNumber - a.versionNumber);
@@ -230,10 +274,10 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
 
         {/* Document Actions */}
         <div className="document-actions">
-          <a
-            href={`/api/v1/documents/${doc.id}/download`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => download()}
+            disabled={isDownloading}
             className="action-btn primary"
           >
             <svg
@@ -249,14 +293,9 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            Download
-          </a>
-          <a
-            href={`/api/v1/documents/${doc.id}/preview`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="action-btn"
-          >
+            {isDownloading ? 'Downloading…' : 'Download'}
+          </button>
+          <button type="button" onClick={() => setShowPreview(true)} className="action-btn">
             <svg
               width="16"
               height="16"
@@ -270,7 +309,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
               <circle cx="12" cy="12" r="3" />
             </svg>
             Preview
-          </a>
+          </button>
           <button
             type="button"
             className={`action-btn${showSharePanel ? ' active' : ''}`}
@@ -301,6 +340,18 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
           <div id="doc-share-panel" className="share-panel-wrapper">
             <DocumentSharePanel documentId={doc.id} documentTitle={doc.title} />
           </div>
+        )}
+
+        {showPreview && (
+          <Suspense fallback={null}>
+            <DocumentPreviewModal
+              documentId={doc.id}
+              title={doc.title}
+              fileName={doc.file_name}
+              mimeType={doc.mime_type}
+              onClose={() => setShowPreview(false)}
+            />
+          </Suspense>
         )}
       </div>
 
@@ -362,14 +413,24 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
 
       {/* Version History (Story 7B.1) — list-only timeline */}
       <div className="version-history-section">
-        <h3 className="section-title">História verzií</h3>
+        <h3 className="section-title">{t('documents.versionHistory.title', 'Version history')}</h3>
 
-        {versions.isLoading && <p className="version-empty">Načítavam verzie…</p>}
+        {versions.isLoading && (
+          <p className="version-empty">
+            {t('documents.versionHistory.loading', 'Loading versions…')}
+          </p>
+        )}
 
-        {versions.error && <p className="version-empty">Históriu verzií sa nepodarilo načítať.</p>}
+        {versions.error && (
+          <p className="version-empty">
+            {t('documents.versionHistory.loadError', 'Failed to load version history.')}
+          </p>
+        )}
 
         {!versions.isLoading && !versions.error && versionRows.length === 0 && (
-          <p className="version-empty">Pre tento dokument nie sú dostupné žiadne verzie.</p>
+          <p className="version-empty">
+            {t('documents.versionHistory.empty', 'No versions are available for this document.')}
+          </p>
         )}
 
         {versionRows.length > 0 && (
@@ -379,8 +440,17 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
                 <div className="version-marker" aria-hidden="true" />
                 <div className="version-body">
                   <div className="version-head">
-                    <span className="version-number">Verzia {v.versionNumber}</span>
-                    {v.isCurrent && <span className="version-current-badge">Aktuálna</span>}
+                    <span className="version-number">
+                      {t('documents.versionHistory.version', {
+                        defaultValue: 'Version {{n}}',
+                        n: v.versionNumber,
+                      })}
+                    </span>
+                    {v.isCurrent && (
+                      <span className="version-current-badge">
+                        {t('documents.versionHistory.current', 'Current')}
+                      </span>
+                    )}
                   </div>
                   <div className="version-meta">
                     {v.uploader && <span className="version-meta-item">{v.uploader}</span>}

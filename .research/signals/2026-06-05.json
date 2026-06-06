@@ -1,0 +1,198 @@
+{
+  "date": "2026-06-05",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts",
+      "type": "churn-hotspot",
+      "source": "merged PRs since 2026-06-04T07:47:41Z",
+      "score_delta": 1,
+      "evidence": "appeared in 4 merged PRs this run (#1101 ann category cleanup, #1098 status-date i18n, #1083 voting locale, #1077 realtime sync) — top of churn list",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "merged PRs since 2026-06-04T07:47:41Z",
+      "score_delta": 1,
+      "evidence": "appeared in 4 merged PRs this run — top of churn list; runs_seen=2 in hotspot_history (qualifies for repeated-churn next run)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "merged PRs since 2026-06-04T07:47:41Z",
+      "score_delta": 1,
+      "evidence": "appeared in 3 merged PRs this run (#1101 mobile cleanup, #1081 versions, #1082 deep-link)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1100-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1100",
+      "score_delta": 2,
+      "evidence": "PR #1100 modified frontend/apps/ppt-web/src/App.tsx + FileDisputePageRoute.tsx without updating docs/screens/ppt/*.md (best-effort heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1085-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1085",
+      "score_delta": 2,
+      "evidence": "PR #1085 modified frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} without updating docs/screens/reality/*.md (best-effort heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "untriaged-issue-1061",
+      "type": "untriaged-issue",
+      "source": "Issue #1061",
+      "score_delta": 1,
+      "evidence": "Issue #1061 ([dispatcher incident] dev .research/management/assignments-archive.json corrupted to 1/196 rows by failed MCP push) has no labels — open since 2026-06-04",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "dep-update-noise-2026-06-05",
+      "type": "dep-update-noise",
+      "source": "dependabot open PRs",
+      "score_delta": 0,
+      "evidence": "9 open dependabot PRs in window (#1058 rust-toolchain, #1059 expo-github-action, #1060 quick-xml, #1062 npm-minor-patch, #1063 expo-localization, #1064 kotlin group, #1065 expo-location, #1066 zod 4 major, #1067 typescript 6 major) — logged, not scored",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (no high-confidence + score>=3 signal of an allowlist signal type this run)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals not double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "no open >14d undecayed",
+      "observed": "true (0 candidates)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial-pass line",
+      "observed": "0 new plans this run — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + structure",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0 paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostname grep",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed = none and cursors advanced consistently",
+      "observed": "no phase failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still resolvable",
+      "observed": "0 missing",
+      "expected": "0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run ≥ HEAD",
+      "observed": "7≥7",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "0 actions (no candidate)",
+      "expected": "caps respected"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursors",
+      "observed": "GC7 pass: pm 0→1, cov 7→8, epics=13",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}

@@ -603,6 +603,84 @@ async fn test_pin_announcement() {
     db.cleanup().await.unwrap();
 }
 
+/// Issue #972.7: announcements pinned longer than the cutoff are auto-unpinned
+/// by `auto_unpin_expired`, while recently-pinned ones are left untouched.
+#[tokio::test]
+#[ignore]
+async fn test_auto_unpin_expired() {
+    use db::repositories::AnnouncementRepository;
+
+    let db = TestDb::new().await.expect("Failed to connect to test DB");
+    db.cleanup().await.unwrap();
+    db.setup_as_super_admin().await.unwrap();
+
+    let org_id = db.create_test_org("Auto Unpin Org").await.unwrap();
+    let user_id = db
+        .create_test_user("unpin@test.com", "Unpin Author")
+        .await
+        .unwrap();
+
+    // Stale pin: pinned 40 days ago — should be unpinned with a 30-day cutoff.
+    let stale_id = db
+        .create_test_announcement(org_id, user_id, "Stale Pin", "Content")
+        .await
+        .unwrap();
+    sqlx::query(
+        "UPDATE announcements SET pinned = true, pinned_at = NOW() - INTERVAL '40 days', pinned_by = $1 WHERE id = $2",
+    )
+    .bind(user_id)
+    .bind(stale_id)
+    .execute(&db.pool)
+    .await
+    .unwrap();
+
+    // Fresh pin: pinned 1 day ago — should remain pinned.
+    let fresh_id = db
+        .create_test_announcement(org_id, user_id, "Fresh Pin", "Content")
+        .await
+        .unwrap();
+    sqlx::query(
+        "UPDATE announcements SET pinned = true, pinned_at = NOW() - INTERVAL '1 day', pinned_by = $1 WHERE id = $2",
+    )
+    .bind(user_id)
+    .bind(fresh_id)
+    .execute(&db.pool)
+    .await
+    .unwrap();
+
+    let repo = AnnouncementRepository::new(db.pool.clone());
+    let unpinned = repo
+        .auto_unpin_expired(chrono::Duration::days(30))
+        .await
+        .unwrap();
+
+    assert_eq!(unpinned, vec![stale_id], "only the stale pin should unpin");
+
+    // Stale announcement is fully unpinned (pinned flag + audit columns cleared).
+    let stale = sqlx::query("SELECT pinned, pinned_at, pinned_by FROM announcements WHERE id = $1")
+        .bind(stale_id)
+        .fetch_one(&db.pool)
+        .await
+        .unwrap();
+    let stale_pinned: bool = stale.get("pinned");
+    let stale_pinned_at: Option<chrono::DateTime<chrono::Utc>> = stale.get("pinned_at");
+    let stale_pinned_by: Option<Uuid> = stale.get("pinned_by");
+    assert!(!stale_pinned, "stale announcement should be unpinned");
+    assert!(stale_pinned_at.is_none(), "pinned_at should be cleared");
+    assert!(stale_pinned_by.is_none(), "pinned_by should be cleared");
+
+    // Fresh announcement is untouched.
+    let fresh_pinned: bool = sqlx::query("SELECT pinned FROM announcements WHERE id = $1")
+        .bind(fresh_id)
+        .fetch_one(&db.pool)
+        .await
+        .unwrap()
+        .get("pinned");
+    assert!(fresh_pinned, "fresh announcement should stay pinned");
+
+    db.cleanup().await.unwrap();
+}
+
 // ==================== RLS Table Coverage Test ====================
 
 /// Verify announcements tables have RLS enabled

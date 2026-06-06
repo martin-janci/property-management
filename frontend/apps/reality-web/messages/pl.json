@@ -3,6 +3,7 @@
     "allListings": "Wszystkie oferty",
     "branding": "Branding",
     "dashboard": "Panel agencji",
+    "inviteError": "Błąd podczas wysyłania zaproszenia. Spróbuj ponownie.",
     "inviteRealtor": "Zaproś agenta",
     "manageRealtors": "Zarządzaj agentami",
     "performanceOverview": "Przegląd wydajności",
@@ -46,6 +47,10 @@
     "save": "Zapisz",
     "search": "Szukaj",
     "success": "Sukces"
+  },
+  "comparison": {
+    "loadError": "Nie udało się wczytać udostępnionego porównania. Niektóre nieruchomości mogą być już niedostępne.",
+    "loading": "Wczytywanie udostępnionego porównania..."
   },
   "contact": {
     "askQuestion": "Zadać pytanie",

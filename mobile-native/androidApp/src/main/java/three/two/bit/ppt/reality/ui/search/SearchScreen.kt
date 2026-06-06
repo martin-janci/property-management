@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.listing.*
@@ -76,6 +81,7 @@ fun SearchScreen(
 ) {
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val listState = rememberLazyListState()
 
     var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -100,33 +106,30 @@ fun SearchScreen(
     val networkErrorMsg = stringResource(R.string.error_network)
     val searchFailedMsg = stringResource(R.string.error_generic)
 
+    // Shared search logic lives in SearchState (commonMain) so it's unit-tested and
+    // reusable by the iOS target; this composable is a thin shell around it.
     fun performSearch(page: Int = 1) {
         scope.launch {
             isLoading = true
             errorMessage = null
 
-            val filters =
-                ListingSearchFilters(
+            val request =
+                SearchState.buildSearchRequest(
+                    query = searchQuery,
                     type = selectedType,
                     category = selectedCategory,
-                    minPrice = minPrice.toLongOrNull(),
-                    maxPrice = maxPrice.toLongOrNull(),
+                    minPrice = minPrice,
+                    maxPrice = maxPrice,
                     minRooms = minRooms,
-                )
-            val request =
-                ListingSearchRequest(
-                    query = searchQuery.takeIf { it.isNotBlank() },
-                    filters = filters,
                     sort = selectedSort,
                     page = page,
-                    pageSize = 20,
                 )
             repository
                 .searchListings(request)
                 .fold(
                     onSuccess = { response ->
                         searchResults =
-                            if (page == 1) response.listings else searchResults + response.listings
+                            SearchState.mergePage(searchResults, response.listings, page)
                         totalResults = response.total
                         currentPage = page
                     },
@@ -140,11 +143,78 @@ fun SearchScreen(
 
     LaunchedEffect(Unit) { performSearch() }
 
+    // AC-2: debounced search. A 300ms debounce on free-text query changes mirrors the
+    // iOS SearchView (Task.sleep 300ms). drop(1) skips the initial empty emission so the
+    // LaunchedEffect(Unit) above owns the first load; distinctUntilChanged avoids re-firing
+    // when the same text settles.
+    LaunchedEffect(Unit) {
+        snapshotFlow { searchQuery }
+            .drop(1)
+            .debounce(SearchState.SEARCH_DEBOUNCE_MS)
+            .distinctUntilChanged()
+            .collect { performSearch() }
+    }
+
+    // AC-4: infinite scroll. When the user scrolls within PREFETCH_THRESHOLD of the end and
+    // more results exist, fetch the next page automatically.
+    LaunchedEffect(listState, searchResults.size, totalResults, isLoading) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .distinctUntilChanged()
+            .collect { lastVisible ->
+                if (
+                    SearchState.shouldLoadNextPage(
+                        lastVisibleIndex = lastVisible,
+                        loadedCount = searchResults.size,
+                        total = totalResults,
+                        isLoading = isLoading,
+                    )
+                ) {
+                    performSearch(currentPage + 1)
+                }
+            }
+    }
+
     val activeFilterCount =
         remember(selectedType, selectedCategory, minRooms, minPrice, maxPrice) {
-            listOf(selectedType, selectedCategory, minRooms).count { it != null } +
-                (if (minPrice.isNotBlank() || maxPrice.isNotBlank()) 1 else 0)
+            SearchState.activeFilterCount(
+                type = selectedType,
+                category = selectedCategory,
+                minRooms = minRooms,
+                minPrice = minPrice,
+                maxPrice = maxPrice,
+            )
         }
+
+    // AC-4: FilterSheet — advanced filters presented as a modal bottom sheet (matching the
+    // iOS shared `FilterSheet` component) instead of an inline collapsible panel.
+    if (showFilters) {
+        FilterSheet(
+            selectedType = selectedType,
+            selectedCategory = selectedCategory,
+            minPrice = minPrice,
+            maxPrice = maxPrice,
+            selectedSort = selectedSort,
+            onDismiss = { showFilters = false },
+            onApply = { type, category, minP, maxP, sort ->
+                selectedType = type
+                selectedCategory = category
+                minPrice = minP
+                maxPrice = maxP
+                selectedSort = sort
+                showFilters = false
+                performSearch()
+            },
+            onReset = {
+                selectedType = null
+                selectedCategory = null
+                minPrice = ""
+                maxPrice = ""
+                selectedSort = ListingSortOption.NEWEST
+                showFilters = false
+                performSearch()
+            },
+        )
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -152,21 +222,17 @@ fun SearchScreen(
                 ListingsTopBar(
                     activeFilterCount = activeFilterCount,
                     onBackClick = onBackClick,
-                    onFiltersClick = { showFilters = !showFilters },
+                    onFiltersClick = { showFilters = true },
                 )
 
-                // Search input row — single line, inline with chips per design hint
+                // Search input row — single line, inline with chips per design hint.
+                // Text changes drive the debounced search above; the IME "search"
+                // action just dismisses the keyboard.
                 SearchInputRow(
                     value = searchQuery,
                     onChange = { searchQuery = it },
-                    onSearch = {
-                        keyboardController?.hide()
-                        performSearch()
-                    },
-                    onClear = {
-                        searchQuery = ""
-                        performSearch()
-                    },
+                    onSearch = { keyboardController?.hide() },
+                    onClear = { searchQuery = "" },
                 )
 
                 // Filter chip strip
@@ -178,31 +244,6 @@ fun SearchScreen(
                     },
                     totalResults = totalResults,
                 )
-
-                if (showFilters) {
-                    AdvancedFilterPanel(
-                        selectedType = selectedType,
-                        onTypeChange = {
-                            selectedType = it
-                            performSearch()
-                        },
-                        selectedCategory = selectedCategory,
-                        onCategoryChange = {
-                            selectedCategory = it
-                            performSearch()
-                        },
-                        minPrice = minPrice,
-                        onMinPriceChange = { minPrice = it },
-                        maxPrice = maxPrice,
-                        onMaxPriceChange = { maxPrice = it },
-                        selectedSort = selectedSort,
-                        onSortChange = {
-                            selectedSort = it
-                            performSearch()
-                        },
-                        onApplyPrice = { performSearch() },
-                    )
-                }
 
                 errorMessage?.let { ErrorBanner(it) }
 
@@ -222,6 +263,7 @@ fun SearchScreen(
                     searchResults.isEmpty() -> EmptySearchResults()
                     viewMode == ViewMode.LIST -> {
                         LazyColumn(
+                            state = listState,
                             modifier = Modifier.fillMaxSize(),
                             contentPadding =
                                 PaddingValues(
@@ -238,6 +280,8 @@ fun SearchScreen(
                                     onClick = { onListingClick(listing.id) },
                                 )
                             }
+                            // Infinite-scroll footer: a spinner while the next page loads.
+                            // The fetch itself is triggered by the scroll LaunchedEffect above.
                             if (searchResults.size < totalResults) {
                                 item {
                                     Box(
@@ -245,13 +289,7 @@ fun SearchScreen(
                                             Modifier.fillMaxWidth().padding(vertical = 16.dp),
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        if (isLoading) CircularProgressIndicator()
-                                        else
-                                            TextButton(
-                                                onClick = { performSearch(currentPage + 1) }
-                                            ) {
-                                                Text(stringResource(R.string.action_load_more))
-                                            }
+                                        CircularProgressIndicator()
                                     }
                                 }
                             }
@@ -385,7 +423,7 @@ private fun SegmentChip(icon: ImageVector, label: String, selected: Boolean, onC
     }
 }
 
-// ─── Search input ────────────────────────────────────────────────────────────
+// ─── Search input ───────────────────────────────────────────────────────────
 
 @Composable
 private fun SearchInputRow(
@@ -419,7 +457,7 @@ private fun SearchInputRow(
     )
 }
 
-// ─── Rooms chip strip ────────────────────────────────────────────────────────
+// ─── Rooms chip strip ──────────────────────────────────────────────────────
 
 @Composable
 private fun RoomsChipStrip(selected: Int?, onSelect: (Int?) -> Unit, totalResults: Int) {
@@ -469,144 +507,177 @@ private fun RoomsChipStrip(selected: Int?, onSelect: (Int?) -> Unit, totalResult
     }
 }
 
-// ─── Advanced filter panel (collapsible) ────────────────────────────────────
+// ─── Filter sheet (modal bottom sheet) ─────────────────────────────────
+//
+// AC-4: advanced filters are presented as a Material 3 ModalBottomSheet, named
+// `FilterSheet` to match the iOS shared component (docs/screens/reality-mobile/search.md
+// → sharedComponents: FilterSheet). The sheet holds its own draft copy of every
+// filter and only commits to the caller on "Apply", so partial edits don't fire a
+// search mid-typing. "Reset" clears the draft and applies the cleared state.
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AdvancedFilterPanel(
+private fun FilterSheet(
     selectedType: ListingType?,
-    onTypeChange: (ListingType?) -> Unit,
     selectedCategory: PropertyCategory?,
-    onCategoryChange: (PropertyCategory?) -> Unit,
     minPrice: String,
-    onMinPriceChange: (String) -> Unit,
     maxPrice: String,
-    onMaxPriceChange: (String) -> Unit,
     selectedSort: ListingSortOption,
-    onSortChange: (ListingSortOption) -> Unit,
-    onApplyPrice: () -> Unit,
+    onDismiss: () -> Unit,
+    onApply: (ListingType?, PropertyCategory?, String, String, ListingSortOption) -> Unit,
+    onReset: () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier.fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(16.dp)
-    ) {
-        // Type
-        Text(
-            text = stringResource(R.string.filter_type),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                FilterChip(
-                    selected = selectedType == null,
-                    onClick = { onTypeChange(null) },
-                    label = { Text(stringResource(R.string.filter_all)) },
-                )
-            }
-            items(ListingType.entries) { type ->
-                FilterChip(
-                    selected = selectedType == type,
-                    onClick = { onTypeChange(type) },
-                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        // Category
-        Text(
-            text = stringResource(R.string.filter_category),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                FilterChip(
-                    selected = selectedCategory == null,
-                    onClick = { onCategoryChange(null) },
-                    label = { Text(stringResource(R.string.filter_all)) },
-                )
-            }
-            items(PropertyCategory.entries) { category ->
-                FilterChip(
-                    selected = selectedCategory == category,
-                    onClick = { onCategoryChange(category) },
-                    label = { Text(category.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        // Price
-        Text(
-            text = stringResource(R.string.filter_price_range_eur),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Draft state — seeded from the committed filters, edited locally, committed on Apply.
+    var draftType by remember { mutableStateOf(selectedType) }
+    var draftCategory by remember { mutableStateOf(selectedCategory) }
+    var draftMinPrice by remember { mutableStateOf(minPrice) }
+    var draftMaxPrice by remember { mutableStateOf(maxPrice) }
+    var draftSort by remember { mutableStateOf(selectedSort) }
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
         ) {
-            OutlinedTextField(
-                value = minPrice,
-                onValueChange = onMinPriceChange,
-                placeholder = { Text(stringResource(R.string.filter_min)) },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            Text(
+                text = stringResource(R.string.filters),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp),
             )
-            Text("—")
-            OutlinedTextField(
-                value = maxPrice,
-                onValueChange = onMaxPriceChange,
-                placeholder = { Text(stringResource(R.string.filter_max)) },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { onApplyPrice() }),
+
+            // Type
+            Text(
+                text = stringResource(R.string.filter_type),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 8.dp),
             )
-            IconButton(onClick = onApplyPrice) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = stringResource(R.string.filter_apply),
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                item {
+                    FilterChip(
+                        selected = draftType == null,
+                        onClick = { draftType = null },
+                        label = { Text(stringResource(R.string.filter_all)) },
+                    )
+                }
+                items(ListingType.entries) { type ->
+                    FilterChip(
+                        selected = draftType == type,
+                        onClick = { draftType = type },
+                        label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            // Category
+            Text(
+                text = stringResource(R.string.filter_category),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                item {
+                    FilterChip(
+                        selected = draftCategory == null,
+                        onClick = { draftCategory = null },
+                        label = { Text(stringResource(R.string.filter_all)) },
+                    )
+                }
+                items(PropertyCategory.entries) { category ->
+                    FilterChip(
+                        selected = draftCategory == category,
+                        onClick = { draftCategory = category },
+                        label = {
+                            Text(category.name.lowercase().replaceFirstChar { it.uppercase() })
+                        },
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            // Price
+            Text(
+                text = stringResource(R.string.filter_price_range_eur),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedTextField(
+                    value = draftMinPrice,
+                    onValueChange = { draftMinPrice = it },
+                    placeholder = { Text(stringResource(R.string.filter_min)) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                )
+                Text("—")
+                OutlinedTextField(
+                    value = draftMaxPrice,
+                    onValueChange = { draftMaxPrice = it },
+                    placeholder = { Text(stringResource(R.string.filter_max)) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 )
             }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        // Sort
-        Text(
-            text = stringResource(R.string.sort_by),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(ListingSortOption.entries) { sort ->
-                val label =
-                    when (sort) {
-                        ListingSortOption.NEWEST -> stringResource(R.string.sort_newest)
-                        ListingSortOption.OLDEST -> stringResource(R.string.sort_oldest)
-                        ListingSortOption.PRICE_ASC -> stringResource(R.string.sort_price_asc)
-                        ListingSortOption.PRICE_DESC -> stringResource(R.string.sort_price_desc)
-                        ListingSortOption.AREA_ASC -> stringResource(R.string.sort_area_asc)
-                        ListingSortOption.AREA_DESC -> stringResource(R.string.sort_area_desc)
-                        ListingSortOption.RELEVANCE -> stringResource(R.string.sort_relevance)
-                    }
-                FilterChip(
-                    selected = selectedSort == sort,
-                    onClick = { onSortChange(sort) },
-                    label = { Text(label) },
-                )
+            Spacer(modifier = Modifier.height(12.dp))
+            // Sort
+            Text(
+                text = stringResource(R.string.sort_by),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(ListingSortOption.entries) { sort ->
+                    val label =
+                        when (sort) {
+                            ListingSortOption.NEWEST -> stringResource(R.string.sort_newest)
+                            ListingSortOption.OLDEST -> stringResource(R.string.sort_oldest)
+                            ListingSortOption.PRICE_ASC -> stringResource(R.string.sort_price_asc)
+                            ListingSortOption.PRICE_DESC -> stringResource(R.string.sort_price_desc)
+                            ListingSortOption.AREA_ASC -> stringResource(R.string.sort_area_asc)
+                            ListingSortOption.AREA_DESC -> stringResource(R.string.sort_area_desc)
+                            ListingSortOption.RELEVANCE -> stringResource(R.string.sort_relevance)
+                        }
+                    FilterChip(
+                        selected = draftSort == sort,
+                        onClick = { draftSort = sort },
+                        label = { Text(label) },
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            // Action row — Reset (text) + Apply (filled).
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedButton(onClick = onReset, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.clear_filters))
+                }
+                Button(
+                    onClick = {
+                        onApply(draftType, draftCategory, draftMinPrice, draftMaxPrice, draftSort)
+                    },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(stringResource(R.string.apply_filters))
+                }
             }
         }
     }
 }
 
-// ─── Empty / error / map placeholder ────────────────────────────────────────
+// ─── Empty / error / map placeholder ───────────────────────────────────
 
 @Composable
 private fun ErrorBanner(error: String) {

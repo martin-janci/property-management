@@ -1,8 +1,11 @@
 # Template — `${BG_TARGET}` and `${BG_COLOR}` are filled in at container
 # startup by /docker-entrypoint.d/10-render-template.sh via `envsubst`.
 #
-# admin-web differs from ppt-web in two ways:
+# Shared, churn-prone boilerplate (relative redirects, gzip, common security
+# headers) lives in /etc/nginx/partials/*.conf and is pulled in via `include`
+# below — identical to ppt-web. admin-web differs from ppt-web only in:
 #   - X-Frame-Options: DENY (admin must never be embedded)
+#   - Content-Security-Policy: frame-ancestors 'none'
 #   - Cache-Control: no-store on HTML (no admin caching at intermediaries)
 
 server {
@@ -13,48 +16,25 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # Emit relative redirects (#957) — see ppt-web template. Avoids leaking the
-    # internal :8080 port / https->http downgrade in implicit slash redirects.
-    absolute_redirect off;
-
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_proxied expired no-cache no-store private auth;
-    gzip_types
-        text/plain
-        text/css
-        text/xml
-        text/javascript
-        application/javascript
-        application/x-javascript
-        application/json
-        application/xml
-        application/rss+xml
-        application/atom+xml
-        image/svg+xml;
+    # Relative redirects + gzip (shared with ppt-web).
+    include /etc/nginx/partials/server-common.conf;
 
     # Stronger security headers than ppt-web — admin is sensitive.
+    include /etc/nginx/partials/security-headers-common.conf;
     add_header X-Frame-Options "DENY" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Cache-Control "no-store" always;
-    # HSTS — was missing (#954). The super-admin console is served TLS-only.
-    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     # CSP — was missing (#954). frame-ancestors 'none' mirrors X-Frame-Options
     # DENY (admin must never be framed); connect-src kept permissive (https:/wss:)
     # for same-origin /api proxying and external telemetry.
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
 
+    # Cache static assets. `add_header` in a location does NOT inherit the
+    # parent's headers, so re-include the common set + re-declare X-Frame-Options.
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         expires 1y;
         add_header Cache-Control "public, immutable" always;
+        include /etc/nginx/partials/security-headers-common.conf;
         add_header X-Frame-Options "DENY" always;
-        add_header X-Content-Type-Options "nosniff" always;
-        add_header X-XSS-Protection "1; mode=block" always;
-        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     }
 
     location /health {

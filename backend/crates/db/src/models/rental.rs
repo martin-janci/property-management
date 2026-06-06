@@ -103,6 +103,11 @@ pub struct RentalPlatformConnection {
     pub refresh_token: Option<String>,
     pub token_expires_at: Option<DateTime<Utc>>,
 
+    // Gap 83-1: Airbnb-specific encrypted token columns (canonical after migration 00175).
+    // Non-Airbnb connections leave these NULL.
+    pub encrypted_token: Option<String>,
+    pub encrypted_refresh_token: Option<String>,
+
     // External identifiers
     pub external_property_id: Option<String>,
     pub external_listing_url: Option<String>,
@@ -130,6 +135,22 @@ impl RentalPlatformConnection {
         self.token_expires_at
             .map(|exp| exp <= Utc::now())
             .unwrap_or(true)
+    }
+
+    /// Return the encrypted access token, preferring the canonical
+    /// `encrypted_token` column (gap-83-1) over the legacy `access_token`.
+    pub fn canonical_encrypted_token(&self) -> Option<&str> {
+        self.encrypted_token
+            .as_deref()
+            .or(self.access_token.as_deref())
+    }
+
+    /// Return the encrypted refresh token, preferring the canonical
+    /// `encrypted_refresh_token` column (gap-83-1) over the legacy `refresh_token`.
+    pub fn canonical_encrypted_refresh_token(&self) -> Option<&str> {
+        self.encrypted_refresh_token
+            .as_deref()
+            .or(self.refresh_token.as_deref())
     }
 }
 

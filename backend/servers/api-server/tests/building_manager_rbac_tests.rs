@@ -69,6 +69,16 @@ async fn resident(pool: &PgPool, app: &TestApp, slug: &str) -> (String, Uuid) {
     (token, org)
 }
 
+/// Authenticate a manager member of a fresh org. Returns (token, org_id).
+async fn manager(pool: &PgPool, app: &TestApp, slug: &str) -> (String, Uuid) {
+    let org = seed_org(pool, slug).await;
+    let user = TestUser::new();
+    let (token, _r) = create_authenticated_user(app, &user).await;
+    let uid = user_id_for(pool, &user.email).await;
+    seed_membership(pool, org, uid, "manager").await;
+    (token, org)
+}
+
 fn authed(
     method: Method,
     uri: &str,
@@ -153,6 +163,60 @@ async fn resident_cannot_bulk_import_buildings(pool: PgPool) {
         resp.status,
         StatusCode::FORBIDDEN,
         "bulk import as resident must be 403, got {}",
+        resp.status
+    );
+}
+
+/// Round-10 finding (#789): `list_buildings` trusted the client-supplied
+/// `organization_id` query param. A member authenticated against org A who
+/// asks for `?organization_id=<orgB>` must be rejected with 403 (matching
+/// `create_building`) rather than receiving a silently-empty 200 page.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_rejects_org_mismatch(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, org_a) = manager(&pool, &app, "list-self").await;
+    // A second org the caller is NOT scoped to for this request.
+    let org_b = seed_org(&pool, "list-other").await;
+
+    let resp = app
+        .execute(authed(
+            Method::GET,
+            &format!("/api/v1/buildings?organization_id={org_b}"),
+            org_a,
+            &token,
+            json!({}),
+        ))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "list with mismatched organization_id must be 403, got {}",
+        resp.status
+    );
+}
+
+/// Positive control: the same manager listing their OWN org succeeds, so the
+/// new guard does not over-reject the happy path.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_allows_own_org(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, org) = manager(&pool, &app, "list-ok").await;
+
+    let resp = app
+        .execute(authed(
+            Method::GET,
+            &format!("/api/v1/buildings?organization_id={org}"),
+            org,
+            &token,
+            json!({}),
+        ))
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list with matching organization_id must be 200, got {}",
         resp.status
     );
 }

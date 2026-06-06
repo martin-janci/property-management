@@ -21,8 +21,9 @@ import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.listing.ListingRepository
+import three.two.bit.ppt.reality.navigation.DeepLinkRouter
+import three.two.bit.ppt.reality.navigation.DeepLinkTarget as SharedDeepLinkTarget
 import three.two.bit.ppt.reality.navigation.RealityNavHost
-import three.two.bit.ppt.reality.navigation.Screen
 import three.two.bit.ppt.reality.ui.theme.RealityPortalTheme
 
 /**
@@ -169,20 +170,18 @@ fun RealityPortalApp(
     )
 }
 
-/** Navigate to a deep link target (Epic 122) */
+/**
+ * Navigate to a deep link target (Epic 122). Route resolution is delegated to the shared
+ * [DeepLinkRouter] (commonMain) so Android and iOS resolve the same nav-graph routes (story 82-2,
+ * AC-4).
+ */
 private fun navigateToDeepLink(navController: NavHostController, target: DeepLinkTarget) {
-    when (target) {
-        is DeepLinkTarget.Listing -> {
-            navController.navigate(Screen.ListingDetail.createRoute(target.id))
+    val shared =
+        when (target) {
+            is DeepLinkTarget.Listing -> SharedDeepLinkTarget.Listing(target.id)
+            is DeepLinkTarget.Search -> SharedDeepLinkTarget.Search
+            is DeepLinkTarget.Favorites -> SharedDeepLinkTarget.Favorites
+            is DeepLinkTarget.Inquiries -> SharedDeepLinkTarget.Inquiries
         }
-        is DeepLinkTarget.Search -> {
-            navController.navigate(Screen.Search.route)
-        }
-        is DeepLinkTarget.Favorites -> {
-            navController.navigate(Screen.Favorites.route)
-        }
-        is DeepLinkTarget.Inquiries -> {
-            navController.navigate(Screen.Inquiries.route)
-        }
-    }
+    DeepLinkRouter.route(shared)?.let { route -> navController.navigate(route) }
 }

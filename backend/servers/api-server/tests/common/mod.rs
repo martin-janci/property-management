@@ -15,6 +15,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use tower::ServiceExt;
+use uuid::Uuid;
 
 /// Test configuration.
 pub struct TestConfig {
@@ -150,6 +151,11 @@ impl TestApp {
     /// Create a JSON DELETE request.
     pub fn delete(&self, uri: &str) -> RequestBuilder {
         RequestBuilder::new(Method::DELETE, uri)
+    }
+
+    /// Create a JSON PATCH request.
+    pub fn patch(&self, uri: &str) -> RequestBuilder {
+        RequestBuilder::new(Method::PATCH, uri)
     }
 }
 
@@ -402,4 +408,86 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
         .to_string();
 
     (access_token, refresh_token)
+}
+
+// ----------------------------------------------------------------------------
+// Tenant-seeding fixtures.
+//
+// Tenant-scoped routes use `RlsConnection`, which resolves tenant context via
+// `ValidatedTenantExtractor`. Under the `TestApp` harness (no
+// `host_tenant_middleware`), that extractor requires BOTH an `X-Tenant-ID`
+// header AND a matching active `organization_members` row — otherwise the
+// request is rejected with 400 (missing header) or 403 (not a member) before
+// the handler ever runs. A freshly-registered user from
+// `create_authenticated_user` has no org membership, so tests provision one
+// with these helpers.
+//
+// Historically every tenant-scoped test file re-declared its own near-identical
+// `seed_org` / `seed_membership` (~35 copies). These shared versions promote
+// the canonical pattern so new tests import one helper instead of copying ~30
+// lines of seeding boilerplate. (See issue #1090.)
+// ----------------------------------------------------------------------------
+
+/// Insert a fresh active organization and return its id.
+///
+/// `slug` is a short, stable label chosen by the caller (e.g. `"s1"`). It is
+/// embedded into a randomized slug/email so concurrent `#[sqlx::test]` runs (or
+/// multiple orgs within one test) never collide on the `organizations` unique
+/// constraints, while staying human-readable in failures.
+pub async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO organizations (name, slug, contact_email, status)
+           VALUES ($1, $2, $3, 'active') RETURNING id"#,
+    )
+    .bind(format!("Test Org {slug}"))
+    .bind(format!("test-org-{slug}-{}", Uuid::new_v4()))
+    .bind(format!("{slug}-{}@test-org.internal", Uuid::new_v4()))
+    .fetch_one(pool)
+    .await
+    .expect("seed org")
+}
+
+/// Make `user_id` an active member of `org_id` with the given `role` (the
+/// `role_type` column, e.g. `"org_admin"`, `"resident"`).
+///
+/// `id` is omitted (the column defaults to `gen_random_uuid()`), and both
+/// `created_at` (defaults to `NOW()`) and `joined_at` (nullable) are left for
+/// the database — the minimal insert needed to satisfy `ValidatedTenantExtractor`.
+pub async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
+    sqlx::query(
+        r#"INSERT INTO organization_members
+               (organization_id, user_id, role_type, status)
+           VALUES ($1, $2, $3, 'active')
+           ON CONFLICT DO NOTHING"#,
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .bind(role)
+    .execute(pool)
+    .await
+    .expect("seed membership");
+}
+
+/// Register + verify + log in a user, then make them an active `org_admin`
+/// member of a fresh org so `RlsConnection` can resolve tenant context.
+///
+/// Returns `(access_token, org_id)`. Pass `org_id.to_string()` as the
+/// `X-Tenant-ID` header on subsequent requests.
+pub async fn create_authenticated_user_with_org(
+    app: &TestApp,
+    user: &TestUser,
+    slug: &str,
+) -> (String, Uuid) {
+    let (access_token, _refresh) = create_authenticated_user(app, user).await;
+
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("resolve user id");
+
+    let org_id = seed_org(&app.pool, slug).await;
+    seed_membership(&app.pool, org_id, user_id, "org_admin").await;
+
+    (access_token, org_id)
 }

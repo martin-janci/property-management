@@ -688,10 +688,16 @@ async fn resolve_share_recipients(
         share_type::ROLE => match target_role {
             Some(role) => {
                 sqlx::query_as(
+                    // Issue #1000: exclude expired memberships, matching the
+                    // announcement targeting predicate in `announcement.rs`
+                    // (`list_published_rls`/`count_published_rls`). A user whose
+                    // membership lapsed (but was never explicitly revoked) no
+                    // longer has org access and must not be fanned out to.
                     r#"
                     SELECT DISTINCT user_id FROM user_memberships
                     WHERE organization_id = $1
                       AND revoked_at IS NULL
+                      AND (expires_at IS NULL OR expires_at > NOW())
                       AND role = $2
                     "#,
                 )

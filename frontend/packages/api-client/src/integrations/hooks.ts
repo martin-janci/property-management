@@ -10,6 +10,7 @@ import type {
   AccountingExportQuery,
   AccountingSystem,
   AirbnbConnectRequest,
+  BookingConnectRequest,
   CalendarEventsQuery,
   CalendarQuery,
   CreateAccountingExport,
@@ -62,6 +63,10 @@ export const integrationKeys = {
   airbnbListings: (orgId: string) => [...integrationKeys.all, 'airbnb-listings', orgId] as const,
   airbnbReservations: (orgId: string) =>
     [...integrationKeys.all, 'airbnb-reservations', orgId] as const,
+  // Booking.com (Gap 83.2)
+  bookingStatus: (orgId: string) => [...integrationKeys.all, 'booking-status', orgId] as const,
+  bookingConflicts: (orgId: string) =>
+    [...integrationKeys.all, 'booking-conflicts', orgId] as const,
 };
 
 // ============================================
@@ -563,5 +568,69 @@ export function useDisconnectAirbnb(organizationId: string) {
         queryKey: integrationKeys.airbnbReservations(organizationId),
       });
     },
+  });
+}
+
+// ============================================
+// Booking.com Channel (Gap 83.2)
+// ============================================
+
+export function useBookingStatus(organizationId: string) {
+  return useQuery({
+    queryKey: integrationKeys.bookingStatus(organizationId),
+    queryFn: () => api.getBookingStatus(organizationId),
+    enabled: !!organizationId,
+  });
+}
+
+export function useConnectBooking(organizationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: BookingConnectRequest) => api.connectBooking(organizationId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: integrationKeys.bookingStatus(organizationId),
+      });
+      queryClient.invalidateQueries({ queryKey: integrationKeys.statistics(organizationId) });
+    },
+  });
+}
+
+export function useDisconnectBooking(organizationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.disconnectBooking(organizationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: integrationKeys.bookingStatus(organizationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: integrationKeys.bookingConflicts(organizationId),
+      });
+      queryClient.invalidateQueries({ queryKey: integrationKeys.statistics(organizationId) });
+    },
+  });
+}
+
+export function useSyncBooking(organizationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.syncBooking(organizationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: integrationKeys.bookingStatus(organizationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: integrationKeys.bookingConflicts(organizationId),
+      });
+    },
+  });
+}
+
+export function useBookingConflicts(organizationId: string, enabled = true) {
+  return useQuery({
+    queryKey: integrationKeys.bookingConflicts(organizationId),
+    queryFn: () => api.getBookingConflicts(organizationId),
+    enabled: !!organizationId && enabled,
   });
 }

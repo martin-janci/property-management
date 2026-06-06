@@ -12,6 +12,7 @@
 import type { AuthUser } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getAuthApi } from '../authApiClient';
@@ -24,6 +25,7 @@ interface FormErrors {
 }
 
 export function ProfileEditPage() {
+  const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, setUser } = useAuth();
 
   const [firstName, setFirstName] = useState('');
@@ -46,8 +48,8 @@ export function ProfileEditPage() {
       setSavedMessage(undefined);
 
       const next: FormErrors = {};
-      if (!firstName.trim()) next.firstName = 'First name is required';
-      if (!lastName.trim()) next.lastName = 'Last name is required';
+      if (!firstName.trim()) next.firstName = 'firstNameRequired';
+      if (!lastName.trim()) next.lastName = 'lastNameRequired';
       if (Object.keys(next).length > 0) {
         setErrors(next);
         return;
@@ -73,15 +75,18 @@ export function ProfileEditPage() {
         // setUser persists to storage AND updates in-memory auth state, so
         // every consumer of the context re-renders with the new name.
         setUser(updated);
-        setSavedMessage('Profile updated.');
+        setSavedMessage(t('auth.profile.success'));
       } catch {
-        setErrors({ general: 'Could not save profile. Please try again.' });
+        setErrors({ general: 'saveFailed' });
       } finally {
         setIsSubmitting(false);
       }
     },
-    [firstName, lastName, user, setUser]
+    [firstName, lastName, user, setUser, t]
   );
+
+  /** Resolves a field/general error key into a localized message. */
+  const errorText = (key?: string) => (key ? t(`auth.profile.${key}`) : '');
 
   if (isLoading) return null;
   if (!isAuthenticated || !user) {
@@ -92,15 +97,15 @@ export function ProfileEditPage() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <h1 className="auth-title">Edit profile</h1>
-          <p className="auth-subtitle">Update your name as it appears in the app.</p>
+          <h1 className="auth-title">{t('auth.profile.title')}</h1>
+          <p className="auth-subtitle">{t('auth.profile.subtitle')}</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {errors.general && (
             <div className="auth-error-banner" role="alert" aria-live="polite">
               <span aria-hidden="true">!</span>
-              <span>{errors.general}</span>
+              <span>{errorText(errors.general)}</span>
             </div>
           )}
           {savedMessage && (
@@ -112,7 +117,7 @@ export function ProfileEditPage() {
           <div className="auth-field-row">
             <div className="auth-field">
               <label htmlFor="firstName" className="auth-label">
-                First name
+                {t('auth.profile.firstName')}
               </label>
               <input
                 id="firstName"
@@ -125,11 +130,13 @@ export function ProfileEditPage() {
                 className={`auth-input ${errors.firstName ? 'auth-input--error' : ''}`}
                 aria-invalid={errors.firstName ? 'true' : 'false'}
               />
-              {errors.firstName && <span className="auth-field-error">{errors.firstName}</span>}
+              {errors.firstName && (
+                <span className="auth-field-error">{errorText(errors.firstName)}</span>
+              )}
             </div>
             <div className="auth-field">
               <label htmlFor="lastName" className="auth-label">
-                Last name
+                {t('auth.profile.lastName')}
               </label>
               <input
                 id="lastName"
@@ -142,13 +149,15 @@ export function ProfileEditPage() {
                 className={`auth-input ${errors.lastName ? 'auth-input--error' : ''}`}
                 aria-invalid={errors.lastName ? 'true' : 'false'}
               />
-              {errors.lastName && <span className="auth-field-error">{errors.lastName}</span>}
+              {errors.lastName && (
+                <span className="auth-field-error">{errorText(errors.lastName)}</span>
+              )}
             </div>
           </div>
 
           <div className="auth-field">
             <label htmlFor="email" className="auth-label">
-              Email
+              {t('auth.profile.email')}
             </label>
             <input
               id="email"
@@ -159,27 +168,27 @@ export function ProfileEditPage() {
               disabled
               className="auth-input"
             />
-            <span className="auth-help">Contact support to change the email on this account.</span>
+            <span className="auth-help">{t('auth.profile.emailHelp')}</span>
           </div>
 
           <button type="submit" className="auth-submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <span className="auth-spinner" aria-hidden="true" />
-                <span>Saving…</span>
+                <span>{t('auth.profile.submitting')}</span>
               </>
             ) : (
-              'Save changes'
+              t('auth.profile.submit')
             )}
           </button>
         </form>
 
         <div className="auth-links">
           <Link to="/settings/password" className="auth-link">
-            Change password
+            {t('auth.profile.changePassword')}
           </Link>
           <Link to="/settings/two-factor" className="auth-link">
-            Two-factor authentication
+            {t('auth.profile.twoFactor')}
           </Link>
         </div>
       </div>

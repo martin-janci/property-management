@@ -1043,4 +1043,61 @@ mod sso_token_service_tests {
             "expired, never-redeemed tokens must be swept on mint"
         );
     }
+
+    /// Regression (issue #820, PR #921): the eviction sweep on mint must only
+    /// remove *expired* tokens — a still-live token minted earlier must survive
+    /// later mints and remain redeemable. Guards against a `retain` predicate
+    /// that is too aggressive (e.g. comparing against the new token's
+    /// `expires_at` instead of `now`, or an inverted comparison), which the
+    /// `mobile_token_mint_evicts_expired_entries` test alone cannot catch
+    /// because it never holds more than one live token at assertion time.
+    #[tokio::test]
+    async fn mobile_token_mint_preserves_still_live_tokens() {
+        let svc = SsoTokenService::new();
+
+        // Mint a still-live token first.
+        let live_first = svc
+            .create_mobile_token(&user("first"), chrono::Duration::minutes(5))
+            .await
+            .expect("mint first live");
+
+        // Interleave an already-expired token (to be swept) and a second live
+        // token, then mint a third live token whose sweep must keep all live
+        // entries intact.
+        svc.create_mobile_token(&user("expired"), chrono::Duration::seconds(-1))
+            .await
+            .expect("mint expired");
+        let live_second = svc
+            .create_mobile_token(&user("second"), chrono::Duration::minutes(5))
+            .await
+            .expect("mint second live");
+        svc.create_mobile_token(&user("third"), chrono::Duration::minutes(5))
+            .await
+            .expect("mint third live");
+
+        // Only the single expired entry should have been swept; the three live
+        // tokens must remain.
+        assert_eq!(
+            svc.len().await,
+            3,
+            "sweep on mint must preserve every still-live token"
+        );
+
+        // The earliest still-live token must remain redeemable (proves it was
+        // not collaterally evicted by a later mint's sweep).
+        let redeemed = svc.validate_and_consume_token(&live_first).await;
+        assert!(
+            redeemed.is_ok(),
+            "a still-live token minted before later mints must remain redeemable"
+        );
+        assert_eq!(redeemed.unwrap().user_id, "first");
+
+        // And the second live token is likewise intact and one-time-usable.
+        let redeemed_second = svc.validate_and_consume_token(&live_second).await;
+        assert!(
+            redeemed_second.is_ok(),
+            "all still-live tokens must survive the eviction sweep"
+        );
+        assert_eq!(redeemed_second.unwrap().user_id, "second");
+    }
 }
