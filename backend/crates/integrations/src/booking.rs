@@ -291,7 +291,13 @@ pub mod ota_xml {
                     }
                 }
                 Ok(Event::Text(ref t)) if in_error && error_msg.is_none() => {
-                    let text = t.unescape().unwrap_or_default();
+                    // quick-xml 0.40 removed `BytesText::unescape`; decode the
+                    // charset then resolve XML entities via the free function
+                    // (same decode+unescape semantics the old method provided).
+                    let decoded = t.decode().unwrap_or_default();
+                    let text = quick_xml::escape::unescape(&decoded)
+                        .map(|c| c.into_owned())
+                        .unwrap_or_else(|_| decoded.into_owned());
                     let trimmed = text.trim();
                     if !trimmed.is_empty() {
                         error_msg = Some(trimmed.to_string());
@@ -447,7 +453,14 @@ pub mod ota_xml {
                 let key_bytes = a.key.into_inner().to_vec();
                 local_name(&key_bytes) == name
             })
-            .and_then(|a| a.unescape_value().ok().map(|v| v.into_owned()))
+            // quick-xml 0.40 deprecated `unescape_value`; `normalized_value`
+            // performs XML attribute-value normalization (entity resolution)
+            // on the UTF-8 value, matching the old decode+unescape behavior.
+            .and_then(|a| {
+                a.normalized_value(quick_xml::XmlVersion::Implicit1_0)
+                    .ok()
+                    .map(|v| v.into_owned())
+            })
     }
 
     /// Word-boundary-aware attribute extractor for a raw XML fragment.
