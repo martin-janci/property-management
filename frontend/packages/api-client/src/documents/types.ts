@@ -277,6 +277,48 @@ export interface ShareListResponse {
   shares: ShareWithDocument[];
 }
 
+// --- Document Versions types (Story 7B.1, #974) ---
+
+/**
+ * A single version row as returned by the backend version-history endpoint
+ * (`GET /api/v1/documents/{id}/versions`). Mirrors the Rust `DocumentVersion`
+ * model — snake_case, with `created_by_name` resolved server-side from the
+ * uploader's profile and `is_current_version` flagging the live version.
+ */
+export interface DocumentVersion {
+  id: string;
+  version_number: number;
+  is_current_version: boolean;
+  file_key: string;
+  file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  created_by: string;
+  created_by_name: string;
+  created_at: string;
+}
+
+/**
+ * Inner `history` object of the version-history response. Mirrors the Rust
+ * `DocumentVersionHistory` model.
+ */
+export interface DocumentVersionHistory {
+  document_id: string;
+  title: string;
+  total_versions: number;
+  versions: DocumentVersion[];
+}
+
+/**
+ * Response envelope for `GET /api/v1/documents/{id}/versions`. Mirrors the Rust
+ * `VersionHistoryResponse { history }` wrapper. The generated OpenAPI client
+ * models this endpoint as a bare camelCase array, so callers that need the real
+ * backend shape should type against this instead.
+ */
+export interface VersionHistoryResponse {
+  history: DocumentVersionHistory;
+}
+
 export interface CreateShareRequest {
   share_type: ShareType;
   target_id?: string;

@@ -41,16 +41,23 @@ interface DocumentDetailProps {
 
 /**
  * Raw shape of a version row as returned by the list-versions endpoint.
- * The generated client returns camelCase (`version`, `createdAt`, `createdBy`,
- * `file.sizeBytes`), but we read snake_case aliases too for resilience.
+ *
+ * The real backend (`VersionHistoryResponse`) returns snake_case rows with
+ * `version_number`, `is_current_version`, `created_by_name`, `size_bytes` and
+ * `created_at`. The generated OpenAPI client instead models the endpoint as a
+ * camelCase array, so we tolerate both spellings for resilience.
  */
 interface VersionRecord {
   id?: string;
   version?: number;
   version_number?: number;
   versionNumber?: number;
+  is_current_version?: boolean;
+  isCurrentVersion?: boolean;
   uploader?: string;
   uploaderName?: string;
+  created_by_name?: string;
+  createdByName?: string;
   createdBy?: string;
   created_by?: string;
   createdAt?: string;
@@ -178,10 +185,21 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   // Estimate word count from OCR text
   const wordCount = doc.ocr_text ? doc.ocr_text.split(/\s+/).filter((w) => w.length > 0).length : 0;
 
-  // Normalise version rows from the (generated, camelCase) list-versions
-  // response into a small UI shape, tolerating both camelCase and snake_case
-  // field names. Newest version first; the highest version number is current.
-  const rawVersions = (versions.data ?? []) as unknown as VersionRecord[];
+  // Normalise version rows into a small UI shape, tolerating both the real
+  // backend response (the `VersionHistoryResponse` envelope: snake_case rows
+  // under `history.versions`) and the generated client's bare camelCase array.
+  // Newest version first; prefer the server's `is_current_version` flag and
+  // fall back to "highest version number" only when no row is flagged current.
+  const versionsData = versions.data as
+    | { history?: { versions?: VersionRecord[] } }
+    | VersionRecord[]
+    | undefined;
+  const rawVersions: VersionRecord[] = Array.isArray(versionsData)
+    ? versionsData
+    : (versionsData?.history?.versions ?? []);
+  const anyFlaggedCurrent = rawVersions.some(
+    (v) => v.is_current_version ?? v.isCurrentVersion ?? false
+  );
   const maxVersion = rawVersions.reduce((max, v) => {
     const n = versionNumberOf(v);
     return n > max ? n : max;
@@ -189,13 +207,22 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   const versionRows: VersionRow[] = rawVersions
     .map((v) => {
       const versionNumber = versionNumberOf(v);
+      const flaggedCurrent = v.is_current_version ?? v.isCurrentVersion;
       return {
         id: v.id ?? `version-${versionNumber}`,
         versionNumber,
-        uploader: v.uploaderName ?? v.uploader ?? v.createdBy ?? v.created_by,
+        uploader:
+          v.created_by_name ??
+          v.createdByName ??
+          v.uploaderName ??
+          v.uploader ??
+          v.createdBy ??
+          v.created_by,
         createdAt: v.createdAt ?? v.created_at ?? '',
         sizeBytes: v.file?.sizeBytes ?? v.file?.size_bytes ?? v.sizeBytes ?? v.size_bytes,
-        isCurrent: versionNumber === maxVersion && maxVersion > 0,
+        isCurrent: anyFlaggedCurrent
+          ? (flaggedCurrent ?? false)
+          : versionNumber === maxVersion && maxVersion > 0,
       };
     })
     .sort((a, b) => b.versionNumber - a.versionNumber);
