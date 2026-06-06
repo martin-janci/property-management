@@ -41,6 +41,11 @@ combined_rows_jq() {
 FAIL=0
 note() { printf '  ok    %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1" >&2; FAIL=1; }
+# warn() — advisory only: prints but does NOT set FAIL. Used for invariants
+# that are self-healing on the next run (e.g. action-list archive bloat, which
+# action-list-reconcile.sh sweeps) so introducing the check doesn't retroactively
+# hard-fail an already-bloated dev snapshot.
+warn() { printf '  WARN  %s\n' "$1" >&2; }
 
 echo "==> dispatcher-self-test"
 echo "    assignments: $ASSIGN"
@@ -596,6 +601,24 @@ if [ -f "$ACTION_LIST" ]; then
   fi
   echo
 fi
+
+# --- T26: action-list.json holds non-terminal items only (issue #1014) ------
+# Spec (dispatcher-prompt.md Phase 1 step 4): action-list.json carries only
+# open/in-progress items; done/dropped live in action-list-archive.json. Bloat
+# from un-archived terminal rows is what pushed the file past the MCP inline
+# push limit and corrupted it on dev. Advisory (warn, not fail) because
+# action-list-reconcile.sh --apply is self-healing on the next Phase 6.
+echo "T26 action-list.json holds non-terminal items only (issue #1014; advisory)"
+if [ -f "$ACTION_LIST" ]; then
+  TERM=$(jq -r '[.items[] | select(.status=="done" or .status=="dropped" or .status=="merged" or .status=="failed")] | length' "$ACTION_LIST")
+  if [ "$TERM" = "0" ]; then note "no terminal items in action-list.json (archive split clean)"
+  else
+    warn "$TERM terminal item(s) in action-list.json — run: bash .research/action-list-reconcile.sh --apply"
+  fi
+else
+  printf '  skip  %s not found\n' "$ACTION_LIST"
+fi
+echo
 
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
