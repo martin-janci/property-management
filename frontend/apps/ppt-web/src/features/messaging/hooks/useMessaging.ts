@@ -60,6 +60,17 @@ function getNeighborsApi(accessToken: string | undefined) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Join a participant's first/last name into a display name.
+ *
+ * The `users` table has a single `name` column, so the API maps it onto
+ * `firstName` and leaves `lastName` empty. Trim the join so a missing last
+ * name doesn't leave a trailing space (e.g. `"Jane "`).
+ */
+function fullName(firstName: string, lastName: string): string {
+  return `${firstName} ${lastName}`.trim();
+}
+
+/**
  * Map an API ThreadWithPreview to the feature-layer MessageThread type.
  */
 export function mapApiThreadToUi(apiThread: ThreadWithPreview): MessageThread {
@@ -76,7 +87,7 @@ export function mapApiThreadToUi(apiThread: ThreadWithPreview): MessageThread {
     lastMessageSenderId: lastMsg?.senderId ?? undefined,
     lastMessageSenderName: lastMsg?.isFromMe
       ? undefined
-      : `${participant.firstName} ${participant.lastName}`,
+      : fullName(participant.firstName, participant.lastName),
     unreadCount: apiThread.unreadCount,
     createdAt: apiThread.createdAt,
     updatedAt: apiThread.updatedAt,
@@ -84,7 +95,7 @@ export function mapApiThreadToUi(apiThread: ThreadWithPreview): MessageThread {
       {
         id: participant.id,
         userId: participant.id,
-        userName: `${participant.firstName} ${participant.lastName}`,
+        userName: fullName(participant.firstName, participant.lastName),
         userAvatar: undefined,
         joinedAt: apiThread.createdAt,
         lastReadAt: undefined,
@@ -102,7 +113,7 @@ export function mapApiMessageToUi(apiMsg: MessageWithSender): Message {
     id: apiMsg.id,
     threadId: apiMsg.threadId,
     senderId: apiMsg.sender.id,
-    senderName: `${apiMsg.sender.firstName} ${apiMsg.sender.lastName}`,
+    senderName: fullName(apiMsg.sender.firstName, apiMsg.sender.lastName),
     content: apiMsg.content,
     createdAt: apiMsg.createdAt,
     readBy: apiMsg.readAt ? [apiMsg.sender.id] : [],
@@ -130,7 +141,7 @@ export function mapApiThreadDetailToUi(detail: ThreadDetailResponse): ThreadWith
       {
         id: other.id,
         userId: other.id,
-        userName: `${other.firstName} ${other.lastName}`,
+        userName: fullName(other.firstName, other.lastName),
         userAvatar: undefined,
         joinedAt: thread.createdAt,
         lastReadAt: undefined,
