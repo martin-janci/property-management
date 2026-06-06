@@ -90,15 +90,15 @@ else fail "$MISSING rows missing one or more required fields"; fi
 echo
 
 # --- T3: status enum -------------------------------------------------------
-echo "T3  status ∈ {in-progress, review, merged, failed, done}  (done = legacy compat)"
+echo "T3  status ∈ {in-progress, review, merged, failed, done, quarantined}  (done = legacy compat; quarantined = semi-terminal, PR 5/5)"
 BAD=$(jq -s -r '
   [.[].assignments[]]
-  | map(select((.status as $s | ["in-progress","review","merged","failed","done"] | index($s) | not)))
+  | map(select((.status as $s | ["in-progress","review","merged","failed","done","quarantined"] | index($s) | not)))
   | length' "${ASSIGN_FILES[@]}")
 if [ "$BAD" = "0" ]; then note "all status values in allowed set"
 else
   fail "$BAD rows with disallowed status"
-  jq -s -r '[.[].assignments[]] | .[] | select((.status as $s | ["in-progress","review","merged","failed","done"] | index($s) | not)) | "    \(.task_id) :: status=\(.status)"' "${ASSIGN_FILES[@]}" >&2
+  jq -s -r '[.[].assignments[]] | .[] | select((.status as $s | ["in-progress","review","merged","failed","done","quarantined"] | index($s) | not)) | "    \(.task_id) :: status=\(.status)"' "${ASSIGN_FILES[@]}" >&2
 fi
 echo
 
