@@ -157,6 +157,7 @@
     "emptyTitle": "Ziadne dokumenty",
     "noMatches": "Ziadne dokumenty nezodpovedaju hladaniu",
     "folderEmpty": "Tento priecinok je prazdny",
+    "folderItemCount": "{{count}} poloziek",
     "searchPlaceholder": "Hladat dokumenty…",
     "filter": {
       "all": "Vsetky",
@@ -190,6 +191,27 @@
       "openFailed": "Dokument sa nepodarilo otvorit.",
       "sharingUnavailableTitle": "Zdielanie nie je dostupne",
       "shareFailed": "Dokument sa nepodarilo zdielat."
+    },
+    "folder": {
+      "newTitle": "Novy priecinok",
+      "insideFolder": "V priecinku \"{{name}}\"",
+      "atRoot": "Na korenovej urovni",
+      "nameLabel": "Nazov priecinku",
+      "namePlaceholder": "napr. Zmluvy 2024",
+      "descriptionLabel": "Popis (volitelny)",
+      "descriptionPlaceholder": "Strucny popis tohto priecinku",
+      "nameRequired": "Nazov priecinku je povinny",
+      "nameTooLong": "Nazov priecinku musi mat najviac 255 znakov",
+      "createButton": "Vytvorit priecinok",
+      "createError": "Priecinok sa nepodarilo vytvorit"
+    },
+    "move": {
+      "title": "Premiestnit dokument",
+      "destination": "CIEL",
+      "rootLabel": "Koren (bez priecinku)",
+      "noFolders": "Ziadne priecinky k dispozicii",
+      "confirm": "Premiestnit sem",
+      "errorTitle": "Dokument sa nepodarilo premiestnit"
     },
     "upload": {
       "title": "Nahrat dokument",

@@ -157,25 +157,7 @@
     "emptyTitle": "Zadne dokumenty",
     "noMatches": "Zadne dokumenty neodpovidaji hledani",
     "folderEmpty": "Tato slozka je prazdna",
-    "searchPlaceholder": "Search documents…",
-    "filter": {
-      "all": "All",
-      "audience": "Audience"
-    },
-    "permissions": {
-      "title": "Document Permissions",
-      "audience": "Audience",
-      "status": "Status",
-      "metadata": "Details",
-      "category": "Category",
-      "created": "Created",
-      "updated": "Last updated",
-      "loadError": "Could not load document details",
-      "draftNote": "This document is a draft and is only visible to the author and managers.",
-      "archivedNote": "This document has been archived and is no longer actively shared.",
-      "rlsTitle": "Row-Level Security",
-      "rlsBody": "Access to this document is enforced by the server. The audience shown above reflects who can see it."
-    },
+    "folderItemCount": "{{count}} polozek",
     "preview": {
       "fetching": "Pripravuji nahled…",
       "urlReady": "Dokument je pripraven",
@@ -190,6 +172,27 @@
       "openFailed": "Dokument se nepodarilo otevrit.",
       "sharingUnavailableTitle": "Sdileni neni dostupne",
       "shareFailed": "Dokument se nepodarilo sdilet."
+    },
+    "folder": {
+      "newTitle": "Nova slozka",
+      "insideFolder": "Ve slozce „{{name}}”",
+      "atRoot": "Na korenove urovni",
+      "nameLabel": "Nazev slozky",
+      "namePlaceholder": "napr. Smlouvy 2024",
+      "descriptionLabel": "Popis (volitelny)",
+      "descriptionPlaceholder": "Strucny popis teto slozky",
+      "nameRequired": "Nazev slozky je povinny",
+      "nameTooLong": "Nazev slozky musi mit nejvyse 255 znaku",
+      "createButton": "Vytvorit slozku",
+      "createError": "Slozku se nepodarilo vytvorit"
+    },
+    "move": {
+      "title": "Presunout dokument",
+      "destination": "CIL",
+      "rootLabel": "Koren (bez slozky)",
+      "noFolders": "Zadne slozky k dispozici",
+      "confirm": "Presunout sem",
+      "errorTitle": "Dokument se nepodarilo presunout"
     },
     "upload": {
       "title": "Nahrat dokument",
@@ -227,6 +230,25 @@
         "correspondence": "Korespondence",
         "other": "Jine"
       }
+    },
+    "searchPlaceholder": "Hledat dokumenty…",
+    "filter": {
+      "all": "Vsechny",
+      "audience": "Publikum"
+    },
+    "permissions": {
+      "title": "Opravneni dokumentu",
+      "audience": "Publikum",
+      "status": "Stav",
+      "metadata": "Podrobnosti",
+      "category": "Kategorie",
+      "created": "Vytvoreno",
+      "updated": "Naposledy aktualizovano",
+      "loadError": "Nepodarilo se nacist podrobnosti dokumentu",
+      "draftNote": "Tento dokument je koncept a je viditelny pouze pro autora a spravce.",
+      "archivedNote": "Tento dokument byl archivovan a jiz neni aktivne sdilet.",
+      "rlsTitle": "Zabezpeceni na urovni radku",
+      "rlsBody": "Pristup k tomuto dokumentu je vynucen serverem. Zobrazene publikum odrazi kdo jej muze videt."
     }
   },
   "settings": {

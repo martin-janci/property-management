@@ -1,0 +1,257 @@
+{
+  "generated": "2026-06-06T03:06:08Z",
+  "trigger": "",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-search-stale-response-race",
+      "type": "code-review-finding",
+      "source": [
+        "mobile-native-kmp segment review 2026-06-06",
+        "PR #1125"
+      ],
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "medium",
+      "evidence": [
+        "SearchScreen.kt:111-142 performSearch launches a coroutine on rememberCoroutineScope with no Job tracking or cancellation of previous in-flight request",
+        "SearchScreen.kt:144/150/205/214/242 — initial load, debounce, FilterSheet apply, FilterSheet reset, RoomsChipStrip onSelect all fire performSearch with no overlap guard",
+        "onSuccess overwrites searchResults/totalResults/currentPage unconditionally; older slower response from stale filter can clobber newer one"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+      "type": "code-review-finding",
+      "source": [
+        "mobile-native-kmp segment review 2026-06-06"
+      ],
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "medium",
+      "evidence": [
+        "DeepLinkRouter.kt:103-114 queryParam returns substring(eq+1) with no percent-decoding",
+        "MainActivity.kt:84 uses android.net.Uri.getQueryParameter which DOES URL-decode — Android/iOS produce different token strings for same deep link",
+        "DeepLinkRouter.kt:85 'sso' branch passes raw encoded value into DeepLinkTarget.Sso(token); iOS attempts SSO validation with wrong string"
+      ],
+      "files": [
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt"
+      ]
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+      "type": "code-review-finding",
+      "source": [
+        "mobile-native-kmp segment review 2026-06-06"
+      ],
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "severity": "low",
+      "evidence": [
+        "MainActivity.kt:76-109 handleDeepLink reimplements scheme/host dispatch using android.net.Uri",
+        "MainActivity.kt:113-121 a second Android-only DeepLinkTarget sealed class lacks Sso — adding a shared target silently no-ops on Android",
+        "DeepLinkRouter.kt:36 documents itself as single source of truth; Android entry point ignores it"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt"
+      ]
+    },
+    {
+      "id": "code-review-issue-1137-pkce-test-tautology",
+      "type": "code-review-finding",
+      "source": [
+        "#1137",
+        "PR #1132"
+      ],
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "severity": "low",
+      "evidence": [
+        "services/oauth.rs mod tests test_pkce_verification: assert!(pkce_challenge(verifier) == pkce_challenge(verifier)) — tautology",
+        "plain-method rejection assertion was removed (only mentioned in a comment)",
+        "issue #1137 proposes pinning RFC 7636 Appendix B known-answer vector for a real regression check"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-mobile-native-search-screen-kt",
+      "type": "churn-hotspot",
+      "source": [
+        "PR #1125"
+      ],
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "+1293 LOC churn 2026-06-05..2026-06-06 (PR #1125 gap-82-3-reality-mobile-search-filters)"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
+      ]
+    },
+    {
+      "id": "churn-hotspot-mobile-native-listing-detail-kt",
+      "type": "churn-hotspot",
+      "source": [
+        "PR #1121"
+      ],
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "+1279 LOC churn 2026-06-05..2026-06-06 (PR #1121 gap-82-4-reality-mobile-listing-detail-favorites)"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/oauth.rs",
+      "type": "churn-hotspot",
+      "source": [
+        "PR #1133"
+      ],
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "+186 LOC churn this run (PR #1133 refactor-routes-oauth-rs-hot); already in state.seen_signals — cumulative re-emit with no score change"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal met the certainty bar (confidence=high AND score>=3 AND signal type in allowlist) this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$(date)/.md + head -1 matches",
+      "observed": "ok",
+      "expected": "ok"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced (cursors + seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score>8, no decay candidates this run",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no plans promoted this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans (<=2)",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md byte-identical",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs accounted for",
+      "observed": "n/a (no new promotions)",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "ok",
+      "expected": "ok"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md byte-identical",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length == 0",
+      "observed": "0",
+      "expected": "<=3 with per-type caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; coverage_cursor in range and advanced",
+      "observed": "8->9, pm 1->2",
+      "expected": "in [0,13)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

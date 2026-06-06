@@ -27,6 +27,10 @@ pub async fn handler(
 ) -> Result<Sse<impl Stream<Item = std::result::Result<Event, Infallible>>>> {
     caller.require_scope("worktree:read")?;
 
+    // Validate the path param at the boundary (#769 finding 6) — the name is
+    // interpolated into the expected container name (`wt-{name}-{service}`) below.
+    crate::infra::git::validate_alias_strict(&name)?;
+
     let wt = svc
         .store
         .get_worktree(&name)

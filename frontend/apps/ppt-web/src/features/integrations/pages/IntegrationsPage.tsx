@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import {
   AccountingExportsList,
+  BookingChannelPanel,
   CalendarConnectionsList,
   ESignatureWorkflowsList,
   IntegrationsDashboard,
@@ -18,7 +19,7 @@ interface IntegrationsPageProps {
   organizationId: string;
 }
 
-type TabValue = 'calendars' | 'accounting' | 'esignatures' | 'video' | 'webhooks';
+type TabValue = 'calendars' | 'accounting' | 'esignatures' | 'video' | 'webhooks' | 'booking';
 
 const tabs: { value: TabValue; label: string }[] = [
   { value: 'calendars', label: 'Calendars' },
@@ -26,6 +27,7 @@ const tabs: { value: TabValue; label: string }[] = [
   { value: 'esignatures', label: 'E-Signatures' },
   { value: 'video', label: 'Video' },
   { value: 'webhooks', label: 'Webhooks' },
+  { value: 'booking', label: 'Booking.com' },
 ];
 
 export function IntegrationsPage({ organizationId }: IntegrationsPageProps) {
@@ -70,6 +72,8 @@ export function IntegrationsPage({ organizationId }: IntegrationsPageProps) {
           {activeTab === 'video' && <VideoMeetingsList organizationId={organizationId} />}
 
           {activeTab === 'webhooks' && <WebhookSubscriptionsList organizationId={organizationId} />}
+
+          {activeTab === 'booking' && <BookingChannelPanel organizationId={organizationId} />}
         </div>
       </div>
     </div>

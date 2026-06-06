@@ -11,6 +11,10 @@ interface AnnouncementsPageProps {
   announcements: AnnouncementSummary[];
   total: number;
   isLoading?: boolean;
+  /** True when the announcements list query failed (surfaces an inline error state). */
+  isError?: boolean;
+  /** Retry the failed announcements list query. */
+  onRetry?: () => void;
   /** Pinned published announcements for the sticky band (Story 6.4). Fetched
    *  separately in the route wrapper so the band is immune to list filters. */
   pinnedAnnouncements?: AnnouncementSummary[];
@@ -28,6 +32,8 @@ export function AnnouncementsPage({
   announcements,
   total,
   isLoading,
+  isError,
+  onRetry,
   pinnedAnnouncements = [],
   onNavigateToCreate,
   onNavigateToView,
@@ -69,6 +75,8 @@ export function AnnouncementsPage({
         page={page}
         pageSize={pageSize}
         isLoading={isLoading}
+        isError={isError}
+        onRetry={onRetry}
         pinnedAnnouncements={pinnedAnnouncements}
         onPageChange={handlePageChange}
         onStatusFilter={handleStatusFilter}

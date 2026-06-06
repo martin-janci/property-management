@@ -64,6 +64,11 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
     run_git_assert(&["init", work_str]);
     run_git_assert(&["-C", work_str, "config", "user.email", "t@t"]);
     run_git_assert(&["-C", work_str, "config", "user.name", "t"]);
+    // Disable commit signing for the fixture repo. A developer (or CI) machine
+    // with `commit.gpgsign=true` in global config would otherwise make the
+    // fixture `git commit` invoke a signing backend and fail with a non-zero
+    // exit. Mirrors the per-test fixture in `infra/git.rs`.
+    run_git_assert(&["-C", work_str, "config", "commit.gpgsign", "false"]);
     std::fs::write(work.join("README.md"), "hi").unwrap();
     run_git_assert(&["-C", work_str, "add", "."]);
     run_git_assert(&["-C", work_str, "commit", "-m", "init"]);

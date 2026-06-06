@@ -184,6 +184,7 @@ impl RentalRepository {
             SELECT
                 id, organization_id, unit_id, platform::text AS platform,
                 access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
                 external_property_id, external_listing_url,
                 is_active, last_sync_at, sync_error,
                 sync_calendar, sync_interval_minutes, block_other_platforms,
@@ -275,6 +276,7 @@ impl RentalRepository {
             RETURNING
                 id, organization_id, unit_id, platform::text AS platform,
                 access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
                 external_property_id, external_listing_url,
                 is_active, last_sync_at, sync_error,
                 sync_calendar, sync_interval_minutes, block_other_platforms,
@@ -2364,17 +2366,20 @@ impl RentalRepository {
             INSERT INTO rental_platform_connections (
                 organization_id, unit_id, platform,
                 access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
                 external_property_id, is_active
             )
-            VALUES ($1, $2, 'airbnb', $3, $4, $5, $6, true)
-            ON CONFLICT (organization_id, unit_id, platform) DO UPDATE SET
-                access_token = $3,
-                refresh_token = COALESCE($4, rental_platform_connections.refresh_token),
-                token_expires_at = $5,
-                external_property_id = COALESCE($6, rental_platform_connections.external_property_id),
-                is_active = true,
-                sync_error = NULL,
-                updated_at = NOW()
+            VALUES ($1, $2, 'airbnb', $3, $4, $5, $3, $4, $6, true)
+            ON CONFLICT (unit_id, platform) DO UPDATE SET
+                access_token             = $3,
+                refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
+                encrypted_token          = $3,
+                encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
+                token_expires_at         = $5,
+                external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
+                is_active                = true,
+                sync_error               = NULL,
+                updated_at               = NOW()
             RETURNING *
             "#,
         )
@@ -2422,6 +2427,8 @@ impl RentalRepository {
             UPDATE rental_platform_connections SET
                 access_token = NULL,
                 refresh_token = NULL,
+                encrypted_token = NULL,
+                encrypted_refresh_token = NULL,
                 token_expires_at = NULL,
                 is_active = false,
                 sync_error = 'User revoked access',
@@ -2436,7 +2443,74 @@ impl RentalRepository {
         Ok(result.rows_affected() as i64)
     }
 
+    /// Rotate Airbnb OAuth tokens for a connection after a successful refresh.
+    ///
+    /// Gap 83-1: Writes to both the canonical `encrypted_token` /
+    /// `encrypted_refresh_token` columns (added in migration 00175) AND the
+    /// legacy `access_token` / `refresh_token` columns so that code that
+    /// hasn't been updated yet keeps working.
+    pub async fn update_airbnb_tokens(
+        &self,
+        connection_id: Uuid,
+        encrypted_access: &str,
+        encrypted_refresh: Option<&str>,
+        expires_at: Option<chrono::DateTime<Utc>>,
+    ) -> Result<RentalPlatformConnection, SqlxError> {
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            r#"
+            UPDATE rental_platform_connections SET
+                access_token             = $2,
+                refresh_token            = COALESCE($3, refresh_token),
+                encrypted_token          = $2,
+                encrypted_refresh_token  = COALESCE($3, encrypted_refresh_token),
+                token_expires_at         = $4,
+                sync_error               = NULL,
+                updated_at               = NOW()
+            WHERE id = $1
+              AND platform = 'airbnb'
+            RETURNING *
+            "#,
+        )
+        .bind(connection_id)
+        .bind(encrypted_access)
+        .bind(encrypted_refresh)
+        .bind(expires_at)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(conn)
+    }
+
+    /// Mark an Airbnb connection as broken due to a permanent auth failure.
+    ///
+    /// Records the error and disables the connection so operators can see the
+    /// problem in the status dashboard.
+    pub async fn mark_airbnb_token_error(
+        &self,
+        connection_id: Uuid,
+        error: &str,
+    ) -> Result<(), SqlxError> {
+        sqlx::query(
+            r#"
+            UPDATE rental_platform_connections SET
+                sync_error = $2,
+                updated_at = NOW()
+            WHERE id = $1 AND platform = 'airbnb'
+            "#,
+        )
+        .bind(connection_id)
+        .bind(error)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
     /// Get Airbnb connections needing token refresh.
+    ///
+    /// Gap 83-1: Checks both `encrypted_refresh_token` (canonical) and the
+    /// legacy `refresh_token` column so that connections migrated by 00175
+    /// are also picked up.
     pub async fn get_airbnb_connections_needing_refresh(
         &self,
         buffer_secs: i64,
@@ -2448,7 +2522,7 @@ impl RentalRepository {
             SELECT * FROM rental_platform_connections
             WHERE platform = 'airbnb'
               AND is_active = true
-              AND refresh_token IS NOT NULL
+              AND (encrypted_refresh_token IS NOT NULL OR refresh_token IS NOT NULL)
               AND token_expires_at IS NOT NULL
               AND token_expires_at <= $1
             ORDER BY token_expires_at ASC

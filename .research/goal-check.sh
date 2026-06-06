@@ -27,9 +27,15 @@ EMIT_JSON=0
 # drains anything above CEIL. Override via env to keep the two in lockstep
 # (the dispatcher exports the same three before reading coverage). Changing a
 # bound here must be mirrored in dispatcher-prompt.md Phase 2.6, never forked.
-BUFFER_FLOOR="${BUFFER_FLOOR:-18}"   # below this = starving → Tier-1 refill
-BUFFER_TARGET="${BUFFER_TARGET:-36}" # refill brings claimable up to this
-BUFFER_CEIL="${BUFFER_CEIL:-60}"     # above this = overflow → Phase 2.6 drains
+# Bounds are sized in DAYS OF THROUGHPUT (12 cron runs/day x DISPATCHER_CLAIM_CAP
+# claims/run). Doubled on 2026-06-02 to track the claim-cap raise 3->6:
+# TARGET = 1 day (12x6=72), FLOOR = half day (36), CEIL ~ 1.7 days (120). Keeping
+# the buffer measured in time-of-work means the faster dispatcher always has
+# enough ready items queued to fill its higher claim cap, instead of starving or
+# being force-drained by a ceiling sized for the old slower rate.
+BUFFER_FLOOR="${BUFFER_FLOOR:-36}"   # below this = starving → Tier-1 refill
+BUFFER_TARGET="${BUFFER_TARGET:-72}" # refill brings claimable up to this
+BUFFER_CEIL="${BUFFER_CEIL:-120}"    # above this = overflow → Phase 2.6 drains
 
 RESULTS='[]'           # accumulates {check,passed,observed,expected,hard}
 HARD_FAIL=0

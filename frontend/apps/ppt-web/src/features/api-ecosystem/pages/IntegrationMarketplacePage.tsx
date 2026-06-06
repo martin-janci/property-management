@@ -4,163 +4,31 @@
  * Browse and install integrations from the marketplace.
  */
 
+import { type MarketplaceIntegrationSummary, useMarketplaceIntegrations } from '@ppt/api-client';
 import { useMemo, useState } from 'react';
 import { IntegrationCard, type IntegrationCardProps } from '../components/IntegrationCard';
 
-// Sample data for demonstration
-const sampleIntegrations: IntegrationCardProps[] = [
-  {
-    id: '1',
-    slug: 'quickbooks',
-    name: 'QuickBooks',
-    description:
-      'Sync invoices, payments, and customers with QuickBooks Online for seamless accounting.',
-    category: 'accounting',
-    iconUrl: undefined,
-    vendorName: 'Intuit',
-    status: 'available',
-    ratingAverage: 4.5,
-    ratingCount: 128,
-    installCount: 1542,
-    isFeatured: true,
-    isPremium: false,
-  },
-  {
-    id: '2',
-    slug: 'xero',
-    name: 'Xero',
-    description: 'Powerful accounting integration for invoices, payments, and financial reporting.',
-    category: 'accounting',
-    iconUrl: undefined,
-    vendorName: 'Xero Limited',
-    status: 'available',
-    ratingAverage: 4.3,
-    ratingCount: 89,
-    installCount: 987,
-    isFeatured: false,
-    isPremium: false,
-  },
-  {
-    id: '3',
-    slug: 'salesforce',
-    name: 'Salesforce',
-    description: 'Connect with Salesforce CRM to sync contacts, leads, and opportunities.',
-    category: 'crm',
-    iconUrl: undefined,
-    vendorName: 'Salesforce',
-    status: 'available',
-    ratingAverage: 4.7,
-    ratingCount: 256,
-    installCount: 2341,
-    isFeatured: true,
-    isPremium: true,
-  },
-  {
-    id: '4',
-    slug: 'hubspot',
-    name: 'HubSpot',
-    description: 'Integrate with HubSpot for marketing automation and CRM functionality.',
-    category: 'crm',
-    iconUrl: undefined,
-    vendorName: 'HubSpot',
-    status: 'available',
-    ratingAverage: 4.6,
-    ratingCount: 178,
-    installCount: 1876,
-    isFeatured: false,
-    isPremium: false,
-  },
-  {
-    id: '5',
-    slug: 'slack',
-    name: 'Slack',
-    description: 'Send notifications and updates to Slack channels. Keep your team informed.',
-    category: 'communication',
-    iconUrl: undefined,
-    vendorName: 'Slack Technologies',
-    status: 'available',
-    ratingAverage: 4.8,
-    ratingCount: 312,
-    installCount: 3456,
-    isFeatured: true,
-    isPremium: false,
-  },
-  {
-    id: '6',
-    slug: 'microsoft-teams',
-    name: 'Microsoft Teams',
-    description: 'Post notifications and adaptive cards to Microsoft Teams channels.',
-    category: 'communication',
-    iconUrl: undefined,
-    vendorName: 'Microsoft',
-    status: 'available',
-    ratingAverage: 4.4,
-    ratingCount: 145,
-    installCount: 1234,
-    isFeatured: false,
-    isPremium: false,
-  },
-  {
-    id: '7',
-    slug: 'google-calendar',
-    name: 'Google Calendar',
-    description: 'Sync meetings, inspections, and events with Google Calendar.',
-    category: 'calendar',
-    iconUrl: undefined,
-    vendorName: 'Google',
-    status: 'available',
-    ratingAverage: 4.5,
-    ratingCount: 201,
-    installCount: 2187,
-    isFeatured: false,
-    isPremium: false,
-  },
-  {
-    id: '8',
-    slug: 'outlook-calendar',
-    name: 'Outlook Calendar',
-    description: 'Synchronize events with Microsoft Outlook Calendar.',
-    category: 'calendar',
-    iconUrl: undefined,
-    vendorName: 'Microsoft',
-    status: 'available',
-    ratingAverage: 4.2,
-    ratingCount: 98,
-    installCount: 876,
-    isFeatured: false,
-    isPremium: false,
-  },
-  {
-    id: '9',
-    slug: 'stripe',
-    name: 'Stripe',
-    description: 'Accept payments and manage subscriptions with Stripe.',
-    category: 'payment',
-    iconUrl: undefined,
-    vendorName: 'Stripe',
-    status: 'coming_soon',
-    ratingAverage: undefined,
-    ratingCount: 0,
-    installCount: 0,
-    isFeatured: false,
-    isPremium: false,
-  },
-  {
-    id: '10',
-    slug: 'zapier',
-    name: 'Zapier',
-    description: 'Connect PPT with 5,000+ apps through Zapier automation.',
-    category: 'other',
-    iconUrl: undefined,
-    vendorName: 'Zapier',
-    status: 'available',
-    ratingAverage: 4.6,
-    ratingCount: 187,
-    installCount: 1543,
-    isFeatured: false,
-    isPremium: true,
-  },
-];
+/**
+ * Map a backend `MarketplaceIntegrationSummary` (snake_case wire format) onto
+ * the `IntegrationCardProps` shape the card component expects.
+ */
+function toCardProps(i: MarketplaceIntegrationSummary): IntegrationCardProps {
+  return {
+    id: i.id,
+    slug: i.slug,
+    name: i.name,
+    description: i.description,
+    category: i.category,
+    iconUrl: i.icon_url ?? undefined,
+    vendorName: i.vendor_name,
+    status: i.status,
+    ratingAverage: i.rating_average ?? undefined,
+    ratingCount: i.rating_count,
+    installCount: i.install_count,
+    isFeatured: i.is_featured,
+    isPremium: i.is_premium,
+  };
+}
 
 const categories = [
   { value: '', label: 'All Categories' },
@@ -182,10 +50,13 @@ export function IntegrationMarketplacePage() {
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [showPremiumOnly, setShowPremiumOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'name'>('popular');
-  const [installedIds] = useState<Set<string>>(new Set(['5'])); // Slack is installed
+
+  const { data, isLoading, isError, error, refetch } = useMarketplaceIntegrations();
+
+  const integrations = useMemo<IntegrationCardProps[]>(() => (data ?? []).map(toCardProps), [data]);
 
   const filteredIntegrations = useMemo(() => {
-    let result = [...sampleIntegrations];
+    let result = [...integrations];
 
     // Search filter
     if (searchQuery) {
@@ -228,7 +99,7 @@ export function IntegrationMarketplacePage() {
     });
 
     return result;
-  }, [searchQuery, selectedCategory, showFeaturedOnly, showPremiumOnly, sortBy]);
+  }, [integrations, searchQuery, selectedCategory, showFeaturedOnly, showPremiumOnly, sortBy]);
 
   const handleInstall = (_id: string) => {
     // TODO: Implement installation flow (Epic API-marketplace install)
@@ -330,21 +201,40 @@ export function IntegrationMarketplacePage() {
         </div>
 
         {/* Results count */}
-        <p className="mt-4 text-sm text-gray-500">
-          Showing {filteredIntegrations.length} integration
-          {filteredIntegrations.length !== 1 ? 's' : ''}
-        </p>
+        {!isLoading && !isError && (
+          <p className="mt-4 text-sm text-gray-500">
+            Showing {filteredIntegrations.length} integration
+            {filteredIntegrations.length !== 1 ? 's' : ''}
+          </p>
+        )}
       </div>
 
       {/* Integration grid */}
       <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-        {filteredIntegrations.length > 0 ? (
+        {isLoading ? (
+          <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center text-sm text-gray-500">
+            Loading integrations…
+          </div>
+        ) : isError ? (
+          <div className="rounded-lg border-2 border-dashed border-red-300 bg-red-50 p-12 text-center">
+            <h3 className="text-sm font-medium text-red-800">Failed to load integrations</h3>
+            <p className="mt-1 text-sm text-red-600">
+              {error instanceof Error ? error.message : 'An unexpected error occurred.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="mt-4 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredIntegrations.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredIntegrations.map((integration) => (
               <IntegrationCard
                 key={integration.id}
                 {...integration}
-                isInstalled={installedIds.has(integration.id)}
                 onInstall={() => handleInstall(integration.id)}
                 onViewDetails={() => handleViewDetails(integration.id)}
               />

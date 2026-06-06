@@ -43,15 +43,34 @@ interface NeighborsResponse {
   total: number;
 }
 
-interface BuildingItem {
+export interface BuildingItem {
   id: string;
   name?: string | null;
 }
 
 /** Response shape of `GET /api/v1/buildings` (`BuildingsListResponse`). */
-interface BuildingsPaginatedResponse {
+export interface BuildingsPaginatedResponse {
   buildings: BuildingItem[];
   total: number;
+}
+
+/**
+ * Resolve the first building from the `GET /api/v1/buildings` response.
+ *
+ * The backend returns `{ buildings, total }` — NOT the legacy `{ items }`
+ * shape the screen used to read, which always yielded `undefined` and broke
+ * the neighbours lookup. Returns id/name (name coerced from a nullable
+ * string to `undefined`) or both `undefined` when the list is empty/absent.
+ */
+export function selectBuilding(data: BuildingsPaginatedResponse | undefined): {
+  buildingId: string | undefined;
+  buildingName: string | undefined;
+} {
+  const first = data?.buildings?.[0];
+  return {
+    buildingId: first?.id,
+    buildingName: first?.name ?? undefined,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -72,8 +91,7 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
     '/api/v1/buildings'
   );
 
-  const buildingId = buildingsQuery.data?.buildings?.[0]?.id;
-  const buildingName = buildingsQuery.data?.buildings?.[0]?.name ?? undefined;
+  const { buildingId, buildingName } = selectBuilding(buildingsQuery.data);
 
   // Fetch neighbors once we have a building id
   const neighborsQuery = useApiQuery<NeighborsResponse>(

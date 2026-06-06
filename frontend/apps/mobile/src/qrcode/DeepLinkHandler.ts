@@ -148,8 +148,18 @@ export function createDeepLink(
   params?: Record<string, string>,
   query?: Record<string, string>
 ): string {
-  // Find route for screen
-  const route = DEEP_LINK_ROUTES.find((r) => r.screen === screen);
+  // Find a route for the screen. When the caller supplies params (e.g. an
+  // entity `id` from a tapped push), prefer the route whose `params` cover
+  // those keys so we build the *detail* path (`announcements/:id`) rather than
+  // the bare list path (`announcements`) — otherwise the id is silently
+  // dropped and the tap always lands on the list screen.
+  const paramKeys = params ? Object.keys(params).filter((k) => params[k]) : [];
+  const route =
+    (paramKeys.length > 0
+      ? DEEP_LINK_ROUTES.find(
+          (r) => r.screen === screen && paramKeys.every((k) => r.params?.includes(k))
+        )
+      : undefined) ?? DEEP_LINK_ROUTES.find((r) => r.screen === screen);
 
   if (!route) {
     // Default to simple path

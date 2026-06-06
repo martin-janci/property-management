@@ -17,6 +17,7 @@ export * from './compliance';
 export * from './critical-notifications';
 export * from './disputes';
 export * from './documents';
+export * from './ecosystem';
 export * from './emergency';
 export * from './esignature';
 export * from './facilities';

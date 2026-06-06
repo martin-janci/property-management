@@ -2,121 +2,22 @@
   "date": "2026-06-03",
   "signals": [
     {
-      "id": "churn-hotspot-backend/servers/api-server/src/main.rs",
-      "type": "churn-hotspot",
-      "source": "git log origin/dev since 2026-06-02T03:13Z",
-      "score_delta": 1,
+      "id": "code-review-finding-cross-cutting-schema-drift-1008",
+      "type": "code-review-finding",
+      "source": "Issue #1008",
+      "score_delta": 3,
       "confidence": "high",
-      "candidate_vector": "refactor",
-      "evidence": "backend/servers/api-server/src/main.rs touched in 2 commits this run (+10/-0 lines): PR #989 (gap-sweep backend) and PR #963 (security headers); top-3 raw churn after lockfile/version-bump exclusions"
-    },
-    {
-      "id": "churn-hotspot-docker/nginx/admin-web.nginx.conf.template",
-      "type": "churn-hotspot",
-      "source": "git log origin/dev since 2026-06-02T03:13Z",
-      "score_delta": 1,
-      "confidence": "high",
-      "candidate_vector": "dx",
-      "evidence": "docker/nginx/admin-web.nginx.conf.template touched in 2 commits this run (+11/-0 lines): PR #964 (relative redirects + drop X-Powered-By) and PR #963 (baseline security headers)"
-    },
-    {
-      "id": "churn-hotspot-docker/nginx/ppt-web.nginx.conf.template",
-      "type": "churn-hotspot",
-      "source": "git log origin/dev since 2026-06-02T03:13Z",
-      "score_delta": 1,
-      "confidence": "high",
-      "candidate_vector": "dx",
-      "evidence": "docker/nginx/ppt-web.nginx.conf.template touched in 2 commits this run (+14/-0 lines): PR #964 (relative redirects) and PR #963 (baseline security headers)"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/App.tsx",
-      "type": "churn-hotspot",
-      "source": "git log origin/dev since 2026-06-02T03:13Z",
-      "score_delta": 1,
-      "confidence": "high",
-      "candidate_vector": "refactor",
-      "evidence": "frontend/apps/mobile/src/App.tsx touched in 2 commits this run (+65/-1 lines): PR #962 (RN universal links + deep-link handler) and PR #992 (mobile document detail wiring); third consecutive run mobile/App.tsx churns (history runs_seen previously tracked only ppt-web/App.tsx)"
-    },
-    {
-      "id": "hotfix-no-test-pr-992",
-      "type": "hotfix-no-test",
-      "source": "PR #992",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "test-gap",
-      "evidence": "fix(epic-7a): wire mobile document detail + notify document-share recipients (#973) — 4 files changed (backend/crates/common/src/notifications/mod.rs, backend/servers/api-server/src/routes/documents/shares.rs, frontend/apps/mobile/src/App.tsx, frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx), no *test* file in diff"
-    },
-    {
-      "id": "hotfix-no-test-pr-990",
-      "type": "hotfix-no-test",
-      "source": "PR #990",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "test-gap",
-      "evidence": "fix(frontend): close frontend gap-sweep remainder (Epics 1/6/7B/9/10B/11/15/17/18) — 34 files changed across ppt-web, admin-web, reality-web, api-client, reality-api-client (ProfileEditPage, DocumentDetail, SessionsPage, PrivacySettingsPage, useMessaging, agency/[slug]/page etc.), no *test* file in diff"
-    },
-    {
-      "id": "hotfix-no-test-pr-959",
-      "type": "hotfix-no-test",
-      "source": "PR #959",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "test-gap",
-      "evidence": "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test before the bound-clamp was added"
-    },
-    {
-      "id": "hotfix-no-test-pr-963",
-      "type": "hotfix-no-test",
-      "source": "PR #963",
-      "score_delta": 2,
-      "confidence": "high",
-      "candidate_vector": "test-gap",
-      "evidence": "fix(api): add baseline security headers to API edge + SPA hosts (#954) — 6 files changed (backend/crates/api-core/src/middleware/mod.rs, backend/crates/api-core/src/middleware/security_headers.rs, backend/servers/api-server/src/main.rs, backend/servers/reality-server/src/main.rs, docker/nginx/admin-web.nginx.conf.template, docker/nginx/ppt-web.nginx.conf.template), no *test* file in diff; a new middleware (security_headers) shipped without a unit test asserting HSTS / nosniff / CSP presence on a handler response"
-    },
-    {
-      "id": "risky-churn-pr-992-app-tsx",
-      "type": "risky-churn",
-      "source": "PR #992 x churn-hotspot frontend/apps/mobile/src/App.tsx",
-      "score_delta": 2,
-      "confidence": "medium",
       "candidate_vector": "bug",
-      "evidence": "PR #992 (fix) modified frontend/apps/mobile/src/App.tsx — a top-churn file this run — with no test diff; the navigation/deep-link wiring path that resolves a DocumentSharePayload into screen.push is now changing in back-to-back PRs (#962 deep-link handler, #992 doc-detail param shape) without coverage"
+      "evidence": "Issue #1008: hand-written sqlx queries reference non-existent columns (delegations.delegate_id, delegations.scope, delegations.expires_at, unit_residents.move_out_date, users.first_name) — invisible without .sqlx offline metadata, undermines #971.3 + #971.6 reported-fixed items; cross-cutting between voting.rs, scheduler.rs, repositories/vote.rs, repositories/messaging.rs"
     },
     {
-      "id": "risky-churn-pr-963-main-rs",
-      "type": "risky-churn",
-      "source": "PR #963 x churn-hotspot backend/servers/api-server/src/main.rs",
-      "score_delta": 2,
-      "confidence": "medium",
-      "candidate_vector": "bug",
-      "evidence": "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response"
-    },
-    {
-      "id": "untriaged-issue-952",
+      "id": "untriaged-issue-1014",
       "type": "untriaged-issue",
-      "source": "#952",
+      "source": "Issue #1014",
       "score_delta": 1,
       "confidence": "high",
       "candidate_vector": "triage",
-      "evidence": "Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex"
-    },
-    {
-      "id": "untriaged-issue-951",
-      "type": "untriaged-issue",
-      "source": "#951",
-      "score_delta": 1,
-      "confidence": "high",
-      "candidate_vector": "triage",
-      "evidence": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)"
-    },
-    {
-      "id": "untriaged-issue-950",
-      "type": "untriaged-issue",
-      "source": "#950",
-      "score_delta": 1,
-      "confidence": "high",
-      "candidate_vector": "triage",
-      "evidence": "Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy"
+      "evidence": "Issue #1014 (no labels, OPEN): Dispatcher Phase 6 push fallback corrupted action-list.json via MCP push_files inline-content limit on a 92KB file — recovery PRs #1024 + #1027 already landed but systemic fix still open"
     }
   ],
   "code_review": {
@@ -128,22 +29,124 @@
   "auto_fix_actions": [],
   "auto_fix_skipped_reason": "no candidate: no signal type from the Phase-5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review) fired this run; no signal met confidence=high + score>=3 + allowlist match",
   "goal_checks": [
-    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-06-03.md && H1 matches", "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G2", "passed": true, "command": "state.json differs from HEAD on cursors/seen_signals", "observed": "true", "expected": "true" },
-    { "goal": "G3", "passed": true, "command": "backlog ids unique", "observed": "true", "expected": "true" },
-    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id from this run was in prior seen_signals with non-zero delta", "observed": "true", "expected": "true" },
-    { "goal": "G5", "passed": true, "command": "no score > 8; dx-portfolio-dashboard-stubs decayed 2 to 1", "observed": "score 1, status open, evidence appended", "expected": "score - 1 OR status dropped" },
-    { "goal": "G6", "passed": true, "command": "no new plans this run (vacuous)", "observed": "0 new plans", "expected": "every new plan has adversarial-pass annotation" },
-    { "goal": "G7", "passed": true, "command": "<=2 new plans + metadata + headings (vacuous)", "observed": "0 new plans", "expected": "<=2" },
-    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l", "observed": "0", "expected": "0" },
-    { "goal": "G9", "passed": true, "command": "secret/private-hostname scan on staged diff (excl. baseline docs)", "observed": "0 matches", "expected": "0" },
-    { "goal": "G10", "passed": true, "command": "regen backlog.md and diff", "observed": "identical", "expected": "identical" },
-    { "goal": "G11", "passed": true, "command": "phase-failure honesty: brief lists 'Phases that failed: none'", "observed": "none", "expected": "consistency" },
-    { "goal": "G12", "passed": true, "command": "every prior plan still in plans/ or plans/_archive/", "observed": "all present", "expected": "all present" },
-    { "goal": "G13", "passed": true, "command": "archive count: HEAD=7 NOW=7", "observed": "7 >= 7", "expected": "NOW >= HEAD" },
-    { "goal": "G14", "passed": true, "command": "regen IDEAS_TRIAGE.md and diff", "observed": "identical", "expected": "identical" },
-    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty (no candidate), kill switch unset", "observed": "len=0", "expected": "len<=3 + per-type<=1 + idempotency" },
-    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped; pm_cursor unchanged vs HEAD; no-op", "observed": "pm_cursor.next_index=0 (HEAD=0), coverage_cursor.next_index=7 (HEAD=7)", "expected": "no-op when Phase 1.6 skipped" },
-    { "goal": "G17", "passed": true, "command": "Telegram bot-token literal scan on staged diff", "observed": "0 matches", "expected": "0" }
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-03.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-ids count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit non-cumulative score_delta=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap=8 + decay check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuously true",
+      "observed": "no plans/ adds",
+      "expected": "all plans have adversarial pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness gates — vacuously true",
+      "observed": "0 new plans",
+      "expected": "≤2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname scan",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity with regen",
+      "observed": "ok by construction (just regenerated)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures reported",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotion convergence",
+      "observed": "no prior plan silently deleted",
+      "expected": "all prior plans present in plans/ or _archive/"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "no archive shrink",
+      "expected": "archive count >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity with regen",
+      "observed": "ok by construction (just regenerated)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no actions this run)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "≤3 actions, kill-switch honored"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts — Phase 1.6 not run this run",
+      "observed": "no-op (pm_cursor unchanged vs HEAD)",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    }
   ]
 }

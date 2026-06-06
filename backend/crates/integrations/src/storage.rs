@@ -44,6 +44,14 @@ pub const AWS_ACCESS_KEY_ID_ENV: &str = "AWS_ACCESS_KEY_ID";
 /// Environment variable for AWS secret access key.
 pub const AWS_SECRET_ACCESS_KEY_ENV: &str = "AWS_SECRET_ACCESS_KEY";
 
+/// Environment variable for the presigned download URL TTL, in seconds.
+///
+/// Controls how long a `GET /documents/{id}/download` presigned URL stays
+/// valid. Defaults to [`DEFAULT_DOWNLOAD_EXPIRATION_SECS`] (15 minutes) when
+/// unset or unparsable. Keep this short — the URL grants unauthenticated S3
+/// read access for its whole lifetime.
+pub const S3_PRESIGNED_URL_TTL_ENV: &str = "S3_PRESIGNED_URL_TTL_SECS";
+
 // ============================================================================
 // Error Types
 // ============================================================================
@@ -166,6 +174,10 @@ pub struct StorageConfig {
 
     /// AWS secret access key.
     pub secret_access_key: String,
+
+    /// TTL (seconds) for presigned download URLs. Short-lived by design;
+    /// defaults to [`DEFAULT_DOWNLOAD_EXPIRATION_SECS`] (15 minutes).
+    pub download_ttl_secs: i64,
 }
 
 impl StorageConfig {
@@ -185,12 +197,22 @@ impl StorageConfig {
             StorageError::Configuration(format!("{AWS_SECRET_ACCESS_KEY_ENV} not set"))
         })?;
 
+        // Presigned download TTL knob. Reject non-positive values (a zero or
+        // negative TTL would mint an already-expired URL) and fall back to the
+        // 15-minute default when unset or unparsable.
+        let download_ttl_secs = std::env::var(S3_PRESIGNED_URL_TTL_ENV)
+            .ok()
+            .and_then(|v| v.parse::<i64>().ok())
+            .filter(|secs| *secs > 0)
+            .unwrap_or(DEFAULT_DOWNLOAD_EXPIRATION_SECS);
+
         Ok(Self {
             bucket,
             region,
             endpoint,
             access_key_id,
             secret_access_key,
+            download_ttl_secs,
         })
     }
 
@@ -207,6 +229,7 @@ impl StorageConfig {
             endpoint: None,
             access_key_id: access_key_id.into(),
             secret_access_key: secret_access_key.into(),
+            download_ttl_secs: DEFAULT_DOWNLOAD_EXPIRATION_SECS,
         }
     }
 
@@ -214,6 +237,16 @@ impl StorageConfig {
     #[must_use]
     pub fn with_endpoint(mut self, endpoint: impl Into<String>) -> Self {
         self.endpoint = Some(endpoint.into());
+        self
+    }
+
+    /// Override the presigned download URL TTL (seconds). Non-positive values
+    /// are ignored to avoid minting already-expired URLs.
+    #[must_use]
+    pub fn with_download_ttl(mut self, secs: i64) -> Self {
+        if secs > 0 {
+            self.download_ttl_secs = secs;
+        }
         self
     }
 }
@@ -525,6 +558,15 @@ impl StorageService {
         &self.config.region
     }
 
+    /// Configured TTL (seconds) for presigned download URLs.
+    ///
+    /// Handlers pass this into `generate_download_url` so the validity window
+    /// is driven by the `S3_PRESIGNED_URL_TTL_SECS` config knob rather than a
+    /// hard-coded constant.
+    pub fn download_ttl_secs(&self) -> i64 {
+        self.config.download_ttl_secs
+    }
+
     // =========================================================================
     // Story 103.1: Real S3 Operations
     // =========================================================================
@@ -579,6 +621,51 @@ impl StorageService {
             content_type = %content_type,
             size_bytes = %size,
             "Uploaded file to S3"
+        );
+
+        Ok(key.to_string())
+    }
+
+    /// Upload a **system-generated** artifact (e.g. an organization data export
+    /// or tenant backup tarball) to S3.
+    ///
+    /// Unlike [`upload`](Self::upload), this does NOT enforce the user-content
+    /// MIME allowlist — the bytes are produced by the server itself, not
+    /// uploaded by an end user, so the allowlist (which exists to constrain
+    /// user uploads) does not apply. The size cap is still enforced. Use this
+    /// ONLY for trusted, server-produced content (issue #979).
+    pub async fn upload_system_artifact(
+        &self,
+        key: &str,
+        content: Vec<u8>,
+        content_type: &str,
+    ) -> Result<String, StorageError> {
+        let client = self.get_s3_client()?;
+        let size = content.len();
+
+        if size as i64 > MAX_UPLOAD_SIZE_BYTES {
+            return Err(StorageError::FileTooLarge(
+                size as i64,
+                MAX_UPLOAD_SIZE_BYTES,
+            ));
+        }
+
+        let body = ByteStream::from(content);
+        client
+            .put_object()
+            .bucket(&self.config.bucket)
+            .key(key)
+            .body(body)
+            .content_type(content_type)
+            .send()
+            .await
+            .map_err(|e| StorageError::UploadError(format!("S3 PutObject failed: {}", e)))?;
+
+        tracing::info!(
+            key = %key,
+            content_type = %content_type,
+            size_bytes = %size,
+            "Uploaded system artifact to S3"
         );
 
         Ok(key.to_string())
@@ -973,6 +1060,42 @@ mod tests {
         let config = StorageConfig::new("my-bucket", "us-west-2", "key", "secret")
             .with_endpoint("http://localhost:9000");
         assert_eq!(config.endpoint, Some("http://localhost:9000".to_string()));
+    }
+
+    #[test]
+    fn test_storage_config_default_download_ttl() {
+        let config = StorageConfig::new("my-bucket", "us-west-2", "key", "secret");
+        assert_eq!(config.download_ttl_secs, DEFAULT_DOWNLOAD_EXPIRATION_SECS);
+        assert_eq!(config.download_ttl_secs, 15 * 60);
+    }
+
+    #[test]
+    fn test_storage_config_with_download_ttl() {
+        let config =
+            StorageConfig::new("my-bucket", "us-west-2", "key", "secret").with_download_ttl(300);
+        assert_eq!(config.download_ttl_secs, 300);
+    }
+
+    #[test]
+    fn test_storage_config_with_download_ttl_rejects_non_positive() {
+        // A zero / negative TTL would mint an already-expired URL — keep the default.
+        let base = StorageConfig::new("my-bucket", "us-west-2", "key", "secret");
+        assert_eq!(
+            base.clone().with_download_ttl(0).download_ttl_secs,
+            DEFAULT_DOWNLOAD_EXPIRATION_SECS
+        );
+        assert_eq!(
+            base.with_download_ttl(-1).download_ttl_secs,
+            DEFAULT_DOWNLOAD_EXPIRATION_SECS
+        );
+    }
+
+    #[test]
+    fn test_storage_service_exposes_download_ttl() {
+        let config =
+            StorageConfig::new("my-bucket", "us-west-2", "key", "secret").with_download_ttl(900);
+        let service = StorageService::new(config);
+        assert_eq!(service.download_ttl_secs(), 900);
     }
 
     #[test]

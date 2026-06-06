@@ -154,6 +154,144 @@ async fn count_audit_rows(pool: &PgPool, user_id: Uuid, action: &str) -> i64 {
     .unwrap_or(0)
 }
 
+/// Run the full PKCE S256 authorization-code flow for a **confidential** client
+/// and return `(access_token, refresh_token)`.
+///
+/// Shared by `refresh_rotation` and `provider_security` tests.  Using this
+/// helper instead of copy-pasting the consent → token exchange pattern means
+/// future changes to the authorize/token endpoints only need updating in one
+/// place.
+async fn confidential_auth_flow(
+    app: &TestApp,
+    user_at: &str,
+    client_id: &str,
+    client_secret: &str,
+    redirect_uri: &str,
+) -> (String, String) {
+    let (verifier, challenge) = pkce_pair();
+    let consent_form = form_body(&[
+        ("client_id", client_id),
+        ("redirect_uri", redirect_uri),
+        ("scope", "profile"),
+        ("code_challenge", &challenge),
+        ("code_challenge_method", "S256"),
+        ("consent", "approve"),
+    ]);
+    let code = app
+        .execute(form_request_with_auth(
+            "/api/v1/oauth/authorize",
+            &consent_form,
+            user_at,
+        ))
+        .await
+        .json_value()["code"]
+        .as_str()
+        .expect("missing code in confidential_auth_flow")
+        .to_string();
+
+    let token_body = form_body(&[
+        ("grant_type", "authorization_code"),
+        ("code", &code),
+        ("redirect_uri", redirect_uri),
+        ("client_id", client_id),
+        ("client_secret", client_secret),
+        ("code_verifier", &verifier),
+    ]);
+    let tokens = app
+        .execute(form_request("/api/v1/oauth/token", &token_body))
+        .await
+        .json_value();
+
+    let at = tokens["access_token"]
+        .as_str()
+        .expect("access_token missing in confidential_auth_flow")
+        .to_string();
+    let rt = tokens["refresh_token"]
+        .as_str()
+        .expect("refresh_token missing in confidential_auth_flow")
+        .to_string();
+    (at, rt)
+}
+
+/// POST the consent form for a PKCE S256 authorize request and return the
+/// authorization `code`.
+///
+/// This covers the most common test setup step: the user approves consent for
+/// a given `client_id` / `redirect_uri` / `scope` / `challenge` and the test
+/// immediately needs the resulting code.  Centralising it here means the form
+/// field list only needs to be maintained in one place.
+async fn consent_and_get_code(
+    app: &TestApp,
+    user_at: &str,
+    client_id: &str,
+    redirect_uri: &str,
+    scope: &str,
+    challenge: &str,
+) -> String {
+    let consent_form = form_body(&[
+        ("client_id", client_id),
+        ("redirect_uri", redirect_uri),
+        ("scope", scope),
+        ("code_challenge", challenge),
+        ("code_challenge_method", "S256"),
+        ("consent", "approve"),
+    ]);
+    app.execute(form_request_with_auth(
+        "/api/v1/oauth/authorize",
+        &consent_form,
+        user_at,
+    ))
+    .await
+    .json_value()["code"]
+        .as_str()
+        .expect("missing code in consent_and_get_code")
+        .to_string()
+}
+
+/// POST the RFC 7009 token-revocation endpoint with client credentials in the
+/// form body and return the HTTP status code.
+///
+/// Call sites only care about whether the revoke succeeded (200) or was
+/// rejected; they can assert the returned `StatusCode` directly.
+async fn revoke_rfc7009(
+    app: &TestApp,
+    token: &str,
+    token_type_hint: &str,
+    client_id: &str,
+    client_secret: &str,
+) -> StatusCode {
+    let body = form_body(&[
+        ("token", token),
+        ("token_type_hint", token_type_hint),
+        ("client_id", client_id),
+        ("client_secret", client_secret),
+    ]);
+    app.execute(form_request("/api/v1/oauth/revoke", &body))
+        .await
+        .status
+}
+
+/// POST the RFC 7662 introspection endpoint with client credentials in the
+/// form body and return the parsed JSON response body.
+///
+/// Most callers only need to inspect `body["active"]`; they can assert the
+/// full value from the returned `serde_json::Value`.
+async fn introspect_with_creds(
+    app: &TestApp,
+    token: &str,
+    client_id: &str,
+    client_secret: &str,
+) -> serde_json::Value {
+    let body = form_body(&[
+        ("token", token),
+        ("client_id", client_id),
+        ("client_secret", client_secret),
+    ]);
+    app.execute(form_request("/api/v1/oauth/introspect", &body))
+        .await
+        .json_value()
+}
+
 // ─── module: pkce_flow ───────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -330,20 +468,15 @@ mod pkce_flow {
         let (client_id, redirect_uri) = seed_public_client(&pool).await;
         let (_verifier, challenge) = pkce_pair();
 
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let consent_req =
-            form_request_with_auth("/api/v1/oauth/authorize", &consent_form, &access_token);
-        let code = app.execute(consent_req).await.json_value()["code"]
-            .as_str()
-            .expect("missing code")
-            .to_string();
+        let code = consent_and_get_code(
+            &app,
+            &access_token,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
 
         // Supply a WRONG verifier
         let token_form = form_body(&[
@@ -386,6 +519,41 @@ mod pkce_flow {
             resp.status,
             StatusCode::BAD_REQUEST,
             "public client without PKCE must be rejected. body={}",
+            resp.text()
+        );
+        let body = resp.json_value();
+        assert_eq!(body["error"], "invalid_request");
+    }
+
+    /// Regression (issue #823, PR #908): PKCE is mandatory for the
+    /// authorization-code flow for *all* clients, not just public ones
+    /// (OAuth 2.1 §4.1.1 / RFC 7636). Previously `validate_authorize_request`
+    /// only required `code_challenge` when `!is_confidential`, so a confidential
+    /// client could obtain an authorization code with no PKCE binding — a code
+    /// then exchangeable at `/token` with no `code_verifier` at all (the token
+    /// path only checked the verifier `if let Some(challenge)`). A confidential
+    /// client authorizing without `code_challenge` must now be rejected with
+    /// 400 `invalid_request`.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_confidential_client_requires_pkce(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (access_token, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, _client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        // No code_challenge supplied.
+        let uri = format!(
+            "/api/v1/oauth/authorize?response_type=code&client_id={}&redirect_uri={}&scope=profile",
+            urlencoding::encode(&client_id),
+            urlencoding::encode(&redirect_uri),
+        );
+        // Authenticated (issue #820) so the request reaches PKCE validation.
+        let req = get_request_with_auth(&uri, &access_token);
+        let resp = app.execute(req).await;
+        assert_eq!(
+            resp.status,
+            StatusCode::BAD_REQUEST,
+            "confidential client without PKCE must be rejected. body={}",
             resp.text()
         );
         let body = resp.json_value();
@@ -499,25 +667,15 @@ mod pkce_flow {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
         let (verifier, challenge) = pkce_pair();
 
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &access_token,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("missing code")
-            .to_string();
+        let code = consent_and_get_code(
+            &app,
+            &access_token,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
 
         let make_token_req = || {
             let body = form_body(&[
@@ -681,23 +839,16 @@ mod consent_revoke {
         let (client_id, redirect_uri) = seed_public_client(&pool).await;
         let (_verifier, challenge) = pkce_pair();
 
-        // Grant authorization
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let consent_resp = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &access_token,
-            ))
-            .await;
-        assert_eq!(consent_resp.status, StatusCode::OK);
+        // Grant authorization (return code is not used further in this test)
+        consent_and_get_code(
+            &app,
+            &access_token,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
 
         // List grants
         let list_req = Request::builder()
@@ -798,60 +949,6 @@ mod consent_revoke {
 mod refresh_rotation {
     use super::*;
 
-    /// Helper: run the full auth flow for a confidential client and return the
-    /// initial access_token + refresh_token.
-    async fn auth_flow(
-        app: &TestApp,
-        access_token: &str,
-        client_id: &str,
-        client_secret: &str,
-        redirect_uri: &str,
-    ) -> (String, String) {
-        let (verifier, challenge) = pkce_pair();
-        let consent_form = form_body(&[
-            ("client_id", client_id),
-            ("redirect_uri", redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                access_token,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("missing code")
-            .to_string();
-
-        let token_body = form_body(&[
-            ("grant_type", "authorization_code"),
-            ("code", &code),
-            ("redirect_uri", redirect_uri),
-            ("client_id", client_id),
-            ("client_secret", client_secret),
-            ("code_verifier", &verifier),
-        ]);
-        let tokens = app
-            .execute(form_request("/api/v1/oauth/token", &token_body))
-            .await
-            .json_value();
-
-        let at = tokens["access_token"]
-            .as_str()
-            .expect("access_token")
-            .to_string();
-        let rt = tokens["refresh_token"]
-            .as_str()
-            .expect("refresh_token")
-            .to_string();
-        (at, rt)
-    }
-
     /// Refresh rotation: using a refresh token must yield a new access + refresh
     /// token, and the old refresh token must be invalidated.
     #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -862,7 +959,7 @@ mod refresh_rotation {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (_at1, rt1) =
-            auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Use rt1 to get a new token set
         let refresh_body = form_body(&[
@@ -920,7 +1017,7 @@ mod refresh_rotation {
 
         // Issue initial tokens
         let (_at1, rt1) =
-            auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Rotate once: rt1 → rt2
         let rotate1_body = form_body(&[
@@ -1026,23 +1123,16 @@ mod refresh_rotation {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         // Obtain an initial refresh token via the full auth flow.
-        let (_at, rt) = auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+        let (_at, rt) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Explicitly revoke the refresh token via RFC 7009 (client-authenticated).
-        let revoke_body = form_body(&[
-            ("token", &rt),
-            ("token_type_hint", "refresh_token"),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let revoke_resp = app
-            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
-            .await;
+        let revoke_status =
+            revoke_rfc7009(&app, &rt, "refresh_token", &client_id, &client_secret).await;
         assert_eq!(
-            revoke_resp.status,
+            revoke_status,
             StatusCode::OK,
-            "RFC 7009 revoke must return 200. body={}",
-            revoke_resp.text()
+            "RFC 7009 revoke must return 200"
         );
 
         // Now attempt to use the revoked refresh token at /token — must be rejected.
@@ -1078,7 +1168,8 @@ mod refresh_rotation {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
         let (other_client_id, other_client_secret, _) = seed_confidential_client(&pool).await;
 
-        let (_at, rt) = auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+        let (_at, rt) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Try to use rt with a different client
         let body = form_body(&[
@@ -1123,22 +1214,15 @@ mod audit_trail {
 
         let before = count_audit_rows(&pool, user_id, "oauth_authorize").await;
 
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let resp = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &access_token,
-            ))
-            .await;
-        assert_eq!(resp.status, StatusCode::OK);
+        consent_and_get_code(
+            &app,
+            &access_token,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
 
         let after = count_audit_rows(&pool, user_id, "oauth_authorize").await;
         assert_eq!(
@@ -1158,19 +1242,14 @@ mod audit_trail {
         let (_verifier, challenge) = pkce_pair();
 
         // Grant first
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        app.execute(form_request_with_auth(
-            "/api/v1/oauth/authorize",
-            &consent_form,
+        consent_and_get_code(
+            &app,
             &access_token,
-        ))
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
         .await;
 
         let user_id: Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
@@ -1207,60 +1286,12 @@ mod audit_trail {
         let user = TestUser::new();
         let (user_at, _) = create_authenticated_user(&app, &user).await;
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
-        let (verifier, challenge) = pkce_pair();
 
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &user_at,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("missing code")
-            .to_string();
-
-        let token_body = form_body(&[
-            ("grant_type", "authorization_code"),
-            ("code", &code),
-            ("redirect_uri", &redirect_uri),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-            ("code_verifier", &verifier),
-        ]);
-        let oauth_at = app
-            .execute(form_request("/api/v1/oauth/token", &token_body))
-            .await
-            .json_value()["access_token"]
-            .as_str()
-            .expect("access_token")
-            .to_string();
+        let (oauth_at, _rt) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Introspect with client credentials in form body
-        let introspect_body = form_body(&[
-            ("token", &oauth_at),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let introspect_resp = app
-            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
-            .await;
-        assert_eq!(
-            introspect_resp.status,
-            StatusCode::OK,
-            "introspect must return 200. body={}",
-            introspect_resp.text()
-        );
-        let intro = introspect_resp.json_value();
+        let intro = introspect_with_creds(&app, &oauth_at, &client_id, &client_secret).await;
         assert_eq!(intro["active"], true);
         assert!(intro["sub"].is_string());
         assert_eq!(intro["client_id"], client_id);
@@ -1307,27 +1338,17 @@ mod audit_trail {
         let user = TestUser::new();
         let (user_at, _) = create_authenticated_user(&app, &user).await;
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+        // Use "profile email" scope (both are in the confidential client's grant).
         let (verifier, challenge) = pkce_pair();
-
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile email"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &user_at,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("missing code")
-            .to_string();
+        let code = consent_and_get_code(
+            &app,
+            &user_at,
+            &client_id,
+            &redirect_uri,
+            "profile email",
+            &challenge,
+        )
+        .await;
 
         let token_body = form_body(&[
             ("grant_type", "authorization_code"),
@@ -1347,21 +1368,7 @@ mod audit_trail {
             .to_string();
 
         // Introspect the refresh token
-        let introspect_body = form_body(&[
-            ("token", &oauth_rt),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
-            .await;
-        assert_eq!(
-            intro.status,
-            StatusCode::OK,
-            "introspect must return 200. body={}",
-            intro.text()
-        );
-        let body = intro.json_value();
+        let body = introspect_with_creds(&app, &oauth_rt, &client_id, &client_secret).await;
         assert_eq!(body["active"], true, "live refresh token must be active");
         assert_eq!(body["client_id"], client_id);
         assert!(body["sub"].is_string(), "sub must be present");
@@ -1382,66 +1389,17 @@ mod audit_trail {
         let user = TestUser::new();
         let (user_at, _) = create_authenticated_user(&app, &user).await;
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
-        let (verifier, challenge) = pkce_pair();
 
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &user_at,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("code")
-            .to_string();
-
-        let token_body = form_body(&[
-            ("grant_type", "authorization_code"),
-            ("code", &code),
-            ("redirect_uri", &redirect_uri),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-            ("code_verifier", &verifier),
-        ]);
-        let oauth_at = app
-            .execute(form_request("/api/v1/oauth/token", &token_body))
-            .await
-            .json_value()["access_token"]
-            .as_str()
-            .expect("access_token")
-            .to_string();
+        let (oauth_at, _rt) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Revoke the access token (RFC 7009, client-authenticated)
-        let revoke_body = form_body(&[
-            ("token", &oauth_at),
-            ("token_type_hint", "access_token"),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let revoke_resp = app
-            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
-            .await;
-        assert_eq!(revoke_resp.status, StatusCode::OK);
+        let status =
+            revoke_rfc7009(&app, &oauth_at, "access_token", &client_id, &client_secret).await;
+        assert_eq!(status, StatusCode::OK);
 
         // Introspect — must be inactive
-        let introspect_body = form_body(&[
-            ("token", &oauth_at),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
-            .await
-            .json_value();
+        let intro = introspect_with_creds(&app, &oauth_at, &client_id, &client_secret).await;
         assert_eq!(
             intro["active"], false,
             "revoked token must return active=false, got {}",
@@ -1458,67 +1416,17 @@ mod audit_trail {
         let user = TestUser::new();
         let (user_at, _) = create_authenticated_user(&app, &user).await;
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
-        let (verifier, challenge) = pkce_pair();
 
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &user_at,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("missing code")
-            .to_string();
-
-        let token_body = form_body(&[
-            ("grant_type", "authorization_code"),
-            ("code", &code),
-            ("redirect_uri", &redirect_uri),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-            ("code_verifier", &verifier),
-        ]);
-        let tokens = app
-            .execute(form_request("/api/v1/oauth/token", &token_body))
-            .await
-            .json_value();
-        let oauth_rt = tokens["refresh_token"]
-            .as_str()
-            .expect("refresh_token")
-            .to_string();
+        let (_at, oauth_rt) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Revoke the refresh token via RFC 7009 (client-authenticated).
-        let revoke_body = form_body(&[
-            ("token", &oauth_rt),
-            ("token_type_hint", "refresh_token"),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let revoke_resp = app
-            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
-            .await;
-        assert_eq!(revoke_resp.status, StatusCode::OK);
+        let status =
+            revoke_rfc7009(&app, &oauth_rt, "refresh_token", &client_id, &client_secret).await;
+        assert_eq!(status, StatusCode::OK);
 
         // Introspect — must report active=false.
-        let introspect_body = form_body(&[
-            ("token", &oauth_rt),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
-            .await
-            .json_value();
+        let intro = introspect_with_creds(&app, &oauth_rt, &client_id, &client_secret).await;
         assert_eq!(
             intro["active"], false,
             "revoked refresh token must return active=false, got {}",
@@ -1720,59 +1628,6 @@ mod provider_security {
             .expect("deactivate client");
     }
 
-    /// Run the full authorization flow and return (oauth_access_token, oauth_refresh_token).
-    async fn auth_flow_confidential(
-        app: &TestApp,
-        user_at: &str,
-        client_id: &str,
-        client_secret: &str,
-        redirect_uri: &str,
-    ) -> (String, String) {
-        let (verifier, challenge) = pkce_pair();
-        let consent_form = form_body(&[
-            ("client_id", client_id),
-            ("redirect_uri", redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                user_at,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("missing code")
-            .to_string();
-
-        let token_body = form_body(&[
-            ("grant_type", "authorization_code"),
-            ("code", &code),
-            ("redirect_uri", redirect_uri),
-            ("client_id", client_id),
-            ("client_secret", client_secret),
-            ("code_verifier", &verifier),
-        ]);
-        let tokens = app
-            .execute(form_request("/api/v1/oauth/token", &token_body))
-            .await
-            .json_value();
-
-        let at = tokens["access_token"]
-            .as_str()
-            .expect("access_token missing")
-            .to_string();
-        let rt = tokens["refresh_token"]
-            .as_str()
-            .expect("refresh_token missing")
-            .to_string();
-        (at, rt)
-    }
-
     // ── A. PKCE S256 enforcement ─────────────────────────────────────────────
 
     /// PKCE `plain` method stored during authorize must be rejected at the token
@@ -1852,25 +1707,15 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
         let (_verifier, challenge) = pkce_pair();
 
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &access_token,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("code missing")
-            .to_string();
+        let code = consent_and_get_code(
+            &app,
+            &access_token,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
 
         // Omit code_verifier entirely
         let token_form = form_body(&[
@@ -1894,6 +1739,145 @@ mod provider_security {
         assert_eq!(err["error"], "invalid_grant");
     }
 
+    /// Defense-in-depth regression (issue #823 / superseded PR #908, landed in
+    /// #1025): PKCE is enforced at the *authorize* stage, but the token endpoint
+    /// must independently refuse to exchange any stored authorization code that
+    /// has **no** `code_challenge` bound to it — see the comment in
+    /// `OAuthService::exchange_code_for_tokens`. Such a challenge-less code can
+    /// only exist if it was minted before PKCE enforcement, or via a future bug
+    /// that bypasses `validate_authorize_request`. Because the live authorize
+    /// path now always requires a `code_challenge`, the only way to exercise
+    /// this second layer is to insert the row directly.
+    ///
+    /// Both attempts — with and without a `code_verifier` — must be rejected
+    /// with `invalid_grant`, and no tokens must be issued.
+    #[sqlx::test(migrator = "db::MIGRATOR")]
+    async fn test_challengeless_stored_code_not_exchangeable(pool: PgPool) {
+        let app = TestApp::new(pool.clone()).await;
+        let user = TestUser::new();
+        let (_access_token, _) = create_authenticated_user(&app, &user).await;
+        let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
+
+        // Look up the freshly-created user's id so the seeded code references a
+        // real principal (FK on oauth_authorization_codes.user_id).
+        let user_id: Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+            .bind(&user.email)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch seeded user id");
+
+        // Mint a raw authorization code and store its SHA-256 hash with a NULL
+        // code_challenge — i.e. a code with no PKCE binding. This mirrors how
+        // OAuthService hashes codes (`hash_token` = hex(sha256(code))).
+        let raw_code = format!("legacy-code-{}", Uuid::new_v4());
+        let code_hash = {
+            let mut hasher = Sha256::new();
+            hasher.update(raw_code.as_bytes());
+            hex::encode(hasher.finalize())
+        };
+
+        sqlx::query(
+            r#"
+            INSERT INTO oauth_authorization_codes
+                (user_id, client_id, code_hash, scopes, redirect_uri,
+                 code_challenge, code_challenge_method, expires_at)
+            VALUES
+                ($1, $2, $3, '["profile"]'::jsonb, $4,
+                 NULL, NULL, NOW() + INTERVAL '10 minutes')
+            "#,
+        )
+        .bind(user_id)
+        .bind(&client_id)
+        .bind(&code_hash)
+        .bind(&redirect_uri)
+        .execute(&pool)
+        .await
+        .expect("seed challenge-less authorization code");
+
+        // Attempt 1: exchange WITHOUT a code_verifier.
+        let token_form_no_verifier = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &raw_code),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+        ]);
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &token_form_no_verifier))
+            .await;
+        assert_eq!(
+            resp.status,
+            StatusCode::BAD_REQUEST,
+            "challenge-less code must not be exchangeable (no verifier). body={}",
+            resp.text()
+        );
+        assert_eq!(resp.json_value()["error"], "invalid_grant");
+
+        // The first exchange attempt atomically consumed the code, so a re-seed
+        // is needed to prove the second (with-verifier) path independently.
+        let raw_code2 = format!("legacy-code-{}", Uuid::new_v4());
+        let code_hash2 = {
+            let mut hasher = Sha256::new();
+            hasher.update(raw_code2.as_bytes());
+            hex::encode(hasher.finalize())
+        };
+        sqlx::query(
+            r#"
+            INSERT INTO oauth_authorization_codes
+                (user_id, client_id, code_hash, scopes, redirect_uri,
+                 code_challenge, code_challenge_method, expires_at)
+            VALUES
+                ($1, $2, $3, '["profile"]'::jsonb, $4,
+                 NULL, NULL, NOW() + INTERVAL '10 minutes')
+            "#,
+        )
+        .bind(user_id)
+        .bind(&client_id)
+        .bind(&code_hash2)
+        .bind(&redirect_uri)
+        .execute(&pool)
+        .await
+        .expect("re-seed challenge-less authorization code");
+
+        // Attempt 2: exchange WITH an arbitrary code_verifier. A challenge-less
+        // stored code must still be rejected — the verifier has nothing valid to
+        // match against, so the token endpoint refuses it rather than treating
+        // "no challenge" as "PKCE not required".
+        let token_form_with_verifier = form_body(&[
+            ("grant_type", "authorization_code"),
+            ("code", &raw_code2),
+            ("redirect_uri", &redirect_uri),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+            ("code_verifier", "any-verifier-the-attacker-supplies"),
+        ]);
+        let resp2 = app
+            .execute(form_request(
+                "/api/v1/oauth/token",
+                &token_form_with_verifier,
+            ))
+            .await;
+        assert_eq!(
+            resp2.status,
+            StatusCode::BAD_REQUEST,
+            "challenge-less code must not be exchangeable (with verifier). body={}",
+            resp2.text()
+        );
+        assert_eq!(resp2.json_value()["error"], "invalid_grant");
+
+        // And no access tokens may have been minted for this user as a result.
+        let issued: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM oauth_access_tokens WHERE user_id = $1")
+                .bind(user_id)
+                .fetch_one(&pool)
+                .await
+                .expect("count access tokens");
+        assert_eq!(
+            issued, 0,
+            "no access token must be issued from a challenge-less authorization code"
+        );
+    }
+
     // ── B. Revoked-token introspection ───────────────────────────────────────
 
     /// Introspecting a revoked access token must return active=false.
@@ -1909,35 +1893,15 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Revoke the access token via RFC 7009 (client-authenticated)
-        let revoke_body = form_body(&[
-            ("token", &oauth_at),
-            ("token_type_hint", "access_token"),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let revoke_resp = app
-            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
-            .await;
-        assert_eq!(
-            revoke_resp.status,
-            StatusCode::OK,
-            "revoke must return 200. body={}",
-            revoke_resp.text()
-        );
+        let revoke_status =
+            revoke_rfc7009(&app, &oauth_at, "access_token", &client_id, &client_secret).await;
+        assert_eq!(revoke_status, StatusCode::OK, "revoke must return 200");
 
         // Introspect the now-revoked token
-        let introspect_body = form_body(&[
-            ("token", &oauth_at),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
-            .await
-            .json_value();
+        let intro = introspect_with_creds(&app, &oauth_at, &client_id, &client_secret).await;
         assert_eq!(
             intro["active"], false,
             "revoked access token must introspect as active=false, got {}",
@@ -1958,30 +1922,15 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (_at, rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Revoke the refresh token via RFC 7009 (client-authenticated)
-        let revoke_body = form_body(&[
-            ("token", &rt),
-            ("token_type_hint", "refresh_token"),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let revoke_resp = app
-            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
-            .await;
-        assert_eq!(revoke_resp.status, StatusCode::OK);
+        let revoke_status =
+            revoke_rfc7009(&app, &rt, "refresh_token", &client_id, &client_secret).await;
+        assert_eq!(revoke_status, StatusCode::OK);
 
         // Introspect the now-revoked refresh token
-        let introspect_body = form_body(&[
-            ("token", &rt),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
-            .await
-            .json_value();
+        let intro = introspect_with_creds(&app, &rt, &client_id, &client_secret).await;
         assert_eq!(
             intro["active"], false,
             "revoked refresh token must introspect as active=false, got {}",
@@ -1999,7 +1948,7 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Introspect with no credentials — only the token field
         let body_no_creds = form_body(&[("token", &oauth_at)]);
@@ -2030,7 +1979,7 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Build Basic auth header: base64(client_id:client_secret) using STANDARD engine
         let credentials = format!("{}:{}", client_id, client_secret);
@@ -2079,7 +2028,7 @@ mod provider_security {
 
         // Initial token issuance
         let (_at1, rt1) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Rotate rt1 → rt2
         let rotate_body = form_body(&[
@@ -2158,32 +2107,17 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_staff_only_client(&pool).await;
         let (verifier, challenge) = pkce_pair();
 
-        // Authorize
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let consent_resp = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &user_at,
-            ))
-            .await;
-        assert_eq!(
-            consent_resp.status,
-            StatusCode::OK,
-            "staff user on staff-only client must be able to authorize. body={}",
-            consent_resp.text()
-        );
-        let code = consent_resp.json_value()["code"]
-            .as_str()
-            .expect("code")
-            .to_string();
+        // Authorize — consent_and_get_code panics if code is absent, which
+        // serves as an implicit 200-and-code assertion.
+        let code = consent_and_get_code(
+            &app,
+            &user_at,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
 
         // Token exchange must succeed
         let token_form = form_body(&[
@@ -2249,31 +2183,15 @@ mod provider_security {
         let (verifier, challenge) = pkce_pair();
 
         // Authorize — principal_kind is not checked at the consent stage.
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let consent_resp = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &public_at,
-            ))
-            .await;
-        assert_eq!(
-            consent_resp.status,
-            StatusCode::OK,
-            "authorize must succeed at consent stage (principal_kind checked at token time). body={}",
-            consent_resp.text()
-        );
-        let code = consent_resp.json_value()["code"]
-            .as_str()
-            .expect("code")
-            .to_string();
+        let code = consent_and_get_code(
+            &app,
+            &public_at,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
 
         // Token exchange must fail with 403: principal_kind='public' is not in
         // allowed_principal_kinds=['staff'] for this client.
@@ -2322,7 +2240,7 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (_at, rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Tighten policy: client now only allows 'public'. The staff user's
         // kind ('staff') is no longer in the allowed set, but they hold a
@@ -2371,25 +2289,15 @@ mod provider_security {
         let (verifier, challenge) = pkce_pair();
 
         // Authorize with the registered redirect URI
-        let consent_form = form_body(&[
-            ("client_id", &client_id),
-            ("redirect_uri", &redirect_uri),
-            ("scope", "profile"),
-            ("code_challenge", &challenge),
-            ("code_challenge_method", "S256"),
-            ("consent", "approve"),
-        ]);
-        let code = app
-            .execute(form_request_with_auth(
-                "/api/v1/oauth/authorize",
-                &consent_form,
-                &access_token,
-            ))
-            .await
-            .json_value()["code"]
-            .as_str()
-            .expect("code")
-            .to_string();
+        let code = consent_and_get_code(
+            &app,
+            &access_token,
+            &client_id,
+            &redirect_uri,
+            "profile",
+            &challenge,
+        )
+        .await;
 
         // Token exchange with a DIFFERENT redirect URI
         let wrong_uri = "https://attacker.example.com/steal";
@@ -2431,7 +2339,7 @@ mod provider_security {
 
         // Issue initial tokens while client is active
         let (_at, rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Now deactivate the client (simulates admin revocation via /admin/oauth/clients/{id})
         deactivate_client(&pool, &client_id).await;
@@ -2480,7 +2388,7 @@ mod provider_security {
 
         // Issue a token while the client is active
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Deactivate the client
         deactivate_client(&pool, &client_id).await;
@@ -2523,7 +2431,7 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Revoke WITHOUT any client credentials.
         let revoke_body = form_body(&[("token", &oauth_at), ("token_type_hint", "access_token")]);
@@ -2539,15 +2447,7 @@ mod provider_security {
 
         // The token must still be active — the unauthenticated call must be a
         // no-op, not a successful revocation.
-        let introspect_body = form_body(&[
-            ("token", &oauth_at),
-            ("client_id", &client_id),
-            ("client_secret", &client_secret),
-        ]);
-        let intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
-            .await
-            .json_value();
+        let intro = introspect_with_creds(&app, &oauth_at, &client_id, &client_secret).await;
         assert_eq!(
             intro["active"], true,
             "token must remain active after an unauthenticated revoke attempt, got {}",
@@ -2568,39 +2468,29 @@ mod provider_security {
         // Victim client issues a token.
         let (victim_id, victim_secret, victim_redirect) = seed_confidential_client(&pool).await;
         let (victim_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &victim_id, &victim_secret, &victim_redirect)
+            confidential_auth_flow(&app, &user_at, &victim_id, &victim_secret, &victim_redirect)
                 .await;
 
         // Attacker client authenticates with its OWN valid credentials and tries
         // to revoke the victim's token.
         let (attacker_id, attacker_secret, _attacker_redirect) =
             seed_confidential_client(&pool).await;
-        let revoke_body = form_body(&[
-            ("token", &victim_at),
-            ("token_type_hint", "access_token"),
-            ("client_id", &attacker_id),
-            ("client_secret", &attacker_secret),
-        ]);
-        let resp = app
-            .execute(form_request("/api/v1/oauth/revoke", &revoke_body))
-            .await;
+        let cross_revoke_status = revoke_rfc7009(
+            &app,
+            &victim_at,
+            "access_token",
+            &attacker_id,
+            &attacker_secret,
+        )
+        .await;
         assert_eq!(
-            resp.status,
+            cross_revoke_status,
             StatusCode::OK,
-            "RFC 7009 returns 200 even when the token is not the caller's. body={}",
-            resp.text()
+            "RFC 7009 returns 200 even when the token is not the caller's."
         );
 
         // Victim token must still be active — the cross-client revoke is a no-op.
-        let introspect_body = form_body(&[
-            ("token", &victim_at),
-            ("client_id", &victim_id),
-            ("client_secret", &victim_secret),
-        ]);
-        let intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &introspect_body))
-            .await
-            .json_value();
+        let intro = introspect_with_creds(&app, &victim_at, &victim_id, &victim_secret).await;
         assert_eq!(
             intro["active"], true,
             "another client must not be able to revoke this token, got {}",
@@ -2621,18 +2511,10 @@ mod provider_security {
         // Owner client issues a token.
         let (owner_id, owner_secret, owner_redirect) = seed_confidential_client(&pool).await;
         let (owner_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &owner_id, &owner_secret, &owner_redirect).await;
+            confidential_auth_flow(&app, &user_at, &owner_id, &owner_secret, &owner_redirect).await;
 
         // Sanity: the owner sees its own token as active.
-        let owner_introspect = form_body(&[
-            ("token", &owner_at),
-            ("client_id", &owner_id),
-            ("client_secret", &owner_secret),
-        ]);
-        let owner_intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &owner_introspect))
-            .await
-            .json_value();
+        let owner_intro = introspect_with_creds(&app, &owner_at, &owner_id, &owner_secret).await;
         assert_eq!(
             owner_intro["active"], true,
             "owner must see its own token active, got {}",
@@ -2641,15 +2523,7 @@ mod provider_security {
 
         // A different (validly authenticated) client introspects the same token.
         let (other_id, other_secret, _other_redirect) = seed_confidential_client(&pool).await;
-        let other_introspect = form_body(&[
-            ("token", &owner_at),
-            ("client_id", &other_id),
-            ("client_secret", &other_secret),
-        ]);
-        let other_intro = app
-            .execute(form_request("/api/v1/oauth/introspect", &other_introspect))
-            .await
-            .json_value();
+        let other_intro = introspect_with_creds(&app, &owner_at, &other_id, &other_secret).await;
         assert_eq!(
             other_intro["active"], false,
             "a token belonging to another client must introspect as inactive, got {}",

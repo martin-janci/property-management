@@ -3,6 +3,7 @@
     "allListings": "Összes hirdetés",
     "branding": "Arculat",
     "dashboard": "Ügynökség irányítópult",
+    "inviteError": "Hiba a meghívó küldésekor. Kérjük, próbálja újra.",
     "inviteRealtor": "Ügynök meghívása",
     "manageRealtors": "Ügynökök kezelése",
     "performanceOverview": "Teljesítmény áttekintés",
@@ -46,6 +47,10 @@
     "save": "Mentés",
     "search": "Keresés",
     "success": "Siker"
+  },
+  "comparison": {
+    "loadError": "A megosztott összehasonlítás betöltése sikertelen. Egyes ingatlanok már nem érhetők el.",
+    "loading": "Megosztott összehasonlítás betöltése..."
   },
   "contact": {
     "askQuestion": "Kérdést feltenni",

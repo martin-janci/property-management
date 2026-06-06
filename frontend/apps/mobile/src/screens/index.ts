@@ -1,6 +1,6 @@
 // Auth screens (UC-14)
 
-export type { Announcement, AnnouncementAttachment, AnnouncementCategory } from './announcements';
+export type { Announcement, AnnouncementAttachment } from './announcements';
 export { AnnouncementDetailScreen, AnnouncementsScreen } from './announcements';
 export {
   AuthFlow,

@@ -107,20 +107,17 @@ impl RegistryRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        let owner_name: Option<String> = sqlx::query_scalar(
-            "SELECT COALESCE(first_name || ' ' || last_name, email) FROM users WHERE id = $1",
-        )
-        .bind(registration.owner_id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let owner_name: Option<String> =
+            sqlx::query_scalar("SELECT COALESCE(name, email) FROM users WHERE id = $1")
+                .bind(registration.owner_id)
+                .fetch_optional(&self.pool)
+                .await?;
 
         let reviewed_by_name = if let Some(reviewed_by) = registration.reviewed_by {
-            sqlx::query_scalar::<_, String>(
-                "SELECT COALESCE(first_name || ' ' || last_name, email) FROM users WHERE id = $1",
-            )
-            .bind(reviewed_by)
-            .fetch_optional(&self.pool)
-            .await?
+            sqlx::query_scalar::<_, String>("SELECT COALESCE(name, email) FROM users WHERE id = $1")
+                .bind(reviewed_by)
+                .fetch_optional(&self.pool)
+                .await?
         } else {
             None
         };
@@ -168,7 +165,7 @@ impl RegistryRepository {
         let registrations = sqlx::query_as::<_, PetRegistrationSummary>(
             r#"
             SELECT pr.id, pr.unit_id, u.unit_number,
-                   pr.owner_id, COALESCE(usr.first_name || ' ' || usr.last_name, usr.email) as owner_name,
+                   pr.owner_id, COALESCE(usr.name, usr.email) as owner_name,
                    pr.pet_name, pr.pet_type, pr.breed, pr.pet_size, pr.status, pr.created_at
             FROM pet_registrations pr
             JOIN units u ON u.id = pr.unit_id
@@ -366,20 +363,17 @@ impl RegistryRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        let owner_name: Option<String> = sqlx::query_scalar(
-            "SELECT COALESCE(first_name || ' ' || last_name, email) FROM users WHERE id = $1",
-        )
-        .bind(registration.owner_id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let owner_name: Option<String> =
+            sqlx::query_scalar("SELECT COALESCE(name, email) FROM users WHERE id = $1")
+                .bind(registration.owner_id)
+                .fetch_optional(&self.pool)
+                .await?;
 
         let reviewed_by_name = if let Some(reviewed_by) = registration.reviewed_by {
-            sqlx::query_scalar::<_, String>(
-                "SELECT COALESCE(first_name || ' ' || last_name, email) FROM users WHERE id = $1",
-            )
-            .bind(reviewed_by)
-            .fetch_optional(&self.pool)
-            .await?
+            sqlx::query_scalar::<_, String>("SELECT COALESCE(name, email) FROM users WHERE id = $1")
+                .bind(reviewed_by)
+                .fetch_optional(&self.pool)
+                .await?
         } else {
             None
         };
@@ -437,7 +431,7 @@ impl RegistryRepository {
         let registrations = sqlx::query_as::<_, VehicleRegistrationSummary>(
             r#"
             SELECT vr.id, vr.unit_id, u.unit_number,
-                   vr.owner_id, COALESCE(usr.first_name || ' ' || usr.last_name, usr.email) as owner_name,
+                   vr.owner_id, COALESCE(usr.name, usr.email) as owner_name,
                    vr.vehicle_type, vr.make, vr.model, vr.license_plate, vr.status,
                    ps.spot_number as parking_spot_number, vr.created_at
             FROM vehicle_registrations vr

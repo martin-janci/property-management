@@ -15,6 +15,7 @@ import { cleanup } from '@testing-library/react';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import * as matchers from 'vitest-axe/matchers';
+import en from '../../messages/en.json';
 
 // Import type declarations for vitest-axe matchers
 import './vitest-axe.d';
@@ -22,21 +23,14 @@ import './vitest-axe.d';
 // Extend Vitest expect with axe accessibility matchers
 expect.extend(matchers);
 
-// Initialize i18n for tests with English translations
+// Initialize i18n for tests with the full English translation bundle so
+// components that read real keys (auth pages, status indicators, …) render
+// their English copy under test instead of bare keys.
 i18n.use(initReactI18next).init({
   lng: 'en',
   fallbackLng: 'en',
   resources: {
-    en: {
-      translation: {
-        common: {
-          notifications: 'Notifications',
-          dismissNotification: 'Dismiss notification',
-          copied: 'Copied',
-          copyErrorMessage: 'Copy error message',
-        },
-      },
-    },
+    en: { translation: en },
   },
   interpolation: {
     escapeValue: false,

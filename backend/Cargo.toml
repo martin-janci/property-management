@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.22"
+version = "0.3.82"
 edition = "2021"
 rust-version = "1.75"
 license = "MIT"
@@ -55,6 +55,7 @@ argon2 = "=0.6.0-rc.8"
 # Utilities
 uuid = { version = "1.6", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.10"
 thiserror = "2.0"
 anyhow = "1.0"
 tracing = "0.1"
@@ -75,6 +76,9 @@ url = "2.5"
 
 # HTTP client (for integrations)
 reqwest = { version = "0.13", features = ["json", "form", "query"] }
+
+# XML parsing/generation (for OTA/Booking.com integration)
+quick-xml = { version = "0.37", features = ["serialize"] }
 
 # Observability (Epic 95)
 opentelemetry = { version = "0.32", features = ["metrics", "trace"] }

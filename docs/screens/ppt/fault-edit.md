@@ -9,7 +9,7 @@ implementations:
     component: EditFaultPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: complete
 endpoints: []
 relatedScreens:
   - id: ppt/fault-detail
@@ -33,3 +33,4 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
+- 2026-06-02 — agent (gap-sweep): wired EditFaultPageRoute to `useFault` (load initial data) + `useUpdateFault` + `useBuildings` in App.tsx (was initialData={{}} + no-op toast). apiStatus stub→complete.

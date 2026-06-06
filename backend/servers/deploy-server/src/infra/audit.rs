@@ -222,4 +222,60 @@ mod tests {
         assert!(derive_oidc_scopes("refs/heads/bugfix/x").is_empty());
         assert!(derive_oidc_scopes("refs/tags/not-a-version").is_empty());
     }
+
+    #[test]
+    fn empty_and_blank_refs_get_no_scope() {
+        // Edge: an empty or whitespace `git_ref` claim must never grant scopes.
+        assert!(derive_oidc_scopes("").is_empty());
+        assert!(derive_oidc_scopes(" ").is_empty());
+        assert!(derive_oidc_scopes("refs/heads/").is_empty());
+    }
+
+    #[test]
+    fn protected_branches_match_exactly_not_by_prefix() {
+        // `main`/`dev` use `==`, so refs that merely *start with* them
+        // (e.g. a `maintenance` branch or a `develop` branch) must NOT be
+        // granted `release:deploy`.
+        assert!(derive_oidc_scopes("refs/heads/maintenance").is_empty());
+        assert!(derive_oidc_scopes("refs/heads/develop").is_empty());
+        assert!(derive_oidc_scopes("refs/heads/main-backup").is_empty());
+        // A nested ref that ends in `/main` is also not the protected branch.
+        assert!(
+            derive_oidc_scopes("refs/heads/feature/main").is_empty()
+                || derive_oidc_scopes("refs/heads/feature/main")
+                    == vec!["worktree:open".to_string(), "worktree:close".to_string()]
+        );
+    }
+
+    #[test]
+    fn version_tag_prefix_boundary() {
+        // `refs/tags/v` is matched by `starts_with`, so the bare prefix and any
+        // `v`-prefixed tag qualify, while a tag without the `v` does not.
+        assert_eq!(
+            derive_oidc_scopes("refs/tags/v"),
+            vec!["release:register".to_string()]
+        );
+        assert_eq!(
+            derive_oidc_scopes("refs/tags/v10.20.30-rc.1"),
+            vec!["release:register".to_string()]
+        );
+        assert!(derive_oidc_scopes("refs/tags/1.2.3").is_empty());
+        assert!(derive_oidc_scopes("refs/tags/release-1").is_empty());
+    }
+
+    #[test]
+    fn nested_feature_branches_get_worktree_scopes() {
+        // The `refs/heads/feature/` prefix match grants worktree scopes for any
+        // depth of nesting, and even an empty suffix.
+        assert_eq!(
+            derive_oidc_scopes("refs/heads/feature/"),
+            vec!["worktree:open".to_string(), "worktree:close".to_string()]
+        );
+        assert_eq!(
+            derive_oidc_scopes("refs/heads/feature/epic-2/sub/task"),
+            vec!["worktree:open".to_string(), "worktree:close".to_string()]
+        );
+        // `featureish` (no slash) is not the feature namespace.
+        assert!(derive_oidc_scopes("refs/heads/featureX").is_empty());
+    }
 }

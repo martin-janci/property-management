@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FaultCategory, FaultPriority, FaultStatus, FaultSummary } from './FaultCard';
 import { FaultCard } from './FaultCard';
 
@@ -13,6 +14,10 @@ interface FaultListProps {
   page: number;
   pageSize: number;
   isLoading?: boolean;
+  /** True when the list query failed. Renders an inline error state. */
+  isError?: boolean;
+  /** Retry the failed list query. */
+  onRetry?: () => void;
   onPageChange: (page: number) => void;
   onStatusFilter: (status?: FaultStatus) => void;
   onPriorityFilter: (priority?: FaultPriority) => void;
@@ -64,6 +69,8 @@ export function FaultList({
   page,
   pageSize,
   isLoading,
+  isError,
+  onRetry,
   onPageChange,
   onStatusFilter,
   onPriorityFilter,
@@ -74,6 +81,7 @@ export function FaultList({
   onTriage,
   onCreate,
 }: FaultListProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const totalPages = Math.ceil(total / pageSize);
 
@@ -145,6 +153,27 @@ export function FaultList({
         </select>
       </div>
 
+      {/* Error */}
+      {!isLoading && isError && (
+        <div
+          role="alert"
+          className="text-center py-8 border border-red-200 bg-red-50 rounded-lg text-red-700"
+        >
+          <p className="font-medium">
+            {t('faults.failedToLoad', { defaultValue: 'Failed to load faults' })}
+          </p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-3 px-3 py-1 border border-red-300 rounded text-red-700 hover:bg-red-100"
+            >
+              {t('common.retry', { defaultValue: 'Retry' })}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Loading */}
       {isLoading && (
         <div className="flex justify-center py-8">
@@ -153,11 +182,11 @@ export function FaultList({
       )}
 
       {/* List */}
-      {!isLoading && faults.length === 0 && (
+      {!isLoading && !isError && faults.length === 0 && (
         <div className="text-center py-8 text-gray-500">No faults found.</div>
       )}
 
-      {!isLoading && faults.length > 0 && (
+      {!isLoading && !isError && faults.length > 0 && (
         <div className="space-y-3">
           {faults.map((fault) => (
             <FaultCard
