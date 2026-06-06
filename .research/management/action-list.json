@@ -516,11 +516,17 @@
       "action": "Reality mobile (KMP) home/search screen: debounced search, infinite scroll and FilterSheet wiring (story 82-3, AC-2/AC-4) on the Android target.",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
-      "source": "dispatcher-tier1-refill-coverage 2026-06-03",
+      "status": "done",
+      "source": "dispatcher-tier1-refill-coverage 2026-06-03 | gc1-reconcile 2026-06-06T00:20:04Z",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1125,
+        "merged_at": "2026-06-05T10:21:36Z",
+        "at": "2026-06-06T00:20:04Z"
+      }
     },
     {
       "id": "test-gap-82-2-reality-mobile-nav-state",
@@ -589,10 +595,16 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "dispatcher-tier1-refill-coverage 2026-06-04",
-      "depends_on": []
+      "source": "dispatcher-tier1-refill-coverage 2026-06-04 | gc1-reconcile 2026-06-06T00:20:04Z",
+      "depends_on": [],
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "merged_pr": 1121,
+        "merged_at": "2026-06-05T08:24:57Z",
+        "at": "2026-06-06T00:20:04Z"
+      }
     },
     {
       "id": "gap-82-5-reality-mobile-inquiries-account",
