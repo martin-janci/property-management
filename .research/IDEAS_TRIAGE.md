@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-06-05 03:15 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-06 03:06 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -8,12 +8,15 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
+| 1 | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting | #749, issue #749 closed | 2026-06-06 | done |
+| 1 | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | #755, issue #755 closed | 2026-06-06 | done |
+| 1 | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | #764, issue #764 closed | 2026-06-06 | done |
+| 1 | Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth | #765, issue #765 closed | 2026-06-06 | done |
 | 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061 | 2026-06-05 | open |
-| 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | #952 | 2026-06-03 | open |
-| 1 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) | #951 | 2026-06-03 | open |
-| 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | #950 | 2026-06-03 | open |
 | 1 | Dispatcher action-list.json corruption when MCP push falls back from blocked git push | #1014 | 2026-06-03 | open |
-| 1 | Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure) | #920, #944 | 2026-06-02 | done |
+| 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy | #950 | 2026-06-03 | open |
+| 1 | Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected | #951 | 2026-06-03 | open |
+| 1 | Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex | #952 | 2026-06-03 | open |
 | 1 | Issue #751 (no labels, OPEN): Current dev review: frontend/web/API-client findings | #751, #942 | 2026-06-02 | done |
 | 1 | Issue #752 (no labels, OPEN): Current dev review: mobile CI tooling findings | #752, #929 | 2026-06-02 | done |
 | 1 | Issue #756 (no labels, OPEN): Current dev review: Epic 10A OAuth Provider | #756, #934 | 2026-06-02 | done |
@@ -21,6 +24,7 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #763 (no labels, OPEN): Current dev review: Reality Server & Inquiries | #763, #935 | 2026-06-02 | done |
 | 1 | Issue #767 (no labels, OPEN): Current dev review: Mobile RN Property Management app | #767, #943 | 2026-06-02 | done |
 | 1 | Issue #768 (no labels, OPEN): Current dev review: Admin-web features (10B) | #768, #930 | 2026-06-02 | done |
+| 1 | Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure) | #920, #944 | 2026-06-02 | done |
 | 1 | Issue #750 (no labels, OPEN): Current dev review: backend/API/database findings | #750, PR #922 | 2026-06-01 | done |
 | 1 | Issue #753 (no labels, OPEN): Current dev review: Epic 6 Announcements & Communication | #753 | 2026-06-01 | done |
 | 1 | Issue #754 (no labels, OPEN): Current dev review: Epic 7A Basic Document Management | #754, PR #914 | 2026-06-01 | done |
@@ -45,15 +49,11 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 | 1 | Issue #848 (no labels, OPEN): Code review: Epics 78+134 — Vendor portal stubs & Predictive maintenance gaps (origin/dev) | #848, PR #913 | 2026-06-01 | done |
 | 1 | Issue #850 (no labels, OPEN): Code review: Epics 61+146+42 — Multi-currency, Data residency, Violations (origin/dev) | #850, PR #883 | 2026-06-01 | done |
 | 1 | Issue #851 (no labels, OPEN): Code review: Epics 15+105+69 — Listings/syndication & Developer API stubs (origin/dev) | #851, PR #904 | 2026-06-01 | done |
-| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 500) | #859, PR #871 | 2026-06-01 | done |
+| 1 | Issue #859 (no labels, OPEN): sqlx 0.9 breaks runtime decode of Postgres enum columns into Rust String (SELECT * reads 5 | #859, PR #871 | 2026-06-01 | done |
 | 1 | Issue #867 (no labels, OPEN): Tech debt: api-server main.rs duplicates lib.rs::create_router — routers diverge silently | #867, PR #870 | 2026-06-01 | done |
 | 1 | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev) | #836, PR #866 | 2026-05-31 | done |
 | 1 | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/dev) | #845, PR #862 | 2026-05-31 | done |
 | 1 | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings auth (origin/dev) | #849, PR #869 | 2026-05-31 | done |
-| 1 | Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting | #749 | 2026-05-30 | open |
-| 1 | Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences | #755 | 2026-05-30 | open |
-| 1 | Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening | #764 | 2026-05-30 | open |
-| 1 | Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth | #765 | 2026-05-30 | open |
 | 1 | Issue #769 (no labels, OPEN): Current dev review: Deploy server | #769 | 2026-05-30 | open |
 | 1 | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | #779 | 2026-05-30 | open |
 | 1 | Issue #789 (no labels, OPEN): Dev review rounds 6-10: scheduler, notifications, admin, orgs, buildings | #789 | 2026-05-30 | open |

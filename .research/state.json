@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-05T03:15:03Z",
-  "last_run_ms": 35000,
-  "last_pr_seen": 1106,
-  "last_issue_seen": 1097,
-  "last_commit_sha": "8c1a34d7be59dc42a8e6927b95b83167767c8641",
+  "last_run_iso": "2026-06-06T03:06:08Z",
+  "last_run_ms": 4321,
+  "last_pr_seen": 1140,
+  "last_issue_seen": 1137,
+  "last_commit_sha": "db457e50e4025c40da1037d0a13d57522d552ce6",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -163,9 +163,9 @@
       "recent_churn": 40
     },
     "backend/servers/api-server/src/routes/oauth.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-02",
-      "recent_churn": 161
+      "runs_seen": 2,
+      "last_seen": "2026-06-06",
+      "recent_churn": 186
     },
     "backend/servers/api-server/src/main.rs": {
       "runs_seen": 1,
@@ -211,6 +211,16 @@
       "runs_seen": 1,
       "last_seen": "2026-06-05",
       "recent_churn": 3
+    },
+    "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-06",
+      "recent_churn": 1293
+    },
+    "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-06",
+      "recent_churn": 1279
     }
   },
   "seen_signals": [
@@ -386,7 +396,13 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "code-review-mobile-native-kmp-search-stale-response-race",
+    "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+    "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+    "code-review-issue-1137-pkce-test-tautology",
+    "churn-hotspot-mobile-native-search-screen-kt",
+    "churn-hotspot-mobile-native-listing-detail-kt"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -397,11 +413,11 @@
     "ppt-web-core": "2026-06-05",
     "reality-web": "2026-05-28",
     "mobile-rn": "2026-06-03",
-    "mobile-native-kmp": "2026-05-26"
+    "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 22,
-    "vectors_created": 120,
+    "runs": 23,
+    "vectors_created": 126,
     "plans_created": 7,
     "quiet_days": 0,
     "auto_fix_count": 0
@@ -417,10 +433,10 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 1,
+    "next_index": 2,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
-      "pm-backend": "2026-05-24",
+      "pm-backend": "2026-06-06",
       "pm-frontend": "2026-05-25",
       "pm-qa": "2026-05-25",
       "pm-devops": "2026-05-27",
@@ -430,6 +446,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 8
+    "next_index": 9
   }
 }

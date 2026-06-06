@@ -116,32 +116,32 @@
       "plan": "plans/_archive/security-realtors-mark-inquiry-read-idor.md"
     },
     {
-      "id": "security-voice-device-idor",
-      "title": "IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping",
+      "id": "security-equipment-idor",
+      "title": "IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping",
       "vector": "security",
       "score": 3,
       "status": "done",
       "confidence": "high",
       "sources": [
-        "code-review api-core 2026-05-23",
-        "ai.rs:3002",
-        "PR #461"
+        "code-review api-core 2026-05-25",
+        "ai.rs:1133",
+        "equipment.rs:144"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/ai.rs:3002 — unlink_voice_device binds `_principal: RequestPrincipal` but ignores it, calling deactivate_voice_device(id) with only the path id",
-        "wired at ai.rs:2059 — DELETE /api/v1/ai/llm/voice/devices/{id} -> unlink_voice_device",
-        "backend/crates/db/src/repositories/llm_document.rs:1141 — `UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1` has no org/owner predicate",
-        "any authenticated principal can deactivate another tenant's voice device by guessing/enumerating the UUID (IDOR / cross-tenant write)",
-        "found by rotating expert review (Rust), full call path traced from the wired Axum route to the unscoped UPDATE",
-        "resolved: PR #461 merged 2026-05-24 — fix(security): IDOR on voice device delete/list-commands; unlink_voice_device now passes principal.user_id and llm_document.rs:1151 query is `WHERE id = $1 AND user_id = $2`. Equipment endpoints in the same file remain unscoped — tracked as security-equipment-idor"
+        "backend/servers/api-server/src/routes/ai.rs:1133 — delete_equipment binds `_principal: RequestPrincipal` but discards it, calling state.equipment_repo.delete(id) with only the path id",
+        "wired at ai.rs:1042 — DELETE /{id} -> delete_equipment (reachable production route under the AI equipment router)",
+        "backend/crates/db/src/repositories/equipment.rs:144 — `DELETE FROM equipment WHERE id = $1` has no org/owner/tenant predicate",
+        "update_equipment (equipment_repo.update(id, req); equipment.rs:104 `UPDATE equipment SET ... WHERE id`) and update_maintenance (equipment_repo.update_maintenance(id, req); equipment.rs:213) share the same discard pattern",
+        "contrast: update_workflow/delete_workflow in the same file scope via workflow_repo.update(id, org_id) / delete(id, org_id); acknowledge_alert passes principal.user_id — the equipment cluster is the lone unscoped group",
+        "any authenticated user can delete/modify another tenant's equipment by enumerating the UUID (cross-tenant write IDOR); same class as the voice-device IDOR fixed in PR #461, found by rotating expert review (Rust, api-core), full call path traced"
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai.rs",
-        "backend/crates/db/src/repositories/llm_document.rs"
+        "backend/crates/db/src/repositories/equipment.rs"
       ],
-      "created_at": "2026-05-23",
+      "created_at": "2026-05-25",
       "updated_at": "2026-05-25",
-      "plan": "plans/_archive/security-voice-device-idor.md"
+      "plan": "plans/_archive/security-equipment-idor.md"
     },
     {
       "id": "security-ssrf-outbound-url-validation",
@@ -174,243 +174,266 @@
       "plan": "plans/_archive/security-ssrf-outbound-url-validation.md"
     },
     {
-      "id": "security-equipment-idor",
-      "title": "IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping",
+      "id": "security-voice-device-idor",
+      "title": "IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping",
       "vector": "security",
       "score": 3,
       "status": "done",
       "confidence": "high",
       "sources": [
-        "code-review api-core 2026-05-25",
-        "ai.rs:1133",
-        "equipment.rs:144"
+        "code-review api-core 2026-05-23",
+        "ai.rs:3002",
+        "PR #461"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/ai.rs:1133 — delete_equipment binds `_principal: RequestPrincipal` but discards it, calling state.equipment_repo.delete(id) with only the path id",
-        "wired at ai.rs:1042 — DELETE /{id} -> delete_equipment (reachable production route under the AI equipment router)",
-        "backend/crates/db/src/repositories/equipment.rs:144 — `DELETE FROM equipment WHERE id = $1` has no org/owner/tenant predicate",
-        "update_equipment (equipment_repo.update(id, req); equipment.rs:104 `UPDATE equipment SET ... WHERE id`) and update_maintenance (equipment_repo.update_maintenance(id, req); equipment.rs:213) share the same discard pattern",
-        "contrast: update_workflow/delete_workflow in the same file scope via workflow_repo.update(id, org_id) / delete(id, org_id); acknowledge_alert passes principal.user_id — the equipment cluster is the lone unscoped group",
-        "any authenticated user can delete/modify another tenant's equipment by enumerating the UUID (cross-tenant write IDOR); same class as the voice-device IDOR fixed in PR #461, found by rotating expert review (Rust, api-core), full call path traced"
+        "backend/servers/api-server/src/routes/ai.rs:3002 — unlink_voice_device binds `_principal: RequestPrincipal` but ignores it, calling deactivate_voice_device(id) with only the path id",
+        "wired at ai.rs:2059 — DELETE /api/v1/ai/llm/voice/devices/{id} -> unlink_voice_device",
+        "backend/crates/db/src/repositories/llm_document.rs:1141 — `UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1` has no org/owner predicate",
+        "any authenticated principal can deactivate another tenant's voice device by guessing/enumerating the UUID (IDOR / cross-tenant write)",
+        "found by rotating expert review (Rust), full call path traced from the wired Axum route to the unscoped UPDATE",
+        "resolved: PR #461 merged 2026-05-24 — fix(security): IDOR on voice device delete/list-commands; unlink_voice_device now passes principal.user_id and llm_document.rs:1151 query is `WHERE id = $1 AND user_id = $2`. Equipment endpoints in the same file remain unscoped — tracked as security-equipment-idor"
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai.rs",
-        "backend/crates/db/src/repositories/equipment.rs"
+        "backend/crates/db/src/repositories/llm_document.rs"
       ],
-      "created_at": "2026-05-25",
+      "created_at": "2026-05-23",
       "updated_at": "2026-05-25",
-      "plan": "plans/_archive/security-equipment-idor.md"
+      "plan": "plans/_archive/security-voice-device-idor.md"
     },
     {
-      "id": "bug-webhook-airbnb-dup-sync-jobs",
-      "title": "Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
+      "id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+      "title": "DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform",
       "vector": "bug",
-      "score": 2,
-      "status": "done",
-      "confidence": "high",
-      "sources": [
-        "PR #538",
-        "webhook.rs:1028",
-        "PR #841",
-        "PR #1030"
-      ],
-      "evidence": [
-        "backend/servers/api-server/src/routes/integrations/webhook.rs:1028 — TODO acknowledges Airbnb delivers webhooks at-least-once; a rapid sequence of events for the same listing enqueues duplicate SYNC_EXTERNAL background jobs",
-        "no dedup today: the handler inserts a CreateBackgroundJob unconditionally; fix needs an idempotent worker-level upsert or a check for an already-queued SYNC_EXTERNAL job for (org_id, connection_id) before insert",
-        "[partial] PR #841 (closes #711) merged 2026-05-30 — adds airbnb_webhook_events dedup ledger (migration 00169) that suppresses Airbnb at-least-once retries by event_id at webhook.rs:1014-1052. Residual: the TODO at webhook.rs:1073 about distinct-event-rapid-succession SYNC_EXTERNAL dedup is still present; the duplicate-job concern for non-replay distinct events remains. Stays open until worker-level/job-level dedup lands.",
-        "resolved: PR #1030 merged 2026-06-03 — dedup Airbnb webhook redeliveries before SYNC_EXTERNAL enqueue"
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/integrations/webhook.rs"
-      ],
-      "created_at": "2026-05-26",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "bug-reality-web-realtor-invite-silent-error",
-      "title": "Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI",
-      "vector": "bug",
-      "confidence": "high",
-      "score": 2,
-      "status": "done",
-      "sources": [
-        "code-review reality-web 2026-05-28",
-        "rotating-expert-review",
-        "PR #1023"
-      ],
-      "evidence": [
-        "RealtorManagement.tsx:529-540 — InviteRealtorModal.handleSubmit awaits inviteRealtor.mutateAsync; on failure only console.error('Failed to invite realtor', error), never reads inviteRealtor.isError/.error nor setState an error message, so the modal stays open with the form intact and zero feedback (the useMutation at reality-api-client/src/agency/hooks.ts:231 exposes both); isPending drives the button but isError is never surfaced",
-        "resolved: PR #1023 merged 2026-06-03 — surface InviteRealtorModal error inline"
-      ],
-      "files": [
-        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
-      ],
-      "created_at": "2026-05-28",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "bug-mediation-page-no-error-state",
-      "title": "MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure",
-      "vector": "bug",
-      "confidence": "high",
-      "score": 2,
-      "status": "done",
-      "sources": [
-        "PR #555",
-        "code-review 2026-05-27",
-        "PR #1029"
-      ],
-      "evidence": [
-        "MediationWorkspacePage.tsx:313 destructures only {data,isLoading} from useDispute and guards only loading at :369; on 404/403/network failure the page falls through to render referenceNumber=disputeId, status \"unknown\", empty parties, and a dead resolve tab with no error message or retry (useDispute exposes isError/error but the page never consumes them)",
-        "resolved: PR #1029 merged 2026-06-03 — error state on mediation dispute fetch failure"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx"
-      ],
-      "created_at": "2026-05-27",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "dx-documentsbrowse-folder-preselect",
-      "title": "DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
-      "vector": "dx",
-      "confidence": "high",
-      "score": 2,
-      "status": "done",
-      "sources": [
-        "PR #623",
-        "PR #1031"
-      ],
-      "evidence": [
-        "frontend/apps/ppt-web/src/features/documents/components/DocumentsBrowse.tsx:511 — `currentFolderId={null} /* TODO: pre-select once DocumentSummary exposes folder_id */` hardwires null, so the move-folder dialog never pre-selects the document's current folder",
-        "blocked on the DocumentSummary API type exposing folder_id; minor UX gap on the new MoveFolderDialog surface",
-        "resolved: PR #1031 merged 2026-06-03 — pre-select current folder in MoveFolderDialog"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/features/documents/components/DocumentsBrowse.tsx"
-      ],
-      "created_at": "2026-05-27",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "bug-mobile-voting-unsafe-cast",
-      "title": "Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape",
-      "vector": "bug",
-      "confidence": "medium",
-      "score": 2,
-      "status": "done",
-      "sources": [
-        "code-review mobile-rn 2026-05-27",
-        "rotating-expert-review",
-        "PR #1028"
-      ],
-      "evidence": [
-        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:108 — `data as unknown as ApiVoteSummary[]` double-casts the typed useApiQuery<ApiVoteListResponse> result; if the backend returns any shape that is neither an array nor {votes:[...]}, the subsequent apiVotes.map(toUiVote) at :110 throws an unhandled render-time crash with no isError guard on that path",
-        "resolved: PR #1028 merged 2026-06-03 — guard VotingScreen against unsafe API response cast"
-      ],
-      "files": [
-        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
-      ],
-      "created_at": "2026-05-27",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-992-mobile-doc-detail",
-      "title": "Mobile document-detail wiring (PR #992) shipped without a regression test for the deep-link payload path",
-      "vector": "test-gap",
-      "confidence": "high",
-      "score": 2,
-      "status": "done",
-      "sources": [
-        "PR #1082",
-        "PR #992"
-      ],
-      "evidence": [
-        "fix(epic-7a): wire mobile document detail + notify document-share recipients (#973) — 4 files changed (backend/crates/common/src/notifications/mod.rs, backend/servers/api-server/src/routes/documents/shares.rs, frontend/apps/mobile/src/App.tsx, frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx), no *test* file in diff",
-        "resolved: PR #1082 merged 2026-06-05 — closes via PR title match"
-      ],
-      "files": [
-        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx",
-        "frontend/apps/mobile/src/App.tsx",
-        "backend/servers/api-server/src/routes/documents/shares.rs"
-      ],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-990-frontend-gap-sweep",
-      "title": "Frontend gap-sweep (PR #990, 34 files across Epics 1/6/7B/9/10B/11/15/17/18) shipped without a regression test",
-      "vector": "test-gap",
-      "confidence": "high",
-      "score": 2,
-      "status": "done",
-      "sources": [
-        "PR #1081",
-        "PR #990"
-      ],
-      "evidence": [
-        "fix(frontend): close frontend gap-sweep remainder (Epics 1/6/7B/9/10B/11/15/17/18) — 34 files changed across ppt-web, admin-web, reality-web, api-client, reality-api-client (ProfileEditPage, DocumentDetail, SessionsPage, PrivacySettingsPage, useMessaging, agency/[slug]/page etc.), no *test* file in diff",
-        "resolved: PR #1081 merged 2026-06-05 — closes via PR title match"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/features/auth/pages/ProfileEditPage.tsx",
-        "frontend/apps/ppt-web/src/features/documents/pages/DocumentDetail.tsx",
-        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx",
-        "frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx",
-        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts"
-      ],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
-      "title": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
-      "vector": "test-gap",
       "confidence": "high",
       "score": 2,
       "status": "open",
       "sources": [
-        "PR #959",
-        "issue #953"
+        "mobile-native-kmp segment review 2026-06-06"
       ],
       "evidence": [
-        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up"
+        "DeepLinkRouter.kt:103-114 queryParam returns substring after '=' with no percent-decoding",
+        "MainActivity.kt:84 uses android.net.Uri.getQueryParameter which DOES URL-decode — Android and shared/iOS paths produce different token strings for the same deep link",
+        "DeepLinkRouter.kt:85 'sso' branch passes raw encoded value into DeepLinkTarget.Sso(token); iOS attempts SSO validation with the wrong string"
       ],
       "files": [
-        "backend/servers/reality-server/src/routes/listings.rs"
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt",
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt"
       ],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "created_at": "2026-06-06",
+      "updated_at": "2026-06-06",
       "plan": null
     },
     {
-      "id": "test-gap-hotfix-no-test-pr-963-security-headers",
-      "title": "API + SPA security-headers middleware (PR #963) shipped without an assertion test for HSTS/nosniff/CSP",
-      "vector": "test-gap",
+      "id": "code-review-mobile-native-kmp-search-stale-response-race",
+      "title": "SearchScreen stale-response race — overlapping searches can clobber newer results",
+      "vector": "bug",
       "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp segment review 2026-06-06",
+        "PR #1125"
+      ],
+      "evidence": [
+        "SearchScreen.kt:111-142 — performSearch() launches a coroutine on rememberCoroutineScope() with no Job tracking or cancellation",
+        "SearchScreen.kt:144/150/205/214/242 — initial load, debounce, FilterSheet apply/reset, RoomsChipStrip onSelect all fire performSearch() with no overlap guard",
+        "onSuccess overwrites searchResults/totalResults/currentPage unconditionally; older slower response can clobber newer one (no request-token / sequence guard)"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
+      ],
+      "created_at": "2026-06-06",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "dx-push-fanout-blpop-drain",
+      "title": "PushFanoutWorker BLPOP queue-drain deferred — Redis path is a logging no-op",
+      "vector": "dx",
+      "score": 2,
+      "status": "done",
+      "confidence": "high",
+      "sources": [
+        "PR #515",
+        "push_fanout.rs:621",
+        "PR #1115"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:621 — TODO: BLPOP drain left for a follow-up PR; when Redis is present process_pending_jobs only logs a heartbeat and returns",
+        "real delivery currently happens synchronously via FcmHttpAdapter::send inside NotificationPipeline::dispatch; the dedicated Redis push_fanout_queue is never drained, so any jobs enqueued there are dropped",
+        "resolved 2026-06-06: PR #1115 — dx-push-fanout-blpop-drain: implement PushFanoutWorker BLPOP queue-drain"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-ai-rs-module-split",
+      "title": "ai.rs (3,134 LOC) — explicit module-split into routes/ai/{sessions,equipment,workflows,voice,llm,mod}.rs",
+      "vector": "refactor",
+      "score": 2,
+      "status": "done",
+      "confidence": "high",
+      "sources": [
+        "pm-tech-lead analysis 2026-05-25",
+        "security-voice-device-idor (PR #461)",
+        "security-equipment-idor",
+        "PR #1114"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai.rs — 3,134 lines; single-file route module covering AI chat sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices, and photo-enhancement surfaces",
+        "19 handlers bind `_principal: RequestPrincipal` and discard it — the IDOR pattern that produced the voice-device IDOR (PR #461) and the equipment IDOR cluster still in backlog",
+        "proposed split: routes/ai/sessions.rs, routes/ai/equipment.rs, routes/ai/workflows.rs, routes/ai/voice.rs, routes/ai/llm.rs, routes/ai/mod.rs — each file target <700 LOC",
+        "split enables per-surface scoping review; sibling pattern established by PR #456 (integrations/organizations/documents split)",
+        "CI lint check-discarded-principal.sh (backend/scripts/lints/) flags any _principal discards that survive the split",
+        "resolved 2026-06-06: PR #1114 — refactor-ai-rs-module-split: split routes/ai.rs into surface-scoped modules"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-announcements-rs-hot",
+      "title": "announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work)",
+      "vector": "refactor",
+      "score": 2,
+      "status": "done",
+      "confidence": "medium",
+      "sources": [
+        "git log origin/dev since 2026-05-24",
+        "PR #504",
+        "PR #505",
+        "PR #548",
+        "PR #1110"
+      ],
+      "evidence": [
+        "Top-3 code-churn source file this run: 2,722 lines (additions+deletions)",
+        "2,722-line route module; churned from the Epic 2B notification pipeline (#463) and the in-flight Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development, runs_seen=1",
+        "watch candidate: re-evaluate for a split if it persists as a hotspot",
+        "repeated-churn 2026-05-26: PR #504 (PATCH pin endpoint, +10) and PR #505 (comments RLS rework + test module, +142/-15) churned it again; runs_seen=2 — still a top-3 hotspot, reinforces the announcements module-split case",
+        "PR #548 touched announcements.rs again (transactional pin_with_cap_rls TOCTOU fix) on 2026-05-26",
+        "resolved 2026-06-06: PR #1110 — refactor-announcements-rs-hot: split announcements.rs into per-surface modules"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/announcements.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-announcements-rs-module-split",
+      "title": "announcements.rs (2,722 LOC) — explicit module-split into routes/announcements/{crud,targeting,delivery,reactions,mod}.rs",
+      "vector": "refactor",
+      "score": 2,
+      "status": "done",
+      "confidence": "high",
+      "sources": [
+        "pm-tech-lead analysis 2026-05-25",
+        "PR #1110"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/announcements.rs — 2,722 lines; single-file route module covering announcement CRUD, audience targeting, push/email delivery triggers, and resident reaction surfaces",
+        "churned in Epic 2B notification pipeline (PR #463) and Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development increasing merge-conflict and review risk",
+        "proposed split: routes/announcements/crud.rs, targeting.rs, delivery.rs, reactions.rs, mod.rs — each file target <700 LOC",
+        "split aligns ownership with frontend feature slices (ppt-web announcements feature); sibling pattern established by PR #456",
+        "CI lint check-discarded-principal.sh (backend/scripts/lints/) catches any _principal discards on announcement mutation handlers",
+        "resolved 2026-06-06: PR #1110 — refactor-announcements-rs-hot: split announcements.rs into per-surface modules"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/announcements.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-app-tsx-route-coupling",
+      "title": "Reduce App.tsx route-aggregator coupling (top churn hotspot, merge-conflict risk)",
+      "vector": "refactor",
+      "confidence": "medium",
       "score": 2,
       "status": "done",
       "sources": [
-        "PR #963",
-        "issue #954",
-        "PR #1021"
+        "PR #474",
+        "PR #475",
+        "PR #489",
+        "PR #511",
+        "PR #547",
+        "PR #549",
+        "PR #555",
+        "PR #1108"
       ],
       "evidence": [
-        "fix(api): add baseline security headers to API edge + SPA hosts (#954) — 6 files changed (backend/crates/api-core/src/middleware/mod.rs, backend/crates/api-core/src/middleware/security_headers.rs, backend/servers/api-server/src/main.rs, backend/servers/reality-server/src/main.rs, docker/nginx/admin-web.nginx.conf.template, docker/nginx/ppt-web.nginx.conf.template), no *test* file in diff; a new middleware (`security_headers`) shipped without a unit test asserting HSTS / nosniff / CSP presence on a handler response",
-        "resolved: PR #1021 merged 2026-06-03 — add regression tests for security_headers middleware (#963)"
+        "frontend/apps/ppt-web/src/App.tsx churned 367 lines across 3 PRs this run (#474 +289, #489 +72, #475 +6)",
+        "pm-scrum-master flagged triple-conflict rebase risk across #503/#500/80-3 wiring on the central router",
+        "repeated-churn 2026-05-26: PR #511 added +253/-65 (318 lines) wiring DisputeDetailPage + DisputeMediationRoute + pinned-band props through the central router; runs_seen=2 — App.tsx keeps absorbing per-feature route + data-mapping logic that belongs in route modules",
+        "PR #547 (report execution-history route) and PR #549 (useCallback route wrappers) both touched App.tsx again on 2026-05-26 — aggregator coupling persists",
+        "repeated-churn 2026-05-27: PR #555 (mediation workspace UI) replaced the DisputeMediationRoute stub with MediationWorkspacePage and added +122 lines to App.tsx; runs_seen=3 — aggregator keeps absorbing per-feature route + callback wiring",
+        "resolved 2026-06-06: PR #1108 — refactor-app-tsx-route-coupling: reduce App.tsx route-aggregator coupling"
       ],
       "files": [
-        "backend/crates/api-core/src/middleware/security_headers.rs"
+        "frontend/apps/ppt-web/src/App.tsx"
       ],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "created_at": "2026-05-25",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-platform-admin-rs-module-split",
+      "title": "platform_admin.rs (2,762 LOC) — explicit module-split into routes/platform_admin/{tenants,features,billing,audit,mod}.rs",
+      "vector": "refactor",
+      "score": 2,
+      "status": "done",
+      "confidence": "high",
+      "sources": [
+        "pm-tech-lead analysis 2026-05-25",
+        "PR #1109"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/platform_admin.rs — 2,762 lines; highest-privilege route module covering platform-level tenant management, feature-flag control, billing overrides, audit log, and OAuth-provider admin surfaces",
+        "highest-privilege surface in the system — large single file increases review blast radius; admin-core gate coverage cannot be scanned per-surface",
+        "proposed split: routes/platform_admin/tenants.rs, features.rs, billing.rs, audit.rs, mod.rs — each file target <700 LOC",
+        "split enables per-surface admin-gate coverage; sibling pattern established by PR #456",
+        "CI lint check-discarded-principal.sh (backend/scripts/lints/) catches any _principal discards introduced during or after the split",
+        "resolved 2026-06-06: PR #1109 — refactor-platform-admin-rs-module-split: split platform_admin.rs by concern"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1033-ppt",
+      "title": "Screen-map drift: PR #1033 wired error/retry into AnnouncementsPage+FaultsPage via App.tsx without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #1033",
+        "PR #1111"
+      ],
+      "evidence": [
+        "PR #1033 (gap-79-1-announcements-faults-api-wiring) modified frontend/apps/ppt-web/src/App.tsx (AnnouncementsPageRoute + FaultsPageRoute now feed isError/refetch from useAnnouncements/useFaults) without updating docs/screens/ppt/announcements.md or docs/screens/ppt/faults-list.md to reflect the new inline error/retry state — drift signal on ppt product",
+        "resolved 2026-06-06: PR #1111 — test-gap-screen-map-drift-pr-1033-ppt: sync screen-maps with PR #1033"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "docs/screens/ppt/announcements.md",
+        "docs/screens/ppt/faults-list.md"
+      ],
+      "created_at": "2026-06-04",
+      "updated_at": "2026-06-06",
       "plan": null
     },
     {
@@ -438,122 +461,58 @@
       "plan": null
     },
     {
-      "id": "bug-risky-churn-pr-963-api-main-rs",
-      "title": "Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test",
-      "vector": "bug",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
-      "sources": [
-        "PR #963"
-      ],
-      "evidence": [
-        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response"
-      ],
-      "files": [
-        "backend/servers/api-server/src/main.rs",
-        "backend/crates/api-core/src/middleware/security_headers.rs"
-      ],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-943-mobile-dev-review-tail",
-      "title": "Mobile RN dev-review tail (#943) shipped without test coverage",
-      "vector": "test-gap",
-      "confidence": "high",
+      "id": "dx-integration-marketplace-stubs",
+      "title": "Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation",
+      "vector": "dx",
       "score": 2,
       "status": "done",
       "sources": [
-        "PR #1080",
-        "PR #943",
-        "issue #767"
+        "PR #1105",
+        "PR #282",
+        "PR #328",
+        "commit 254f01d",
+        "commit c97781a"
       ],
       "evidence": [
-        "PR #943 fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, screens/announcements/AnnouncementsScreen.tsx, screens/documents/DocumentsScreen.tsx, screens/neighbors/NeighborsScreen.tsx) merged with no jest/RN Testing Library tests in diff. Second hotfix-no-test on the same mobile RN files in 14 days (cf. test-gap-hotfix-no-test-pr-918-mobile-dev-review).",
-        "resolved: PR #1080 merged 2026-06-05 — closes via PR title match"
+        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:234 — `TODO: Implement installation flow (Epic API-marketplace install)`",
+        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:238 — `TODO: Navigate to integration details route`",
+        "backend/servers/api-server/src/routes/integrations.rs — `TODO: Generate OAuth URL based on integration type`",
+        "backend/servers/api-server/src/routes/integrations.rs — `TODO: Full implementation needs building/unit context from TenantContext`",
+        "PR #328 explicitly downgraded the UI handlers from `console.log` placeholders to no-op TODOs but did not wire the real endpoints",
+        "[partial] 2026-05-23: the two integrations.rs OAuth TODO patterns are no longer present, but both IntegrationMarketplacePage.tsx TODOs (lines 234/238) remain — item stays open on the UI side",
+        "resolved: PR #1105 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
-        "frontend/apps/mobile/src/App.tsx",
-        "frontend/apps/mobile/src/hooks/usePushNotifications.ts",
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
-        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
-        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx"
+        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx",
+        "backend/servers/api-server/src/routes/integrations.rs"
       ],
-      "created_at": "2026-06-02",
+      "created_at": "2026-05-20",
       "updated_at": "2026-06-05",
       "plan": null
     },
     {
-      "id": "test-gap-hotfix-no-test-pr-939-deploy-server-scopes",
-      "title": "deploy-server OIDC scope mapping (#939) shipped without unit test for derive_oidc_scopes",
+      "id": "test-gap-booking-push-validation-untested",
+      "title": "Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test",
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
       "status": "done",
       "sources": [
-        "PR #1106",
-        "PR #939"
+        "PR #1068",
+        "PR #607",
+        "issue #572"
       ],
       "evidence": [
-        "PR #939 fix(deploy-server): grant refs/heads/dev the release:deploy scope — extracted derive_oidc_scopes() in backend/servers/deploy-server/src/infra/audit.rs and added a new branch for refs/heads/dev with no rustdoc-test or unit test exercising the mapping table. PR body itself flags: dev token now target-agnostic for release:deploy → can request target: prod; tightening tracked as follow-up.",
-        "Latent scope-escalation note from PR body: derive_oidc_scopes is target-agnostic for release:deploy; dev/main can call any target. Hardening tracked as follow-up.",
-        "resolved: PR #1106 merged 2026-06-05 — closes via PR title match"
+        "PR #607 (fix(api): booking push endpoints) added MAX_BATCH_SIZE=500 and available_count<0 guards to push_booking_availability and push_booking_rates in backend/servers/api-server/src/routes/integrations/install.rs (BATCH_TOO_LARGE / INVALID_AVAILABLE_COUNT 400s) with no test file in the diff",
+        "classic hotfix-no-test: input validation on two reachable Airbnb push endpoints shipped without a regression test that would 400 on >500 updates or a negative count",
+        "test plan: a backend integration test posting 501 updates -> 400 BATCH_TOO_LARGE and one update with available_count=-1 -> 400 INVALID_AVAILABLE_COUNT, mirroring backend/servers/api-server/tests/document_upload_tests.rs structure",
+        "resolved: PR #1068 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
-        "backend/servers/deploy-server/src/infra/audit.rs"
+        "backend/servers/api-server/src/routes/integrations/install.rs"
       ],
-      "created_at": "2026-06-02",
+      "created_at": "2026-05-27",
       "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "test-gap-router-set-parity-tests",
-      "title": "api-server main.rs vs lib.rs::create_router diverge silently (5 routes unreachable in prod, no test asserts parity)",
-      "vector": "test-gap",
-      "confidence": "high",
-      "score": 2,
-      "status": "done",
-      "sources": [
-        "PR #866",
-        "issue #867",
-        "issue #836",
-        "PR #870"
-      ],
-      "evidence": [
-        "PR #866 (closes #836) registered 5 routers (push-tokens, mfa/recovery-codes, pricing, property-valuations, data-residency) that were present in lib.rs::create_router (so TestApp / integration tests passed) but missing from backend/servers/api-server/src/main.rs (so unreachable in production binary)",
-        "PR #866 adds no test that asserts main.rs and lib.rs::create_router expose the same route set — the divergence will recur the next time a route is added on only one of the two sides",
-        "follow-up issue #867 (OPEN, tech-debt) filed by the PR author proposes either (a) main() builds from lib.rs::create_router(state) and layers production-only middleware on top, or (b) extract a shared fn app_router(state) -> Router, plus a test asserting parity",
-        "hotfix-no-test pattern: PR title is `fix(api-server)`, changed files include only main.rs with no *test* file in the diff",
-        "resolved: PR #870 (Tech debt #867: build api-server production router from a single route_table()) introduces api_server::route_table() as the single source of truth used by both lib.rs::create_router and main.rs, and adds backend/servers/api-server/tests/router_single_source_tests.rs — 3 DB-free guard tests (main_builds_from_route_table, main_does_not_hand_list_api_routes, route_table_contains_the_previously_diverged_routers) asserting the parity invariant. Closes #867."
-      ],
-      "files": [
-        "backend/servers/api-server/src/main.rs",
-        "backend/servers/api-server/src/lib.rs"
-      ],
-      "created_at": "2026-05-31",
-      "updated_at": "2026-06-01",
-      "plan": null
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-922-ppt",
-      "title": "Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update",
-      "vector": "test-gap",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
-      "sources": [
-        "PR #922"
-      ],
-      "evidence": [
-        "PR #922 (fix: address dev-review rounds 1-5 findings, #788) modified frontend/apps/ppt-web/src/App.tsx without a docs/screens/ppt/*.md update — drift signal on ppt product"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/App.tsx"
-      ],
-      "created_at": "2026-06-01",
-      "updated_at": "2026-06-01",
       "plan": null
     },
     {
@@ -650,30 +609,145 @@
       "plan": null
     },
     {
-      "id": "bug-report-schedule-update-no-sql",
-      "title": "ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column)",
-      "vector": "bug",
+      "id": "test-gap-hotfix-no-test-pr-939-deploy-server-scopes",
+      "title": "deploy-server OIDC scope mapping (#939) shipped without unit test for derive_oidc_scopes",
+      "vector": "test-gap",
       "confidence": "high",
       "score": 2,
       "status": "done",
       "sources": [
-        "PR #611",
-        "issue #616",
-        "PR #643",
-        "PR #815"
+        "PR #1106",
+        "PR #939"
       ],
       "evidence": [
-        "backend/crates/db/src/repositories/report_schedule.rs:299 — update_schedule carries a `TODO: UPDATE report_schedules SET cron_expression = COALESCE(...)` doc-comment describing the SQL it should run, but the body instead stores the cron string in `current.time` because the dedicated cron_expression column does not exist yet",
-        "ties to open issue #616 (migration number comment wrong; cron_expression column missing from schema; no sqlx prepare --check) — surfaced by post-merge review of PR #611",
-        "real fix is a SQLx migration adding report_schedules.cron_expression + rewriting update_schedule to the documented UPDATE; until then cron edits round-trip through the overloaded `time` field",
-        "2026-05-28: PR #643 (RBAC/cross-tenant fix) restructured update_schedule (now report_schedule.rs:479, org-scoped `WHERE id=$1 AND organization_id=$2`) and DELETED the TODO doc-comment, but the cron bug PERSISTS — line 504 still does `SET time = COALESCE($3, time)` with $3 bound to cron_expression (line 519); no dedicated cron_expression column exists. A grep-based evidence-gone check would now FALSE-POSITIVE (the TODO marker is gone) — do not auto-resolve; the real fix is still a SQLx migration adding report_schedules.cron_expression.",
-        "resolved: PR #815 merged 2026-05-30 — adds migration 00163_report_schedules_add_cron_expression.sql; update_schedule now does `SET cron_expression = COALESCE($3, cron_expression)` at report_schedule.rs:511 with the dedicated column. The overloaded `time` workaround is gone; closes #616."
+        "PR #939 fix(deploy-server): grant refs/heads/dev the release:deploy scope — extracted derive_oidc_scopes() in backend/servers/deploy-server/src/infra/audit.rs and added a new branch for refs/heads/dev with no rustdoc-test or unit test exercising the mapping table. PR body itself flags: dev token now target-agnostic for release:deploy → can request target: prod; tightening tracked as follow-up.",
+        "Latent scope-escalation note from PR body: derive_oidc_scopes is target-agnostic for release:deploy; dev/main can call any target. Hardening tracked as follow-up.",
+        "resolved: PR #1106 merged 2026-06-05 — closes via PR title match"
       ],
       "files": [
-        "backend/crates/db/src/repositories/report_schedule.rs"
+        "backend/servers/deploy-server/src/infra/audit.rs"
       ],
-      "created_at": "2026-05-27",
-      "updated_at": "2026-05-30",
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-943-mobile-dev-review-tail",
+      "title": "Mobile RN dev-review tail (#943) shipped without test coverage",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #1080",
+        "PR #943",
+        "issue #767"
+      ],
+      "evidence": [
+        "PR #943 fix(mobile): address dev-review findings (#767) — 5 files under frontend/apps/mobile/src/ (App.tsx, hooks/usePushNotifications.ts, screens/announcements/AnnouncementsScreen.tsx, screens/documents/DocumentsScreen.tsx, screens/neighbors/NeighborsScreen.tsx) merged with no jest/RN Testing Library tests in diff. Second hotfix-no-test on the same mobile RN files in 14 days (cf. test-gap-hotfix-no-test-pr-918-mobile-dev-review).",
+        "resolved: PR #1080 merged 2026-06-05 — closes via PR title match"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/App.tsx",
+        "frontend/apps/mobile/src/hooks/usePushNotifications.ts",
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx",
+        "frontend/apps/mobile/src/screens/neighbors/NeighborsScreen.tsx"
+      ],
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-990-frontend-gap-sweep",
+      "title": "Frontend gap-sweep (PR #990, 34 files across Epics 1/6/7B/9/10B/11/15/17/18) shipped without a regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #1081",
+        "PR #990"
+      ],
+      "evidence": [
+        "fix(frontend): close frontend gap-sweep remainder (Epics 1/6/7B/9/10B/11/15/17/18) — 34 files changed across ppt-web, admin-web, reality-web, api-client, reality-api-client (ProfileEditPage, DocumentDetail, SessionsPage, PrivacySettingsPage, useMessaging, agency/[slug]/page etc.), no *test* file in diff",
+        "resolved: PR #1081 merged 2026-06-05 — closes via PR title match"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/auth/pages/ProfileEditPage.tsx",
+        "frontend/apps/ppt-web/src/features/documents/pages/DocumentDetail.tsx",
+        "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx",
+        "frontend/apps/ppt-web/src/features/privacy/pages/PrivacySettingsPage.tsx",
+        "frontend/apps/ppt-web/src/features/messaging/hooks/useMessaging.ts"
+      ],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-992-mobile-doc-detail",
+      "title": "Mobile document-detail wiring (PR #992) shipped without a regression test for the deep-link payload path",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #1082",
+        "PR #992"
+      ],
+      "evidence": [
+        "fix(epic-7a): wire mobile document detail + notify document-share recipients (#973) — 4 files changed (backend/crates/common/src/notifications/mod.rs, backend/servers/api-server/src/routes/documents/shares.rs, frontend/apps/mobile/src/App.tsx, frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx), no *test* file in diff",
+        "resolved: PR #1082 merged 2026-06-05 — closes via PR title match"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentDetailScreen.tsx",
+        "frontend/apps/mobile/src/App.tsx",
+        "backend/servers/api-server/src/routes/documents/shares.rs"
+      ],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1085-reality",
+      "title": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1085"
+      ],
+      "evidence": [
+        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1100-ppt",
+      "title": "Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1100"
+      ],
+      "evidence": [
+        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
       "plan": null
     },
     {
@@ -697,85 +771,6 @@
         "docs/screens/ppt/"
       ],
       "created_at": "2026-05-30",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "refactor-app-tsx-route-coupling",
-      "title": "Reduce App.tsx route-aggregator coupling (top churn hotspot, merge-conflict risk)",
-      "vector": "refactor",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
-      "sources": [
-        "PR #474",
-        "PR #475",
-        "PR #489",
-        "PR #511",
-        "PR #547",
-        "PR #549",
-        "PR #555"
-      ],
-      "evidence": [
-        "frontend/apps/ppt-web/src/App.tsx churned 367 lines across 3 PRs this run (#474 +289, #489 +72, #475 +6)",
-        "pm-scrum-master flagged triple-conflict rebase risk across #503/#500/80-3 wiring on the central router",
-        "repeated-churn 2026-05-26: PR #511 added +253/-65 (318 lines) wiring DisputeDetailPage + DisputeMediationRoute + pinned-band props through the central router; runs_seen=2 — App.tsx keeps absorbing per-feature route + data-mapping logic that belongs in route modules",
-        "PR #547 (report execution-history route) and PR #549 (useCallback route wrappers) both touched App.tsx again on 2026-05-26 — aggregator coupling persists",
-        "repeated-churn 2026-05-27: PR #555 (mediation workspace UI) replaced the DisputeMediationRoute stub with MediationWorkspacePage and added +122 lines to App.tsx; runs_seen=3 — aggregator keeps absorbing per-feature route + callback wiring"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/App.tsx"
-      ],
-      "created_at": "2026-05-25",
-      "updated_at": "2026-05-27",
-      "plan": null
-    },
-    {
-      "id": "test-gap-screen-map-drift-ppt-report-history",
-      "title": "Screen-map drift: report execution-history route (PR #547) added without a ppt screen doc",
-      "vector": "test-gap",
-      "score": 2,
-      "status": "done",
-      "confidence": "medium",
-      "sources": [
-        "PR #547",
-        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
-        "PR #623"
-      ],
-      "evidence": [
-        "PR #547 added the report execution-history table to ScheduleDetailPage and wired it via frontend/apps/ppt-web/src/{App.tsx,routes/lazyRoutes.tsx} without touching any docs/screens/ppt/*.md",
-        "best-effort drift heuristic (route-basename match) — review candidate, may already be covered by an existing reports screen doc under a different slug",
-        "resolved: docs/screens/ppt/reports.md was updated this run alongside the report schedule editor (PR #623) + exec-history API (PR #611) — the reports screen doc now covers the execution-history surface; drift heuristic cleared"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/features/reports/pages/ScheduleDetailPage.tsx"
-      ],
-      "created_at": "2026-05-26",
-      "updated_at": "2026-05-27",
-      "plan": null
-    },
-    {
-      "id": "test-gap-booking-push-validation-untested",
-      "title": "Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test",
-      "vector": "test-gap",
-      "confidence": "high",
-      "score": 2,
-      "status": "done",
-      "sources": [
-        "PR #1068",
-        "PR #607",
-        "issue #572"
-      ],
-      "evidence": [
-        "PR #607 (fix(api): booking push endpoints) added MAX_BATCH_SIZE=500 and available_count<0 guards to push_booking_availability and push_booking_rates in backend/servers/api-server/src/routes/integrations/install.rs (BATCH_TOO_LARGE / INVALID_AVAILABLE_COUNT 400s) with no test file in the diff",
-        "classic hotfix-no-test: input validation on two reachable Airbnb push endpoints shipped without a regression test that would 400 on >500 updates or a negative count",
-        "test plan: a backend integration test posting 501 updates -> 400 BATCH_TOO_LARGE and one update with available_count=-1 -> 400 INVALID_AVAILABLE_COUNT, mirroring backend/servers/api-server/tests/document_upload_tests.rs structure",
-        "resolved: PR #1068 merged 2026-06-05 — closes via PR title match"
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/integrations/install.rs"
-      ],
-      "created_at": "2026-05-27",
       "updated_at": "2026-06-05",
       "plan": null
     },
@@ -812,30 +807,285 @@
       "plan": null
     },
     {
-      "id": "refactor-announcements-rs-hot",
-      "title": "announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work)",
-      "vector": "refactor",
+      "id": "bug-mediation-page-no-error-state",
+      "title": "MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure",
+      "vector": "bug",
+      "confidence": "high",
       "score": 2,
-      "status": "open",
-      "confidence": "medium",
+      "status": "done",
       "sources": [
-        "git log origin/dev since 2026-05-24",
-        "PR #504",
-        "PR #505",
-        "PR #548"
+        "PR #555",
+        "code-review 2026-05-27",
+        "PR #1029"
       ],
       "evidence": [
-        "Top-3 code-churn source file this run: 2,722 lines (additions+deletions)",
-        "2,722-line route module; churned from the Epic 2B notification pipeline (#463) and the in-flight Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development, runs_seen=1",
-        "watch candidate: re-evaluate for a split if it persists as a hotspot",
-        "repeated-churn 2026-05-26: PR #504 (PATCH pin endpoint, +10) and PR #505 (comments RLS rework + test module, +142/-15) churned it again; runs_seen=2 — still a top-3 hotspot, reinforces the announcements module-split case",
-        "PR #548 touched announcements.rs again (transactional pin_with_cap_rls TOCTOU fix) on 2026-05-26"
+        "MediationWorkspacePage.tsx:313 destructures only {data,isLoading} from useDispute and guards only loading at :369; on 404/403/network failure the page falls through to render referenceNumber=disputeId, status \"unknown\", empty parties, and a dead resolve tab with no error message or retry (useDispute exposes isError/error but the page never consumes them)",
+        "resolved: PR #1029 merged 2026-06-03 — error state on mediation dispute fetch failure"
       ],
       "files": [
-        "backend/servers/api-server/src/routes/announcements.rs"
+        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx"
       ],
-      "created_at": "2026-05-25",
-      "updated_at": "2026-05-26",
+      "created_at": "2026-05-27",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "bug-mobile-voting-unsafe-cast",
+      "title": "Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "code-review mobile-rn 2026-05-27",
+        "rotating-expert-review",
+        "PR #1028"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:108 — `data as unknown as ApiVoteSummary[]` double-casts the typed useApiQuery<ApiVoteListResponse> result; if the backend returns any shape that is neither an array nor {votes:[...]}, the subsequent apiVotes.map(toUiVote) at :110 throws an unhandled render-time crash with no isError guard on that path",
+        "resolved: PR #1028 merged 2026-06-03 — guard VotingScreen against unsafe API response cast"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "bug-reality-web-realtor-invite-silent-error",
+      "title": "Reality-web InviteRealtorModal swallows invite-mutation failure with no error UI",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "code-review reality-web 2026-05-28",
+        "rotating-expert-review",
+        "PR #1023"
+      ],
+      "evidence": [
+        "RealtorManagement.tsx:529-540 — InviteRealtorModal.handleSubmit awaits inviteRealtor.mutateAsync; on failure only console.error('Failed to invite realtor', error), never reads inviteRealtor.isError/.error nor setState an error message, so the modal stays open with the form intact and zero feedback (the useMutation at reality-api-client/src/agency/hooks.ts:231 exposes both); isPending drives the button but isError is never surfaced",
+        "resolved: PR #1023 merged 2026-06-03 — surface InviteRealtorModal error inline"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-05-28",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-963-api-main-rs",
+      "title": "Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #963"
+      ],
+      "evidence": [
+        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response"
+      ],
+      "files": [
+        "backend/servers/api-server/src/main.rs",
+        "backend/crates/api-core/src/middleware/security_headers.rs"
+      ],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "bug-webhook-airbnb-dup-sync-jobs",
+      "title": "Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
+      "vector": "bug",
+      "score": 2,
+      "status": "done",
+      "confidence": "high",
+      "sources": [
+        "PR #538",
+        "webhook.rs:1028",
+        "PR #841",
+        "PR #1030"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:1028 — TODO acknowledges Airbnb delivers webhooks at-least-once; a rapid sequence of events for the same listing enqueues duplicate SYNC_EXTERNAL background jobs",
+        "no dedup today: the handler inserts a CreateBackgroundJob unconditionally; fix needs an idempotent worker-level upsert or a check for an already-queued SYNC_EXTERNAL job for (org_id, connection_id) before insert",
+        "[partial] PR #841 (closes #711) merged 2026-05-30 — adds airbnb_webhook_events dedup ledger (migration 00169) that suppresses Airbnb at-least-once retries by event_id at webhook.rs:1014-1052. Residual: the TODO at webhook.rs:1073 about distinct-event-rapid-succession SYNC_EXTERNAL dedup is still present; the duplicate-job concern for non-replay distinct events remains. Stays open until worker-level/job-level dedup lands.",
+        "resolved: PR #1030 merged 2026-06-03 — dedup Airbnb webhook redeliveries before SYNC_EXTERNAL enqueue"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "dx-documentsbrowse-folder-preselect",
+      "title": "DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #623",
+        "PR #1031"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentsBrowse.tsx:511 — `currentFolderId={null} /* TODO: pre-select once DocumentSummary exposes folder_id */` hardwires null, so the move-folder dialog never pre-selects the document's current folder",
+        "blocked on the DocumentSummary API type exposing folder_id; minor UX gap on the new MoveFolderDialog surface",
+        "resolved: PR #1031 merged 2026-06-03 — pre-select current folder in MoveFolderDialog"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentsBrowse.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination",
+      "title": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #959",
+        "issue #953"
+      ],
+      "evidence": [
+        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/listings.rs"
+      ],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-963-security-headers",
+      "title": "API + SPA security-headers middleware (PR #963) shipped without an assertion test for HSTS/nosniff/CSP",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #963",
+        "issue #954",
+        "PR #1021"
+      ],
+      "evidence": [
+        "fix(api): add baseline security headers to API edge + SPA hosts (#954) — 6 files changed (backend/crates/api-core/src/middleware/mod.rs, backend/crates/api-core/src/middleware/security_headers.rs, backend/servers/api-server/src/main.rs, backend/servers/reality-server/src/main.rs, docker/nginx/admin-web.nginx.conf.template, docker/nginx/ppt-web.nginx.conf.template), no *test* file in diff; a new middleware (`security_headers`) shipped without a unit test asserting HSTS / nosniff / CSP presence on a handler response",
+        "resolved: PR #1021 merged 2026-06-03 — add regression tests for security_headers middleware (#963)"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/security_headers.rs"
+      ],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "test-gap-router-set-parity-tests",
+      "title": "api-server main.rs vs lib.rs::create_router diverge silently (5 routes unreachable in prod, no test asserts parity)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #866",
+        "issue #867",
+        "issue #836",
+        "PR #870"
+      ],
+      "evidence": [
+        "PR #866 (closes #836) registered 5 routers (push-tokens, mfa/recovery-codes, pricing, property-valuations, data-residency) that were present in lib.rs::create_router (so TestApp / integration tests passed) but missing from backend/servers/api-server/src/main.rs (so unreachable in production binary)",
+        "PR #866 adds no test that asserts main.rs and lib.rs::create_router expose the same route set — the divergence will recur the next time a route is added on only one of the two sides",
+        "follow-up issue #867 (OPEN, tech-debt) filed by the PR author proposes either (a) main() builds from lib.rs::create_router(state) and layers production-only middleware on top, or (b) extract a shared fn app_router(state) -> Router, plus a test asserting parity",
+        "hotfix-no-test pattern: PR title is `fix(api-server)`, changed files include only main.rs with no *test* file in the diff",
+        "resolved: PR #870 (Tech debt #867: build api-server production router from a single route_table()) introduces api_server::route_table() as the single source of truth used by both lib.rs::create_router and main.rs, and adds backend/servers/api-server/tests/router_single_source_tests.rs — 3 DB-free guard tests (main_builds_from_route_table, main_does_not_hand_list_api_routes, route_table_contains_the_previously_diverged_routers) asserting the parity invariant. Closes #867."
+      ],
+      "files": [
+        "backend/servers/api-server/src/main.rs",
+        "backend/servers/api-server/src/lib.rs"
+      ],
+      "created_at": "2026-05-31",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-922-ppt",
+      "title": "Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #922"
+      ],
+      "evidence": [
+        "PR #922 (fix: address dev-review rounds 1-5 findings, #788) modified frontend/apps/ppt-web/src/App.tsx without a docs/screens/ppt/*.md update — drift signal on ppt product"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-06-01",
+      "updated_at": "2026-06-01",
+      "plan": null
+    },
+    {
+      "id": "bug-report-schedule-update-no-sql",
+      "title": "ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "done",
+      "sources": [
+        "PR #611",
+        "issue #616",
+        "PR #643",
+        "PR #815"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/report_schedule.rs:299 — update_schedule carries a `TODO: UPDATE report_schedules SET cron_expression = COALESCE(...)` doc-comment describing the SQL it should run, but the body instead stores the cron string in `current.time` because the dedicated cron_expression column does not exist yet",
+        "ties to open issue #616 (migration number comment wrong; cron_expression column missing from schema; no sqlx prepare --check) — surfaced by post-merge review of PR #611",
+        "real fix is a SQLx migration adding report_schedules.cron_expression + rewriting update_schedule to the documented UPDATE; until then cron edits round-trip through the overloaded `time` field",
+        "2026-05-28: PR #643 (RBAC/cross-tenant fix) restructured update_schedule (now report_schedule.rs:479, org-scoped `WHERE id=$1 AND organization_id=$2`) and DELETED the TODO doc-comment, but the cron bug PERSISTS — line 504 still does `SET time = COALESCE($3, time)` with $3 bound to cron_expression (line 519); no dedicated cron_expression column exists. A grep-based evidence-gone check would now FALSE-POSITIVE (the TODO marker is gone) — do not auto-resolve; the real fix is still a SQLx migration adding report_schedules.cron_expression.",
+        "resolved: PR #815 merged 2026-05-30 — adds migration 00163_report_schedules_add_cron_expression.sql; update_schedule now does `SET cron_expression = COALESCE($3, cron_expression)` at report_schedule.rs:511 with the dedicated column. The overloaded `time` workaround is gone; closes #616."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/report_schedule.rs"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-30",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-ppt-report-history",
+      "title": "Screen-map drift: report execution-history route (PR #547) added without a ppt screen doc",
+      "vector": "test-gap",
+      "score": 2,
+      "status": "done",
+      "confidence": "medium",
+      "sources": [
+        "PR #547",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+        "PR #623"
+      ],
+      "evidence": [
+        "PR #547 added the report execution-history table to ScheduleDetailPage and wired it via frontend/apps/ppt-web/src/{App.tsx,routes/lazyRoutes.tsx} without touching any docs/screens/ppt/*.md",
+        "best-effort drift heuristic (route-basename match) — review candidate, may already be covered by an existing reports screen doc under a different slug",
+        "resolved: docs/screens/ppt/reports.md was updated this run alongside the report schedule editor (PR #623) + exec-history API (PR #611) — the reports screen doc now covers the execution-history surface; drift heuristic cleared"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/pages/ScheduleDetailPage.tsx"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-27",
       "plan": null
     },
     {
@@ -868,25 +1118,28 @@
       "plan": null
     },
     {
-      "id": "dx-push-fanout-blpop-drain",
-      "title": "PushFanoutWorker BLPOP queue-drain deferred — Redis path is a logging no-op",
-      "vector": "dx",
+      "id": "refactor-documents-rs-hot",
+      "title": "documents.rs churn-hot — 10,659 lines over 14d",
+      "vector": "refactor",
       "score": 2,
-      "status": "open",
-      "confidence": "high",
+      "status": "done",
+      "confidence": "medium",
       "sources": [
-        "PR #515",
-        "push_fanout.rs:621"
+        "git log origin/main since 2026-05-06",
+        "git log origin/dev since 2026-05-20",
+        "PR #456"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/push_fanout.rs:621 — TODO: BLPOP drain left for a follow-up PR; when Redis is present process_pending_jobs only logs a heartbeat and returns",
-        "real delivery currently happens synchronously via FcmHttpAdapter::send inside NotificationPipeline::dispatch; the dedicated Redis push_fanout_queue is never drained, so any jobs enqueued there are dropped"
+        "Top-3 code-churn file in window: 10,659 lines",
+        "Currently 3,553 lines — paired with repositories/document.rs (also 7,977 lines churn)",
+        "repeated-churn 2026-05-23: 3,553 lines this run, runs_seen=2 — still a top-3 churn file",
+        "resolved: PR #456 merged 2026-05-24 — split into routes/documents/{core,folders,intelligence,shares,versions,mod}.rs; the single documents.rs file is deleted"
       ],
       "files": [
-        "backend/servers/api-server/src/services/push_fanout.rs"
+        "backend/servers/api-server/src/routes/documents.rs"
       ],
-      "created_at": "2026-05-26",
-      "updated_at": "2026-05-26",
+      "created_at": "2026-05-20",
+      "updated_at": "2026-05-25",
       "plan": null
     },
     {
@@ -936,31 +1189,6 @@
       ],
       "files": [
         "backend/servers/api-server/src/routes/organizations.rs"
-      ],
-      "created_at": "2026-05-20",
-      "updated_at": "2026-05-25",
-      "plan": null
-    },
-    {
-      "id": "refactor-documents-rs-hot",
-      "title": "documents.rs churn-hot — 10,659 lines over 14d",
-      "vector": "refactor",
-      "score": 2,
-      "status": "done",
-      "confidence": "medium",
-      "sources": [
-        "git log origin/main since 2026-05-06",
-        "git log origin/dev since 2026-05-20",
-        "PR #456"
-      ],
-      "evidence": [
-        "Top-3 code-churn file in window: 10,659 lines",
-        "Currently 3,553 lines — paired with repositories/document.rs (also 7,977 lines churn)",
-        "repeated-churn 2026-05-23: 3,553 lines this run, runs_seen=2 — still a top-3 churn file",
-        "resolved: PR #456 merged 2026-05-24 — split into routes/documents/{core,folders,intelligence,shares,versions,mod}.rs; the single documents.rs file is deleted"
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/documents.rs"
       ],
       "created_at": "2026-05-20",
       "updated_at": "2026-05-25",
@@ -1065,80 +1293,6 @@
       "resolution": "false-positive: PR #460 was an API-base host-inference bugfix inside an existing listing-detail page, not a screen change"
     },
     {
-      "id": "refactor-ai-rs-module-split",
-      "title": "ai.rs (3,134 LOC) — explicit module-split into routes/ai/{sessions,equipment,workflows,voice,llm,mod}.rs",
-      "vector": "refactor",
-      "score": 2,
-      "status": "open",
-      "confidence": "high",
-      "sources": [
-        "pm-tech-lead analysis 2026-05-25",
-        "security-voice-device-idor (PR #461)",
-        "security-equipment-idor"
-      ],
-      "evidence": [
-        "backend/servers/api-server/src/routes/ai.rs — 3,134 lines; single-file route module covering AI chat sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices, and photo-enhancement surfaces",
-        "19 handlers bind `_principal: RequestPrincipal` and discard it — the IDOR pattern that produced the voice-device IDOR (PR #461) and the equipment IDOR cluster still in backlog",
-        "proposed split: routes/ai/sessions.rs, routes/ai/equipment.rs, routes/ai/workflows.rs, routes/ai/voice.rs, routes/ai/llm.rs, routes/ai/mod.rs — each file target <700 LOC",
-        "split enables per-surface scoping review; sibling pattern established by PR #456 (integrations/organizations/documents split)",
-        "CI lint check-discarded-principal.sh (backend/scripts/lints/) flags any _principal discards that survive the split"
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/ai.rs"
-      ],
-      "created_at": "2026-05-25",
-      "updated_at": "2026-05-25",
-      "plan": null
-    },
-    {
-      "id": "refactor-platform-admin-rs-module-split",
-      "title": "platform_admin.rs (2,762 LOC) — explicit module-split into routes/platform_admin/{tenants,features,billing,audit,mod}.rs",
-      "vector": "refactor",
-      "score": 2,
-      "status": "open",
-      "confidence": "high",
-      "sources": [
-        "pm-tech-lead analysis 2026-05-25"
-      ],
-      "evidence": [
-        "backend/servers/api-server/src/routes/platform_admin.rs — 2,762 lines; highest-privilege route module covering platform-level tenant management, feature-flag control, billing overrides, audit log, and OAuth-provider admin surfaces",
-        "highest-privilege surface in the system — large single file increases review blast radius; admin-core gate coverage cannot be scanned per-surface",
-        "proposed split: routes/platform_admin/tenants.rs, features.rs, billing.rs, audit.rs, mod.rs — each file target <700 LOC",
-        "split enables per-surface admin-gate coverage; sibling pattern established by PR #456",
-        "CI lint check-discarded-principal.sh (backend/scripts/lints/) catches any _principal discards introduced during or after the split"
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/platform_admin.rs"
-      ],
-      "created_at": "2026-05-25",
-      "updated_at": "2026-05-25",
-      "plan": null
-    },
-    {
-      "id": "refactor-announcements-rs-module-split",
-      "title": "announcements.rs (2,722 LOC) — explicit module-split into routes/announcements/{crud,targeting,delivery,reactions,mod}.rs",
-      "vector": "refactor",
-      "score": 2,
-      "status": "open",
-      "confidence": "high",
-      "sources": [
-        "pm-tech-lead analysis 2026-05-25"
-      ],
-      "evidence": [
-        "backend/servers/api-server/src/routes/announcements.rs — 2,722 lines; single-file route module covering announcement CRUD, audience targeting, push/email delivery triggers, and resident reaction surfaces",
-        "churned in Epic 2B notification pipeline (PR #463) and Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development increasing merge-conflict and review risk",
-        "proposed split: routes/announcements/crud.rs, targeting.rs, delivery.rs, reactions.rs, mod.rs — each file target <700 LOC",
-        "split aligns ownership with frontend feature slices (ppt-web announcements feature); sibling pattern established by PR #456",
-        "CI lint check-discarded-principal.sh (backend/scripts/lints/) catches any _principal discards on announcement mutation handlers"
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/announcements.rs"
-      ],
-      "created_at": "2026-05-25",
-      "updated_at": "2026-05-25",
-      "plan": null
-    },
-    {
       "id": "refactor-dead-dup-handler-modules",
       "title": "Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline",
       "vector": "refactor",
@@ -1197,32 +1351,628 @@
       "plan": null
     },
     {
-      "id": "dx-integration-marketplace-stubs",
-      "title": "Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation",
-      "vector": "dx",
-      "score": 2,
-      "status": "done",
+      "id": "churn-hotspot-mobile-native-listing-detail-kt",
+      "title": "Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
       "sources": [
-        "PR #1105",
-        "PR #282",
-        "PR #328",
-        "commit 254f01d",
-        "commit c97781a"
+        "PR #1121"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:234 — `TODO: Implement installation flow (Epic API-marketplace install)`",
-        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:238 — `TODO: Navigate to integration details route`",
-        "backend/servers/api-server/src/routes/integrations.rs — `TODO: Generate OAuth URL based on integration type`",
-        "backend/servers/api-server/src/routes/integrations.rs — `TODO: Full implementation needs building/unit context from TenantContext`",
-        "PR #328 explicitly downgraded the UI handlers from `console.log` placeholders to no-op TODOs but did not wire the real endpoints",
-        "[partial] 2026-05-23: the two integrations.rs OAuth TODO patterns are no longer present, but both IntegrationMarketplacePage.tsx TODOs (lines 234/238) remain — item stays open on the UI side",
-        "resolved: PR #1105 merged 2026-06-05 — closes via PR title match"
+        "+1279 LOC churn 2026-06-05..2026-06-06 (PR #1121 gap-82-4-reality-mobile-listing-detail-favorites)",
+        "optimistic favorite-toggle wiring; rollback logic looks correct (captured prior + isFavoriteLoading gate)"
       ],
       "files": [
-        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx",
-        "backend/servers/api-server/src/routes/integrations.rs"
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
       ],
-      "created_at": "2026-05-20",
+      "created_at": "2026-06-06",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-mobile-native-search-screen-kt",
+      "title": "Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1125"
+      ],
+      "evidence": [
+        "+1293 LOC churn 2026-06-05..2026-06-06 (PR #1125 gap-82-3-reality-mobile-search-filters)",
+        "instability proxy; the stale-response race finding lives in the same file"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
+      ],
+      "created_at": "2026-06-06",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-issue-1137-pkce-test-tautology",
+      "title": "PKCE unit test became a tautology after services/oauth.rs DRY refactor (#1132)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#1137",
+        "PR #1132"
+      ],
+      "evidence": [
+        "tests/services/oauth.rs assert!(pkce_challenge(verifier) == pkce_challenge(verifier)) — both sides are the same pure fn → always true",
+        "plain-method rejection assertion removed (only mentioned in a comment)",
+        "issue #1137 (label: follow-up, from-merged-review) — proposed fix: pin RFC 7636 Appendix B known-answer vector"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "created_at": "2026-06-06",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+      "title": "MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "mobile-native-kmp segment review 2026-06-06"
+      ],
+      "evidence": [
+        "MainActivity.kt:76-109 handleDeepLink reimplements scheme/host dispatch with android.net.Uri",
+        "MainActivity.kt:113-121 a second Android-only DeepLinkTarget sealed class lacks Sso — adding a new shared target silently no-ops on Android until both classes are updated",
+        "DeepLinkRouter.kt:36 documents itself as the single source of truth; Android entry point ignores it"
+      ],
+      "files": [
+        "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
+        "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt"
+      ],
+      "created_at": "2026-06-06",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "dx-nginx-template-churn-2026-06-03",
+      "title": "docker/nginx admin-web + ppt-web templates churned twice this run (security headers + redirects)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #963",
+        "PR #964",
+        "PR #1107"
+      ],
+      "evidence": [
+        "docker/nginx/admin-web.nginx.conf.template +11/-0 across PR #963 (security headers) and PR #964 (relative redirects + drop X-Powered-By)",
+        "docker/nginx/ppt-web.nginx.conf.template +14/-0 across the same two PRs",
+        "no nginx config tests today; would benefit from a smoke test (curl staging admin + ppt SPA hosts and assert HSTS / nosniff / Cache-Control on the response)",
+        "resolved 2026-06-06: PR #1107 — dx-nginx-template-churn-2026-06-03: consolidate shared nginx config"
+      ],
+      "files": [
+        "docker/nginx/admin-web.nginx.conf.template",
+        "docker/nginx/ppt-web.nginx.conf.template"
+      ],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-ai-rs-hot",
+      "title": "ai.rs churn-hot — 3,142 lines this run; 3,142-line route monolith, candidate for module split",
+      "vector": "refactor",
+      "score": 1,
+      "status": "done",
+      "confidence": "medium",
+      "sources": [
+        "git log origin/dev since 2026-05-24",
+        "PR #1114"
+      ],
+      "evidence": [
+        "Top code-churn source file this run: 3,142 lines (additions+deletions)",
+        "3,142-line single-file route module covering AI sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices and photo enhancement — same monolith class as the integrations/organizations/documents files just split in PR #456",
+        "harbored the voice-device IDOR (fixed #461) and the equipment IDOR found this run — surface count makes cross-tenant-scoping bugs easy to miss; splitting by surface (sessions/equipment/workflows/voice/...) would shrink review blast radius",
+        "resolved 2026-06-06: PR #1114 — refactor-ai-rs-module-split: split routes/ai.rs (covers ai-rs-hot)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-auth-refresh-spec-churn-2026-06-04",
+      "title": "ppt-web e2e auth-refresh.spec.ts added (+252 lines, story 79-2 token-refresh coverage)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #1047",
+        "PR #1113"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/e2e/auth-refresh.spec.ts NEWLY added (+252 lines) via PR #1047 — Playwright integration coverage for the silent token-refresh path (4 scenarios). One-shot test addition, not instability; backlog row exists for hotspot tracking and will decay if no further churn.",
+        "resolved 2026-06-06: PR #1113 — refactor-auth-refresh-spec-churn-2026-06-04: de-flake & de-duplicate"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/e2e/auth-refresh.spec.ts"
+      ],
+      "created_at": "2026-06-04",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-esignature-webhook-idempotency-tests-churn-2026-06-04",
+      "title": "api-server esignature_webhook_idempotency_tests.rs added (+228 lines, terminal-state regression)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #1034",
+        "PR #1119"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs NEWLY added (+228 lines) via PR #1034 — HTTP regression coverage for the e-signature webhook idempotency guard (Completed/Declined/Expired/Cancelled). One-shot test addition, not instability.",
+        "resolved 2026-06-06: PR #1119 — refactor-esignature-webhook-idempotency-tests-churn-2026-06-04"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs"
+      ],
+      "created_at": "2026-06-04",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-evidenceuploader-test-tsx-churn-2026-06-04",
+      "title": "ppt-web EvidenceUploader.test.tsx added (+202 lines, dispute-filing AC-2 regression)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #1048",
+        "PR #1116"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx NEWLY added (+202 lines) via PR #1048 — accepted types, per-file type+size, MAX_FILES cap, remove + object-URL revoke, description editing, status indicators. One-shot test addition, not instability.",
+        "resolved 2026-06-06: PR #1116 — refactor-evidenceuploader-test-tsx-churn: de-duplicate and harden EvidenceUploader tests"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx"
+      ],
+      "created_at": "2026-06-04",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-main-rs-churn-2026-06-03",
+      "title": "api-server main.rs touched twice this run (gap-sweep + security headers) — minor churn marker",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #989",
+        "PR #963",
+        "PR #1120"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/main.rs touched in 2 commits this run (+10/-0 lines): PR #989 (gap-sweep backend) and PR #963 (security headers); top-3 raw churn after lockfile/version-bump exclusions",
+        "resolved 2026-06-06: PR #1120 — refactor-main-rs-churn-2026-06-03: extract router/middleware/CORS setup"
+      ],
+      "files": [
+        "backend/servers/api-server/src/main.rs"
+      ],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-mediation-duplicated-spinner",
+      "title": "Duplicated animate-spin spinner markup across mediation page + chat thread (no shared Spinner)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #555",
+        "code-review 2026-05-27",
+        "PR #1128"
+      ],
+      "evidence": [
+        "Identical role=status animate-spin spinner block duplicated at MediationWorkspacePage.tsx:91 and :375 and MediationChatThread.tsx — no shared Spinner component in ui-kit; should be extracted",
+        "resolved 2026-06-06: PR #1128 — refactor-mediation-duplicated-spinner: dedupe inline spinners in disputes feature"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-mediation-ref-number-full-uuid",
+      "title": "Mediation reference number uppercases full UUID (DSP-<uuid>) instead of a short code",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #555",
+        "code-review 2026-05-27",
+        "PR #1130"
+      ],
+      "evidence": [
+        "MediationWorkspacePage.tsx:382 sets referenceNumber = DSP-${dispute.id.toUpperCase()} — renders the full uppercased UUID as the human-facing reference (e.g. DSP-3F2A1B9C-...) rather than a short code",
+        "resolved 2026-06-06: PR #1130 — refactor-mediation-ref-number-full-uuid: short mediation reference code"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-mobile-app-tsx-churn-2026-06-03",
+      "title": "frontend/apps/mobile/src/App.tsx churned twice this run (universal links + doc-detail wiring)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #962",
+        "PR #992",
+        "PR #1131"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/App.tsx touched in 2 commits this run (+65/-1 lines): PR #962 (RN universal links + deep-link handler) and PR #992 (mobile document detail wiring); navigation/deep-link wiring is becoming the central seam — watch for further churn before considering a Navigator extraction",
+        "resolved 2026-06-06: PR #1131 — refactor-mobile-app-tsx-churn-2026-06-03: extract App.tsx route/deep-link wiring"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/App.tsx"
+      ],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-platform-admin-rs-hot",
+      "title": "platform_admin.rs churn-hot — 2,762 lines this run (admin/OAuth-provider feature work)",
+      "vector": "refactor",
+      "score": 1,
+      "status": "done",
+      "confidence": "medium",
+      "sources": [
+        "git log origin/dev since 2026-05-24",
+        "PR #1109"
+      ],
+      "evidence": [
+        "Top-2 code-churn source file this run: 2,762 lines (additions+deletions)",
+        "2,762-line route module; churned from the OAuth-provider admin + platform-health UI backend work (gap-10a/gap-10b PRs #469/#471) — active feature development, not yet repeated-churn (runs_seen=1)",
+        "watch candidate: if it stays a top-3 hotspot next run it warrants a module-split like PR #456",
+        "resolved 2026-06-06: PR #1109 — refactor-platform-admin-rs-module-split: covers platform-admin-rs-hot"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-reality-web-comparison-i18n",
+      "title": "Reality-web ComparisonUrlHandler hardcodes English loading/error strings",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "code-review reality-web 2026-05-28",
+        "rotating-expert-review",
+        "PR #1127"
+      ],
+      "evidence": [
+        "ComparisonUrlHandler.tsx:52,64 — 'Loading shared comparison...' and 'Failed to load shared comparison. Some properties may no longer be available.' hardcoded in English instead of next-intl t(); reality-web ships sk/cs/de/en and 40 other files use useTranslations/getTranslations, so these render untranslated for non-EN locales",
+        "resolved 2026-06-06: PR #1127 — refactor-reality-web-comparison-i18n: move ComparisonUrlHandler strings to next-intl"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-05-28",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-routes-oauth-rs-hot",
+      "title": "Watch routes/oauth.rs churn after audit-log + hardening PRs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #930",
+        "PR #933",
+        "PR #1133"
+      ],
+      "evidence": [
+        "churn-hotspot this run: backend/servers/api-server/src/routes/oauth.rs — touched by PR #930 (audit OAuth mutations w/ reason) and PR #933 (introspect/revoke hardening). 1212 lines.",
+        "resolved 2026-06-06: PR #1133 — refactor-routes-oauth-rs-hot: reduce churn in routes/oauth.rs"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "refactor-services-oauth-rs-hot",
+      "title": "Watch services/oauth.rs churn after introspect/revoke hardening (#933)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #933",
+        "PR #1132"
+      ],
+      "evidence": [
+        "churn-hotspot this run: backend/servers/api-server/src/services/oauth.rs — touched by PR #933 (OAuth introspect/revoke hardening, scheduler retry budget). 920 lines.",
+        "resolved 2026-06-06: PR #1132 — refactor-services-oauth-rs-hot: reduce churn in services/oauth.rs"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/oauth.rs"
+      ],
+      "created_at": "2026-06-02",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "test-gap-mobile-voting-transforms",
+      "title": "Mobile VotingScreen pure transforms toUiStatus/toUiVote have no tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "code-review mobile-rn 2026-05-27",
+        "rotating-expert-review",
+        "PR #1117"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:48,64 — exported pure transforms toUiStatus/toUiVote (status-string mapping + null-coalescing of participation/eligible counts) have no test file anywhere in the repo; the mobile app has only 3 test files total (LanguageSwitcher + 2 integration), none covering voting or announcements logic",
+        "resolved 2026-06-06: PR #1117 — test-gap-mobile-voting-transforms: unit-test mobile VotingScreen toUiStatus/toUiVote"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-749",
+      "title": "Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#749",
+        "issue #749 closed"
+      ],
+      "evidence": [
+        "Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting",
+        "resolved 2026-06-06: issue #749 closed — Issue #749 (announcement creation findings) now CLOSED"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-755",
+      "title": "Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#755",
+        "issue #755 closed"
+      ],
+      "evidence": [
+        "Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences",
+        "resolved 2026-06-06: issue #755 closed — Issue #755 (Epic 8A notification preferences) now CLOSED"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-764",
+      "title": "Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#764",
+        "issue #764 closed"
+      ],
+      "evidence": [
+        "Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening",
+        "resolved 2026-06-06: issue #764 closed — Issue #764 (Admin MFA & Auth Hardening) now CLOSED"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-765",
+      "title": "Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "#765",
+        "issue #765 closed"
+      ],
+      "evidence": [
+        "Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth",
+        "resolved 2026-06-06: issue #765 closed — Issue #765 (Integrations & Airbnb OAuth) now CLOSED"
+      ],
+      "files": [],
+      "created_at": "2026-05-30",
+      "updated_at": "2026-06-06",
+      "plan": null
+    },
+    {
+      "id": "bug-mobile-voting-hardcoded-locale",
+      "title": "Mobile VotingScreen hardcodes en-US in toLocaleDateString — vote dates never localize",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #1083",
+        "code-review mobile-rn 2026-05-27",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:131 — toLocaleDateString('en-US', ...) hardcodes the en-US locale so vote dates never localize for sk/cs/de users; sibling AnnouncementDetailScreen.tsx:119 correctly passes i18n.language for the same call",
+        "resolved: PR #1083 merged 2026-06-05 — closes via PR title match"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "bug-reality-web-listing-metadata-ssr-throw",
+      "title": "Reality-web listing generateMetadata can throw during SSR on malformed 200 body",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #1085",
+        "code-review reality-web 2026-05-28",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "app/[locale]/listings/[slug]/page.tsx:75 getListing returns response.json() typed as ListingDetail with no runtime validation; generateMetadata:93 calls listing.description.slice(0,160) and listing.address.city guarded only by the !listing null-check at :86, so a 200 body with null description / missing address from reality-server throws during SSR instead of degrading to the existing 'Listing Not Found' fallback",
+        "resolved: PR #1085 merged 2026-06-05 — closes via PR title match"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-05-28",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements",
+      "title": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1101",
+        "PR #1077",
+        "PR #1083",
+        "PR #1098"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements-test",
+      "title": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1101",
+        "PR #1077",
+        "PR #1083",
+        "PR #1098"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-documents",
+      "title": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1101",
+        "PR #1081",
+        "PR #1082"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx"
+      ],
+      "created_at": "2026-06-05",
+      "updated_at": "2026-06-05",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-1061-dispatcher-archive-corruption",
+      "title": "Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Issue #1061"
+      ],
+      "evidence": [
+        "Open issue #1061 untriaged (no labels) — dispatcher MCP push corrupted assignments-archive.json on the dev branch, dropping 195 historical rows; needs operator triage to decide rebuild vs accept"
+      ],
+      "files": [
+        ".research/management/assignments-archive.json"
+      ],
+      "created_at": "2026-06-05",
       "updated_at": "2026-06-05",
       "plan": null
     },
@@ -1245,126 +1995,6 @@
         "backend/servers/api-server/src/routes/oauth_provider.rs"
       ],
       "created_at": "2026-06-01",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "refactor-main-rs-churn-2026-06-03",
-      "title": "api-server main.rs touched twice this run (gap-sweep + security headers) — minor churn marker",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #989",
-        "PR #963"
-      ],
-      "evidence": [
-        "backend/servers/api-server/src/main.rs touched in 2 commits this run (+10/-0 lines): PR #989 (gap-sweep backend) and PR #963 (security headers); top-3 raw churn after lockfile/version-bump exclusions"
-      ],
-      "files": [
-        "backend/servers/api-server/src/main.rs"
-      ],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "dx-nginx-template-churn-2026-06-03",
-      "title": "docker/nginx admin-web + ppt-web templates churned twice this run (security headers + redirects)",
-      "vector": "dx",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #963",
-        "PR #964"
-      ],
-      "evidence": [
-        "docker/nginx/admin-web.nginx.conf.template +11/-0 across PR #963 (security headers) and PR #964 (relative redirects + drop X-Powered-By)",
-        "docker/nginx/ppt-web.nginx.conf.template +14/-0 across the same two PRs",
-        "no nginx config tests today; would benefit from a smoke test (curl staging admin + ppt SPA hosts and assert HSTS / nosniff / Cache-Control on the response)"
-      ],
-      "files": [
-        "docker/nginx/admin-web.nginx.conf.template",
-        "docker/nginx/ppt-web.nginx.conf.template"
-      ],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "refactor-mobile-app-tsx-churn-2026-06-03",
-      "title": "frontend/apps/mobile/src/App.tsx churned twice this run (universal links + doc-detail wiring)",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #962",
-        "PR #992"
-      ],
-      "evidence": [
-        "frontend/apps/mobile/src/App.tsx touched in 2 commits this run (+65/-1 lines): PR #962 (RN universal links + deep-link handler) and PR #992 (mobile document detail wiring); navigation/deep-link wiring is becoming the central seam — watch for further churn before considering a Navigator extraction"
-      ],
-      "files": [
-        "frontend/apps/mobile/src/App.tsx"
-      ],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-952",
-      "title": "Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#952"
-      ],
-      "evidence": [
-        "Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex"
-      ],
-      "files": [],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-951",
-      "title": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#951"
-      ],
-      "evidence": [
-        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed"
-      ],
-      "files": [],
-      "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-950",
-      "title": "Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#950"
-      ],
-      "evidence": [
-        "Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy"
-      ],
-      "files": [],
-      "created_at": "2026-06-03",
       "updated_at": "2026-06-03",
       "plan": null
     },
@@ -1393,22 +2023,77 @@
       "plan": null
     },
     {
-      "id": "triage-issue-920",
-      "title": "Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure)",
+      "id": "triage-issue-950",
+      "title": "Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy",
       "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "done",
+      "status": "open",
       "sources": [
-        "#920",
-        "#944"
+        "#950"
       ],
       "evidence": [
-        "new GitHub issue #920 (OPEN, no labels): Announcement targeting not enforced on read (intra-org disclosure) — security-relevant, awaits triage label",
-        "resolved: GitHub issue #920 closed (#944)"
+        "Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks staging auto-deploy"
       ],
       "files": [],
-      "created_at": "2026-06-01",
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-951",
+      "title": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#951"
+      ],
+      "evidence": [
+        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed"
+      ],
+      "files": [],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-952",
+      "title": "Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#952"
+      ],
+      "evidence": [
+        "Issue #952 (no labels, OPEN): [staging] Reality SSO login dead-ends: redirect_uri callback 404s on reality apex"
+      ],
+      "files": [],
+      "created_at": "2026-06-03",
+      "updated_at": "2026-06-03",
+      "plan": null
+    },
+    {
+      "id": "refactor-oauth-integration-tests-hot",
+      "title": "Stabilize oauth_integration_tests churn — heavy edits across 3 OAuth fix PRs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #930",
+        "PR #933"
+      ],
+      "evidence": [
+        "churn-hotspot this run: backend/servers/api-server/tests/oauth_integration_tests.rs — touched by PR #930 (audit OAuth client mutations) and PR #933 (introspect/revoke hardening)"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-06-02",
       "updated_at": "2026-06-02",
       "plan": null
     },
@@ -1553,64 +2238,22 @@
       "plan": null
     },
     {
-      "id": "refactor-oauth-integration-tests-hot",
-      "title": "Stabilize oauth_integration_tests churn — heavy edits across 3 OAuth fix PRs",
-      "vector": "refactor",
+      "id": "triage-issue-920",
+      "title": "Issue #920 (no labels, OPEN): Announcement targeting not enforced on read (intra-org disclosure)",
+      "vector": "triage",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #930",
-        "PR #933"
+        "#920",
+        "#944"
       ],
       "evidence": [
-        "churn-hotspot this run: backend/servers/api-server/tests/oauth_integration_tests.rs — touched by PR #930 (audit OAuth client mutations) and PR #933 (introspect/revoke hardening)"
+        "new GitHub issue #920 (OPEN, no labels): Announcement targeting not enforced on read (intra-org disclosure) — security-relevant, awaits triage label",
+        "resolved: GitHub issue #920 closed (#944)"
       ],
-      "files": [
-        "backend/servers/api-server/tests/oauth_integration_tests.rs"
-      ],
-      "created_at": "2026-06-02",
-      "updated_at": "2026-06-02",
-      "plan": null
-    },
-    {
-      "id": "refactor-services-oauth-rs-hot",
-      "title": "Watch services/oauth.rs churn after introspect/revoke hardening (#933)",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #933"
-      ],
-      "evidence": [
-        "churn-hotspot this run: backend/servers/api-server/src/services/oauth.rs — touched by PR #933 (OAuth introspect/revoke hardening, scheduler retry budget). 920 lines."
-      ],
-      "files": [
-        "backend/servers/api-server/src/services/oauth.rs"
-      ],
-      "created_at": "2026-06-02",
-      "updated_at": "2026-06-02",
-      "plan": null
-    },
-    {
-      "id": "refactor-routes-oauth-rs-hot",
-      "title": "Watch routes/oauth.rs churn after audit-log + hardening PRs",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #930",
-        "PR #933"
-      ],
-      "evidence": [
-        "churn-hotspot this run: backend/servers/api-server/src/routes/oauth.rs — touched by PR #930 (audit OAuth mutations w/ reason) and PR #933 (introspect/revoke hardening). 1212 lines."
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/oauth.rs"
-      ],
-      "created_at": "2026-06-02",
+      "files": [],
+      "created_at": "2026-06-01",
       "updated_at": "2026-06-02",
       "plan": null
     },
@@ -2188,78 +2831,6 @@
       "plan": null
     },
     {
-      "id": "triage-issue-749",
-      "title": "Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#749"
-      ],
-      "evidence": [
-        "Issue #749 (no labels, OPEN): Code review findings: Story 6.1 announcement creation and targeting"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-755",
-      "title": "Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#755"
-      ],
-      "evidence": [
-        "Issue #755 (no labels, OPEN): Current dev review: Epic 8A Notification Preferences"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-764",
-      "title": "Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#764"
-      ],
-      "evidence": [
-        "Issue #764 (no labels, OPEN): Current dev review: Admin MFA & Auth Hardening"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-765",
-      "title": "Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "#765"
-      ],
-      "evidence": [
-        "Issue #765 (no labels, OPEN): Current dev review: Integrations & Airbnb OAuth"
-      ],
-      "files": [],
-      "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
-      "plan": null
-    },
-    {
       "id": "triage-issue-769",
       "title": "Issue #769 (no labels, OPEN): Current dev review: Deploy server",
       "vector": "triage",
@@ -2314,181 +2885,6 @@
       "plan": null
     },
     {
-      "id": "refactor-reality-web-comparison-i18n",
-      "title": "Reality-web ComparisonUrlHandler hardcodes English loading/error strings",
-      "vector": "refactor",
-      "confidence": "medium",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "code-review reality-web 2026-05-28",
-        "rotating-expert-review"
-      ],
-      "evidence": [
-        "ComparisonUrlHandler.tsx:52,64 — 'Loading shared comparison...' and 'Failed to load shared comparison. Some properties may no longer be available.' hardcoded in English instead of next-intl t(); reality-web ships sk/cs/de/en and 40 other files use useTranslations/getTranslations, so these render untranslated for non-EN locales"
-      ],
-      "files": [
-        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
-      ],
-      "created_at": "2026-05-28",
-      "updated_at": "2026-05-28",
-      "plan": null
-    },
-    {
-      "id": "bug-reality-web-listing-metadata-ssr-throw",
-      "title": "Reality-web listing generateMetadata can throw during SSR on malformed 200 body",
-      "vector": "bug",
-      "confidence": "medium",
-      "score": 1,
-      "status": "done",
-      "sources": [
-        "PR #1085",
-        "code-review reality-web 2026-05-28",
-        "rotating-expert-review"
-      ],
-      "evidence": [
-        "app/[locale]/listings/[slug]/page.tsx:75 getListing returns response.json() typed as ListingDetail with no runtime validation; generateMetadata:93 calls listing.description.slice(0,160) and listing.address.city guarded only by the !listing null-check at :86, so a 200 body with null description / missing address from reality-server throws during SSR instead of degrading to the existing 'Listing Not Found' fallback",
-        "resolved: PR #1085 merged 2026-06-05 — closes via PR title match"
-      ],
-      "files": [
-        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
-      ],
-      "created_at": "2026-05-28",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "refactor-mediation-ref-number-full-uuid",
-      "title": "Mediation reference number uppercases full UUID (DSP-<uuid>) instead of a short code",
-      "vector": "refactor",
-      "confidence": "medium",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #555",
-        "code-review 2026-05-27"
-      ],
-      "evidence": [
-        "MediationWorkspacePage.tsx:382 sets referenceNumber = DSP-${dispute.id.toUpperCase()} — renders the full uppercased UUID as the human-facing reference (e.g. DSP-3F2A1B9C-...) rather than a short code"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx"
-      ],
-      "created_at": "2026-05-27",
-      "updated_at": "2026-05-27",
-      "plan": null
-    },
-    {
-      "id": "refactor-mediation-duplicated-spinner",
-      "title": "Duplicated animate-spin spinner markup across mediation page + chat thread (no shared Spinner)",
-      "vector": "refactor",
-      "confidence": "medium",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #555",
-        "code-review 2026-05-27"
-      ],
-      "evidence": [
-        "Identical role=status animate-spin spinner block duplicated at MediationWorkspacePage.tsx:91 and :375 and MediationChatThread.tsx — no shared Spinner component in ui-kit; should be extracted"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
-        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx"
-      ],
-      "created_at": "2026-05-27",
-      "updated_at": "2026-05-27",
-      "plan": null
-    },
-    {
-      "id": "bug-mobile-voting-hardcoded-locale",
-      "title": "Mobile VotingScreen hardcodes en-US in toLocaleDateString — vote dates never localize",
-      "vector": "bug",
-      "confidence": "medium",
-      "score": 1,
-      "status": "done",
-      "sources": [
-        "PR #1083",
-        "code-review mobile-rn 2026-05-27",
-        "rotating-expert-review"
-      ],
-      "evidence": [
-        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:131 — toLocaleDateString('en-US', ...) hardcodes the en-US locale so vote dates never localize for sk/cs/de users; sibling AnnouncementDetailScreen.tsx:119 correctly passes i18n.language for the same call",
-        "resolved: PR #1083 merged 2026-06-05 — closes via PR title match"
-      ],
-      "files": [
-        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
-      ],
-      "created_at": "2026-05-27",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "test-gap-mobile-voting-transforms",
-      "title": "Mobile VotingScreen pure transforms toUiStatus/toUiVote have no tests",
-      "vector": "test-gap",
-      "confidence": "medium",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "code-review mobile-rn 2026-05-27",
-        "rotating-expert-review"
-      ],
-      "evidence": [
-        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:48,64 — exported pure transforms toUiStatus/toUiVote (status-string mapping + null-coalescing of participation/eligible counts) have no test file anywhere in the repo; the mobile app has only 3 test files total (LanguageSwitcher + 2 integration), none covering voting or announcements logic"
-      ],
-      "files": [
-        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
-      ],
-      "created_at": "2026-05-27",
-      "updated_at": "2026-05-27",
-      "plan": null
-    },
-    {
-      "id": "refactor-ai-rs-hot",
-      "title": "ai.rs churn-hot — 3,142 lines this run; 3,142-line route monolith, candidate for module split",
-      "vector": "refactor",
-      "score": 1,
-      "status": "open",
-      "confidence": "medium",
-      "sources": [
-        "git log origin/dev since 2026-05-24"
-      ],
-      "evidence": [
-        "Top code-churn source file this run: 3,142 lines (additions+deletions)",
-        "3,142-line single-file route module covering AI sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices and photo enhancement — same monolith class as the integrations/organizations/documents files just split in PR #456",
-        "harbored the voice-device IDOR (fixed #461) and the equipment IDOR found this run — surface count makes cross-tenant-scoping bugs easy to miss; splitting by surface (sessions/equipment/workflows/voice/...) would shrink review blast radius"
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/ai.rs"
-      ],
-      "created_at": "2026-05-25",
-      "updated_at": "2026-05-25",
-      "plan": null
-    },
-    {
-      "id": "refactor-platform-admin-rs-hot",
-      "title": "platform_admin.rs churn-hot — 2,762 lines this run (admin/OAuth-provider feature work)",
-      "vector": "refactor",
-      "score": 1,
-      "status": "open",
-      "confidence": "medium",
-      "sources": [
-        "git log origin/dev since 2026-05-24"
-      ],
-      "evidence": [
-        "Top-2 code-churn source file this run: 2,762 lines (additions+deletions)",
-        "2,762-line route module; churned from the OAuth-provider admin + platform-health UI backend work (gap-10a/gap-10b PRs #469/#471) — active feature development, not yet repeated-churn (runs_seen=1)",
-        "watch candidate: if it stays a top-3 hotspot next run it warrants a module-split like PR #456"
-      ],
-      "files": [
-        "backend/servers/api-server/src/routes/platform_admin.rs"
-      ],
-      "created_at": "2026-05-25",
-      "updated_at": "2026-05-25",
-      "plan": null
-    },
-    {
       "id": "bug-announcer-stale-message",
       "title": "Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message",
       "vector": "bug",
@@ -2533,218 +2929,6 @@
       ],
       "created_at": "2026-05-20",
       "updated_at": "2026-06-04",
-      "plan": null
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1033-ppt",
-      "title": "Screen-map drift: PR #1033 wired error/retry into AnnouncementsPage+FaultsPage via App.tsx without a docs/screens/ppt update",
-      "vector": "test-gap",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
-      "sources": [
-        "PR #1033"
-      ],
-      "evidence": [
-        "PR #1033 (gap-79-1-announcements-faults-api-wiring) modified frontend/apps/ppt-web/src/App.tsx (AnnouncementsPageRoute + FaultsPageRoute now feed isError/refetch from useAnnouncements/useFaults) without updating docs/screens/ppt/announcements.md or docs/screens/ppt/faults-list.md to reflect the new inline error/retry state — drift signal on ppt product"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/App.tsx",
-        "docs/screens/ppt/announcements.md",
-        "docs/screens/ppt/faults-list.md"
-      ],
-      "created_at": "2026-06-04",
-      "updated_at": "2026-06-04",
-      "plan": null
-    },
-    {
-      "id": "refactor-auth-refresh-spec-churn-2026-06-04",
-      "title": "ppt-web e2e auth-refresh.spec.ts added (+252 lines, story 79-2 token-refresh coverage)",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #1047"
-      ],
-      "evidence": [
-        "frontend/apps/ppt-web/e2e/auth-refresh.spec.ts NEWLY added (+252 lines) via PR #1047 — Playwright integration coverage for the silent token-refresh path (4 scenarios). One-shot test addition, not instability; backlog row exists for hotspot tracking and will decay if no further churn."
-      ],
-      "files": [
-        "frontend/apps/ppt-web/e2e/auth-refresh.spec.ts"
-      ],
-      "created_at": "2026-06-04",
-      "updated_at": "2026-06-04",
-      "plan": null
-    },
-    {
-      "id": "refactor-esignature-webhook-idempotency-tests-churn-2026-06-04",
-      "title": "api-server esignature_webhook_idempotency_tests.rs added (+228 lines, terminal-state regression)",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #1034"
-      ],
-      "evidence": [
-        "backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs NEWLY added (+228 lines) via PR #1034 — HTTP regression coverage for the e-signature webhook idempotency guard (Completed/Declined/Expired/Cancelled). One-shot test addition, not instability."
-      ],
-      "files": [
-        "backend/servers/api-server/tests/esignature_webhook_idempotency_tests.rs"
-      ],
-      "created_at": "2026-06-04",
-      "updated_at": "2026-06-04",
-      "plan": null
-    },
-    {
-      "id": "refactor-evidenceuploader-test-tsx-churn-2026-06-04",
-      "title": "ppt-web EvidenceUploader.test.tsx added (+202 lines, dispute-filing AC-2 regression)",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #1048"
-      ],
-      "evidence": [
-        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx NEWLY added (+202 lines) via PR #1048 — accepted types, per-file type+size, MAX_FILES cap, remove + object-URL revoke, description editing, status indicators. One-shot test addition, not instability."
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/features/disputes/components/EvidenceUploader.test.tsx"
-      ],
-      "created_at": "2026-06-04",
-      "updated_at": "2026-06-04",
-      "plan": null
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1100-ppt",
-      "title": "Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
-      "vector": "test-gap",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
-      "sources": [
-        "PR #1100"
-      ],
-      "evidence": [
-        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)"
-      ],
-      "files": [
-        "frontend/apps/ppt-web/src/App.tsx",
-        "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx"
-      ],
-      "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1085-reality",
-      "title": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
-      "vector": "test-gap",
-      "confidence": "medium",
-      "score": 2,
-      "status": "open",
-      "sources": [
-        "PR #1085"
-      ],
-      "evidence": [
-        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic"
-      ],
-      "files": [
-        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
-        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts"
-      ],
-      "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "triage-issue-1061-dispatcher-archive-corruption",
-      "title": "Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061)",
-      "vector": "triage",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "Issue #1061"
-      ],
-      "evidence": [
-        "Open issue #1061 untriaged (no labels) — dispatcher MCP push corrupted assignments-archive.json on the dev branch, dropping 195 historical rows; needs operator triage to decide rebuild vs accept"
-      ],
-      "files": [
-        ".research/management/assignments-archive.json"
-      ],
-      "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "title": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #1101",
-        "PR #1077",
-        "PR #1083",
-        "PR #1098"
-      ],
-      "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)"
-      ],
-      "files": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts"
-      ],
-      "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "refactor-churn-hotspot-mobile-announcements",
-      "title": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #1101",
-        "PR #1077",
-        "PR #1083",
-        "PR #1098"
-      ],
-      "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework"
-      ],
-      "files": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
-      ],
-      "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
-      "plan": null
-    },
-    {
-      "id": "refactor-churn-hotspot-mobile-documents",
-      "title": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
-      "vector": "refactor",
-      "confidence": "high",
-      "score": 1,
-      "status": "open",
-      "sources": [
-        "PR #1101",
-        "PR #1081",
-        "PR #1082"
-      ],
-      "evidence": [
-        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run"
-      ],
-      "files": [
-        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx"
-      ],
-      "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
       "plan": null
     }
   ]
