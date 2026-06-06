@@ -44,6 +44,7 @@ export type Screen =
   | 'Buildings'
   | 'Leases'
   | 'LeaseDetail'
+  | 'LeaseSignature'
   | 'More';
 
 /**
