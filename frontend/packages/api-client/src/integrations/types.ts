@@ -477,6 +477,87 @@ export interface VideoMeetingQuery {
 }
 
 // ============================================
+// Airbnb Integration (Gap 83-1 / Story 83.1)
+//
+// Field names mirror the backend `AirbnbStatusResponse` / `AirbnbConnectResponse`
+// etc. which serialize as snake_case (see
+// backend/servers/api-server/src/routes/integrations/install.rs).
+// ============================================
+
+/** Airbnb connection status (GET .../airbnb/status). */
+export interface AirbnbStatus {
+  connected: boolean;
+  external_account_id?: string | null;
+  last_sync_at?: string | null;
+  sync_error?: string | null;
+  listings_count: number;
+  reservations_count: number;
+}
+
+/** Body for POST .../airbnb/connect. */
+export interface AirbnbConnectRequest {
+  redirect_uri?: string;
+}
+
+/** Response from POST .../airbnb/connect — OAuth authorize URL + CSRF state. */
+export interface AirbnbConnectResponse {
+  auth_url: string;
+  state: string;
+}
+
+/** Response from POST .../airbnb/sync. */
+export interface AirbnbSyncResponse {
+  success: boolean;
+  items_synced: number;
+  synced_at: string;
+  error?: string | null;
+}
+
+/**
+ * Listing mapping row. Derived from the rentals platform-connection summary
+ * (`GET /api/v1/rentals/connections`, filtered to platform === "airbnb").
+ */
+export interface AirbnbListingMapping {
+  id: string;
+  unit_id: string;
+  unit_name: string;
+  platform: string;
+  is_active: boolean;
+  last_sync_at?: string | null;
+  sync_error?: string | null;
+}
+
+/**
+ * Reservation feed row. Derived from the rentals bookings list
+ * (`GET /api/v1/rentals/bookings?platform=airbnb`).
+ */
+export interface AirbnbReservation {
+  id: string;
+  unit_id: string;
+  unit_name: string;
+  building_name: string;
+  platform: string;
+  external_booking_id?: string | null;
+  guest_name: string;
+  guest_count: number;
+  check_in: string;
+  check_out: string;
+  nights: number;
+  total_amount?: string | null;
+  currency?: string | null;
+  status: string;
+  guest_registration_status?: string | null;
+}
+
+/** Paginated reservation feed response. */
+export interface AirbnbReservationFeed {
+  bookings: AirbnbReservation[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// ============================================
 // Gap 83.2: Booking.com Channel Integration
 // ============================================
 //

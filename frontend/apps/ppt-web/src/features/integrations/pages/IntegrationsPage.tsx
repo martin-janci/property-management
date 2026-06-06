@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import {
   AccountingExportsList,
+  AirbnbConnectionPanel,
   BookingChannelPanel,
   CalendarConnectionsList,
   ESignatureWorkflowsList,
@@ -19,9 +20,17 @@ interface IntegrationsPageProps {
   organizationId: string;
 }
 
-type TabValue = 'calendars' | 'accounting' | 'esignatures' | 'video' | 'webhooks' | 'booking';
+type TabValue =
+  | 'airbnb'
+  | 'calendars'
+  | 'accounting'
+  | 'esignatures'
+  | 'video'
+  | 'webhooks'
+  | 'booking';
 
 const tabs: { value: TabValue; label: string }[] = [
+  { value: 'airbnb', label: 'Airbnb' },
   { value: 'calendars', label: 'Calendars' },
   { value: 'accounting', label: 'Accounting' },
   { value: 'esignatures', label: 'E-Signatures' },
@@ -31,7 +40,7 @@ const tabs: { value: TabValue; label: string }[] = [
 ];
 
 export function IntegrationsPage({ organizationId }: IntegrationsPageProps) {
-  const [activeTab, setActiveTab] = useState<TabValue>('calendars');
+  const [activeTab, setActiveTab] = useState<TabValue>('airbnb');
 
   return (
     <div className="space-y-6">
@@ -61,6 +70,8 @@ export function IntegrationsPage({ organizationId }: IntegrationsPageProps) {
         </div>
 
         <div className="pt-4">
+          {activeTab === 'airbnb' && <AirbnbConnectionPanel organizationId={organizationId} />}
+
           {activeTab === 'calendars' && <CalendarConnectionsList organizationId={organizationId} />}
 
           {activeTab === 'accounting' && <AccountingExportsList organizationId={organizationId} />}

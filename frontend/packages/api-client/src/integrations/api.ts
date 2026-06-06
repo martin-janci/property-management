@@ -4,10 +4,17 @@
  * API functions for External Integrations (Epic 61).
  */
 
+import { authenticatedFetchJson } from '../lib/fetch';
 import type {
   AccountingExport,
   AccountingExportQuery,
   AccountingExportSettings,
+  AirbnbConnectRequest,
+  AirbnbConnectResponse,
+  AirbnbListingMapping,
+  AirbnbReservationFeed,
+  AirbnbStatus,
+  AirbnbSyncResponse,
   BookingChannelStatus,
   BookingConflictCheck,
   BookingConnectRequest,
@@ -405,6 +412,63 @@ export async function listWebhookLogs(id: string): Promise<WebhookDeliveryLog[]>
 
 export async function getWebhookStatistics(id: string): Promise<WebhookStatistics> {
   return apiRequest<WebhookStatistics>(`${API_BASE}/webhooks/${id}/stats`);
+}
+
+// ============================================
+// Airbnb Integration (Gap 83-1 / Story 83.1)
+//
+// Wires to the install-surface Airbnb routes under
+// `/api/v1/integrations/organizations/{org_id}/airbnb/*`.
+// Listing mappings + reservation feed reuse the rentals endpoints
+// (`/api/v1/rentals/*`) filtered to the Airbnb platform.
+//
+// These calls go through the shared `authenticatedFetchJson` factory so the
+// bearer token (and MFA retry flow) is attached — unlike the legacy
+// `apiRequest` helper above, which does not authenticate.
+// ============================================
+
+const RENTALS_BASE = '/api/v1/rentals';
+
+export async function getAirbnbStatus(organizationId: string): Promise<AirbnbStatus> {
+  return authenticatedFetchJson<AirbnbStatus>(
+    `${API_BASE}/organizations/${organizationId}/airbnb/status`
+  );
+}
+
+export async function connectAirbnb(
+  organizationId: string,
+  data: AirbnbConnectRequest = {}
+): Promise<AirbnbConnectResponse> {
+  return authenticatedFetchJson<AirbnbConnectResponse>(
+    `${API_BASE}/organizations/${organizationId}/airbnb/connect`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+export async function syncAirbnb(organizationId: string): Promise<AirbnbSyncResponse> {
+  return authenticatedFetchJson<AirbnbSyncResponse>(
+    `${API_BASE}/organizations/${organizationId}/airbnb/sync`,
+    { method: 'POST' }
+  );
+}
+
+export async function disconnectAirbnb(organizationId: string): Promise<void> {
+  return authenticatedFetchJson<void>(`${API_BASE}/organizations/${organizationId}/airbnb`, {
+    method: 'DELETE',
+  });
+}
+
+export async function listAirbnbListingMappings(): Promise<AirbnbListingMapping[]> {
+  const all = await authenticatedFetchJson<AirbnbListingMapping[]>(`${RENTALS_BASE}/connections`);
+  return all.filter((c) => c.platform === 'airbnb');
+}
+
+export async function listAirbnbReservations(limit = 50): Promise<AirbnbReservationFeed> {
+  const qs = buildQueryString({ platform: 'airbnb', limit });
+  return authenticatedFetchJson<AirbnbReservationFeed>(`${RENTALS_BASE}/bookings${qs}`);
 }
 
 // ============================================
