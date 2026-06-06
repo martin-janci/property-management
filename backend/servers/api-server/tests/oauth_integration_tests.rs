@@ -1123,12 +1123,17 @@ mod refresh_rotation {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         // Obtain an initial refresh token via the full auth flow.
-        let (_at, rt) = confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+        let (_at, rt) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Explicitly revoke the refresh token via RFC 7009 (client-authenticated).
         let revoke_status =
             revoke_rfc7009(&app, &rt, "refresh_token", &client_id, &client_secret).await;
-        assert_eq!(revoke_status, StatusCode::OK, "RFC 7009 revoke must return 200");
+        assert_eq!(
+            revoke_status,
+            StatusCode::OK,
+            "RFC 7009 revoke must return 200"
+        );
 
         // Now attempt to use the revoked refresh token at /token — must be rejected.
         let use_revoked_body = form_body(&[
@@ -1163,7 +1168,8 @@ mod refresh_rotation {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
         let (other_client_id, other_client_secret, _) = seed_confidential_client(&pool).await;
 
-        let (_at, rt) = confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
+        let (_at, rt) =
+            confidential_auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Try to use rt with a different client
         let body = form_body(&[
@@ -2469,8 +2475,14 @@ mod provider_security {
         // to revoke the victim's token.
         let (attacker_id, attacker_secret, _attacker_redirect) =
             seed_confidential_client(&pool).await;
-        let cross_revoke_status =
-            revoke_rfc7009(&app, &victim_at, "access_token", &attacker_id, &attacker_secret).await;
+        let cross_revoke_status = revoke_rfc7009(
+            &app,
+            &victim_at,
+            "access_token",
+            &attacker_id,
+            &attacker_secret,
+        )
+        .await;
         assert_eq!(
             cross_revoke_status,
             StatusCode::OK,
