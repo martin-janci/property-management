@@ -563,8 +563,21 @@ pub async fn list_buildings(
     mut rls: RlsConnection,
     Query(query): Query<ListBuildingsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // RLS policies automatically filter by tenant - user can only see buildings
-    // in organizations they belong to
+    // RLS policies filter by the resolved tenant, so a mismatched
+    // `organization_id` would silently return an empty page. Reject it
+    // explicitly instead — mirrors the guard in `create_building` so the
+    // client-supplied org cannot diverge from the authenticated tenant
+    // (closes the round-10 `list_buildings` finding in #789).
+    if query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_AUTHORIZED",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
 
     let limit = query
         .limit
