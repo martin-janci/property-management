@@ -445,7 +445,7 @@ impl OAuthService {
             .as_ref()
             .ok_or(OAuthServiceError::InvalidCodeVerifier)?;
 
-        if !self.verify_pkce(
+        if !Self::verify_pkce(
             verifier,
             challenge,
             auth_code.code_challenge_method.as_deref(),
@@ -847,7 +847,7 @@ impl OAuthService {
 
     /// Verify PKCE code challenge.
     /// Only S256 method is supported per OAuth 2.1 recommendations.
-    fn verify_pkce(&self, verifier: &str, challenge: &str, method: Option<&str>) -> bool {
+    fn verify_pkce(verifier: &str, challenge: &str, method: Option<&str>) -> bool {
         // Only S256 is supported - plain method is deprecated per OAuth 2.1
         match method.unwrap_or("S256") {
             "S256" => {
@@ -866,13 +866,6 @@ impl OAuthService {
 mod tests {
     use super::*;
 
-    /// Compute a PKCE S256 challenge from a verifier string.
-    fn pkce_challenge(verifier: &str) -> String {
-        let mut hasher = Sha256::new();
-        hasher.update(verifier.as_bytes());
-        URL_SAFE_NO_PAD.encode(hasher.finalize())
-    }
-
     /// Generate `n` random base64url-encoded bytes via the OS CSPRNG.
     fn random_b64(n: usize) -> String {
         let mut bytes = vec![0u8; n];
@@ -882,15 +875,24 @@ mod tests {
 
     #[test]
     fn test_pkce_verification() {
+        // RFC 7636 Appendix B known-answer vector: this pins the S256 challenge
+        // computation so a regression in `verify_pkce` is actually caught.
         let verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
-        let expected = pkce_challenge(verifier);
+        let challenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
 
-        assert!(pkce_challenge(verifier) == expected);
-        assert!(pkce_challenge("wrong") != expected);
+        // Correct verifier + challenge under S256 (and default method == S256).
+        assert!(OAuthService::verify_pkce(verifier, challenge, Some("S256")));
+        assert!(OAuthService::verify_pkce(verifier, challenge, None));
 
-        // plain method is not supported — verify_pkce_helper would return false
-        // S256 with mismatched challenge returns false
-        assert!(pkce_challenge("test") != "test");
+        // Wrong verifier must not match the challenge.
+        assert!(!OAuthService::verify_pkce("wrong", challenge, Some("S256")));
+
+        // `plain` is intentionally unsupported, even when verifier == challenge.
+        assert!(!OAuthService::verify_pkce(
+            challenge,
+            challenge,
+            Some("plain")
+        ));
     }
 
     #[test]
