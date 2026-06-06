@@ -29,9 +29,15 @@ use dialoguer::{Confirm, Input, Password};
 /// Default reality-portal OAuth redirect URIs covering the standard prod +
 /// staging Reality Portal apexes. Operators with custom apex hostnames can
 /// override via repeated `--reality-portal-redirect-uri` flags.
+///
+/// Uses the `api.<apex>` subdomain because the bare apex (`rlt.sk`,
+/// `staging.rlt.sk`) reverse-proxies to reality-web (Next.js) which has no
+/// `/api/v1/sso/*` handler — the SSO callback 404s if the redirect_uri points
+/// at the apex. `api.<apex>` is proxied by Caddy to reality-server :8081,
+/// which serves the `/api/v1/sso/callback` handler (fix for #952).
 const DEFAULT_REALITY_PORTAL_REDIRECT_URIS: &[&str] = &[
-    "https://rlt.sk/api/v1/sso/callback",
-    "https://staging.rlt.sk/api/v1/sso/callback",
+    "https://api.rlt.sk/api/v1/sso/callback",
+    "https://api.staging.rlt.sk/api/v1/sso/callback",
 ];
 
 /// UPSERT the `reality-portal` row in `oauth_clients` with the given secret.
