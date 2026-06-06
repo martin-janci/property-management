@@ -179,9 +179,28 @@ impl FaultRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // The enum columns (category/priority/status/ai_*) are cast to text so the
+        // row decodes into the `String`-typed `Fault` model regardless of whether
+        // the connection has the PG enum types registered (matches the `::text`
+        // idiom used by `find_by_id_for_org` and the statistics queries).
         let fault = sqlx::query_as::<_, Fault>(
             r#"
-            SELECT * FROM faults WHERE id = $1
+            SELECT
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
+            FROM faults
+            WHERE id = $1
             "#,
         )
         .bind(id)
@@ -206,9 +225,26 @@ impl FaultRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // Cast enum columns to text so the row decodes into the `String`-typed
+        // `Fault` model (matches `find_by_id_for_org` and the statistics queries).
         let fault = sqlx::query_as::<_, Fault>(
             r#"
-            SELECT * FROM faults WHERE idempotency_key = $1
+            SELECT
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
+            FROM faults
+            WHERE idempotency_key = $1
             "#,
         )
         .bind(key)
@@ -402,9 +438,26 @@ impl FaultRepository {
 
     /// Find fault by idempotency key.
     pub async fn find_by_idempotency_key(&self, key: &str) -> Result<Option<Fault>, SqlxError> {
+        // Cast enum columns to text so the row decodes into the `String`-typed
+        // `Fault` model (matches `find_by_id_for_org` and the statistics queries).
         let fault = sqlx::query_as::<_, Fault>(
             r#"
-            SELECT * FROM faults WHERE idempotency_key = $1
+            SELECT
+                id, organization_id, building_id, unit_id, reporter_id,
+                title, description, location_description,
+                category::text AS category,
+                priority::text AS priority,
+                status::text AS status,
+                ai_category::text AS ai_category,
+                ai_priority::text AS ai_priority,
+                ai_confidence, ai_processed_at,
+                assigned_to, assigned_at, triaged_by, triaged_at,
+                resolved_at, resolved_by, resolution_notes,
+                confirmed_at, confirmed_by, rating, feedback,
+                scheduled_date, estimated_completion, idempotency_key,
+                created_at, updated_at
+            FROM faults
+            WHERE idempotency_key = $1
             "#,
         )
         .bind(key)
