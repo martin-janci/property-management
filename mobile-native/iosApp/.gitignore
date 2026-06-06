@@ -1,0 +1,14 @@
+# The Xcode project is generated from project.yml via `xcodegen generate`
+# (Epic 82 - Story 82.1). It is a build artifact, not a tracked source — see
+# project.yml and scripts/build-ios.sh ("generated, not committed").
+iosApp.xcodeproj/
+
+# Xcode build output + KMP framework staging produced by the pre-build script.
+DerivedData/
+build/
+shared-framework-staging/
+
+# Xcode user state
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcuserstate

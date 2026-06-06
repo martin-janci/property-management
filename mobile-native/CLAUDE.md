@@ -54,6 +54,10 @@ Kotlin Multiplatform project for Reality Portal mobile apps.
 # Build iOS framework
 ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
 
+# Generate + build the iOS app (macOS only; requires `brew install xcodegen`)
+cd iosApp && xcodegen generate          # materialise iosApp.xcodeproj from project.yml
+../../scripts/build-ios.sh development   # KMP framework + xcodebuild (Dev scheme)
+
 # Run tests
 ./gradlew :shared:allTests
 
@@ -92,9 +96,21 @@ mobile-native/
 │   ├── build.gradle.kts
 │   ├── proguard-rules.pro
 │   └── src/main/java/three/two/bit/ppt/reality/
-└── iosApp/                 # iOS application (Xcode)
-    └── iosApp/
+└── iosApp/                 # iOS application (SwiftUI)
+    ├── project.yml         # XcodeGen manifest — single source of truth for iosApp.xcodeproj
+    ├── Configurations/     # Base/Development/Staging/Production xcconfig
+    ├── xcschemes/          # RealityPortal-{Dev,Staging,Prod} schemes
+    └── iosApp/             # Swift sources (App/, Core/{DI,Services,Navigation}, Features/)
 ```
+
+> **iOS project is generated, not committed.** `iosApp.xcodeproj` is produced by
+> `xcodegen generate` from `iosApp/project.yml` and is git-ignored. The manifest
+> declares the three build configs (each wired to its `Configurations/*.xcconfig`),
+> the three schemes, the `iosApp` + `iosAppTests` targets, and a pre-build step
+> that links the `:shared` KMP framework (`link<Build>FrameworkIos<Arch>`) before
+> the Swift compile. The SwiftUI entry point is `iosApp/App/RealityPortalApp.swift`;
+> DI lives in `iosApp/Core/DI/DependencyContainer.swift`; Ktor networking is
+> bootstrapped by the shared module's `HttpClientProvider` (ktor-client-darwin).
 
 ## Version Catalog
 
