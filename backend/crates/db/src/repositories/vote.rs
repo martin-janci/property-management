@@ -140,8 +140,8 @@ impl VoteRepository {
                 start_at, end_at, quorum_type, quorum_percentage,
                 allow_delegation, anonymous_voting, created_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6, $7::quorum_type, $8, $9, $10, $11)
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(data.organization_id)
@@ -174,7 +174,7 @@ impl VoteRepository {
     {
         let vote = sqlx::query_as::<_, Vote>(
             r#"
-            SELECT * FROM votes WHERE id = $1
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at FROM votes WHERE id = $1
             "#,
         )
         .bind(id)
@@ -302,7 +302,7 @@ impl VoteRepository {
         // Get vote from RLS context
         let vote = sqlx::query_as::<_, Vote>(
             r#"
-            SELECT * FROM votes WHERE id = $1
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at FROM votes WHERE id = $1
             "#,
         )
         .bind(vote_id)
@@ -414,8 +414,8 @@ impl VoteRepository {
                 start_at, end_at, quorum_type, quorum_percentage,
                 allow_delegation, anonymous_voting, created_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6, $7::quorum_type, $8, $9, $10, $11)
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(data.organization_id)
@@ -714,13 +714,13 @@ impl VoteRepository {
                 description = COALESCE($3, description),
                 start_at = COALESCE($4, start_at),
                 end_at = COALESCE($5, end_at),
-                quorum_type = COALESCE($6, quorum_type),
+                quorum_type = COALESCE($6::quorum_type, quorum_type),
                 quorum_percentage = COALESCE($7, quorum_percentage),
                 allow_delegation = COALESCE($8, allow_delegation),
                 anonymous_voting = COALESCE($9, anonymous_voting),
                 updated_at = NOW()
             WHERE id = $1 AND status = 'draft'
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -774,14 +774,14 @@ impl VoteRepository {
             r#"
             UPDATE votes
             SET
-                status = $2,
+                status = $2::vote_status,
                 start_at = $3,
                 eligible_count = $4,
                 published_by = $5,
                 published_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1 AND status = 'draft'
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -826,7 +826,7 @@ impl VoteRepository {
                 cancellation_reason = $3,
                 updated_at = NOW()
             WHERE id = $1 AND status != 'closed'
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -866,7 +866,7 @@ impl VoteRepository {
                 results_calculated_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -900,7 +900,7 @@ impl VoteRepository {
             UPDATE votes
             SET status = 'active', updated_at = NOW()
             WHERE status = 'scheduled' AND start_at <= NOW()
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .fetch_all(&self.pool)
@@ -945,8 +945,8 @@ impl VoteRepository {
                 vote_id, question_text, description, question_type,
                 options, display_order, is_required
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
+            VALUES ($1, $2, $3, $4::vote_question_type, $5, $6, $7)
+            RETURNING id, vote_id, question_text, description, question_type::text AS question_type, options, display_order, is_required, created_at, updated_at
             "#,
         )
         .bind(data.vote_id)
@@ -981,7 +981,7 @@ impl VoteRepository {
     pub async fn get_questions(&self, vote_id: Uuid) -> Result<Vec<VoteQuestion>, SqlxError> {
         let questions = sqlx::query_as::<_, VoteQuestion>(
             r#"
-            SELECT * FROM vote_questions
+            SELECT id, vote_id, question_text, description, question_type::text AS question_type, options, display_order, is_required, created_at, updated_at FROM vote_questions
             WHERE vote_id = $1
             ORDER BY display_order
             "#,
@@ -1015,7 +1015,7 @@ impl VoteRepository {
                 is_required = COALESCE($6, is_required),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING id, vote_id, question_text, description, question_type::text AS question_type, options, display_order, is_required, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -1206,7 +1206,7 @@ impl VoteRepository {
                 WHERE u.building_id = $1
                   AND ur.user_id = $2
                   AND ur.resident_type = 'owner'
-                  AND ur.move_out_date IS NULL
+                  AND ur.end_date IS NULL
 
                 UNION ALL
 
@@ -1221,10 +1221,10 @@ impl VoteRepository {
                 FROM units u
                 JOIN delegations d ON u.id = d.unit_id
                 WHERE u.building_id = $1
-                  AND d.delegate_id = $2
+                  AND d.delegate_user_id = $2
                   AND d.status = 'active'
-                  AND d.scope IN ('voting', 'full')
-                  AND (d.expires_at IS NULL OR d.expires_at > NOW())
+                  AND (d.scopes && ARRAY['voting','all']::delegation_scope[])
+                  AND (d.end_date IS NULL OR d.end_date >= CURRENT_DATE)
                   AND $3 = true
             )
             SELECT
@@ -1296,7 +1296,7 @@ impl VoteRepository {
             JOIN unit_residents ur ON u.id = ur.unit_id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             "#,
         )
         .bind(vote.building_id)
@@ -1324,7 +1324,7 @@ impl VoteRepository {
             JOIN units u ON ur.unit_id = u.id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             "#,
         )
         .bind(building_id)
@@ -1837,8 +1837,8 @@ impl VoteRepository {
         let entry = sqlx::query_as::<_, VoteAuditLog>(
             r#"
             INSERT INTO vote_audit_log (vote_id, user_id, action, data_hash, data_snapshot, ip_address, user_agent)
-            VALUES ($1, $2, $3, $4, $5, $6::inet, $7)
-            RETURNING *
+            VALUES ($1, $2, $3::vote_audit_action, $4, $5, $6::inet, $7)
+            RETURNING id, vote_id, user_id, action::text AS action, data_hash, data_snapshot, ip_address::text AS ip_address, user_agent, created_at
             "#,
         )
         .bind(data.vote_id)
@@ -1866,8 +1866,8 @@ impl VoteRepository {
         let entry = sqlx::query_as::<_, VoteAuditLog>(
             r#"
             INSERT INTO vote_audit_log (vote_id, user_id, action, data_hash, data_snapshot, ip_address, user_agent)
-            VALUES ($1, $2, $3, $4, $5, $6::inet, $7)
-            RETURNING *
+            VALUES ($1, $2, $3::vote_audit_action, $4, $5, $6::inet, $7)
+            RETURNING id, vote_id, user_id, action::text AS action, data_hash, data_snapshot, ip_address::text AS ip_address, user_agent, created_at
             "#,
         )
         .bind(data.vote_id)
@@ -1887,7 +1887,7 @@ impl VoteRepository {
     pub async fn get_audit_log(&self, vote_id: Uuid) -> Result<Vec<VoteAuditLog>, SqlxError> {
         let entries = sqlx::query_as::<_, VoteAuditLog>(
             r#"
-            SELECT * FROM vote_audit_log
+            SELECT id, vote_id, user_id, action::text AS action, data_hash, data_snapshot, ip_address::text AS ip_address, user_agent, created_at FROM vote_audit_log
             WHERE vote_id = $1
             ORDER BY created_at
             "#,
@@ -1927,7 +1927,7 @@ impl VoteRepository {
             JOIN unit_residents ur ON u.id = ur.unit_id
             WHERE u.building_id = $2
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             ORDER BY u.designation
             "#,
         )
