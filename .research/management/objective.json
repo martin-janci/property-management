@@ -2,10 +2,10 @@
   "schema_version": 1,
   "epic_prefix": "gap-82",
   "selected_at": "2026-06-06T00:19:24Z",
-  "last_action": "repick",
-  "reason": "prior target 'NONE' exhausted; closest-to-done is 'gap-82' (open=4 claimable=1)",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
-    "open": 4,
+    "open": 2,
     "claimable": 1
   }
 }
