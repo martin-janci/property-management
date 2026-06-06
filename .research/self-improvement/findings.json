@@ -2,7 +2,7 @@
   "schema_version": 1,
   "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
   "updated_at": "2026-06-04T02:22:50Z",
-  "generated_by": "b79cde72442194adab53f710273fdff25202fe33",
+  "generated_by": "4f877de50cbeccb6e957c057196c2d44277d1411",
   "findings": [
     {
       "finding_id": "rebase-ours-takes-upstream-discards-state",
@@ -88,17 +88,38 @@
       "severity": "high",
       "status": "acknowledged",
       "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T15:22:00Z",
-      "recurrence": 4,
+      "last_seen": "2026-06-06T14:23:16Z",
+      "recurrence": 5,
       "evidence": [
         "A parallel run pushed state (generated=2026-05-28T12:32:35Z, 137 archived) mid-transition; reset to origin/dev and re-ran",
         "d654512a 2026-05-28 02:15: 'R0 new (all captured by concurrent run)' — Phase 5 verdicts for #643/#641/#642 produced by a concurrent dispatcher",
         "6bf8e883 2026-05-28 14:11: archive-append re-merged rows already archived by a concurrent run (root of T4 duplicate-archive FAIL)",
-        "b8bf30ad 2026-05-28 15:17: re-claimed gap-10a-1/gap-10b-3 that a concurrent/prior run had already merged into archive 12h earlier — a lock would have surfaced the completed state before claim"
+        "b8bf30ad 2026-05-28 15:17: re-claimed gap-10a-1/gap-10b-3 that a concurrent/prior run had already merged into archive 12h earlier — a lock would have surfaced the completed state before claim",
+        "4f877de50: lock skipped (gh unavailable); dev moved 70e5e9d->681ff5e mid-run (concurrent PR merges); no .research conflict but window real"
       ],
       "proposed_fix": "Take a run-level advisory lock at Phase 1 (dispatcher.lock ref/row or GitHub deployment lock); abort fast if held. This also prevents the archive-dedup and stale-base re-run failures which are downstream symptoms of overlap.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 1 bootstrap)",
       "operator_notes": "Spec drafted on fix/dispatcher-lock-and-gc3-cap: new Phase 0.5 — GitHub ref (refs/tags/dispatcher-lock) as an atomic CAS mutex via `gh api POST /git/refs` (201=win, 422=held). TTL+holder ride in the tag object's message so a dead holder is reclaimable; release via DELETE on an EXIT trap covering Phase 6 abort paths. Uses gh REST not git push (the proxy 403s push — finding git-push-blocked-by-proxy), so the lock can actually acquire here. Landed as commit 9e61f4eb on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
+      "finding_id": "mcp-push-cannot-inline-large-archive",
+      "first_seen": "2026-06-03T15:48:48Z",
+      "last_seen": "2026-06-06T14:23:16Z",
+      "recurrence": 3,
+      "severity": "high",
+      "category": "infra",
+      "symptom": "Phase 6 archive-move produced a 198KB assignments-archive.json; mcp__github__push_files cannot inline a file that large (and git push is proxy-403'd), so the archive could not be pushed. The merged PR#1019 row was dropped from active (T19-clean) but its archive record was not persisted — Merged-total understated by 1.",
+      "evidence": [
+        "2026-06-04 02:04 run: 211KB assignments-archive.json (186 rows) impractical to reproduce inline for mcp__github__push_files; Phase 6 state landed via branch+PR+rebase-merge (PR#1042) instead",
+        "34702851a49f: pusher subagent stalled generating 198KB inline param; killed before push; fell back to pushing only the 3 small state files",
+        "assignments-archive.json = 198873 bytes / 175 rows; MCP push_files practical inline ceiling is well under that",
+        "4f877de50: 10 merged/done rows leaked in active (prior runs deferred 72KB archive push); cleared this run via session-branch push + PR #1145 rebase-merge"
+      ],
+      "root_cause": "assignments-archive.json grows unbounded (175 rows, ~1.1KB/row) while the only working push path in this env (MCP push_files) requires the full file content inline. The existing 'git-push-blocked-by-proxy' finding forces MCP-only; this finding is the collision of that constraint with an ever-growing archive.",
+      "proposed_fix": "PROVEN WORKAROUND (this run): direct `git push origin dev` is 403'd but pushing the dispatcher commit to the auto-checked-out session branch SUCCEEDS, then create a PR vs dev and `merge_pull_request(merge_method=rebase)` lands the exact commit (all blobs, incl. 74KB assignments-archive.json) with zero inline-content limit and zero transcription. Verified md5-identical on origin/dev. Bake this into Phase 6 as the primary push path, replacing/ahead-of mcp__github__push_files for large files. Supersedes the 'defer archive push, hold terminals as non-terminal' stopgap that caused the recurring leak.",
+      "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
     },
     {
       "finding_id": "approved-but-unmergeable-pool-grows",
@@ -117,25 +138,6 @@
       "proposed_fix": "Per-blocker routing in Phase 5.5: ci-fail -> Phase 5.7 respawn; needs-human-review -> explicit human-escalation tag + stop; dirty -> auto-rebase; ci-unknown/0-checks -> re-trigger CI or wait, don't strand.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 merge gate)",
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
-    {
-      "finding_id": "mcp-push-cannot-inline-large-archive",
-      "first_seen": "2026-06-03T15:48:48Z",
-      "last_seen": "2026-06-04T02:19:55Z",
-      "recurrence": 2,
-      "severity": "high",
-      "category": "infra",
-      "symptom": "Phase 6 archive-move produced a 198KB assignments-archive.json; mcp__github__push_files cannot inline a file that large (and git push is proxy-403'd), so the archive could not be pushed. The merged PR#1019 row was dropped from active (T19-clean) but its archive record was not persisted — Merged-total understated by 1.",
-      "evidence": [
-        "2026-06-04 02:04 run: 211KB assignments-archive.json (186 rows) impractical to reproduce inline for mcp__github__push_files; Phase 6 state landed via branch+PR+rebase-merge (PR#1042) instead",
-        "34702851a49f: pusher subagent stalled generating 198KB inline param; killed before push; fell back to pushing only the 3 small state files",
-        "assignments-archive.json = 198873 bytes / 175 rows; MCP push_files practical inline ceiling is well under that"
-      ],
-      "root_cause": "assignments-archive.json grows unbounded (175 rows, ~1.1KB/row) while the only working push path in this env (MCP push_files) requires the full file content inline. The existing 'git-push-blocked-by-proxy' finding forces MCP-only; this finding is the collision of that constraint with an ever-growing archive.",
-      "proposed_fix": "Shard the archive (e.g. assignments-archive-YYYY-MM.json, or a rolling 'recent' + cold shards) so any single file the dispatcher must push stays < ~60KB; OR add an 'archive-pending.json' delta file that Phase 6 appends to (small) and a separate compaction job folds into the cold archive out-of-band; OR teach archive-reconcile to push via a chunked/base64 git-blob API. See .research/archive-reconcile.sh + dispatcher-prompt.md Phase 6 push section.",
-      "effort": "medium",
-      "status": "open",
-      "operator_notes": ""
     },
     {
       "finding_id": "self-test-fail-recurs-each-run",
@@ -192,6 +194,23 @@
       "proposed_fix": "Normalize task_id by stripping trailing -impl|-fix|-v\\d+ before the open-PR / same-epic conflict check, or key dedup on the gap-id prefix (gap-82-4-*) so suffix variants collide. T20 already computes this stem for active rows — reuse the same stem function in the Phase 2/3 dedup gate.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 2/3 dedup gate)",
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
+      "finding_id": "buffer-metric-blind-to-archived-open-items",
+      "first_seen": "2026-06-06T14:23:16Z",
+      "last_seen": "2026-06-06T14:23:16Z",
+      "recurrence": 1,
+      "severity": "high",
+      "category": "claim",
+      "symptom": "Phase 2.6 buffer reported claimable=54/open=54 but REAL claimable=0; all 54 open action-list items already terminal (merged/failed/done) in assignments-archive by exact id.",
+      "evidence": [
+        "4f877de50: 54 open items, all exact-id present in archive; spot-check 5 -> all status=merged; Phase 3 claimed=0"
+      ],
+      "root_cause": "open_count = count(open AND id NOT in ACTIVE assignments) — it does NOT subtract archive task_ids, so terminalized-but-never-closed action-list rows inflate the metric. gc1-reconcile only closes gap-<n>-<m> stems, so non-gap ids (test-gap-*, refactor-*, triage-*, dx-*, bug-*, security-*) never auto-close.",
+      "proposed_fix": "Extend gc1-reconcile (or add a phase) to close any OPEN action-list item whose exact task_id is terminal in active+archive, for ANY id shape (not just gap-<n>-<m>). AND/OR change the Phase 2.6 open_count formula to subtract archive task_ids so the buffer reflects real claimable. Today the dispatcher silently starves (claimable=0) without firing Tier-1/Tier-2 because the metric says 54.",
+      "effort": "medium",
+      "status": "open",
+      "operator_notes": ""
     },
     {
       "finding_id": "orphan-recovery-reinserts-archived-task-id",
@@ -322,13 +341,14 @@
       "category": "push-path",
       "status": "acknowledged",
       "first_seen": "2026-05-28T18:21:53Z",
-      "last_seen": "2026-06-04T02:19:55Z",
+      "last_seen": "2026-06-06T14:23:16Z",
       "recurrence": 4,
       "evidence": [
         "2026-06-04 02:04 run: direct git push to dev is HTTP-403 (proxy); Phase 6 state landed via branch+PR+rebase-merge (PR#1042)",
         "All 4 retry attempts (2s/4s/8s/16s backoff) for git push returned HTTP 403 curl 22",
         "mcp__github__push_files used successfully for Phase 3.5 and Phase 6 commits",
-        "2026-05-28 run (R8/X6): local git push again returned HTTP 403 from the proxy after several retries; fell back to mcp__github__push_files to land the findings/state commit"
+        "2026-05-28 run (R8/X6): local git push again returned HTTP 403 from the proxy after several retries; fell back to mcp__github__push_files to land the findings/state commit",
+        "4f877de50: confirmed: push to dev 403; push to session branch claude/* OK → PR rebase-merge lands on dev"
       ],
       "proposed_fix": "Treat mcp__github__push_files as the primary push path in this environment; fall back to git push only if MCP tool unavailable. Add PUSH_METHOD=mcp env flag to dispatcher-prompt. Now recurring across runs — promote the MCP path from fallback to default rather than burning a 4-attempt backoff loop each run.",
       "effort": "small",
@@ -368,6 +388,23 @@
       "proposed_fix": "Add an explicit ci-unknown/0-checks branch to the merge gate: re-trigger CI (or wait + recheck) rather than treating absent checks as indeterminate-and-stranded. Also normalize reviewer_summary to a verdict= key so a 'ci-green-prefix' note is not mistaken for a verdict.",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 5.5 CI evaluation)",
       "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
+      "finding_id": "tier2-kick-payload-rejected-400",
+      "first_seen": "2026-06-06T14:23:16Z",
+      "last_seen": "2026-06-06T14:23:16Z",
+      "recurrence": 1,
+      "severity": "medium",
+      "category": "spec",
+      "symptom": "Tier-2 upstream planner kick returned HTTP 400: {\"error\":{\"message\":\"claimable: Extra inputs are not permitted\"}}.",
+      "evidence": [
+        "4f877de50: POST $DISPATCHER_URL body={reason,claimable} -> 400 invalid_request_error claimable not permitted"
+      ],
+      "root_cause": "The trigger 'fire' endpoint schema does not accept the dispatcher's {reason,claimable} body (issue #5 capture working as designed). The Anthropic routine fire endpoint likely expects a different shape (e.g. {text:...}) or no extra fields.",
+      "proposed_fix": "Update Phase 2.6 Tier-2 payload to match the fire endpoint schema (drop `claimable`/`reason`, or send {text:\"buffer-low\"}). Until fixed every Tier-2 kick no-ops, so genuine starvation never reaches the planner.",
+      "effort": "small",
+      "status": "open",
+      "operator_notes": ""
     },
     {
       "finding_id": "pick-target-epic-emits-bare-task-id-epic-prefix",
@@ -498,5 +535,5 @@
     }
   ],
   "last_status_reconcile": "2026-05-30 — flipped 5 findings open->acknowledged after their drafted fixes were consolidated onto branch fix/dispatcher-postmerge-cadence-clone-mtime (commits 8b63235e, cdcd1ce3, 17463444, 9e61f4eb); still awaiting a live dispatcher run to confirm in practice.",
-  "generated_at": "2026-06-04T02:22:50Z"
+  "generated_at": "2026-06-06T14:23:16Z"
 }
