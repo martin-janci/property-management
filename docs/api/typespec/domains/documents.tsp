@@ -60,6 +60,46 @@ model Folder {
   ...AuditableEntity;
 }
 
+@doc("Presigned-URL response for document download/preview (Story 7A.4)")
+model DocumentUrlResponse {
+  url: string;
+  expiresAt: dateTime;
+}
+
+@doc("A single document version (Story 7B.1)")
+model DocumentVersion {
+  id: uuid;
+  versionNumber: int32;
+  isCurrentVersion: boolean;
+  fileKey: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: int64;
+  createdBy: uuid;
+  createdByName: string;
+  createdAt: dateTime;
+}
+
+@doc("Full version history for a document (Story 7B.1)")
+model DocumentVersionHistory {
+  documentId: uuid;
+  title: string;
+  totalVersions: int32;
+  versions: DocumentVersion[];
+}
+
+@doc("Envelope returned by the version-history endpoint")
+model VersionHistoryResponse {
+  history: DocumentVersionHistory;
+}
+
+@doc("Result of creating a document version (Story 7B.1)")
+model CreateVersionResponse {
+  id: uuid;
+  versionNumber: int32;
+  message: string;
+}
+
 @route("/api/v1/documents")
 @tag("Documents")
 interface DocumentsApi {
@@ -110,24 +150,28 @@ interface DocumentsApi {
     @path id: uuid
   ): { @statusCode statusCode: 204; };
 
+  // Returns a presigned S3 URL (with Content-Disposition: attachment), not the
+  // file bytes — matches the api-server `UrlResponse` handler (Story 7A.4).
   @get @route("/{id}/download") download(
     @header("Authorization") token: string,
     @header("X-Tenant-ID") tenantId: uuid,
     @path id: uuid
-  ): { @header("Content-Type") contentType: string; @body body: bytes; };
+  ): DocumentUrlResponse;
 
-  @post @route("/{id}/new-version") uploadNewVersion(
+  // Create a new version. The api-server route is POST /{id}/versions taking a
+  // storage-key payload (file already uploaded to S3), not POST /{id}/new-version.
+  @post @route("/{id}/versions") uploadVersion(
     @header("Authorization") token: string,
     @header("X-Tenant-ID") tenantId: uuid,
     @path id: uuid,
-    @body body: { fileContent: string; fileName: string; mimeType: string; }
-  ): Document;
+    @body body: { fileKey: string; fileName: string; mimeType: string; sizeBytes: int64; }
+  ): { @statusCode statusCode: 201; @body body: CreateVersionResponse; };
 
   @get @route("/{id}/versions") listVersions(
     @header("Authorization") token: string,
     @header("X-Tenant-ID") tenantId: uuid,
     @path id: uuid
-  ): Document[];
+  ): VersionHistoryResponse;
 
   @get @route("/folders") listFolders(
     @header("Authorization") token: string,
