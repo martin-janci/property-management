@@ -93,6 +93,11 @@ jobs:
   trigger-deploy:
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    # continue-on-error: deploy-trigger failures (e.g. OIDC 403 while onyx
+    # auth.yaml is being updated) must not mark a successful image build red.
+    # The images are already pushed when this job runs; a trigger failure is
+    # an infra-side concern, not a build failure. See issue #950.
+    continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
       id-token: write
