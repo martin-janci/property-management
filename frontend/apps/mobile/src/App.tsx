@@ -6,10 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
-import { useOfflineSupport, usePushNotifications } from './hooks';
-import { deepLinkManager } from './qrcode';
+import { useDeepLinkRouting, useOfflineSupport, usePushNotifications } from './hooks';
 import { colors } from './screens/shared/screenStyles';
-import { resolveDeepLinkTarget, type Screen } from './services/deepLinkRouting';
+import type { Screen } from './services/deepLinkRouting';
 import './i18n'; // Initialize i18n
 import {
   AnnouncementDetailScreen,
@@ -92,24 +91,10 @@ function MainApp() {
   }, []);
 
   // gap-85-3: route incoming deep links (custom scheme + universal/App Links).
-  // The manager handles the cold-start initial URL, runtime `url` events, and
-  // queues auth-required links until the user is authenticated.
-  useEffect(() => {
-    const unsubscribe = deepLinkManager.addHandler((link) => {
-      const target = resolveDeepLinkTarget(link);
-      if (target) {
-        handleNavigate(target.screen, target.params);
-      }
-    });
-    void deepLinkManager.initialize();
-    return unsubscribe;
-  }, [handleNavigate]);
-
-  // Keep the manager's auth gate in sync so auth-required links queued while
-  // logged out are dispatched the moment the user authenticates.
-  useEffect(() => {
-    deepLinkManager.setAuthenticated(isAuthenticated);
-  }, [isAuthenticated]);
+  // Wiring lives in `useDeepLinkRouting`: it handles the cold-start initial
+  // URL, runtime `url` events, and the auth gate that queues auth-required
+  // links until the user is authenticated.
+  useDeepLinkRouting(handleNavigate, isAuthenticated);
 
   if (isLoading) {
     return (
