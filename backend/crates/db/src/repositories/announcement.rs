@@ -50,6 +50,15 @@ use uuid::Uuid;
 /// It references `$1` for the organization id (the `roles` arm), so callers must
 /// bind the org id as the first parameter. Expanded via `concat!` at compile
 /// time, so the resulting query string stays a `'static str`.
+///
+/// Membership is tested as JSONB array containment —
+/// `announcements.target_ids @> to_jsonb(<value>::text)` — rather than
+/// `<value> IN (SELECT jsonb_array_elements_text(target_ids))`. Both express
+/// "is `<value>` an element of the `target_ids` array" (Postgres treats
+/// `'["a","b"]'::jsonb @> '"a"'::jsonb` as true), but only the `@>` form is a
+/// sargable operator the GIN index `idx_announcements_target_ids_gin`
+/// (migration 00176) can serve, so the planner can probe it instead of
+/// unnesting every candidate row's array (issue #999 / #1070).
 macro_rules! announcement_targeting_predicate {
     () => {
         r#"
@@ -59,13 +68,13 @@ macro_rules! announcement_targeting_predicate {
                     JOIN units u ON u.id = ur.unit_id
                     WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
                       AND ur.end_date IS NULL
-                      AND u.building_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                      AND announcements.target_ids @> to_jsonb(u.building_id::text)
                 ))
                 OR (target_type = 'units' AND EXISTS (
                     SELECT 1 FROM unit_residents ur
                     WHERE ur.user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
                       AND ur.end_date IS NULL
-                      AND ur.unit_id::text IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                      AND announcements.target_ids @> to_jsonb(ur.unit_id::text)
                 ))
                 OR (target_type = 'roles' AND EXISTS (
                     SELECT 1 FROM user_memberships m
@@ -73,7 +82,7 @@ macro_rules! announcement_targeting_predicate {
                       AND m.organization_id = $1
                       AND m.revoked_at IS NULL
                       AND (m.expires_at IS NULL OR m.expires_at > NOW())
-                      AND m.role IN (SELECT jsonb_array_elements_text(announcements.target_ids))
+                      AND announcements.target_ids @> to_jsonb(m.role::text)
                 ))
 "#
     };
