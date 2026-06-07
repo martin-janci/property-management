@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -106,27 +107,55 @@ fun SearchScreen(
     val networkErrorMsg = stringResource(R.string.error_network)
     val searchFailedMsg = stringResource(R.string.error_generic)
 
+    // Stale-response race guard. Each new (page-1) search bumps a monotonic generation and
+    // cancels the in-flight job; the apply step is gated on SearchState.shouldApplyResponse so a
+    // slower OLDER request that completes after a NEWER one can't clobber the newer results.
+    // Page > 1 (infinite-scroll append) reuses the current generation so legitimate appends still
+    // land. searchGeneration/searchJob are plain holders (no recomposition needed).
+    val searchGeneration = remember { intArrayOf(0) }
+    val searchJob = remember { arrayOfNulls<Job>(1) }
+
     // Shared search logic lives in SearchState (commonMain) so it's unit-tested and
     // reusable by the iOS target; this composable is a thin shell around it.
     fun performSearch(page: Int = 1) {
-        scope.launch {
-            isLoading = true
-            errorMessage = null
+        // A fresh search (page 1) supersedes anything in flight: cancel it and bump the
+        // generation so its late response is discarded by the guard below.
+        if (page <= 1) {
+            searchJob[0]?.cancel()
+            searchGeneration[0] += 1
+        }
+        val generation = searchGeneration[0].toLong()
 
-            val request =
-                SearchState.buildSearchRequest(
-                    query = searchQuery,
-                    type = selectedType,
-                    category = selectedCategory,
-                    minPrice = minPrice,
-                    maxPrice = maxPrice,
-                    minRooms = minRooms,
-                    sort = selectedSort,
-                    page = page,
-                )
-            repository
-                .searchListings(request)
-                .fold(
+        searchJob[0] =
+            scope.launch {
+                isLoading = true
+                errorMessage = null
+
+                val request =
+                    SearchState.buildSearchRequest(
+                        query = searchQuery,
+                        type = selectedType,
+                        category = selectedCategory,
+                        minPrice = minPrice,
+                        maxPrice = maxPrice,
+                        minRooms = minRooms,
+                        sort = selectedSort,
+                        page = page,
+                    )
+                val result = repository.searchListings(request)
+
+                // Discard responses that no longer belong to the latest search generation —
+                // this is what prevents an out-of-order older response from winning.
+                if (
+                    !SearchState.shouldApplyResponse(
+                        responseGeneration = generation,
+                        currentGeneration = searchGeneration[0].toLong(),
+                    )
+                ) {
+                    return@launch
+                }
+
+                result.fold(
                     onSuccess = { response ->
                         searchResults =
                             SearchState.mergePage(searchResults, response.listings, page)
@@ -137,8 +166,8 @@ fun SearchScreen(
                         errorMessage = if (it.isNetworkError()) networkErrorMsg else searchFailedMsg
                     },
                 )
-            isLoading = false
-        }
+                isLoading = false
+            }
     }
 
     LaunchedEffect(Unit) { performSearch() }
@@ -324,7 +353,7 @@ private enum class ViewMode {
     MAP,
 }
 
-// ─── Top bar ─────────────────────────────────────────────────────────────────
+// ─── Top bar ───────────────────────────────────────────────────────────
 
 @Composable
 private fun ListingsTopBar(
@@ -423,7 +452,7 @@ private fun SegmentChip(icon: ImageVector, label: String, selected: Boolean, onC
     }
 }
 
-// ─── Search input ───────────────────────────────────────────────────────────
+// ─── Search input ──────────────────────────────────────────────────────
 
 @Composable
 private fun SearchInputRow(
@@ -457,7 +486,7 @@ private fun SearchInputRow(
     )
 }
 
-// ─── Rooms chip strip ──────────────────────────────────────────────────────
+// ─── Rooms chip strip ──────────────────────────────────────────────
 
 @Composable
 private fun RoomsChipStrip(selected: Int?, onSelect: (Int?) -> Unit, totalResults: Int) {
@@ -507,7 +536,7 @@ private fun RoomsChipStrip(selected: Int?, onSelect: (Int?) -> Unit, totalResult
     }
 }
 
-// ─── Filter sheet (modal bottom sheet) ─────────────────────────────────
+// ─── Filter sheet (modal bottom sheet) ───────────────────────────────
 //
 // AC-4: advanced filters are presented as a Material 3 ModalBottomSheet, named
 // `FilterSheet` to match the iOS shared component (docs/screens/reality-mobile/search.md
@@ -677,7 +706,7 @@ private fun FilterSheet(
     }
 }
 
-// ─── Empty / error / map placeholder ───────────────────────────────────
+// ─── Empty / error / map placeholder ─────────────────────────────────
 
 @Composable
 private fun ErrorBanner(error: String) {
