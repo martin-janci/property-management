@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-07T12:11:54Z",
+  "selected_at": "2026-06-07T16:15:10Z",
   "last_action": "empty",
-  "reason": "no gap-N/pm-role epic in backlog; claimed single highest-value research item (finish-first depth-first config)",
+  "reason": "no gap-/pm- epic in pool; pick-target-epic emitted full-task-id prefix failing self-test T21 — finish-first inert; backlog stale (7 open backlog items already terminal) so Tier-1 found 0 valid refills",
   "stats_at_selection": {
     "open": 11,
-    "claimable": 11
+    "claimable": 9
   }
 }
