@@ -11,9 +11,9 @@ package three.two.bit.ppt.reality.listing
  *   the reported total, and whether a load is in flight, decide whether to fetch the next page.
  * - [mergePage] — append-or-replace semantics for paginated results (page 1 replaces, later pages
  *   append).
- * - [shouldApplyResponse] — stale-response guard: given the request generation a response belongs to
- *   and the generation currently in effect, decide whether the response may be applied. Protects the
- *   search-as-you-type path from out-of-order completions where a slower OLDER request would
+ * - [shouldApplyResponse] — stale-response guard: given the request generation a response belongs
+ *   to and the generation currently in effect, decide whether the response may be applied. Protects
+ *   the search-as-you-type path from out-of-order completions where a slower OLDER request would
  *   otherwise clobber the results of a NEWER one.
  *
  * Epic 82 - Story 82.3: Reality mobile Home & Search (AC-2 debounced search, AC-4 infinite scroll +
@@ -106,8 +106,8 @@ object SearchState {
      *
      * Each search dispatched from the screen is tagged with a monotonically increasing generation
      * token (captured at launch time). When the network request completes, the caller passes the
-     * generation the response belongs to ([responseGeneration]) together with the generation that is
-     * currently in effect ([currentGeneration]) — i.e. the token of the most-recently-launched
+     * generation the response belongs to ([responseGeneration]) together with the generation that
+     * is currently in effect ([currentGeneration]) — i.e. the token of the most-recently-launched
      * search. The response may only be applied when it belongs to the latest generation.
      *
      * This makes the apply step order-independent: if a slower OLDER request finishes after a NEWER
