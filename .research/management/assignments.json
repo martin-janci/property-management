@@ -1,12 +1,12 @@
 {
-  "generated": "2026-06-07T08:39:21Z",
+  "generated": "2026-06-07T10:11:33Z",
   "assignments": [
     {
       "task_id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination-retry",
       "branch": "auto-impl/test-gap-hotfix-no-test-pr-959-reality-l",
       "status": "review",
       "claimed_at": "2026-06-07T08:13:56Z",
-      "last_updated": "2026-06-07T08:39:21Z",
+      "last_updated": "2026-06-07T10:11:33Z",
       "status_changed_at": "2026-06-07T08:37:39Z",
       "pr_number": 1154,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1154",
@@ -21,7 +21,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null,
+      "merge_attempted_at": "2026-06-07T10:11:33Z",
       "quarantined_at": null,
       "quarantine_reason": null
     }
