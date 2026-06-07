@@ -92,7 +92,7 @@ owner: reality-frontend
 
 - **Empty**: not depicted in design; for a missing listing (404), recommend portal-shell layout with `Listing not found` headline + "Browse listings" primary CTA + return-link to district. (Implementation note — match the header but skip gallery/aside.)
 - **Loading**: not depicted; recommend gallery skeleton (mosaic shape) + title/price skeleton + 3 section skeletons; right-rail collapsed to single agent-card skeleton. SSR-first means most content is static; loading mainly affects history/passport async sections.
-- **Error**: not depicted; per voice → blunt `Unable to load listing details` banner inside content grid with `Try again` CTA, retain header + breadcrumbs.
+- **Error**: not depicted; per voice → blunt `Unable to load listing details` banner inside content grid with `Try again` CTA, retain header + breadcrumbs. SSR note: `generateMetadata` must never throw on a malformed/partial 200 body — it degrades to the `Listing Not Found - Reality Portal` fallback metadata (see `metadata.ts` `buildListingMetadata` / `FALLBACK_METADATA`) rather than crashing the request.
 - **Success**: full populated detail as designed (5-image mosaic, 6 pills, 4-cell stats, all 7 sections, agent + mortgage + report aside).
 
 ## Notes
@@ -114,11 +114,13 @@ Single-property detail view — converts portal traffic into UC-46 inquiries (Ca
 - POI strip currently uses emoji (🚋 🏫 🛒 🌳) — per SKILL.md these must be migrated to Lucide icons before shipping.
 - Mortgage card border `#bfdbfe` is a hard-coded dawn shade — should derive from `--accent-soft-border` token or equivalent in dark mode.
 - Verified badge `success-50` background only exists in light; in dark, drop to `rgba(16,185,129,.15)` per the dark-mode pairing rule.
+- SSR metadata is built defensively in a standalone, component-free module: `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts` exposes `buildListingMetadata(listing: unknown)` (+ `FALLBACK_METADATA`), unit-tested in `metadata.test.ts`. `getListing` returns the raw JSON body of any 200 response, so a truthy-but-malformed body (e.g. `{}`, missing `title`/`address`/`description`) is treated as `unknown` and validated before nested access; the page's `generateMetadata` just delegates to the helper. When changing title/og-image/description shape, edit the helper (not `page.tsx`) so the regression test stays the contract.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-06-07 — agent: reconciled screen-map with PR #1085 (reality-web listing-detail SSR metadata hardening). PR extracted a defensive `buildListingMetadata(listing: unknown)` helper + `FALLBACK_METADATA` into a new `metadata.ts` module (with `metadata.test.ts`, 8 cases) so a malformed/partial 200 body no longer throws in `generateMetadata` during SSR; `page.tsx` now delegates to it. Documented the SSR fallback in States > Error and Notes > Specific. Frontmatter unchanged: reality-web buildStatus stays `shipped` (no UI/route change) and apiStatus stays `partial` (no endpoint change — still only `listings_get`); this is a robustness fix, not a feature.
 - 2026-05-13 — agent: implemented KMP ListingDetailScreen redesign per ui_kits/mobile-native/screens.jsx KmpListingDetailScreen. New layout: 280dp swipeable hero gallery with white-pill back/share/heart, page dots + counter; sticky agent bar (gradient avatar + Verified pill + Call pill); header section (Featured + transaction-type uppercase badges, large display price + €/m², title, address); 4-card quick stats strip (Area / Year / Energy / Floor); tab strip (Overview / Building / Nearby / Price history) with brand-600 underline; tab body — overview = description + features chips, building = 2-col K/V passport card, nearby = map placeholder, price-history = placeholder; bottom action bar with circle message tile + full-width primary "Žiadať obhliadku". Inquiry dialog + share sheet preserved. Added 11 new strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (ui_kits/reality-web/listing-detail.html); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections), states, design-specific notes; linked UC-31/44/46; declared 7 sharedComponents; added 3 relatedScreens (report-listing forward ref deferred — screen-map not yet created)
 - 2026-05-08 — init: created from scan (source: sitemap)
