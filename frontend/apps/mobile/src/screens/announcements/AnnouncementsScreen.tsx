@@ -102,6 +102,56 @@ export function filterMainList(items: Announcement[], searchQuery: string): Anno
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+/**
+ * Overlay the locally-tracked read state onto an announcement.
+ *
+ * Read state is tracked client-side in a `Set<id>` (the published summary
+ * carries no per-user read flag). Once an id is in the set the row is read;
+ * otherwise the row keeps whatever `isRead` the mapper produced.
+ */
+export function applyReadState(announcement: Announcement, readIds: Set<string>): Announcement {
+  if (announcement.isRead || !readIds.has(announcement.id)) return announcement;
+  return { ...announcement, isRead: true };
+}
+
+/** Build the read-state-aware UI list from a published-list response. */
+export function buildAnnouncements(
+  data: ApiAnnouncementListResponse | undefined,
+  readIds: Set<string>
+): Announcement[] {
+  return extractItems(data)
+    .map(toUiAnnouncement)
+    .map((a) => applyReadState(a, readIds));
+}
+
+/** Number of unread rows in a UI list. */
+export function countUnread(items: Announcement[]): number {
+  return items.filter((a) => !a.isRead).length;
+}
+
+/**
+ * Format a timestamp as a short relative label for the feed cards.
+ *
+ * < 1h → "Just now"; < 24h → "Nh ago"; < 7d → "Nd ago"; otherwise an
+ * absolute "Mon D" date. `now` is injectable so the output is deterministic
+ * under test.
+ */
+export function formatRelativeDate(dateString: string, now: Date = new Date()): string {
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffHours < 24) {
+    if (diffHours < 1) return 'Just now';
+    return `${diffHours}h ago`;
+  }
+  if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 interface AnnouncementsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
@@ -122,38 +172,12 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   // Story 6.4 — pinned items are derived client-side from the published list
   // (the published endpoint already orders `pinned DESC`). A dedicated query
   // is unnecessary and the endpoint does not accept a `pinned` filter.
-  const pinnedData = data;
-
-  const allRaw: Announcement[] = extractItems(data)
-    .map(toUiAnnouncement)
-    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }));
-
-  const pinnedItems: Announcement[] = derivePinnedItems(
-    extractItems(pinnedData)
-      .map(toUiAnnouncement)
-      .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }))
-  );
+  const allRaw: Announcement[] = buildAnnouncements(data, readIds);
+  const pinnedItems: Announcement[] = derivePinnedItems(allRaw);
 
   const onRefresh = useCallback(async () => {
     await refetch();
   }, [refetch]);
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffHours < 24) {
-      if (diffHours < 1) return 'Just now';
-      return `${diffHours}h ago`;
-    }
-    if (diffDays < 7) {
-      return `${diffDays}d ago`;
-    }
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
 
   const markAsRead = (id: string) => {
     setReadIds((prev) => {
@@ -167,7 +191,7 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   // Main list excludes pinned items (they appear in the sticky band above)
   const filteredAnnouncements = filterMainList(allRaw, searchQuery);
 
-  const unreadCount = allRaw.filter((a) => !a.isRead).length;
+  const unreadCount = countUnread(allRaw);
 
   const handleCardPress = (announcement: Announcement) => {
     markAsRead(announcement.id);
@@ -251,7 +275,9 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
               onPress={() => handleCardPress(announcement)}
             >
               <View style={styles.announcementHeader}>
-                <Text style={styles.announcementDate}>{formatDate(announcement.createdAt)}</Text>
+                <Text style={styles.announcementDate}>
+                  {formatRelativeDate(announcement.createdAt)}
+                </Text>
               </View>
 
               <Text style={styles.announcementTitle}>{announcement.title}</Text>
