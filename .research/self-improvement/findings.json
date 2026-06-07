@@ -2,86 +2,8 @@
   "schema_version": 1,
   "description": "Structured backlog of systemic dispatcher findings produced by Phase 8 self-review. Upsert by finding_id; bump recurrence + last_seen when a finding re-appears. Do not rewrite from scratch.",
   "updated_at": "2026-06-04T02:22:50Z",
-  "generated_by": "4f877de50cbeccb6e957c057196c2d44277d1411",
+  "generated_by": "89b7b23",
   "findings": [
-    {
-      "finding_id": "rebase-ours-takes-upstream-discards-state",
-      "title": "git checkout --ours during rebase onto origin/dev takes the UPSTREAM side, silently discarding the dispatcher's state writes",
-      "severity": "critical",
-      "category": "push-path",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T20:24:00Z",
-      "last_seen": "2026-05-28T20:24:00Z",
-      "recurrence": 1,
-      "symptom": "During `git rebase origin/dev`, `git checkout --ours <file>` resolved conflicts to origin/dev's version, dropping this run's assignments.json updates; the subsequent push was 'Everything up-to-date' (no change landed).",
-      "evidence": [
-        "Rebase conflict on assignments.json resolved with --ours, which during a rebase means the side being rebased ONTO (origin/dev), not the local branch",
-        "Push reported 'Everything up-to-date' — the dispatcher's state changes had been overwritten by the upstream version",
-        "Recovery: restored the correct tree from a reflog commit, then pushed via MCP API"
-      ],
-      "root_cause": "In a rebase, --ours/--theirs are inverted relative to a merge: --ours is the upstream (the commit you are replaying onto) and --theirs is your local change. The conflict-resolution step assumed merge semantics, so it kept upstream and threw away the local state write. The mistake was invisible because the push then had nothing to send.",
-      "proposed_fix": "In the dispatcher conflict-resolution spec, make state-file ownership explicit: for files the dispatcher OWNS (assignments.json, version), always resolve to the LOCAL/dispatcher side — during a rebase that is `--theirs`, not `--ours`. Better: never rebase owned state files — use `-X theirs` only for generated artifacts and reapply the dispatcher's state commit last (cherry-pick). Add a post-resolve guard that diffs the resolved file against the intended state and aborts the push if the dispatcher's changes are absent.",
-      "effort": "small",
-      "affected_artifact": ".research/dispatcher-prompt.md (rebase / conflict-resolution step)",
-      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded — add an explicit no-op-push detector. FIXED in Phase 6 push step: (a) owned-state conflict-resolution rule — during a REBASE keep OUR side via `git checkout --theirs` for `.research/management/**`+`VERSION` (--ours is upstream in a rebase, the inverse of a merge); any non-owned conflict aborts+bails; (b) no-op-push detector greps push output for 'Everything up-to-date' after a state commit and refuses to mark the run successful; (c) post-push verification diffs the landed origin/dev tree against the intended tree. Awaiting next dispatcher run to confirm."
-    },
-    {
-      "finding_id": "reclaim-of-already-merged-task-id",
-      "title": "Phase 3 claim re-claims a task_id that is already merged in the archive, scheduling already-shipped work and breaking self-test T4",
-      "severity": "critical",
-      "category": "self-test",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T15:22:00Z",
-      "last_seen": "2026-05-28T15:22:00Z",
-      "recurrence": 1,
-      "related_issue": 9,
-      "symptom": "Self-test T4 FAIL — gap-10a-1-oauth-tests and gap-10b-3-admin-health-ui each present in BOTH active (in-progress, claimed this run) and archive (merged). Also surfaces in goal-check as GC1 done_with_open_gap=10.",
-      "evidence": [
-        "b8bf30ad Phase 7 'Claimed: gap-10a-1-oauth-tests, gap-10b-3-admin-health-ui' at 2026-05-28T15:17:09Z",
-        "Archive already holds gap-10a-1-oauth-tests merged=PR#470 (merged_at 2026-05-25T00:45Z) and gap-10b-3-admin-health-ui merged=PR#471 (merged_at 2026-05-24T20:51Z) — work shipped ~12h before re-claim",
-        "dispatcher-self-test T4 FAIL: 'a row exists in both active and archive — Phase 6 move bug'",
-        "goal-check.sh GC1-referential-integrity FAIL includes done_with_open_gap=10 — coverage gaps marked done but still re-opened/claimable, the same class of bug at the coverage layer"
-      ],
-      "root_cause": "The Phase 2.6 buffer / Phase 3 claim selection picks claimable gaps from the coverage/action-list pool without subtracting task_ids already terminal in assignments-archive.json. A merged-then-still-open coverage gap (done_with_open_gap) re-enters the claimable set, so the dispatcher claims a fresh in-progress row for an already-merged task_id.",
-      "proposed_fix": "In Phase 3 claim selection, exclude any candidate whose task_id (and its normalized stem) already appears with a terminal status in assignments-archive.json before stamping an in-progress row. Reconcile coverage 'done' state against archive merges in Phase 2.6 so a merged gap cannot remain claimable (fixes goal-check done_with_open_gap). Add self-test assertion that a newly-claimed task_id has no terminal archive twin.",
-      "effort": "medium",
-      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill + Phase 3 claim selection) + .research/dispatcher-self-test.sh",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
-    {
-      "finding_id": "subagent-race-on-dev-push",
-      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
-      "severity": "critical",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
-      "evidence": [
-        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
-        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
-      ],
-      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
-      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
-      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
-    },
-    {
-      "finding_id": "subagent-workspace-contamination",
-      "title": "Subagents run git ops in the dispatcher working tree instead of a dedicated worktree, leaving local commits ahead of remote",
-      "severity": "critical",
-      "status": "acknowledged",
-      "first_seen": "2026-05-28T13:41:00Z",
-      "last_seen": "2026-05-28T13:41:00Z",
-      "recurrence": 1,
-      "related_issue": 7,
-      "evidence": [
-        "Phase 5 reviewer for PR#661 ran git ops in /home/user/property-management, creating a local commit ahead of remote",
-        "PR#640 rebaser likely did the same",
-        "Recurring issue tracked as #7"
-      ],
-      "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
-      "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
-      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
-    },
     {
       "finding_id": "no-run-level-lock-parallel-overlap",
       "title": "Two dispatcher cycles overlap with no lock, forcing a mid-run reset + re-run on push conflict",
@@ -104,8 +26,8 @@
     {
       "finding_id": "mcp-push-cannot-inline-large-archive",
       "first_seen": "2026-06-03T15:48:48Z",
-      "last_seen": "2026-06-06T14:23:16Z",
-      "recurrence": 3,
+      "last_seen": "2026-06-07T02:14:56Z",
+      "recurrence": 4,
       "severity": "high",
       "category": "infra",
       "symptom": "Phase 6 archive-move produced a 198KB assignments-archive.json; mcp__github__push_files cannot inline a file that large (and git push is proxy-403'd), so the archive could not be pushed. The merged PR#1019 row was dropped from active (T19-clean) but its archive record was not persisted — Merged-total understated by 1.",
@@ -113,7 +35,8 @@
         "2026-06-04 02:04 run: 211KB assignments-archive.json (186 rows) impractical to reproduce inline for mcp__github__push_files; Phase 6 state landed via branch+PR+rebase-merge (PR#1042) instead",
         "34702851a49f: pusher subagent stalled generating 198KB inline param; killed before push; fell back to pushing only the 3 small state files",
         "assignments-archive.json = 198873 bytes / 175 rows; MCP push_files practical inline ceiling is well under that",
-        "4f877de50: 10 merged/done rows leaked in active (prior runs deferred 72KB archive push); cleared this run via session-branch push + PR #1145 rebase-merge"
+        "4f877de50: 10 merged/done rows leaked in active (prior runs deferred 72KB archive push); cleared this run via session-branch push + PR #1145 rebase-merge",
+        "89b7b23: dispatcher 2026-06-07 — 4 merged reconciled+swept; 0 claimable (all 54 open are archive dups: 45 merged/done, 9 failed); Tier2 HTTP400; large-archive pushed via session-branch+rebase-merge (PR #1152→d1bbc54)"
       ],
       "root_cause": "assignments-archive.json grows unbounded (175 rows, ~1.1KB/row) while the only working push path in this env (MCP push_files) requires the full file content inline. The existing 'git-push-blocked-by-proxy' finding forces MCP-only; this finding is the collision of that constraint with an ever-growing archive.",
       "proposed_fix": "PROVEN WORKAROUND (this run): direct `git push origin dev` is 403'd but pushing the dispatcher commit to the auto-checked-out session branch SUCCEEDS, then create a PR vs dev and `merge_pull_request(merge_method=rebase)` lands the exact commit (all blobs, incl. 74KB assignments-archive.json) with zero inline-content limit and zero transcription. Verified md5-identical on origin/dev. Bake this into Phase 6 as the primary push path, replacing/ahead-of mcp__github__push_files for large files. Supersedes the 'defer archive push, hold terminals as non-terminal' stopgap that caused the recurring leak.",
@@ -198,13 +121,14 @@
     {
       "finding_id": "buffer-metric-blind-to-archived-open-items",
       "first_seen": "2026-06-06T14:23:16Z",
-      "last_seen": "2026-06-06T14:23:16Z",
-      "recurrence": 1,
+      "last_seen": "2026-06-07T02:14:56Z",
+      "recurrence": 2,
       "severity": "high",
       "category": "claim",
       "symptom": "Phase 2.6 buffer reported claimable=54/open=54 but REAL claimable=0; all 54 open action-list items already terminal (merged/failed/done) in assignments-archive by exact id.",
       "evidence": [
-        "4f877de50: 54 open items, all exact-id present in archive; spot-check 5 -> all status=merged; Phase 3 claimed=0"
+        "4f877de50: 54 open items, all exact-id present in archive; spot-check 5 -> all status=merged; Phase 3 claimed=0",
+        "89b7b23: dispatcher 2026-06-07 — 4 merged reconciled+swept; 0 claimable (all 54 open are archive dups: 45 merged/done, 9 failed); Tier2 HTTP400; large-archive pushed via session-branch+rebase-merge (PR #1152→d1bbc54)"
       ],
       "root_cause": "open_count = count(open AND id NOT in ACTIVE assignments) — it does NOT subtract archive task_ids, so terminalized-but-never-closed action-list rows inflate the metric. gc1-reconcile only closes gap-<n>-<m> stems, so non-gap ids (test-gap-*, refactor-*, triage-*, dx-*, bug-*, security-*) never auto-close.",
       "proposed_fix": "Extend gc1-reconcile (or add a phase) to close any OPEN action-list item whose exact task_id is terminal in active+archive, for ANY id shape (not just gap-<n>-<m>). AND/OR change the Phase 2.6 open_count formula to subtract archive task_ids so the buffer reflects real claimable. Today the dispatcher silently starves (claimable=0) without firing Tier-1/Tier-2 because the metric says 54.",
@@ -392,13 +316,14 @@
     {
       "finding_id": "tier2-kick-payload-rejected-400",
       "first_seen": "2026-06-06T14:23:16Z",
-      "last_seen": "2026-06-06T14:23:16Z",
-      "recurrence": 1,
+      "last_seen": "2026-06-07T02:14:56Z",
+      "recurrence": 2,
       "severity": "medium",
       "category": "spec",
       "symptom": "Tier-2 upstream planner kick returned HTTP 400: {\"error\":{\"message\":\"claimable: Extra inputs are not permitted\"}}.",
       "evidence": [
-        "4f877de50: POST $DISPATCHER_URL body={reason,claimable} -> 400 invalid_request_error claimable not permitted"
+        "4f877de50: POST $DISPATCHER_URL body={reason,claimable} -> 400 invalid_request_error claimable not permitted",
+        "89b7b23: dispatcher 2026-06-07 — 4 merged reconciled+swept; 0 claimable (all 54 open are archive dups: 45 merged/done, 9 failed); Tier2 HTTP400; large-archive pushed via session-branch+rebase-merge (PR #1152→d1bbc54)"
       ],
       "root_cause": "The trigger 'fire' endpoint schema does not accept the dispatcher's {reason,claimable} body (issue #5 capture working as designed). The Anthropic routine fire endpoint likely expects a different shape (e.g. {text:...}) or no extra fields.",
       "proposed_fix": "Update Phase 2.6 Tier-2 payload to match the fire endpoint schema (drop `claimable`/`reason`, or send {text:\"buffer-low\"}). Until fixed every Tier-2 kick no-ops, so genuine starvation never reaches the planner.",
@@ -532,8 +457,86 @@
       "effort": "trivial",
       "affected_artifact": ".research/dispatcher-prompt.md (Phase 3 WIP gate + Phase 7 summary)",
       "operator_notes": "Expected behavior; recorded as a throughput signal. WIP should be back under cap next run after X6 merges."
+    },
+    {
+      "finding_id": "rebase-ours-takes-upstream-discards-state",
+      "title": "git checkout --ours during rebase onto origin/dev takes the UPSTREAM side, silently discarding the dispatcher's state writes",
+      "severity": "critical",
+      "category": "push-path",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T20:24:00Z",
+      "last_seen": "2026-05-28T20:24:00Z",
+      "recurrence": 1,
+      "symptom": "During `git rebase origin/dev`, `git checkout --ours <file>` resolved conflicts to origin/dev's version, dropping this run's assignments.json updates; the subsequent push was 'Everything up-to-date' (no change landed).",
+      "evidence": [
+        "Rebase conflict on assignments.json resolved with --ours, which during a rebase means the side being rebased ONTO (origin/dev), not the local branch",
+        "Push reported 'Everything up-to-date' — the dispatcher's state changes had been overwritten by the upstream version",
+        "Recovery: restored the correct tree from a reflog commit, then pushed via MCP API"
+      ],
+      "root_cause": "In a rebase, --ours/--theirs are inverted relative to a merge: --ours is the upstream (the commit you are replaying onto) and --theirs is your local change. The conflict-resolution step assumed merge semantics, so it kept upstream and threw away the local state write. The mistake was invisible because the push then had nothing to send.",
+      "proposed_fix": "In the dispatcher conflict-resolution spec, make state-file ownership explicit: for files the dispatcher OWNS (assignments.json, version), always resolve to the LOCAL/dispatcher side — during a rebase that is `--theirs`, not `--ours`. Better: never rebase owned state files — use `-X theirs` only for generated artifacts and reapply the dispatcher's state commit last (cherry-pick). Add a post-resolve guard that diffs the resolved file against the intended state and aborts the push if the dispatcher's changes are absent.",
+      "effort": "small",
+      "affected_artifact": ".research/dispatcher-prompt.md (rebase / conflict-resolution step)",
+      "operator_notes": "Recovered via reflog + MCP push this run. The 'Everything up-to-date' push is the tell that state was discarded — add an explicit no-op-push detector. FIXED in Phase 6 push step: (a) owned-state conflict-resolution rule — during a REBASE keep OUR side via `git checkout --theirs` for `.research/management/**`+`VERSION` (--ours is upstream in a rebase, the inverse of a merge); any non-owned conflict aborts+bails; (b) no-op-push detector greps push output for 'Everything up-to-date' after a state commit and refuses to mark the run successful; (c) post-push verification diffs the landed origin/dev tree against the intended tree. Awaiting next dispatcher run to confirm."
+    },
+    {
+      "finding_id": "reclaim-of-already-merged-task-id",
+      "title": "Phase 3 claim re-claims a task_id that is already merged in the archive, scheduling already-shipped work and breaking self-test T4",
+      "severity": "critical",
+      "category": "self-test",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T15:22:00Z",
+      "last_seen": "2026-05-28T15:22:00Z",
+      "recurrence": 1,
+      "related_issue": 9,
+      "symptom": "Self-test T4 FAIL — gap-10a-1-oauth-tests and gap-10b-3-admin-health-ui each present in BOTH active (in-progress, claimed this run) and archive (merged). Also surfaces in goal-check as GC1 done_with_open_gap=10.",
+      "evidence": [
+        "b8bf30ad Phase 7 'Claimed: gap-10a-1-oauth-tests, gap-10b-3-admin-health-ui' at 2026-05-28T15:17:09Z",
+        "Archive already holds gap-10a-1-oauth-tests merged=PR#470 (merged_at 2026-05-25T00:45Z) and gap-10b-3-admin-health-ui merged=PR#471 (merged_at 2026-05-24T20:51Z) — work shipped ~12h before re-claim",
+        "dispatcher-self-test T4 FAIL: 'a row exists in both active and archive — Phase 6 move bug'",
+        "goal-check.sh GC1-referential-integrity FAIL includes done_with_open_gap=10 — coverage gaps marked done but still re-opened/claimable, the same class of bug at the coverage layer"
+      ],
+      "root_cause": "The Phase 2.6 buffer / Phase 3 claim selection picks claimable gaps from the coverage/action-list pool without subtracting task_ids already terminal in assignments-archive.json. A merged-then-still-open coverage gap (done_with_open_gap) re-enters the claimable set, so the dispatcher claims a fresh in-progress row for an already-merged task_id.",
+      "proposed_fix": "In Phase 3 claim selection, exclude any candidate whose task_id (and its normalized stem) already appears with a terminal status in assignments-archive.json before stamping an in-progress row. Reconcile coverage 'done' state against archive merges in Phase 2.6 so a merged gap cannot remain claimable (fixes goal-check done_with_open_gap). Add self-test assertion that a newly-claimed task_id has no terminal archive twin.",
+      "effort": "medium",
+      "affected_artifact": ".research/dispatcher-prompt.md (Phase 2.6 buffer refill + Phase 3 claim selection) + .research/dispatcher-self-test.sh",
+      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
+    },
+    {
+      "finding_id": "subagent-race-on-dev-push",
+      "title": "Concurrent subagent pushes to dev create rapid version-bump cycles and empty the dispatcher Phase 6 commit",
+      "severity": "critical",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T13:41:00Z",
+      "last_seen": "2026-05-28T13:41:00Z",
+      "recurrence": 1,
+      "evidence": [
+        "Version churn 0.2.964 -> 0.2.968 in a single run from concurrent subagent pushes",
+        "Dispatcher Phase 6 commit was 'nothing to commit' because subagents pre-empted all changes"
+      ],
+      "proposed_fix": "Serialize state writes behind a single owner: subagents return diffs, only the dispatcher commits/pushes assignments + version.",
+      "affected_artifact": ".research/dispatcher-prompt.md (state-write ownership)",
+      "operator_notes": "Drafted on fix/dispatcher-state-write-ownership. Audited every dispatcher-spawned skill: ppt-project-management + ppt-dev-review already RETURN without committing; ppt-implement/ppt-pr-followup commit only on their own feature branch; the ONE violator was ppt-review-merged (Step 5 did its own `git add .research/management/... && commit && push origin dev` — a separate dev push that research-land replays + version-bump churns, and that can empty the orchestrator's Phase 6 commit). Fix: (a) dispatcher-prompt.md gains a single-writer invariant (HARD RULE) + a per-actor contract table; orchestrator owns all .research/** commits (dispatcher: Phase 3.5+6; routine: its Phase 6 `git add .research/`). (b) Dispatcher Phase 2.5 spawns ppt-review-merged with DISPATCHER_OWNED_COMMIT=1 and folds post-merge-review.json+last-merged-review.txt into the Phase 6 commit. (c) ppt-review-merged gates its commit/push on that flag (standalone still self-commits). (d) Defense-in-depth: version-bump.yml skips a push that touches ONLY .research/** (bookkeeping is not a product change), capping the rapid-bump cycles for direct-push paths. Note: GITHUB_TOKEN pushes (research-land/version-bump's own) already don't re-trigger workflows, so the churn bit hardest where the dispatcher pushes dev with a PAT. Landed as commit cdcd1ce3 on fix/dispatcher-postmerge-cadence-clone-mtime. Awaiting next dispatcher run to confirm."
+    },
+    {
+      "finding_id": "subagent-workspace-contamination",
+      "title": "Subagents run git ops in the dispatcher working tree instead of a dedicated worktree, leaving local commits ahead of remote",
+      "severity": "critical",
+      "status": "acknowledged",
+      "first_seen": "2026-05-28T13:41:00Z",
+      "last_seen": "2026-05-28T13:41:00Z",
+      "recurrence": 1,
+      "related_issue": 7,
+      "evidence": [
+        "Phase 5 reviewer for PR#661 ran git ops in /home/user/property-management, creating a local commit ahead of remote",
+        "PR#640 rebaser likely did the same",
+        "Recurring issue tracked as #7"
+      ],
+      "proposed_fix": "Hard-isolate every subagent to its own `git worktree add` under .claude/worktrees/<task>; have the dispatcher refuse to spawn any subagent that would operate in the dispatcher CWD.",
+      "affected_artifact": ".research/dispatcher-prompt.md (subagent-spawn contract)",
+      "operator_notes": "Addressed in fix/dispatcher-findings — spec changes only; landed via this PR. Awaiting next dispatcher run to confirm in practice."
     }
   ],
   "last_status_reconcile": "2026-05-30 — flipped 5 findings open->acknowledged after their drafted fixes were consolidated onto branch fix/dispatcher-postmerge-cadence-clone-mtime (commits 8b63235e, cdcd1ce3, 17463444, 9e61f4eb); still awaiting a live dispatcher run to confirm in practice.",
-  "generated_at": "2026-06-06T14:23:16Z"
+  "generated_at": "2026-06-07T02:14:56Z"
 }
