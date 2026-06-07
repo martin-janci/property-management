@@ -1,9 +1,13 @@
 import {
   type Announcement,
   type ApiAnnouncementSummary,
+  applyReadState,
+  buildAnnouncements,
+  countUnread,
   derivePinnedItems,
   extractItems,
   filterMainList,
+  formatRelativeDate,
   toUiAnnouncement,
 } from './AnnouncementsScreen';
 
@@ -124,5 +128,84 @@ describe('filterMainList (PR #943 main feed partitioning)', () => {
     expect(filterMainList(items, 'LIFT').map((a) => a.id)).toEqual(['old']);
     // A term that matched the old `content` body must NOT match now.
     expect(filterMainList(items, 'no-such-title')).toEqual([]);
+  });
+});
+
+// Pure helpers extracted from the component body during the churn-hotspot
+// refactor. These used to live inline (untested); pinning them here prevents
+// silent regression of read-state overlay, unread counting, and the feed's
+// relative-date label.
+
+describe('applyReadState (client-side read overlay)', () => {
+  const base = ui({ id: 'a', isRead: false });
+
+  it('marks an unread row read when its id is in the set', () => {
+    const out = applyReadState(base, new Set(['a']));
+    expect(out.isRead).toBe(true);
+    expect(out).not.toBe(base); // new object — does not mutate input
+  });
+
+  it('returns the same reference when the id is absent', () => {
+    const out = applyReadState(base, new Set(['other']));
+    expect(out).toBe(base);
+  });
+
+  it('returns the same reference when already read', () => {
+    const read = ui({ id: 'a', isRead: true });
+    expect(applyReadState(read, new Set(['a']))).toBe(read);
+  });
+});
+
+describe('buildAnnouncements (response → read-aware UI list)', () => {
+  it('maps the published list and overlays read state', () => {
+    const resp = { announcements: [summary] }; // summary.id === 'a-1'
+    const out = buildAnnouncements(resp, new Set(['a-1']));
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ id: 'a-1', isRead: true, isPinned: true });
+  });
+
+  it('returns [] for an undefined response', () => {
+    expect(buildAnnouncements(undefined, new Set())).toEqual([]);
+  });
+
+  it('leaves rows unread when their id is not in the set', () => {
+    const out = buildAnnouncements({ announcements: [summary] }, new Set());
+    expect(out[0].isRead).toBe(false);
+  });
+});
+
+describe('countUnread', () => {
+  it('counts rows whose isRead is false', () => {
+    const items = [
+      ui({ id: 'a', isRead: false }),
+      ui({ id: 'b', isRead: true }),
+      ui({ id: 'c', isRead: false }),
+    ];
+    expect(countUnread(items)).toBe(2);
+  });
+
+  it('is 0 for an empty list', () => {
+    expect(countUnread([])).toBe(0);
+  });
+});
+
+describe('formatRelativeDate (feed card label)', () => {
+  const now = new Date('2026-05-20T12:00:00Z');
+
+  it('returns "Just now" under one hour', () => {
+    expect(formatRelativeDate('2026-05-20T11:30:00Z', now)).toBe('Just now');
+  });
+
+  it('returns "Nh ago" within the same day', () => {
+    expect(formatRelativeDate('2026-05-20T09:00:00Z', now)).toBe('3h ago');
+  });
+
+  it('returns "Nd ago" within the week', () => {
+    expect(formatRelativeDate('2026-05-18T12:00:00Z', now)).toBe('2d ago');
+  });
+
+  it('returns an absolute month-day label beyond a week', () => {
+    // 2026-05-01 is >7d before now → absolute "May 1" style label.
+    expect(formatRelativeDate('2026-05-01T12:00:00Z', now)).toBe('May 1');
   });
 });
