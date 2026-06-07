@@ -938,7 +938,7 @@ fun ListingCard(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = listingMeta(listing),
+                    text = SearchState.searchResultMeta(listing.rooms, listing.areaSqm),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -961,12 +961,4 @@ private fun UppercaseBadge(text: String, bg: Color, ink: Color) {
             color = ink,
         )
     }
-}
-
-private fun listingMeta(listing: ListingSummary): String {
-    val parts = buildList {
-        listing.rooms?.let { add("$it izby") }
-        listing.areaSqm?.toInt()?.let { add("$it m²") }
-    }
-    return parts.joinToString(" · ")
 }
