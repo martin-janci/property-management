@@ -66,6 +66,44 @@ class DeepLinkRouterTest {
     }
 
     @Test
+    fun parse_sso_deep_link_percent_decodes_token() {
+        // A real JWT/opaque token may contain reserved chars that get percent-encoded in the URL.
+        // The shared router must decode them so the token matches what Android's
+        // `Uri.getQueryParameter` (which decodes) hands to the same SSO validation path.
+        // %2B -> '+', %2F -> '/', %3D -> '='  (a base64url/base64 token with padding)
+        val target = DeepLinkRouter.parse("reality://sso?token=ab%2Bcd%2Fef%3D%3D")
+        assertEquals(DeepLinkTarget.Sso("ab+cd/ef=="), target)
+    }
+
+    @Test
+    fun parse_sso_deep_link_decodes_plus_as_space() {
+        // Query semantics: '+' decodes to a space (form-urlencoded), matching platform URI decoders.
+        val target = DeepLinkRouter.parse("reality://sso?token=a+b")
+        assertEquals(DeepLinkTarget.Sso("a b"), target)
+    }
+
+    @Test
+    fun parse_sso_deep_link_decodes_utf8_multibyte() {
+        // %C3%A1 is the UTF-8 encoding of 'á' — two bytes must combine into one char.
+        val target = DeepLinkRouter.parse("reality://sso?token=caf%C3%A9")
+        assertEquals(DeepLinkTarget.Sso("café"), target)
+    }
+
+    @Test
+    fun parse_sso_deep_link_leaves_unencoded_token_untouched() {
+        // No escapes -> fast path returns the token verbatim.
+        val target = DeepLinkRouter.parse("reality://sso?token=plain-token-123")
+        assertEquals(DeepLinkTarget.Sso("plain-token-123"), target)
+    }
+
+    @Test
+    fun parse_sso_deep_link_tolerates_malformed_escape() {
+        // A stray '%' not followed by two hex digits is passed through literally rather than throwing.
+        val target = DeepLinkRouter.parse("reality://sso?token=50%off")
+        assertEquals(DeepLinkTarget.Sso("50%off"), target)
+    }
+
+    @Test
     fun parse_rejects_foreign_scheme() {
         assertNull(DeepLinkRouter.parse("https://listing/abc-123"))
         assertNull(DeepLinkRouter.parse("ppt://listing/abc-123"))
