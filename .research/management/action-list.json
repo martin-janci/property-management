@@ -3,14 +3,15 @@
   "items": [
     {
       "id": "gap-8a-3-notification-preference-sync-retry",
-      "action": "[retry of gap-8a-3-notification-preference-sync: prior attempt failed on sandbox infra, not logic] Notification preference sync (story 8a-3): persist per-channel notification preferences to the backend and sync them across devices on login; distinct from the realtime delivery pipeline already covered by test-gap-8a-3-notification-realtime-sync.",
+      "action": "[DISPATCHER-DONE 2026-06-07T08:28:01Z: already-implemented on dev - per-channel persistence + login GET snapshot + WS pubsub sync live (PR #472, migration 00177); remaining 8A.3 mobile-push leg tracked separately as gap-8a-3-mobile-push] [retry of gap-8a-3-notification-preference-sync: prior attempt failed on sandbox infra, not logic] Notification preference sync (story 8a-3): persist per-channel notification preferences to the backend and sync them across devices on login; distinct from the realtime delivery pipeline already covered by test-gap-8a-3-notification-realtime-sync.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-retry 2026-06-07T08:13:56Z (sandbox-failure-after-reclaim)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolved": "verified-on-dev 2026-06-07T08:28:01Z by retry implementer (rust-backend); no change needed"
     },
     {
       "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination-retry",
