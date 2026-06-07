@@ -33,6 +33,22 @@ fn clamp_pagination(page: Option<i32>, limit: Option<i32>) -> (i32, i32) {
     (page, limit)
 }
 
+/// Build the `PublicListingQuery` that reaches SQL from a raw search request,
+/// clamping pagination first.
+///
+/// This is the single source of truth for the clamp-then-wire step used by the
+/// `search` handler: it guarantees the clamped `(page, limit)` — not the raw
+/// request values — are what end up in the query sent to the DB. Returning the
+/// clamped pair as well lets the handler echo the effective values in the
+/// response.
+fn build_listing_query(req: ListingSearchRequest) -> (PublicListingQuery, i32, i32) {
+    let (page, limit) = clamp_pagination(req.page, req.limit);
+    let mut query: PublicListingQuery = req.into();
+    query.page = Some(page);
+    query.limit = Some(limit);
+    (query, page, limit)
+}
+
 /// Create listings router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -258,11 +274,9 @@ pub async fn search(
     Query(req): Query<ListingSearchRequest>,
 ) -> Result<Json<ListingSearchResponse>, (axum::http::StatusCode, String)> {
     // Clamp pagination at the handler before it reaches SQL (mirrors the
-    // articles handler pattern).
-    let (page, limit) = clamp_pagination(req.page, req.limit);
-    let mut query: PublicListingQuery = req.into();
-    query.page = Some(page);
-    query.limit = Some(limit);
+    // articles handler pattern). `build_listing_query` is the single source of
+    // truth for the clamp-then-wire step.
+    let (query, page, limit) = build_listing_query(req);
 
     // Search listings
     let listings = state
@@ -904,5 +918,79 @@ mod tests {
     #[test]
     fn valid_values_pass_through() {
         assert_eq!(clamp_pagination(Some(3), Some(50)), (3, 50));
+    }
+
+    // --- Wiring regression for #953 / #959 ---
+    //
+    // The pure `clamp_pagination` tests above only prove the helper is correct.
+    // They would still pass if someone dropped the override that copies the
+    // clamped values into the `PublicListingQuery` that actually reaches SQL —
+    // re-opening the original 500 / resource-exhaustion bug. These tests assert
+    // the end-to-end clamp-then-wire step (`build_listing_query`), i.e. that the
+    // *query sent to the DB* carries the clamped values, not the raw request.
+
+    /// A search request with everything unset except the fields under test.
+    fn req_with_pagination(page: Option<i32>, limit: Option<i32>) -> ListingSearchRequest {
+        ListingSearchRequest {
+            q: None,
+            property_type: None,
+            transaction_type: None,
+            price_min: None,
+            price_max: None,
+            area_min: None,
+            area_max: None,
+            rooms_min: None,
+            rooms_max: None,
+            city: None,
+            country: None,
+            page,
+            limit,
+            sort: None,
+        }
+    }
+
+    #[test]
+    fn query_for_negative_limit_never_carries_negative_to_sql() {
+        let (query, _, echoed_limit) = build_listing_query(req_with_pagination(None, Some(-1)));
+        assert_eq!(
+            query.limit,
+            Some(1),
+            "negative limit must be clamped in the query handed to SQL"
+        );
+        assert_eq!(echoed_limit, 1, "response must echo the clamped limit");
+    }
+
+    #[test]
+    fn query_for_oversized_limit_is_capped_in_sql_query() {
+        let (query, _, echoed_limit) =
+            build_listing_query(req_with_pagination(None, Some(100_000)));
+        assert_eq!(
+            query.limit,
+            Some(MAX_LISTINGS_LIMIT),
+            "oversized limit must be capped in the query handed to SQL"
+        );
+        assert_eq!(echoed_limit, MAX_LISTINGS_LIMIT);
+    }
+
+    #[test]
+    fn query_for_negative_page_never_carries_negative_to_sql() {
+        let (query, echoed_page, _) = build_listing_query(req_with_pagination(Some(-5), None));
+        assert_eq!(
+            query.page,
+            Some(1),
+            "negative page must be clamped in the query handed to SQL"
+        );
+        assert_eq!(echoed_page, 1, "response must echo the clamped page");
+    }
+
+    #[test]
+    fn query_preserves_non_pagination_filters() {
+        let mut req = req_with_pagination(Some(2), Some(25));
+        req.city = Some("Bratislava".to_string());
+        req.transaction_type = Some("rent".to_string());
+        let (query, page, limit) = build_listing_query(req);
+        assert_eq!((page, limit), (2, 25), "valid pagination passes through");
+        assert_eq!(query.city.as_deref(), Some("Bratislava"));
+        assert_eq!(query.transaction_type.as_deref(), Some("rent"));
     }
 }
