@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-04T21:44:38Z",
+  "generated": "2026-06-07T12:16:41Z",
   "items": [
     {
       "id": "gap-8a-3-notification-preference-sync-retry",
@@ -18,8 +18,130 @@
       "action": "[retry of test-gap-hotfix-no-test-pr-959-reality-listings-pagination: prior attempt failed on sandbox infra, not logic] Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-retry 2026-06-07T08:13:56Z (sandbox-failure-after-reclaim)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "gc1_closed": "merged via PR #1154"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
+      "action": "DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "code-review-mobile-native-kmp-search-stale-response-race",
+      "action": "SearchScreen stale-response race — overlapping searches can clobber newer results",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1085-reality",
+      "action": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1100-ppt",
+      "action": "Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "triage-issue-1151",
+      "action": "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "churn-hotspot-mobile-native-listing-detail-kt",
+      "action": "Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "churn-hotspot-mobile-native-search-screen-kt",
+      "action": "Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+      "action": "MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements",
+      "action": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-announcements-test",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "refactor-churn-hotspot-mobile-documents",
+      "action": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
       "depends_on": []
