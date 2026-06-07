@@ -1,8 +1,11 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-07T18:15:33Z",
+  "selected_at": "2026-06-07T22:10:37Z",
   "last_action": "empty",
-  "reason": "no gap-/pm- epic in claimable pool; pick-target-epic emits full-task-id prefix that fails self-test T21 — finish-first held inert. Backlog stale (open backlog items already terminal in archive); Tier-2 kick returned HTTP 400 (planner rejects 'claimable' field). Archive-move deferred: assignments-archive.json (298KB) exceeds MCP push_files safe size (#1014) and git push/api.github.com are proxy-403 with no token — terminal rows kept in active to avoid data loss.",
-  "stats_at_selection": { "open": 3, "claimable": 3 }
+  "reason": "Only claimable candidate is a churn-hotspot task (refactor-churn-hotspot-mobile-announcements-test) whose prefix is not gap-N/pm-<role>, so it is not representable in the finish-first schema; pick-target-epic --update emits the full task-id which fails self-test T21. Held finish-first inert (NONE) so T21 stays green; Phase 3 normal claim path still claims the single candidate. Buffer starved (claimable=1<floor=36): Tier-2 upstream kick fired successfully (HTTP 200, session_01QF9kF9dVnwehLcQrewXjVR) after correcting the payload to {text:...}+anthropic-version header (spec's {reason,claimable} body 400s). Coverage Tier-1 refill skipped: snapshot is 2026-05-29 (stale); real backlog source is the research routine, which is actively feeding churn/code-review/test-gap items.",
+  "stats_at_selection": {
+    "open": 1,
+    "claimable": 1
+  }
 }
