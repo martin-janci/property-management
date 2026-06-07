@@ -4,16 +4,14 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 /**
  * Regression guard for the Android `MainActivity` deep-link handler (`androidApp`).
  *
  * `MainActivity.handleDeepLink` used to reimplement `reality://` scheme/host dispatch with
- * `android.net.Uri` and a *second*, Android-only `DeepLinkTarget` sealed class that lacked `Sso`
- * — so a new shared target would silently no-op on Android. It now does nothing platform-specific
+ * `android.net.Uri` and a *second*, Android-only `DeepLinkTarget` sealed class that lacked `Sso` —
+ * so a new shared target would silently no-op on Android. It now does nothing platform-specific
  * beyond pulling the URI string off the `Intent` and delegating to [DeepLinkRouter]:
- *
  * ```kotlin
  * when (val target = DeepLinkRouter.parse(uri.toString())) {
  *     is DeepLinkTarget.Sso -> ssoService.validateAndLogin(target.token)   // out-of-band
