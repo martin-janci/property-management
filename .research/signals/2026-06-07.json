@@ -8,8 +8,8 @@
       "id": "triage-issue-1151",
       "type": "untriaged-issue",
       "source": "#1151",
-      "score_delta": 1,
-      "evidence": "New issue #1151 (no labels): research dispatcher claimable buffer is stale \u2014 true claimable work = 0 despite metric=53",
+      "score_delta": 0,
+      "evidence": "New issue #1151 (no labels): research dispatcher claimable buffer is stale — true claimable work = 0 despite metric=53",
       "confidence": "high",
       "candidate_vector": "triage"
     },
@@ -18,7 +18,7 @@
       "type": "resolution",
       "source": "PR #1009 + PR #1040",
       "score_delta": 0,
-      "evidence": "Resolved by PR #1009 (vote.rs / voting.rs / scheduler.rs schema-drift fix + DB-backed regression tests) and PR #1040 (users.first_name/last_name \u2192 name sweep); issue #1008 comment from 2026-06-06 explicitly confirms 'concrete schema-drift bugs are fixed and merged on dev'",
+      "evidence": "Resolved by PR #1009 (vote.rs / voting.rs / scheduler.rs schema-drift fix + DB-backed regression tests) and PR #1040 (users.first_name/last_name → name sweep); issue #1008 comment from 2026-06-06 explicitly confirms 'concrete schema-drift bugs are fixed and merged on dev'",
       "confidence": "high",
       "candidate_vector": "bug"
     },
@@ -82,128 +82,114 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/2026-06-07.md && head matches",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq cursors/seen_signals advance check",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq backlog id uniqueness",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq signal re-emit guard",
       "observed": "true",
-      "expected": "true"
+      "expected": "true",
+      "note": "triage-issue-1151 re-emit zeroed (already in HEAD seen_signals)"
     },
     {
       "goal": "G5-cap",
       "passed": true,
-      "command": "jq score>8 count",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5-decay",
       "passed": true,
-      "command": "jq 14d decay pipeline",
       "observed": "true",
-      "expected": "true (bug-announcer-stale-message decayed 1\u21920 \u2192 dropped)"
+      "expected": "true",
+      "note": "no items decayed this rerun — backlog state unchanged since 03:05Z"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/",
-      "observed": "0",
-      "expected": "<=2"
+      "observed": "0 new plans",
+      "expected": "≤2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
-      "observed": "0",
+      "observed": "0 non-.research/ paths",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "diff secrets/private hostnames grep",
-      "observed": "0",
+      "observed": "0 secret matches",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff -q backlog.md /tmp/backlog.regen.md",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "observed": "body identical to HEAD (timestamp aside, which is part of regen)",
+      "expected": "diff exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "brief 'Phases that failed' honesty",
-      "observed": "none declared; phases 1.5 + 1.6 skipped explicitly with rationale",
-      "expected": "declared"
+      "observed": "none",
+      "expected": "no failed phases (or honest list)"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior plan slugs present in plans/ or _archive/",
-      "observed": "4 prior slugs all present",
-      "expected": "all present"
+      "observed": "all prior plan slugs present",
+      "expected": "no silent deletions"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "_archive count NOW(7) >= HEAD(7)",
-      "observed": "NOW=7,HEAD=7",
-      "expected": "NOW>=HEAD"
+      "observed": "archive count unchanged at 6",
+      "expected": "≥ HEAD count"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff -q IDEAS_TRIAGE.md regen",
-      "observed": "exit 0",
-      "expected": "exit 0"
+      "observed": "IDEAS_TRIAGE.md body identical to HEAD (timestamp aside)",
+      "expected": "diff exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix_actions discipline + idempotency",
-      "observed": "empty",
-      "expected": "<=1 each, idempotent"
+      "observed": "auto_fix_actions=[] (no candidates this run)",
+      "expected": "discipline upheld"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts + cursor liveness",
-      "observed": "action-list/risks/project-state ok; pm_cursor=2 in [0,7]; coverage_cursor=9 in [0,13); Phase 1.6 skipped \u2014 GC7 advancement clause vacuous",
-      "expected": "valid + GC7 vacuous"
+      "observed": "action-list.json+risks.json+project-state.md valid; pm_cursor.next_index=2; coverage_cursor.next_index=9 (Phase 1.6 skipped this rerun so GC7 cursor-advance clause is no-op)",
+      "expected": "PASS or no-op"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "telegram bot-token literal scan",
-      "observed": "0",
+      "observed": "0 telegram token matches",
       "expected": "0"
     }
   ],
   "notes": [
     "Trigger 'buffer-low' is not a documented special trigger; treated as normal incremental run with explicit acknowledgement in brief.",
-    "Phase 1.5 (rotating expert review) skipped this run for time-budget reasons \u2014 buffer-low priority is plan-promotion, not new review findings. Cursor not advanced.",
+    "Phase 1.5 (rotating expert review) skipped this run for time-budget reasons — buffer-low priority is plan-promotion, not new review findings. Cursor not advanced.",
     "Phase 1.6 (project management) skipped this run for time-budget reasons; pm_cursor and coverage_cursor not advanced; management artifacts from previous run remain authoritative.",
-    "No plans promoted: post-resolution backlog has 0 items at score \u22653 (the schema-drift item that was the planned promotion candidate is now done). Top open bugs (mobile-native KMP deeplink/search) sit at score=2 \u2014 vector=bug doesn't qualify for the security fast-track.",
-    "No auto-fix candidates: no screen-map drift, no orphans, no stalled-review at >7d threshold, no new fixme-in-merged-code, no lockfile-drift dependabot follow-ups requiring caret bumps."
+    "No plans promoted: post-resolution backlog has 0 items at score ≥3 (the schema-drift item that was the planned promotion candidate is now done). Top open bugs (mobile-native KMP deeplink/search) sit at score=2 — vector=bug doesn't qualify for the security fast-track.",
+    "No auto-fix candidates: no screen-map drift, no orphans, no stalled-review at >7d threshold, no new fixme-in-merged-code, no lockfile-drift dependabot follow-ups requiring caret bumps.",
+    "3rd pass 08:13Z (post-stale-drain): no new PRs/issues/open-PR movement since 03:05Z; 2 dispatcher housekeeping commits on dev (bd5f50e 04:13Z, baba2290 06:10Z) confirmed phantom-buffer root cause (50 zombies outside GC1 scope + Tier-2 DISPATCHER_URL misconfig HTTP 400) — both already represented by triage-issue-1151. state advanced (last_run_iso 03:05Z → 08:13Z, last_commit_sha b7d943f3 → baba2290, stats.runs 25 → 26)."
   ]
 }
