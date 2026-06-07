@@ -165,6 +165,33 @@ class SearchStateTest {
         assertFalse(SearchState.shouldApplyResponse(responseGeneration = 9, currentGeneration = 7))
     }
 
+    // ── searchResultMeta ─────────────────────────────────────────────────
+
+    @Test
+    fun searchResultMeta_roomsAndArea_joinedWithSeparator() {
+        assertEquals("3 izby · 84 m²", SearchState.searchResultMeta(rooms = 3, areaSqm = 84.0))
+    }
+
+    @Test
+    fun searchResultMeta_areaTruncatedToWholeNumber() {
+        assertEquals("2 izby · 64 m²", SearchState.searchResultMeta(rooms = 2, areaSqm = 64.9))
+    }
+
+    @Test
+    fun searchResultMeta_onlyRooms() {
+        assertEquals("1 izby", SearchState.searchResultMeta(rooms = 1, areaSqm = null))
+    }
+
+    @Test
+    fun searchResultMeta_onlyArea() {
+        assertEquals("50 m²", SearchState.searchResultMeta(rooms = null, areaSqm = 50.0))
+    }
+
+    @Test
+    fun searchResultMeta_neither_isEmpty() {
+        assertEquals("", SearchState.searchResultMeta(rooms = null, areaSqm = null))
+    }
+
     private fun summary(id: String) =
         ListingSummary(
             id = id,

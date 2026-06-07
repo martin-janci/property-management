@@ -15,6 +15,7 @@ package three.two.bit.ppt.reality.listing
  *   to and the generation currently in effect, decide whether the response may be applied. Protects
  *   the search-as-you-type path from out-of-order completions where a slower OLDER request would
  *   otherwise clobber the results of a NEWER one.
+ * - [searchResultMeta] — the "rooms · m²" meta line shown on each result card.
  *
  * Epic 82 - Story 82.3: Reality mobile Home & Search (AC-2 debounced search, AC-4 infinite scroll +
  * FilterSheet).
@@ -121,4 +122,24 @@ object SearchState {
      */
     fun shouldApplyResponse(responseGeneration: Long, currentGeneration: Long): Boolean =
         responseGeneration == currentGeneration
+
+    /**
+     * Meta line for a search-result [ListingCard][three.two.bit.ppt.reality.ui.search.ListingCard]:
+     * room count and floor area joined with " · " (e.g. `3 izby · 84 m²`).
+     *
+     * Pure formatting extracted from the Compose card so it can be unit-tested and reused by the
+     * iOS target. Behaviour is identical to the inline helper it replaced: rooms come first (when
+     * present), then the integer-truncated area in m², and an absent dimension is simply omitted.
+     * With neither dimension present the result is the empty string.
+     *
+     * @param rooms room count, or null when unknown
+     * @param areaSqm floor area in m² (truncated to a whole number for display), or null
+     */
+    fun searchResultMeta(rooms: Int?, areaSqm: Double?): String {
+        val parts = buildList {
+            rooms?.let { add("$it izby") }
+            areaSqm?.toInt()?.let { add("$it m²") }
+        }
+        return parts.joinToString(" · ")
+    }
 }
