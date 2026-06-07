@@ -77,7 +77,8 @@ class DeepLinkRouterTest {
 
     @Test
     fun parse_sso_deep_link_decodes_plus_as_space() {
-        // Query semantics: '+' decodes to a space (form-urlencoded), matching platform URI decoders.
+        // Query semantics: '+' decodes to a space (form-urlencoded), matching platform URI
+        // decoders.
         val target = DeepLinkRouter.parse("reality://sso?token=a+b")
         assertEquals(DeepLinkTarget.Sso("a b"), target)
     }
@@ -98,7 +99,8 @@ class DeepLinkRouterTest {
 
     @Test
     fun parse_sso_deep_link_tolerates_malformed_escape() {
-        // A stray '%' not followed by two hex digits is passed through literally rather than throwing.
+        // A stray '%' not followed by two hex digits is passed through literally rather than
+        // throwing.
         val target = DeepLinkRouter.parse("reality://sso?token=50%off")
         assertEquals(DeepLinkTarget.Sso("50%off"), target)
     }

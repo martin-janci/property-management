@@ -120,9 +120,10 @@ object DeepLinkRouter {
      * byte sequence interpreted as UTF-8.
      *
      * This mirrors Android's `android.net.Uri.getQueryParameter`, which decodes its result. The
-     * shared router previously returned the raw, still-encoded substring, so the same `reality://sso`
-     * deep link produced a decoded token on Android but an encoded token on the shared/iOS path —
-     * breaking SSO validation on iOS. Decoding here makes every platform agree on the token string.
+     * shared router previously returned the raw, still-encoded substring, so the same
+     * `reality://sso` deep link produced a decoded token on Android but an encoded token on the
+     * shared/iOS path — breaking SSO validation on iOS. Decoding here makes every platform agree on
+     * the token string.
      *
      * Malformed escapes (a `%` not followed by two hex digits) are passed through literally rather
      * than throwing, matching the lenient behaviour of platform URI decoders.
