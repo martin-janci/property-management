@@ -1,0 +1,209 @@
+{
+  "date": "2026-06-07",
+  "trigger": "buffer-low",
+  "lag_hours": 21,
+  "merged_prs_processed": 18,
+  "signals": [
+    {
+      "id": "triage-issue-1151",
+      "type": "untriaged-issue",
+      "source": "#1151",
+      "score_delta": 1,
+      "evidence": "New issue #1151 (no labels): research dispatcher claimable buffer is stale \u2014 true claimable work = 0 despite metric=53",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "resolution-bug-schema-drift-issue-1008",
+      "type": "resolution",
+      "source": "PR #1009 + PR #1040",
+      "score_delta": 0,
+      "evidence": "Resolved by PR #1009 (vote.rs / voting.rs / scheduler.rs schema-drift fix + DB-backed regression tests) and PR #1040 (users.first_name/last_name \u2192 name sweep); issue #1008 comment from 2026-06-06 explicitly confirms 'concrete schema-drift bugs are fixed and merged on dev'",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "resolution-code-review-pkce-tautology",
+      "type": "resolution",
+      "source": "PR #1146",
+      "score_delta": 0,
+      "evidence": "Resolved by PR #1146 (real PKCE assertion via verify_pkce with RFC 7636 vector); issue #1137 closed",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "resolution-triage-769",
+      "type": "resolution",
+      "source": "PR #1141 + issue #769 closed",
+      "score_delta": 0,
+      "evidence": "PR #1141 validates worktree path params on deploy-server; issue #769 closed 2026-06-01",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "resolution-triage-789",
+      "type": "resolution",
+      "source": "PR #1142 + issue #789 closed",
+      "score_delta": 0,
+      "evidence": "PR #1142 rejects mismatched organization_id in list_buildings; issue #789 closed 2026-06-02",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "resolution-triage-950",
+      "type": "resolution",
+      "source": "PR #1143 + issue #950 closed",
+      "score_delta": 0,
+      "evidence": "PR #1143 fixes CI false-red image builds; issue #950 closed today",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "resolution-triage-952",
+      "type": "resolution",
+      "source": "PR #1144 + issue #952 closed",
+      "score_delta": 0,
+      "evidence": "PR #1144 fixes Reality SSO callback URL; issue #952 closed today",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "resolution-triage-1061",
+      "type": "resolution",
+      "source": "issue #1061 closed",
+      "score_delta": 0,
+      "evidence": "Issue #1061 (dispatcher assignments-archive corruption) CLOSED 2026-06-06T14:55Z; restoration commit 8f154b2 landed",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-07.md && head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursors/seen_signals advance check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal re-emit guard",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score>8 count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "jq 14d decay pipeline",
+      "observed": "true",
+      "expected": "true (bug-announcer-stale-message decayed 1\u21920 \u2192 dropped)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "diff secrets/private hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' honesty",
+      "observed": "none declared; phases 1.5 + 1.6 skipped explicitly with rationale",
+      "expected": "declared"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs present in plans/ or _archive/",
+      "observed": "4 prior slugs all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count NOW(7) >= HEAD(7)",
+      "observed": "NOW=7,HEAD=7",
+      "expected": "NOW>=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions discipline + idempotency",
+      "observed": "empty",
+      "expected": "<=1 each, idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursor liveness",
+      "observed": "action-list/risks/project-state ok; pm_cursor=2 in [0,7]; coverage_cursor=9 in [0,13); Phase 1.6 skipped \u2014 GC7 advancement clause vacuous",
+      "expected": "valid + GC7 vacuous"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram bot-token literal scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "notes": [
+    "Trigger 'buffer-low' is not a documented special trigger; treated as normal incremental run with explicit acknowledgement in brief.",
+    "Phase 1.5 (rotating expert review) skipped this run for time-budget reasons \u2014 buffer-low priority is plan-promotion, not new review findings. Cursor not advanced.",
+    "Phase 1.6 (project management) skipped this run for time-budget reasons; pm_cursor and coverage_cursor not advanced; management artifacts from previous run remain authoritative.",
+    "No plans promoted: post-resolution backlog has 0 items at score \u22653 (the schema-drift item that was the planned promotion candidate is now done). Top open bugs (mobile-native KMP deeplink/search) sit at score=2 \u2014 vector=bug doesn't qualify for the security fast-track.",
+    "No auto-fix candidates: no screen-map drift, no orphans, no stalled-review at >7d threshold, no new fixme-in-merged-code, no lockfile-drift dependabot follow-ups requiring caret bumps."
+  ]
+}

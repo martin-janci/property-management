@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-06T03:06:08Z",
-  "last_run_ms": 4321,
-  "last_pr_seen": 1140,
-  "last_issue_seen": 1137,
-  "last_commit_sha": "db457e50e4025c40da1037d0a13d57522d552ce6",
+  "last_run_iso": "2026-06-07T00:15:00Z",
+  "last_run_ms": 8000,
+  "last_pr_seen": 1150,
+  "last_issue_seen": 1151,
+  "last_commit_sha": "b9c3ee2e1d42c3729f42cc495c9c18e6127e8e4b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -402,7 +402,8 @@
     "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
     "code-review-issue-1137-pkce-test-tautology",
     "churn-hotspot-mobile-native-search-screen-kt",
-    "churn-hotspot-mobile-native-listing-detail-kt"
+    "churn-hotspot-mobile-native-listing-detail-kt",
+    "triage-issue-1151"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -416,8 +417,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 23,
-    "vectors_created": 126,
+    "runs": 24,
+    "vectors_created": 127,
     "plans_created": 7,
     "quiet_days": 0,
     "auto_fix_count": 0
