@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-07T12:17:49Z",
+  "generated": "2026-06-07T12:28:33Z",
   "assignments": [
     {
       "task_id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination-retry",
@@ -28,18 +28,18 @@
     {
       "task_id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
       "branch": "auto-impl/code-review-mobile-native-kmp-deeplink-t",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-07T12:17:49Z",
-      "last_updated": "2026-06-07T12:17:49Z",
-      "status_changed_at": "2026-06-07T12:17:49Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-07T12:28:33Z",
+      "status_changed_at": "2026-06-07T12:28:33Z",
+      "pr_number": 1155,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1155",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "kotlin-mp",
+      "implementer_summary": "pr=1155 status=done specialist=kotlin-mp scope_drift=true code_reuse_warn=none note=shared DeepLinkRouter now percent-decodes query params (matches Android Uri); compile+driver tests pass, full gradle blocked by AGP proxy; drift is pm-frontend hint vs pm-mobile-owned mobile-native path",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
