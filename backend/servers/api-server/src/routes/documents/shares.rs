@@ -411,10 +411,16 @@ async fn access_shared_document(
     Path(token): Path<String>,
 ) -> Result<Json<SharedDocumentResponse>, (StatusCode, Json<ErrorResponse>)> {
     let ip_address = addr.ip().to_string();
-    // Find share by token
-    // TODO: This endpoint is public, no RLS context available
-    #[allow(deprecated)]
-    let share = match state.document_repo.find_share_by_token(&token).await {
+    // Find share by token. This public endpoint has no caller org context, so
+    // the validated token is the authorization grant: the lookup runs with
+    // super-admin RLS context on a dedicated connection (see
+    // `find_share_by_token_for_share`) so it stays correct under FORCE RLS on
+    // `document_shares` (#754 / PAP-21).
+    let share = match state
+        .document_repo
+        .find_share_by_token_for_share(&token)
+        .await
+    {
         Ok(Some(s)) => s,
         Ok(None) => {
             return Err((
@@ -476,12 +482,13 @@ async fn access_shared_document(
         }
     };
 
-    // Log access - important for audit trail but shouldn't fail the request
-    // Public endpoint, no RLS context
-    #[allow(deprecated)]
+    // Log access - important for audit trail but shouldn't fail the request.
+    // Public endpoint: the validated token authorizes the write, which runs
+    // with super-admin RLS context on a dedicated connection (FORCE RLS on
+    // `document_share_access_log`, #754 / PAP-21).
     if let Err(e) = state
         .document_repo
-        .log_share_access(LogShareAccess {
+        .log_share_access_for_share(LogShareAccess {
             share_id: share.id,
             accessed_by: None,
             ip_address: Some(ip_address.clone()),
@@ -542,10 +549,16 @@ async fn access_protected_share(
     Json(req): Json<AccessShareRequest>,
 ) -> Result<Json<SharedDocumentResponse>, (StatusCode, Json<ErrorResponse>)> {
     let ip_address = addr.ip().to_string();
-    // Find share by token
-    // TODO: This endpoint is public, no RLS context available
-    #[allow(deprecated)]
-    let share = match state.document_repo.find_share_by_token(&token).await {
+    // Find share by token. This public endpoint has no caller org context, so
+    // the validated token is the authorization grant: the lookup runs with
+    // super-admin RLS context on a dedicated connection (see
+    // `find_share_by_token_for_share`) so it stays correct under FORCE RLS on
+    // `document_shares` (#754 / PAP-21).
+    let share = match state
+        .document_repo
+        .find_share_by_token_for_share(&token)
+        .await
+    {
         Ok(Some(s)) => s,
         Ok(None) => {
             return Err((
@@ -568,10 +581,12 @@ async fn access_protected_share(
         }
     };
 
-    // Verify password
+    // Verify password. The share row is under FORCE RLS, so the lookup needed
+    // to read its password hash runs with super-admin RLS context on a
+    // dedicated connection (#754 / PAP-21).
     if !state
         .document_repo
-        .verify_share_password(share.id, &req.password)
+        .verify_share_password_for_share(share.id, &req.password)
         .await
         .unwrap_or(false)
     {
@@ -609,12 +624,13 @@ async fn access_protected_share(
         }
     };
 
-    // Log access - important for audit trail but shouldn't fail the request
-    // Public endpoint, no RLS context
-    #[allow(deprecated)]
+    // Log access - important for audit trail but shouldn't fail the request.
+    // Public endpoint: the validated token authorizes the write, which runs
+    // with super-admin RLS context on a dedicated connection (FORCE RLS on
+    // `document_share_access_log`, #754 / PAP-21).
     if let Err(e) = state
         .document_repo
-        .log_share_access(LogShareAccess {
+        .log_share_access_for_share(LogShareAccess {
             share_id: share.id,
             accessed_by: None,
             ip_address: Some(ip_address.clone()),
