@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-08T06:56:42Z",
+  "generated": "2026-06-08T08:36:01Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-mobile-announcements-test",
@@ -52,18 +52,18 @@
     {
       "task_id": "test-oauth-authorization-server-integration",
       "branch": "auto-impl/test-oauth-authorization-server-integrat",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-08T08:10:00Z",
-      "last_updated": "2026-06-08T08:10:00Z",
-      "status_changed_at": "2026-06-08T08:10:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-08T08:36:01Z",
+      "status_changed_at": "2026-06-08T08:36:01Z",
+      "pr_number": 1168,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1168",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=1168 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=15 sqlx::test authz error-path + audit-trail cases green on ephemeral PG16; fmt clean; additive only",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
