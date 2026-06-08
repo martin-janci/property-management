@@ -12,9 +12,9 @@
  */
 
 import {
-  usePriceMap,
   type DistrictPriceData,
   type PriceMapPropertyType,
+  usePriceMap,
 } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
@@ -61,14 +61,14 @@ export default function PriceMapPage() {
         best == null || (d.avg_price_per_m2 as number) > (best.avg_price_per_m2 as number)
           ? d
           : best,
-      null,
+      null
     );
     const trending = districts
       .filter((d) => d.trend_pct_qoq != null)
       .reduce<DistrictPriceData | null>(
         (best, d) =>
           best == null || (d.trend_pct_qoq as number) > (best.trend_pct_qoq as number) ? d : best,
-        null,
+        null
       );
     const totalListings = districts.reduce((s, d) => s + d.listing_count, 0);
 
@@ -241,7 +241,7 @@ export default function PriceMapPage() {
                     style={{ cursor: 'pointer', transition: 'opacity .15s' }}
                     onClick={() =>
                       setSelectedId(
-                        selectedId === district.district_id ? null : district.district_id,
+                        selectedId === district.district_id ? null : district.district_id
                       )
                     }
                     aria-label={district.district_name}
