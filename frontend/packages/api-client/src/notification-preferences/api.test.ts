@@ -55,7 +55,9 @@ describe('notification-preferences api client — request wiring contract', () =
 
   it('updateNotificationPreference → PATCH /api/v1/users/me/notification-preferences/{channel}', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      okJson({ preference: { channel: 'email', enabled: false, updatedAt: '2026-01-01T00:00:00Z' } })
+      okJson({
+        preference: { channel: 'email', enabled: false, updatedAt: '2026-01-01T00:00:00Z' },
+      })
     );
     await updateNotificationPreference('email', { enabled: false });
     expect(lastCall()).toEqual({
@@ -76,14 +78,11 @@ describe('notification-preferences api client — request wiring contract', () =
 
   it('updateNotificationPreference promotes 409 to ConfirmationRequiredError', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      okJson(
-        { error: { message: 'Disabling this channel would silence all notifications.' } },
-        409
-      )
+      okJson({ error: { message: 'Disabling this channel would silence all notifications.' } }, 409)
     );
-    await expect(
-      updateNotificationPreference('in_app', { enabled: false })
-    ).rejects.toBeInstanceOf(ConfirmationRequiredError);
+    await expect(updateNotificationPreference('in_app', { enabled: false })).rejects.toBeInstanceOf(
+      ConfirmationRequiredError
+    );
   });
 
   it('ConfirmationRequiredError carries the channel that triggered it', async () => {
