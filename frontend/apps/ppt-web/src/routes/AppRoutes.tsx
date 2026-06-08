@@ -20,7 +20,9 @@ import { disputeRoutes } from './groups/disputes';
 import { documentRoutes, newsRoutes } from './groups/documents';
 import { faultRoutes } from './groups/faults';
 import { financialRoutes } from './groups/financial';
+import { leaseRoutes } from './groups/leases';
 import { messagingRoutes } from './groups/messaging';
+import { meterRoutes } from './groups/meters';
 import { neighborRoutes } from './groups/neighbors';
 import { outageRoutes } from './groups/outages';
 import { rentalRoutes } from './groups/rentals';
@@ -44,6 +46,8 @@ export function AppRoutes() {
       {communityRoutes()}
       {financialRoutes()}
       {rentalRoutes()}
+      {meterRoutes()}
+      {leaseRoutes()}
       {votingRoutes()}
       {reportRoutes()}
       {buildingRoutes()}
