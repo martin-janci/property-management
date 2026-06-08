@@ -13,11 +13,18 @@
 ## 1. Executive Summary
 
 **Overall: ~71% of documented epics are delivered end-to-end; 100% are delivered on the
-backend.** The product is far *larger* than its catalog — the catalog describes 24 epics /
-101 FRs, but the codebase ships **177 migrations, 71 mounted api-server route groups, and
-46 ppt-web feature dirs.** The dominant risk is not missing backend; it is **(a) a handful
-of MVP/Phase-2 features whose UI was never wired into the web router, and (b) a very large
-body of undocumented "feature-factory" code** that no epic, story, or FR describes.
+backend.** The product is far *larger* than its catalog — at the time of this snapshot the
+catalog described 24 epics / 101 FRs, but the codebase ships **177 migrations, 71 mounted
+api-server route groups, and 46 ppt-web feature dirs.** The dominant risk is not missing
+backend; it is **(a) a handful of MVP/Phase-2 features whose UI was never wired into the web
+router, and (b) a very large body of undocumented "feature-factory" code** that no epic, story,
+or FR describes.
+
+> **Update (PAP-32, 2026-06-08):** the six *keeper* clusters of that feature-factory code have
+> since been backfilled into `_bmad-output/epics.md` as **Phase-5 Epics 25-30 / FR102-134** per
+> PAP-17 Option C (see §2). The catalog now enumerates **30 epics / 134 FRs**. The metrics in
+> the table below are preserved as the original point-in-time reconstruction; §2 carries the
+> post-backfill rollup.
 
 | Metric | Result |
 |--------|--------|
@@ -26,7 +33,7 @@ body of undocumented "feature-factory" code** that no epic, story, or FR describ
 | Epics fully missing | **0** |
 | Backend coverage of documented epics | **24 / 24 (100%)** — every epic has migration + routes + substantive repo |
 | FR coverage (API/schema level) | **101 / 101 reachable via API** — claim holds at the backend; 4 FR groups lack a web UI (see §5) |
-| Undocumented backend route modules (code-no-doc) | **~40+** (marketplace, disputes, insurance, legal, esg, investor_portal, gov-portal, registry, forms, operations, …) |
+| Undocumented backend route modules (code-no-doc) | **~40+** (marketplace, disputes, insurance, legal, esg, investor_portal, gov-portal, registry, forms, operations, …) — **6 keeper clusters since cataloged as Phase-5 Epics 25-30 (PAP-32, see §2); the rest are quarantined infra/501-stubs** |
 | Undocumented ppt-web feature dirs | **~23 of 46** unmapped to any epic; ~16 are unreachable dead code |
 | Genuine backend stubs (501 Not Implemented) | **3** — `vendor_portal.rs`, `public_api.rs`, `competitive.rs` |
 
@@ -113,13 +120,37 @@ Status = end-to-end (backend + the UI surfaces the epic implies). **BE**=backend
 | 18 | Short-Term Rental Integration | FR84-86 | ✅ | ✅ | — | **DONE** | `rentals.rs` 1716 L, `integrations/booking_channel.rs`; `groups/rentals.tsx` 570 L (bookings/calendar/guests) |
 | 19 | Lease Mgmt & Tenant Screening | FR87-89 | ✅ | 🟡 | ✅ | **🟡 PARTIAL** | `leases.rs` 1290 L, `enhanced_tenant_screening.rs`; **ppt-web `features/leases/` built but NOT routed**; mobile `LeaseSignatureScreen` |
 
-> **Epic count discrepancy:** `epics.md` frontmatter declares `total_epics: 25` but the
-> Epic List + Summary table enumerate **24** (12+4+2+6). The extra epics under
-> `_bmad-output/epics/` — **epic-111 Multi-Language Support** and **epic-120 Docker
-> Infrastructure** — are not in the 24-row catalog; one of them likely accounts for the "25".
-> Both are effectively delivered (i18n: ppt-web/reality-web/mobile locale bundles incl.
-> sk/cs/de/en + pl/hu; Docker: `docker-build.yml`/`docker-frontend.yml` + manifests). Treat
-> the "24 vs 25" as a catalog bookkeeping nit, not a delivery gap.
+### Phase 5 — Facilities, Compliance, Community & Analytics (backfill, 6 epics)
+
+> **New (PAP-32).** These six epics were backfilled into `_bmad-output/epics.md` per PAP-17
+> **Option C** — they catalog already-shipped backend ("code with no doc" from §4.B) as Epics
+> 25-30 / FR102-134. **Documentation only; no feature code.** Backend is DONE for all six; the
+> `W`/`M` columns flag the UI-wiring gaps already inventoried in §4.B (this table does not create
+> new gap claims, it just gives the now-cataloged epics a rollup row).
+
+| Epic | Name | FRs | BE | W | M | Rollup | One-line evidence |
+|------|------|-----|----|----|----|--------|-------------------|
+| 25 | Facilities & Operations | FR102-107 | ✅ | 🟡 | 🟡 | **🟡 PARTIAL** | `work_orders.rs` 935 L, `vendors.rs` 989 L, `operations.rs` 1443 L, `package_visitor.rs` 1175 L, `outages.rs` 932 L; `outages/`+`facilities/` web routed, mobile `outages/` |
+| 26 | Disputes, Legal, Insurance & Compliance | FR108-115 | ✅ | 🟡 | — | **🟡 PARTIAL** | `disputes.rs` 1581 L, `emergency.rs` 1634 L, `legal.rs` 1134 L, `violations.rs`, `insurance.rs`, `compliance.rs`, `regional_compliance.rs`; **`aml_dsa.rs` 1963 L → needs named owner + security review**; `disputes/`+`emergency/` routed, `insurance/`+`compliance/` dead-code |
+| 27 | Community, Marketplace & News | FR116-120 | ✅ | ✅ | ✅ | **DONE** | `marketplace.rs` 1933 L, `community.rs`, `news_articles.rs` 1060 L, `neighbors.rs`; `/community/*`,`news/`,`neighbors/` web + mobile — **strongest keeper** |
+| 28 | Investor & Portfolio Analytics | FR121-127 | ✅ | ❌ | — | **🟡 PARTIAL** | `investor_portal.rs`, `owner_analytics.rs`, `portfolio_analytics.rs`, `portfolio_performance.rs`, `property_valuation.rs`, `board_meetings.rs`, `subscriptions.rs` 1681 L; **ppt-web `subscription/`+`portfolio-performance/` dead-code (unrouted)** |
+| 29 | ESG & Building Certifications | FR128-130 | ✅ | ❌ | — | **🟡 PARTIAL** | `esg_reporting.rs`, `building_certifications.rs`; `00093`/`00094` migrations; no routed web group yet (back-office) |
+| 30 | Forms, Registry & Government Portal | FR131-134 | ✅ | 🟡 | 🟡 | **🟡 PARTIAL** | `forms.rs` 1873 L, `registry.rs` 1093 L, `government_portal.rs` 987 L; RN `forms/` reachable; **`registry/`+`government-portal/` web dead-code** |
+
+> **⚠️ `aml_dsa.rs` (1963 L) — security/ownership flag (Epic 26 / FR115).** Large AML/EDD + DSA
+> module with **no named owner and no security review on record**. Cataloged for completeness
+> only; **assign an owner + run a security review before FR115 is treated as production-ready.**
+> Owner: **Atlas to assign** (CTO recommends a dedicated child issue).
+
+> **Epic count (reconciled by PAP-32):** `epics.md` frontmatter now declares `total_epics: 31`
+> — Phases 1-4 enumerate **24** rows (12+4+2+6) + **6** Phase-5 backfill epics (25-30) = **30**
+> catalog rows, plus **1** standalone epic file under `_bmad-output/epics/` (the old "24 vs 25"
+> nit: **epic-111 Multi-Language Support** and **epic-120 Docker Infrastructure** are
+> standalone, effectively delivered — i18n locale bundles incl. sk/cs/de/en + pl/hu; Docker
+> `docker-build.yml`/`docker-frontend.yml`). The headline frontmatter `31` counts the 24 core +
+> 6 Phase-5 + a bookkeeping unit for the standalone-epic files; treat the residual ±1 as a
+> bookkeeping nit, not a delivery gap. The earlier aspirational `epics-002…015.md` backlog
+> (epics up to ~150, conflicting numbering) is **superseded and not tracked here**.
 
 ---
 
