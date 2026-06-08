@@ -1,39 +1,105 @@
 'use client';
 
 /**
- * Price map page — choropleth of Bratislava district prices.
+ * Price map page — choropleth of district/city prices.
  * Screen-map: docs/screens/reality/price-map.md
+ *
+ * Data comes from reality-server's `/api/v1/price-map` aggregation via
+ * `usePriceMap` (@ppt/reality-api-client). The server groups by city and
+ * carries no map geometry, so SVG outlines live in `_geometry.ts` as
+ * presentational scaffolding; every district the API returns still appears
+ * in the list and insights even without a matching outline.
  */
 
+import {
+  usePriceMap,
+  type DistrictPriceData,
+  type PriceMapPropertyType,
+} from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Footer, Header } from '@/components/ui';
-import { MOCK_DISTRICTS, MOCK_INSIGHTS, type PriceMapFilter } from './_mock';
+import { geometryFor, priceToColor } from './_geometry';
 
 // TODO: replace filter strip with @ppt/ui-kit/ChipGroup once available
 // TODO: replace with @ppt/ui-kit/SegmentedControl for transactionType toggle
 
 type TransactionType = 'sale' | 'rent';
-type PropertyType = 'all' | 'apartment' | 'house' | 'land';
 
-const PROPERTY_OPTIONS: { value: PropertyType; label: string }[] = [
+const PROPERTY_OPTIONS: { value: PriceMapPropertyType; label: string }[] = [
   { value: 'all', label: 'Všetky' },
   { value: 'apartment', label: 'Byty' },
   { value: 'house', label: 'Domy' },
   { value: 'land', label: 'Pozemky' },
 ];
 
+const formatPrice = (v: number | null | undefined) =>
+  v == null ? '—' : `${Math.round(v).toLocaleString('sk-SK')} €`;
+
 export default function PriceMapPage() {
   const t = useTranslations('pages.priceMap');
-  const [filter, setFilter] = useState<PriceMapFilter>({
-    propertyType: 'all',
-    transactionType: 'sale',
-  });
+  const [transactionType, setTransactionType] = useState<TransactionType>('sale');
+  const [propertyType, setPropertyType] = useState<PriceMapPropertyType>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const selected = MOCK_DISTRICTS.find((d) => d.id === selectedId) ?? null;
+  const { data, isLoading, isError } = usePriceMap({
+    mode: transactionType,
+    propertyType,
+  });
 
-  const formatPrice = (v: number) => `${v.toLocaleString('sk-SK')} €`;
+  const districts: DistrictPriceData[] = data?.districts ?? [];
+  const selected = districts.find((d) => d.district_id === selectedId) ?? null;
+
+  // Insights derived from live data — no mock constants.
+  const insights = useMemo(() => {
+    const priced = districts.filter((d) => d.avg_price_per_m2 != null);
+    const avgPpm2 = priced.length
+      ? priced.reduce((s, d) => s + (d.avg_price_per_m2 as number), 0) / priced.length
+      : null;
+    const dearest = priced.reduce<DistrictPriceData | null>(
+      (best, d) =>
+        best == null || (d.avg_price_per_m2 as number) > (best.avg_price_per_m2 as number)
+          ? d
+          : best,
+      null,
+    );
+    const trending = districts
+      .filter((d) => d.trend_pct_qoq != null)
+      .reduce<DistrictPriceData | null>(
+        (best, d) =>
+          best == null || (d.trend_pct_qoq as number) > (best.trend_pct_qoq as number) ? d : best,
+        null,
+      );
+    const totalListings = districts.reduce((s, d) => s + d.listing_count, 0);
+
+    return [
+      {
+        label: 'Priemerná cena / m²',
+        value: formatPrice(avgPpm2),
+        trend: `${priced.length} lokalít`,
+      },
+      {
+        label: 'Najdrahšia lokalita',
+        value: dearest?.district_name ?? '—',
+        trend: dearest ? `${formatPrice(dearest.avg_price_per_m2)} / m²` : '',
+      },
+      {
+        label: 'Najväčší rast',
+        value: trending?.district_name ?? '—',
+        trend:
+          trending?.trend_pct_qoq != null
+            ? `${trending.trend_pct_qoq > 0 ? '+' : ''}${trending.trend_pct_qoq} % QoQ`
+            : '',
+      },
+      {
+        label: 'Aktívne inzeráty',
+        value: totalListings.toLocaleString('sk-SK'),
+        trend: `${districts.length} lokalít`,
+      },
+    ];
+  }, [districts]);
+
+  const mappable = districts.filter((d) => geometryFor(d.district_id, d.district_name));
 
   return (
     <div
@@ -73,26 +139,26 @@ export default function PriceMapPage() {
           </h1>
           <div style={{ display: 'flex', gap: 4 }}>
             {/* TODO: replace with @ppt/ui-kit/SegmentedControl once available */}
-            {(['sale', 'rent'] as TransactionType[]).map((t) => (
+            {(['sale', 'rent'] as TransactionType[]).map((tx) => (
               <button
-                key={t}
+                key={tx}
                 type="button"
-                onClick={() => setFilter((f) => ({ ...f, transactionType: t }))}
+                onClick={() => setTransactionType(tx)}
                 style={{
                   padding: '7px 16px',
                   borderRadius: 6,
                   border: 'none',
                   background:
-                    filter.transactionType === t
+                    transactionType === tx
                       ? 'var(--ppt-color-primary, #2563eb)'
                       : 'var(--ppt-bg-app, #f1f5f9)',
-                  color: filter.transactionType === t ? '#fff' : 'var(--ppt-fg-secondary)',
+                  color: transactionType === tx ? '#fff' : 'var(--ppt-fg-secondary)',
                   fontWeight: 600,
                   cursor: 'pointer',
                   fontSize: '0.875rem',
                 }}
               >
-                {t === 'sale' ? 'Predaj' : 'Prenájom'}
+                {tx === 'sale' ? 'Predaj' : 'Prenájom'}
               </button>
             ))}
           </div>
@@ -102,20 +168,20 @@ export default function PriceMapPage() {
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => setFilter((f) => ({ ...f, propertyType: opt.value }))}
+                onClick={() => setPropertyType(opt.value)}
                 style={{
                   padding: '6px 14px',
                   borderRadius: 99,
-                  border: `1px solid ${filter.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                  border: `1px solid ${propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
                   background:
-                    filter.propertyType === opt.value
+                    propertyType === opt.value
                       ? 'var(--ppt-color-primary-light, #dbeafe)'
                       : 'transparent',
                   color:
-                    filter.propertyType === opt.value
+                    propertyType === opt.value
                       ? 'var(--ppt-color-primary, #2563eb)'
                       : 'var(--ppt-fg-secondary)',
-                  fontWeight: filter.propertyType === opt.value ? 600 : 400,
+                  fontWeight: propertyType === opt.value ? 600 : 400,
                   cursor: 'pointer',
                   fontSize: '0.875rem',
                 }}
@@ -138,30 +204,56 @@ export default function PriceMapPage() {
               padding: 24,
             }}
           >
-            <svg
-              viewBox="0 80 400 200"
-              style={{ width: '100%', maxWidth: 600, height: 'auto' }}
-              aria-label="Mapa bratislavských mestských štvrtí"
-            >
-              {MOCK_DISTRICTS.map((district) => (
-                <path
-                  key={district.id}
-                  d={district.svgPath}
-                  fill={district.color}
-                  opacity={selectedId === district.id ? 1 : 0.7}
-                  stroke="#fff"
-                  strokeWidth={2}
-                  style={{ cursor: 'pointer', transition: 'opacity .15s' }}
-                  onClick={() => setSelectedId(selectedId === district.id ? null : district.id)}
-                  aria-label={district.name}
-                >
-                  {/* Single template-string child avoids the SSR/CSR
-                      whitespace-handling mismatch that triggered Next.js's
-                      "hydration error" overlay on first paint. */}
-                  <title>{`${district.name}: ${formatPrice(district.avgPricePerSqm)} / m²`}</title>
-                </path>
-              ))}
-            </svg>
+            {isLoading ? (
+              <div style={{ color: 'var(--ppt-fg-secondary)', fontSize: '0.9375rem' }}>
+                Načítavam dáta…
+              </div>
+            ) : isError ? (
+              <div style={{ color: 'var(--ppt-color-danger, #ef4444)', fontSize: '0.9375rem' }}>
+                Dáta o cenách sa nepodarilo načítať.
+              </div>
+            ) : mappable.length === 0 ? (
+              <div
+                style={{
+                  color: 'var(--ppt-fg-secondary)',
+                  fontSize: '0.9375rem',
+                  textAlign: 'center',
+                  maxWidth: 360,
+                }}
+              >
+                Pre vybrané lokality zatiaľ nie je dostupný mapový podklad. Štatistiky nájdete v
+                zozname vpravo.
+              </div>
+            ) : (
+              <svg
+                viewBox="0 80 400 200"
+                style={{ width: '100%', maxWidth: 600, height: 'auto' }}
+                aria-label="Mapa cien podľa lokality"
+              >
+                {mappable.map((district) => (
+                  <path
+                    key={district.district_id}
+                    d={geometryFor(district.district_id, district.district_name)}
+                    fill={priceToColor(district.avg_price_per_m2)}
+                    opacity={selectedId === district.district_id ? 1 : 0.7}
+                    stroke="#fff"
+                    strokeWidth={2}
+                    style={{ cursor: 'pointer', transition: 'opacity .15s' }}
+                    onClick={() =>
+                      setSelectedId(
+                        selectedId === district.district_id ? null : district.district_id,
+                      )
+                    }
+                    aria-label={district.district_name}
+                  >
+                    {/* Single template-string child avoids the SSR/CSR
+                        whitespace-handling mismatch that triggered Next.js's
+                        "hydration error" overlay on first paint. */}
+                    <title>{`${district.district_name}: ${formatPrice(district.avg_price_per_m2)} / m²`}</title>
+                  </path>
+                ))}
+              </svg>
+            )}
 
             {/* Legend */}
             <div
@@ -237,18 +329,23 @@ export default function PriceMapPage() {
                     margin: '0 0 20px',
                   }}
                 >
-                  {selected.name}
+                  {selected.district_name}
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {[
-                    { label: 'Priem. cena / m²', value: `${formatPrice(selected.avgPricePerSqm)}` },
                     {
-                      label: 'Zmena (12 mesiacov)',
-                      value: `${selected.change12m > 0 ? '+' : ''}${selected.change12m} %`,
-                      positive: selected.change12m > 0,
+                      label: 'Priem. cena / m²',
+                      value: formatPrice(selected.avg_price_per_m2),
                     },
-                    { label: 'Medián celkovej ceny', value: formatPrice(selected.medianTotal) },
-                    { label: 'Aktívne inzeráty', value: String(selected.listings) },
+                    {
+                      label: 'Trend (medzikvartálne)',
+                      value:
+                        selected.trend_pct_qoq == null
+                          ? '—'
+                          : `${selected.trend_pct_qoq > 0 ? '+' : ''}${selected.trend_pct_qoq} %`,
+                      positive: (selected.trend_pct_qoq ?? 0) > 0,
+                    },
+                    { label: 'Aktívne inzeráty', value: String(selected.listing_count) },
                   ].map((row) => (
                     <div
                       key={row.label}
@@ -278,7 +375,7 @@ export default function PriceMapPage() {
                   ))}
                 </div>
                 <a
-                  href={`/listings?city=${encodeURIComponent(selected.name)}`}
+                  href={`/listings?city=${encodeURIComponent(selected.district_name)}`}
                   style={{
                     display: 'block',
                     marginTop: 24,
@@ -292,7 +389,7 @@ export default function PriceMapPage() {
                     fontSize: '0.9375rem',
                   }}
                 >
-                  Zobraziť inzeráty v tejto štvrti
+                  Zobraziť inzeráty v tejto lokalite
                 </a>
               </div>
             ) : (
@@ -305,7 +402,7 @@ export default function PriceMapPage() {
                     margin: '0 0 6px',
                   }}
                 >
-                  Bratislava – Prehľad
+                  Prehľad lokalít
                 </h2>
                 <p
                   style={{
@@ -314,59 +411,73 @@ export default function PriceMapPage() {
                     marginBottom: 20,
                   }}
                 >
-                  Kliknite na mestskú štvrť pre detailné štatistiky.
+                  Kliknite na lokalitu pre detailné štatistiky.
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {MOCK_DISTRICTS.map((d) => (
-                    <button
-                      key={d.id}
-                      type="button"
-                      onClick={() => setSelectedId(d.id)}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '12px 14px',
-                        background: 'var(--ppt-bg-subtle, #f8fafc)',
-                        borderRadius: 8,
-                        border: '1px solid var(--ppt-border-default, #e5e7eb)',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span
-                          style={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: 3,
-                            background: d.color,
-                            flexShrink: 0,
-                          }}
-                        />
+                {isLoading ? (
+                  <p style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
+                    Načítavam dáta…
+                  </p>
+                ) : isError ? (
+                  <p style={{ fontSize: '0.875rem', color: 'var(--ppt-color-danger, #ef4444)' }}>
+                    Dáta o cenách sa nepodarilo načítať.
+                  </p>
+                ) : districts.length === 0 ? (
+                  <p style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
+                    Pre zvolené filtre nie sú dostupné žiadne dáta.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {districts.map((d) => (
+                      <button
+                        key={d.district_id}
+                        type="button"
+                        onClick={() => setSelectedId(d.district_id)}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '12px 14px',
+                          background: 'var(--ppt-bg-subtle, #f8fafc)',
+                          borderRadius: 8,
+                          border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: 3,
+                              background: priceToColor(d.avg_price_per_m2),
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: '0.875rem',
+                              color: 'var(--ppt-fg-primary)',
+                              fontWeight: 500,
+                            }}
+                          >
+                            {d.district_name}
+                          </span>
+                        </div>
                         <span
                           style={{
                             fontSize: '0.875rem',
+                            fontWeight: 700,
                             color: 'var(--ppt-fg-primary)',
-                            fontWeight: 500,
+                            flexShrink: 0,
                           }}
                         >
-                          {d.name.split(' – ')[1] ?? d.name}
+                          {formatPrice(d.avg_price_per_m2)}/m²
                         </span>
-                      </div>
-                      <span
-                        style={{
-                          fontSize: '0.875rem',
-                          fontWeight: 700,
-                          color: 'var(--ppt-fg-primary)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {formatPrice(d.avgPricePerSqm)}/m²
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -383,7 +494,7 @@ export default function PriceMapPage() {
             gap: 16,
           }}
         >
-          {MOCK_INSIGHTS.map((insight) => (
+          {insights.map((insight) => (
             <div key={insight.label}>
               <div
                 style={{
