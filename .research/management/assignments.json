@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-08T02:22:25Z",
+  "generated": "2026-06-08T04:11:28Z",
   "assignments": [
     {
       "task_id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
@@ -31,7 +31,7 @@
       "branch": "auto-impl/refactor-churn-hotspot-mobile-announceme",
       "status": "review",
       "claimed_at": "2026-06-08T00:12:36Z",
-      "last_updated": "2026-06-08T02:22:25Z",
+      "last_updated": "2026-06-08T04:11:28Z",
       "status_changed_at": "2026-06-08T00:26:57Z",
       "pr_number": 1165,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1165",
