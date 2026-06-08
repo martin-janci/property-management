@@ -5,9 +5,10 @@
  * fragment. Extracted from App.tsx to isolate announcement work.
  */
 import type {
-  Announcement,
   AnnouncementWithDetails,
+  CreateAnnouncementRequest,
   ListAnnouncementsParams,
+  UpdateAnnouncementRequest,
 } from '@ppt/api-client';
 import {
   useAcknowledgeAnnouncement,
@@ -16,6 +17,7 @@ import {
   useAnnouncementComments,
   useAnnouncements,
   useArchiveAnnouncement,
+  useCreateAnnouncement,
   useCreateAnnouncementComment,
   useDeleteAnnouncement,
   useDeleteAnnouncementComment,
@@ -23,6 +25,7 @@ import {
   usePinAnnouncement,
   usePinnedAnnouncements,
   usePublishAnnouncement,
+  useUpdateAnnouncement,
 } from '@ppt/api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -177,18 +180,42 @@ function AnnouncementsPageRoute() {
   );
 }
 
+/**
+ * Route wrapper for the create-announcement page (UC-06, gap-79-1).
+ *
+ * Wired to `useCreateAnnouncement` (POST /api/v1/announcements). On success the
+ * server returns the new id; we navigate to its detail view.
+ */
 function CreateAnnouncementPageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+  const createAnnouncement = useCreateAnnouncement();
 
   return (
     <CreateAnnouncementPage
       buildings={[]}
       units={[]}
       roles={[]}
-      onSubmit={() => {
-        showToast({ type: 'success', title: 'Created', message: 'Announcement created' });
-        navigate('/announcements');
+      isLoading={createAnnouncement.isPending}
+      onSubmit={async (data: CreateAnnouncementRequest) => {
+        try {
+          const created = await createAnnouncement.mutateAsync(data);
+          showToast({
+            type: 'success',
+            title: t('announcements.created', { defaultValue: 'Created' }),
+            message: t('announcements.createdMessage', { defaultValue: 'Announcement created' }),
+          });
+          navigate(created?.id ? `/announcements/${created.id}` : '/announcements');
+        } catch (err) {
+          showToast({
+            type: 'error',
+            title: t('announcements.createFailed', {
+              defaultValue: 'Failed to create announcement',
+            }),
+            message: err instanceof Error ? err.message : '',
+          });
+        }
       }}
       onCancel={() => navigate('/announcements')}
     />
@@ -487,45 +514,79 @@ function ViewAnnouncementPageRoute() {
   return <ViewAnnouncementPageInner announcementId={announcementId} />;
 }
 
-function EditAnnouncementPageRoute() {
-  const { announcementId } = useParams<{ announcementId: string }>();
+/**
+ * Inner component for the edit-announcement page — all hooks called
+ * unconditionally (the route wrapper guards the missing-param case).
+ *
+ * Wired to @ppt/api-client standalone hooks (UC-06, gap-79-1):
+ *   useAnnouncement       — load the current draft/scheduled announcement
+ *   useUpdateAnnouncement  — PUT /api/v1/announcements/:id
+ *
+ * `AnnouncementWithDetails` extends `Announcement`, so the detail payload feeds
+ * `EditAnnouncementPage` (which expects `Announcement`) without any mapping.
+ */
+function EditAnnouncementPageInner({ announcementId }: { announcementId: string }) {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
-  if (!announcementId) {
-    return <div>Announcement not found</div>;
+  const { data, isLoading, error } = useAnnouncement(announcementId);
+  const updateAnnouncement = useUpdateAnnouncement(announcementId);
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const announcement = data?.announcement;
+
+  if (isLoading || !announcement) {
+    return <div className="p-6">{t('common.loading', { defaultValue: 'Loading…' })}</div>;
   }
-
-  // Mock announcement data - would use useAnnouncement hook
-  const mockAnnouncement: Announcement = {
-    id: announcementId,
-    organizationId: 'org-1',
-    authorId: 'user-1',
-    title: 'Sample Announcement',
-    content: 'This is a sample announcement content.',
-    status: 'draft',
-    targetType: 'all',
-    targetIds: [],
-    pinned: false,
-    acknowledgmentRequired: false,
-    commentsEnabled: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
 
   return (
     <EditAnnouncementPage
-      announcement={mockAnnouncement}
+      announcement={announcement}
       buildings={[]}
       units={[]}
       roles={[]}
-      onSubmit={() => {
-        showToast({ type: 'success', title: 'Updated', message: 'Announcement updated' });
-        navigate(`/announcements/${announcementId}`);
+      isLoading={updateAnnouncement.isPending}
+      onSubmit={async (formData: UpdateAnnouncementRequest) => {
+        try {
+          await updateAnnouncement.mutateAsync(formData);
+          showToast({
+            type: 'success',
+            title: t('announcements.updated', { defaultValue: 'Updated' }),
+            message: t('announcements.updatedMessage', { defaultValue: 'Announcement updated' }),
+          });
+          navigate(`/announcements/${announcementId}`);
+        } catch (err) {
+          showToast({
+            type: 'error',
+            title: t('announcements.updateFailed', {
+              defaultValue: 'Failed to update announcement',
+            }),
+            message: err instanceof Error ? err.message : '',
+          });
+        }
       }}
       onCancel={() => navigate(`/announcements/${announcementId}`)}
     />
   );
+}
+
+/** Route wrapper — guards for missing param before mounting inner component */
+function EditAnnouncementPageRoute() {
+  const { announcementId } = useParams<{ announcementId: string }>();
+  if (!announcementId) {
+    return <div>Announcement not found</div>;
+  }
+  return <EditAnnouncementPageInner announcementId={announcementId} />;
 }
 
 /** Announcements routes (UC-06). */
