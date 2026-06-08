@@ -452,3 +452,39 @@ catalog entry (regulatory surface).
   module + UX sign-off). Escalated to Atlas/UX for a keep-and-schedule vs retire call; tracked, not
   executed here.
 - **Policy:** §8.0 stub/uncatalogued-surface policy adopted as the standing review rule.
+
+### 8.5 Platform / infrastructure surface (PAP-33) — keep code, no product epic
+
+Per [PAP-17](/PAP/issues/PAP-17) **Option C**, executed in [PAP-33](/PAP/issues/PAP-33). The
+following backend route modules are **platform/infrastructure plumbing, not product features**.
+They are kept in the tree but are deliberately **not** catalogued into a product epic/FR (they
+have no end-user story behind them — they serve tenancy, packaging, reporting, migration, and
+regional/currency mechanics):
+
+- `infrastructure.rs` — cross-cutting infra endpoints (Epic 71 placeholder surface).
+- `feature_packages.rs` — feature-flag / plan-packaging plumbing.
+- `reports.rs` — generic report generation surface (not a product report screen).
+- `migration.rs` — data-migration tooling endpoints.
+- `tenant_config.rs` — per-tenant configuration plumbing.
+- `api_ecosystem.rs` — internal API-ecosystem surface.
+- `multi_currency.rs` — currency/FX mechanics consumed by financial modules.
+- `data_residency.rs` — region/data-residency controls.
+
+These supersede their mention under §8.3 (they are platform plumbing, so they are **not** part of
+the ~40-module product-catalog backfill). No deletion, no epic — just this note.
+
+### 8.6 PAP-33 execution record
+
+Done on branch `pap-33-retire-dead-scaffolds` (PR against `dev`):
+
+- **DELETED (dead, no migration, no product):** `competitive` — backend
+  `routes/competitive.rs` (unmounted from `routes/mod.rs` + `lib.rs`) and the
+  `frontend/apps/ppt-web/src/features/competitive/` web dir.
+- **GATED + annotated (roadmap stubs, kept):** `public_api` (`/api/v1/developer`) and
+  `vendor_portal` (`/api/v1/vendor-portal`) — `ROADMAP(PAP-24)` header markers added and both
+  unmounted from `lib.rs` so callers get 404 instead of a false 501. `vendors.rs` remains the
+  live vendor surface.
+- **DEFERRED for confirmation:** the §4 ppt-web dead-dir deletion list (`api-ecosystem/`,
+  `developer/`, `integrations/`, `migration/`, `data-residency/`, `multi-currency/`,
+  `delegation/`, `packages/`) — all route-less and import-free, posted on PAP-33 for a fast
+  board confirm before removal.
