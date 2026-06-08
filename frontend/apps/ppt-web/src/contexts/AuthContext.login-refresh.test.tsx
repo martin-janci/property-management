@@ -237,9 +237,9 @@ describe('AuthContext.login — email/password flow (Story 79.2)', () => {
     });
 
     await act(async () => {
-      await expect(
-        ctxRef.current?.login({ email: 'x@y.z', password: 'wrong' })
-      ).rejects.toThrow('invalid_credentials');
+      await expect(ctxRef.current?.login({ email: 'x@y.z', password: 'wrong' })).rejects.toThrow(
+        'invalid_credentials'
+      );
     });
 
     // No tokens written, session stays anonymous, guard still shows /login.
