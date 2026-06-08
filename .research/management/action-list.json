@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-08T06:25:40Z",
+  "generated": "2026-06-08T06:56:42Z",
   "items": [
     {
       "id": "gap-8a-3-notification-preference-sync-retry",
@@ -195,11 +195,12 @@
       "action": "Coverage 84-2: add webhook idempotency guard for e-signature status callbacks so terminal states (completed/declined/voided) are not reprocessed on duplicate webhook delivery. Backend api-server; include a regression test.",
       "owner_role": "pm-backend",
       "priority": "high",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolved": "already-implemented+merged on dev (PR #1034 guard + #1119 tests); coverage gap 84-2 was stale; dispatcher no-op 2026-06-08"
     },
     {
       "id": "bug-report-schedule-cron-expression-column",
