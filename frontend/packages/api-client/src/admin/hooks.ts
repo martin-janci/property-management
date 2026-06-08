@@ -15,6 +15,7 @@ import {
   fetchHealthDashboard,
   fetchMetricHistory,
   fetchSupportData,
+  getAgency,
   getOAuthClient,
   getSystemAnnouncement,
   listAgencies,
@@ -46,6 +47,7 @@ export const adminKeys = {
   all: ['admin'] as const,
   agencies: () => [...adminKeys.all, 'agencies'] as const,
   agencyList: (params?: ListAgenciesParams) => [...adminKeys.agencies(), 'list', params] as const,
+  agency: (id: string) => [...adminKeys.agencies(), 'detail', id] as const,
   oauthClients: () => [...adminKeys.all, 'oauth', 'clients'] as const,
   oauthClient: (id: string) => [...adminKeys.oauthClients(), id] as const,
   health: () => [...adminKeys.all, 'health'] as const,
@@ -72,6 +74,18 @@ export function useAgencies(params?: ListAgenciesParams) {
     queryKey: adminKeys.agencyList(params),
     queryFn: ({ signal }) => listAgencies(params, signal),
     staleTime: 30_000,
+  });
+}
+
+/**
+ * Detailed view of a single agency (org drill-in). Disabled until `id` is set.
+ */
+export function useAgency(id: string) {
+  return useQuery({
+    queryKey: adminKeys.agency(id),
+    queryFn: ({ signal }) => getAgency(id, signal),
+    staleTime: 30_000,
+    enabled: !!id,
   });
 }
 

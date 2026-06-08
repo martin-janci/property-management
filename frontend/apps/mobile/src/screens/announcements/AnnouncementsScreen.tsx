@@ -11,8 +11,6 @@ import {
 import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
 
-export type AnnouncementCategory = 'general' | 'urgent' | 'maintenance' | 'event' | 'financial';
-
 export interface AnnouncementAttachment {
   id: string;
   name: string;
@@ -23,7 +21,6 @@ export interface AnnouncementAttachment {
 export interface Announcement {
   id: string;
   title: string;
-  category: AnnouncementCategory;
   createdAt: string;
   author: string;
   isRead: boolean;
@@ -39,7 +36,7 @@ export interface Announcement {
  * intentionally lightweight: no `content` body, no author, no category. The
  * full body is fetched lazily by `AnnouncementDetailScreen`.
  */
-interface ApiAnnouncementSummary {
+export interface ApiAnnouncementSummary {
   id: string;
   title: string;
   status: string;
@@ -58,11 +55,10 @@ interface ApiAnnouncementListResponse {
 }
 
 /** Coerce a published-list summary into the UI's Announcement shape. */
-function toUiAnnouncement(a: ApiAnnouncementSummary): Announcement {
+export function toUiAnnouncement(a: ApiAnnouncementSummary): Announcement {
   return {
     id: a.id,
     title: a.title,
-    category: 'general',
     createdAt: a.published_at ?? new Date().toISOString(),
     author: 'Building Management',
     isRead: false,
@@ -73,9 +69,87 @@ function toUiAnnouncement(a: ApiAnnouncementSummary): Announcement {
 }
 
 /** Extract the summary list from the published-list response. */
-function extractItems(data: ApiAnnouncementListResponse | undefined): ApiAnnouncementSummary[] {
+export function extractItems(
+  data: ApiAnnouncementListResponse | undefined
+): ApiAnnouncementSummary[] {
   if (!data) return [];
   return data.announcements ?? [];
+}
+
+/**
+ * Derive the pinned sticky-band items from the published list (PR #943).
+ *
+ * PR #943 dropped the dedicated `?pinned=true` query and now derives pinned
+ * items client-side from the same published list, keeping only `isPinned`
+ * rows. This is the band shown above the main feed.
+ */
+export function derivePinnedItems(items: Announcement[]): Announcement[] {
+  return items.filter((a) => a.isPinned);
+}
+
+/**
+ * Build the main (non-pinned) feed from the published list (PR #943).
+ *
+ * Excludes pinned items (they live in the sticky band), matches the search
+ * query against the TITLE only (the published summary has no `content` body
+ * since PR #943), and sorts newest-first by `createdAt`.
+ */
+export function filterMainList(items: Announcement[], searchQuery: string): Announcement[] {
+  const q = searchQuery.toLowerCase();
+  return items
+    .filter((a) => !a.isPinned)
+    .filter((a) => q === '' || a.title.toLowerCase().includes(q))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+/**
+ * Overlay the locally-tracked read state onto an announcement.
+ *
+ * Read state is tracked client-side in a `Set<id>` (the published summary
+ * carries no per-user read flag). Once an id is in the set the row is read;
+ * otherwise the row keeps whatever `isRead` the mapper produced.
+ */
+export function applyReadState(announcement: Announcement, readIds: Set<string>): Announcement {
+  if (announcement.isRead || !readIds.has(announcement.id)) return announcement;
+  return { ...announcement, isRead: true };
+}
+
+/** Build the read-state-aware UI list from a published-list response. */
+export function buildAnnouncements(
+  data: ApiAnnouncementListResponse | undefined,
+  readIds: Set<string>
+): Announcement[] {
+  return extractItems(data)
+    .map(toUiAnnouncement)
+    .map((a) => applyReadState(a, readIds));
+}
+
+/** Number of unread rows in a UI list. */
+export function countUnread(items: Announcement[]): number {
+  return items.filter((a) => !a.isRead).length;
+}
+
+/**
+ * Format a timestamp as a short relative label for the feed cards.
+ *
+ * < 1h → "Just now"; < 24h → "Nh ago"; < 7d → "Nd ago"; otherwise an
+ * absolute "Mon D" date. `now` is injectable so the output is deterministic
+ * under test.
+ */
+export function formatRelativeDate(dateString: string, now: Date = new Date()): string {
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffHours < 24) {
+    if (diffHours < 1) return 'Just now';
+    return `${diffHours}h ago`;
+  }
+  if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 interface AnnouncementsScreenProps {
@@ -83,7 +157,6 @@ interface AnnouncementsScreenProps {
 }
 
 export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
-  const [filter, setFilter] = useState<'all' | AnnouncementCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
@@ -99,67 +172,12 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   // Story 6.4 — pinned items are derived client-side from the published list
   // (the published endpoint already orders `pinned DESC`). A dedicated query
   // is unnecessary and the endpoint does not accept a `pinned` filter.
-  const pinnedData = data;
-
-  const allRaw: Announcement[] = extractItems(data)
-    .map(toUiAnnouncement)
-    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }));
-
-  const pinnedItems: Announcement[] = extractItems(pinnedData)
-    .map(toUiAnnouncement)
-    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }))
-    .filter((a) => a.isPinned);
+  const allRaw: Announcement[] = buildAnnouncements(data, readIds);
+  const pinnedItems: Announcement[] = derivePinnedItems(allRaw);
 
   const onRefresh = useCallback(async () => {
     await refetch();
   }, [refetch]);
-
-  const getCategoryColor = (category: AnnouncementCategory): string => {
-    switch (category) {
-      case 'urgent':
-        return colors.danger;
-      case 'maintenance':
-        return colors.warning;
-      case 'event':
-        return colors.eventCategoryInk;
-      case 'financial':
-        return colors.success;
-      default:
-        return colors.textMuted;
-    }
-  };
-
-  const getCategoryIcon = (category: AnnouncementCategory): string => {
-    switch (category) {
-      case 'urgent':
-        return '🚨';
-      case 'maintenance':
-        return '🔧';
-      case 'event':
-        return '📅';
-      case 'financial':
-        return '💰';
-      default:
-        return '📢';
-    }
-  };
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffHours < 24) {
-      if (diffHours < 1) return 'Just now';
-      return `${diffHours}h ago`;
-    }
-    if (diffDays < 7) {
-      return `${diffDays}d ago`;
-    }
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
 
   const markAsRead = (id: string) => {
     setReadIds((prev) => {
@@ -171,13 +189,9 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   };
 
   // Main list excludes pinned items (they appear in the sticky band above)
-  const filteredAnnouncements = allRaw
-    .filter((a) => !a.isPinned)
-    .filter((a) => (filter === 'all' ? true : a.category === filter))
-    .filter((a) => searchQuery === '' || a.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const filteredAnnouncements = filterMainList(allRaw, searchQuery);
 
-  const unreadCount = allRaw.filter((a) => !a.isRead).length;
+  const unreadCount = countUnread(allRaw);
 
   const handleCardPress = (announcement: Announcement) => {
     markAsRead(announcement.id);
@@ -230,26 +244,6 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
         />
       </View>
 
-      {/* Filters */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer}>
-        <View style={styles.filters}>
-          {(['all', 'urgent', 'maintenance', 'event', 'financial', 'general'] as const).map(
-            (cat) => (
-              <Pressable
-                key={cat}
-                style={[styles.filterButton, filter === cat && styles.filterButtonActive]}
-                onPress={() => setFilter(cat)}
-              >
-                {cat !== 'all' && <Text style={styles.filterIcon}>{getCategoryIcon(cat)}</Text>}
-                <Text style={[styles.filterText, filter === cat && styles.filterTextActive]}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </Text>
-              </Pressable>
-            )
-          )}
-        </View>
-      </ScrollView>
-
       {/* Announcements List */}
       <ScrollView
         style={styles.scrollView}
@@ -281,16 +275,9 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
               onPress={() => handleCardPress(announcement)}
             >
               <View style={styles.announcementHeader}>
-                <View
-                  style={[
-                    styles.categoryBadge,
-                    { backgroundColor: getCategoryColor(announcement.category) },
-                  ]}
-                >
-                  <Text style={styles.categoryIcon}>{getCategoryIcon(announcement.category)}</Text>
-                  <Text style={styles.categoryText}>{announcement.category}</Text>
-                </View>
-                <Text style={styles.announcementDate}>{formatDate(announcement.createdAt)}</Text>
+                <Text style={styles.announcementDate}>
+                  {formatRelativeDate(announcement.createdAt)}
+                </Text>
               </View>
 
               <Text style={styles.announcementTitle}>{announcement.title}</Text>
@@ -394,40 +381,6 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
   },
-  filtersContainer: {
-    backgroundColor: colors.surface,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  filters: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceMuted,
-    gap: 4,
-  },
-  filterButtonActive: {
-    backgroundColor: colors.accent,
-  },
-  filterIcon: {
-    fontSize: 14,
-  },
-  filterText: {
-    fontSize: 14,
-    color: colors.textMuted,
-    fontWeight: '500',
-  },
-  filterTextActive: {
-    color: colors.surface,
-  },
   scrollView: {
     flex: 1,
     padding: 16,
@@ -472,23 +425,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  categoryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    gap: 4,
-  },
-  categoryIcon: {
-    fontSize: 12,
-  },
-  categoryText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.surface,
-    textTransform: 'uppercase',
   },
   announcementDate: {
     fontSize: 12,

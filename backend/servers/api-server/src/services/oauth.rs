@@ -181,15 +181,11 @@ impl OAuthService {
         request: RegisterClientRequest,
     ) -> Result<RegisterClientResponse, OAuthServiceError> {
         // Validate scopes
-        for scope in &request.scopes {
-            if OAuthScope::parse(scope).is_none() {
-                return Err(OAuthServiceError::InvalidScope(scope.clone()));
-            }
-        }
+        self.validate_scopes(&request.scopes)?;
 
         // Generate client_id and client_secret
-        let client_id = self.generate_client_id();
-        let client_secret = self.generate_client_secret();
+        let client_id = self.generate_random_b64(16);
+        let client_secret = self.generate_random_b64(32);
         let client_secret_hash = self
             .auth_service
             .hash_password(&client_secret)
@@ -241,11 +237,7 @@ impl OAuthService {
     ) -> Result<Option<OAuthClientSummary>, OAuthServiceError> {
         // Validate scopes if provided
         if let Some(ref scopes) = data.scopes {
-            for scope in scopes {
-                if OAuthScope::parse(scope).is_none() {
-                    return Err(OAuthServiceError::InvalidScope(scope.clone()));
-                }
-            }
+            self.validate_scopes(scopes)?;
         }
 
         let client = self.repo.update_client(id, data).await?;
@@ -254,7 +246,7 @@ impl OAuthService {
 
     /// Regenerate client secret.
     pub async fn regenerate_client_secret(&self, id: Uuid) -> Result<String, OAuthServiceError> {
-        let client_secret = self.generate_client_secret();
+        let client_secret = self.generate_random_b64(32);
         let client_secret_hash = self
             .auth_service
             .hash_password(&client_secret)
@@ -283,11 +275,7 @@ impl OAuthService {
         client_id: &str,
         client_secret: &str,
     ) -> Result<OAuthClient, OAuthServiceError> {
-        let client = self
-            .repo
-            .find_active_client_by_client_id(client_id)
-            .await?
-            .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
+        let client = self.require_active_client(client_id).await?;
 
         let valid = self
             .auth_service
@@ -315,16 +303,17 @@ impl OAuthService {
         code_challenge: Option<&str>,
     ) -> Result<ConsentPageData, OAuthServiceError> {
         // Find and validate client
-        let client = self
-            .repo
-            .find_active_client_by_client_id(client_id)
-            .await?
-            .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
+        let client = self.require_active_client(client_id).await?;
 
-        // PKCE is required for public (non-confidential) clients per RFC 7636 / OAuth 2.1
-        if !client.is_confidential && code_challenge.is_none() {
+        // PKCE is required for the authorization-code flow for ALL clients
+        // (public and confidential) per OAuth 2.1 §4.1.1 / RFC 7636. A
+        // confidential client secret is not a substitute for PKCE: PKCE
+        // protects the authorization-code in transit against interception,
+        // which a client secret presented later at the token endpoint does
+        // not. Reject any authorize request without a code_challenge.
+        if code_challenge.is_none() {
             return Err(OAuthServiceError::InvalidRequest(
-                "PKCE code_challenge required for public clients".to_string(),
+                "PKCE code_challenge is required for the authorization-code flow".to_string(),
             ));
         }
 
@@ -333,7 +322,7 @@ impl OAuthService {
             return Err(OAuthServiceError::InvalidRedirectUri);
         }
 
-        // Validate scopes
+        // Validate scopes (default to "profile" if none requested)
         let scopes = if requested_scopes.is_empty() {
             vec!["profile".to_string()]
         } else {
@@ -346,14 +335,7 @@ impl OAuthService {
         };
 
         // Build scope display info
-        let scope_displays: Vec<ScopeDisplay> = scopes
-            .iter()
-            .filter_map(|s| OAuthScope::parse(s))
-            .map(|s| ScopeDisplay {
-                name: s.as_str().to_string(),
-                description: s.description().to_string(),
-            })
-            .collect();
+        let scope_displays = self.build_scope_displays(&scopes);
 
         Ok(ConsentPageData {
             client_id: client.client_id,
@@ -380,11 +362,7 @@ impl OAuthService {
         // submitted form, so without this gate a caller could request scopes the
         // client was never authorized for (privilege escalation). Validating here
         // covers every caller of `create_authorization_code`, not just the GET path.
-        let client = self
-            .repo
-            .find_active_client_by_client_id(client_id)
-            .await?
-            .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
+        let client = self.require_active_client(client_id).await?;
 
         for scope in scopes {
             if !client.is_scope_allowed(scope) {
@@ -452,46 +430,36 @@ impl OAuthService {
             return Err(OAuthServiceError::InvalidGrant);
         }
 
-        // Validate PKCE if code challenge was provided
-        if let Some(ref challenge) = auth_code.code_challenge {
-            let verifier = request
-                .code_verifier
-                .as_ref()
-                .ok_or_else(|| OAuthServiceError::InvalidCodeVerifier)?;
+        // Validate PKCE. PKCE is mandatory for every authorization-code flow
+        // (enforced at the authorize stage in `validate_authorize_request`), so
+        // a stored code with no challenge must never be exchangeable — treat its
+        // absence as invalid_grant (defense in depth against codes minted before
+        // enforcement or via a bypassed authorize path). A present challenge
+        // requires a matching code_verifier.
+        let challenge = auth_code
+            .code_challenge
+            .as_deref()
+            .ok_or(OAuthServiceError::InvalidGrant)?;
+        let verifier = request
+            .code_verifier
+            .as_ref()
+            .ok_or(OAuthServiceError::InvalidCodeVerifier)?;
 
-            if !self.verify_pkce(
-                verifier,
-                challenge,
-                auth_code.code_challenge_method.as_deref(),
-            ) {
-                return Err(OAuthServiceError::InvalidCodeVerifier);
-            }
+        if !Self::verify_pkce(
+            verifier,
+            challenge,
+            auth_code.code_challenge_method.as_deref(),
+        ) {
+            return Err(OAuthServiceError::InvalidCodeVerifier);
         }
 
         // Get client for rotation settings and principal_kind enforcement (Phase 6 C17)
-        let client = self
-            .repo
-            .find_active_client_by_client_id(&auth_code.client_id)
-            .await?
-            .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
+        let client = self.require_active_client(&auth_code.client_id).await?;
 
         // Phase 6 C17: enforce principal_kind at token issuance.
         // Look up the user's kind and verify the client allows it.
-        let user = self
-            .user_repo
-            .find_by_id(auth_code.user_id)
-            .await?
-            .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
-
-        if !client.is_principal_kind_allowed(&user.principal_kind) {
-            tracing::warn!(
-                user_id = %auth_code.user_id,
-                principal_kind = %user.principal_kind,
-                client_id = %auth_code.client_id,
-                "Token issuance denied: principal_kind not allowed for OAuth client"
-            );
-            return Err(OAuthServiceError::PrincipalKindNotAllowed);
-        }
+        self.check_principal_kind_allowed(auth_code.user_id, &auth_code.client_id, &client)
+            .await?;
 
         // Generate tokens. Public clients receive no refresh token in the
         // response (per spec) and we now skip persisting one as well — a
@@ -554,30 +522,14 @@ impl OAuthService {
         }
 
         // Get client for rotation settings
-        let client = self
-            .repo
-            .find_active_client_by_client_id(client_id)
-            .await?
-            .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
+        let client = self.require_active_client(client_id).await?;
 
         // Phase 6 C17 + review R6: re-check principal_kind on refresh so a
         // user whose kind is no longer permitted by this client (e.g. after
         // a config change) cannot mint new tokens via an existing refresh
         // grant. Mirrors the check in exchange_code_for_tokens.
-        let user = self
-            .user_repo
-            .find_by_id(refresh_token.user_id)
-            .await?
-            .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
-        if !client.is_principal_kind_allowed(&user.principal_kind) {
-            tracing::warn!(
-                user_id = %refresh_token.user_id,
-                principal_kind = %user.principal_kind,
-                client_id = %client_id,
-                "Refresh denied: principal_kind not allowed for OAuth client"
-            );
-            return Err(OAuthServiceError::PrincipalKindNotAllowed);
-        }
+        self.check_principal_kind_allowed(refresh_token.user_id, client_id, &client)
+            .await?;
 
         // Revoke old refresh token
         self.repo.revoke_refresh_token(refresh_token.id).await?;
@@ -791,25 +743,91 @@ impl OAuthService {
         Ok((access_token, Some(refresh_token)))
     }
 
-    /// Generate a 16-byte client_id (base64url encoded).
+    /// Fetch an active client by `client_id`, returning `InvalidClient` if not found.
     ///
-    /// Uses OS-backed CSPRNG directly rather than `thread_rng` so entropy
-    /// does not depend on the ChaCha20 thread-local state being seeded first.
-    fn generate_client_id(&self) -> String {
-        let mut bytes = [0u8; 16];
-        rand::rngs::SysRng
-            .try_fill_bytes(&mut bytes)
-            .expect("OS rng failed");
-        URL_SAFE_NO_PAD.encode(bytes)
+    /// Centralises the repeated `find_active_client_by_client_id + ok_or_else`
+    /// pattern so future changes to the error message or the lookup itself only
+    /// need to be made in one place.
+    async fn require_active_client(
+        &self,
+        client_id: &str,
+    ) -> Result<OAuthClient, OAuthServiceError> {
+        self.repo
+            .find_active_client_by_client_id(client_id)
+            .await?
+            .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))
     }
 
-    /// Generate a 32-byte client_secret (base64url encoded).
-    fn generate_client_secret(&self) -> String {
-        let mut bytes = [0u8; 32];
+    /// Validate that every scope string in `scopes` is a recognised `OAuthScope`.
+    ///
+    /// Returns `InvalidScope` on the first unrecognised entry.
+    fn validate_scopes(&self, scopes: &[String]) -> Result<(), OAuthServiceError> {
+        for scope in scopes {
+            if OAuthScope::parse(scope).is_none() {
+                return Err(OAuthServiceError::InvalidScope(scope.clone()));
+            }
+        }
+        Ok(())
+    }
+
+    /// Build `ScopeDisplay` metadata from a list of scope strings.
+    fn build_scope_displays(&self, scopes: &[String]) -> Vec<ScopeDisplay> {
+        scopes
+            .iter()
+            .filter_map(|s| OAuthScope::parse(s))
+            .map(|s| ScopeDisplay {
+                name: s.as_str().to_string(),
+                description: s.description().to_string(),
+            })
+            .collect()
+    }
+
+    /// Enforce the Phase 6 C17 `principal_kind` policy for a given user + client pair.
+    ///
+    /// Shared between `exchange_code_for_tokens` and `refresh_tokens` so that
+    /// the policy is applied consistently: if the user's `principal_kind` is not
+    /// in the client's allowed list the grant is rejected and a warning is logged.
+    async fn check_principal_kind_allowed(
+        &self,
+        user_id: Uuid,
+        client_id: &str,
+        client: &OAuthClient,
+    ) -> Result<(), OAuthServiceError> {
+        let user = self
+            .user_repo
+            .find_by_id(user_id)
+            .await?
+            .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
+
+        if !client.is_principal_kind_allowed(&user.principal_kind) {
+            tracing::warn!(
+                user_id = %user_id,
+                principal_kind = %user.principal_kind,
+                client_id = %client_id,
+                "Token grant denied: principal_kind not allowed for OAuth client"
+            );
+            return Err(OAuthServiceError::PrincipalKindNotAllowed);
+        }
+
+        Ok(())
+    }
+
+    /// Generate `n` random bytes from the OS CSPRNG and return them base64url-encoded
+    /// (no padding).
+    ///
+    /// Callers:
+    /// - `generate_secure_token()` — 32 bytes → tokens / auth codes
+    /// - `register_client` / `regenerate_client_secret` — 32 bytes → client secret
+    /// - `register_client` — 16 bytes → client id
+    ///
+    /// Uses `SysRng` directly rather than `thread_rng` so entropy does not
+    /// depend on the ChaCha20 thread-local state being seeded first.
+    fn generate_random_b64(&self, n: usize) -> String {
+        let mut bytes = vec![0u8; n];
         rand::rngs::SysRng
             .try_fill_bytes(&mut bytes)
             .expect("OS rng failed");
-        URL_SAFE_NO_PAD.encode(bytes)
+        URL_SAFE_NO_PAD.encode(&bytes)
     }
 
     /// Generate a 32-byte secure token (base64url encoded).
@@ -817,11 +835,7 @@ impl OAuthService {
     /// Used for OAuth authorization codes, access tokens, and refresh tokens —
     /// all shared secrets that require CSPRNG-quality entropy.
     fn generate_secure_token(&self) -> String {
-        let mut bytes = [0u8; 32];
-        rand::rngs::SysRng
-            .try_fill_bytes(&mut bytes)
-            .expect("OS rng failed");
-        URL_SAFE_NO_PAD.encode(bytes)
+        self.generate_random_b64(32)
     }
 
     /// Hash a token using SHA-256.
@@ -833,7 +847,7 @@ impl OAuthService {
 
     /// Verify PKCE code challenge.
     /// Only S256 method is supported per OAuth 2.1 recommendations.
-    fn verify_pkce(&self, verifier: &str, challenge: &str, method: Option<&str>) -> bool {
+    fn verify_pkce(verifier: &str, challenge: &str, method: Option<&str>) -> bool {
         // Only S256 is supported - plain method is deprecated per OAuth 2.1
         match method.unwrap_or("S256") {
             "S256" => {
@@ -852,56 +866,39 @@ impl OAuthService {
 mod tests {
     use super::*;
 
-    /// Test PKCE verification directly without needing service.
-    /// Only S256 is supported.
-    fn verify_pkce_helper(verifier: &str, challenge: &str, method: Option<&str>) -> bool {
-        match method.unwrap_or("S256") {
-            "S256" => {
-                let mut hasher = Sha256::new();
-                hasher.update(verifier.as_bytes());
-                let computed = URL_SAFE_NO_PAD.encode(hasher.finalize());
-                computed == challenge
-            }
-            // plain is not supported
-            _ => false,
-        }
-    }
-
-    /// Generate secure token for testing.
-    fn generate_test_token() -> String {
-        let mut bytes = [0u8; 32];
+    /// Generate `n` random base64url-encoded bytes via the OS CSPRNG.
+    fn random_b64(n: usize) -> String {
+        let mut bytes = vec![0u8; n];
         rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes).expect("OS rng failed");
-        URL_SAFE_NO_PAD.encode(bytes)
-    }
-
-    /// Generate client ID for testing.
-    fn generate_test_client_id() -> String {
-        let mut bytes = [0u8; 16];
-        rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes).expect("OS rng failed");
-        URL_SAFE_NO_PAD.encode(bytes)
+        URL_SAFE_NO_PAD.encode(&bytes)
     }
 
     #[test]
     fn test_pkce_verification() {
-        // Test S256 method
+        // RFC 7636 Appendix B known-answer vector: this pins the S256 challenge
+        // computation so a regression in `verify_pkce` is actually caught.
         let verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+        let challenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
 
-        // Generate expected challenge from verifier
-        let mut hasher = Sha256::new();
-        hasher.update(verifier.as_bytes());
-        let expected = URL_SAFE_NO_PAD.encode(hasher.finalize());
+        // Correct verifier + challenge under S256 (and default method == S256).
+        assert!(OAuthService::verify_pkce(verifier, challenge, Some("S256")));
+        assert!(OAuthService::verify_pkce(verifier, challenge, None));
 
-        assert!(verify_pkce_helper(verifier, &expected, Some("S256")));
-        assert!(!verify_pkce_helper("wrong", &expected, Some("S256")));
+        // Wrong verifier must not match the challenge.
+        assert!(!OAuthService::verify_pkce("wrong", challenge, Some("S256")));
 
-        // plain method is not supported (returns false)
-        assert!(!verify_pkce_helper("test", "test", Some("plain")));
+        // `plain` is intentionally unsupported, even when verifier == challenge.
+        assert!(!OAuthService::verify_pkce(
+            challenge,
+            challenge,
+            Some("plain")
+        ));
     }
 
     #[test]
     fn test_token_generation() {
-        let token1 = generate_test_token();
-        let token2 = generate_test_token();
+        let token1 = random_b64(32);
+        let token2 = random_b64(32);
 
         // Should be 43 chars (32 bytes base64url encoded without padding)
         assert_eq!(token1.len(), 43);
@@ -910,8 +907,8 @@ mod tests {
 
     #[test]
     fn test_client_id_generation() {
-        let id1 = generate_test_client_id();
-        let id2 = generate_test_client_id();
+        let id1 = random_b64(16);
+        let id2 = random_b64(16);
 
         // Should be 22 chars (16 bytes base64url encoded without padding)
         assert_eq!(id1.len(), 22);

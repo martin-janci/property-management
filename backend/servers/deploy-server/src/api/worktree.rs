@@ -560,6 +560,11 @@ pub async fn get_handler(
     Path(name): Path<String>,
 ) -> Result<Json<Worktree>> {
     caller.require_scope("worktree:read")?;
+    // Validate the path param with the same strict rules `open_handler` applies
+    // to a freshly-created alias (#769 finding 6). The name flows into Caddy host
+    // strings and Postgres DB-name reconstruction downstream; reject anything that
+    // isn't `[A-Za-z0-9_-]` (no path separators, no leading dash) at the boundary.
+    crate::infra::git::validate_alias_strict(&name)?;
     let wt = svc
         .store
         .get_worktree(&name)
@@ -582,6 +587,10 @@ pub async fn close_handler(
     Path(name): Path<String>,
 ) -> Result<Json<Worktree>> {
     caller.require_scope("worktree:close")?;
+    // Validate the path param before it reaches the lock registry, the store, or
+    // the Caddy/Postgres cleanup paths (#769 finding 6). Same strict rules as
+    // `open_handler`.
+    crate::infra::git::validate_alias_strict(&name)?;
     // Serialize against concurrent open/close/GC for the same worktree (#11, #12).
     let _lock = svc.worktree_locks.acquire(&name).await;
 

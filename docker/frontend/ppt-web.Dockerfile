@@ -69,6 +69,13 @@ RUN apk add --no-cache gettext
 # Ship the template (not the final config) — rendered at startup.
 COPY docker/nginx/ppt-web.nginx.conf.template /etc/nginx/conf.d/default.conf.template
 
+# Shared, `include`d partials (relative redirects, gzip, common security
+# headers). Kept OUTSIDE /etc/nginx/conf.d so the base image's
+# `include /etc/nginx/conf.d/*.conf` does not try to load them as standalone
+# server configs; the template pulls them in by absolute path. No envsubst
+# needed — they carry no `${BG_*}` placeholders.
+COPY docker/nginx/partials/ /etc/nginx/partials/
+
 # nginx:alpine's stock entrypoint runs every script in /docker-entrypoint.d/*.sh
 # before exec'ing nginx, so dropping the renderer here gives us templating
 # without a custom ENTRYPOINT line.

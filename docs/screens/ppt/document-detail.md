@@ -70,7 +70,7 @@ owner: pm-frontend
 ### Right rail (3 cards)
 - [ ] [w] **Metadáta** — kv-list (`dl`): Kategória / Publikum (with eye icon) / Rok / Nahral (avatar+name) / Zdroj (Manuálny upload · web) / ID (monospace selectable)
 - [ ] [w] **Akcie** — vertical action list (5 rows): Zdieľať s rezidentmi · Pripojiť k oznamu · Premenovať / upraviť metadáta · Archivovať · Vymazať (danger ink)
-- [ ] [w] **História verzií · 4** — timeline with current version highlighted (brand-600 dot), prior versions with neutral dots; each entry: version tag (v3/v2/v1) + commit-style title + sub-line (date · time · author · size)
+- [x] [w] **História verzií · 4** — timeline with current version highlighted (brand-600 dot), prior versions with neutral dots; each entry: version tag (v3/v2/v1) + commit-style title + sub-line (date · time · author · size) — list-only (no restore) shipped via `useDocumentVersions`
 
 ### Locale + theme switcher
 - [ ] [-] preview-bar with Theme + Locale toggles (SK/CS/DE/EN)
@@ -105,6 +105,8 @@ UC-08 single-document detail. Manager-side full editing; resident-side filtered 
 
 <!-- newest entries on top -->
 
+- 2026-06-03 — agent: #974.1 — fixed the version-history binding to match the real backend `VersionHistoryResponse` (the generated client mis-models this endpoint as a bare camelCase array; runtime returns `{ history: { versions: [...] } }` snake_case). Page now unwraps `history.versions`, prefers the server's `is_current_version` flag for the current-version highlight, and reads `created_by_name` for the uploader. Added `VersionHistoryResponse`/`DocumentVersionHistory`/`DocumentVersion` types and typed the `useDocumentVersions` hook to the backend shape. Still list-only (no restore).
+- 2026-06-03 — agent: gap-7b-1 — added "História verzií" list-only version-history timeline to DocumentDetail (via new `useDocumentVersions` hook); each row shows version number + uploader + date + size, newest first, highest version highlighted as current. No restore (excluded from fixable-now scope).
 - 2026-05-27 — agent: gap-7a-4 review fixes — useDocumentDownload hook extracted and wired into DownloadButton; download errors now surface via toast; getDownloadUrl imperative call retained (same fetchApi transport as all api-client ops)
 - 2026-05-27 — agent: gap-7a-4 — added DocumentPreviewModal (PDF inline preview via PdfPreview + image preview via <img> + fallback + download button in header); preview eye + download action buttons added to each document row in DocumentsBrowse; useDownloadUrl + usePreviewUrl presigned-URL hooks wired; modal is accessible (Escape key close, backdrop click, auto-focus close button, role=dialog aria-modal); apiStatus remains complete
 - 2026-05-27 — agent: gap-7a-2 review fixes — useDocumentDownload hook extracted; download error toast added; MoveFolderDialog focus trap completed

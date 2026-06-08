@@ -1,6 +1,6 @@
 // Auth screens (UC-14)
 
-export type { Announcement, AnnouncementAttachment, AnnouncementCategory } from './announcements';
+export type { Announcement, AnnouncementAttachment } from './announcements';
 export { AnnouncementDetailScreen, AnnouncementsScreen } from './announcements';
 export {
   AuthFlow,
@@ -26,8 +26,8 @@ export type { Fault, FaultCategory, FaultPriority, FaultStatus } from './faults'
 export { FaultsListScreen, ReportFaultScreen } from './faults';
 export type { FormStatus, ResidentForm } from './forms';
 export { FormsScreen } from './forms';
-export type { Lease, LeaseRole, LeaseStatus } from './leases';
-export { LeaseDetailScreen, LeasesScreen } from './leases';
+export type { ESignatureRequest, ESignatureStatus, Lease, LeaseRole, LeaseStatus } from './leases';
+export { LeaseDetailScreen, LeaseSignatureScreen, LeasesScreen } from './leases';
 // Phase 3 feature screens
 export { MessagesScreen, ThreadDetailScreen } from './messages';
 export type { Meter, MeterCommodity } from './meters';

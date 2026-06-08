@@ -9,6 +9,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
+use common::notifications::{Notification, NotificationCategory};
 use db::models::{share_type, CreateShare, DocumentSummary, LogShareAccess};
 use uuid::Uuid;
 
@@ -212,7 +213,54 @@ async fn create_share(
                 .as_ref()
                 .map(|token| format!("/documents/shared/{}", token));
 
+            // Best-effort: notify the recipients of a non-link share (#973.2).
+            // LINK shares are pull-based (anyone with the URL) so there is no
+            // concrete recipient to notify. Recipient resolution runs on the
+            // same RLS connection so the reads are authorised under the
+            // manager's org context, mirroring the announcement publish path.
+            let recipients = resolve_share_recipients(
+                rls.conn(),
+                tenant.tenant_id,
+                &share.share_type,
+                share.target_id,
+                share.target_role.as_deref(),
+            )
+            .await;
+
             rls.release().await;
+
+            if !recipients.is_empty() {
+                let notification = Notification::new(
+                    Uuid::nil(),
+                    NotificationCategory::Documents,
+                    "Document shared with you",
+                    format!("\"{}\" has been shared with you", existing.title),
+                )
+                .with_action_url(format!("/documents/{}", existing.id))
+                .with_data(serde_json::json!({
+                    "document_id": existing.id,
+                    "share_id": share.id,
+                    "share_type": share.share_type,
+                    "shared_by": auth.user_id,
+                }));
+
+                let (sent, skipped, failed) = state
+                    .notification_pipeline
+                    .broadcast(&recipients, &notification, Some(existing.id))
+                    .await;
+
+                tracing::info!(
+                    document_id = %existing.id,
+                    share_id = %share.id,
+                    share_type = %share.share_type,
+                    recipients = recipients.len(),
+                    channels_sent = sent,
+                    channels_skipped = skipped,
+                    channels_failed = failed,
+                    "Document share created — recipient notifications dispatched"
+                );
+            }
+
             Ok((
                 StatusCode::CREATED,
                 Json(CreateShareResponse {
@@ -603,6 +651,96 @@ async fn access_protected_share(
         download_url,
         preview_url,
     }))
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/// Resolve a document share's targeting into the concrete set of recipient
+/// user ids (#973.2, Epic 7A.5 share-notification fan-out).
+///
+/// Must be called on a connection whose RLS context is the sharing manager's
+/// org, so the membership / unit / resident reads are authorised. Mirrors the
+/// announcement publish fan-out (`resolve_announcement_recipients`).
+///
+/// | share_type | recipients |
+/// |------------|------------|
+/// | `link`     | none (pull-based; anyone with the URL) |
+/// | `user`     | the single target user |
+/// | `role`     | active org members holding the target role |
+/// | `building` | active residents of units in the target building |
+///
+/// Resolution is best-effort: a query error is logged and treated as "no
+/// recipients" so a transient read failure never blocks the share itself.
+async fn resolve_share_recipients(
+    conn: &mut sqlx::PgConnection,
+    org_id: Uuid,
+    share_type_str: &str,
+    target_id: Option<Uuid>,
+    target_role: Option<&str>,
+) -> Vec<Uuid> {
+    let result: Result<Vec<(Uuid,)>, sqlx::Error> = match share_type_str {
+        share_type::USER => match target_id {
+            Some(uid) => Ok(vec![(uid,)]),
+            None => Ok(Vec::new()),
+        },
+        share_type::ROLE => match target_role {
+            Some(role) => {
+                sqlx::query_as(
+                    // Issue #1000: exclude expired memberships, matching the
+                    // announcement targeting predicate in `announcement.rs`
+                    // (`list_published_rls`/`count_published_rls`). A user whose
+                    // membership lapsed (but was never explicitly revoked) no
+                    // longer has org access and must not be fanned out to.
+                    r#"
+                    SELECT DISTINCT user_id FROM user_memberships
+                    WHERE organization_id = $1
+                      AND revoked_at IS NULL
+                      AND (expires_at IS NULL OR expires_at > NOW())
+                      AND role = $2
+                    "#,
+                )
+                .bind(org_id)
+                .bind(role)
+                .fetch_all(&mut *conn)
+                .await
+            }
+            None => Ok(Vec::new()),
+        },
+        share_type::BUILDING => match target_id {
+            Some(building_id) => {
+                sqlx::query_as(
+                    r#"
+                    SELECT DISTINCT ur.user_id
+                    FROM unit_residents ur
+                    JOIN units u ON u.id = ur.unit_id
+                    WHERE u.building_id = $1
+                      AND ur.end_date IS NULL
+                      AND ur.receives_notifications = TRUE
+                    "#,
+                )
+                .bind(building_id)
+                .fetch_all(&mut *conn)
+                .await
+            }
+            None => Ok(Vec::new()),
+        },
+        // LINK (and anything unexpected) has no concrete recipient.
+        _ => Ok(Vec::new()),
+    };
+
+    match result {
+        Ok(rows) => rows.into_iter().map(|(id,)| id).collect(),
+        Err(e) => {
+            tracing::error!(
+                share_type = %share_type_str,
+                error = %e,
+                "Failed to resolve share recipients; share created without notification fan-out"
+            );
+            Vec::new()
+        }
+    }
 }
 
 // ============================================================================

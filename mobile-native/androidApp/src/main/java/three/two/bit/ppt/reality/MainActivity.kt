@@ -21,8 +21,9 @@ import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.listing.ListingRepository
+import three.two.bit.ppt.reality.navigation.DeepLinkRouter
+import three.two.bit.ppt.reality.navigation.DeepLinkTarget
 import three.two.bit.ppt.reality.navigation.RealityNavHost
-import three.two.bit.ppt.reality.navigation.Screen
 import three.two.bit.ppt.reality.ui.theme.RealityPortalTheme
 
 /**
@@ -72,51 +73,27 @@ class MainActivity : ComponentActivity() {
         handleDeepLink(intent)
     }
 
+    /**
+     * Dispatch an incoming `reality://…` intent through the shared [DeepLinkRouter] — the single
+     * source of truth for deep-link scheme/host/path/query parsing (shared across Android + iOS).
+     *
+     * Android contributes only the platform-specific bit: pulling the URI string out of the
+     * [Intent]. All scheme/host matching and percent-decoding lives in [DeepLinkRouter.parse] so a
+     * new shared [DeepLinkTarget] (e.g. [DeepLinkTarget.Sso]) is honoured here automatically rather
+     * than silently no-op-ing on Android.
+     */
     private fun handleDeepLink(intent: Intent?) {
         val uri = intent?.data ?: return
 
-        if (uri.scheme != "reality") return
-
-        when (uri.host) {
-            "sso" -> {
-                // Handle SSO deep-link: reality://sso?token=xxx
-                val token = uri.getQueryParameter("token")
-                if (token != null) {
-                    lifecycleScope.launch { ssoService.validateAndLogin(token) }
-                }
-            }
-            "listing" -> {
-                // Handle listing deep-link: reality://listing/{id}
-                val listingId = uri.pathSegments.firstOrNull()
-                if (listingId != null) {
-                    pendingDeepLink.value = DeepLinkTarget.Listing(listingId)
-                }
-            }
-            "search" -> {
-                // Handle search deep-link: reality://search
-                pendingDeepLink.value = DeepLinkTarget.Search
-            }
-            "favorites" -> {
-                // Handle favorites deep-link: reality://favorites
-                pendingDeepLink.value = DeepLinkTarget.Favorites
-            }
-            "inquiries" -> {
-                // Handle inquiries deep-link: reality://inquiries
-                pendingDeepLink.value = DeepLinkTarget.Inquiries
-            }
+        when (val target = DeepLinkRouter.parse(uri.toString())) {
+            // SSO is handled out-of-band: validate the token instead of navigating.
+            is DeepLinkTarget.Sso ->
+                lifecycleScope.launch { ssoService.validateAndLogin(target.token) }
+            // Navigable targets are deferred until the NavHost is composed.
+            null -> Unit
+            else -> pendingDeepLink.value = target
         }
     }
-}
-
-/** Deep link navigation target (Epic 122) */
-sealed class DeepLinkTarget {
-    data class Listing(val id: String) : DeepLinkTarget()
-
-    data object Search : DeepLinkTarget()
-
-    data object Favorites : DeepLinkTarget()
-
-    data object Inquiries : DeepLinkTarget()
 }
 
 @Composable
@@ -169,20 +146,12 @@ fun RealityPortalApp(
     )
 }
 
-/** Navigate to a deep link target (Epic 122) */
+/**
+ * Navigate to a deep link target (Epic 122). Route resolution is delegated to the shared
+ * [DeepLinkRouter] (commonMain) so Android and iOS resolve the same nav-graph routes (story 82-2,
+ * AC-4). Out-of-band targets (e.g. [DeepLinkTarget.Sso]) resolve to a `null` route and are no-ops
+ * here — they are handled before navigation in [MainActivity.handleDeepLink].
+ */
 private fun navigateToDeepLink(navController: NavHostController, target: DeepLinkTarget) {
-    when (target) {
-        is DeepLinkTarget.Listing -> {
-            navController.navigate(Screen.ListingDetail.createRoute(target.id))
-        }
-        is DeepLinkTarget.Search -> {
-            navController.navigate(Screen.Search.route)
-        }
-        is DeepLinkTarget.Favorites -> {
-            navController.navigate(Screen.Favorites.route)
-        }
-        is DeepLinkTarget.Inquiries -> {
-            navController.navigate(Screen.Inquiries.route)
-        }
-    }
+    DeepLinkRouter.route(target)?.let { route -> navController.navigate(route) }
 }

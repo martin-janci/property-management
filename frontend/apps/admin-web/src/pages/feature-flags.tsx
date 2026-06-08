@@ -11,13 +11,17 @@
  * "Save not yet implemented" for that flag and leaves a TODO comment below.
  */
 
-import { type SettingsField, SettingsForm } from '@ppt/admin-ui';
-import { useQuery } from '@tanstack/react-query';
+import { type SettingsField, SettingsForm, useCapability } from '@ppt/admin-ui';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAdminAuth } from '../auth/AdminAuthContext';
-import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
+import {
+  type AuditReasonAction,
+  AuditReasonPrompt,
+  useAuditReasonValid,
+} from '../components/AuditReasonPrompt';
 import { useToast } from '../components/Toast';
 import { useFocusTrap } from '../components/useFocusTrap';
 import { HelpTooltip } from '../features/help';
@@ -52,6 +56,37 @@ interface ListFeatureFlagsBackendResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Per-flag override types (Epic 10B.2)
+//
+// GET /api/v1/platform-admin/feature-flags/{id} returns
+//   { flag: { flag: FeatureFlag, overrides: FeatureFlagOverride[] } }
+// (FeatureFlagDetailResponse wraps FeatureFlagWithOverrides). We only need the
+// overrides + the inner flag's is_enabled for the panel.
+// ---------------------------------------------------------------------------
+
+type OverrideScopeType = 'organization' | 'user' | 'role';
+
+const OVERRIDE_SCOPE_TYPES: readonly OverrideScopeType[] = ['organization', 'user', 'role'];
+
+interface FeatureFlagOverride {
+  id: string;
+  flag_id: string;
+  scope_type: string;
+  scope_id: string;
+  is_enabled: boolean;
+  created_at: string;
+}
+
+interface FeatureFlagWithOverrides {
+  flag: BackendFeatureFlag & { description?: string | null };
+  overrides: FeatureFlagOverride[];
+}
+
+interface FeatureFlagDetailResponse {
+  flag: FeatureFlagWithOverrides;
+}
+
+// ---------------------------------------------------------------------------
 // AuditReason dialog — shown before actual API call
 // ---------------------------------------------------------------------------
 
@@ -59,9 +94,22 @@ interface AuditReasonDialogProps {
   onConfirm: (reason: string) => void;
   onCancel: () => void;
   isPending: boolean;
+  /** Dialog heading. Defaults to the global save-flags title. */
+  title?: string;
+  /** Audit action label forwarded to AuditReasonPrompt. */
+  action?: AuditReasonAction;
+  /** Confirm-button label. */
+  confirmLabel?: string;
 }
 
-function AuditReasonDialog({ onConfirm, onCancel, isPending }: AuditReasonDialogProps) {
+function AuditReasonDialog({
+  onConfirm,
+  onCancel,
+  isPending,
+  title = 'Save feature flags',
+  action = 'feature_flag_toggle',
+  confirmLabel = 'Save flags',
+}: AuditReasonDialogProps) {
   const [reason, setReason] = useState('');
   const isValid = useAuditReasonValid(reason, 20);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -111,10 +159,10 @@ function AuditReasonDialog({ onConfirm, onCancel, isPending }: AuditReasonDialog
             color: 'var(--ppt-fg-primary, #111827)',
           }}
         >
-          Save feature flags
+          {title}
         </h2>
         <AuditReasonPrompt
-          action="feature_flag_toggle"
+          action={action}
           minLength={20}
           value={reason}
           onChange={setReason}
@@ -153,11 +201,418 @@ function AuditReasonDialog({ onConfirm, onCancel, isPending }: AuditReasonDialog
             disabled={!isValid || isPending}
             onClick={() => onConfirm(reason)}
           >
-            {isPending ? 'Saving…' : 'Save flags'}
+            {isPending ? 'Saving…' : confirmLabel}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Per-flag override panel (Epic 10B.2)
+//
+// Lists the flag's existing scope overrides and lets an operator add (via the
+// audit-reason dialog) or remove targeted overrides. Reuses the same bearer +
+// credentials:'include' fetch pattern as the rest of the page.
+// ---------------------------------------------------------------------------
+
+interface OverridesPanelProps {
+  flag: BackendFeatureFlag;
+}
+
+function FeatureFlagOverridesPanel({ flag }: OverridesPanelProps) {
+  const { t } = useTranslation();
+  const { token } = useAdminAuth();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+
+  const detailKey = useMemo(
+    () => ['admin', 'platform', 'feature-flags', flag.id, 'detail'] as const,
+    [flag.id]
+  );
+
+  const authHeaders = useCallback(
+    (json = false): Record<string, string> => {
+      const headers: Record<string, string> = {};
+      if (json) headers['Content-Type'] = 'application/json';
+      if (token) headers.Authorization = `Bearer ${token}`;
+      return headers;
+    },
+    [token]
+  );
+
+  const detailQuery = useQuery<FeatureFlagWithOverrides>({
+    queryKey: detailKey,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/v1/platform-admin/feature-flags/${encodeURIComponent(flag.id)}`,
+        { headers: authHeaders(), credentials: 'include' }
+      );
+      if (!res.ok) throw new Error(`Feature flag detail fetch failed: ${res.status}`);
+      const body = (await res.json()) as FeatureFlagDetailResponse;
+      return body.flag;
+    },
+    staleTime: 15_000,
+    retry: 1,
+  });
+
+  // Add-override form state.
+  const [scopeType, setScopeType] = useState<OverrideScopeType>('organization');
+  const [scopeId, setScopeId] = useState('');
+  const [isEnabled, setIsEnabled] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+
+  const invalidate = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin', 'platform', 'feature-flags'] }),
+      queryClient.invalidateQueries({ queryKey: detailKey }),
+    ]);
+  }, [queryClient, detailKey]);
+
+  const handleAddConfirm = useCallback(
+    async (_reason: string) => {
+      setPending(true);
+      try {
+        const res = await fetch(
+          `/api/v1/platform-admin/feature-flags/${encodeURIComponent(flag.id)}/overrides`,
+          {
+            method: 'POST',
+            headers: authHeaders(true),
+            credentials: 'include',
+            body: JSON.stringify({
+              scope_type: scopeType,
+              scope_id: scopeId.trim(),
+              is_enabled: isEnabled,
+            }),
+          }
+        );
+        if (res.status === 201 || res.ok) {
+          setDialogOpen(false);
+          setScopeId('');
+          await invalidate();
+          showToast({
+            type: 'success',
+            title: t('admin.featureFlags.overrides.toast.addedTitle', {
+              defaultValue: 'Override added',
+            }),
+            message: t('admin.featureFlags.overrides.toast.addedMessage', {
+              defaultValue: 'The feature flag override was created.',
+            }),
+          });
+        } else {
+          const text = await res.text().catch(() => '');
+          showToast({
+            type: 'error',
+            title: t('admin.featureFlags.overrides.toast.addFailedTitle', {
+              defaultValue: 'Failed to add override',
+            }),
+            message: text || `HTTP ${res.status}`,
+          });
+        }
+      } catch (e) {
+        showToast({
+          type: 'error',
+          title: t('admin.featureFlags.overrides.toast.addFailedTitle', {
+            defaultValue: 'Failed to add override',
+          }),
+          message: e instanceof Error ? e.message : 'Network error',
+        });
+      } finally {
+        setPending(false);
+      }
+    },
+    [flag.id, authHeaders, scopeType, scopeId, isEnabled, invalidate, showToast, t]
+  );
+
+  const handleRemove = useCallback(
+    async (overrideId: string) => {
+      try {
+        const res = await fetch(
+          `/api/v1/platform-admin/feature-flags/${encodeURIComponent(
+            flag.id
+          )}/overrides/${encodeURIComponent(overrideId)}`,
+          { method: 'DELETE', headers: authHeaders(), credentials: 'include' }
+        );
+        if (res.status === 204 || res.ok) {
+          await invalidate();
+          showToast({
+            type: 'success',
+            title: t('admin.featureFlags.overrides.toast.removedTitle', {
+              defaultValue: 'Override removed',
+            }),
+            message: t('admin.featureFlags.overrides.toast.removedMessage', {
+              defaultValue: 'The feature flag override was removed.',
+            }),
+          });
+        } else {
+          const text = await res.text().catch(() => '');
+          showToast({
+            type: 'error',
+            title: t('admin.featureFlags.overrides.toast.removeFailedTitle', {
+              defaultValue: 'Failed to remove override',
+            }),
+            message: text || `HTTP ${res.status}`,
+          });
+        }
+      } catch (e) {
+        showToast({
+          type: 'error',
+          title: t('admin.featureFlags.overrides.toast.removeFailedTitle', {
+            defaultValue: 'Failed to remove override',
+          }),
+          message: e instanceof Error ? e.message : 'Network error',
+        });
+      }
+    },
+    [flag.id, authHeaders, invalidate, showToast, t]
+  );
+
+  const canSubmitAdd = scopeId.trim().length > 0 && !pending;
+  const overrides = detailQuery.data?.overrides ?? [];
+
+  return (
+    <div
+      style={{
+        borderTop: '1px solid var(--ppt-border-default, #e5e7eb)',
+        marginTop: 8,
+        paddingTop: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
+      {dialogOpen && (
+        <AuditReasonDialog
+          title={t('admin.featureFlags.overrides.dialogTitle', {
+            defaultValue: 'Add feature flag override',
+          })}
+          confirmLabel={t('admin.featureFlags.overrides.addAction', {
+            defaultValue: 'Add override',
+          })}
+          isPending={pending}
+          onConfirm={handleAddConfirm}
+          onCancel={() => setDialogOpen(false)}
+        />
+      )}
+
+      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>
+        {t('admin.featureFlags.overrides.title', { defaultValue: 'Per-scope overrides' })}
+      </h3>
+
+      {detailQuery.isLoading && (
+        <div role="status" aria-live="polite">
+          {t('admin.featureFlags.overrides.loading', { defaultValue: 'Loading overrides…' })}
+        </div>
+      )}
+
+      {detailQuery.isError && (
+        <div role="alert" className="ppt-admin-error">
+          {t('admin.featureFlags.overrides.loadError', {
+            defaultValue: 'Failed to load overrides.',
+          })}
+        </div>
+      )}
+
+      {!detailQuery.isLoading && !detailQuery.isError && overrides.length === 0 && (
+        <p style={{ margin: 0, color: 'var(--ppt-fg-secondary, #6b7280)' }}>
+          {t('admin.featureFlags.overrides.empty', {
+            defaultValue: 'No overrides — this flag uses its global value everywhere.',
+          })}
+        </p>
+      )}
+
+      {overrides.length > 0 && (
+        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
+          <thead>
+            <tr style={{ textAlign: 'left' }}>
+              <th style={{ padding: '4px 8px' }}>
+                {t('admin.featureFlags.overrides.columns.scopeType', { defaultValue: 'Scope' })}
+              </th>
+              <th style={{ padding: '4px 8px' }}>
+                {t('admin.featureFlags.overrides.columns.scopeId', { defaultValue: 'Scope ID' })}
+              </th>
+              <th style={{ padding: '4px 8px' }}>
+                {t('admin.featureFlags.overrides.columns.enabled', { defaultValue: 'Enabled' })}
+              </th>
+              <th style={{ padding: '4px 8px' }} />
+            </tr>
+          </thead>
+          <tbody>
+            {overrides.map((o) => (
+              <tr key={o.id} style={{ borderTop: '1px solid var(--ppt-border-default, #f1f5f9)' }}>
+                <td style={{ padding: '4px 8px' }}>{o.scope_type}</td>
+                <td style={{ padding: '4px 8px', fontFamily: 'monospace' }}>{o.scope_id}</td>
+                <td style={{ padding: '4px 8px' }}>
+                  {o.is_enabled
+                    ? t('admin.featureFlags.overrides.on', { defaultValue: 'On' })
+                    : t('admin.featureFlags.overrides.off', { defaultValue: 'Off' })}
+                </td>
+                <td style={{ padding: '4px 8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => void handleRemove(o.id)}
+                    style={{
+                      padding: '3px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                    }}
+                  >
+                    {t('admin.featureFlags.overrides.removeAction', { defaultValue: 'Remove' })}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Add-override form */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (canSubmitAdd) setDialogOpen(true);
+        }}
+        style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 10 }}
+      >
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
+          {t('admin.featureFlags.overrides.columns.scopeType', { defaultValue: 'Scope' })}
+          <select
+            value={scopeType}
+            onChange={(e) => setScopeType(e.target.value as OverrideScopeType)}
+            style={{ padding: '5px 8px' }}
+          >
+            {OVERRIDE_SCOPE_TYPES.map((s) => (
+              <option key={s} value={s}>
+                {t(`admin.featureFlags.overrides.scope.${s}`, { defaultValue: s })}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
+          {t('admin.featureFlags.overrides.columns.scopeId', { defaultValue: 'Scope ID' })}
+          <input
+            type="text"
+            value={scopeId}
+            onChange={(e) => setScopeId(e.target.value)}
+            placeholder={t('admin.featureFlags.overrides.scopeIdPlaceholder', {
+              defaultValue: 'UUID',
+            })}
+            style={{ padding: '5px 8px', minWidth: 260 }}
+          />
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+          <input
+            type="checkbox"
+            checked={isEnabled}
+            onChange={(e) => setIsEnabled(e.target.checked)}
+          />
+          {t('admin.featureFlags.overrides.columns.enabled', { defaultValue: 'Enabled' })}
+        </label>
+        <button
+          type="submit"
+          disabled={!canSubmitAdd}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 8,
+            border: 'none',
+            background: 'var(--ppt-brand-600, #2563eb)',
+            color: '#fff',
+            cursor: canSubmitAdd ? 'pointer' : 'not-allowed',
+            fontSize: 13,
+            fontWeight: 500,
+            opacity: canSubmitAdd ? 1 : 0.45,
+          }}
+        >
+          {t('admin.featureFlags.overrides.addAction', { defaultValue: 'Add override' })}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Flag list with expandable override panels (Epic 10B.2)
+// ---------------------------------------------------------------------------
+
+function FeatureFlagOverridesSection({ flags }: { flags: BackendFeatureFlag[] }) {
+  const { t } = useTranslation();
+  const canWrite = useCapability('feature_flags_write');
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Gate the whole panel behind feature_flags_write, mirroring the form below.
+  if (!canWrite) return null;
+  if (flags.length === 0) return null;
+
+  return (
+    <section style={{ marginTop: 32 }}>
+      <h2 style={{ fontSize: 18, fontWeight: 600 }}>
+        {t('admin.featureFlags.overrides.sectionTitle', {
+          defaultValue: 'Targeted overrides',
+        })}
+      </h2>
+      <p style={{ color: 'var(--ppt-fg-secondary, #6b7280)', marginTop: 4 }}>
+        {t('admin.featureFlags.overrides.sectionHint', {
+          defaultValue:
+            'Enable or disable a flag for a specific organisation, user, or role. Targeted scopes take precedence over the global value.',
+        })}
+      </p>
+      <ul
+        style={{
+          listStyle: 'none',
+          padding: 0,
+          margin: '16px 0 0',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}
+      >
+        {flags.map((flag) => {
+          const isOpen = expanded === flag.id;
+          return (
+            <li
+              key={flag.id}
+              style={{
+                border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                borderRadius: 'var(--ppt-radius-lg, 10px)',
+                padding: 12,
+              }}
+            >
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => setExpanded(isOpen ? null : flag.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  padding: 0,
+                }}
+              >
+                <span>
+                  {flag.name ?? flag.key}{' '}
+                  <code style={{ color: 'var(--ppt-fg-secondary, #6b7280)', fontWeight: 400 }}>
+                    {flag.key}
+                  </code>
+                </span>
+                <span aria-hidden>{isOpen ? '▾' : '▸'}</span>
+              </button>
+              {isOpen && <FeatureFlagOverridesPanel flag={flag} />}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -394,6 +849,7 @@ const FeatureFlagsPage: React.FC = () => {
           capability="feature_flags_write"
           onSubmit={handleSubmit}
         />
+        <FeatureFlagOverridesSection flags={backendFlags ?? []} />
       </section>
     </>
   );

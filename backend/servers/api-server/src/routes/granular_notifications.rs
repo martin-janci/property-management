@@ -440,25 +440,10 @@ fn parse_time(s: &str) -> Result<NaiveTime, String> {
 }
 
 fn check_quiet_hours(schedule: &NotificationSchedule) -> bool {
-    if !schedule.quiet_hours_enabled {
-        return false;
-    }
-
-    // Simple check - doesn't handle timezone or weekends
-    // Full implementation would use the schedule's timezone
-    if let (Some(start), Some(end)) = (schedule.quiet_hours_start, schedule.quiet_hours_end) {
-        let now = chrono::Utc::now().time();
-        if start <= end {
-            // Normal case: e.g., 22:00 to 07:00 doesn't cross midnight... wait that does
-            // Actually 09:00 to 17:00 doesn't cross midnight
-            now >= start && now <= end
-        } else {
-            // Crosses midnight: e.g., 22:00 to 07:00
-            now >= start || now <= end
-        }
-    } else {
-        false
-    }
+    // Issue #980: evaluate in the user's stored timezone (and honour the
+    // separate weekend window) via the shared, unit-tested helper, rather than
+    // the previous UTC-only/weekend-blind comparison.
+    crate::services::quiet_hours::evaluate(schedule, chrono::Utc::now()).active
 }
 
 // ============================================================================

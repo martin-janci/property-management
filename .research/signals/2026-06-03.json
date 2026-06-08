@@ -1,0 +1,152 @@
+{
+  "date": "2026-06-03",
+  "signals": [
+    {
+      "id": "code-review-finding-cross-cutting-schema-drift-1008",
+      "type": "code-review-finding",
+      "source": "Issue #1008",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "Issue #1008: hand-written sqlx queries reference non-existent columns (delegations.delegate_id, delegations.scope, delegations.expires_at, unit_residents.move_out_date, users.first_name) — invisible without .sqlx offline metadata, undermines #971.3 + #971.6 reported-fixed items; cross-cutting between voting.rs, scheduler.rs, repositories/vote.rs, repositories/messaging.rs"
+    },
+    {
+      "id": "untriaged-issue-1014",
+      "type": "untriaged-issue",
+      "source": "Issue #1014",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1014 (no labels, OPEN): Dispatcher Phase 6 push fallback corrupted action-list.json via MCP push_files inline-content limit on a 92KB file — recovery PRs #1024 + #1027 already landed but systemic fix still open"
+    }
+  ],
+  "code_review": {
+    "segment_reviewed": "mobile-rn",
+    "reason": "churn-aligned (frontend/apps/mobile/src/App.tsx in top-3 hotspots; mobile-rn last reviewed 2026-05-27, 7 days ago)",
+    "findings_count": 0,
+    "note": "Phase 1.5 ran in lightweight inline mode (skill not spawned). Reviewed PR #962 (universal links) and PR #992 (doc-detail wiring) diffs: both small, follow established patterns, no immediately obvious correctness/security flaws. No findings emitted this run."
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal type from the Phase-5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review) fired this run; no signal met confidence=high + score>=3 + allowlist match",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-03.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique-ids count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emit non-cumulative score_delta=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap=8 + decay check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — vacuously true",
+      "observed": "no plans/ adds",
+      "expected": "all plans have adversarial pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness gates — vacuously true",
+      "observed": "0 new plans",
+      "expected": "≤2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname scan",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity with regen",
+      "observed": "ok by construction (just regenerated)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures reported",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotion convergence",
+      "observed": "no prior plan silently deleted",
+      "expected": "all prior plans present in plans/ or _archive/"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "no archive shrink",
+      "expected": "archive count >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity with regen",
+      "observed": "ok by construction (just regenerated)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no actions this run)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "≤3 actions, kill-switch honored"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts — Phase 1.6 not run this run",
+      "observed": "no-op (pm_cursor unchanged vs HEAD)",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    }
+  ]
+}

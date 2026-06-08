@@ -37,6 +37,9 @@ pub struct SchedulerConfig {
     pub payment_reminder_days_before: i64,
     /// Days before signature request expiry to send reminder (default: 3).
     pub signature_reminder_days_before: i64,
+    /// Maximum age (in days) a pinned announcement is kept pinned before the
+    /// scheduler auto-unpins it (default: 30, issue #972.7).
+    pub pin_max_age_days: i64,
 }
 
 impl Default for SchedulerConfig {
@@ -48,6 +51,7 @@ impl Default for SchedulerConfig {
             meter_reminder_days_before: 3,
             payment_reminder_days_before: 7,
             signature_reminder_days_before: 3,
+            pin_max_age_days: 30,
         }
     }
 }
@@ -56,6 +60,7 @@ impl Default for SchedulerConfig {
 #[derive(Debug, Default)]
 pub struct SchedulerMetrics {
     pub announcements_published: u64,
+    pub announcements_unpinned: u64,
     pub votes_activated: u64,
     pub votes_closed: u64,
     pub vote_reminders_sent: u64,
@@ -149,6 +154,7 @@ impl Scheduler {
         let guard = self.metrics.lock().unwrap();
         SchedulerMetrics {
             announcements_published: guard.announcements_published,
+            announcements_unpinned: guard.announcements_unpinned,
             votes_activated: guard.votes_activated,
             votes_closed: guard.votes_closed,
             vote_reminders_sent: guard.vote_reminders_sent,
@@ -199,6 +205,12 @@ impl Scheduler {
         // Story 106.1: Publish scheduled announcements and send notifications
         if let Err(e) = self.publish_scheduled_announcements().await {
             tracing::error!("Failed to publish scheduled announcements: {}", e);
+            self.increment_errors();
+        }
+
+        // Story 6.4 (issue #972.7): Auto-unpin announcements pinned too long
+        if let Err(e) = self.auto_unpin_expired_announcements().await {
+            tracing::error!("Failed to auto-unpin expired announcements: {}", e);
             self.increment_errors();
         }
 
@@ -306,6 +318,29 @@ impl Scheduler {
         Ok(())
     }
 
+    /// Auto-unpin announcements that have been pinned longer than the
+    /// configured maximum age (Story 6.4 / issue #972.7).
+    async fn auto_unpin_expired_announcements(&self) -> Result<(), sqlx::Error> {
+        // Note: Scheduler runs in background without user context.
+        // These operations are privileged/admin-level and don't need RLS enforcement.
+        let max_age = chrono::Duration::days(self.config.pin_max_age_days);
+        let unpinned = self.announcement_repo.auto_unpin_expired(max_age).await?;
+
+        if !unpinned.is_empty() {
+            tracing::info!(
+                "Auto-unpinned {} announcement(s) pinned longer than {} day(s): {:?}",
+                unpinned.len(),
+                self.config.pin_max_age_days,
+                unpinned
+            );
+
+            let mut metrics = self.metrics.lock().unwrap();
+            metrics.announcements_unpinned += unpinned.len() as u64;
+        }
+
+        Ok(())
+    }
+
     /// Get target users for an announcement based on target_type and target_ids.
     async fn get_announcement_target_users(
         &self,
@@ -351,7 +386,7 @@ impl Scheduler {
                     SELECT DISTINCT ur.user_id
                     FROM unit_residents ur
                     JOIN units u ON ur.unit_id = u.id
-                    WHERE u.building_id = ANY($1) AND ur.move_out_date IS NULL
+                    WHERE u.building_id = ANY($1) AND ur.end_date IS NULL
                     "#,
                 )
                 .bind(&target_ids)
@@ -364,7 +399,7 @@ impl Scheduler {
                 let users: Vec<(uuid::Uuid,)> = sqlx::query_as(
                     r#"
                     SELECT DISTINCT user_id FROM unit_residents
-                    WHERE unit_id = ANY($1) AND move_out_date IS NULL
+                    WHERE unit_id = ANY($1) AND end_date IS NULL
                     "#,
                 )
                 .bind(&target_ids)
@@ -548,7 +583,7 @@ impl Scheduler {
             JOIN units u ON ur.unit_id = u.id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             "#,
         )
         .bind(building_id)
@@ -623,7 +658,7 @@ impl Scheduler {
             JOIN units u ON ur.unit_id = u.id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
               AND NOT EXISTS (
                   SELECT 1 FROM vote_responses vr
                   WHERE vr.vote_id = $2 AND vr.unit_id = ur.unit_id
@@ -663,7 +698,7 @@ impl Scheduler {
             JOIN unit_residents ur ON ur.unit_id = u.id
             WHERE v.id = ANY($1)
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
               AND NOT EXISTS (
                   SELECT 1 FROM vote_responses vr
                   WHERE vr.vote_id = v.id AND vr.unit_id = ur.unit_id
@@ -982,9 +1017,17 @@ mod tests {
     }
 
     #[test]
+    fn test_scheduler_config_pin_max_age_default() {
+        // Issue #972.7: pinned announcements auto-unpin after 30 days by default.
+        let config = SchedulerConfig::default();
+        assert_eq!(config.pin_max_age_days, 30);
+    }
+
+    #[test]
     fn test_scheduler_metrics_default() {
         let metrics = SchedulerMetrics::default();
         assert_eq!(metrics.announcements_published, 0);
+        assert_eq!(metrics.announcements_unpinned, 0);
         assert_eq!(metrics.votes_closed, 0);
         assert_eq!(metrics.errors, 0);
     }

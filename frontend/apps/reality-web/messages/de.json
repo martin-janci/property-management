@@ -3,6 +3,7 @@
     "allListings": "Alle Angebote",
     "branding": "Branding",
     "dashboard": "Agentur-Dashboard",
+    "inviteError": "Fehler beim Senden der Einladung. Bitte versuchen Sie es erneut.",
     "inviteRealtor": "Makler einladen",
     "manageRealtors": "Makler verwalten",
     "performanceOverview": "Leistungsübersicht",
@@ -46,6 +47,10 @@
     "save": "Speichern",
     "search": "Suchen",
     "success": "Erfolg"
+  },
+  "comparison": {
+    "loadError": "Der geteilte Vergleich konnte nicht geladen werden. Einige Immobilien sind möglicherweise nicht mehr verfügbar.",
+    "loading": "Geteilter Vergleich wird geladen..."
   },
   "contact": {
     "askQuestion": "Eine Frage stellen",

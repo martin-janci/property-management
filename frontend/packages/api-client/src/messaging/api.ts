@@ -48,6 +48,7 @@ export const createMessagingApi = (config: ApiConfig) => {
       const searchParams = new URLSearchParams();
       if (params?.limit) searchParams.set('limit', params.limit.toString());
       if (params?.offset) searchParams.set('offset', params.offset.toString());
+      if (params?.search) searchParams.set('search', params.search);
 
       const url = searchParams.toString()
         ? `${baseUrl}/threads?${searchParams}`
@@ -104,6 +105,17 @@ export const createMessagingApi = (config: ApiConfig) => {
     markThreadRead: async (threadId: string): Promise<MessageSuccessResponse> => {
       const response = await fetch(`${baseUrl}/threads/${threadId}/read`, {
         method: 'POST',
+        headers,
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Delete a message from a thread (soft delete on the backend).
+     */
+    deleteMessage: async (threadId: string, messageId: string): Promise<MessageSuccessResponse> => {
+      const response = await fetch(`${baseUrl}/threads/${threadId}/messages/${messageId}`, {
+        method: 'DELETE',
         headers,
       });
       return handleResponse(response);

@@ -84,9 +84,9 @@ owner: pm-frontend
 
 ## States
 
-- **Empty**: not depicted in design; recommended — empty card with check-circle icon + "All caught up" + "No open faults right now." (per project README empty-state voice).
-- **Loading**: not depicted; recommend table skeleton (8 rows × 6 cols) + sidebar group title skeletons; reduced-motion → static.
-- **Error**: not depicted; per voice → blunt single-line "Unable to load faults. Try again". Sidebar + toolbar retained.
+- **Empty**: not depicted in design; recommended — empty card with check-circle icon + "All caught up" + "No open faults right now." (per project README empty-state voice). **Implemented** (PR #1033): `FaultList` renders "No faults found." when `!isLoading && !isError && faults.length === 0`.
+- **Loading**: not depicted; recommend table skeleton (8 rows × 6 cols) + sidebar group title skeletons; reduced-motion → static. **Implemented**: spinner shown while `isLoading`.
+- **Error**: **Implemented** (PR #1033) — `FaultList` renders an inline `role="alert"` danger tile (red-50 bg / red-200 border) with `faults.failedToLoad` ("Failed to load faults") + a `common.retry` button that calls `onRetry` (route wrapper `refetch()`). Mutually exclusive with empty/loaded (`!isLoading && isError`); toolbar + filters retained. Threaded `FaultsPageRoute → FaultsPage → FaultList` via `isError`/`onRetry` props. Design treatment still TBD (per voice → blunt single-line).
 - **Success**: 7-row sample of 38 total, mixed priorities and statuses, demonstrating all 8 status-pill colors via varied row coverage.
 
 ## Notes
@@ -102,13 +102,15 @@ UC-03 faults list — the manager's working surface for the 8-state fault machin
 - Sidebar counts are dynamic (must update on filter change). All-priorities/All-status defaults; multi-select filtering (clicking multiple priorities ANDs them together).
 - "SLA breached" tag in subtitle is a meta count — should expose breach reason on hover (which SLA tier and by how long).
 - Data-table column widths: `72px 1fr 140px 140px 140px 100px` — ID + flexible fault + 3 fixed status columns + age. Below 1024px, collapse status/priority/assignee into a stacked sub-line under the title (mobile-style).
-- The bundle's faults page does not depict empty/loading/error states — these need design at implementation time. Following project voice: blunt, single-line, action-tagged.
+- The bundle's faults page does not depict empty/loading/error states — these need design at implementation time. Following project voice: blunt, single-line, action-tagged. **Update (PR #1033):** loading/error/empty are now wired in code — `FaultList` owns the triad and the error tile carries a retry button (`onRetry → refetch()`). The visual error/empty *design* is still TBD; the code provides a functional baseline (i18n key `faults.failedToLoad` + shared `common.retry`).
 - Mobile nav shouldn't carry the legacy emoji `🔧` — substitute Lucide `wrench` per SKILL.md non-negotiable.
 - Sidebar group headers use uppercase 11/600/.06em — matches the spec for "category eyebrow" type.
 
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-06-05 — agent: test-gap-screen-map-drift-pr-1033-ppt — screen-map sync for PR #1033: FaultsPageRoute now threads `isError`/`onRetry` (from `useFaults` error + `refetch`) through FaultsPage → FaultList; FaultList renders an inline `role="alert"` error tile + retry button (i18n `faults.failedToLoad` + `common.retry`), mutually exclusive with empty/loaded; added FaultsPage.test.tsx regression (gap-79-1). Updated States (Error/Loading/Empty → Implemented) + Notes; docs-only, no code change here
 
 - 2026-05-24 — agent: gap-79-1 — wired FaultsPage to useFaults+useUpdateFaultStatus+useAssignFault hooks with snake→camelCase mapper; ppt-web.apiStatus stub→partial
 

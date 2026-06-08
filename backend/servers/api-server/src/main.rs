@@ -31,7 +31,8 @@ use api_server::{observability, routes, services, state};
 
 use db::repositories::AnnouncementRepository;
 use services::{
-    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, Scheduler, SchedulerConfig,
+    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, QuietHoursDrainConfig,
+    QuietHoursDrainWorker, Scheduler, SchedulerConfig,
 };
 use state::AppState;
 
@@ -100,6 +101,150 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         .collect()
 }
 
+/// Build the production CORS layer.
+///
+/// Origins are configurable via the `CORS_ALLOWED_ORIGINS` env var (falling
+/// back to [`DEFAULT_CORS_ORIGINS`]). `allow_headers` MUST be an explicit list
+/// when paired with `allow_credentials(true)`: per the CORS spec browsers
+/// reject the wildcard with credentials, and tower-http panics at layer
+/// construction if the two are combined.
+///
+/// Extracted from `main()` so CORS-policy edits (a recurring churn point) live
+/// in one cohesive function instead of inline in the `main()` middleware chain.
+fn cors_layer() -> CorsLayer {
+    CorsLayer::new()
+        // Allow requests from configured origins (env var or defaults)
+        .allow_origin(get_cors_allowed_origins())
+        // Allow common HTTP methods
+        .allow_methods([
+            http::Method::GET,
+            http::Method::POST,
+            http::Method::PUT,
+            http::Method::PATCH,
+            http::Method::DELETE,
+            http::Method::OPTIONS,
+        ])
+        // Allow common headers
+        .allow_headers([
+            http::header::AUTHORIZATION,
+            http::header::CONTENT_TYPE,
+            http::header::ACCEPT,
+            http::header::ORIGIN,
+            http::HeaderName::from_static("x-requested-with"),
+        ])
+        // Allow credentials (cookies, authorization headers)
+        .allow_credentials(true)
+        // Cache preflight response for 1 hour
+        .max_age(std::time::Duration::from_secs(3600))
+}
+
+/// Assemble the production router: the shared [`route_table`] plus the
+/// production-only surface layered on top.
+///
+/// The application route table is sourced from the SINGLE source of truth,
+/// `api_server::route_table()` (issue #867). The production binary used to
+/// hand-maintain a parallel chain of `.nest(...)` calls here, which drifted
+/// from `lib.rs::create_router` (used by the integration tests): PR #836 had
+/// to retro-fit five routers that existed only in the test-side router and
+/// were therefore unreachable in production. Building both routers from the
+/// same `route_table()` makes that class of divergence impossible — a route
+/// added to `route_table()` is reachable in production AND exercised by the
+/// tests, and the guard test `route_table_is_single_source_of_truth` fails
+/// the build if `main.rs` ever reverts to hand-listing API routes.
+///
+/// Only production-only surface is added on top here:
+///   - `/metrics`            — needs the production observability registry.
+///   - Swagger UI            — dev/ops doc endpoint.
+///   - Phase-3 host routing  — `/tenant-config`, `/admin/tenants/...`,
+///                             `/internal/caddy-ask`; these depend on the
+///                             live host-tenant middleware and are covered
+///                             by their own focused tests
+///                             (`tenant_config_tests.rs`, `caddy_ask_tests.rs`).
+///
+/// Extracted from `main()` so router-assembly edits stop colliding with the
+/// rest of startup.
+fn build_app_router() -> axum::Router<AppState> {
+    route_table()
+        // Prometheus metrics endpoint (Epic 95.4) — production-only.
+        .route("/metrics", get(metrics_endpoint))
+        // Phase 3: per-host tenant config (read by reality-web at request
+        // time). Mounted at the root because reality-web hits the same host
+        // Caddy serves the app on, and the path must match exactly.
+        .nest("/tenant-config", routes::tenant_config::router())
+        // Phase 3: per-tenant admin endpoints (branding + feature flags).
+        // Stub auth via `require_platform_principal`; Phase 5 swaps to a
+        // real capability registry.
+        .nest(
+            "/admin/tenants/{org_id}/branding",
+            routes::admin_tenants::branding_router(),
+        )
+        .nest(
+            "/admin/tenants/{org_id}/feature-flags",
+            routes::admin_tenants::feature_flags_router(),
+        )
+        // Phase 3: Caddy on-demand TLS ask-endpoint. Mounted at `/internal`,
+        // which is in PUBLIC_ALLOWLIST so host_tenant_middleware skips it
+        // entirely — by definition this endpoint runs BEFORE TLS / a
+        // host -> tenant mapping exists. Auth is enforced inside the handler
+        // (loopback bind in dev, X-Internal-Token shared secret in prod).
+        .nest("/internal/caddy-ask", routes::caddy_ask::router())
+        // Swagger UI
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+}
+
+/// Layer production middleware onto the assembled router and bind the app
+/// state, yielding the final `Router` ready to serve.
+///
+/// Layer order is significant — Tower layers execute outside-in, so the chain
+/// below is preserved EXACTLY as it was inline in `main()`:
+///   1. admin-core extensions (must be visible to every nested route)
+///   2. global request body cap
+///   3. baseline security headers
+///   4. tracing
+///   5. host-tenant resolution (runs FIRST on the request pipeline)
+///   6. CORS
+///   7. application state
+///
+/// Mirrors the chain in `lib.rs::create_router` via the shared
+/// `attach_admin_extensions` helper so production and tests cannot drift.
+/// Extracted from `main()` so middleware/security-header edits (a recurring
+/// churn point — #954 security headers, #989 gap-sweep) live in one function.
+fn apply_middleware(
+    app: axum::Router<AppState>,
+    admin_ext: &api_server::AdminExtensions,
+    host_tenant_config: api_core::middleware::HostTenantConfig,
+    state: AppState,
+) -> axum::Router {
+    attach_admin_extensions(app, admin_ext)
+        // P0-15: global request body cap. Default Axum limit is 2 MiB which
+        // is fine for JSON but exposes every multipart handler to memory
+        // abuse when the handler itself forgets to limit. Upload routes
+        // that legitimately need more (restore, migration import) raise
+        // this per-route via `DefaultBodyLimit::max(...)` and stream
+        // chunks instead of buffering full payloads. Cap here: 16 MiB.
+        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+        // Baseline security headers (HSTS, nosniff, frame-deny, referrer) on
+        // every response — the API edge previously shipped none (#954).
+        .layer(axum::middleware::from_fn(
+            api_core::middleware::security_headers,
+        ))
+        // Middleware
+        .layer(TraceLayer::new_for_http())
+        // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST
+        // on the request pipeline (layers execute outside-in), inspecting the
+        // Host header to inject a `ResolvedTenant` extension before any
+        // handler/extractor runs. Public-allowlist paths (`/health`, etc.)
+        // bypass resolution; unknown hosts fail closed with 404.
+        .layer(axum::middleware::from_fn_with_state(
+            host_tenant_config,
+            api_core::middleware::host_tenant_middleware,
+        ))
+        // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var
+        .layer(cors_layer())
+        // Application state
+        .with_state(state)
+}
+
 #[derive(OpenApi)]
 #[openapi(
     info(
@@ -152,6 +297,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::organizations::get_organization_branding,
         routes::organizations::update_organization_branding,
         routes::organizations::export_organization_data,
+        routes::messaging::delete_message,
     ),
     components(schemas(
         routes::health::HealthResponse,
@@ -403,6 +549,34 @@ async fn main() -> anyhow::Result<()> {
         tenant_rate_limiters,
     );
 
+    // gap-84-1: Wire the S3 / MinIO storage service so document download &
+    // preview endpoints can mint short-lived presigned URLs. The constructor
+    // (`from_env_async`) initialises the real aws-sdk-s3 client — for an
+    // S3-compatible endpoint like MinIO it picks up S3_ENDPOINT and uses
+    // path-style addressing. Fail-soft: a missing/invalid config logs a
+    // warning and leaves `storage_service = None`, in which case the download
+    // endpoint returns 503 STORAGE_NOT_CONFIGURED rather than crashing the
+    // whole server (mirrors the optional-service pattern used elsewhere).
+    let state = match integrations::StorageService::from_env_async().await {
+        Ok(storage) => {
+            tracing::info!(
+                bucket = %storage.bucket(),
+                region = %storage.region(),
+                download_ttl_secs = storage.download_ttl_secs(),
+                "S3 storage service initialised — document downloads enabled"
+            );
+            state.with_storage(storage)
+        }
+        Err(e) => {
+            tracing::warn!(
+                error = %e,
+                "S3 storage not configured — document download/preview endpoints \
+                 will return 503 until S3_BUCKET / AWS_* env vars are set"
+            );
+            state
+        }
+    };
+
     // Start background scheduler for scheduled announcements
     let scheduler_enabled = std::env::var("SCHEDULER_ENABLED")
         .map(|v| v != "false" && v != "0")
@@ -429,6 +603,10 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(3),
+        pin_max_age_days: std::env::var("PIN_MAX_AGE_DAYS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(30),
     };
     let scheduler_pool = state.db.clone();
     let announcement_repo = AnnouncementRepository::new(scheduler_pool.clone());
@@ -453,6 +631,17 @@ async fn main() -> anyhow::Result<()> {
     );
     let _push_fanout_handle = push_fanout_worker.start();
 
+    // Story 8B.3 / #980: release notifications held during quiet hours once the
+    // user's quiet-hours window ends. Polls `held_notifications` on an interval;
+    // disabled-safe (no crash when env vars are unset).
+    let quiet_hours_drain_worker = QuietHoursDrainWorker::new(
+        db_pool.clone(),
+        email_service.clone(),
+        state.pubsub_service.clone(),
+        QuietHoursDrainConfig::from_env(),
+    );
+    let _quiet_hours_drain_handle = quiet_hours_drain_worker.start();
+
     // Phase 5 — admin dependency injection (B7).
     //
     // Build the admin-core dep bundle (capability registry init + grants /
@@ -464,111 +653,12 @@ async fn main() -> anyhow::Result<()> {
     // because `RequireCapability` could not find `AdminDeps` in extensions.
     let admin_ext = build_admin_extensions(db_pool.clone());
 
-    // Build router.
-    //
-    // The application route table is sourced from the SINGLE source of truth,
-    // `api_server::route_table()` (issue #867). The production binary used to
-    // hand-maintain a parallel chain of `.nest(...)` calls here, which drifted
-    // from `lib.rs::create_router` (used by the integration tests): PR #836 had
-    // to retro-fit five routers that existed only in the test-side router and
-    // were therefore unreachable in production. Building both routers from the
-    // same `route_table()` makes that class of divergence impossible — a route
-    // added to `route_table()` is reachable in production AND exercised by the
-    // tests, and the guard test `route_table_is_single_source_of_truth` fails
-    // the build if `main.rs` ever reverts to hand-listing API routes.
-    //
-    // Only production-only surface is added on top here:
-    //   - `/metrics`            — needs the production observability registry.
-    //   - Swagger UI            — dev/ops doc endpoint.
-    //   - Phase-3 host routing  — `/tenant-config`, `/admin/tenants/...`,
-    //                             `/internal/caddy-ask`; these depend on the
-    //                             live host-tenant middleware and are covered
-    //                             by their own focused tests
-    //                             (`tenant_config_tests.rs`, `caddy_ask_tests.rs`).
-    let app = route_table()
-        // Prometheus metrics endpoint (Epic 95.4) — production-only.
-        .route("/metrics", get(metrics_endpoint))
-        // Phase 3: per-host tenant config (read by reality-web at request
-        // time). Mounted at the root because reality-web hits the same host
-        // Caddy serves the app on, and the path must match exactly.
-        .nest("/tenant-config", routes::tenant_config::router())
-        // Phase 3: per-tenant admin endpoints (branding + feature flags).
-        // Stub auth via `require_platform_principal`; Phase 5 swaps to a
-        // real capability registry.
-        .nest(
-            "/admin/tenants/{org_id}/branding",
-            routes::admin_tenants::branding_router(),
-        )
-        .nest(
-            "/admin/tenants/{org_id}/feature-flags",
-            routes::admin_tenants::feature_flags_router(),
-        )
-        // Phase 3: Caddy on-demand TLS ask-endpoint. Mounted at `/internal`,
-        // which is in PUBLIC_ALLOWLIST so host_tenant_middleware skips it
-        // entirely — by definition this endpoint runs BEFORE TLS / a
-        // host -> tenant mapping exists. Auth is enforced inside the handler
-        // (loopback bind in dev, X-Internal-Token shared secret in prod).
-        .nest("/internal/caddy-ask", routes::caddy_ask::router())
-        // Swagger UI
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()));
-
-    // Phase 5 — admin dependency injection (B7). Layered before TraceLayer so
-    // every nested route inherits these extensions. Mirrors the chain in
-    // `lib.rs::create_router` exactly via the shared `attach_admin_extensions`
-    // helper so production and tests cannot drift.
-    let app = attach_admin_extensions(app, &admin_ext)
-        // P0-15: global request body cap. Default Axum limit is 2 MiB which
-        // is fine for JSON but exposes every multipart handler to memory
-        // abuse when the handler itself forgets to limit. Upload routes
-        // that legitimately need more (restore, migration import) raise
-        // this per-route via `DefaultBodyLimit::max(...)` and stream
-        // chunks instead of buffering full payloads. Cap here: 16 MiB.
-        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
-        // Baseline security headers (HSTS, nosniff, frame-deny, referrer) on
-        // every response — the API edge previously shipped none (#954).
-        .layer(axum::middleware::from_fn(
-            api_core::middleware::security_headers,
-        ))
-        // Middleware
-        .layer(TraceLayer::new_for_http())
-        // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST
-        // on the request pipeline (layers execute outside-in), inspecting the
-        // Host header to inject a `ResolvedTenant` extension before any
-        // handler/extractor runs. Public-allowlist paths (`/health`, etc.)
-        // bypass resolution; unknown hosts fail closed with 404.
-        .layer(axum::middleware::from_fn_with_state(
-            host_tenant_config.clone(),
-            api_core::middleware::host_tenant_middleware,
-        ))
-        // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var
-        .layer(
-            CorsLayer::new()
-                // Allow requests from configured origins (env var or defaults)
-                .allow_origin(get_cors_allowed_origins())
-                // Allow common HTTP methods
-                .allow_methods([
-                    http::Method::GET,
-                    http::Method::POST,
-                    http::Method::PUT,
-                    http::Method::PATCH,
-                    http::Method::DELETE,
-                    http::Method::OPTIONS,
-                ])
-                // Allow common headers
-                .allow_headers([
-                    http::header::AUTHORIZATION,
-                    http::header::CONTENT_TYPE,
-                    http::header::ACCEPT,
-                    http::header::ORIGIN,
-                    http::HeaderName::from_static("x-requested-with"),
-                ])
-                // Allow credentials (cookies, authorization headers)
-                .allow_credentials(true)
-                // Cache preflight response for 1 hour
-                .max_age(std::time::Duration::from_secs(3600)),
-        )
-        // Application state
-        .with_state(state);
+    // Build the production router (shared route table + production-only
+    // surface) then layer production middleware and bind the app state. The
+    // two cohesive blocks live in `build_app_router` / `apply_middleware` so
+    // concurrent PRs editing routing vs. middleware no longer collide here.
+    let app = build_app_router();
+    let app = apply_middleware(app, &admin_ext, host_tenant_config, state);
 
     // Run server
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));

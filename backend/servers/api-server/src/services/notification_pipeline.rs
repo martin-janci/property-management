@@ -4,7 +4,7 @@
 //! - **2b-1** Channel infrastructure: `NotificationPipeline` + `DeliveryRequest` dispatch
 //! - **2b-2** Preference routing: `PreferenceRouter` checks per-user, per-channel settings
 //! - **2b-3** Delivery tracking: in-memory + logging; ready to swap for a DB adapter
-//! - **2b-4** Transport adapters: `SmtpEmailAdapter`, `FcmPushAdapter` (stub), `DbInAppAdapter`
+//! - **2b-4** Transport adapters: `SmtpEmailAdapter`, `FcmHttpAdapter`, `DbInAppAdapter`
 //! - **2b-5** Pipeline integration: `NotificationPipeline::dispatch` / `dispatch_to_users`
 //!
 //! ## Architecture
@@ -19,7 +19,7 @@
 //!    │
 //!    └─ For each enabled channel:
 //!         ├─ email  ─► impl EmailTransport (SmtpEmailAdapter)
-//!         ├─ push   ─► impl PushTransport  (FcmPushAdapter)
+//!         ├─ push   ─► impl PushTransport  (FcmHttpAdapter)
 //!         └─ in_app ─► impl InAppTransport (DbInAppAdapter)
 //!              │
 //!              ▼
@@ -33,7 +33,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use db::{
-    models::{Locale, User},
+    models::{CreateHeldNotification, HeldNotification, Locale, User},
     repositories::{
         GranularNotificationRepository, NotificationPreferenceRepository, UserRepository,
     },
@@ -43,12 +43,29 @@ use uuid::Uuid;
 
 use common::notifications::{
     pipeline::{DeliveryRecord, DeliveryStatus, PipelineResult, RoutingDecision},
-    EmailTransport, InAppTransport, Notification, NotificationChannel, NotificationError,
-    NotificationPriority, PushTransport, TransportResult,
+    EmailTransport, InAppTransport, Notification, NotificationCategory, NotificationChannel,
+    NotificationError, NotificationPriority, PushTransport, TransportResult,
 };
 
 use super::email::EmailService;
 use super::push_fanout::{FcmConfig, FcmHttpAdapter};
+use super::quiet_hours;
+
+/// Map a stored `held_notifications.event_type` string back to a category for
+/// re-delivery (best-effort; unknown values become `System`). The string is the
+/// `NotificationCategory::as_str()` we wrote when holding.
+fn category_from_str(s: &str) -> NotificationCategory {
+    match s {
+        "announcements" => NotificationCategory::Announcements,
+        "faults" => NotificationCategory::Faults,
+        "votes" => NotificationCategory::Votes,
+        "messages" => NotificationCategory::Messages,
+        "community" => NotificationCategory::Community,
+        "financial" => NotificationCategory::Financial,
+        "documents" => NotificationCategory::Documents,
+        _ => NotificationCategory::System,
+    }
+}
 
 // ============================================================================
 // Story 2b-4a — Email transport adapter (SMTP via existing EmailService)
@@ -100,74 +117,6 @@ impl EmailTransport for SmtpEmailAdapter {
             )
             .await
             .map_err(|e| NotificationError::EmailFailed(e.to_string()))
-    }
-}
-
-// ============================================================================
-// Story 2b-4b — Push transport adapter (FCM stub)
-// ============================================================================
-
-/// FCM / APNs push notification adapter.
-///
-/// **Current status:** stub that logs intent; a real FCM HTTP v1 or APNs
-/// implementation should replace `send_to_fcm` / `send_to_apns` in a
-/// follow-up PR without changing the trait boundary.
-#[derive(Clone, Default)]
-pub struct FcmPushAdapter {
-    /// FCM server key (None = disabled / not configured)
-    fcm_server_key: Option<String>,
-}
-
-impl FcmPushAdapter {
-    /// Create a new adapter.  Pass `None` to run in log-only (no real push) mode.
-    pub fn new(fcm_server_key: Option<String>) -> Self {
-        Self { fcm_server_key }
-    }
-
-    /// Load from environment variable `FCM_SERVER_KEY`.
-    pub fn from_env() -> Self {
-        Self::new(std::env::var("FCM_SERVER_KEY").ok())
-    }
-
-    /// Returns `true` when push delivery is enabled (FCM key is set).
-    pub fn is_configured(&self) -> bool {
-        self.fcm_server_key.is_some()
-    }
-}
-
-#[async_trait]
-impl PushTransport for FcmPushAdapter {
-    async fn send(
-        &self,
-        user_id: Uuid,
-        device_tokens: &[String],
-        notification: &Notification,
-    ) -> TransportResult {
-        if !self.is_configured() {
-            // Issue #484: previously returned Ok(()) which caused the
-            // pipeline to mark the delivery as `Sent`. Return the
-            // explicit `PushNotConfigured` error so callers see a
-            // `Skipped` outcome and `sent` counters are not inflated.
-            tracing::info!(
-                user_id = %user_id,
-                token_count = device_tokens.len(),
-                title = %notification.title,
-                category = %notification.category,
-                "[Epic 2B] Push notification (FCM not configured — skipped)"
-            );
-            return Err(NotificationError::PushNotConfigured);
-        }
-
-        // TODO (follow-up): call FCM HTTP v1 API for each device_token
-        // For now, log that we would send and return Ok.
-        tracing::info!(
-            user_id = %user_id,
-            token_count = device_tokens.len(),
-            title = %notification.title,
-            "[Epic 2B] Push notification queued (FCM stub — real send pending)"
-        );
-
-        Ok(())
     }
 }
 
@@ -401,6 +350,8 @@ pub struct NotificationPipeline {
     email_adapter: Arc<dyn EmailTransport>,
     push_adapter: Arc<dyn PushTransport>,
     in_app_adapter: Arc<dyn InAppTransport>,
+    /// Story 8B.3 / #980: read quiet-hours schedules and persist held pushes.
+    granular_repo: GranularNotificationRepository,
 }
 
 impl NotificationPipeline {
@@ -426,7 +377,7 @@ impl NotificationPipeline {
         let push_adapter = Arc::new(FcmHttpAdapter::new(pool.clone(), FcmConfig::from_env()))
             as Arc<dyn PushTransport>;
         let in_app_adapter =
-            Arc::new(DbInAppAdapter::new(granular_repo, pubsub)) as Arc<dyn InAppTransport>;
+            Arc::new(DbInAppAdapter::new(granular_repo.clone(), pubsub)) as Arc<dyn InAppTransport>;
 
         Self {
             config,
@@ -435,6 +386,7 @@ impl NotificationPipeline {
             email_adapter,
             push_adapter,
             in_app_adapter,
+            granular_repo,
         }
     }
 
@@ -531,8 +483,79 @@ impl NotificationPipeline {
                 .push(DeliveryRecord::pending(notification.id, user_id, *ch).into_skipped());
         }
 
+        // Issue #980 (Story 8B.3): resolve the user's quiet-hours window once.
+        // During an active window, the Push channel is *held* for delivery when
+        // quiet hours end; in-app and email are unaffected. Urgent notifications
+        // bypass quiet hours entirely (same carve-out as the preference bypass
+        // above), so we don't even fetch the schedule for them.
+        let quiet = if matches!(notification.priority, NotificationPriority::Urgent) {
+            None
+        } else {
+            self.granular_repo
+                .get_user_schedule(user_id)
+                .await
+                .ok()
+                .flatten()
+                .map(|s| quiet_hours::evaluate(&s, chrono::Utc::now()))
+                .filter(|state| state.active)
+        };
+        let mut held = 0usize;
+
         // Deliver on each enabled channel (2b-4 adapters)
         for channel in &routing.enabled_channels {
+            if *channel == NotificationChannel::Push {
+                if let Some(state) = &quiet {
+                    // Default to an 8h horizon if the window end couldn't be
+                    // computed, so a held push is never lost forever.
+                    let release_at = state
+                        .ends_at
+                        .unwrap_or_else(|| chrono::Utc::now() + chrono::Duration::hours(8));
+                    match self
+                        .granular_repo
+                        .create_held_notification(CreateHeldNotification {
+                            user_id,
+                            event_type: notification.category.as_str().to_string(),
+                            title: notification.title.clone(),
+                            body: Some(notification.body.clone()),
+                            data: notification
+                                .action_url
+                                .as_ref()
+                                .map(|u| serde_json::json!({ "action_url": u })),
+                            channels: vec![NotificationChannel::Push.as_str().to_string()],
+                            release_at,
+                            is_priority: false,
+                        })
+                        .await
+                    {
+                        Ok(_) => {
+                            held += 1;
+                            // A held push wasn't sent — record it as skipped so
+                            // `sent`/`failed` stay honest (see `held` log below).
+                            result.skipped += 1;
+                            result.records.push(
+                                DeliveryRecord::pending(notification.id, user_id, *channel)
+                                    .into_skipped(),
+                            );
+                            tracing::info!(
+                                user_id = %user_id,
+                                release_at = %release_at,
+                                "[#980] Push held during quiet hours"
+                            );
+                            continue;
+                        }
+                        Err(e) => {
+                            // Failing to persist the hold must not drop the push;
+                            // fall through to immediate delivery.
+                            tracing::warn!(
+                                user_id = %user_id,
+                                error = %e,
+                                "[#980] Failed to hold push during quiet hours; delivering now"
+                            );
+                        }
+                    }
+                }
+            }
+
             let record = self
                 .deliver_channel(user_id, &user, notification, entity_id, *channel)
                 .await;
@@ -548,6 +571,7 @@ impl NotificationPipeline {
             user_id = %user_id,
             sent = result.sent,
             skipped = result.skipped,
+            held = held,
             failed = result.failed,
             "[Epic 2B] Notification dispatch complete"
         );
@@ -610,6 +634,59 @@ impl NotificationPipeline {
         per_user.iter().fold((0, 0, 0), |(s, sk, f), (_, r)| {
             (s + r.sent, sk + r.skipped, f + r.failed)
         })
+    }
+
+    /// Issue #980: deliver a previously held notification on its stored
+    /// channels, bypassing the quiet-hours gate (the drain worker only releases
+    /// rows whose `release_at` has passed, i.e. quiet hours have ended).
+    /// Returns the number of channels successfully sent.
+    pub async fn deliver_held(&self, held: &HeldNotification) -> usize {
+        let user = match self.user_repo.find_by_id(held.user_id).await {
+            Ok(Some(u)) => u,
+            Ok(None) => {
+                tracing::warn!(user_id = %held.user_id, "[#980] Held notification for unknown user; dropping");
+                return 0;
+            }
+            Err(e) => {
+                tracing::warn!(user_id = %held.user_id, error = %e, "[#980] Failed to resolve user for held notification");
+                return 0;
+            }
+        };
+
+        let mut notification = Notification::new(
+            held.user_id,
+            category_from_str(&held.event_type),
+            held.title.clone(),
+            held.body.clone().unwrap_or_default(),
+        );
+        if let Some(url) = held
+            .data
+            .as_ref()
+            .and_then(|d| d.get("action_url"))
+            .and_then(|u| u.as_str())
+        {
+            notification = notification.with_action_url(url);
+        }
+
+        let mut sent = 0;
+        for ch in &held.channels {
+            let channel = match ch.as_str() {
+                "push" => NotificationChannel::Push,
+                "email" => NotificationChannel::Email,
+                "in_app" => NotificationChannel::InApp,
+                other => {
+                    tracing::warn!(channel = %other, "[#980] Unknown held channel; skipping");
+                    continue;
+                }
+            };
+            let record = self
+                .deliver_channel(held.user_id, &user, &notification, None, channel)
+                .await;
+            if record.status == DeliveryStatus::Sent {
+                sent += 1;
+            }
+        }
+        sent
     }
 
     // ------------------------------------------------------------------
@@ -705,15 +782,6 @@ mod tests {
         assert_eq!(SmtpEmailAdapter::parse_locale("de"), Locale::German);
         assert_eq!(SmtpEmailAdapter::parse_locale("en"), Locale::English);
         assert_eq!(SmtpEmailAdapter::parse_locale("unknown"), Locale::English);
-    }
-
-    #[test]
-    fn fcm_adapter_is_configured() {
-        let without_key = FcmPushAdapter::new(None);
-        assert!(!without_key.is_configured());
-
-        let with_key = FcmPushAdapter::new(Some("server-key-abc".to_string()));
-        assert!(with_key.is_configured());
     }
 
     #[test]

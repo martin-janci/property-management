@@ -10,6 +10,7 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use common::errors::ErrorResponse;
+use common::notifications::{Notification, NotificationCategory};
 use db::models::{
     CancelVote, CastVote, CreateVote, CreateVoteComment, CreateVoteQuestion, HideVoteComment,
     PublishVote, QuestionOption, UpdateVote, UpdateVoteQuestion, Vote, VoteAuditLog,
@@ -535,6 +536,57 @@ async fn publish_vote(
             )
         })?;
 
+    // Story 5.1: notify eligible owners when a vote is published. Only dispatch
+    // on immediate publishes (status == ACTIVE); SCHEDULED votes are handled by
+    // the scheduler's activation path at start time, so gating avoids a
+    // double-notification. Best-effort: log on error, never fail the publish.
+    if vote.status == db::models::vote_status::ACTIVE {
+        match state
+            .vote_repo
+            .get_eligible_owner_user_ids(vote.building_id)
+            .await
+        {
+            Ok(eligible_ids) if !eligible_ids.is_empty() => {
+                let notification = Notification::new(
+                    Uuid::nil(),
+                    NotificationCategory::Votes,
+                    format!("New Vote: {}", vote.title),
+                    format!(
+                        "A new vote has started: \"{}\". Deadline: {}",
+                        vote.title,
+                        vote.end_at.format("%Y-%m-%d %H:%M")
+                    ),
+                )
+                .with_action_url(format!("/voting/{}", vote.id))
+                .with_data(serde_json::json!({
+                    "vote_id": vote.id,
+                    "organization_id": vote.organization_id,
+                    "building_id": vote.building_id,
+                    "end_at": vote.end_at.to_rfc3339(),
+                }));
+
+                let results = state
+                    .notification_pipeline
+                    .dispatch_to_users(&eligible_ids, &notification, Some(vote.id), None)
+                    .await;
+
+                tracing::info!(
+                    vote_id = %vote.id,
+                    recipients = results.len(),
+                    "Vote published — VoteStarted notifications dispatched"
+                );
+            }
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!(
+                    vote_id = %vote.id,
+                    error = %e,
+                    "Failed to load eligible owners for vote-published notification"
+                );
+            }
+        }
+    }
+
     rls.release().await;
     Ok(Json(vote))
 }
@@ -1047,6 +1099,55 @@ async fn cast_vote(
         ));
     }
 
+    // Re-validate the delegation at cast time (Story 5.4): a delegation that was
+    // active when eligibility was loaded may have since been revoked or expired.
+    // Run the check on the same RLS connection so it sees the same tenant context.
+    if let Some(delegation_id) = req.delegation_id {
+        let user_id = rls.user_id();
+        let is_valid: bool = match sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS (
+                SELECT 1 FROM delegations
+                WHERE id = $1
+                  AND delegate_user_id = $2
+                  AND unit_id = $3
+                  AND status = 'active'
+                  AND (scopes && ARRAY['voting','all']::delegation_scope[])
+                  AND (end_date IS NULL OR end_date >= CURRENT_DATE)
+            )
+            "#,
+        )
+        .bind(delegation_id)
+        .bind(user_id)
+        .bind(req.unit_id)
+        .fetch_one(&mut **rls.conn())
+        .await
+        {
+            Ok(exists) => exists,
+            Err(e) => {
+                rls.release().await;
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DATABASE_ERROR",
+                        format!("Failed to validate delegation: {}", e),
+                    )),
+                ));
+            }
+        };
+
+        if !is_valid {
+            rls.release().await;
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "DELEGATION_REVOKED",
+                    "Delegation revoked",
+                )),
+            ));
+        }
+    }
+
     let data = CastVote {
         vote_id: id,
         user_id: rls.user_id(),
@@ -1057,7 +1158,7 @@ async fn cast_vote(
 
     let receipt = state
         .vote_repo
-        .cast_vote_rls(&mut **rls.conn(), data)
+        .cast_vote_rls(rls.conn(), data)
         .await
         .map_err(|e| {
             (

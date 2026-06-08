@@ -10,6 +10,7 @@ import type {
   Agency,
   AgencyBranding,
   AgencyListing,
+  AgencyMember,
   AgencyPerformance,
   AgencyStats,
   CreateAgencyRequest,
@@ -44,6 +45,38 @@ export function useAgency(agencyId?: string) {
   return useQuery({
     queryKey: ['agency', agencyId],
     queryFn: () => fetchApi<Agency>(`/api/v1/agencies/${agencyId}`),
+    enabled: !!agencyId,
+  });
+}
+
+/**
+ * Public agency lookup by slug (Issue #978).
+ *
+ * The reality-server `GET /api/v1/agencies/by-slug/{slug}` handler wraps the
+ * payload in `AgencyResponse { agency }` (unlike the by-id callers above which
+ * read the bare entity), so we unwrap `.agency` in the queryFn.
+ */
+export function useAgencyBySlug(slug?: string) {
+  return useQuery({
+    queryKey: ['agency-by-slug', slug],
+    queryFn: async () => {
+      const { agency } = await fetchApi<{ agency: Agency }>(`/api/v1/agencies/by-slug/${slug}`);
+      return agency;
+    },
+    enabled: !!slug,
+  });
+}
+
+/**
+ * Public agency team members (Issue #978).
+ *
+ * `GET /api/v1/agencies/{id}/members` returns `MembersResponse { members, total }`.
+ */
+export function useAgencyMembers(agencyId?: string) {
+  return useQuery({
+    queryKey: ['agency-members', agencyId],
+    queryFn: () =>
+      fetchApi<{ members: AgencyMember[]; total: number }>(`/api/v1/agencies/${agencyId}/members`),
     enabled: !!agencyId,
   });
 }

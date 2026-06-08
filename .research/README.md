@@ -99,7 +99,7 @@ Setup at https://claude.ai/code/routines → **New routine**.
 | **Instructions** | full contents of `routine-prompt.md` |
 | **Repository** | `martin-janci/property-management`, branch `main`, ✅ *Allow unrestricted branch pushes* |
 | **Model** | Sonnet 4.6 (or Opus 4.8 for higher-quality analyses; Opus costs more) |
-| **Connectors** | **None.** The routine uses `gh` CLI via Bash. |
+| **Connectors** | Built-in **GitHub MCP** (`mcp__github__*`). It is the primary GitHub I/O path — `git push`/`git fetch` over the git transport are HTTP-403'd by the sandbox proxy (finding `git-push-blocked-by-proxy`), and `gh` CLI through the same proxy is unreliable, so both are fallback-only. The dispatcher's *GitHub I/O contract* (top of `dispatcher-prompt.md`) spells out the per-operation mapping. |
 | **Schedule** | Daily 05:00 local |
 | **API trigger** | Optional — handy for ad-hoc `text: "deep"` or `text: "reset"` runs |
 

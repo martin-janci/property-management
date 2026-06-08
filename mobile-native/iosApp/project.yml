@@ -1,0 +1,208 @@
+# project.yml — XcodeGen manifest for the Reality Portal iOS app.
+#
+# Epic 82 - Story 82.1: SwiftUI Project Setup
+#
+# Why this file exists
+# --------------------
+# `scripts/build-ios.sh` and `iosApp/xcschemes/INSTALL.md` both assume an
+# `iosApp.xcodeproj` that is *generated, not committed*. Until now nothing in
+# the repo could actually produce it — `build-ios.sh` fails fast when the
+# project is missing, and INSTALL.md asked a human to hand-create the project
+# in Xcode. This manifest closes that gap: `xcodegen generate` (run from this
+# directory) deterministically materialises `iosApp.xcodeproj` from the
+# committed sources, xcconfigs, Info.plists, and schemes — so downstream
+# 82-x screen work has a reproducible, scriptable compiling base.
+#
+# Generate the project (macOS, requires `brew install xcodegen`):
+#   cd mobile-native/iosApp && xcodegen generate
+#
+# The generated `iosApp.xcodeproj` stays git-ignored (see .gitignore); only
+# this manifest + the source/config inputs are tracked.
+
+name: iosApp
+
+options:
+  bundleIdPrefix: three.two.bit.ppt.reality
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+  # Generated schemes would clash with the hand-authored ones under
+  # xcschemes/; we declare the three Reality* schemes explicitly below.
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+# Build configurations mirror the three committed xcconfigs. The base build
+# type (debug/release) is inferred from each xcconfig's CONFIGURATION key:
+#   Development -> Debug, Staging -> Release, Production -> Release.
+configs:
+  Development: debug
+  Staging: release
+  Production: release
+
+# Project-level xcconfig wiring. Each configuration inherits the matching
+# Configurations/*.xcconfig (which itself #includes Base.xcconfig).
+configFiles:
+  Development: Configurations/Development.xcconfig
+  Staging: Configurations/Staging.xcconfig
+  Production: Configurations/Production.xcconfig
+
+settings:
+  base:
+    # The KMP `:shared` module uses plain `binaries.framework {}` (NOT the
+    # kotlin-cocoapods plugin), so Gradle emits the framework under
+    #   shared/build/bin/<konanTarget>/<debug|release>Framework/shared.framework
+    # The pre-build script picks the right konanTarget by SDK + arch and copies
+    # it to a stable, SDK-agnostic drop dir that the search path below points at.
+    FRAMEWORK_SEARCH_PATHS:
+      - "$(inherited)"
+      - "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    SWIFT_VERSION: "5.9"
+
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    # Matches the BlueprintName/BuildableName in xcschemes/*.xcscheme
+    # (BlueprintIdentifier = "iosApp", BuildableName = "iosApp.app").
+    sources:
+      - path: iosApp
+        excludes:
+          - "**/.DS_Store"
+    info:
+      path: iosApp/Resources/Info.plist
+    # Per-config xcconfig also applied at the target level so PRODUCT_BUNDLE_*,
+    # API_BASE_URL, ENVIRONMENT, ENABLE_LOGGING resolve into Info.plist.
+    configFiles:
+      Development: Configurations/Development.xcconfig
+      Staging: Configurations/Staging.xcconfig
+      Production: Configurations/Production.xcconfig
+    settings:
+      base:
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
+        Development:
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-Dev
+        Staging:
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-Staging
+        Production:
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      # The KMP framework is a pre-built static framework dropped in by Gradle;
+      # `embed: false` because it is statically linked into the app binary.
+      - framework: shared.framework
+        embed: false
+        implicit: true
+    preBuildScripts:
+      - name: "Build KMP shared framework"
+        # Builds the `:shared` plain framework with the real (non-cocoapods)
+        # link task, then stages it where FRAMEWORK_SEARCH_PATHS expects it.
+        # Task naming: link<Debug|Release>FrameworkIos<Arch>. Device builds use
+        # IosArm64; simulator builds use IosSimulatorArm64 / IosX64.
+        script: |
+          set -euo pipefail
+          cd "$SRCROOT/.."
+
+          # Map Xcode SDK + arch -> Kotlin/Native konan target.
+          if [ "${PLATFORM_NAME:-iphoneos}" = "iphonesimulator" ]; then
+            case "${ARCHS%% *}" in
+              arm64) KONAN_TARGET="iosSimulatorArm64" ;;
+              *)     KONAN_TARGET="iosX64" ;;
+            esac
+          else
+            KONAN_TARGET="iosArm64"
+          fi
+
+          # Development -> Debug framework, Staging/Production -> Release.
+          if [ "${CONFIGURATION:-Development}" = "Development" ]; then
+            KOTLIN_BUILD="Debug"
+          else
+            KOTLIN_BUILD="Release"
+          fi
+
+          TARGET_CAP="$(printf '%s' "$KONAN_TARGET" | sed 's/^./\U&/')"
+          ./gradlew ":shared:link${KOTLIN_BUILD}Framework${TARGET_CAP}"
+
+          SRC_FW="shared/build/bin/${KONAN_TARGET}/${KOTLIN_BUILD,,}Framework/shared.framework"
+          DEST_DIR="shared/build/xcode-frameworks/${CONFIGURATION}"
+          rm -rf "$DEST_DIR/shared.framework"
+          mkdir -p "$DEST_DIR"
+          cp -R "$SRC_FW" "$DEST_DIR/"
+        basedOnDependencyAnalysis: false
+
+  iosAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    # Matches xcschemes TestAction (BlueprintIdentifier = "iosAppTests",
+    # BuildableName = "iosAppTests.xctest").
+    sources:
+      - path: iosAppTests
+    info:
+      path: iosAppTests/Info.plist
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iosApp.app/iosApp"
+
+# Schemes mirror the three hand-authored xcschemes/*.xcscheme exactly so the
+# existing INSTALL.md naming + build-ios.sh `-scheme` values keep working.
+schemes:
+  RealityPortal-Dev:
+    build:
+      targets:
+        iosApp: all
+        iosAppTests: [test]
+    run:
+      config: Development
+      environmentVariables:
+        - variable: ENVIRONMENT
+          value: development
+          isEnabled: true
+    test:
+      config: Development
+      targets:
+        - iosAppTests
+    profile:
+      config: Development
+    analyze:
+      config: Development
+    archive:
+      config: Development
+
+  RealityPortal-Staging:
+    build:
+      targets:
+        iosApp: all
+        iosAppTests: [test]
+    run:
+      config: Staging
+    test:
+      config: Staging
+      targets:
+        - iosAppTests
+    profile:
+      config: Staging
+    analyze:
+      config: Staging
+    archive:
+      config: Staging
+
+  RealityPortal-Prod:
+    build:
+      targets:
+        iosApp: all
+        iosAppTests: [test]
+    run:
+      config: Production
+    test:
+      config: Production
+      targets:
+        - iosAppTests
+    profile:
+      config: Production
+    analyze:
+      config: Production
+    archive:
+      config: Production

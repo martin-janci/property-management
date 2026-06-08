@@ -140,8 +140,8 @@ impl VoteRepository {
                 start_at, end_at, quorum_type, quorum_percentage,
                 allow_delegation, anonymous_voting, created_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6, $7::quorum_type, $8, $9, $10, $11)
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(data.organization_id)
@@ -174,7 +174,7 @@ impl VoteRepository {
     {
         let vote = sqlx::query_as::<_, Vote>(
             r#"
-            SELECT * FROM votes WHERE id = $1
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at FROM votes WHERE id = $1
             "#,
         )
         .bind(id)
@@ -187,14 +187,16 @@ impl VoteRepository {
     /// Cast a vote with RLS context (Story 5.3).
     ///
     /// Use this method with an `RlsConnection` to ensure RLS policies are enforced.
-    pub async fn cast_vote_rls<'e, E>(
+    ///
+    /// Takes a `&mut PgConnection` (rather than a generic by-value executor) so
+    /// that the ballot INSERT and the immutable audit-log INSERT both run on the
+    /// SAME RLS-scoped connection, keeping the tenant context (`app.current_org_id`)
+    /// in scope for the `vote_audit_log` insert policy (Story 5.7).
+    pub async fn cast_vote_rls(
         &self,
-        executor: E,
+        executor: &mut sqlx::PgConnection,
         data: CastVote,
-    ) -> Result<VoteReceipt, SqlxError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
+    ) -> Result<VoteReceipt, SqlxError> {
         // Generate hash for ballot integrity
         let hash_input = format!(
             "{}:{}:{}:{}:{}",
@@ -206,20 +208,23 @@ impl VoteRepository {
         );
         let response_hash = hex::encode(Sha256::digest(hash_input.as_bytes()));
 
-        // Get vote weight from unit ownership_share
-        // Note: For RLS version, we use a default weight of 1.0
-        // The calling code should provide the weight if needed
-        let vote_weight = Decimal::from(1);
-
         let is_delegated = data.delegation_id.is_some();
 
+        // Fold the ownership-weight lookup into the INSERT as a scalar subquery so
+        // the stored vote_weight reflects the unit's ownership_share (Story 5.2),
+        // mirroring the legacy `COALESCE(ownership_share, 1.0)` semantics. The
+        // subquery degrades safely to 1.0 if the units row is not visible/found.
         let response = sqlx::query_as::<_, VoteResponse>(
             r#"
             INSERT INTO vote_responses (
                 vote_id, user_id, unit_id, delegation_id, is_delegated,
                 answers, vote_weight, response_hash
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES (
+                $1, $2, $3, $4, $5, $6,
+                COALESCE((SELECT ownership_share FROM units WHERE id = $3), 1.0),
+                $7
+            )
             ON CONFLICT (vote_id, unit_id) DO UPDATE
             SET
                 user_id = EXCLUDED.user_id,
@@ -237,10 +242,38 @@ impl VoteRepository {
         .bind(data.delegation_id)
         .bind(is_delegated)
         .bind(&data.answers)
-        .bind(vote_weight)
         .bind(&response_hash)
-        .fetch_one(executor)
+        .fetch_one(&mut *executor)
         .await?;
+
+        // Write the immutable audit entry on the SAME RLS executor (Story 5.7).
+        let audit_action = if is_delegated {
+            audit_action::BALLOT_UPDATED
+        } else {
+            audit_action::BALLOT_CAST
+        };
+
+        Self::create_audit_entry_rls(
+            &mut *executor,
+            CreateVoteAuditLog {
+                vote_id: data.vote_id,
+                user_id: Some(data.user_id),
+                action: audit_action.to_string(),
+                data: serde_json::json!({
+                    "unit_id": data.unit_id,
+                    "response_hash": response_hash,
+                    "is_delegated": is_delegated,
+                }),
+                ip_address: None,
+                user_agent: None,
+            },
+        )
+        .await?;
+
+        // The RLS executor borrow has ended; recompute participation_count on the
+        // pool so the live quorum/participation indicator reflects this ballot
+        // while the vote is still active (Story 5.6).
+        self.update_participation_count(data.vote_id).await?;
 
         // Generate confirmation number (first 8 chars of hash)
         let confirmation_number = response_hash[..8].to_uppercase();
@@ -269,7 +302,7 @@ impl VoteRepository {
         // Get vote from RLS context
         let vote = sqlx::query_as::<_, Vote>(
             r#"
-            SELECT * FROM votes WHERE id = $1
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at FROM votes WHERE id = $1
             "#,
         )
         .bind(vote_id)
@@ -291,18 +324,15 @@ impl VoteRepository {
                     });
                 Ok(Some(results))
             }
-            Some(_) => {
-                // Vote not closed yet - for RLS version, return empty results
-                // Full calculation requires multiple queries
-                Ok(Some(VoteResults {
-                    vote_id,
-                    participation_count: 0,
-                    eligible_count: 0,
-                    participation_rate: 0.0,
-                    quorum_met: false,
-                    questions: Vec::new(),
-                    calculated_at: Utc::now(),
-                }))
+            Some(v) => {
+                // Vote not closed yet - compute live tallies so an active-vote
+                // results dashboard sees real participation/per-question data
+                // (Story 5.6). Uses compute_results (no audit write) on self.pool,
+                // reusing the already-loaded vote row. RLS scoping for this branch
+                // relies on route-level authorization (the RLS executor only gated
+                // the initial vote lookup above).
+                let results = self.compute_results(&v).await?;
+                Ok(Some(results))
             }
             None => Ok(None),
         }
@@ -384,8 +414,8 @@ impl VoteRepository {
                 start_at, end_at, quorum_type, quorum_percentage,
                 allow_delegation, anonymous_voting, created_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6, $7::quorum_type, $8, $9, $10, $11)
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(data.organization_id)
@@ -684,13 +714,13 @@ impl VoteRepository {
                 description = COALESCE($3, description),
                 start_at = COALESCE($4, start_at),
                 end_at = COALESCE($5, end_at),
-                quorum_type = COALESCE($6, quorum_type),
+                quorum_type = COALESCE($6::quorum_type, quorum_type),
                 quorum_percentage = COALESCE($7, quorum_percentage),
                 allow_delegation = COALESCE($8, allow_delegation),
                 anonymous_voting = COALESCE($9, anonymous_voting),
                 updated_at = NOW()
             WHERE id = $1 AND status = 'draft'
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -744,14 +774,14 @@ impl VoteRepository {
             r#"
             UPDATE votes
             SET
-                status = $2,
+                status = $2::vote_status,
                 start_at = $3,
                 eligible_count = $4,
                 published_by = $5,
                 published_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1 AND status = 'draft'
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -796,7 +826,7 @@ impl VoteRepository {
                 cancellation_reason = $3,
                 updated_at = NOW()
             WHERE id = $1 AND status != 'closed'
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -836,7 +866,7 @@ impl VoteRepository {
                 results_calculated_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -870,7 +900,7 @@ impl VoteRepository {
             UPDATE votes
             SET status = 'active', updated_at = NOW()
             WHERE status = 'scheduled' AND start_at <= NOW()
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at
             "#,
         )
         .fetch_all(&self.pool)
@@ -915,8 +945,8 @@ impl VoteRepository {
                 vote_id, question_text, description, question_type,
                 options, display_order, is_required
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
+            VALUES ($1, $2, $3, $4::vote_question_type, $5, $6, $7)
+            RETURNING id, vote_id, question_text, description, question_type::text AS question_type, options, display_order, is_required, created_at, updated_at
             "#,
         )
         .bind(data.vote_id)
@@ -951,7 +981,7 @@ impl VoteRepository {
     pub async fn get_questions(&self, vote_id: Uuid) -> Result<Vec<VoteQuestion>, SqlxError> {
         let questions = sqlx::query_as::<_, VoteQuestion>(
             r#"
-            SELECT * FROM vote_questions
+            SELECT id, vote_id, question_text, description, question_type::text AS question_type, options, display_order, is_required, created_at, updated_at FROM vote_questions
             WHERE vote_id = $1
             ORDER BY display_order
             "#,
@@ -985,7 +1015,7 @@ impl VoteRepository {
                 is_required = COALESCE($6, is_required),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING id, vote_id, question_text, description, question_type::text AS question_type, options, display_order, is_required, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -1176,7 +1206,7 @@ impl VoteRepository {
                 WHERE u.building_id = $1
                   AND ur.user_id = $2
                   AND ur.resident_type = 'owner'
-                  AND ur.move_out_date IS NULL
+                  AND ur.end_date IS NULL
 
                 UNION ALL
 
@@ -1191,10 +1221,10 @@ impl VoteRepository {
                 FROM units u
                 JOIN delegations d ON u.id = d.unit_id
                 WHERE u.building_id = $1
-                  AND d.delegate_id = $2
+                  AND d.delegate_user_id = $2
                   AND d.status = 'active'
-                  AND d.scope IN ('voting', 'full')
-                  AND (d.expires_at IS NULL OR d.expires_at > NOW())
+                  AND (d.scopes && ARRAY['voting','all']::delegation_scope[])
+                  AND (d.end_date IS NULL OR d.end_date >= CURRENT_DATE)
                   AND $3 = true
             )
             SELECT
@@ -1266,7 +1296,7 @@ impl VoteRepository {
             JOIN unit_residents ur ON u.id = ur.unit_id
             WHERE u.building_id = $1
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             "#,
         )
         .bind(vote.building_id)
@@ -1274,6 +1304,34 @@ impl VoteRepository {
         .await?;
 
         Ok(count.0 as i32)
+    }
+
+    /// Get the user IDs of eligible owners for a building (Story 5.1).
+    ///
+    /// Returns the distinct owner residents of the building's units — the
+    /// recipients of a `VoteStarted` notification when a vote is published.
+    /// Mirrors the scheduler's eligible-users query (scheduler.rs) so immediate
+    /// and scheduled publishes notify the same audience. Note this counts user
+    /// IDs, not units (unlike `count_eligible_units`).
+    pub async fn get_eligible_owner_user_ids(
+        &self,
+        building_id: Uuid,
+    ) -> Result<Vec<Uuid>, SqlxError> {
+        let users: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT DISTINCT ur.user_id
+            FROM unit_residents ur
+            JOIN units u ON ur.unit_id = u.id
+            WHERE u.building_id = $1
+              AND ur.resident_type = 'owner'
+              AND ur.end_date IS NULL
+            "#,
+        )
+        .bind(building_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(users.into_iter().map(|(id,)| id).collect())
     }
 
     /// Update participation count for a vote.
@@ -1493,13 +1551,17 @@ impl VoteRepository {
     // Results (Story 5.5)
     // ========================================================================
 
-    /// Calculate results for a vote.
-    #[allow(deprecated)]
-    pub async fn calculate_results(&self, vote_id: Uuid) -> Result<VoteResults, SqlxError> {
-        let vote = self
-            .find_by_id(vote_id)
-            .await?
-            .ok_or(SqlxError::RowNotFound)?;
+    /// Compute live tallies for a vote WITHOUT writing an audit entry.
+    ///
+    /// Pure read path shared by [`calculate_results`](Self::calculate_results)
+    /// (which appends a `RESULTS_CALCULATED` audit entry afterwards) and the
+    /// active-vote arm of [`get_poll_results_rls`](Self::get_poll_results_rls)
+    /// (a read that must NOT spam the audit log on every dashboard poll).
+    ///
+    /// Queries `self.pool`, not the RLS executor, so callers must enforce
+    /// route-level authorization before exposing the results (Story 5.6).
+    async fn compute_results(&self, vote: &Vote) -> Result<VoteResults, SqlxError> {
+        let vote_id = vote.id;
         let questions = self.get_questions(vote_id).await?;
 
         // Get all responses
@@ -1521,7 +1583,7 @@ impl VoteRepository {
         };
 
         // Calculate quorum
-        let quorum_met = self.check_quorum(&vote, participation_count, eligible_count);
+        let quorum_met = self.check_quorum(vote, participation_count, eligible_count);
 
         // Calculate results for each question
         let mut question_results = Vec::new();
@@ -1533,21 +1595,6 @@ impl VoteRepository {
             question_results.push(result);
         }
 
-        // Create audit log entry
-        self.create_audit_entry(CreateVoteAuditLog {
-            vote_id,
-            user_id: None,
-            action: audit_action::RESULTS_CALCULATED.to_string(),
-            data: serde_json::json!({
-                "participation_count": participation_count,
-                "participation_rate": participation_rate,
-                "quorum_met": quorum_met,
-            }),
-            ip_address: None,
-            user_agent: None,
-        })
-        .await?;
-
         Ok(VoteResults {
             vote_id,
             participation_count,
@@ -1557,6 +1604,34 @@ impl VoteRepository {
             questions: question_results,
             calculated_at: Utc::now(),
         })
+    }
+
+    /// Calculate results for a vote.
+    #[allow(deprecated)]
+    pub async fn calculate_results(&self, vote_id: Uuid) -> Result<VoteResults, SqlxError> {
+        let vote = self
+            .find_by_id(vote_id)
+            .await?
+            .ok_or(SqlxError::RowNotFound)?;
+
+        let results = self.compute_results(&vote).await?;
+
+        // Create audit log entry
+        self.create_audit_entry(CreateVoteAuditLog {
+            vote_id,
+            user_id: None,
+            action: audit_action::RESULTS_CALCULATED.to_string(),
+            data: serde_json::json!({
+                "participation_count": results.participation_count,
+                "participation_rate": results.participation_rate,
+                "quorum_met": results.quorum_met,
+            }),
+            ip_address: None,
+            user_agent: None,
+        })
+        .await?;
+
+        Ok(results)
     }
 
     /// Check if quorum is met.
@@ -1742,6 +1817,43 @@ impl VoteRepository {
     // Audit Log
     // ========================================================================
 
+    /// Create an audit log entry on a caller-supplied executor.
+    ///
+    /// Executor-generic mirror of [`create_audit_entry`](Self::create_audit_entry)
+    /// that runs the INSERT on the passed executor instead of `self.pool`. Used by
+    /// the RLS ballot-cast path so the audit row is written under the same RLS
+    /// session context (`app.current_org_id`) as the ballot itself (Story 5.7).
+    pub async fn create_audit_entry_rls<'e, E>(
+        executor: E,
+        data: CreateVoteAuditLog,
+    ) -> Result<VoteAuditLog, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        // Generate hash of the data
+        let data_str = serde_json::to_string(&data.data).unwrap_or_default();
+        let data_hash = hex::encode(Sha256::digest(data_str.as_bytes()));
+
+        let entry = sqlx::query_as::<_, VoteAuditLog>(
+            r#"
+            INSERT INTO vote_audit_log (vote_id, user_id, action, data_hash, data_snapshot, ip_address, user_agent)
+            VALUES ($1, $2, $3::vote_audit_action, $4, $5, $6::inet, $7)
+            RETURNING id, vote_id, user_id, action::text AS action, data_hash, data_snapshot, ip_address::text AS ip_address, user_agent, created_at
+            "#,
+        )
+        .bind(data.vote_id)
+        .bind(data.user_id)
+        .bind(&data.action)
+        .bind(&data_hash)
+        .bind(&data.data)
+        .bind(&data.ip_address)
+        .bind(&data.user_agent)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(entry)
+    }
+
     /// Create an audit log entry.
     pub async fn create_audit_entry(
         &self,
@@ -1754,8 +1866,8 @@ impl VoteRepository {
         let entry = sqlx::query_as::<_, VoteAuditLog>(
             r#"
             INSERT INTO vote_audit_log (vote_id, user_id, action, data_hash, data_snapshot, ip_address, user_agent)
-            VALUES ($1, $2, $3, $4, $5, $6::inet, $7)
-            RETURNING *
+            VALUES ($1, $2, $3::vote_audit_action, $4, $5, $6::inet, $7)
+            RETURNING id, vote_id, user_id, action::text AS action, data_hash, data_snapshot, ip_address::text AS ip_address, user_agent, created_at
             "#,
         )
         .bind(data.vote_id)
@@ -1775,7 +1887,7 @@ impl VoteRepository {
     pub async fn get_audit_log(&self, vote_id: Uuid) -> Result<Vec<VoteAuditLog>, SqlxError> {
         let entries = sqlx::query_as::<_, VoteAuditLog>(
             r#"
-            SELECT * FROM vote_audit_log
+            SELECT id, vote_id, user_id, action::text AS action, data_hash, data_snapshot, ip_address::text AS ip_address, user_agent, created_at FROM vote_audit_log
             WHERE vote_id = $1
             ORDER BY created_at
             "#,
@@ -1815,7 +1927,7 @@ impl VoteRepository {
             JOIN unit_residents ur ON u.id = ur.unit_id
             WHERE u.building_id = $2
               AND ur.resident_type = 'owner'
-              AND ur.move_out_date IS NULL
+              AND ur.end_date IS NULL
             ORDER BY u.designation
             "#,
         )

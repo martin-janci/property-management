@@ -1,0 +1,972 @@
+//! Epic 64: Advanced AI & LLM Capabilities.
+//!
+//! - Story 64.1: LLM-Powered Lease Agreement Generation
+//! - Story 64.2: AI Property Listing Description Generator
+//! - Story 64.3: Conversational AI Tenant Support (Enhanced RAG)
+//! - Story 64.4: AI Photo Enhancement for Listings
+//! - Story 64.5: Voice Assistant Integration (handlers in [`super::voice`])
+
+use crate::routes::ai::require_tenant_id;
+use crate::routes::ai::voice::{
+    link_voice_device, list_voice_commands, list_voice_devices, unlink_voice_device,
+};
+use crate::state::AppState;
+use api_core::extractors::principal::RequestPrincipal;
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
+use common::errors::ErrorResponse;
+use db::models::{
+    EnhancePhotoRequest, EnhancedChatRequest, GenerateLeaseRequest,
+    GenerateListingDescriptionRequest, UpdateEscalationConfig,
+};
+use serde::{Deserialize, Serialize};
+use std::time::Instant;
+use uuid::Uuid;
+
+/// Router for LLM document generation (Epic 64).
+pub fn llm_router() -> Router<AppState> {
+    Router::new()
+        // Lease generation (Story 64.1)
+        .route("/lease/generate", post(generate_lease))
+        .route("/lease/templates", get(list_lease_templates))
+        .route("/lease/templates/{id}", get(get_lease_template))
+        // Listing descriptions (Story 64.2)
+        .route("/listing/description", post(generate_listing_description))
+        .route(
+            "/listing/descriptions/{listing_id}",
+            get(list_listing_descriptions),
+        )
+        .route(
+            "/listing/descriptions/{id}/publish",
+            post(publish_description),
+        )
+        // Enhanced chat (Story 64.3)
+        .route("/chat/enhanced", post(enhanced_chat))
+        .route("/chat/escalation-config", get(get_escalation_config))
+        .route("/chat/escalation-config", put(update_escalation_config))
+        // Photo enhancement (Story 64.4)
+        .route("/photos/enhance", post(enhance_photo))
+        .route("/photos/enhance/batch", post(batch_enhance_photos))
+        .route("/photos/{id}", get(get_photo_enhancement))
+        // Voice assistant (Story 64.5)
+        .route("/voice/devices", get(list_voice_devices))
+        .route("/voice/devices", post(link_voice_device))
+        .route("/voice/devices/{id}", delete(unlink_voice_device))
+        .route("/voice/commands/{device_id}", get(list_voice_commands))
+        // Statistics
+        .route("/statistics", get(get_ai_statistics))
+        .route("/requests", get(list_generation_requests))
+        .route("/requests/{id}", get(get_generation_request))
+}
+
+// ============================================================================
+// Story 64.1 + Epic 92.1: Lease Generation Endpoints
+// ============================================================================
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/llm/lease/generate",
+    request_body = GenerateLeaseRequest,
+    responses(
+        (status = 201, description = "Lease agreement generated"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+    ),
+    tag = "AI LLM"
+)]
+async fn generate_lease(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Json(req): Json<GenerateLeaseRequest>,
+) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+    let start_time = Instant::now();
+
+    // SECURITY (issue #766 / #816): the lease is generated for a specific
+    // `unit_id`. Validate that the unit belongs to the caller's tenant BEFORE
+    // creating the generation request or burning any LLM tokens — otherwise a
+    // caller could generate a lease (and have it cost-attributed to their org)
+    // against another tenant's unit, leaking the unit's identity/context.
+    let unit_ok = state
+        .llm_document_repo
+        .unit_belongs_to_org(req.unit_id, tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to validate unit ownership: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to validate unit",
+                )),
+            )
+        })?;
+    if !unit_ok {
+        // 404 (not 403) mirrors the rest of this module: do not confirm the
+        // existence of another tenant's unit to a caller who cannot see it.
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Unit not found")),
+        ));
+    }
+
+    // Check feature flag for document generation
+    let doc_gen_enabled = std::env::var("LLM_DOCUMENT_GENERATION")
+        .unwrap_or_else(|_| "true".to_string())
+        .to_lowercase();
+    let doc_gen_enabled = doc_gen_enabled != "false" && doc_gen_enabled != "0";
+
+    // Determine provider and model
+    let provider = std::env::var("LLM_PROVIDER").unwrap_or_else(|_| "anthropic".to_string());
+    let model = std::env::var("LLM_MODEL").unwrap_or_else(|_| match provider.as_str() {
+        "openai" => "gpt-4o".to_string(),
+        "azure_openai" => "gpt-4o".to_string(),
+        _ => "claude-3-5-sonnet-20241022".to_string(),
+    });
+
+    // Create a generation request record
+    let input_data = serde_json::to_value(&req).unwrap_or_default();
+    let request = state
+        .llm_document_repo
+        .create_generation_request(
+            tenant_id,
+            principal.user_id,
+            "lease_generation",
+            &provider,
+            &model,
+            input_data.clone(),
+            req.template_id,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to create generation request: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to create request",
+                )),
+            )
+        })?;
+
+    if !doc_gen_enabled {
+        tracing::info!("LLM document generation disabled via feature flag");
+        return Ok((
+            StatusCode::CREATED,
+            Json(serde_json::json!({
+                "request_id": request.id,
+                "status": "pending",
+                "message": "Lease generation is currently disabled. Request queued for later processing."
+            })),
+        ));
+    }
+
+    // Epic 92.1: Generate lease using LLM
+    let jurisdiction = req.jurisdiction.as_deref().unwrap_or("SK");
+    let lease_input = integrations::LeaseGenerationInput {
+        unit_id: req.unit_id,
+        landlord_name: req.landlord_name.clone(),
+        landlord_address: req.landlord_address.clone(),
+        tenant_name: req.tenant_name.clone(),
+        tenant_email: req.tenant_email.clone(),
+        tenant_phone: req.tenant_phone.clone(),
+        start_date: req.start_date.clone(),
+        end_date: req.end_date.clone(),
+        monthly_rent: req.monthly_rent,
+        security_deposit: req.security_deposit,
+        currency: req.currency.clone(),
+        additional_terms: req.additional_terms.clone(),
+        include_pet_clause: req.include_pet_clause,
+        include_parking: req.include_parking,
+        jurisdiction: Some(jurisdiction.to_string()),
+    };
+
+    let system_prompt = build_lease_system_prompt(jurisdiction, &req.language);
+
+    let result = state
+        .llm_client
+        .generate_lease(
+            &provider,
+            &model,
+            &system_prompt,
+            &lease_input,
+            &req.language,
+        )
+        .await;
+
+    let latency_ms = start_time.elapsed().as_millis() as i32;
+
+    match result {
+        Ok(lease_result) => {
+            // Update the generation request with the result
+            let result_json = serde_json::to_value(&lease_result).unwrap_or_default();
+            let _ = state
+                .llm_document_repo
+                .update_generation_status(
+                    request.id,
+                    "completed",
+                    Some(result_json.clone()),
+                    None,
+                    Some(lease_result.tokens_used),
+                    None,
+                    Some(latency_ms),
+                )
+                .await;
+
+            tracing::info!(
+                "Lease generated successfully for unit {} (tokens: {}, latency: {}ms)",
+                req.unit_id,
+                lease_result.tokens_used,
+                latency_ms
+            );
+
+            Ok((
+                StatusCode::CREATED,
+                Json(serde_json::json!({
+                    "request_id": request.id,
+                    "status": "completed",
+                    "document_html": lease_result.document_html,
+                    "document_text": lease_result.document_text,
+                    "clauses": lease_result.clauses,
+                    "warnings": lease_result.warnings,
+                    "compliance_notes": lease_result.compliance_notes,
+                    "tokens_used": lease_result.tokens_used,
+                    "latency_ms": latency_ms,
+                    "provider": provider,
+                    "model": model
+                })),
+            ))
+        }
+        Err(e) => {
+            tracing::error!("Lease generation failed: {}", e);
+            let error_msg = format!("{}", e);
+
+            // Update the generation request with the error
+            let _ = state
+                .llm_document_repo
+                .update_generation_status(
+                    request.id,
+                    "failed",
+                    None,
+                    Some(&error_msg),
+                    None,
+                    None,
+                    Some(latency_ms),
+                )
+                .await;
+
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "GENERATION_FAILED",
+                    format!("Failed to generate lease: {}", e),
+                )),
+            ))
+        }
+    }
+}
+
+/// Build the system prompt for lease generation based on jurisdiction.
+fn build_lease_system_prompt(jurisdiction: &str, language: &str) -> String {
+    let legal_framework = match jurisdiction {
+        "SK" => "Slovak Civil Code (Obciansky zakonnik) and Act No. 116/1990 Coll. on Rental and Sub-rental of Non-residential Premises",
+        "CZ" => "Czech Civil Code (Obcansky zakonik) No. 89/2012 Coll., specifically sections 2235-2301",
+        "DE" => "German Civil Code (BGB), Mietrecht (sections 535-580a)",
+        _ => "applicable local tenancy laws",
+    };
+
+    let language_name = match language {
+        "sk" => "Slovak",
+        "cs" => "Czech",
+        "de" => "German",
+        _ => "English",
+    };
+
+    format!(
+        r#"You are an expert legal document assistant specializing in residential lease agreements for Central European jurisdictions.
+
+Your task is to generate a comprehensive lease agreement that complies with {}.
+
+Requirements:
+1. Generate the document in {} language
+2. Include all mandatory clauses required by law
+3. Use clear, professional legal language appropriate for the jurisdiction
+4. Include proper formatting with numbered sections
+5. Add placeholders for signatures and dates
+6. Include any required notices or disclosures
+
+The generated lease should be ready for review and signing, with proper legal structure and comprehensive terms covering:
+- Parties and property identification
+- Lease term and renewal conditions
+- Rent amount, payment terms, and late fees
+- Security deposit terms and conditions for return
+- Maintenance responsibilities
+- Rules for property use
+- Termination conditions
+- Dispute resolution procedures
+
+Respond with well-structured content that can be converted to a professional document."#,
+        legal_framework, language_name
+    )
+}
+
+async fn list_lease_templates(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    match state
+        .llm_document_repo
+        .list_prompt_templates(Some(tenant_id), Some("lease_generation"))
+        .await
+    {
+        Ok(templates) => Ok(Json(serde_json::json!({ "templates": templates }))),
+        Err(e) => {
+            tracing::error!("Failed to list templates: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to list templates",
+                )),
+            ))
+        }
+    }
+}
+
+async fn get_lease_template(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's prompt template by guessing its id.
+    // System templates (org_id NULL) remain readable by everyone.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_prompt_template_for_org(id, org_id)
+        .await
+    {
+        Ok(Some(template)) => Ok(Json(serde_json::json!(template))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Template not found")),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to get template: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to get template",
+                )),
+            ))
+        }
+    }
+}
+
+// ============================================================================
+// Story 64.2 + Epic 92.2: Listing Description Endpoints
+// ============================================================================
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/llm/listing/description",
+    request_body = GenerateListingDescriptionRequest,
+    responses(
+        (status = 201, description = "Description generated"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+    ),
+    tag = "AI LLM"
+)]
+async fn generate_listing_description(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Json(req): Json<GenerateListingDescriptionRequest>,
+) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+    let start_time = Instant::now();
+
+    // Check feature flag for document generation
+    let doc_gen_enabled = std::env::var("LLM_DOCUMENT_GENERATION")
+        .unwrap_or_else(|_| "true".to_string())
+        .to_lowercase();
+    let doc_gen_enabled = doc_gen_enabled != "false" && doc_gen_enabled != "0";
+
+    // Determine provider and model
+    let provider = std::env::var("LLM_PROVIDER").unwrap_or_else(|_| "anthropic".to_string());
+    let model = std::env::var("LLM_MODEL").unwrap_or_else(|_| match provider.as_str() {
+        "openai" => "gpt-4o".to_string(),
+        "azure_openai" => "gpt-4o".to_string(),
+        _ => "claude-3-5-sonnet-20241022".to_string(),
+    });
+
+    // Create a generation request
+    let input_data = serde_json::to_value(&req).unwrap_or_default();
+    let request = state
+        .llm_document_repo
+        .create_generation_request(
+            tenant_id,
+            principal.user_id,
+            "listing_description",
+            &provider,
+            &model,
+            input_data.clone(),
+            None,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to create generation request: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to create request",
+                )),
+            )
+        })?;
+
+    // Epic 92.2: Generate listing description using LLM
+    let style_str = req.style.as_ref().and_then(|s| s.tone.as_deref());
+    let system_prompt = build_listing_system_prompt(style_str);
+
+    let listing_input = integrations::ListingDescriptionInput {
+        property_type: req.property_type.clone(),
+        transaction_type: req.transaction_type.clone(),
+        size_sqm: req.size_sqm,
+        rooms: req.rooms,
+        bathrooms: req.bathrooms,
+        floor: req.floor,
+        total_floors: req.total_floors,
+        features: req.features.clone(),
+        city: req.location.city.clone(),
+        district: req.location.district.clone(),
+        nearby_amenities: req.location.nearby_amenities.clone(),
+        price: req.price,
+        currency: req.currency.clone(),
+        language: req.language.clone(),
+        style: req.style.as_ref().and_then(|s| s.tone.clone()),
+        max_length: req.max_length,
+    };
+
+    // Generate description (or use placeholder if disabled)
+    let (description_text, tokens_used) = if doc_gen_enabled {
+        match state
+            .llm_client
+            .generate_listing_description(&provider, &model, &system_prompt, &listing_input)
+            .await
+        {
+            Ok(result) => (result.description, result.tokens_used),
+            Err(e) => {
+                tracing::warn!("LLM listing generation failed, using fallback: {}", e);
+                // Fallback to placeholder
+                let placeholder = format!(
+                    "Beautiful {} {} in {} with {} rooms. This property offers {} sqm of living space with modern amenities.",
+                    req.property_type,
+                    if req.transaction_type == "sale" { "for sale" } else { "for rent" },
+                    req.location.city,
+                    req.rooms.unwrap_or(0),
+                    req.size_sqm.unwrap_or(0.0)
+                );
+                (placeholder, 0)
+            }
+        }
+    } else {
+        let placeholder = format!(
+            "Beautiful {} {} in {} with {} rooms. This property offers {} sqm of living space with modern amenities.",
+            req.property_type,
+            if req.transaction_type == "sale" { "for sale" } else { "for rent" },
+            req.location.city,
+            req.rooms.unwrap_or(0),
+            req.size_sqm.unwrap_or(0.0)
+        );
+        (placeholder, 0)
+    };
+
+    let latency_ms = start_time.elapsed().as_millis() as i32;
+
+    // Store the generated description
+    let description = state
+        .llm_document_repo
+        .create_listing_description(
+            tenant_id,
+            req.listing_id,
+            principal.user_id,
+            &req.language,
+            &description_text,
+            input_data,
+            Some(tokens_used.into()),
+            request.id,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to store description: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to store description",
+                )),
+            )
+        })?;
+
+    // Update the generation request status
+    let _ = state
+        .llm_document_repo
+        .update_generation_status(
+            request.id,
+            "completed",
+            Some(serde_json::json!({ "description": description_text })),
+            None,
+            Some(tokens_used),
+            None,
+            Some(latency_ms),
+        )
+        .await;
+
+    tracing::info!(
+        "Listing description generated for listing {:?} in {} (tokens: {}, latency: {}ms)",
+        req.listing_id,
+        req.language,
+        tokens_used,
+        latency_ms
+    );
+
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "id": description.id,
+            "description": description_text,
+            "request_id": request.id,
+            "language": req.language,
+            "tokens_used": tokens_used,
+            "latency_ms": latency_ms,
+            "provider": provider,
+            "model": model
+        })),
+    ))
+}
+
+/// Build the system prompt for listing description generation.
+fn build_listing_system_prompt(style: Option<&str>) -> String {
+    let style_instruction = match style {
+        Some("luxury") => "Use elegant, sophisticated language that appeals to high-end buyers. Emphasize exclusivity, premium finishes, and prestigious location.",
+        Some("casual") => "Use friendly, approachable language. Focus on livability and community aspects.",
+        Some("investment") => "Focus on investment potential, rental yields, and market position. Include relevant statistics.",
+        _ => "Use professional, engaging language that highlights the property's best features while remaining factual.",
+    };
+
+    format!(
+        r#"You are an expert real estate copywriter specializing in property listings for Central European markets.
+
+Your task is to generate compelling property listing descriptions that attract potential buyers or renters.
+
+Style Guidelines:
+{}
+
+Requirements:
+1. Generate a main description (150-300 words unless specified otherwise)
+2. Create 3-5 key highlights as bullet points
+3. Suggest an attention-grabbing title
+4. Provide SEO-friendly keywords
+5. Highlight unique selling points
+6. Include location benefits
+7. Use appropriate language for the target market
+
+The description should:
+- Be engaging and persuasive
+- Be accurate and not misleading
+- Follow real estate advertising best practices
+- Be culturally appropriate for the Central European market
+
+Format your response with clear sections for each component."#,
+        style_instruction
+    )
+}
+
+async fn list_listing_descriptions(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(listing_id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's generated listing descriptions by
+    // enumerating a listing id.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .list_listing_descriptions_for_org(listing_id, org_id)
+        .await
+    {
+        Ok(descriptions) => Ok(Json(serde_json::json!({ "descriptions": descriptions }))),
+        Err(e) => {
+            tracing::error!("Failed to list descriptions: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
+            ))
+        }
+    }
+}
+
+async fn publish_description(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (issue #766 / #816): scope the mutate to the caller's org so a
+    // tenant cannot publish another org's generated listing description.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .publish_description_for_org(id, org_id)
+        .await
+    {
+        Ok(Some(desc)) => Ok(Json(serde_json::json!(desc))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Description not found")),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to publish description: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to publish")),
+            ))
+        }
+    }
+}
+
+// ============================================================================
+// Story 64.3: Enhanced Chat (RAG) Endpoints
+// ============================================================================
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/llm/chat/enhanced",
+    request_body = EnhancedChatRequest,
+    responses(
+        (status = 200, description = "Chat response with context"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+    ),
+    tag = "AI LLM"
+)]
+async fn enhanced_chat(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Json(req): Json<EnhancedChatRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    // Get escalation config
+    let config = state
+        .llm_document_repo
+        .get_escalation_config(tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get escalation config: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get config")),
+            )
+        })?;
+
+    // Placeholder response - real implementation would:
+    // 1. Search document embeddings for relevant context
+    // 2. Call LLM with context
+    // 3. Check confidence against threshold
+    let confidence = 0.85; // Placeholder
+    let escalated = confidence < config.confidence_threshold;
+
+    let response = serde_json::json!({
+        "message_id": Uuid::new_v4(),
+        "response": format!("I understand you're asking about: {}. Let me help you with that.", req.message),
+        "confidence": confidence,
+        "sources": [],
+        "escalated": escalated,
+        "escalation_reason": if escalated { Some("Low confidence in response") } else { None },
+        "language_detected": req.language,
+        "tokens_used": 150
+    });
+
+    Ok(Json(response))
+}
+
+async fn get_escalation_config(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    match state
+        .llm_document_repo
+        .get_escalation_config(tenant_id)
+        .await
+    {
+        Ok(config) => Ok(Json(serde_json::json!(config))),
+        Err(e) => {
+            tracing::error!("Failed to get config: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get config")),
+            ))
+        }
+    }
+}
+
+async fn update_escalation_config(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Json(req): Json<UpdateEscalationConfig>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    match state
+        .llm_document_repo
+        .update_escalation_config(tenant_id, req)
+        .await
+    {
+        Ok(config) => Ok(Json(serde_json::json!(config))),
+        Err(e) => {
+            tracing::error!("Failed to update config: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to update config",
+                )),
+            ))
+        }
+    }
+}
+
+// ============================================================================
+// Story 64.4: Photo Enhancement Endpoints
+// ============================================================================
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/llm/photos/enhance",
+    request_body = EnhancePhotoRequest,
+    responses(
+        (status = 201, description = "Photo enhancement started"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+    ),
+    tag = "AI LLM"
+)]
+async fn enhance_photo(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Json(req): Json<EnhancePhotoRequest>,
+) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    let metadata = serde_json::to_value(&req.options).unwrap_or_default();
+
+    let enhancement = state
+        .llm_document_repo
+        .create_photo_enhancement(
+            tenant_id,
+            req.listing_id,
+            principal.user_id,
+            &req.photo_url,
+            &req.enhancement_type,
+            metadata,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to create enhancement: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to create enhancement",
+                )),
+            )
+        })?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "id": enhancement.id,
+            "status": enhancement.status,
+            "is_ai_enhanced": true,
+            "message": "Photo enhancement started. Check status for completion."
+        })),
+    ))
+}
+
+async fn batch_enhance_photos(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Json(req): Json<db::models::BatchEnhancePhotosRequest>,
+) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    let mut enhancements = Vec::new();
+    for photo_url in &req.photo_urls {
+        let enhancement = state
+            .llm_document_repo
+            .create_photo_enhancement(
+                tenant_id,
+                req.listing_id,
+                principal.user_id,
+                photo_url,
+                &req.enhancement_type,
+                serde_json::json!({}),
+            )
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to create enhancement: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to create enhancement",
+                    )),
+                )
+            })?;
+        enhancements.push(serde_json::json!({
+            "id": enhancement.id,
+            "status": enhancement.status,
+            "original_url": photo_url
+        }));
+    }
+
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "batch_id": Uuid::new_v4(),
+            "total_photos": req.photo_urls.len(),
+            "enhancements": enhancements
+        })),
+    ))
+}
+
+async fn get_photo_enhancement(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's photo enhancement by guessing its id.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_photo_enhancement_for_org(id, org_id)
+        .await
+    {
+        Ok(Some(enhancement)) => Ok(Json(serde_json::json!(enhancement))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Enhancement not found")),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to get enhancement: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
+            ))
+        }
+    }
+}
+
+// ============================================================================
+// Statistics and Requests Endpoints
+// ============================================================================
+
+async fn get_ai_statistics(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    match state
+        .llm_document_repo
+        .get_usage_statistics(tenant_id, None, None)
+        .await
+    {
+        Ok(stats) => Ok(Json(serde_json::json!(stats))),
+        Err(e) => {
+            tracing::error!("Failed to get statistics: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to get statistics",
+                )),
+            ))
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, utoipa::IntoParams)]
+pub struct GenerationRequestsQuery {
+    pub request_type: Option<String>,
+    pub status: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+async fn list_generation_requests(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    axum::extract::Query(query): axum::extract::Query<GenerationRequestsQuery>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let tenant_id = require_tenant_id(&principal)?;
+
+    match state
+        .llm_document_repo
+        .list_generation_requests(
+            tenant_id,
+            query.request_type.as_deref(),
+            query.status.as_deref(),
+            query.limit.unwrap_or(50),
+            query.offset.unwrap_or(0),
+        )
+        .await
+    {
+        Ok(requests) => Ok(Json(serde_json::json!({ "requests": requests }))),
+        Err(e) => {
+            tracing::error!("Failed to list requests: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
+            ))
+        }
+    }
+}
+
+async fn get_generation_request(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY (issue #766 / #816): scope the read to the caller's org so a
+    // tenant cannot read another org's generation request (prompts, results,
+    // cost data) by guessing its id.
+    let org_id = require_tenant_id(&principal)?;
+    match state
+        .llm_document_repo
+        .find_generation_request_for_org(id, org_id)
+        .await
+    {
+        Ok(Some(request)) => Ok(Json(serde_json::json!(request))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Request not found")),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to get request: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
+            ))
+        }
+    }
+}

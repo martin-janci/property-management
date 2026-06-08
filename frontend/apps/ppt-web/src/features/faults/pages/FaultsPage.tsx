@@ -25,6 +25,10 @@ interface FaultsPageProps {
   faults: FaultSummary[];
   total: number;
   isLoading?: boolean;
+  /** True when the faults list query failed (surfaces an inline error state). */
+  isError?: boolean;
+  /** Retry the failed faults list query. */
+  onRetry?: () => void;
   onNavigateToCreate: () => void;
   onNavigateToView: (id: string) => void;
   onNavigateToEdit: (id: string) => void;
@@ -36,6 +40,8 @@ export function FaultsPage({
   faults,
   total,
   isLoading,
+  isError,
+  onRetry,
   onNavigateToCreate,
   onNavigateToView,
   onNavigateToEdit,
@@ -87,6 +93,8 @@ export function FaultsPage({
         page={page}
         pageSize={pageSize}
         isLoading={isLoading}
+        isError={isError}
+        onRetry={onRetry}
         onPageChange={handlePageChange}
         onStatusFilter={handleStatusFilter}
         onPriorityFilter={handlePriorityFilter}
