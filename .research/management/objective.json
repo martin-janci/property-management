@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-08T14:12:50Z",
+  "selected_at": "2026-06-08T16:12:12Z",
   "last_action": "empty",
-  "reason": "Finish-first inoperable: every open action-list item is a flat task-id (no gap-N / pm-<role> epic prefix), so pick-target-epic.sh --update emitted epic_prefix='feat-admin-web-oauth-consent-page', which violates T21 (must match gap-N[a-z]?|pm-<role>|NONE) and FAILs dispatcher-self-test. Reset to NONE so the self-test passes; Phase 3 falls to the normal claim path (free_slots=3 by priority). Recurring structural env blocks (same as prior runs): (1) gh CLI unavailable -> Phase 0.5 lock skipped-gh-unavailable, all GitHub I/O via MCP. (2) MCP token identity == PR author (martin-janci) -> bot cannot APPROVE/REQUEST_CHANGES its own PRs (GitHub 422); Phase 5 reviewers NOT spawned, Phase 5.5 merge human-gated; open PRs #1165 #1170 await human review+merge. (3) Tier-1 refill is quality-limited: coverage.json (2026-05-29) is stale and its actionable gaps are already drained into the existing open items, so claimable sits just under FLOOR. Operator: add gap-N / pm-<role> prefixed ids to action-list to make finish-first targetable (or set DISPATCHER_FINISH_FIRST=0); re-scan coverage to refill the buffer; and run the dispatcher under a bot identity distinct from the PR author to unblock the review->merge pipeline.",
+  "reason": "Finish-first inoperable: flat task-ids violate T21 epic_prefix shape, so reset to NONE; Phase 3 used the normal priority claim path. Env blocks (recurring): (1) gh unavailable -> Phase 0.5 lock skipped-gh-unavailable, GitHub I/O via MCP. (2) MCP identity == PR author martin-janci -> bot cannot self-approve PRs (422); Phase 5 reviewers + Phase 5.5 merge inoperable; PRs #1165 #1170 #1171 await human review. (3) archive-move push blocked: assignments-archive.json (~300KB) is too large to transmit via mcp push_files reliably and git push is 403; T19 terminal-in-active leak deferred (lossless, harmless to correctness). Operator: enable a working git push (or smaller archive) to let the dispatcher run archive-reconcile; run under a bot identity != PR author to unblock review->merge.",
   "stats_at_selection": {
     "open": 0,
     "claimable": 0
