@@ -35,6 +35,17 @@ export const EmergencyContactDirectoryPage = lazy(() =>
   import('../features/emergency').then((m) => ({ default: m.EmergencyContactDirectoryPage }))
 );
 
+// Voting feature (Epic 5: Building Voting & Decisions, FR37-44)
+export const VotingPage = lazy(() =>
+  import('../features/voting').then((m) => ({ default: m.VotingPage }))
+);
+export const VoteCreatePage = lazy(() =>
+  import('../features/voting').then((m) => ({ default: m.VoteCreatePage }))
+);
+export const VoteDetailPage = lazy(() =>
+  import('../features/voting').then((m) => ({ default: m.VoteDetailPage }))
+);
+
 // Disputes feature (Epic 77)
 export const DisputesPage = lazy(() =>
   import('../features/disputes').then((m) => ({ default: m.DisputesPage }))

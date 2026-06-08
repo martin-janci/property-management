@@ -42,6 +42,7 @@ export * from './outages';
 export * from './packages';
 export * from './registry';
 export * from './reports';
+export * from './voting';
 export * from './workflow-automation';
 
 // API client configuration
