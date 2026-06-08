@@ -38,8 +38,8 @@ function PendingDataNotice({ onBack }: { onBack: () => void }) {
     <div className="mx-auto max-w-md py-16 text-center">
       <h1 className="text-lg font-semibold text-gray-900">Meter data unavailable</h1>
       <p className="mt-2 text-sm text-gray-500">
-        This screen is wired into the app but is waiting on the meters API client. Detail data
-        will appear once the client module ships.
+        This screen is wired into the app but is waiting on the meters API client. Detail data will
+        appear once the client module ships.
       </p>
       <button
         type="button"
@@ -86,7 +86,13 @@ function EditReadingPageRoute() {
 /** Route wrapper: manager pending-validations queue. Renders empty until the api-client lands. */
 function PendingValidationsPageRoute() {
   const navigate = useNavigate();
-  return <PendingValidationsPage readings={[]} onValidate={() => {}} onBack={() => navigate('/meters')} />;
+  return (
+    <PendingValidationsPage
+      readings={[]}
+      onValidate={() => {}}
+      onBack={() => navigate('/meters')}
+    />
+  );
 }
 
 /** Route wrapper: cross-meter consumption comparison. Renders empty until the api-client lands. */

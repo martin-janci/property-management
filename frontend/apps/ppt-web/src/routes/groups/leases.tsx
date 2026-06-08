@@ -70,8 +70,8 @@ function PendingDataNotice({ onBack }: { onBack: () => void }) {
     <div className="mx-auto max-w-md py-16 text-center">
       <h1 className="text-lg font-semibold text-gray-900">Lease data unavailable</h1>
       <p className="mt-2 text-sm text-gray-500">
-        This screen is wired into the app but is waiting on the leases API client. Detail data
-        will appear once the client module ships.
+        This screen is wired into the app but is waiting on the leases API client. Detail data will
+        appear once the client module ships.
       </p>
       <button
         type="button"
