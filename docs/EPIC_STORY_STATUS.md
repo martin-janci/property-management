@@ -357,3 +357,98 @@ Build gaps surfaced by this analysis, ranked. *Per PAP-18, listed only — not c
 direct `grep`/`find`/`read` on HEAD `a8a65b0fe`. Verification spot-checks recorded inline
 (e.g. `AppRoutes.tsx` group wiring, absence of ppt-web voting dir, `MOCK_DISTRICTS` in
 price-map). No code was modified.*
+
+---
+
+## 8. Un-catalogued surface triage (PAP-24)
+
+> Resolves [PAP-18](/PAP/issues/PAP-18) §7 items **#5** (dead-code dirs + 501 stubs) and **#8**
+> (undocumented backend modules). A wire / document / delete decision is recorded for **every**
+> item. Verification was re-run against HEAD `dev` directly (not trusting §4) — and it surfaced
+> **4 more unmounted ppt-web dirs** than §4.B listed (`marketplace`, `forms`, `onboarding`,
+> `critical-notifications`) and **corrected the framing**: most "dead" dirs are *built UIs with a
+> live mounted backend* (an unwired-feature/product call), **not** dead code. Only `competitive`
+> is genuinely dead (501 stub + no migration + no product backing).
+
+### 8.0 Stub & uncatalogued-surface policy (NEW — enforced going forward)
+
+A backend `501 not_implemented` handler, or an unmounted frontend feature dir, is **permitted only if**:
+
+1. it is tracked by an **open epic or issue**, AND
+2. it carries a top-of-module marker `// ROADMAP(PAP-NN): <one-line reason>` (TS: `// ROADMAP(PAP-NN)`).
+
+Anything uncatalogued **and** unannotated is dead code and is **deleted on sight**. New stubs
+added without a tracking issue **fail code review**. Mounted endpoints that only return 501 should
+be **unmounted** (so external callers get `404`, not a false "exists but broken" `501`) until real.
+
+### 8.1 Backend 501-stubs (3) — verified mounted, all handlers `not_implemented`
+
+| Module | Mounted at | 501 handlers | Migration? | Decision | Rationale |
+|--------|-----------|--------------|-----------|----------|-----------|
+| `routes/competitive.rs` | `/api/v1/competitive` | 20 | **none** | **DELETE** | Pure scaffold: no schema, no product doc, mirrors dead `competitive/` web dir. Remove module + `mod` decl + nest + web dir. |
+| `routes/public_api.rs` | `/api/v1/developer` | 12 | n/a (facade) | **DOCUMENT as roadmap** | External-developer API facade — a deliberate public contract; keep but add `ROADMAP` marker + tracking issue, and **unmount** until implemented. Drives the `developer/` web dir decision (8.2). |
+| `routes/vendor_portal.rs` | `/api/v1/vendor-portal` | 16 | n/a (facade) | **DOCUMENT as roadmap** | Vendor-facing portal facade. The implemented vendor surface is the separate `vendors.rs` (989 L, real). Keep stub + `ROADMAP` marker + tracking issue; unmount until implemented. |
+
+### 8.2 ppt-web feature dirs — 46 total: 24 reachable, 22 unmounted (triaged below)
+
+Reachable (24, no action): `ai-chat announcements auth buildings community dashboard disputes
+documents emergency errors facilities faults financial messaging neighbors news oauth-grants
+outages privacy rentals reports settings workflow-automation` + `command-palette` (global widget
+mounted in `App.tsx`).
+
+| Unmounted dir | LOC | Backend status | Decision | Owner / note |
+|---------------|----:|----------------|----------|--------------|
+| `competitive/` | 2766 | 501 stub, no migration | **DELETE** | Bundled with `competitive.rs` deletion (8.1). |
+| `developer/` | 5953 | backend is `public_api` 501 stub | **DELETE (or hold)** | Non-functional until `public_api` is built; delete unless roadmapped with the stub. |
+| `meters/` | 4368 | `/api/v1/meters` live | **WIRE** | Owned by [PAP-20](/PAP/issues/PAP-20). |
+| `leases/` | 5362 | `/api/v1/leases` live | **WIRE** | Owned by [PAP-20](/PAP/issues/PAP-20). |
+| `insurance/` | 3824 | `/api/v1/insurance` live | **WIRE (deferred)** | Built UI, live backend — product-roadmap call. |
+| `marketplace/` | 5674 | `/api/v1/marketplace` live | **WIRE (deferred)** | **Newly found.** Separate from mounted `community/MarketplacePage`. |
+| `forms/` | 2444 | `/api/v1/forms` live | **WIRE (deferred)** | **Newly found.** |
+| `onboarding/` | 3406 | n/a (client flow) | **WIRE / INVESTIGATE** | **Newly found** — core flow unmounted; likely a regression, treat as keeper. |
+| `critical-notifications/` | 932 | live | **WIRE (deferred)** | **Newly found.** |
+| `migration/` | 4850 | `migration.rs` live | **WIRE (deferred)** | Admin/data-migration tool. |
+| `subscription/` | 3189 | `/api/v1/subscriptions` live | **WIRE (deferred)** | |
+| `government-portal/` | 2800 | `government_portal` live | **WIRE (deferred)** | |
+| `integrations/` | 2864 | `/api/v1/integrations` live | **WIRE (deferred)** | Heavy client usage; backend live. |
+| `compliance/` | 2403 | `compliance.rs` live | **WIRE (deferred)** | |
+| `registry/` | 2398 | `registry.rs` live | **WIRE (deferred)** | |
+| `multi-currency/` | 2628 | `multi_currency.rs` live | **WIRE (deferred)** | |
+| `portfolio-performance/` | 2275 | `portfolio_performance.rs` live | **WIRE (deferred)** | |
+| `api-ecosystem/` | 1813 | `api_ecosystem.rs` live | **WIRE (deferred)** | Platform feature. |
+| `delegation/` | 1748 | `/api/v1/delegations` live | **WIRE (deferred)** | |
+| `person-months/` | 1592 | live | **WIRE (deferred)** | Story 3.5; mobile screen exists. |
+| `data-residency/` | 1301 | `data_residency.rs` live | **WIRE (deferred)** | Compliance niche. |
+| `packages/` | 941 | `package_visitor.rs` live | **WIRE (deferred)** | |
+
+**Net:** 2 DELETE (`competitive`, `developer`), 2 already-owned WIRE (PAP-20), 18 WIRE-deferred
+(built UI + live backend → roadmap decision, see 8.4). **Zero are "dead code with no backing"
+except `competitive`/`developer`.**
+
+### 8.3 ~40 undocumented backend modules — all verified **mounted & live** → DOCUMENT (none deleted)
+
+Decision for the whole class: **DOCUMENT** (backfill an epic/FR catalog stub). These are
+production routes (substantial, 700–2300 L each) carrying real schema + migrations; deletion is
+off the table. Grouped per §4.B — each group becomes a catalog backfill unit:
+
+- **Facilities/Ops:** `work_orders` `vendors` `operations` `package_visitor` `outages`
+- **Insurance/Legal/Compliance/Disputes:** `insurance` `legal` `compliance` `regional_compliance` `data_residency` `disputes` `violations` `aml_dsa` `emergency` `government_portal`
+- **Financial/Investor/Portfolio:** `subscriptions` `investor_portal` `owner_analytics` `portfolio_analytics` `portfolio_performance` `property_valuation` `market_pricing` `board_meetings`
+- **ESG/Certifications:** `esg_reporting` `building_certifications`
+- **Marketplace/News/Community/Registry/Forms:** `marketplace` `news_articles` `community` `registry` `forms`
+- **Platform/Infra:** `infrastructure` `feature_packages` `reports` `migration` `tenant_config` `api_ecosystem` `multi_currency`
+
+The largest/highest-risk unowned module is **`aml_dsa.rs` (1963 L, AML/EDD)** — prioritize its
+catalog entry (regulatory surface).
+
+### 8.4 Disposition & follow-ups
+
+- **DELETE (dead):** `competitive` (backend+web) and `developer` web dir → child issue, build-verified.
+- **DOCUMENT (roadmap stubs):** `public_api`, `vendor_portal` → add `ROADMAP` markers + tracking,
+  unmount from live router. Folded into the deletion child (same backend touch).
+- **DOCUMENT (catalog backfill):** ~40 mounted backend modules → child issue.
+- **WIRE-deferred (18 built UIs w/ live backend):** **product-roadmap decision** — not unilaterally
+  deletable (discards working features) nor auto-wireable (each needs a route group + `@ppt/api-client`
+  module + UX sign-off). Escalated to Atlas/UX for a keep-and-schedule vs retire call; tracked, not
+  executed here.
+- **Policy:** §8.0 stub/uncatalogued-surface policy adopted as the standing review rule.
