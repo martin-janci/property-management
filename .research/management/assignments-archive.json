@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-07T22:17:01Z",
+  "archived_at": "2026-06-08T04:14:49Z",
   "assignments": [
     {
       "task_id": "bug-announcer-stale-message",
@@ -270,6 +270,31 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
+      "branch": "auto-impl/code-review-mobile-native-kmp-deeplink-a",
+      "status": "merged",
+      "claimed_at": "2026-06-07T18:15:21Z",
+      "last_updated": "2026-06-08T00:17:50Z",
+      "status_changed_at": "2026-06-08T00:17:50Z",
+      "pr_number": 1160,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1160",
+      "merged_at": "2026-06-07T22:16:05Z",
+      "specialist": "kotlin-mp",
+      "implementer_summary": "pr=1160 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=MainActivity delegates to shared DeepLinkRouter; dup Android DeepLinkTarget removed; added AndroidDeepLinkDispatchTest (offline kotlinc compile+run pass; AGP build proxy-blocked, left to CI)",
+      "reviewer_summary": "verdict=approve head_oid=fda237248922fcdace79afae47ee71829e2cc267 note=prior lint blocker resolved (assertTrue import + KDoc fixed, CI green); delegation refactor correct",
+      "last_reviewed_oid": "fda237248922fcdace79afae47ee71829e2cc267",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-06-07T22:15:50Z",
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "archive_pending": true
     },
     {
       "task_id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
