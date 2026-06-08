@@ -410,6 +410,127 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "verify-permission-based-document-access-promote",
+      "action": "Coverage 7a-3: verify permission-based document access (RLS + capability gates) against the story ACs, add any missing integration test coverage, and promote the story from ready-for-dev to done.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-announcement-comments-threading-backend",
+      "action": "Coverage 6-3: backend integration tests for announcement comment threading (create/list/nested-reply/delete) asserting RLS tenant isolation and auth; additive tests only, no behaviour change.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-announcement-acknowledgment-backend",
+      "action": "Coverage 6-2: backend integration tests for announcement view/acknowledgment tracking (mark-read, per-user read state, unread counts) asserting RLS isolation; additive tests only.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-pinned-announcements-backend",
+      "action": "Coverage 6-4: backend integration tests for pin/unpin announcement ordering, max-pinned constraints, and RLS isolation; additive tests only.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "verify-dispute-filing-flow-ac-coverage",
+      "action": "Coverage 80-2: verify the dispute-filing flow against its ACs in ppt-web, complete the task checklist, add missing frontend tests for the filing happy/error paths, and promote the story when AC coverage is confirmed.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "verify-authentication-flow-promote",
+      "action": "Coverage 79-2: verify the ppt-web authentication flow (login/refresh/logout/route-guard) against ACs, add coverage where missing, and promote the story status from pending to done.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-neighbor-information-mobile-integration",
+      "action": "Coverage 6-6: React Native NeighborsScreen integration tests (list/detail, contact-visibility per privacy settings, empty/error states); additive tests only.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "screen-map-reality-mobile-bootstrap",
+      "action": "Coverage 82-1: bootstrap docs/screens/ entries for the ppt-reality-mobile (SwiftUI/KMP) screens so screen-map drift checks cover the iOS app; docs only, no code change.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-ppt-web-api-client-error-handling",
+      "action": "Coverage 79-1: ppt-web api-client integration coverage for error/retry and 401-refresh paths through TanStack Query (network error, 401->refresh->retry, 5xx surfacing); additive tests only.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-document-download-preview-presign-backend",
+      "action": "Coverage 7a-4: backend integration tests for document download/preview presigned-URL generation, permission checks, and content-type handling; additive tests only.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-notification-preference-sync-frontend-wiring",
+      "action": "Coverage 8a-3: wire the ppt-web notification-preference UI to the preference-sync backend (load current prefs, persist toggle changes, optimistic update + error rollback); pairs with the backend preference-sync work.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
     }
   ]
 }
