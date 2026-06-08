@@ -18,7 +18,7 @@ use common::TenantRole;
 use db::models::compliance::{
     AmlAssessmentStatus, AmlRiskLevel, CreateAmlRiskAssessment, CreateEnhancedDueDiligence,
     CreateModerationCase, DsaReportStatus, EddStatus, ModeratedContentType, ModerationActionType,
-    ModerationStatus, TakeModerationAction, ViolationType,
+    ModerationCase, ModerationStatus, TakeModerationAction, ViolationType,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -81,6 +81,24 @@ fn require_compliance_role(user: &AuthUser) -> Result<(), (StatusCode, String)> 
             StatusCode::FORBIDDEN,
             "This endpoint requires compliance officer privileges".to_string(),
         )),
+    }
+}
+
+/// Authorize a caller to file an appeal on a moderation case.
+///
+/// A caller may appeal only if they own the content under moderation, or the
+/// case belongs to their organization. Without this check any authenticated
+/// user could appeal any case in any tenant (PAP-38).
+fn authorize_appeal(user: &AuthUser, case: &ModerationCase) -> Result<(), (StatusCode, String)> {
+    let is_owner = case.content_owner_id == user.user_id;
+    let same_org = user.tenant_id.is_some() && case.organization_id == user.tenant_id;
+    if is_owner || same_org {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            "You are not authorized to file an appeal on this case".to_string(),
+        ))
     }
 }
 
@@ -161,6 +179,8 @@ async fn create_aml_assessment(
     user: AuthUser,
     Json(req): Json<CreateAmlAssessmentRequest>,
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
+    require_compliance_role(&user)?;
+
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -1746,7 +1766,22 @@ async fn file_appeal(
     Path(id): Path<Uuid>,
     Json(req): Json<FileAppealRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
-    // Any authenticated user can file appeal for their content
+    // Any authenticated user can file an appeal, but only for content they own
+    // or for a case within their own organization.
+    let existing = state
+        .compliance_repo
+        .get_moderation_case(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load moderation case: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to file appeal".to_string(),
+            )
+        })?
+        .ok_or((StatusCode::NOT_FOUND, "Moderation case not found".to_string()))?;
+
+    authorize_appeal(&user, &existing)?;
 
     let case = state
         .compliance_repo
@@ -1867,15 +1902,31 @@ async fn report_content(
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     // Any authenticated user can report content
 
+    // Resolve the real owner of the reported content. Storing a placeholder
+    // here corrupts violation-history and owner-notification logic downstream,
+    // so reject the report when the owner cannot be determined (PAP-38).
+    let content_owner_id = state
+        .compliance_repo
+        .resolve_content_owner(req.content_type, req.content_id, user.tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to resolve content owner: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to report content".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            "Reported content could not be found".to_string(),
+        ))?;
+
     let create_req = CreateModerationCase {
         content_type: req.content_type,
         content_id: req.content_id,
         violation_type: req.violation_type,
         report_reason: req.reason,
     };
-
-    // For now, use a placeholder for content_owner_id - in production this would be looked up
-    let content_owner_id = Uuid::new_v4();
 
     let case = state
         .compliance_repo
@@ -1960,4 +2011,110 @@ async fn get_action_templates(
         .collect();
 
     Ok(Json(responses))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use db::models::compliance::{ModerationStatus, ReportSource};
+
+    fn user_with(role: Option<TenantRole>, tenant_id: Option<Uuid>) -> AuthUser {
+        AuthUser {
+            user_id: Uuid::new_v4(),
+            email: "u@example.com".to_string(),
+            name: "U".to_string(),
+            tenant_id,
+            role,
+        }
+    }
+
+    fn case_for(content_owner_id: Uuid, organization_id: Option<Uuid>) -> ModerationCase {
+        let now = Utc::now();
+        ModerationCase {
+            id: Uuid::new_v4(),
+            content_type: ModeratedContentType::Listing,
+            content_id: Uuid::new_v4(),
+            content_preview: None,
+            content_owner_id,
+            organization_id,
+            report_source: ReportSource::User,
+            reported_by: None,
+            automated_confidence: None,
+            violation_type: None,
+            report_reason: None,
+            status: ModerationStatus::Pending,
+            priority: 3,
+            assigned_to: None,
+            assigned_at: None,
+            decision: None,
+            decision_rationale: None,
+            action_template_id: None,
+            decided_by: None,
+            decided_at: None,
+            appeal_filed: false,
+            appeal_reason: None,
+            appeal_filed_at: None,
+            appeal_decision: None,
+            appeal_decided_by: None,
+            appeal_decided_at: None,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    #[test]
+    fn create_assessment_requires_compliance_role() {
+        // Non-compliance roles are rejected with 403.
+        for role in [
+            None,
+            Some(TenantRole::Manager),
+            Some(TenantRole::Owner),
+            Some(TenantRole::OrgAdmin),
+        ] {
+            let err = require_compliance_role(&user_with(role, Some(Uuid::new_v4())))
+                .expect_err("non-compliance role must be rejected");
+            assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
+
+        // Compliance roles are allowed.
+        for role in [TenantRole::SuperAdmin, TenantRole::PlatformAdmin] {
+            assert!(require_compliance_role(&user_with(Some(role), Some(Uuid::new_v4()))).is_ok());
+        }
+    }
+
+    #[test]
+    fn appeal_rejected_for_other_owner_and_other_org() {
+        let user = user_with(Some(TenantRole::Resident), Some(Uuid::new_v4()));
+        // Case owned by someone else, in a different org.
+        let case = case_for(Uuid::new_v4(), Some(Uuid::new_v4()));
+        let err = authorize_appeal(&user, &case).expect_err("cross-tenant appeal must be rejected");
+        assert_eq!(err.0, StatusCode::FORBIDDEN);
+    }
+
+    #[test]
+    fn appeal_allowed_for_content_owner() {
+        let user = user_with(Some(TenantRole::Resident), Some(Uuid::new_v4()));
+        // Different org, but the caller owns the content.
+        let case = case_for(user.user_id, Some(Uuid::new_v4()));
+        assert!(authorize_appeal(&user, &case).is_ok());
+    }
+
+    #[test]
+    fn appeal_allowed_within_same_org() {
+        let org = Uuid::new_v4();
+        let user = user_with(Some(TenantRole::Resident), Some(org));
+        // Different owner, but the case belongs to the caller's org.
+        let case = case_for(Uuid::new_v4(), Some(org));
+        assert!(authorize_appeal(&user, &case).is_ok());
+    }
+
+    #[test]
+    fn appeal_no_tenant_matches_orgless_case_only_by_ownership() {
+        // A user without a tenant must not pass the org check against an
+        // org-less case purely because both are None.
+        let user = user_with(Some(TenantRole::Resident), None);
+        let case = case_for(Uuid::new_v4(), None);
+        let err = authorize_appeal(&user, &case).expect_err("None==None must not grant access");
+        assert_eq!(err.0, StatusCode::FORBIDDEN);
+    }
 }

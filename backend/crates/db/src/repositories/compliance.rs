@@ -363,6 +363,94 @@ impl ComplianceRepository {
         Ok(case)
     }
 
+    /// Resolve the real owner (user id) of a piece of moderated content.
+    ///
+    /// Returns `Ok(None)` when the content row cannot be found or the content
+    /// type has no resolvable owner, so callers can reject the request rather
+    /// than storing a bogus owner (PAP-38). When `organization_id` is provided,
+    /// tenant-scoped tables are filtered by it to prevent cross-tenant
+    /// resolution.
+    pub async fn resolve_content_owner(
+        &self,
+        content_type: ModeratedContentType,
+        content_id: Uuid,
+        organization_id: Option<Uuid>,
+    ) -> Result<Option<Uuid>, SqlxError> {
+        let owner: Option<(Uuid,)> = match content_type {
+            ModeratedContentType::Listing => {
+                sqlx::query_as(
+                    r#"SELECT created_by FROM listings
+                       WHERE id = $1 AND ($2::uuid IS NULL OR organization_id = $2)"#,
+                )
+                .bind(content_id)
+                .bind(organization_id)
+                .fetch_optional(&self.pool)
+                .await?
+            }
+            ModeratedContentType::ListingPhoto => {
+                sqlx::query_as(
+                    r#"SELECT l.created_by FROM listing_photos p
+                       JOIN listings l ON l.id = p.listing_id
+                       WHERE p.id = $1 AND ($2::uuid IS NULL OR l.organization_id = $2)"#,
+                )
+                .bind(content_id)
+                .bind(organization_id)
+                .fetch_optional(&self.pool)
+                .await?
+            }
+            ModeratedContentType::Announcement => {
+                sqlx::query_as(
+                    r#"SELECT author_id FROM announcements
+                       WHERE id = $1 AND ($2::uuid IS NULL OR organization_id = $2)"#,
+                )
+                .bind(content_id)
+                .bind(organization_id)
+                .fetch_optional(&self.pool)
+                .await?
+            }
+            ModeratedContentType::Document => {
+                sqlx::query_as(
+                    r#"SELECT created_by FROM documents
+                       WHERE id = $1 AND ($2::uuid IS NULL OR organization_id = $2)"#,
+                )
+                .bind(content_id)
+                .bind(organization_id)
+                .fetch_optional(&self.pool)
+                .await?
+            }
+            ModeratedContentType::Message => {
+                sqlx::query_as(r#"SELECT sender_id FROM messages WHERE id = $1"#)
+                    .bind(content_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+            }
+            ModeratedContentType::CommunityPost => {
+                sqlx::query_as(r#"SELECT author_id FROM community_posts WHERE id = $1"#)
+                    .bind(content_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+            }
+            ModeratedContentType::Comment => {
+                sqlx::query_as(r#"SELECT author_id FROM community_comments WHERE id = $1"#)
+                    .bind(content_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+            }
+            ModeratedContentType::UserProfile => {
+                // A profile's content_id is the profiled user; that user is the
+                // owner. Confirm the user exists before trusting the id.
+                sqlx::query_as(r#"SELECT id FROM users WHERE id = $1"#)
+                    .bind(content_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+            }
+            // Review has no backing table in the current schema.
+            ModeratedContentType::Review => None,
+        };
+
+        Ok(owner.map(|(id,)| id))
+    }
+
     /// Get moderation case by ID.
     pub async fn get_moderation_case(&self, id: Uuid) -> Result<Option<ModerationCase>, SqlxError> {
         let case =
