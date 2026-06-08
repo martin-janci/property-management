@@ -8,6 +8,6 @@ export type { ApiFolderTreeNode, Document, DocumentStatus, DocumentType } from '
 export { DocumentsScreen, folderNodeToDocument, subfoldersAtPath } from './DocumentsScreen';
 export { DocumentUploadScreen } from './DocumentUploadScreen';
 export type { FlatFolder, MoveDocumentSheetProps } from './MoveDocumentSheet';
-export { MoveDocumentSheet, flattenTree } from './MoveDocumentSheet';
+export { flattenTree, MoveDocumentSheet } from './MoveDocumentSheet';
 export type { NewFolderSheetProps } from './NewFolderSheet';
 export { NewFolderSheet } from './NewFolderSheet';

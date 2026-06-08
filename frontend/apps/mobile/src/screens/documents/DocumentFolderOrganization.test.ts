@@ -211,9 +211,7 @@ describe('flattenTree', () => {
         name: 'Parent',
         parent_id: null,
         document_count: 0,
-        children: [
-          { id: 'f1a', name: 'Child', parent_id: 'f1', document_count: 0, children: [] },
-        ],
+        children: [{ id: 'f1a', name: 'Child', parent_id: 'f1', document_count: 0, children: [] }],
       },
     ];
     expect(flattenTree(tree)).toEqual([
@@ -252,7 +250,13 @@ describe('flattenTree', () => {
 
   it('preserves folder names verbatim', () => {
     const tree: ApiFolderTreeNode[] = [
-      { id: 'f1', name: 'Q1/2024 Budget & Forecast', parent_id: null, document_count: 0, children: [] },
+      {
+        id: 'f1',
+        name: 'Q1/2024 Budget & Forecast',
+        parent_id: null,
+        document_count: 0,
+        children: [],
+      },
     ];
     expect(flattenTree(tree)[0].name).toBe('Q1/2024 Budget & Forecast');
   });
