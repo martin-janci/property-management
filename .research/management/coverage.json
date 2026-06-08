@@ -643,7 +643,7 @@
       "id": "79-2-authentication-flow",
       "title": "Authentication Flow Implementation",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend"
@@ -654,13 +654,12 @@
         "JWT integration with @ppt/api-client",
         "token provider for secure storage",
         "ProtectedRoute.tsx for auth gates",
-        "PR #642 merged 2026-05-28: auth.rs + sso.rs cookie Path reconciliation + runbook, WITH inline tests — resolves the #617 cookie-Path regression class flagged in decisions"
+        "PR #642 merged 2026-05-28: auth.rs + sso.rs cookie Path reconciliation + runbook, WITH inline tests — resolves the #617 cookie-Path regression class flagged in decisions",
+        "vitest coverage maps every promotion-plan AC scenario: AuthCallbackPage.test.tsx (SSO callback stores tokens -> /dashboard; return-url redirect; refresh rotation; state-mismatch/missing-params/provider-error/exchange-failure rollback), AuthContext.test.tsx (logout cache-purge + redirect, #712), ProtectedRoute.test.tsx (route-guard role gating + deriveActiveRole, #482), AuthContext.login-refresh.test.tsx (email/password login persists tokens + unlocks guarded route; revoked refresh -> clean logout, no error loop; concurrent-refresh coalescing)"
       ],
-      "gaps": [
-        "story Status: pending"
-      ],
-      "notes": "SSO auth-callback wiring merged this window (PRs #568/#609) — /auth/callback token storage + refresh flow landed; login/logout context wiring progressing. Remains partial pending full e2e verification (gap-79-2-auth-callback-e2e open). | 2026-05-28: cookie-Path reconciliation (#642, with tests) closes the SSO-callback cookie-read regression risk; e2e verification still the remaining gap.",
-      "last_checked": "2026-05-28"
+      "gaps": [],
+      "notes": "SSO auth-callback wiring merged this window (PRs #568/#609) — /auth/callback token storage + refresh flow landed; login/logout context wiring progressing. | 2026-05-28: cookie-Path reconciliation (#642, with tests) closes the SSO-callback cookie-read regression risk. | 2026-06-08: VERIFIED + PROMOTED partial->done (verify-authentication-flow-promote). Reviewed login/refresh/logout/route-guard against the story-79-2 promotion-plan ACs; gap-79-2-auth-callback-e2e was already satisfied by AuthCallbackPage.test.tsx on dev. Added AuthContext.login-refresh.test.tsx to close the two remaining ppt-web vitest gaps (direct email/password login flow + revoked-refresh-token clean-logout / no-error-loop). Cookie Path=/api is a backend (Rust) assertion already covered by #642 inline tests — out of scope for ppt-web vitest. Band A green: typecheck + biome + 22/22 affected vitest pass.",
+      "last_checked": "2026-06-08"
     },
     {
       "epic": "epic-79",
