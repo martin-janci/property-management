@@ -27,6 +27,7 @@ import { neighborRoutes } from './groups/neighbors';
 import { outageRoutes } from './groups/outages';
 import { rentalRoutes } from './groups/rentals';
 import { reportRoutes } from './groups/reports';
+import { votingRoutes } from './groups/voting';
 
 export function AppRoutes() {
   return (
@@ -47,6 +48,7 @@ export function AppRoutes() {
       {rentalRoutes()}
       {meterRoutes()}
       {leaseRoutes()}
+      {votingRoutes()}
       {reportRoutes()}
       {buildingRoutes()}
       {settingsRoutes()}
