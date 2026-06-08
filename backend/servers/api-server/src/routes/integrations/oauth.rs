@@ -121,7 +121,10 @@ pub async fn airbnb_token_exchange(
     if body.code.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("MISSING_CODE", "Authorization code is required")),
+            Json(ErrorResponse::new(
+                "MISSING_CODE",
+                "Authorization code is required",
+            )),
         ));
     }
 
@@ -174,9 +177,8 @@ pub async fn airbnb_token_exchange(
             )),
         )
     };
-    let encrypted_access =
-        integrations::encrypt_required(crypto.as_ref(), &tokens.access_token)
-            .map_err(encryption_unavailable)?;
+    let encrypted_access = integrations::encrypt_required(crypto.as_ref(), &tokens.access_token)
+        .map_err(encryption_unavailable)?;
     let encrypted_refresh =
         integrations::encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
             .map_err(encryption_unavailable)?;
@@ -196,7 +198,10 @@ pub async fn airbnb_token_exchange(
             tracing::error!(error = %e, "Failed to store Airbnb connection after token exchange");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to store connection")),
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to store connection",
+                )),
             )
         })?;
 
@@ -337,7 +342,10 @@ pub async fn list_airbnb_listings(
             tracing::error!(org_id = %path.org_id, error = %e, "Airbnb listings fetch failed");
             Err((
                 StatusCode::BAD_GATEWAY,
-                Json(ErrorResponse::new("AIRBNB_API_ERROR", "Airbnb API request failed")),
+                Json(ErrorResponse::new(
+                    "AIRBNB_API_ERROR",
+                    "Airbnb API request failed",
+                )),
             ))
         }
     }
@@ -409,7 +417,9 @@ pub async fn list_airbnb_reservations(
                 redirect_uri: state2.airbnb_config.redirect_uri.clone(),
             });
             if let Some(ref id) = lid {
-                client.fetch_reservations(&access_token, id, None, None).await
+                client
+                    .fetch_reservations(&access_token, id, None, None)
+                    .await
             } else {
                 client.fetch_all_reservations(&access_token).await
             }
@@ -420,7 +430,10 @@ pub async fn list_airbnb_reservations(
     match outcome {
         TokenRotationOutcome::Ok(reservations) => {
             let count = reservations.len();
-            Ok(Json(AirbnbReservationsResponse { reservations, count }))
+            Ok(Json(AirbnbReservationsResponse {
+                reservations,
+                count,
+            }))
         }
         TokenRotationOutcome::NoConnection => Err((
             StatusCode::NOT_FOUND,
@@ -460,7 +473,10 @@ pub async fn list_airbnb_reservations(
             tracing::error!(org_id = %path.org_id, error = %e, "Airbnb reservations fetch failed");
             Err((
                 StatusCode::BAD_GATEWAY,
-                Json(ErrorResponse::new("AIRBNB_API_ERROR", "Airbnb API request failed")),
+                Json(ErrorResponse::new(
+                    "AIRBNB_API_ERROR",
+                    "Airbnb API request failed",
+                )),
             ))
         }
     }

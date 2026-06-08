@@ -47,8 +47,7 @@ use uuid::Uuid;
 use common::TestApp;
 
 // Must match `TestConfig::default().jwt_secret`.
-const JWT_SECRET: &str =
-    "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
 
 /// Mirror of `api_core::extractors::auth::Claims`.
 #[derive(Serialize)]
@@ -245,9 +244,7 @@ fn is_protected(status: StatusCode) -> bool {
 async fn token_exchange_rejects_unauthenticated(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "te-unauth").await;
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
     let resp = app
         .execute(anon_post(&uri, json!({"code": "abc123"})))
         .await;
@@ -266,9 +263,7 @@ async fn token_exchange_rejects_empty_code(pool: PgPool) {
     let user_id = seed_user(&pool, "te-empty@test.local").await;
     seed_membership(&pool, org_id, user_id).await;
     let token = mint_token(user_id, org_id);
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
     let resp = app
         .execute(authed_post(&uri, &token, json!({"code": ""})))
         .await;
@@ -297,15 +292,9 @@ async fn token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
     seed_membership(&pool, org_b, user_b).await; // member of B, not A
 
     let token_b = mint_token(user_b, org_b);
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_a}/airbnb/token/exchange"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_a}/airbnb/token/exchange");
     let resp = app
-        .execute(authed_post(
-            &uri,
-            &token_b,
-            json!({"code": "some-code"}),
-        ))
+        .execute(authed_post(&uri, &token_b, json!({"code": "some-code"})))
         .await;
     assert_eq!(
         resp.status,
@@ -327,9 +316,7 @@ async fn token_exchange_returns_503_when_not_configured(pool: PgPool) {
     let user_id = seed_user(&pool, "te-nocfg@test.local").await;
     seed_membership(&pool, org_id, user_id).await;
     let token = mint_token(user_id, org_id);
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
     // Airbnb is not configured in the test environment (AIRBNB_CLIENT_ID is
     // empty/unset), so we expect 503.
     let resp = app
@@ -353,9 +340,7 @@ async fn token_exchange_returns_503_when_not_configured(pool: PgPool) {
 async fn listings_rejects_unauthenticated(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "ls-unauth").await;
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_id}/airbnb/listings"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/listings");
     let resp = app.execute(anon_get(&uri)).await;
     assert!(
         is_protected(resp.status),
@@ -374,9 +359,7 @@ async fn listings_idor_guard_rejects_non_member(pool: PgPool) {
     seed_membership(&pool, org_b, user_b).await;
 
     let token_b = mint_token(user_b, org_b);
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_a}/airbnb/listings"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_a}/airbnb/listings");
     let resp = app.execute(authed_get(&uri, &token_b)).await;
     assert_eq!(
         resp.status,
@@ -396,9 +379,7 @@ async fn listings_returns_404_when_no_connection(pool: PgPool) {
     seed_membership(&pool, org_id, user_id).await;
 
     let token = mint_token(user_id, org_id);
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_id}/airbnb/listings"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/listings");
     let resp = app.execute(authed_get(&uri, &token)).await;
     assert_eq!(
         resp.status,
@@ -418,9 +399,7 @@ async fn listings_returns_404_when_no_connection(pool: PgPool) {
 async fn reservations_rejects_unauthenticated(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "res-unauth").await;
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_id}/airbnb/reservations"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/reservations");
     let resp = app.execute(anon_get(&uri)).await;
     assert!(
         is_protected(resp.status),
@@ -439,9 +418,7 @@ async fn reservations_idor_guard_rejects_non_member(pool: PgPool) {
     seed_membership(&pool, org_b, user_b).await;
 
     let token_b = mint_token(user_b, org_b);
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_a}/airbnb/reservations"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_a}/airbnb/reservations");
     let resp = app.execute(authed_get(&uri, &token_b)).await;
     assert_eq!(
         resp.status,
@@ -462,9 +439,7 @@ async fn reservations_returns_404_when_no_connection(pool: PgPool) {
     seed_membership(&pool, org_id, user_id).await;
 
     let token = mint_token(user_id, org_id);
-    let uri = format!(
-        "/api/v1/integrations/organizations/{org_id}/airbnb/reservations"
-    );
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/reservations");
     let resp = app.execute(authed_get(&uri, &token)).await;
     assert_eq!(
         resp.status,
@@ -515,9 +490,7 @@ async fn new_routes_are_mounted(pool: PgPool) {
 
     let routes: &[(&str, Method)] = &[
         (
-            &format!(
-                "/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange"
-            ),
+            &format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange"),
             Method::POST,
         ),
         (
@@ -525,9 +498,7 @@ async fn new_routes_are_mounted(pool: PgPool) {
             Method::GET,
         ),
         (
-            &format!(
-                "/api/v1/integrations/organizations/{org_id}/airbnb/reservations"
-            ),
+            &format!("/api/v1/integrations/organizations/{org_id}/airbnb/reservations"),
             Method::GET,
         ),
     ];
