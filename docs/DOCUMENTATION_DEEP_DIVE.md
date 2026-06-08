@@ -104,17 +104,28 @@ Examples:
 
 ## Alignment gaps (docs vs code)
 
-### 1) FR defines many domains not mounted in the backend routers
+### 1) Backend router coverage (corrected)
 
-Current `api-server` mounts only:
-- `/api/v1/auth`, `/api/v1/organizations`, `/api/v1/buildings`, `/api/v1/faults`, `/api/v1/voting`, `/api/v1/rentals`, `/api/v1/listings`, `/api/v1/integrations`
+> **Corrected 2026-06-08 (PAP-25).** This section previously claimed the
+> `api-server` mounts **only 8 routers** (`/auth, /organizations, /buildings,
+> /faults, /voting, /rentals, /listings, /integrations`). That was **~9× stale** —
+> it captured only the first MVP slice.
 
-But FR includes endpoints for notifications/announcements/messages/etc.
+Reality (audited at HEAD `a8a65b0fe` in
+[`docs/EPIC_STORY_STATUS.md`](./EPIC_STORY_STATUS.md)): the `api-server` mounts
+**71 `/api/v1/*` route groups**, and every documented epic has backing routes +
+migrations. Notifications / announcements / messages and the rest are mounted.
+
+The *residual* gap is no longer "missing backend routers" but **UI-surface
+routing**: a few already-built `ppt-web` feature dirs (voting, meters, leases)
+are not yet wired into `AppRoutes.tsx`. See `EPIC_STORY_STATUS.md` §5 (FR
+coverage) and §7 (follow-ups).
 
 **Recommendation**
-- Treat FR as a *target* and track implementation via:
+- Track implementation via the layered sources of truth:
   - TypeSpec endpoints (contract)
   - Rust routes/handlers (implementation)
+  - `EPIC_STORY_STATUS.md` (delivery status vs codebase)
   - Validation checklist (readiness)
 
 ### 2) Contract generation pipeline mismatch (“by-service” specs)

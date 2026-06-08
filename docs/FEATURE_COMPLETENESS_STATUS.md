@@ -8,7 +8,12 @@
 > hardcoded `mockX` data in `frontend/apps/ppt-web/src/App.tsx`
 > (FaultDetail / AnnouncementView / ThreadDetail / GroupDetail).
 >
-> **Single source of truth for UC implementation status:** the
+> **Single source of truth for delivery status (epic / story / FR):**
+> [`docs/EPIC_STORY_STATUS.md`](./EPIC_STORY_STATUS.md) — the evidence-grounded
+> per-epic / per-story / FR rollup audited against the codebase (PAP-18). Cite
+> that file, not this one, for "what is shipped".
+>
+> **Single source of truth for fine-grained UC implementation status:** the
 > `apiStatus` and `buildStatus` frontmatter fields on
 > `docs/screens/<product>/*.md`. Query via `/screens query` or the
 > `screen-map` tooling. A UC is only `complete` when every screen-map

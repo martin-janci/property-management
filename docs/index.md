@@ -8,7 +8,7 @@ Property Management System (PPT) and Reality Portal documentation.
 
 - **[spec1.0.md](./spec1.0.md)** - Original system specification with UI/feature details
 - **[use-cases.md](./use-cases.md)** - Complete use case catalog (508 UCs, 51 categories)
-- **[functional-requirements.md](./functional-requirements.md)** - Business rules and acceptance criteria
+- **[functional-requirements.md](./functional-requirements.md)** - Business rules and acceptance criteria (FR-XX.Y / 256 sub-FRs / 508 UCs). Distinct from the **101 capability FRs** in `_bmad-output/epics.md` used for delivery tracking — see the reconciliation note at the top of that file and `EPIC_STORY_STATUS.md` §5–§6.
 
 ### Domain & Architecture
 
@@ -31,8 +31,10 @@ Property Management System (PPT) and Reality Portal documentation.
 
 ## Reviews & Analysis
 
+- **[EPIC_STORY_STATUS.md](./EPIC_STORY_STATUS.md)** — ⭐ **Delivery-status source of truth.** Per-epic / per-story / FR delivery status vs the codebase, evidence-grounded against HEAD (PAP-18). Cite this — **not** `FEATURE_COMPLETENESS_STATUS.md` — for "what's shipped".
 - **[ARCHITECTURE_REVIEW.md](./ARCHITECTURE_REVIEW.md)** - Code/architecture review and gap analysis
 - **[DOCUMENTATION_DEEP_DIVE.md](./DOCUMENTATION_DEEP_DIVE.md)** - Doc audit, source-of-truth model
+- ~~**FEATURE_COMPLETENESS_STATUS.md**~~ — **DEPRECATED / do not cite** (self-contradictory, ~4 months stale). Superseded by `EPIC_STORY_STATUS.md` (delivery status) and `docs/screens/*` frontmatter (fine-grained UC status).
 
 ---
 
@@ -91,4 +93,4 @@ API specifications using TypeSpec and OpenAPI.
 
 ---
 
-*Last updated: 2024-12-21*
+*Last updated: 2026-06-08 (PAP-25 docs hygiene: delivery-status SoT, FR taxonomy reconciliation)*
