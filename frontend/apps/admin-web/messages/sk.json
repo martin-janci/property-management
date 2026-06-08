@@ -49,7 +49,7 @@
       },
       "loading": "Načítava sa…",
       "pagination": {
-        "next": "ċalšie",
+        "next": "Ďalšie",
         "page": "Strana {{page}}",
         "previous": "Predchádzajúce",
         "showing": "Zobrazujú sa {{from}}–{{to}} z {{total}}"
@@ -82,7 +82,7 @@
       "fields": {
         "aiFaultTriage": "AI triedenie porúch (beta)",
         "buildingDisabled": "Vypnúť túto budovu (núdzový vypínač)",
-        "newListingsSearch": "Nové vyhĺdávanie inzerátov (beta)"
+        "newListingsSearch": "Nové vyhľadávanie inzerátov (beta)"
       },
       "helpTooltip": "Funkčné príznaky sa prejavia okamžite pre všetkých používateľov daného nájomníka. Núdzový vypínač používajte opatrne.",
       "title": "Funkčné príznaky",
@@ -205,7 +205,7 @@
       "columns": {
         "displayName": "Zobrazované meno",
         "email": "E-mail",
-        "principalKind": "Typ principala"
+        "principalKind": "Typ principála"
       },
       "empty": "Hľadajte pre načítanie používateľov.",
       "principalKinds": {
@@ -220,7 +220,7 @@
         "cancel": "Zrušiť",
         "confirm": "Zmeniť typ",
         "description": "Toto zmení spôsob autentifikácie {{name}} a oprávnenia, ktoré majú. Pokračovať?",
-        "title": "Zmeniť typ principala"
+        "title": "Zmeniť typ principála"
       }
     }
   },
@@ -248,11 +248,11 @@
     "loadingDispute": "Načítava sa spor...",
     "login": "Prihlásiť sa",
     "logout": "Odhlásiť sa",
-    "next": "ċalej",
+    "next": "Ďalej",
     "no": "Nie",
     "none": "Žiadne",
     "notifications": "Oznámenia",
-    "optional": "Volitelné",
+    "optional": "Voliteľné",
     "pleaseWait": "Počkajte, kým načítame údaje.",
     "previous": "Predchádzajúce",
     "reloadPage": "Obnoviť stránku",
