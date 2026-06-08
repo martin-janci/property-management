@@ -4,7 +4,7 @@ name: Onboarding Tours (Admin)
 product: ppt
 sitemapRefs: {}
 implementations:
-  admin-web:
+  ppt-web:
     route: platform/onboarding
     component: OnboardingToursPage
     buildStatus: shipped
