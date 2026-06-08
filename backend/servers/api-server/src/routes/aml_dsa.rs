@@ -6,7 +6,7 @@
 #![allow(clippy::type_complexity)]
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, RequestPrincipal};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -17,8 +17,8 @@ use chrono::{DateTime, Duration, Utc};
 use common::TenantRole;
 use db::models::compliance::{
     AmlAssessmentStatus, AmlRiskLevel, CreateAmlRiskAssessment, CreateEnhancedDueDiligence,
-    CreateModerationCase, DsaReportStatus, EddStatus, ModeratedContentType, ModerationActionType,
-    ModerationStatus, TakeModerationAction, ViolationType,
+    CreateModerationCase, DsaReportStatus, DsaTransparencyReport, EddStatus, ModeratedContentType,
+    ModerationActionType, ModerationStatus, TakeModerationAction, ViolationType,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -81,6 +81,30 @@ fn require_compliance_role(user: &AuthUser) -> Result<(), (StatusCode, String)> 
             StatusCode::FORBIDDEN,
             "This endpoint requires compliance officer privileges".to_string(),
         )),
+    }
+}
+
+/// Restrict access to platform-operator compliance staff only.
+///
+/// SECURITY (PAP-46): DSA transparency reports are platform-wide — a period
+/// rollup of whole-service moderation metrics with no `organization_id`. Only
+/// the platform operator may read/generate/publish/download them. We gate on
+/// `PrincipalKind::Platform` (resolved from the trusted `users.principal_kind`
+/// column by the `RequestPrincipal` extractor), NOT on `TenantRole`: a
+/// tenant-scoped admin must never reach these handlers even if their
+/// per-org membership role happens to be SuperAdmin/PlatformAdmin. This is a
+/// distinct guard from `require_compliance_role`, which correctly gates the
+/// per-tenant AML/EDD handlers and must not be weakened.
+fn require_platform_compliance_role(
+    principal: &RequestPrincipal,
+) -> Result<(), (StatusCode, String)> {
+    if principal.is_platform() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            "This endpoint requires platform-operator compliance privileges".to_string(),
+        ))
     }
 }
 
@@ -1097,12 +1121,46 @@ pub struct GenerateDsaReportRequest {
     pub period_end: DateTime<Utc>,
 }
 
+/// Map a stored DSA report to its API response.
+///
+/// SECURITY (PAP-46): `download_url` is intentionally `None` here — the stored
+/// `report_file_path` is a server-side object-storage key and must never be
+/// returned to clients. Downloads go through `download_dsa_report`, which
+/// returns a short-lived signed URL instead.
+fn dsa_report_to_response(report: DsaTransparencyReport) -> DsaTransparencyReportResponse {
+    DsaTransparencyReportResponse {
+        id: report.id,
+        period_start: report.period_start,
+        period_end: report.period_end,
+        status: report.status,
+        summary: DsaReportSummary {
+            total_moderation_actions: report.total_moderation_actions,
+            content_removed: report.content_removed_count,
+            content_restricted: report.content_restricted_count,
+            warnings_issued: report.warnings_issued_count,
+            user_reports_received: report.user_reports_received,
+            user_reports_resolved: report.user_reports_resolved,
+            avg_resolution_time_hours: report.avg_resolution_time_hours,
+            automated_decisions: report.automated_decisions_count,
+            automated_decisions_overturned: report.automated_decisions_overturned,
+            appeals_received: report.appeals_received,
+            appeals_upheld: report.appeals_upheld,
+            appeals_rejected: report.appeals_rejected,
+        },
+        content_type_breakdown: vec![],
+        violation_type_breakdown: vec![],
+        download_url: None,
+        generated_at: report.generated_at,
+        published_at: report.published_at,
+    }
+}
+
 /// List DSA transparency reports.
 async fn list_dsa_reports(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<Vec<DsaTransparencyReportResponse>>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let reports = state
         .compliance_repo
@@ -1116,34 +1174,8 @@ async fn list_dsa_reports(
             )
         })?;
 
-    let responses: Vec<DsaTransparencyReportResponse> = reports
-        .into_iter()
-        .map(|r| DsaTransparencyReportResponse {
-            id: r.id,
-            period_start: r.period_start,
-            period_end: r.period_end,
-            status: r.status,
-            summary: DsaReportSummary {
-                total_moderation_actions: r.total_moderation_actions,
-                content_removed: r.content_removed_count,
-                content_restricted: r.content_restricted_count,
-                warnings_issued: r.warnings_issued_count,
-                user_reports_received: r.user_reports_received,
-                user_reports_resolved: r.user_reports_resolved,
-                avg_resolution_time_hours: r.avg_resolution_time_hours,
-                automated_decisions: r.automated_decisions_count,
-                automated_decisions_overturned: r.automated_decisions_overturned,
-                appeals_received: r.appeals_received,
-                appeals_upheld: r.appeals_upheld,
-                appeals_rejected: r.appeals_rejected,
-            },
-            content_type_breakdown: vec![],
-            violation_type_breakdown: vec![],
-            download_url: r.report_file_path,
-            generated_at: r.generated_at,
-            published_at: r.published_at,
-        })
-        .collect();
+    let responses: Vec<DsaTransparencyReportResponse> =
+        reports.into_iter().map(dsa_report_to_response).collect();
 
     Ok(Json(responses))
 }
@@ -1151,10 +1183,11 @@ async fn list_dsa_reports(
 /// Generate a new DSA transparency report.
 async fn generate_dsa_report(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     user: AuthUser,
     Json(req): Json<GenerateDsaReportRequest>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let report = state
         .compliance_repo
@@ -1168,40 +1201,16 @@ async fn generate_dsa_report(
             )
         })?;
 
-    Ok(Json(DsaTransparencyReportResponse {
-        id: report.id,
-        period_start: report.period_start,
-        period_end: report.period_end,
-        status: report.status,
-        summary: DsaReportSummary {
-            total_moderation_actions: report.total_moderation_actions,
-            content_removed: report.content_removed_count,
-            content_restricted: report.content_restricted_count,
-            warnings_issued: report.warnings_issued_count,
-            user_reports_received: report.user_reports_received,
-            user_reports_resolved: report.user_reports_resolved,
-            avg_resolution_time_hours: report.avg_resolution_time_hours,
-            automated_decisions: report.automated_decisions_count,
-            automated_decisions_overturned: report.automated_decisions_overturned,
-            appeals_received: report.appeals_received,
-            appeals_upheld: report.appeals_upheld,
-            appeals_rejected: report.appeals_rejected,
-        },
-        content_type_breakdown: vec![],
-        violation_type_breakdown: vec![],
-        download_url: report.report_file_path,
-        generated_at: report.generated_at,
-        published_at: report.published_at,
-    }))
+    Ok(Json(dsa_report_to_response(report)))
 }
 
 /// Get a specific DSA report.
 async fn get_dsa_report(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let report = state
         .compliance_repo
@@ -1216,40 +1225,16 @@ async fn get_dsa_report(
         })?
         .ok_or((StatusCode::NOT_FOUND, format!("Report {} not found", id)))?;
 
-    Ok(Json(DsaTransparencyReportResponse {
-        id: report.id,
-        period_start: report.period_start,
-        period_end: report.period_end,
-        status: report.status,
-        summary: DsaReportSummary {
-            total_moderation_actions: report.total_moderation_actions,
-            content_removed: report.content_removed_count,
-            content_restricted: report.content_restricted_count,
-            warnings_issued: report.warnings_issued_count,
-            user_reports_received: report.user_reports_received,
-            user_reports_resolved: report.user_reports_resolved,
-            avg_resolution_time_hours: report.avg_resolution_time_hours,
-            automated_decisions: report.automated_decisions_count,
-            automated_decisions_overturned: report.automated_decisions_overturned,
-            appeals_received: report.appeals_received,
-            appeals_upheld: report.appeals_upheld,
-            appeals_rejected: report.appeals_rejected,
-        },
-        content_type_breakdown: vec![],
-        violation_type_breakdown: vec![],
-        download_url: report.report_file_path,
-        generated_at: report.generated_at,
-        published_at: report.published_at,
-    }))
+    Ok(Json(dsa_report_to_response(report)))
 }
 
 /// Publish a DSA report.
 async fn publish_dsa_report(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let report = state
         .compliance_repo
@@ -1263,40 +1248,23 @@ async fn publish_dsa_report(
             )
         })?;
 
-    Ok(Json(DsaTransparencyReportResponse {
-        id: report.id,
-        period_start: report.period_start,
-        period_end: report.period_end,
-        status: report.status,
-        summary: DsaReportSummary {
-            total_moderation_actions: report.total_moderation_actions,
-            content_removed: report.content_removed_count,
-            content_restricted: report.content_restricted_count,
-            warnings_issued: report.warnings_issued_count,
-            user_reports_received: report.user_reports_received,
-            user_reports_resolved: report.user_reports_resolved,
-            avg_resolution_time_hours: report.avg_resolution_time_hours,
-            automated_decisions: report.automated_decisions_count,
-            automated_decisions_overturned: report.automated_decisions_overturned,
-            appeals_received: report.appeals_received,
-            appeals_upheld: report.appeals_upheld,
-            appeals_rejected: report.appeals_rejected,
-        },
-        content_type_breakdown: vec![],
-        violation_type_breakdown: vec![],
-        download_url: report.report_file_path,
-        generated_at: report.generated_at,
-        published_at: report.published_at,
-    }))
+    Ok(Json(dsa_report_to_response(report)))
+}
+
+/// Response for a DSA report download request: a short-lived signed URL.
+#[derive(Debug, Serialize)]
+pub struct DsaDownloadResponse {
+    pub download_url: String,
+    pub expires_at: DateTime<Utc>,
 }
 
 /// Download DSA report as PDF.
 async fn download_dsa_report(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+) -> Result<Json<DsaDownloadResponse>, (StatusCode, String)> {
+    require_platform_compliance_role(&principal)?;
 
     let report = state
         .compliance_repo
@@ -1311,15 +1279,47 @@ async fn download_dsa_report(
         })?
         .ok_or((StatusCode::NOT_FOUND, format!("Report {} not found", id)))?;
 
-    match report.report_file_path {
-        Some(path) => Ok(Json(serde_json::json!({
-            "download_url": path
-        }))),
-        None => Err((
-            StatusCode::NOT_FOUND,
-            "Report file not yet generated".to_string(),
-        )),
-    }
+    // SECURITY (PAP-46): never return the raw stored path. The artifact lives
+    // in object storage; hand the client a short-lived signed URL instead.
+    let file_key = report.report_file_path.ok_or((
+        StatusCode::NOT_FOUND,
+        "Report file not yet generated".to_string(),
+    ))?;
+
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        tracing::error!("Storage service not configured — DSA report downloads unavailable");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Report storage is not configured".to_string(),
+        )
+    })?;
+
+    let filename = format!("dsa-transparency-report-{}.pdf", report.id);
+    let presigned = storage
+        .generate_download_url(
+            &file_key,
+            &filename,
+            "application/pdf",
+            // Short-lived TTL from S3_PRESIGNED_URL_TTL_SECS (default 15 min).
+            Some(storage.download_ttl_secs()),
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                report_id = %report.id,
+                "Failed to sign DSA report download URL"
+            );
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Failed to generate download URL".to_string(),
+            )
+        })?;
+
+    Ok(Json(DsaDownloadResponse {
+        download_url: presigned.url,
+        expires_at: presigned.expires_at,
+    }))
 }
 
 /// DSA metrics for current period.
@@ -1336,9 +1336,9 @@ pub struct DsaMetricsResponse {
 /// Get current DSA metrics.
 async fn get_dsa_metrics(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<DsaMetricsResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let stats = state
         .compliance_repo
@@ -1960,4 +1960,80 @@ async fn get_action_templates(
         .collect();
 
     Ok(Json(responses))
+}
+
+// ============================================================================
+// TESTS (PAP-46): DSA-report authz boundary + download-path non-disclosure
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use db::models::PrincipalKind;
+
+    fn principal(kind: PrincipalKind) -> RequestPrincipal {
+        RequestPrincipal {
+            user_id: Uuid::nil(),
+            kind,
+            effective_org: None,
+        }
+    }
+
+    #[test]
+    fn platform_principal_passes_dsa_guard() {
+        assert!(require_platform_compliance_role(&principal(PrincipalKind::Platform)).is_ok());
+    }
+
+    #[test]
+    fn tenant_scoped_principals_get_403_from_dsa_guard() {
+        // A customer-org admin (Staff principal) — even one whose per-org
+        // membership role is SuperAdmin/PlatformAdmin — must be rejected from
+        // the platform-wide DSA-report handlers, as must portal (Public) users.
+        for kind in [PrincipalKind::Staff, PrincipalKind::Public] {
+            let err = require_platform_compliance_role(&principal(kind)).unwrap_err();
+            assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
+    }
+
+    fn sample_report(file_path: Option<String>) -> DsaTransparencyReport {
+        DsaTransparencyReport {
+            id: Uuid::nil(),
+            period_start: Utc::now(),
+            period_end: Utc::now(),
+            status: DsaReportStatus::Published,
+            total_moderation_actions: 0,
+            content_removed_count: 0,
+            content_restricted_count: 0,
+            warnings_issued_count: 0,
+            user_reports_received: 0,
+            user_reports_resolved: 0,
+            avg_resolution_time_hours: None,
+            automated_decisions_count: 0,
+            automated_decisions_overturned: 0,
+            appeals_received: 0,
+            appeals_upheld: 0,
+            appeals_rejected: 0,
+            content_type_breakdown: None,
+            violation_type_breakdown: None,
+            report_file_path: file_path,
+            generated_at: None,
+            generated_by: None,
+            published_at: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn response_never_leaks_stored_file_path() {
+        // Even when a server-side path/key is stored, the API response must
+        // not expose it; clients must use the signed-URL download endpoint.
+        let resp = dsa_report_to_response(sample_report(Some(
+            "/var/lib/reports/secret/dsa-2026.pdf".to_string(),
+        )));
+        assert!(
+            resp.download_url.is_none(),
+            "download_url must never carry the raw stored path"
+        );
+    }
 }
