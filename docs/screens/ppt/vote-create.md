@@ -4,10 +4,11 @@ name: Vote Create (5-step wizard)
 product: ppt
 implementations:
   ppt-web:
-    component: VoteCreateWizard
-    buildStatus: planned
+    route: /voting/new
+    component: VoteCreatePage
+    buildStatus: shipped
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: complete
   mobile:
     buildStatus: n/a
     redesignStatus: n/a
@@ -111,4 +112,5 @@ UC-04 vote creation. 5-step wizard balances thoroughness (binding decision) with
 
 <!-- newest entries on top -->
 
+- 2026-06-08 — agent (CTO/PAP-19): built ppt-web `VoteCreatePage` (sectioned form: topic, per-type question/option builder for yes-no/single/multiple/ranked, quorum + close schedule) wired to `useCreateVote` + `addQuestion` + `publishVote`; route `/voting/new`; buildStatus planned→shipped, apiStatus stub→complete, component renamed VoteCreateWizard→VoteCreatePage. 5-step stepper chrome + auto-save + legal-preset chips remain a design follow-up.
 - 2026-05-09 — agent: bootstrapped from Batch E (pages/ppt-vote-create.html — 6 artboards: steps 1-5 + confirm); 7 sections + 6 states + 4 notes (with Ranked tally + ZoVB legal flags); declared 8 sharedComponents; parent ppt/voting; sibling ppt/vote-detail

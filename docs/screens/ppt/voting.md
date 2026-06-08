@@ -6,10 +6,11 @@ sitemapRefs:
   mobile: mobile-voting
 implementations:
   ppt-web:
+    route: /voting
     component: VotingPage
-    buildStatus: planned
+    buildStatus: shipped
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: complete
   mobile:
     component: VotingScreen
     buildStatus: shipped
@@ -107,5 +108,6 @@ UC-04 voting list. Quorum tile pattern matches `ui_kits/ppt-web/manager-dashboar
 
 <!-- newest entries on top -->
 
+- 2026-06-08 — agent (CTO/PAP-19): built ppt-web `features/voting/VotingPage` (status-filtered vote list, quorum tile, create CTA) wired to `@ppt/api-client` `useVotes`/`useBuildings`; mounted `votingRoutes()` (`/voting`) in `AppRoutes.tsx` + lazyRoutes; flipped ppt-web buildStatus planned→shipped, apiStatus stub→complete, added route. Functional MVP (English labels); Slovak-localized design-system polish remains a follow-up.
 - 2026-05-09 — agent: integrated Batch E (pages/ppt-voting.html list — 4 artboards: loaded-1-selected/empty/loading/error) + Batch F1 (MobVotingScreen); flipped ppt-web from n/a → planned + redesignStatus → in-progress (drift: route not in sitemap); mobile redesignStatus → in-progress; attached 2 designSources; populated 8 sections + 4 states + 4 notes; declared 7 sharedComponents; added 3 relatedScreens (vote-detail + vote-create children, ppt/home parent)
 - 2026-05-08 — init: created from scan (source: sitemap)
