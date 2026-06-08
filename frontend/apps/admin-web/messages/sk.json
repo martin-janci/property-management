@@ -49,7 +49,7 @@
       },
       "loading": "Načítava sa…",
       "pagination": {
-        "next": "Ďalšie",
+        "next": "ċalšie",
         "page": "Strana {{page}}",
         "previous": "Predchádzajúce",
         "showing": "Zobrazujú sa {{from}}–{{to}} z {{total}}"
@@ -82,7 +82,7 @@
       "fields": {
         "aiFaultTriage": "AI triedenie porúch (beta)",
         "buildingDisabled": "Vypnúť túto budovu (núdzový vypínač)",
-        "newListingsSearch": "Nové vyhľadávanie inzerátov (beta)"
+        "newListingsSearch": "Nové vyhĺdávanie inzerátov (beta)"
       },
       "helpTooltip": "Funkčné príznaky sa prejavia okamžite pre všetkých používateľov daného nájomníka. Núdzový vypínač používajte opatrne.",
       "title": "Funkčné príznaky",
@@ -141,6 +141,17 @@
         "secretRegeneratedTitle": "Tajomstvo obnovené"
       }
     },
+    "oauthConsent": {
+      "title": "Autorizovať aplikáciu",
+      "lead": "{{app}} žiada o prístup k vášmu účtu.",
+      "approve": "Schváliť",
+      "deny": "Zamietnuť",
+      "loading": "Overovanie požiadavky…",
+      "redirectNotice": "Budete presmerovaní na {{uri}}",
+      "invalidRequest": "Táto autorizačná požiadavka je neplatná alebo neúplná.",
+      "loadError": "Autorizačnú požiadavku nebolo možné overiť: {{message}}",
+      "submitError": "Autorizáciu nebolo možné dokončiť: {{message}}"
+    },
     "onboarding": {
       "title": "Onboarding prehliadky",
       "subtitle": "Prezerajte a spravujte postupné onboarding prehliadky pre používateľov platformy.",
@@ -194,7 +205,7 @@
       "columns": {
         "displayName": "Zobrazované meno",
         "email": "E-mail",
-        "principalKind": "Typ principála"
+        "principalKind": "Typ principala"
       },
       "empty": "Hľadajte pre načítanie používateľov.",
       "principalKinds": {
@@ -209,7 +220,7 @@
         "cancel": "Zrušiť",
         "confirm": "Zmeniť typ",
         "description": "Toto zmení spôsob autentifikácie {{name}} a oprávnenia, ktoré majú. Pokračovať?",
-        "title": "Zmeniť typ principála"
+        "title": "Zmeniť typ principala"
       }
     }
   },
@@ -237,11 +248,11 @@
     "loadingDispute": "Načítava sa spor...",
     "login": "Prihlásiť sa",
     "logout": "Odhlásiť sa",
-    "next": "Ďalej",
+    "next": "ċalej",
     "no": "Nie",
     "none": "Žiadne",
     "notifications": "Oznámenia",
-    "optional": "Voliteľné",
+    "optional": "Volitelné",
     "pleaseWait": "Počkajte, kým načítame údaje.",
     "previous": "Predchádzajúce",
     "reloadPage": "Obnoviť stránku",

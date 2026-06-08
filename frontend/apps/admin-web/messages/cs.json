@@ -141,6 +141,17 @@
         "secretRegeneratedTitle": "Tajemství obnoveno"
       }
     },
+    "oauthConsent": {
+      "title": "Autorizovat aplikaci",
+      "lead": "{{app}} žádá o přístup k vašemu účtu.",
+      "approve": "Schválit",
+      "deny": "Zamítnout",
+      "loading": "Ověřování požadavku…",
+      "redirectNotice": "Budete přesměrováni na {{uri}}",
+      "invalidRequest": "Tento autorizační požadavek je neplatný nebo neúplný.",
+      "loadError": "Autorizační požadavek nelze ověřit: {{message}}",
+      "submitError": "Autorizaci nelze dokončit: {{message}}"
+    },
     "onboarding": {
       "title": "Onboarding prohlídky",
       "subtitle": "Prohlížejte a spravujte krok-za-krokem onboarding prohlídky pro uživatele platformy.",
