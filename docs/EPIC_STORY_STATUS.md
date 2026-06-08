@@ -441,6 +441,10 @@ off the table. Grouped per §4.B — each group becomes a catalog backfill unit:
 The largest/highest-risk unowned module is **`aml_dsa.rs` (1963 L, AML/EDD)** — prioritize its
 catalog entry (regulatory surface).
 
+> **Backfill executed in §9 (PAP-27).** Every module below now has a per-module catalog entry
+> — mounted route, one-line purpose, owning epic (with its `_bmad-output/epics-0NN.md` source),
+> and FR mapping. See [§9. Backend Module Catalog Backfill](#9-backend-module-catalog-backfill-pap-27).
+
 ### 8.4 Disposition & follow-ups
 
 - **DELETE (dead):** `competitive` (backend+web) and `developer` web dir → child issue, build-verified.
@@ -452,3 +456,101 @@ catalog entry (regulatory surface).
   module + UX sign-off). Escalated to Atlas/UX for a keep-and-schedule vs retire call; tracked, not
   executed here.
 - **Policy:** §8.0 stub/uncatalogued-surface policy adopted as the standing review rule.
+
+---
+
+## 9. Backend Module Catalog Backfill (PAP-27)
+
+Executes the **DOCUMENT** decision from §8.3 for the 37 mounted-but-uncatalogued backend route
+modules. Each is a **live production route** (verified `.nest(...)` in
+`backend/servers/api-server/src/lib.rs`, except `tenant_config` which mounts in `main.rs`), so
+**none are deleted** — this is a documentation backfill only.
+
+**Key finding:** *every* module already declares an owning epic in its module doc-comment, and
+*every* one of those epics is enumerated in the BMAD `_bmad-output/epics-0NN.md` catalog. The gap
+was never "no epic" — it is that these are **post-PRD extended epics (Epic 20–150)** that the §2
+delivery rollup never folded in, because the **FR1–101 taxonomy stops at the 24 PRD-core epics**
+(Phase 1–4: Epics 1–19 + 10A-SSO + i18n/Docker). So for almost every module the FR mapping is the
+explicit **out-of-scope verdict: "beyond FR1–101 — owning epic is post-PRD"**, not a missing owner.
+Exceptions that *do* touch the FR catalog are called out in the FR column.
+
+Columns: **Module (LoC)** · **Mounted route** · **Purpose** · **Owning epic (BMAD source)** · **FR mapping / out-of-scope verdict**.
+
+### 9.1 Insurance / Legal / Compliance / Disputes (regulatory — highest priority)
+
+> ⚠️ **`aml_dsa.rs` (1963 L) is the largest unowned module and a regulatory surface** (AML / Enhanced
+> Due Diligence / DSA transparency). Catalogued first per the PAP-27 priority order; recommend a named
+> owner + RLS/audit review follow-up (out of scope for this doc-only backfill).
+
+| Module (LoC) | Mounted route | Purpose | Owning epic (BMAD source) | FR mapping / verdict |
+|---|---|---|---|---|
+| `aml_dsa.rs` (1963) | `/api/v1/aml-dsa` | AML risk assessment, Enhanced Due Diligence (EDD), DSA transparency reporting, content-moderation dashboard | Epic 67 — Advanced Compliance (AML/DSA) (`epics-006.md`) | **out-of-scope: beyond FR1–101** (post-PRD regulatory epic) |
+| `insurance.rs` (947) | `/api/v1/insurance` | Insurance policies, claims, documents, renewal reminders | Epic 22 — Insurance Management (`epics-002.md`) | out-of-scope: beyond FR1–101 |
+| `legal.rs` (1134) | `/api/v1/legal` | Legal document & compliance management | Epic 25 — Legal Documents (`epics-002.md`) | out-of-scope: beyond FR1–101 |
+| `compliance.rs` (772) | `/api/v1/compliance` | Compliance report generation (GDPR, audit trails, security) | **Epic 9 — Privacy, Security & GDPR, Story 9.7** (in §2 catalog) | **FR4, FR90–95** ✅ (route-level backfill of a documented epic) |
+| `regional_compliance.rs` (479) | `/api/v1/regional-compliance` | Region-specific legal compliance rules | Epic 72 — Regional Legal Compliance (`epics-006.md`) | out-of-scope: beyond FR1–101 |
+| `data_residency.rs` (763) | `/api/v1/data-residency` | Enhanced data-residency controls for regional compliance | Epic 146 — Data Residency (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `disputes.rs` (1581) | `/api/v1/disputes` | File / mediate / track / enforce dispute resolutions between parties | Epic 77 — Dispute Resolution (`epics-006.md`) | out-of-scope: beyond FR1–101 |
+| `violations.rs` (656) | `/api/v1/violations` | Violation tracking & enforcement | Epic 142 — Violation Tracking & Enforcement (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `emergency.rs` (1634) | `/api/v1/emergency` | Emergency protocols, contacts, incidents, broadcasts, drills | Epic 23 — Emergency Management (`epics-002.md`) | out-of-scope: beyond FR1–101 |
+| `government_portal.rs` (987) | `/api/v1/government-portal` | Government portal integration API (UC-22.3) | Epic 30 — Government Portal Integration (`epics-003.md`) | out-of-scope: beyond FR1–101 |
+
+### 9.2 Facilities / Ops / Maintenance
+
+| Module (LoC) | Mounted route | Purpose | Owning epic (BMAD source) | FR mapping / verdict |
+|---|---|---|---|---|
+| `work_orders.rs` (935) | `/api/v1/work-orders` | Work orders & maintenance scheduling | Epic 20 — Work Orders & Maintenance (`epics-002.md`) | out-of-scope: beyond FR1–101 |
+| `vendors.rs` (989) | `/api/v1/vendors` | Vendor records, contracts & management | Epic 21 — Vendor Management (`epics-002.md`) | out-of-scope: beyond FR1–101 |
+| `operations.rs` (1443) | `/api/v1/operations` | Blue-green deploy mgmt, DB-migration safety, disaster recovery, cost monitoring | Epic 73 — Infrastructure & Operations (`epics-006.md`) | out-of-scope: beyond FR1–101 |
+| `package_visitor.rs` (1175) | `/api/v1/packages`, `/api/v1/visitors` | Package tracking, visitor pre-registration, access-code verification | Epic 58 — Package & Visitor Management (`epics-005.md`) | out-of-scope: beyond FR1–101 |
+| `outages.rs` (932) | `/api/v1/outages` | Utility-outage tracking & resident notifications | UC-12 — Utility Outages (no dedicated epic#) | out-of-scope: beyond FR1–101 (adjacent to Epic 12 Utilities, FR58–63) |
+
+### 9.3 Financial / Investor / Portfolio (beyond Epic 11)
+
+| Module (LoC) | Mounted route | Purpose | Owning epic (BMAD source) | FR mapping / verdict |
+|---|---|---|---|---|
+| `subscriptions.rs` (1681) | `/api/v1/subscriptions` | SaaS subscription plans & billing | Epic 26 — Subscription & Billing (`epics-002.md`) | out-of-scope: beyond FR1–101 |
+| `market_pricing.rs` (1833) | `/api/v1/pricing`, `/api/v1/market-pricing` | Dynamic rent pricing, market-data collection, CMA, AI pricing model | Epic 132 — Market Pricing & Analytics (`epics-015.md`) | **supports FR79–81** (cited as Epic 16 Portal-Search evidence in §2); owning epic itself out-of-scope |
+| `property_valuation.rs` (871) | `/api/v1/property-valuations`, `/api/v1/property-valuation` | AVM models, comparable sales, market data, valuation reports | Epic 138 — Automated Property Valuation Model (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `investor_portal.rs` (937) | `/api/v1/investor-portal` | Investment tracking, ROI calc, investor dashboard | Epic 139 — Investor Portal & ROI Reporting (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `owner_analytics.rs` (526) | `/api/v1/owner-analytics` | Owner investment analytics | Epic 74 — Owner Investment Analytics (`epics-006.md`) | out-of-scope: beyond FR1–101 |
+| `portfolio_analytics.rs` (891) | `/api/v1/portfolio-analytics` | Multi-property portfolio analytics: benchmarking, KPIs, trends | Epic 140 — Portfolio Analytics (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `portfolio_performance.rs` (797) | `/api/v1/portfolio-performance` | Portfolio income/expense tracking, ROI, benchmarking dashboard | Epic 144 — Portfolio Performance Analytics (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `board_meetings.rs` (957) | `/api/v1/board-meetings` | HOA/condo board mgmt: members, agendas, motions/voting, attendance, minutes, action items | Epic 143 — Board Meeting Management (`epics-015.md`) | out-of-scope: beyond FR1–101 (distinct from Epic 5 building voting) |
+
+### 9.4 ESG / Certifications
+
+| Module (LoC) | Mounted route | Purpose | Owning epic (BMAD source) | FR mapping / verdict |
+|---|---|---|---|---|
+| `esg_reporting.rs` (713) | `/api/v1/esg` | ESG (Environmental/Social/Governance) reporting & compliance dashboard | Epic 136 — ESG Reporting Dashboard (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `building_certifications.rs` (633) | `/api/v1/building-certifications` | Smart-building certification tracking | Epic 137 — Smart Building Certification (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+
+### 9.5 Marketplace / News / Community / Registry / Forms
+
+| Module (LoC) | Mounted route | Purpose | Owning epic (BMAD source) | FR mapping / verdict |
+|---|---|---|---|---|
+| `marketplace.rs` (1933) | `/api/v1/marketplace` | Service-provider marketplace: profiles, search, RFQ, verification, reviews | Epic 68 — Service Provider Marketplace (`epics-006.md`) | out-of-scope: beyond FR1–101 |
+| `news_articles.rs` (1060) | `/api/v1/news` | News & media management | Epic 59 — News & Media Management (`epics-005.md`) | out-of-scope: beyond FR1–101 |
+| `community.rs` (784) | `/api/v1/community` | Community groups, posts, events, marketplace | Epic 37 — Community & Social (`epics-003.md`) | out-of-scope: beyond FR1–101 |
+| `registry.rs` (1093) | `/api/v1/registry` | Building registries: pets, vehicles, parking spots, registry rules | Epic 57 — Building Registries (`epics-005.md`) | out-of-scope: beyond FR1–101 |
+| `forms.rs` (1873) | `/api/v1/forms` | Forms management: templates, fields, submissions | Epic 54 — Forms Management (`epics-005.md`) | out-of-scope: beyond FR1–101 |
+
+### 9.6 Platform / Infra (beyond Epic 10B)
+
+| Module (LoC) | Mounted route | Purpose | Owning epic (BMAD source) | FR mapping / verdict |
+|---|---|---|---|---|
+| `infrastructure.rs` (2122) | `/api/v1/infrastructure` | Cross-cutting: distributed tracing, feature flags, background jobs, health monitoring | Epic 71 & 89 — Infrastructure (`epics-006.md` / `epics-009.md`) | out-of-scope: beyond FR1–101 |
+| `reports.rs` (2271) | `/api/v1/reports` | Advanced reporting: fault stats, voting participation, occupancy, consumption, PDF/Excel export | Epic 55 — Advanced Reporting & Analytics (`epics-005.md`) | **reporting layer over FR30–36 / FR37–44 / FR58–63**; owning epic out-of-scope |
+| `api_ecosystem.rs` (1913) | `/api/v1/ecosystem` | Integration marketplace, connector framework, webhooks, developer portal | Epic 150 — API Ecosystem Expansion (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `migration.rs` (1421) | `/api/v1/migration` | Platform migration & data import: templates, bulk import, export, validation | Epic 66 — Platform Migration & Data Import (`epics-006.md`) | out-of-scope: beyond FR1–101 |
+| `multi_currency.rs` (903) | `/api/v1/multi-currency` | Currency config, exchange rates, cross-currency txns, cross-border leases, reporting | Epic 145 — Multi-Currency & Cross-Border (`epics-015.md`) | out-of-scope: beyond FR1–101 |
+| `feature_packages.rs` (795) | `/api/v1/feature-packages` | Feature-package mgmt: admin CRUD + public package listings/comparisons | Epic 108 — Feature Packages (`epics-013.md`) | out-of-scope: beyond FR1–101 |
+| `tenant_config.rs` (253) | `/tenant-config` (prod-only, `main.rs`) | Per-host tenant config: tenant id, branding tokens, feature flags for reality-web SSR | Phase 3 — Hosting & Theming (host-routing infra) | **supports FR8–14** (Epic 2A multi-tenancy/hosting); not a standalone FR |
+
+### 9.7 Coverage summary
+
+- **37 modules catalogued, 0 deleted** — all verified mounted & live (§8.3 decision executed).
+- **1 maps directly into the FR catalog:** `compliance.rs` → Epic 9 / **FR4, FR90–95** (route-level backfill of a documented epic).
+- **3 support documented FR surfaces** without being standalone FRs: `market_pricing` (FR79–81), `reports` (FR30–36/37–44/58–63), `tenant_config` (FR8–14).
+- **33 are formally out-of-scope of FR1–101** — each owned by a post-PRD extended epic (Epic 20–150) already enumerated in `_bmad-output/epics-0NN.md`, but outside the 24-epic / FR1–101 PRD taxonomy that §2 tracks.
+- **Net:** the "code with no doc" class from §4.B is now a *catalog* gap closed in this appendix, not an *ownership* gap. Folding these extended epics into the §2 rollup (and deciding which graduate into a future FR revision) is a product-roadmap call for CEO/Atlas, tracked separately — not part of this doc-only backfill.
