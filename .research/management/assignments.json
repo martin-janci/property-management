@@ -48,6 +48,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "test-oauth-authorization-server-integration",
+      "branch": "auto-impl/test-oauth-authorization-server-integrat",
+      "status": "in-progress",
+      "claimed_at": "2026-06-08T08:10:00Z",
+      "last_updated": "2026-06-08T08:10:00Z",
+      "status_changed_at": "2026-06-08T08:10:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
