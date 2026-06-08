@@ -419,30 +419,65 @@ impl ComplianceRepository {
                 .await?
             }
             ModeratedContentType::Message => {
-                sqlx::query_as(r#"SELECT sender_id FROM messages WHERE id = $1"#)
-                    .bind(content_id)
-                    .fetch_optional(&self.pool)
-                    .await?
+                // Messages carry no org column; scope via the parent thread so a
+                // reporter cannot resolve a message outside their tenant (PAP-48).
+                sqlx::query_as(
+                    r#"SELECT m.sender_id FROM messages m
+                       JOIN message_threads t ON t.id = m.thread_id
+                       WHERE m.id = $1 AND ($2::uuid IS NULL OR t.organization_id = $2)"#,
+                )
+                .bind(content_id)
+                .bind(organization_id)
+                .fetch_optional(&self.pool)
+                .await?
             }
             ModeratedContentType::CommunityPost => {
-                sqlx::query_as(r#"SELECT author_id FROM community_posts WHERE id = $1"#)
-                    .bind(content_id)
-                    .fetch_optional(&self.pool)
-                    .await?
+                // Posts reach their org via group -> building; scope explicitly
+                // rather than relying on RLS session context (PAP-48).
+                sqlx::query_as(
+                    r#"SELECT p.author_id FROM community_posts p
+                       JOIN community_groups g ON g.id = p.group_id
+                       JOIN buildings b ON b.id = g.building_id
+                       WHERE p.id = $1 AND ($2::uuid IS NULL OR b.organization_id = $2)"#,
+                )
+                .bind(content_id)
+                .bind(organization_id)
+                .fetch_optional(&self.pool)
+                .await?
             }
             ModeratedContentType::Comment => {
-                sqlx::query_as(r#"SELECT author_id FROM community_comments WHERE id = $1"#)
-                    .bind(content_id)
-                    .fetch_optional(&self.pool)
-                    .await?
+                // Comments reach their org via post -> group -> building (PAP-48).
+                sqlx::query_as(
+                    r#"SELECT c.author_id FROM community_comments c
+                       JOIN community_posts p ON p.id = c.post_id
+                       JOIN community_groups g ON g.id = p.group_id
+                       JOIN buildings b ON b.id = g.building_id
+                       WHERE c.id = $1 AND ($2::uuid IS NULL OR b.organization_id = $2)"#,
+                )
+                .bind(content_id)
+                .bind(organization_id)
+                .fetch_optional(&self.pool)
+                .await?
             }
             ModeratedContentType::UserProfile => {
                 // A profile's content_id is the profiled user; that user is the
-                // owner. Confirm the user exists before trusting the id.
-                sqlx::query_as(r#"SELECT id FROM users WHERE id = $1"#)
-                    .bind(content_id)
-                    .fetch_optional(&self.pool)
-                    .await?
+                // owner. Confirm the user exists and — when an org is supplied —
+                // is an active member of that org, so a reporter cannot resolve
+                // a user outside their tenant (PAP-48).
+                sqlx::query_as(
+                    r#"SELECT u.id FROM users u
+                       WHERE u.id = $1
+                         AND ($2::uuid IS NULL OR EXISTS (
+                             SELECT 1 FROM organization_members om
+                             WHERE om.user_id = u.id
+                               AND om.organization_id = $2
+                               AND om.status = 'active'
+                         ))"#,
+                )
+                .bind(content_id)
+                .bind(organization_id)
+                .fetch_optional(&self.pool)
+                .await?
             }
             // Review has no backing table in the current schema.
             ModeratedContentType::Review => None,
