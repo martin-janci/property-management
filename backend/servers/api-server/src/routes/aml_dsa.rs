@@ -1779,7 +1779,10 @@ async fn file_appeal(
                 "Failed to file appeal".to_string(),
             )
         })?
-        .ok_or((StatusCode::NOT_FOUND, "Moderation case not found".to_string()))?;
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            "Moderation case not found".to_string(),
+        ))?;
 
     authorize_appeal(&user, &existing)?;
 
