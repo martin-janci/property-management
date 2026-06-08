@@ -11,7 +11,8 @@
  *  (a) all-success     → success toast + navigate(detail, undefined)
  *  (b) partial-fail    → warning toast (correct count) + navigate(detail, {state:{failedEvidence}})
  *  (c) errored entries → filtered out before upload (status === 'error')
- *  (d) create failure  → error toast, no navigate
+ *  (d) create failure  → error toast (Error.message), no navigate
+ *  (e) non-Error throw  → error toast falls back to auth.unexpectedError, no navigate
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
@@ -194,6 +195,29 @@ describe('FileDisputePageRoute', () => {
           type: 'error',
           title: 'disputes.failedToFile',
           message: 'create failed',
+        })
+      );
+    });
+    expect(mockUploadEvidence).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('(e) non-Error rejection → error toast falls back to auth.unexpectedError, no navigate', async () => {
+    currentPayload = makePayload([makeEvidence('e1')]);
+    // A non-Error throw (e.g. a string or rejected non-Error value) must not
+    // crash the handler — the catch falls back to the localized
+    // `auth.unexpectedError` message instead of `error.message`.
+    mockMutateAsync.mockRejectedValueOnce('network down');
+    render(<FileDisputePageRoute />);
+
+    await submit();
+
+    await waitFor(() => {
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          title: 'disputes.failedToFile',
+          message: 'auth.unexpectedError',
         })
       );
     });
