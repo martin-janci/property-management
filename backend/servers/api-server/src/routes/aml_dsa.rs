@@ -98,6 +98,154 @@ fn require_moderator_role(user: &AuthUser) -> Result<(), (StatusCode, String)> {
 }
 
 // ============================================================================
+// INPUT-VALIDATION HELPERS (PAP-44)
+// ============================================================================
+//
+// Boundary validation for untrusted request input. These are deliberately
+// small, pure functions so they can be unit-tested without a DB or HTTP layer.
+
+/// Default page size when the client does not specify `limit`.
+const DEFAULT_PAGE_LIMIT: i64 = 50;
+/// Hard upper bound on `limit` to prevent abusive/accidental large scans.
+const MAX_PAGE_LIMIT: i64 = 200;
+
+/// Maximum size of an EDD document (50 MiB).
+const MAX_EDD_DOCUMENT_BYTES: i64 = 50 * 1024 * 1024;
+
+/// Allow-listed MIME types for EDD document uploads.
+const ALLOWED_EDD_MIME_TYPES: &[&str] = &[
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/tiff",
+    "image/webp",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
+/// Maximum span of a DSA reporting period (~2 years).
+const MAX_DSA_REPORT_RANGE_DAYS: i64 = 732;
+
+/// Length caps for free-text fields.
+const MAX_NOTE_LEN: usize = 10_000;
+const MAX_RATIONALE_LEN: usize = 10_000;
+const MAX_APPEAL_REASON_LEN: usize = 5_000;
+const MAX_FILENAME_LEN: usize = 255;
+const MAX_FILE_PATH_LEN: usize = 1024;
+
+/// Clamp a client-supplied `limit` into `[1, MAX_PAGE_LIMIT]`, defaulting when absent.
+fn clamp_limit(limit: Option<i64>) -> i64 {
+    limit.unwrap_or(DEFAULT_PAGE_LIMIT).clamp(1, MAX_PAGE_LIMIT)
+}
+
+/// Normalize a client-supplied `offset` to a non-negative value.
+fn sanitize_offset(offset: Option<i64>) -> i64 {
+    offset.unwrap_or(0).max(0)
+}
+
+/// Reject paths that are absolute, contain a parent-directory (`..`) component,
+/// use Windows-style separators/drives, contain control characters, or are
+/// empty — i.e. anything that could escape an intended storage root.
+fn validate_storage_path(path: &str) -> Result<(), &'static str> {
+    let trimmed = path.trim();
+    if trimmed.is_empty() {
+        return Err("must not be empty");
+    }
+    if trimmed.len() > MAX_FILE_PATH_LEN {
+        return Err("is too long");
+    }
+    if trimmed.starts_with('/') || trimmed.starts_with('\\') {
+        return Err("must be a relative path");
+    }
+    if trimmed.contains(':') || trimmed.contains('\\') {
+        return Err("must not contain drive letters or backslashes");
+    }
+    if trimmed.chars().any(|c| c.is_control()) {
+        return Err("must not contain control characters");
+    }
+    if trimmed.split('/').any(|component| component == "..") {
+        return Err("must not contain '..' components");
+    }
+    Ok(())
+}
+
+/// Validate an uploaded filename: non-empty, length-capped, no path separators.
+fn validate_filename(name: &str) -> Result<(), &'static str> {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return Err("must not be empty");
+    }
+    if trimmed.len() > MAX_FILENAME_LEN {
+        return Err("is too long");
+    }
+    if trimmed.contains('/') || trimmed.contains('\\') || trimmed.contains('\0') {
+        return Err("must not contain path separators");
+    }
+    if trimmed == "." || trimmed == ".." {
+        return Err("is invalid");
+    }
+    Ok(())
+}
+
+/// Validate EDD document upload metadata: path traversal, MIME allow-list, size bounds.
+fn validate_edd_document(req: &UploadEddDocumentRequest) -> Result<(), String> {
+    validate_storage_path(&req.file_path).map_err(|e| format!("file_path {e}"))?;
+    validate_filename(&req.original_filename).map_err(|e| format!("original_filename {e}"))?;
+    if req.file_size_bytes <= 0 {
+        return Err("file_size_bytes must be greater than 0".to_string());
+    }
+    if req.file_size_bytes > MAX_EDD_DOCUMENT_BYTES {
+        return Err(format!(
+            "file_size_bytes exceeds the maximum of {MAX_EDD_DOCUMENT_BYTES} bytes"
+        ));
+    }
+    let mime = req.mime_type.trim().to_ascii_lowercase();
+    if !ALLOWED_EDD_MIME_TYPES.contains(&mime.as_str()) {
+        return Err(format!("mime_type '{}' is not allowed", req.mime_type));
+    }
+    Ok(())
+}
+
+/// Validate a DSA reporting period: end after start, not in the future, within max span.
+fn validate_report_period(
+    start: DateTime<Utc>,
+    end: DateTime<Utc>,
+    now: DateTime<Utc>,
+) -> Result<(), &'static str> {
+    if end <= start {
+        return Err("period_end must be after period_start");
+    }
+    if end > now {
+        return Err("period_end must not be in the future");
+    }
+    if (end - start) > Duration::days(MAX_DSA_REPORT_RANGE_DAYS) {
+        return Err("reporting period is too large");
+    }
+    Ok(())
+}
+
+/// Validate a required free-text field: non-empty (after trim) and within `max` chars.
+fn validate_text_field(value: &str, max: usize, field: &str) -> Result<(), String> {
+    if value.trim().is_empty() {
+        return Err(format!("{field} must not be empty"));
+    }
+    if value.chars().count() > max {
+        return Err(format!(
+            "{field} exceeds the maximum length of {max} characters"
+        ));
+    }
+    Ok(())
+}
+
+/// Build a scoped, opaque download reference for a DSA report that never
+/// discloses the internal filesystem path. Returns `None` when no file exists.
+fn dsa_report_download_ref(report_id: Uuid, file_path: &Option<String>) -> Option<String> {
+    file_path
+        .as_ref()
+        .map(|_| format!("/api/v1/aml-dsa/dsa/reports/{report_id}/download"))
+}
+
+// ============================================================================
 // STORY 67.1: AML RISK ASSESSMENT
 // ============================================================================
 
@@ -260,8 +408,8 @@ async fn list_aml_assessments(
         "Organization context required".to_string(),
     ))?;
 
-    let limit = params.limit.unwrap_or(50);
-    let offset = params.offset.unwrap_or(0);
+    let limit = clamp_limit(params.limit);
+    let offset = sanitize_offset(params.offset);
     let flagged_only = params.flagged_only.unwrap_or(false);
 
     let (assessments, total) = state
@@ -562,6 +710,10 @@ async fn initiate_edd(
         "Organization context required".to_string(),
     ))?;
 
+    // NOTE (PAP-44): ownership verification of `aml_assessment_id` / `party_id`
+    // against the caller's org is deferred to the IDOR/authz child PAP-38, which
+    // introduces the shared ownership-check helpers this should reuse.
+
     let create_req = CreateEnhancedDueDiligence {
         aml_assessment_id: req.aml_assessment_id,
         organization_id: org_id,
@@ -719,6 +871,10 @@ async fn upload_edd_document(
         "Organization context required".to_string(),
     ))?;
 
+    // Validate client-supplied document metadata at the boundary: reject
+    // path-traversal / absolute paths, spoofed MIME types, and bad sizes.
+    validate_edd_document(&req).map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+
     // Verify the EDD record exists and belongs to the caller's organization
     let _edd = state
         .edd_repo
@@ -866,6 +1022,9 @@ async fn add_edd_note(
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
+
+    validate_text_field(&req.content, MAX_NOTE_LEN, "content")
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
 
     // Verify the EDD record exists and belongs to the caller's organization
     state
@@ -1139,7 +1298,7 @@ async fn list_dsa_reports(
             },
             content_type_breakdown: vec![],
             violation_type_breakdown: vec![],
-            download_url: r.report_file_path,
+            download_url: dsa_report_download_ref(r.id, &r.report_file_path),
             generated_at: r.generated_at,
             published_at: r.published_at,
         })
@@ -1155,6 +1314,10 @@ async fn generate_dsa_report(
     Json(req): Json<GenerateDsaReportRequest>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
+
+    // Bound the reporting period: end after start, not in the future, sane span.
+    validate_report_period(req.period_start, req.period_end, Utc::now())
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
 
     let report = state
         .compliance_repo
@@ -1189,7 +1352,7 @@ async fn generate_dsa_report(
         },
         content_type_breakdown: vec![],
         violation_type_breakdown: vec![],
-        download_url: report.report_file_path,
+        download_url: dsa_report_download_ref(report.id, &report.report_file_path),
         generated_at: report.generated_at,
         published_at: report.published_at,
     }))
@@ -1237,7 +1400,7 @@ async fn get_dsa_report(
         },
         content_type_breakdown: vec![],
         violation_type_breakdown: vec![],
-        download_url: report.report_file_path,
+        download_url: dsa_report_download_ref(report.id, &report.report_file_path),
         generated_at: report.generated_at,
         published_at: report.published_at,
     }))
@@ -1284,7 +1447,7 @@ async fn publish_dsa_report(
         },
         content_type_breakdown: vec![],
         violation_type_breakdown: vec![],
-        download_url: report.report_file_path,
+        download_url: dsa_report_download_ref(report.id, &report.report_file_path),
         generated_at: report.generated_at,
         published_at: report.published_at,
     }))
@@ -1311,9 +1474,12 @@ async fn download_dsa_report(
         })?
         .ok_or((StatusCode::NOT_FOUND, format!("Report {} not found", id)))?;
 
-    match report.report_file_path {
-        Some(path) => Ok(Json(serde_json::json!({
-            "download_url": path
+    // Return a scoped, opaque download reference keyed by report id rather than
+    // disclosing the internal filesystem path (`report_file_path`).
+    match dsa_report_download_ref(report.id, &report.report_file_path) {
+        Some(download_url) => Ok(Json(serde_json::json!({
+            "report_id": report.id,
+            "download_url": download_url
         }))),
         None => Err((
             StatusCode::NOT_FOUND,
@@ -1430,8 +1596,8 @@ async fn get_moderation_queue(
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
-    let limit = params.limit.unwrap_or(50);
-    let offset = params.offset.unwrap_or(0);
+    let limit = clamp_limit(params.limit);
+    let offset = sanitize_offset(params.offset);
     let unassigned_only = params.unassigned_only.unwrap_or(false);
 
     let (cases, total) = state
@@ -1687,6 +1853,9 @@ async fn take_moderation_action(
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
+    validate_text_field(&req.rationale, MAX_RATIONALE_LEN, "rationale")
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+
     let action = TakeModerationAction {
         action: req.action,
         rationale: req.rationale,
@@ -1747,6 +1916,9 @@ async fn file_appeal(
     Json(req): Json<FileAppealRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     // Any authenticated user can file appeal for their content
+
+    validate_text_field(&req.reason, MAX_APPEAL_REASON_LEN, "reason")
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
 
     let case = state
         .compliance_repo
@@ -1960,4 +2132,195 @@ async fn get_action_templates(
         .collect();
 
     Ok(Json(responses))
+}
+
+// ============================================================================
+// TESTS (PAP-44): boundary input-validation helpers
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_upload() -> UploadEddDocumentRequest {
+        UploadEddDocumentRequest {
+            document_type: "passport".to_string(),
+            original_filename: "passport.pdf".to_string(),
+            file_path: "edd/2026/passport.pdf".to_string(),
+            file_size_bytes: 1024,
+            mime_type: "application/pdf".to_string(),
+            expiry_date: None,
+        }
+    }
+
+    // ----- pagination -----
+
+    #[test]
+    fn clamp_limit_defaults_when_absent() {
+        assert_eq!(clamp_limit(None), DEFAULT_PAGE_LIMIT);
+    }
+
+    #[test]
+    fn clamp_limit_caps_at_max() {
+        assert_eq!(clamp_limit(Some(100_000)), MAX_PAGE_LIMIT);
+        assert_eq!(clamp_limit(Some(MAX_PAGE_LIMIT + 1)), MAX_PAGE_LIMIT);
+    }
+
+    #[test]
+    fn clamp_limit_floors_non_positive() {
+        assert_eq!(clamp_limit(Some(0)), 1);
+        assert_eq!(clamp_limit(Some(-50)), 1);
+    }
+
+    #[test]
+    fn clamp_limit_passes_through_in_range() {
+        assert_eq!(clamp_limit(Some(75)), 75);
+    }
+
+    #[test]
+    fn sanitize_offset_rejects_negative() {
+        assert_eq!(sanitize_offset(Some(-10)), 0);
+        assert_eq!(sanitize_offset(None), 0);
+        assert_eq!(sanitize_offset(Some(40)), 40);
+    }
+
+    // ----- path traversal / file upload -----
+
+    #[test]
+    fn storage_path_accepts_relative() {
+        assert!(validate_storage_path("edd/2026/doc.pdf").is_ok());
+    }
+
+    #[test]
+    fn storage_path_rejects_traversal() {
+        assert!(validate_storage_path("../../etc/passwd").is_err());
+        assert!(validate_storage_path("edd/../../secret").is_err());
+        assert!(validate_storage_path("a/../b").is_err());
+    }
+
+    #[test]
+    fn storage_path_rejects_absolute_and_windows() {
+        assert!(validate_storage_path("/etc/passwd").is_err());
+        assert!(validate_storage_path("\\\\server\\share").is_err());
+        assert!(validate_storage_path("C:\\Windows\\system32").is_err());
+    }
+
+    #[test]
+    fn storage_path_rejects_empty_and_control_chars() {
+        assert!(validate_storage_path("   ").is_err());
+        assert!(validate_storage_path("doc\0.pdf").is_err());
+    }
+
+    #[test]
+    fn edd_document_accepts_valid() {
+        assert!(validate_edd_document(&sample_upload()).is_ok());
+    }
+
+    #[test]
+    fn edd_document_rejects_path_traversal() {
+        let mut req = sample_upload();
+        req.file_path = "../../../etc/shadow".to_string();
+        assert!(validate_edd_document(&req).is_err());
+    }
+
+    #[test]
+    fn edd_document_rejects_filename_with_separators() {
+        let mut req = sample_upload();
+        req.original_filename = "../evil.pdf".to_string();
+        assert!(validate_edd_document(&req).is_err());
+    }
+
+    #[test]
+    fn edd_document_rejects_disallowed_mime() {
+        let mut req = sample_upload();
+        req.mime_type = "application/x-msdownload".to_string();
+        assert!(validate_edd_document(&req).is_err());
+    }
+
+    #[test]
+    fn edd_document_rejects_bad_size() {
+        let mut req = sample_upload();
+        req.file_size_bytes = 0;
+        assert!(validate_edd_document(&req).is_err());
+        req.file_size_bytes = -1;
+        assert!(validate_edd_document(&req).is_err());
+        req.file_size_bytes = MAX_EDD_DOCUMENT_BYTES + 1;
+        assert!(validate_edd_document(&req).is_err());
+    }
+
+    #[test]
+    fn edd_document_mime_is_case_insensitive() {
+        let mut req = sample_upload();
+        req.mime_type = "APPLICATION/PDF".to_string();
+        assert!(validate_edd_document(&req).is_ok());
+    }
+
+    // ----- DSA report period -----
+
+    #[test]
+    fn report_period_accepts_valid_past_range() {
+        let now = Utc::now();
+        let end = now - Duration::days(1);
+        let start = end - Duration::days(30);
+        assert!(validate_report_period(start, end, now).is_ok());
+    }
+
+    #[test]
+    fn report_period_rejects_end_before_start() {
+        let now = Utc::now();
+        let start = now - Duration::days(1);
+        let end = now - Duration::days(10);
+        assert!(validate_report_period(start, end, now).is_err());
+    }
+
+    #[test]
+    fn report_period_rejects_future_end() {
+        let now = Utc::now();
+        let start = now - Duration::days(5);
+        let end = now + Duration::days(5);
+        assert!(validate_report_period(start, end, now).is_err());
+    }
+
+    #[test]
+    fn report_period_rejects_absurd_range() {
+        let now = Utc::now();
+        let end = now - Duration::days(1);
+        let start = end - Duration::days(MAX_DSA_REPORT_RANGE_DAYS + 10);
+        assert!(validate_report_period(start, end, now).is_err());
+    }
+
+    // ----- free-text caps -----
+
+    #[test]
+    fn text_field_rejects_empty() {
+        assert!(validate_text_field("", MAX_NOTE_LEN, "content").is_err());
+        assert!(validate_text_field("   \n\t ", MAX_NOTE_LEN, "content").is_err());
+    }
+
+    #[test]
+    fn text_field_rejects_over_max() {
+        let too_long = "a".repeat(MAX_APPEAL_REASON_LEN + 1);
+        assert!(validate_text_field(&too_long, MAX_APPEAL_REASON_LEN, "reason").is_err());
+    }
+
+    #[test]
+    fn text_field_accepts_within_bounds() {
+        assert!(validate_text_field("a reasonable note", MAX_NOTE_LEN, "content").is_ok());
+    }
+
+    // ----- scoped download reference -----
+
+    #[test]
+    fn download_ref_hides_fs_path() {
+        let id = Uuid::nil();
+        let raw = Some("/var/lib/app/reports/secret.pdf".to_string());
+        let reference = dsa_report_download_ref(id, &raw).unwrap();
+        assert!(!reference.contains("/var/lib"));
+        assert!(reference.contains(&id.to_string()));
+    }
+
+    #[test]
+    fn download_ref_none_when_no_file() {
+        assert!(dsa_report_download_ref(Uuid::nil(), &None).is_none());
+    }
 }
