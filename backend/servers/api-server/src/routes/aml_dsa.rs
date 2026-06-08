@@ -138,17 +138,11 @@ fn clamp_pagination(
 ) -> Result<(i64, i64), (StatusCode, String)> {
     let offset = offset.unwrap_or(0);
     if offset < 0 {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            "offset must be >= 0".to_string(),
-        ));
+        return Err((StatusCode::BAD_REQUEST, "offset must be >= 0".to_string()));
     }
     let limit = limit.unwrap_or(DEFAULT_PAGE_LIMIT);
     if limit < 1 {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            "limit must be >= 1".to_string(),
-        ));
+        return Err((StatusCode::BAD_REQUEST, "limit must be >= 1".to_string()));
     }
     Ok((limit.min(MAX_PAGE_LIMIT), offset))
 }
@@ -2215,12 +2209,21 @@ mod validation_tests {
     #[test]
     fn clamp_pagination_defaults_and_caps() {
         // Defaults applied when absent.
-        assert_eq!(clamp_pagination(None, None).unwrap(), (DEFAULT_PAGE_LIMIT, 0));
+        assert_eq!(
+            clamp_pagination(None, None).unwrap(),
+            (DEFAULT_PAGE_LIMIT, 0)
+        );
         // Within bounds preserved.
         assert_eq!(clamp_pagination(Some(150), Some(10)).unwrap(), (150, 10));
         // Over the cap is clamped, not rejected.
-        assert_eq!(clamp_pagination(Some(10_000), Some(0)).unwrap().0, MAX_PAGE_LIMIT);
-        assert_eq!(clamp_pagination(Some(MAX_PAGE_LIMIT + 1), None).unwrap().0, MAX_PAGE_LIMIT);
+        assert_eq!(
+            clamp_pagination(Some(10_000), Some(0)).unwrap().0,
+            MAX_PAGE_LIMIT
+        );
+        assert_eq!(
+            clamp_pagination(Some(MAX_PAGE_LIMIT + 1), None).unwrap().0,
+            MAX_PAGE_LIMIT
+        );
     }
 
     #[test]
@@ -2229,8 +2232,14 @@ mod validation_tests {
         let err = clamp_pagination(Some(50), Some(-1)).unwrap_err();
         assert_eq!(err.0, StatusCode::BAD_REQUEST);
         // Non-positive limit rejected.
-        assert_eq!(clamp_pagination(Some(0), Some(0)).unwrap_err().0, StatusCode::BAD_REQUEST);
-        assert_eq!(clamp_pagination(Some(-5), Some(0)).unwrap_err().0, StatusCode::BAD_REQUEST);
+        assert_eq!(
+            clamp_pagination(Some(0), Some(0)).unwrap_err().0,
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            clamp_pagination(Some(-5), Some(0)).unwrap_err().0,
+            StatusCode::BAD_REQUEST
+        );
     }
 
     #[test]
@@ -2255,22 +2264,59 @@ mod validation_tests {
     #[test]
     fn upload_metadata_enforces_size_mime_and_filename() {
         // Happy path.
-        assert!(validate_upload_metadata(&upload("edd/a.pdf", "a.pdf", 1024, "application/pdf")).is_ok());
+        assert!(
+            validate_upload_metadata(&upload("edd/a.pdf", "a.pdf", 1024, "application/pdf"))
+                .is_ok()
+        );
         // MIME with charset parameter still allowed.
-        assert!(validate_upload_metadata(&upload("edd/a.pdf", "a.pdf", 1024, "application/pdf; charset=binary")).is_ok());
+        assert!(validate_upload_metadata(&upload(
+            "edd/a.pdf",
+            "a.pdf",
+            1024,
+            "application/pdf; charset=binary"
+        ))
+        .is_ok());
         // Disallowed MIME.
-        assert!(validate_upload_metadata(&upload("edd/a.exe", "a.exe", 1024, "application/x-msdownload")).is_err());
+        assert!(validate_upload_metadata(&upload(
+            "edd/a.exe",
+            "a.exe",
+            1024,
+            "application/x-msdownload"
+        ))
+        .is_err());
         // Non-positive size.
-        assert!(validate_upload_metadata(&upload("edd/a.pdf", "a.pdf", 0, "application/pdf")).is_err());
-        assert!(validate_upload_metadata(&upload("edd/a.pdf", "a.pdf", -10, "application/pdf")).is_err());
+        assert!(
+            validate_upload_metadata(&upload("edd/a.pdf", "a.pdf", 0, "application/pdf")).is_err()
+        );
+        assert!(
+            validate_upload_metadata(&upload("edd/a.pdf", "a.pdf", -10, "application/pdf"))
+                .is_err()
+        );
         // Oversized.
-        assert!(validate_upload_metadata(&upload("edd/a.pdf", "a.pdf", MAX_FILE_SIZE_BYTES + 1, "application/pdf")).is_err());
+        assert!(validate_upload_metadata(&upload(
+            "edd/a.pdf",
+            "a.pdf",
+            MAX_FILE_SIZE_BYTES + 1,
+            "application/pdf"
+        ))
+        .is_err());
         // Traversal in path.
-        assert!(validate_upload_metadata(&upload("../a.pdf", "a.pdf", 1024, "application/pdf")).is_err());
+        assert!(
+            validate_upload_metadata(&upload("../a.pdf", "a.pdf", 1024, "application/pdf"))
+                .is_err()
+        );
         // Path separator in filename.
-        assert!(validate_upload_metadata(&upload("edd/a.pdf", "sub/a.pdf", 1024, "application/pdf")).is_err());
+        assert!(validate_upload_metadata(&upload(
+            "edd/a.pdf",
+            "sub/a.pdf",
+            1024,
+            "application/pdf"
+        ))
+        .is_err());
         // Empty filename.
-        assert!(validate_upload_metadata(&upload("edd/a.pdf", "  ", 1024, "application/pdf")).is_err());
+        assert!(
+            validate_upload_metadata(&upload("edd/a.pdf", "  ", 1024, "application/pdf")).is_err()
+        );
     }
 
     #[test]
@@ -2310,7 +2356,9 @@ mod validation_tests {
         assert!(enforce_max_len("content", "short", MAX_FREE_TEXT_LEN).is_ok());
         let long = "x".repeat(MAX_FREE_TEXT_LEN + 1);
         assert_eq!(
-            enforce_max_len("content", &long, MAX_FREE_TEXT_LEN).unwrap_err().0,
+            enforce_max_len("content", &long, MAX_FREE_TEXT_LEN)
+                .unwrap_err()
+                .0,
             StatusCode::BAD_REQUEST
         );
     }
