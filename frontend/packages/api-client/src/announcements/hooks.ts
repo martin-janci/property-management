@@ -455,6 +455,39 @@ export function usePinnedAnnouncements() {
   });
 }
 
+/** Create a new announcement (draft) */
+export function useCreateAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateAnnouncementRequest) =>
+      fetchJson<{ id: string; message: string }>(ANNOUNCEMENTS_BASE, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.statistics() });
+    },
+  });
+}
+
+/** Update an announcement (draft/scheduled only) */
+export function useUpdateAnnouncement(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: UpdateAnnouncementRequest) =>
+      fetchJson<{ message: string; announcement: Announcement }>(`${ANNOUNCEMENTS_BASE}/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.published() });
+    },
+  });
+}
+
 /** Delete an announcement (draft only) */
 export function useDeleteAnnouncement() {
   const queryClient = useQueryClient();
