@@ -1704,14 +1704,13 @@ async fn get_dsa_metrics(
 ) -> Result<Json<DsaMetricsResponse>, (StatusCode, String)> {
     require_platform_compliance_role(&principal)?;
 
-    let org_id = user.tenant_id.ok_or((
-        StatusCode::BAD_REQUEST,
-        "Organization context required".to_string(),
-    ))?;
-
+    // DSA transparency metrics are a platform-wide VLOP artifact (PAP-47
+    // supersedes the PAP-40 per-tenant model). The handler is gated to
+    // platform-operator principals, which carry no tenant context, so the
+    // stats aggregate across all organizations — no `org_id` scoping.
     let stats = state
         .compliance_repo
-        .get_moderation_queue_stats(org_id)
+        .get_platform_moderation_queue_stats()
         .await
         .map_err(|e| {
             tracing::error!("Failed to get DSA metrics: {}", e);
