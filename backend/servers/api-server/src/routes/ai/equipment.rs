@@ -1,8 +1,23 @@
 //! Equipment & predictive maintenance (Story 13.3).
+//!
+//! # RLS (PAP-67 / PAP-71)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on `equipment`,
+//! `equipment_maintenance`, and `maintenance_predictions`, so every query MUST
+//! run on a connection that has `app.current_org_id` set or it collapses to
+//! deny-all. Each handler therefore acquires an [`RlsConnection`] (which
+//! validates tenant membership and sets the org/user GUCs on a dedicated
+//! connection) and passes `&mut **rls.conn()` to the repository. The
+//! authoritative organization is `rls.tenant_id()` — the tenant the caller was
+//! validated against — not a client-supplied value, so the SQL org filter and
+//! the RLS context can never disagree. Cross-tenant access is blocked by RLS: a
+//! by-id read of another org's row returns no row (`404`), and a write targeting
+//! another org fails the policy's `WITH CHECK`. `rls.release()` clears the
+//! context before the connection returns to the pool.
 
-use crate::routes::ai::{require_tenant_id, PaginationQuery};
+use crate::routes::ai::PaginationQuery;
 use crate::state::AppState;
-use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -40,12 +55,16 @@ pub fn equipment_router() -> Router<AppState> {
 
 async fn create_equipment(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<CreateEquipment>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: owning org is derived from the verified principal, never the body.
-    let organization_id = require_tenant_id(&principal)?;
-    match state.equipment_repo.create(organization_id, req).await {
+    // SECURITY: owning org is the validated RLS tenant, never the body.
+    let organization_id = rls.tenant_id();
+    let out = match state
+        .equipment_repo
+        .create(&mut **rls.conn(), organization_id, req)
+        .await
+    {
         Ok(equipment) => Ok((StatusCode::CREATED, Json(serde_json::json!(equipment)))),
         Err(e) => {
             tracing::error!("Failed to create equipment: {}", e);
@@ -54,17 +73,22 @@ async fn create_equipment(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to create")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 async fn list_equipment(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<EquipmentQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state.equipment_repo.list(tenant_id, query).await {
+    let tenant_id = rls.tenant_id();
+    let out = match state
+        .equipment_repo
+        .list(&mut **rls.conn(), tenant_id, query)
+        .await
+    {
         Ok(equipment) => Ok(Json(serde_json::json!({ "equipment": equipment }))),
         Err(e) => {
             tracing::error!("Failed to list equipment: {}", e);
@@ -73,17 +97,22 @@ async fn list_equipment(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 async fn get_equipment(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: derive the tenant from the verified JWT — never trust client input.
-    let tenant_id = require_tenant_id(&principal)?;
-    match state.equipment_repo.find_by_id(id, tenant_id).await {
+    let tenant_id = rls.tenant_id();
+    let out = match state
+        .equipment_repo
+        .find_by_id(&mut **rls.conn(), id, tenant_id)
+        .await
+    {
         Ok(Some(equipment)) => Ok(Json(serde_json::json!(equipment))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -96,18 +125,23 @@ async fn get_equipment(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 async fn update_equipment(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipment>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: derive the tenant from the verified JWT — never trust client input.
-    let tenant_id = require_tenant_id(&principal)?;
-    match state.equipment_repo.update(id, tenant_id, req).await {
+    let tenant_id = rls.tenant_id();
+    let out = match state
+        .equipment_repo
+        .update(&mut **rls.conn(), id, tenant_id, req)
+        .await
+    {
         Ok(equipment) => Ok(Json(serde_json::json!(equipment))),
         Err(sqlx::Error::RowNotFound) => Err((
             StatusCode::NOT_FOUND,
@@ -120,17 +154,22 @@ async fn update_equipment(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to update")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 async fn delete_equipment(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: derive the tenant from the verified JWT — never trust client input.
-    let tenant_id = require_tenant_id(&principal)?;
-    match state.equipment_repo.delete(id, tenant_id).await {
+    let tenant_id = rls.tenant_id();
+    let out = match state
+        .equipment_repo
+        .delete(&mut **rls.conn(), id, tenant_id)
+        .await
+    {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,
@@ -143,20 +182,22 @@ async fn delete_equipment(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to delete")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 async fn list_maintenance(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: derive the tenant from the verified JWT — never trust client input.
-    let tenant_id = require_tenant_id(&principal)?;
-    match state
+    let tenant_id = rls.tenant_id();
+    let out = match state
         .equipment_repo
         .list_maintenance(
+            &mut **rls.conn(),
             id,
             tenant_id,
             query.limit.unwrap_or(50),
@@ -172,22 +213,24 @@ async fn list_maintenance(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 async fn create_maintenance(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(_id): Path<Uuid>,
     Json(req): Json<CreateMaintenance>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: derive the tenant from the verified JWT — never trust client input.
-    // The repository INSERT is guarded by a sub-select that ensures req.equipment_id
-    // belongs to this tenant; a foreign equipment_id yields RowNotFound → 404.
-    let tenant_id = require_tenant_id(&principal)?;
-    match state
+    // SECURITY: org is the validated RLS tenant. The repository INSERT is guarded
+    // by a sub-select that ensures req.equipment_id belongs to this tenant; a
+    // foreign equipment_id yields RowNotFound → 404.
+    let tenant_id = rls.tenant_id();
+    let out = match state
         .equipment_repo
-        .create_maintenance(tenant_id, req)
+        .create_maintenance(&mut **rls.conn(), tenant_id, req)
         .await
     {
         Ok(record) => Ok((StatusCode::CREATED, Json(serde_json::json!(record)))),
@@ -202,20 +245,21 @@ async fn create_maintenance(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to create")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 async fn update_maintenance(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenance>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: derive the tenant from the verified JWT — never trust client input.
-    let tenant_id = require_tenant_id(&principal)?;
-    match state
+    let tenant_id = rls.tenant_id();
+    let out = match state
         .equipment_repo
-        .update_maintenance(id, tenant_id, req)
+        .update_maintenance(&mut **rls.conn(), id, tenant_id, req)
         .await
     {
         Ok(record) => Ok(Json(serde_json::json!(record))),
@@ -233,19 +277,20 @@ async fn update_maintenance(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to update")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 async fn list_predictions(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state
+    let tenant_id = rls.tenant_id();
+    let out = match state
         .equipment_repo
-        .list_high_risk_predictions(tenant_id, 50.0, query.limit.unwrap_or(20))
+        .list_high_risk_predictions(&mut **rls.conn(), tenant_id, 50.0, query.limit.unwrap_or(20))
         .await
     {
         Ok(predictions) => Ok(Json(serde_json::json!({ "predictions": predictions }))),
@@ -256,7 +301,9 @@ async fn list_predictions(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -266,22 +313,22 @@ pub struct AcknowledgePredictionRequest {
 
 async fn acknowledge_prediction(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgePredictionRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: tenant_id is derived from the verified JWT and passed to the
-    // repository so a caller in org B cannot acknowledge predictions belonging
-    // to org A. We return 404 for both "not found" and "wrong tenant" to
-    // prevent cross-tenant ID enumeration.
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state
+    // SECURITY: org + user come from the validated RLS connection so a caller in
+    // org B cannot acknowledge predictions belonging to org A. We return 404 for
+    // both "not found" and "wrong tenant" to prevent cross-tenant ID enumeration.
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = match state
         .equipment_repo
         .acknowledge_prediction(
+            &mut **rls.conn(),
             id,
             tenant_id,
-            principal.user_id,
+            user_id,
             req.action_taken.as_deref(),
         )
         .await
@@ -301,7 +348,9 @@ async fn acknowledge_prediction(
                 )),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, utoipa::IntoParams)]
@@ -312,14 +361,14 @@ pub struct MaintenanceDueQuery {
 
 async fn list_needing_maintenance(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<MaintenanceDueQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state
+    let tenant_id = rls.tenant_id();
+    let out = match state
         .equipment_repo
         .list_needing_maintenance(
+            &mut **rls.conn(),
             tenant_id,
             query.days_ahead.unwrap_or(30),
             query.limit.unwrap_or(20),
@@ -334,5 +383,7 @@ async fn list_needing_maintenance(
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
             ))
         }
-    }
+    };
+    rls.release().await;
+    out
 }
