@@ -35,6 +35,8 @@ export * from './import';
 export * from './inquiries';
 // Export domain-specific modules
 export * from './listings';
+// Price map module — live city-level price aggregations (UC-31)
+export * from './price-map';
 
 // API version
 export const REALITY_API_VERSION = '1.0.0';
