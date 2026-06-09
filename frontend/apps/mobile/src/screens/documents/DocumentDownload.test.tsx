@@ -91,12 +91,9 @@ describe('mimeTypeFromDocType', () => {
     expect(mimeTypeFromDocType(type)).toBe(expected);
   });
 
-  it.each(['folder', 'document'] as const)(
-    'falls back to octet-stream for %s',
-    (type) => {
-      expect(mimeTypeFromDocType(type)).toBe('application/octet-stream');
-    }
-  );
+  it.each(['folder', 'document'] as const)('falls back to octet-stream for %s', (type) => {
+    expect(mimeTypeFromDocType(type)).toBe('application/octet-stream');
+  });
 });
 
 describe('utiFromDocType', () => {
@@ -108,12 +105,13 @@ describe('utiFromDocType', () => {
     expect(utiFromDocType('image')).toBe('public.image');
   });
 
-  it.each(['folder', 'document', 'spreadsheet'] as const)(
-    'falls back to public.data for %s',
-    (type) => {
-      expect(utiFromDocType(type)).toBe('public.data');
-    }
-  );
+  it.each([
+    'folder',
+    'document',
+    'spreadsheet',
+  ] as const)('falls back to public.data for %s', (type) => {
+    expect(utiFromDocType(type)).toBe('public.data');
+  });
 });
 
 describe('formatBytes', () => {
