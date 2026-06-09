@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-09T18:13:51Z",
+  "selected_at": "2026-06-09T22:17:02Z",
   "last_action": "reset-invalid-feat-prefix",
-  "reason": "picker chose feat- epic (feat-82-4-swiftui-listing-detail-polish) which violates T21 shape (gap-N|pm-<role>|NONE); reset to NONE -> finish-first falls back to unfiltered pool",
+  "reason": "picker repeatedly selects feat-* prefixes that violate T21 (gap-N|pm-<role>|NONE); reset to NONE. Tier-1 refill found coverage.json stale (84-2 gap already merged via #1034/#931) — no legitimate new items",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
