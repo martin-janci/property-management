@@ -534,6 +534,77 @@ impl ComplianceRepository {
         })
     }
 
+    /// Get moderation queue statistics across the entire platform (all
+    /// organizations). DSA transparency metrics are platform-wide per the
+    /// PAP-40 tenancy decision and are exposed only to platform-operator
+    /// compliance roles (see `require_platform_compliance_role`). Mirrors
+    /// `get_moderation_queue_stats` with the `organization_id` filter removed.
+    pub async fn get_platform_moderation_queue_stats(
+        &self,
+    ) -> Result<ModerationQueueStats, SqlxError> {
+        let (pending_count,): (i64,) = sqlx::query_as(
+            r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'pending'"#,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let (under_review_count,): (i64,) = sqlx::query_as(
+            r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'under_review'"#,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Cases by priority
+        let by_priority: Vec<(i32, i64)> = sqlx::query_as(
+            r#"
+            SELECT priority, COUNT(*) as count
+            FROM moderation_cases
+            WHERE status IN ('pending', 'under_review')
+            GROUP BY priority
+            ORDER BY priority
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        // Average resolution time
+        let avg_resolution_time_hours: f64 = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (decided_at - created_at)) / 3600.0)::float, 0.0)
+            FROM moderation_cases
+            WHERE decided_at IS NOT NULL
+            "#,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Overdue count (pending for more than 24 hours)
+        let (overdue_count,): (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(*) FROM moderation_cases
+            WHERE status IN ('pending', 'under_review')
+                AND created_at < NOW() - INTERVAL '24 hours'
+            "#,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(ModerationQueueStats {
+            pending_count,
+            under_review_count,
+            by_priority: by_priority
+                .into_iter()
+                .map(|(p, c)| PriorityCount {
+                    priority: p,
+                    count: c,
+                })
+                .collect(),
+            by_violation_type: vec![], // Could be expanded
+            avg_resolution_time_hours,
+            overdue_count,
+        })
+    }
+
     /// Assign a moderation case, scoped to caller's organization.
     pub async fn assign_moderation_case(
         &self,

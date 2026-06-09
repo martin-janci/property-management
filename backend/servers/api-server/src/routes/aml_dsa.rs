@@ -1704,14 +1704,12 @@ async fn get_dsa_metrics(
 ) -> Result<Json<DsaMetricsResponse>, (StatusCode, String)> {
     require_platform_compliance_role(&principal)?;
 
-    let org_id = user.tenant_id.ok_or((
-        StatusCode::BAD_REQUEST,
-        "Organization context required".to_string(),
-    ))?;
-
+    // DSA transparency metrics are platform-wide (all organizations), per the
+    // PAP-40 tenancy decision and the platform-only gate above (PAP-46). There
+    // is no org context here — a platform operator has `tenant_id = None`.
     let stats = state
         .compliance_repo
-        .get_moderation_queue_stats(org_id)
+        .get_platform_moderation_queue_stats()
         .await
         .map_err(|e| {
             tracing::error!("Failed to get DSA metrics: {}", e);
