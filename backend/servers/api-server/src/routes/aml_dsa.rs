@@ -591,6 +591,11 @@ async fn review_aml_assessment(
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let decision = match req.decision.to_lowercase().as_str() {
         "approved" => AmlAssessmentStatus::Approved,
         "rejected" => AmlAssessmentStatus::Rejected,
@@ -604,7 +609,7 @@ async fn review_aml_assessment(
 
     let assessment = state
         .edd_repo
-        .review_aml_assessment(id, user.user_id, decision, req.notes.as_deref())
+        .review_aml_assessment(id, org_id, user.user_id, decision, req.notes.as_deref())
         .await
         .map_err(|e| {
             tracing::error!("Failed to review AML assessment: {}", e);
@@ -1076,6 +1081,7 @@ async fn verify_edd_document(
         .edd_repo
         .verify_edd_document(
             doc_id,
+            edd_id,
             user.user_id,
             status,
             req.rejection_reason.as_deref(),
@@ -1393,7 +1399,6 @@ pub struct DsaReportDownloadResponse {
 // collided (E0428) once both were on `dev`; the duplicate has been removed.
 // The shared helper builds the opaque `/api/v1/aml-dsa/dsa/reports/{id}/download`
 // reference and never discloses the internal `report_file_path`.
-
 // ----------------------------------------------------------------------------
 // DSA transparency reports (Epic 67 / Story 67.3) — platform-VLOP model.
 //
@@ -1699,9 +1704,14 @@ async fn get_dsa_metrics(
 ) -> Result<Json<DsaMetricsResponse>, (StatusCode, String)> {
     require_platform_compliance_role(&principal)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let stats = state
         .compliance_repo
-        .get_moderation_queue_stats()
+        .get_moderation_queue_stats(org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get DSA metrics: {}", e);
@@ -1789,6 +1799,11 @@ async fn get_moderation_queue(
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let limit = clamp_limit(params.limit);
     let offset = sanitize_offset(params.offset);
     let unassigned_only = params.unassigned_only.unwrap_or(false);
@@ -1796,6 +1811,7 @@ async fn get_moderation_queue(
     let (cases, total) = state
         .compliance_repo
         .list_moderation_cases(
+            org_id,
             params.status,
             params.content_type,
             params.violation_type,
@@ -1880,9 +1896,14 @@ async fn get_moderation_stats(
 ) -> Result<Json<ModerationQueueStatsResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let stats = state
         .compliance_repo
-        .get_moderation_queue_stats()
+        .get_moderation_queue_stats(org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get moderation stats: {}", e);
@@ -1924,9 +1945,14 @@ async fn get_moderation_case(
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let case = state
         .compliance_repo
-        .get_moderation_case(id)
+        .get_moderation_case(id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get moderation case: {}", e);
@@ -1987,11 +2013,31 @@ async fn assign_moderation_case(
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let assignee = req.moderator_id.unwrap_or(user.user_id);
+
+    // Validate that the target moderator belongs to the caller's org
+    if assignee != user.user_id {
+        let is_member = state
+            .org_member_repo
+            .is_member(org_id, assignee)
+            .await
+            .unwrap_or(false);
+        if !is_member {
+            return Err((
+                StatusCode::FORBIDDEN,
+                "Moderator does not belong to this organization".to_string(),
+            ));
+        }
+    }
 
     let case = state
         .compliance_repo
-        .assign_moderation_case(id, assignee)
+        .assign_moderation_case(id, org_id, assignee)
         .await
         .map_err(|e| {
             tracing::error!("Failed to assign moderation case: {}", e);
@@ -2046,6 +2092,11 @@ async fn take_moderation_action(
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     validate_text_field(&req.rationale, MAX_RATIONALE_LEN, "rationale")
         .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
 
@@ -2062,7 +2113,7 @@ async fn take_moderation_action(
 
     let case = state
         .compliance_repo
-        .take_moderation_action(id, action, user.user_id)
+        .take_moderation_action(id, org_id, action, user.user_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to take moderation action: {}", e);
@@ -2195,9 +2246,14 @@ async fn decide_appeal(
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
     let case = state
         .compliance_repo
-        .decide_appeal(id, &req.decision, &req.rationale, user.user_id)
+        .decide_appeal(id, org_id, &req.decision, &req.rationale, user.user_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to decide appeal: {}", e);

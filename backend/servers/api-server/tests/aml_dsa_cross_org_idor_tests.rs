@@ -30,7 +30,7 @@
 //! These tests use tables that ship migrations (`00078_create_edd.sql`) so they
 //! run against `db::MIGRATOR` deterministically.
 
-use db::repositories::EddRepository;
+use db::repositories::{ComplianceRepository, EddRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -187,5 +187,259 @@ async fn get_edd_blocks_cross_org_access(pool: PgPool) {
         unscoped,
         Some(edd_in_a),
         "sanity: the unscoped query (the vulnerable pre-fix path) does leak the row"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Fixtures — moderation cases
+// ---------------------------------------------------------------------------
+
+async fn seed_moderation_case(pool: &PgPool, org_id: Uuid, content_owner_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO moderation_cases
+            (content_type, content_id, content_owner_id, organization_id, report_source)
+        VALUES ('listing', $1, $2, $3, 'user')
+        RETURNING id
+        "#,
+    )
+    .bind(Uuid::new_v4())
+    .bind(content_owner_id)
+    .bind(org_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed moderation case")
+}
+
+// ---------------------------------------------------------------------------
+// (3) review_aml_assessment is org-scoped — org B cannot mutate org A's row.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn review_aml_assessment_blocks_cross_org_mutate(pool: PgPool) {
+    use db::models::compliance::AmlAssessmentStatus;
+
+    let repo = EddRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "review-a").await;
+    let org_b = seed_org(&pool, "review-b").await;
+    let user = seed_user(&pool, "reviewer@aml-idor.test").await;
+    let assessment = seed_assessment(&pool, org_a).await;
+
+    // Cross-org review must fail (0 rows updated → fetch_one returns RowNotFound).
+    let cross_org_result = repo
+        .review_aml_assessment(assessment, org_b, user, AmlAssessmentStatus::Approved, None)
+        .await;
+    assert!(
+        cross_org_result.is_err(),
+        "org B must NOT be able to review org A's AML assessment"
+    );
+
+    // Sanity: same-org review succeeds.
+    let same_org_result = repo
+        .review_aml_assessment(assessment, org_a, user, AmlAssessmentStatus::Approved, None)
+        .await;
+    assert!(
+        same_org_result.is_ok(),
+        "org A must be able to review its own AML assessment"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (4) get_moderation_case is org-scoped — org B cannot read org A's case.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_moderation_case_blocks_cross_org_read(pool: PgPool) {
+    let repo = ComplianceRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "mod-case-a").await;
+    let org_b = seed_org(&pool, "mod-case-b").await;
+    let owner = seed_user(&pool, "owner@mod-case.test").await;
+    let case_in_a = seed_moderation_case(&pool, org_a, owner).await;
+
+    // Same-org read succeeds.
+    let same_org = repo
+        .get_moderation_case(case_in_a, org_a)
+        .await
+        .expect("query ok");
+    assert!(
+        same_org.is_some(),
+        "org A must be able to read its own moderation case"
+    );
+
+    // Cross-org read returns None.
+    let cross_org = repo
+        .get_moderation_case(case_in_a, org_b)
+        .await
+        .expect("query ok");
+    assert!(
+        cross_org.is_none(),
+        "org B must NOT be able to read org A's moderation case"
+    );
+
+    // Demonstrate the pre-fix leak.
+    let unscoped: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM moderation_cases WHERE id = $1")
+            .bind(case_in_a)
+            .fetch_optional(&pool)
+            .await
+            .expect("query ok");
+    assert_eq!(
+        unscoped,
+        Some(case_in_a),
+        "sanity: the unscoped (pre-fix) query does leak the row"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (5) list_moderation_cases is org-scoped — each org only sees its own cases.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_moderation_cases_returns_only_own_org(pool: PgPool) {
+    let repo = ComplianceRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "list-a").await;
+    let org_b = seed_org(&pool, "list-b").await;
+    let owner = seed_user(&pool, "list-owner@aml-idor.test").await;
+
+    seed_moderation_case(&pool, org_a, owner).await;
+    seed_moderation_case(&pool, org_a, owner).await;
+    seed_moderation_case(&pool, org_b, owner).await;
+
+    let (a_cases, a_total) = repo
+        .list_moderation_cases(
+            org_a, None, None, None, None, None, false, None, None, 50, 0,
+        )
+        .await
+        .expect("query ok");
+    assert_eq!(a_total, 2, "org A should see exactly its 2 cases");
+    assert!(
+        a_cases.iter().all(|c| c.organization_id == Some(org_a)),
+        "all returned cases must belong to org A"
+    );
+
+    let (b_cases, b_total) = repo
+        .list_moderation_cases(
+            org_b, None, None, None, None, None, false, None, None, 50, 0,
+        )
+        .await
+        .expect("query ok");
+    assert_eq!(b_total, 1, "org B should see exactly its 1 case");
+    assert!(
+        b_cases.iter().all(|c| c.organization_id == Some(org_b)),
+        "all returned cases must belong to org B"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (6) assign_moderation_case is org-scoped — org B cannot assign org A's case.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn assign_moderation_case_blocks_cross_org_mutate(pool: PgPool) {
+    let repo = ComplianceRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "assign-a").await;
+    let org_b = seed_org(&pool, "assign-b").await;
+    let owner = seed_user(&pool, "assign-owner@aml-idor.test").await;
+    let case_in_a = seed_moderation_case(&pool, org_a, owner).await;
+
+    // Cross-org assign must fail.
+    let cross_org = repo.assign_moderation_case(case_in_a, org_b, owner).await;
+    assert!(
+        cross_org.is_err(),
+        "org B must NOT be able to assign org A's moderation case"
+    );
+
+    // Same-org assign succeeds.
+    let same_org = repo.assign_moderation_case(case_in_a, org_a, owner).await;
+    assert!(
+        same_org.is_ok(),
+        "org A must be able to assign its own moderation case"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (7) take_moderation_action is org-scoped — org B cannot act on org A's case.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn take_moderation_action_blocks_cross_org_mutate(pool: PgPool) {
+    use db::models::compliance::{ModerationActionType, TakeModerationAction};
+
+    let repo = ComplianceRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "action-a").await;
+    let org_b = seed_org(&pool, "action-b").await;
+    let owner = seed_user(&pool, "action-owner@aml-idor.test").await;
+    let actor = seed_user(&pool, "actor@aml-idor.test").await;
+    let case_in_a = seed_moderation_case(&pool, org_a, owner).await;
+
+    let action = TakeModerationAction {
+        action: ModerationActionType::Warn,
+        rationale: "test".to_string(),
+        template_id: None,
+    };
+
+    // Cross-org action must fail.
+    let cross_org = repo
+        .take_moderation_action(case_in_a, org_b, action.clone(), actor)
+        .await;
+    assert!(
+        cross_org.is_err(),
+        "org B must NOT be able to act on org A's moderation case"
+    );
+
+    // Same-org action succeeds.
+    let same_org = repo
+        .take_moderation_action(case_in_a, org_a, action, actor)
+        .await;
+    assert!(
+        same_org.is_ok(),
+        "org A must be able to act on its own moderation case"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// (8) decide_appeal is org-scoped — org B cannot decide org A's appeal.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn decide_appeal_blocks_cross_org_mutate(pool: PgPool) {
+    let repo = ComplianceRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "appeal-a").await;
+    let org_b = seed_org(&pool, "appeal-b").await;
+    let owner = seed_user(&pool, "appeal-owner@aml-idor.test").await;
+    let decider = seed_user(&pool, "decider@aml-idor.test").await;
+    let case_in_a = seed_moderation_case(&pool, org_a, owner).await;
+
+    // Mark the case as appealed so decide_appeal has something to act on.
+    sqlx::query(
+        "UPDATE moderation_cases SET appeal_filed = TRUE, status = 'appealed' WHERE id = $1",
+    )
+    .bind(case_in_a)
+    .execute(&pool)
+    .await
+    .expect("mark appealed");
+
+    // Cross-org decide must fail.
+    let cross_org = repo
+        .decide_appeal(case_in_a, org_b, "upheld", "test", decider)
+        .await;
+    assert!(
+        cross_org.is_err(),
+        "org B must NOT be able to decide org A's appeal"
+    );
+
+    // Same-org decide succeeds.
+    let same_org = repo
+        .decide_appeal(case_in_a, org_a, "upheld", "test", decider)
+        .await;
+    assert!(
+        same_org.is_ok(),
+        "org A must be able to decide its own appeal"
     );
 }
