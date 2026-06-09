@@ -323,6 +323,110 @@ impl ComplianceRepository {
     // CONTENT MODERATION CASES
     // ========================================================================
 
+    /// Resolve the real owner (user id) of a piece of reportable content,
+    /// scoped to the caller's organization where the content table carries one.
+    ///
+    /// Returns `Ok(None)` when the content does not exist (or is not visible to
+    /// the caller's org, or the content type has no resolvable owner table), so
+    /// callers can reject the report instead of persisting a bogus owner.
+    /// Cross-tenant content resolves to `None` to avoid leaking its existence.
+    pub async fn resolve_content_owner(
+        &self,
+        content_type: ModeratedContentType,
+        content_id: Uuid,
+        org_id: Option<Uuid>,
+    ) -> Result<Option<Uuid>, SqlxError> {
+        let owner: Option<Uuid> =
+            match content_type {
+                // A user profile *is* a user; the content id is the owner.
+                ModeratedContentType::UserProfile => {
+                    sqlx::query_scalar(r#"SELECT id FROM users WHERE id = $1"#)
+                        .bind(content_id)
+                        .fetch_optional(&self.pool)
+                        .await?
+                }
+
+                // Org-scoped content: only resolvable from within the owning org.
+                ModeratedContentType::Listing => {
+                    sqlx::query_scalar(
+                        r#"SELECT created_by FROM listings WHERE id = $1 AND organization_id = $2"#,
+                    )
+                    .bind(content_id)
+                    .bind(org_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+                }
+
+                ModeratedContentType::ListingPhoto => {
+                    sqlx::query_scalar(
+                        r#"
+                SELECT l.created_by
+                FROM listing_photos p
+                JOIN listings l ON l.id = p.listing_id
+                WHERE p.id = $1 AND l.organization_id = $2
+                "#,
+                    )
+                    .bind(content_id)
+                    .bind(org_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+                }
+
+                ModeratedContentType::Announcement => sqlx::query_scalar(
+                    r#"SELECT author_id FROM announcements WHERE id = $1 AND organization_id = $2"#,
+                )
+                .bind(content_id)
+                .bind(org_id)
+                .fetch_optional(&self.pool)
+                .await?,
+
+                ModeratedContentType::Document => sqlx::query_scalar(
+                    r#"SELECT created_by FROM documents WHERE id = $1 AND organization_id = $2"#,
+                )
+                .bind(content_id)
+                .bind(org_id)
+                .fetch_optional(&self.pool)
+                .await?,
+
+                ModeratedContentType::Message => {
+                    sqlx::query_scalar(
+                        r#"
+                SELECT m.sender_id
+                FROM messages m
+                JOIN message_threads t ON t.id = m.thread_id
+                WHERE m.id = $1 AND t.organization_id = $2
+                "#,
+                    )
+                    .bind(content_id)
+                    .bind(org_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+                }
+
+                // community_posts scope by organization via the owning group's building.
+                ModeratedContentType::CommunityPost => {
+                    sqlx::query_scalar(
+                        r#"
+                SELECT cp.author_id
+                FROM community_posts cp
+                JOIN community_groups cg ON cg.id = cp.group_id
+                JOIN buildings b ON b.id = cg.building_id
+                WHERE cp.id = $1 AND b.organization_id = $2
+                "#,
+                    )
+                    .bind(content_id)
+                    .bind(org_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+                }
+
+                // No backing owner table in this schema yet — caller rejects (404).
+                ModeratedContentType::Review | ModeratedContentType::Comment => None,
+            };
+
+        Ok(owner)
+    }
+
     /// Create a moderation case (user report).
     pub async fn create_moderation_case(
         &self,
@@ -363,21 +467,28 @@ impl ComplianceRepository {
         Ok(case)
     }
 
-    /// Get moderation case by ID.
-    pub async fn get_moderation_case(&self, id: Uuid) -> Result<Option<ModerationCase>, SqlxError> {
-        let case =
-            sqlx::query_as::<_, ModerationCase>(r#"SELECT * FROM moderation_cases WHERE id = $1"#)
-                .bind(id)
-                .fetch_optional(&self.pool)
-                .await?;
+    /// Get moderation case by ID, scoped to caller's organization.
+    pub async fn get_moderation_case(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<ModerationCase>, SqlxError> {
+        let case = sqlx::query_as::<_, ModerationCase>(
+            r#"SELECT * FROM moderation_cases WHERE id = $1 AND organization_id = $2"#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(case)
     }
 
-    /// List moderation cases (queue).
+    /// List moderation cases (queue), scoped to caller's organization.
     #[allow(clippy::too_many_arguments)]
     pub async fn list_moderation_cases(
         &self,
+        org_id: Uuid,
         status: Option<ModerationStatus>,
         content_type: Option<ModeratedContentType>,
         violation_type: Option<ViolationType>,
@@ -393,14 +504,16 @@ impl ComplianceRepository {
         let (total,): (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(*) FROM moderation_cases
-            WHERE ($1::moderation_status IS NULL OR status = $1)
-                AND ($2::moderated_content_type IS NULL OR content_type = $2)
-                AND ($3::violation_type IS NULL OR violation_type = $3)
-                AND ($4::integer IS NULL OR priority = $4)
-                AND ($5::uuid IS NULL OR assigned_to = $5)
-                AND ($6 = FALSE OR assigned_to IS NULL)
+            WHERE organization_id = $1
+                AND ($2::moderation_status IS NULL OR status = $2)
+                AND ($3::moderated_content_type IS NULL OR content_type = $3)
+                AND ($4::violation_type IS NULL OR violation_type = $4)
+                AND ($5::integer IS NULL OR priority = $5)
+                AND ($6::uuid IS NULL OR assigned_to = $6)
+                AND ($7 = FALSE OR assigned_to IS NULL)
             "#,
         )
+        .bind(org_id)
         .bind(status)
         .bind(content_type)
         .bind(violation_type)
@@ -422,19 +535,21 @@ impl ComplianceRepository {
         let query = format!(
             r#"
             SELECT * FROM moderation_cases
-            WHERE ($1::moderation_status IS NULL OR status = $1)
-                AND ($2::moderated_content_type IS NULL OR content_type = $2)
-                AND ($3::violation_type IS NULL OR violation_type = $3)
-                AND ($4::integer IS NULL OR priority = $4)
-                AND ($5::uuid IS NULL OR assigned_to = $5)
-                AND ($6 = FALSE OR assigned_to IS NULL)
+            WHERE organization_id = $1
+                AND ($2::moderation_status IS NULL OR status = $2)
+                AND ($3::moderated_content_type IS NULL OR content_type = $3)
+                AND ($4::violation_type IS NULL OR violation_type = $4)
+                AND ($5::integer IS NULL OR priority = $5)
+                AND ($6::uuid IS NULL OR assigned_to = $6)
+                AND ($7 = FALSE OR assigned_to IS NULL)
             {}
-            LIMIT $7 OFFSET $8
+            LIMIT $8 OFFSET $9
             "#,
             order_clause
         );
 
         let cases = sqlx::query_as::<_, ModerationCase>(sqlx::AssertSqlSafe(query))
+            .bind(org_id)
             .bind(status)
             .bind(content_type)
             .bind(violation_type)
@@ -449,8 +564,88 @@ impl ComplianceRepository {
         Ok((cases, total))
     }
 
-    /// Get moderation queue statistics.
-    pub async fn get_moderation_queue_stats(&self) -> Result<ModerationQueueStats, SqlxError> {
+    /// Get moderation queue statistics, scoped to caller's organization.
+    pub async fn get_moderation_queue_stats(
+        &self,
+        org_id: Uuid,
+    ) -> Result<ModerationQueueStats, SqlxError> {
+        let (pending_count,): (i64,) = sqlx::query_as(
+            r#"SELECT COUNT(*) FROM moderation_cases WHERE organization_id = $1 AND status = 'pending'"#,
+        )
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        let (under_review_count,): (i64,) = sqlx::query_as(
+            r#"SELECT COUNT(*) FROM moderation_cases WHERE organization_id = $1 AND status = 'under_review'"#,
+        )
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Cases by priority
+        let by_priority: Vec<(i32, i64)> = sqlx::query_as(
+            r#"
+            SELECT priority, COUNT(*) as count
+            FROM moderation_cases
+            WHERE organization_id = $1 AND status IN ('pending', 'under_review')
+            GROUP BY priority
+            ORDER BY priority
+            "#,
+        )
+        .bind(org_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        // Average resolution time
+        let avg_resolution_time_hours: f64 = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (decided_at - created_at)) / 3600.0)::float, 0.0)
+            FROM moderation_cases
+            WHERE organization_id = $1 AND decided_at IS NOT NULL
+            "#,
+        )
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Overdue count (pending for more than 24 hours)
+        let (overdue_count,): (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(*) FROM moderation_cases
+            WHERE organization_id = $1
+                AND status IN ('pending', 'under_review')
+                AND created_at < NOW() - INTERVAL '24 hours'
+            "#,
+        )
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(ModerationQueueStats {
+            pending_count,
+            under_review_count,
+            by_priority: by_priority
+                .into_iter()
+                .map(|(p, c)| PriorityCount {
+                    priority: p,
+                    count: c,
+                })
+                .collect(),
+            by_violation_type: vec![], // Could be expanded
+            avg_resolution_time_hours,
+            overdue_count,
+        })
+    }
+
+    /// Get moderation queue statistics across the entire platform (all
+    /// organizations). DSA transparency metrics are platform-wide per the
+    /// PAP-40 tenancy decision and are exposed only to platform-operator
+    /// compliance roles (see `require_platform_compliance_role`). Mirrors
+    /// `get_moderation_queue_stats` with the `organization_id` filter removed.
+    pub async fn get_platform_moderation_queue_stats(
+        &self,
+    ) -> Result<ModerationQueueStats, SqlxError> {
         let (pending_count,): (i64,) =
             sqlx::query_as(r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'pending'"#)
                 .fetch_one(&self.pool)
@@ -513,10 +708,11 @@ impl ComplianceRepository {
         })
     }
 
-    /// Assign a moderation case.
+    /// Assign a moderation case, scoped to caller's organization.
     pub async fn assign_moderation_case(
         &self,
         id: Uuid,
+        org_id: Uuid,
         moderator_id: Uuid,
     ) -> Result<ModerationCase, SqlxError> {
         let case = sqlx::query_as::<_, ModerationCase>(
@@ -529,22 +725,24 @@ impl ComplianceRepository {
                     ELSE status
                 END,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $3
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(moderator_id)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await?;
 
         Ok(case)
     }
 
-    /// Take moderation action.
+    /// Take moderation action, scoped to caller's organization.
     pub async fn take_moderation_action(
         &self,
         id: Uuid,
+        org_id: Uuid,
         action: TakeModerationAction,
         decided_by: Uuid,
     ) -> Result<ModerationCase, SqlxError> {
@@ -568,7 +766,7 @@ impl ComplianceRepository {
                 decided_by = $6,
                 decided_at = NOW(),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $7
             RETURNING *
             "#,
         )
@@ -578,14 +776,25 @@ impl ComplianceRepository {
         .bind(&action.rationale)
         .bind(action.template_id)
         .bind(decided_by)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await?;
 
         Ok(case)
     }
 
-    /// File an appeal.
-    pub async fn file_appeal(&self, id: Uuid, reason: &str) -> Result<ModerationCase, SqlxError> {
+    /// File an appeal, scoped to the case's organization.
+    ///
+    /// The `organization_id` predicate is defense-in-depth against the
+    /// cross-tenant IDOR (PAP-60): even though the handler already verifies
+    /// ownership before calling this, the UPDATE itself refuses to touch a case
+    /// outside `org_id`, mirroring `decide_appeal`.
+    pub async fn file_appeal(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+        reason: &str,
+    ) -> Result<ModerationCase, SqlxError> {
         let case = sqlx::query_as::<_, ModerationCase>(
             r#"
             UPDATE moderation_cases SET
@@ -594,22 +803,24 @@ impl ComplianceRepository {
                 appeal_filed_at = NOW(),
                 status = 'appealed',
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $3
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(reason)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await?;
 
         Ok(case)
     }
 
-    /// Decide an appeal.
+    /// Decide an appeal, scoped to caller's organization.
     pub async fn decide_appeal(
         &self,
         id: Uuid,
+        org_id: Uuid,
         decision: &str,
         _rationale: &str,
         decided_by: Uuid,
@@ -627,7 +838,7 @@ impl ComplianceRepository {
                 appeal_decided_at = NOW(),
                 status = $4,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $5
             RETURNING *
             "#,
         )
@@ -635,6 +846,7 @@ impl ComplianceRepository {
         .bind(decision)
         .bind(decided_by)
         .bind(new_status)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await?;
 

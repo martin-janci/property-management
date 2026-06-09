@@ -1,3 +1,5 @@
+// ROADMAP(PAP-24): roadmap stub — handlers return 501. Unmounted in lib.rs (no /api/v1/developer
+// route) so callers get 404 instead of a false 501. Kept for the planned external-developer portal.
 //! Public API and Developer Portal routes (Epic 69).
 //!
 //! Provides endpoints for API key management, webhooks, rate limiting,

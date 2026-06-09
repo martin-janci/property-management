@@ -46,6 +46,11 @@ export const VoteDetailPage = lazy(() =>
   import('../features/voting').then((m) => ({ default: m.VoteDetailPage }))
 );
 
+// IoT / Smart-Building feature (Epic 14)
+export const IotDashboardPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.IotDashboardPage }))
+);
+
 // Disputes feature (Epic 77)
 export const DisputesPage = lazy(() =>
   import('../features/disputes').then((m) => ({ default: m.DisputesPage }))
