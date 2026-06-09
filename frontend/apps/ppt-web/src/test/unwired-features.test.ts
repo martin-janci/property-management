@@ -2,7 +2,7 @@
 /**
  * Unwired-feature guard (PAP-55 / WS-C — Stable Beta T2).
  *
- * Enforces the board decision recorded on PAP-28: the 18 built-but-unwired
+ * Enforces the board decision recorded on PAP-28: the built-but-unwired
  * ppt-web features stay OUT of the routing / nav surface (no dead-end links to
  * half-built screens for paying customers) while their code is RETAINED for a
  * later, deliberate wiring phase.
@@ -47,8 +47,8 @@ function routingSurfaceSources(): { file: string; content: string }[] {
 }
 
 describe('Unwired feature registry (PAP-55)', () => {
-  it('lists 18 features', () => {
-    expect(UNWIRED_FEATURES.length).toBe(18);
+  it('lists 11 features', () => {
+    expect(UNWIRED_FEATURES.length).toBe(11);
   });
 
   it('retains the code for every unwired feature (dir exists)', () => {

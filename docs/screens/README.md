@@ -39,19 +39,24 @@ Phase 2/3 add: init, update, review (with a visual UI), edit, render (mermaid), 
 ## ppt-web: hidden built-but-unwired features (not in nav)
 
 Per the Stable Beta board decision ([PAP-55](/PAP/issues/PAP-55) / WS-C, recorded
-on [PAP-28](/PAP/issues/PAP-28)), the following **18 ppt-web features are fully
+on [PAP-28](/PAP/issues/PAP-28)), the following **11 ppt-web features are fully
 built with live backends but intentionally NOT wired into the router or nav** —
 they are hidden from customers now and scheduled for deliberate wiring later. The
 code is retained, not deleted.
+
+(The original PAP-28 catalogue listed 18; [PAP-33](/PAP/issues/PAP-33) then
+**retired** 7 dead scaffolds — `migration`, `integrations`, `multi-currency`,
+`api-ecosystem`, `delegation`, `data-residency`, `packages` — deleting their
+code. Deleted features cannot be re-exposed, so the guard no longer tracks them;
+this list was reconciled 18 → 11 when PAP-55 landed on top of PAP-33.)
 
 Because they are not navigable, they have **no screen-map entries** here by design
 (a screen-map describes a reachable screen). When one is wired in a future phase,
 create its screen-map at that time and remove its slug from the registry below.
 
 `insurance` · `marketplace` · `forms` · `onboarding` · `critical-notifications` ·
-`migration` · `subscription` · `government-portal` · `integrations` ·
-`compliance` · `registry` · `multi-currency` · `portfolio-performance` ·
-`api-ecosystem` · `delegation` · `person-months` · `data-residency` · `packages`
+`subscription` · `government-portal` · `compliance` · `registry` ·
+`portfolio-performance` · `person-months`
 
 Source of truth / regression guard:
 `frontend/apps/ppt-web/src/features/unwired-features.ts` and its test
