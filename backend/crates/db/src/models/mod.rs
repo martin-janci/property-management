@@ -731,18 +731,6 @@ pub use public_api::{
     WebhookSubscriptionQuery as PublicApiWebhookSubscriptionQuery,
 };
 
-// Epic 70: Competitive Feature Enhancements
-pub mod competitive;
-
-pub use competitive::{
-    amenity_category, confidence_level, tour_type,
-    ComparableProperty as CompetitiveComparableProperty, ComparablePropertySummary,
-    ComparablesRequest, ComparablesResponse, ComparisonTableEntry, CompetitiveAnalysis,
-    CompetitiveFeaturesStatus, CreateTourHotspot, CreateVirtualTour, NearbyAmenity,
-    NeighborhoodInsights, NeighborhoodInsightsRequest, NeighborhoodInsightsResponse, PriceHistory,
-    PriceRange, PricingAnalysisRequest, PricingAnalysisResponse, PricingFactor, PricingSuggestion,
-    ReorderTours, TourHotspot, UpdateVirtualTour, VirtualTour, VirtualTourWithHotspots,
-};
 
 // Epic 71: Cross-Cutting Infrastructure
 pub mod infrastructure;
