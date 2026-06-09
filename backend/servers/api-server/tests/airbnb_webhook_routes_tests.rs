@@ -286,12 +286,13 @@ async fn legacy_delivery_without_event_id_is_recorded_under_synthetic_key(pool: 
     );
 
     // Exactly one synthetic ledger row exists for this delivery.
-    let synthetic_count: i64 =
-        sqlx::query("SELECT COUNT(*) AS n FROM airbnb_webhook_events WHERE event_id LIKE 'synthetic:%'")
-            .fetch_one(&pool)
-            .await
-            .expect("count query")
-            .get::<i64, _>("n");
+    let synthetic_count: i64 = sqlx::query(
+        "SELECT COUNT(*) AS n FROM airbnb_webhook_events WHERE event_id LIKE 'synthetic:%'",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("count query")
+    .get::<i64, _>("n");
     assert_eq!(
         synthetic_count, 1,
         "legacy delivery must be recorded under exactly one synthetic key"
