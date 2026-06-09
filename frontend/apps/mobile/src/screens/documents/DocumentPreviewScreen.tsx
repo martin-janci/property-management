@@ -56,7 +56,12 @@ interface DocumentPreviewScreenProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatBytes(bytes: number): string {
+/**
+ * Human-readable file size. Exported so the size label shown next to a
+ * downloaded/previewed document can be unit-tested at the boundaries
+ * (B / KB / MB) without rendering the RN tree.
+ */
+export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -96,8 +101,13 @@ function getFileIcon(type: Document['type']): string {
 /**
  * Download a remote file to the device cache directory and return the local
  * URI. Used before invoking expo-sharing (which requires a local URI).
+ *
+ * Exported so the cache-reuse behaviour (skip the network round-trip when a
+ * session-local copy already exists) can be unit-tested with a mocked
+ * expo-file-system — this is the load-bearing part of the download path that
+ * avoids re-fetching the presigned blob on every share.
  */
-async function downloadToCache(url: string, filename: string): Promise<string> {
+export async function downloadToCache(url: string, filename: string): Promise<string> {
   const dest = `${FileSystem.cacheDirectory ?? ''}${filename}`;
   const info = await FileSystem.getInfoAsync(dest);
   // Re-use cached copy if it's already there (session-local cache).
@@ -310,7 +320,12 @@ export function DocumentPreviewScreen({ document, onBack }: DocumentPreviewScree
 
 // ─── MIME / UTI helpers ───────────────────────────────────────────────────────
 
-function mimeTypeFromDocType(type: Document['type']): string {
+/**
+ * Map the app's coarse document type to a MIME type for expo-sharing.
+ * Exported for unit testing — a wrong MIME type silently breaks the
+ * Android share intent target resolution.
+ */
+export function mimeTypeFromDocType(type: Document['type']): string {
   switch (type) {
     case 'pdf':
       return 'application/pdf';
@@ -323,8 +338,8 @@ function mimeTypeFromDocType(type: Document['type']): string {
   }
 }
 
-/** iOS UTI used by expo-sharing. Ignored on Android. */
-function utiFromDocType(type: Document['type']): string | undefined {
+/** iOS UTI used by expo-sharing. Ignored on Android. Exported for unit testing. */
+export function utiFromDocType(type: Document['type']): string | undefined {
   if (!Platform.OS) return undefined; // safety guard for test env
   switch (type) {
     case 'pdf':

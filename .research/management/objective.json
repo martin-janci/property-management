@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-08T16:12:12Z",
-  "last_action": "empty",
-  "reason": "Finish-first inoperable: flat task-ids violate T21 epic_prefix shape, so reset to NONE; Phase 3 used the normal priority claim path. Env blocks (recurring): (1) gh unavailable -> Phase 0.5 lock skipped-gh-unavailable, GitHub I/O via MCP. (2) MCP identity == PR author martin-janci -> bot cannot self-approve PRs (422); Phase 5 reviewers + Phase 5.5 merge inoperable; PRs #1165 #1170 #1171 await human review. (3) archive-move push blocked: assignments-archive.json (~300KB) is too large to transmit via mcp push_files reliably and git push is 403; T19 terminal-in-active leak deferred (lossless, harmless to correctness). Operator: enable a working git push (or smaller archive) to let the dispatcher run archive-reconcile; run under a bot identity != PR author to unblock review->merge.",
+  "selected_at": "2026-06-09T18:13:51Z",
+  "last_action": "reset-invalid-feat-prefix",
+  "reason": "picker chose feat- epic (feat-82-4-swiftui-listing-detail-polish) which violates T21 shape (gap-N|pm-<role>|NONE); reset to NONE -> finish-first falls back to unfiltered pool",
   "stats_at_selection": {
-    "open": 0,
-    "claimable": 0
+    "open": 1,
+    "claimable": 1
   }
 }

@@ -48,13 +48,20 @@ interface MoveDocumentRequest {
 
 // ─── Flatten tree to a depth-first list for the scrollable folder picker ─────────
 
-interface FlatFolder {
+/** Shape of a depth-first flattened folder entry. Exported for unit tests. */
+export interface FlatFolder {
   id: string;
   name: string;
   depth: number;
 }
 
-function flattenTree(nodes: ApiFolderTreeNode[], depth = 0): FlatFolder[] {
+/**
+ * Depth-first flatten of the folder tree into a scrollable list. Each node
+ * gets a `depth` field used for visual indentation in the picker.
+ *
+ * Exported for unit-testing (feat-mobile-document-folder-organization).
+ */
+export function flattenTree(nodes: ApiFolderTreeNode[], depth = 0): FlatFolder[] {
   const result: FlatFolder[] = [];
   for (const node of nodes) {
     result.push({ id: node.id, name: node.name, depth });
