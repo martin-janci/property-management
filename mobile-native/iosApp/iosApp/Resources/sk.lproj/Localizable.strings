@@ -195,7 +195,7 @@
 "label_reduced" = "Znížená cena";
 "label_name_required" = "Meno *";
 "label_email_required" = "E-mail *";
-"label_phone_optional" = "Telefón (voliteľné)";
+"label_phone_optional" = "Telï¿½fón (voliteľné)";
 "label_message" = "Správa";
 
 /* Home Screen (additional) */
@@ -273,13 +273,14 @@
 "loading_listing" = "Načítava sa ponuka...";
 "failed_to_load_listing" = "Nepodarilo sa načítať ponuku";
 "view_on_map" = "Zobraziť na mape";
+"get_directions" = "Navigovať";
 "contact_via_inquiry" = "Kontaktovať cez dopyt";
 "send_inquiry" = "Odoslať dopyt";
 "property" = "Nehnuteľnosť";
 "inquiry_your_message" = "Vaša správa";
 "inquiry_contact_preference" = "Preferovaný kontakt";
 "inquiry_prefer_contact" = "Preferujem kontakt cez";
-"phone" = "Telefón";
+"phone" = "Telï¿½fón";
 "either" = "Akýkoľvek";
 "send" = "Odoslať";
 
