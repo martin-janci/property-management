@@ -20,6 +20,7 @@ use db::models::compliance::{
     CreateModerationCase, DsaReportStatus, EddStatus, ModeratedContentType, ModerationActionType,
     ModerationStatus, TakeModerationAction, ViolationType,
 };
+use db::models::{AuditAction, CreateAuditLog};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -94,6 +95,47 @@ fn require_moderator_role(user: &AuthUser) -> Result<(), (StatusCode, String)> {
             StatusCode::FORBIDDEN,
             "This endpoint requires moderator privileges".to_string(),
         )),
+    }
+}
+
+/// Emit a compliance audit record for an AML/EDD/DSA decision or state change.
+///
+/// Best-effort: a logging failure must never turn a successful compliance
+/// operation into a 500. We log the failure and continue, mirroring the
+/// convention in `routes/listings.rs::global_publish`. The substantive
+/// who/what/when (actor, tenant, resource, decision payload) lands in the
+/// `audit_logs` table so AML record-keeping and EU DSA Art. 17
+/// statement-of-reasons obligations (FR115) have a durable trail.
+async fn write_compliance_audit(
+    state: &AppState,
+    user: &AuthUser,
+    action: AuditAction,
+    resource_type: &str,
+    resource_id: Uuid,
+    details: serde_json::Value,
+) {
+    if let Err(e) = state
+        .audit_log_repo
+        .create(CreateAuditLog {
+            user_id: Some(user.user_id),
+            action,
+            resource_type: Some(resource_type.to_string()),
+            resource_id: Some(resource_id),
+            org_id: user.tenant_id,
+            details: Some(details),
+            old_values: None,
+            new_values: None,
+            ip_address: None,
+            user_agent: None,
+        })
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            resource_type = resource_type,
+            resource_id = %resource_id,
+            "Failed to write compliance audit log"
+        );
     }
 }
 
@@ -547,6 +589,21 @@ async fn review_aml_assessment(
             )
         })?;
 
+    write_compliance_audit(
+        &state,
+        &user,
+        AuditAction::ResourceUpdated,
+        "aml_assessment",
+        assessment.id,
+        serde_json::json!({
+            "operation": "review_aml_assessment",
+            "decision": req.decision.to_lowercase(),
+            "resulting_status": assessment.status,
+            "notes_provided": req.notes.is_some(),
+        }),
+    )
+    .await;
+
     let risk_factors: Vec<RiskFactor> = assessment
         .risk_factors
         .clone()
@@ -729,6 +786,21 @@ async fn initiate_edd(
             "Failed to initiate EDD".to_string(),
         )
     })?;
+
+    write_compliance_audit(
+        &state,
+        &user,
+        AuditAction::ResourceCreated,
+        "enhanced_due_diligence",
+        edd.id,
+        serde_json::json!({
+            "operation": "initiate_edd",
+            "resulting_status": edd.status,
+            "party_id": edd.party_id,
+            "aml_assessment_id": edd.aml_assessment_id,
+        }),
+    )
+    .await;
 
     let documents_requested: Vec<String> = edd
         .documents_requested
@@ -992,6 +1064,21 @@ async fn verify_edd_document(
             )
         })?;
 
+    write_compliance_audit(
+        &state,
+        &user,
+        AuditAction::ResourceUpdated,
+        "edd_document",
+        doc.id,
+        serde_json::json!({
+            "operation": "verify_edd_document",
+            "edd_id": edd_id,
+            "verification_status": req.status.to_lowercase(),
+            "rejection_provided": req.rejection_reason.is_some(),
+        }),
+    )
+    .await;
+
     Ok(Json(EddDocumentResponse {
         id: doc.id,
         document_type: doc.document_type,
@@ -1125,6 +1212,19 @@ async fn complete_edd(
                 "Failed to complete EDD".to_string(),
             )
         })?;
+
+    write_compliance_audit(
+        &state,
+        &user,
+        AuditAction::ResourceUpdated,
+        "enhanced_due_diligence",
+        edd.id,
+        serde_json::json!({
+            "operation": "complete_edd",
+            "resulting_status": edd.status,
+        }),
+    )
+    .await;
 
     let documents_requested: Vec<String> = edd
         .documents_requested
@@ -1425,6 +1525,20 @@ async fn publish_dsa_report(
                 "Failed to publish report".to_string(),
             )
         })?;
+
+    write_compliance_audit(
+        &state,
+        &user,
+        AuditAction::ResourceUpdated,
+        "dsa_transparency_report",
+        report.id,
+        serde_json::json!({
+            "operation": "publish_dsa_report",
+            "resulting_status": report.status,
+            "published_at": report.published_at,
+        }),
+    )
+    .await;
 
     Ok(Json(DsaTransparencyReportResponse {
         id: report.id,
@@ -1856,6 +1970,11 @@ async fn take_moderation_action(
     validate_text_field(&req.rationale, MAX_RATIONALE_LEN, "rationale")
         .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
 
+    // Capture the decision payload before it is moved into the repo call so it
+    // can be recorded as the DSA Art. 17 statement of reasons (action + rationale).
+    let moderation_action = req.action;
+    let rationale = req.rationale.clone();
+
     let action = TakeModerationAction {
         action: req.action,
         rationale: req.rationale,
@@ -1873,6 +1992,21 @@ async fn take_moderation_action(
                 "Failed to take action".to_string(),
             )
         })?;
+
+    write_compliance_audit(
+        &state,
+        &user,
+        AuditAction::ResourceUpdated,
+        "moderation_case",
+        case.id,
+        serde_json::json!({
+            "operation": "take_moderation_action",
+            "action": moderation_action,
+            "rationale": rationale,
+            "resulting_status": case.status,
+        }),
+    )
+    .await;
 
     let now = Utc::now();
     let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
@@ -1993,6 +2127,21 @@ async fn decide_appeal(
                 "Failed to decide appeal".to_string(),
             )
         })?;
+
+    write_compliance_audit(
+        &state,
+        &user,
+        AuditAction::ResourceUpdated,
+        "moderation_case",
+        case.id,
+        serde_json::json!({
+            "operation": "decide_appeal",
+            "decision": req.decision,
+            "rationale": req.rationale,
+            "resulting_status": case.status,
+        }),
+    )
+    .await;
 
     let now = Utc::now();
     let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
