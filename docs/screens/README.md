@@ -35,3 +35,27 @@ See `_template.md` for a full skeleton.
 - CI re-runs `validate --strict` on PRs that touch `docs/screens/**` or route files.
 
 Phase 2/3 add: init, update, review (with a visual UI), edit, render (mermaid), query.
+
+## ppt-web: hidden built-but-unwired features (not in nav)
+
+Per the Stable Beta board decision ([PAP-55](/PAP/issues/PAP-55) / WS-C, recorded
+on [PAP-28](/PAP/issues/PAP-28)), the following **18 ppt-web features are fully
+built with live backends but intentionally NOT wired into the router or nav** —
+they are hidden from customers now and scheduled for deliberate wiring later. The
+code is retained, not deleted.
+
+Because they are not navigable, they have **no screen-map entries** here by design
+(a screen-map describes a reachable screen). When one is wired in a future phase,
+create its screen-map at that time and remove its slug from the registry below.
+
+`insurance` · `marketplace` · `forms` · `onboarding` · `critical-notifications` ·
+`migration` · `subscription` · `government-portal` · `integrations` ·
+`compliance` · `registry` · `multi-currency` · `portfolio-performance` ·
+`api-ecosystem` · `delegation` · `person-months` · `data-residency` · `packages`
+
+Source of truth / regression guard:
+`frontend/apps/ppt-web/src/features/unwired-features.ts` and its test
+`frontend/apps/ppt-web/src/test/unwired-features.test.ts` (CI fails if any of
+these is re-wired into the routing surface without being removed from the list).
+(`meters` / `leases` are owned by [PAP-20](/PAP/issues/PAP-20); `voting` by
+[PAP-19](/PAP/issues/PAP-19) — those are being wired, not hidden.)
