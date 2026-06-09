@@ -166,19 +166,31 @@ async fn seed_unit(pool: &PgPool, building_id: Uuid, designation: &str) -> Uuid 
 /// Seed a minimal Airbnb connection so the listings/reservations handlers have
 /// something to load (they will fail at the Airbnb API call, not at "no
 /// connection found").
-async fn seed_airbnb_connection(pool: &PgPool, org_id: Uuid, unit_id: Uuid) -> Uuid {
+///
+/// `token_expires_at` — pass `None` for a token with no expiry, or `Some(ts)`
+/// to test the proactive-refresh path (set `ts` in the past or within the
+/// 5-minute buffer window).  The access token is stored as plaintext (no
+/// `enc:` prefix) so `decrypt_if_available` can return it without a live
+/// encryption key.
+async fn seed_airbnb_connection(
+    pool: &PgPool,
+    org_id: Uuid,
+    unit_id: Uuid,
+    token_expires_at: Option<chrono::DateTime<chrono::Utc>>,
+) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO rental_platform_connections (
             organization_id, unit_id, platform,
-            access_token, is_active
+            access_token, token_expires_at, is_active
         )
-        VALUES ($1, $2, 'airbnb', 'enc:test-token', true)
+        VALUES ($1, $2, 'airbnb', 'test-plaintext-token', $3, true)
         RETURNING id
         "#,
     )
     .bind(org_id)
     .bind(unit_id)
+    .bind(token_expires_at)
     .fetch_one(pool)
     .await
     .expect("seed airbnb connection")
@@ -527,4 +539,73 @@ async fn new_routes_are_mounted(pool: PgPool) {
             "route {method} {uri} must accept the expected method (got 405)"
         );
     }
+}
+
+// ===========================================================================
+// Token-refresh path coverage
+// ===========================================================================
+
+/// Verify that the `with_token_refresh` wrapper is exercised for the listings
+/// route when an Airbnb connection exists with an already-expired token.
+///
+/// # What this proves
+///
+/// 1. The route does NOT return 404 (no-connection guard) — the connection is
+///    found in the DB.
+/// 2. The route reaches the `with_token_refresh` code path: the token is
+///    decrypted, the proactive-refresh check fires (token is expired), a
+///    refresh is attempted, and — because no real Airbnb credentials are
+///    configured in CI — the Airbnb API call ultimately fails.
+/// 3. The failure surfaces as 502 BAD_GATEWAY (`CallFailed` or
+///    `RefreshFailed`), confirming the refresh wrapper was invoked rather than
+///    the handler short-circuiting at the connection-lookup step.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn listings_with_token_refresh_wrapper_invoked_on_expired_token(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Seed org + member user.
+    let org_id = seed_org(&pool, "tr-listings").await;
+    let user_id = seed_user(&pool, "tr-listings@test.local").await;
+    seed_membership(&pool, org_id, user_id).await;
+
+    // Seed a building and unit — required FK for rental_platform_connections.
+    let building_id = seed_building(&pool, org_id, "Token Refresh Test").await;
+    let unit_id = seed_unit(&pool, building_id, "101").await;
+
+    // Seed an Airbnb connection whose token expired 1 hour ago.
+    // Storing a plaintext token (no `enc:` prefix) ensures `decrypt_if_available`
+    // returns it as-is without needing a live encryption key.
+    let expired_at = Utc::now() - Duration::hours(1);
+    seed_airbnb_connection(&pool, org_id, unit_id, Some(expired_at)).await;
+
+    let token = mint_token(user_id, org_id);
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/listings");
+    let resp = app.execute(authed_get(&uri, &token)).await;
+
+    // The response must NOT be 404 (connection was found) and NOT be 500
+    // (decryption succeeded on the plaintext token).  The expected outcome is
+    // 502 because the Airbnb API call (or refresh attempt) fails without real
+    // credentials — this is the `CallFailed` / `RefreshFailed` branch of
+    // `with_token_refresh`.
+    assert_ne!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "with_token_refresh must not short-circuit at no-connection; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    assert_ne!(
+        resp.status,
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "plaintext token must decrypt without error; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+    assert_eq!(
+        resp.status,
+        StatusCode::BAD_GATEWAY,
+        "expired token path must reach Airbnb API call and return 502; got {}: {}",
+        resp.status,
+        resp.text()
+    );
 }
