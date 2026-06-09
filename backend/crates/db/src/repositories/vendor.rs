@@ -543,11 +543,7 @@ impl VendorRepository {
     }
 
     /// Delete a contract.
-    pub async fn delete_contract<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<bool, sqlx::Error>
+    pub async fn delete_contract<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -819,11 +815,7 @@ impl VendorRepository {
     }
 
     /// Delete an invoice.
-    pub async fn delete_invoice<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<bool, sqlx::Error>
+    pub async fn delete_invoice<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
