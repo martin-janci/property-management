@@ -9,12 +9,12 @@ implementations:
     component: AnnouncementsPage
     buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: partial
+    apiStatus: complete
   mobile:
     component: AnnouncementsScreen + AnnouncementDetailScreen
     buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: partial
+    apiStatus: complete
 endpoints:
   - announcements_list
   - announcements_get
@@ -120,6 +120,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-06-09 — agent: Coverage 6-2 — announcement web viewing + acknowledgment verified live; apiStatus flipped to reflect wired backend; route-wiring tests added.
 
 - 2026-06-05 — agent: test-gap-screen-map-drift-pr-1033-ppt — screen-map sync for PR #1033: AnnouncementsPageRoute now threads `isError`/`onRetry` (from `useAnnouncements` error + `refetch`) through AnnouncementsPage → AnnouncementList; AnnouncementList renders the designed error-503 tile as a `role="alert"` inline error + retry button (i18n `announcements.failedToLoad` + `common.retry`), mutually exclusive with loading/empty/loaded; added AnnouncementsPage.test.tsx regression (gap-79-1). Updated States (Empty/Loading/Error → Implemented) + Notes; docs-only, no code change here
 
