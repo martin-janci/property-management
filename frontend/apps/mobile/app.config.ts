@@ -175,10 +175,36 @@ export default ({ config }: ConfigContext): ExpoConfig => {
        * this into the generated `<app>.entitlements` at prebuild time.
        */
       associatedDomains: [...(config.ios?.associatedDomains ?? []), `applinks:${appLinkHost}`],
+      /**
+       * feat-mobile-push: APNs entitlement (required for iOS push).
+       * Without `aps-environment`, iOS never issues an APNs device token, so
+       * `Notifications.getDevicePushTokenAsync()` in `usePushNotifications`
+       * cannot register the device with the backend notification pipeline.
+       * `development` for debug/staging (APNs sandbox gateway), `production`
+       * for release builds (APNs production gateway). Expo writes this into the
+       * generated `<app>.entitlements` at prebuild time, alongside the
+       * universal-links entitlement above.
+       */
+      entitlements: {
+        ...(config.ios?.entitlements ?? {}),
+        'aps-environment': debugMode ? 'development' : 'production',
+      },
       infoPlist: {
         ...(config.ios?.infoPlist ?? {}),
         API_BASE_URL: apiBaseUrl,
         ENVIRONMENT: environment,
+        /**
+         * feat-mobile-push: enable background/silent push delivery.
+         * `remote-notification` lets iOS wake the app for background (data-only)
+         * FCM/APNs pushes so the notification-preference pipeline's background
+         * path runs — e.g. `syncBadgeFromData` mirroring the badge count onto
+         * the app icon for data-only messages. Without it, iOS drops the wake
+         * event and only foreground/tapped notifications are handled.
+         */
+        UIBackgroundModes: [
+          ...((config.ios?.infoPlist?.UIBackgroundModes as string[] | undefined) ?? []),
+          'remote-notification',
+        ],
         NSPhotoLibraryUsageDescription:
           'The app needs access to your photos to upload property images.',
         NSCameraUsageDescription:
