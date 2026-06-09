@@ -9,12 +9,12 @@ implementations:
     component: AnnouncementsPage
     buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: complete
+    apiStatus: partial
   mobile:
     component: AnnouncementsScreen + AnnouncementDetailScreen
     buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: complete
+    apiStatus: partial
 endpoints:
   - announcements_list
   - announcements_get
@@ -91,9 +91,9 @@ owner: pm-frontend
 
 ## States
 
-- **Empty (list)**: megaphone-icon tile + "Žiadne oznamy" + body + primary "+ Nový oznam" + secondary "Importovať z Faults" link. **Implemented** (PR #1033): `AnnouncementList` shows "No announcements found." when not loading, not error, and the list is empty.
-- **Loading (list)**: 8 skeleton cards (pin skel + 2 line skels + meta skels + progress-bar skel). Code currently renders a single spinner while `isLoading` (skeleton-card treatment still TBD).
-- **Error 503 (list)**: danger tile + retry; toolbar + sidebar interactive. **Implemented** (PR #1033): `AnnouncementList` renders an inline `role="alert"` danger tile (red-50 bg / red-200 border) with `announcements.failedToLoad` ("Failed to load announcements") + a `common.retry` button calling `onRetry` (route wrapper `refetch()`). Threaded `AnnouncementsPageRoute → AnnouncementsPage → AnnouncementList` via `isError`/`onRetry` props; mutually exclusive with loading/empty/loaded.
+- **Empty (list)**: megaphone-icon tile + "Žiadne oznamy" + body + primary "+ Nový oznam" + secondary "Importovať z Faults" link
+- **Loading (list)**: 8 skeleton cards (pin skel + 2 line skels + meta skels + progress-bar skel)
+- **Error 503 (list)**: danger tile + retry; toolbar + sidebar interactive
 - **Loaded (list)**: 8 cards covering 5 states; 2 selected with bulk bar; 1 pinned at top
 - **Detail (existing)**: as designed — published with delivery + ack stats
 
@@ -115,15 +115,13 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 - Audience meta currently free text ("All residents") — must become a tokenized chip set (All residents / Owners only / By unit / By role) tied to the audience-selector when composing.
 - Multi-language announcements (`Slovak · English` in details kv) — implementation must support per-language body editing + per-language read receipts; v1 may ship single-language only.
 - Mobile bottom-nav must drop the legacy 📢 emoji per SKILL.md non-negotiable.
-- **List error/retry wired (PR #1033):** the designed `error-503` artboard now has a code counterpart — `AnnouncementList` owns the loading/error/empty triad and the error tile carries a retry button (`onRetry → refetch()`, i18n `announcements.failedToLoad` + shared `common.retry`). Skeleton-card loading treatment (8 cards per design) is still TBD; code shows a single spinner.
+- **Comment-threading depth (Story 6.3)**: `AnnouncementComments` renders the discussion thread under the detail view (only when `commentsEnabled`). Threads are **capped at depth 3** for the reply affordance — the `Reply` button is suppressed once `depth >= 3`, and indentation (`marginLeft`) is clamped at `min(depth, 3) * 24px`. Deeper replies still render (so a server that returns depth-4+ data won't lose comments) but can't be replied to from the web UI; new replies fold into the depth-3 ancestor. Soft-deleted comments collapse to a `[This comment has been deleted]` tombstone (no content, no actions). Delete affordance shows for the comment owner OR a manager (`technical_manager` / `property_manager`). Any change to the max depth must stay in sync with the backend's comment-nesting limit and the mobile detail screen.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
-- 2026-06-09 — agent: Coverage 6-2 — announcement web viewing + acknowledgment verified live; apiStatus flipped to reflect wired backend; route-wiring tests added.
-
-- 2026-06-05 — agent: test-gap-screen-map-drift-pr-1033-ppt — screen-map sync for PR #1033: AnnouncementsPageRoute now threads `isError`/`onRetry` (from `useAnnouncements` error + `refetch`) through AnnouncementsPage → AnnouncementList; AnnouncementList renders the designed error-503 tile as a `role="alert"` inline error + retry button (i18n `announcements.failedToLoad` + `common.retry`), mutually exclusive with loading/empty/loaded; added AnnouncementsPage.test.tsx regression (gap-79-1). Updated States (Empty/Loading/Error → Implemented) + Notes; docs-only, no code change here
+- 2026-06-09 — agent: feat-6-3-announce-comments-web-ui — Coverage 6-3: added AnnouncementComments.test.tsx (14 cases) covering threading/replies, depth-3 reply cap, deleted-comment tombstone, add/reply wiring (parentId), owner/manager delete affordance, disabled + empty + loading states, Ctrl+Enter submit. Feature (component + api-client hooks + page wiring) already shipped under gap-6-3; this closes the test-coverage gap (mirrors #1190/#1196 pattern). Clarified comment-threading depth in Notes > Specific. ppt-web test/typecheck/biome clean.
 
 - 2026-05-27 — agent: gap-6-2-announcement-read-receipt-retry — Story 6.2 retry: added AnnouncementDetailScreen (mobile) with auto-fire POST /read on mount + acknowledge button; wired AnnouncementDetail case in mobile App.tsx; added auto-mark-read useEffect in ppt-web ViewAnnouncementPageInner (fire-and-forget on announcement load); ppt-web & mobile typecheck + biome clean; mobile component: AnnouncementsScreen + AnnouncementDetailScreen
 
