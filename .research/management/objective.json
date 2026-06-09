@@ -1,1 +1,11 @@
-{"schema_version":1,"epic_prefix":"feat-6-3-announce-comments-web-ui","selected_at":"2026-06-09T04:08:59Z","last_action":"select","reason":"Finish-first target feat-6-3-announce-comments-web-ui (closest-to-done, open=1 claimable=1). Env notes (2026-06-09 04:18Z run): gh unavailable -> lock skipped-gh-unavailable, all GitHub I/O via MCP. CORRECTION to prior note: merge IS operable -> author-bot merged 4 clean+green PRs this run (#1177 #1196 #1190 #1189) via mcp merge_pull_request squash; branch protection does NOT require non-author approval, so no formal review needed, only not-draft + CI-green + no-conflict. Reviews still posted as COMMENTs (self-approval 422). Inoperable: (a) #1165 approved but CONFLICTING -> needs manual git rebase (push 403, MCP update-branch 422); (b) #1197 verdict=changes (red CI test job, DB-backed run needed); (c) assignments-archive.json 314KB too large for mcp push_files -> terminal-in-active (T19) deferred, lossless.","stats_at_selection":{"open":42,"claimable":26}}
+{
+  "schema_version": 1,
+  "epic_prefix": "feat-6-4-announce-pin-unpin-web-ui",
+  "selected_at": "2026-06-09T06:06:23Z",
+  "last_action": "repick",
+  "reason": "prior target 'feat-6-3-announce-comments-web-ui' exhausted; closest-to-done is 'feat-6-4-announce-pin-unpin-web-ui' (open=1 claimable=1)",
+  "stats_at_selection": {
+    "open": 1,
+    "claimable": 1
+  }
+}
