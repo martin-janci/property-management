@@ -209,7 +209,7 @@ async fn list_policies_from_other_org_is_rejected(pool: PgPool) {
     let user_b = seed_user(&pool, "lst-pol-b@ins-idor.test").await;
 
     let repo = InsuranceRepository::new(pool.clone());
-    repo.create_policy(org_a, sample_policy("a1"))
+    repo.create_policy(&pool, org_a, sample_policy("a1"))
         .await
         .expect("seed policy in org A");
 
@@ -237,7 +237,7 @@ async fn get_policy_from_other_org_is_rejected(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_in_a = repo
-        .create_policy(org_a, sample_policy("a2"))
+        .create_policy(&pool, org_a, sample_policy("a2"))
         .await
         .expect("seed policy in org A");
 
@@ -264,7 +264,7 @@ async fn delete_policy_from_other_org_is_rejected(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_in_a = repo
-        .create_policy(org_a, sample_policy("a3"))
+        .create_policy(&pool, org_a, sample_policy("a3"))
         .await
         .expect("seed policy in org A");
 
@@ -298,10 +298,10 @@ async fn list_claims_from_other_org_is_rejected(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_in_a = repo
-        .create_policy(org_a, sample_policy("a4"))
+        .create_policy(&pool, org_a, sample_policy("a4"))
         .await
         .expect("seed policy in org A");
-    repo.create_claim(org_a, user_a, sample_claim(policy_in_a.id, "a4"))
+    repo.create_claim(&pool, org_a, user_a, sample_claim(policy_in_a.id, "a4"))
         .await
         .expect("seed claim in org A");
 
@@ -327,17 +327,17 @@ async fn repo_policies_are_scoped_to_owning_org(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_a = repo
-        .create_policy(org_a, sample_policy("repo-a"))
+        .create_policy(&pool, org_a, sample_policy("repo-a"))
         .await
         .expect("policy A");
     let _policy_b = repo
-        .create_policy(org_b, sample_policy("repo-b"))
+        .create_policy(&pool, org_b, sample_policy("repo-b"))
         .await
         .expect("policy B");
 
     // Org A's list contains only org A's policy.
     let listed_a = repo
-        .list_policies(org_a, InsurancePolicyQuery::default())
+        .list_policies(&pool, org_a, InsurancePolicyQuery::default())
         .await
         .expect("list A");
     assert_eq!(listed_a.len(), 1, "org A must see exactly its own policy");
@@ -351,7 +351,7 @@ async fn repo_policies_are_scoped_to_owning_org(pool: PgPool) {
 
     // Looking up org A's policy with org B's id returns nothing (closed IDOR).
     let cross = repo
-        .find_policy_by_id(org_b, policy_a.id)
+        .find_policy_by_id(&pool, org_b, policy_a.id)
         .await
         .expect("find with wrong org");
     assert!(
@@ -361,7 +361,7 @@ async fn repo_policies_are_scoped_to_owning_org(pool: PgPool) {
 
     // The legitimate owner can read it.
     let own = repo
-        .find_policy_by_id(org_a, policy_a.id)
+        .find_policy_by_id(&pool, org_a, policy_a.id)
         .await
         .expect("find with right org");
     assert!(own.is_some(), "org A must read its own policy by id");
@@ -380,25 +380,25 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_a = repo
-        .create_policy(org_a, sample_policy("repo-clm-a"))
+        .create_policy(&pool, org_a, sample_policy("repo-clm-a"))
         .await
         .expect("policy A");
     let policy_b = repo
-        .create_policy(org_b, sample_policy("repo-clm-b"))
+        .create_policy(&pool, org_b, sample_policy("repo-clm-b"))
         .await
         .expect("policy B");
     let claim_a = repo
-        .create_claim(org_a, user_a, sample_claim(policy_a.id, "repo-a"))
+        .create_claim(&pool, org_a, user_a, sample_claim(policy_a.id, "repo-a"))
         .await
         .expect("claim A");
     let _claim_b = repo
-        .create_claim(org_b, user_b, sample_claim(policy_b.id, "repo-b"))
+        .create_claim(&pool, org_b, user_b, sample_claim(policy_b.id, "repo-b"))
         .await
         .expect("claim B");
 
     // Org A's claim list contains only org A's claim.
     let listed_a = repo
-        .list_claims(org_a, InsuranceClaimQuery::default())
+        .list_claims(&pool, org_a, InsuranceClaimQuery::default())
         .await
         .expect("list A");
     assert_eq!(listed_a.len(), 1, "org A must see exactly its own claim");
@@ -409,7 +409,7 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 
     // Org B cannot read org A's claim by id.
     let cross = repo
-        .find_claim_with_policy(org_b, claim_a.id)
+        .find_claim_with_policy(&pool, org_b, claim_a.id)
         .await
         .expect("find with wrong org");
     assert!(
@@ -419,7 +419,7 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 
     // The legitimate owner can.
     let own = repo
-        .find_claim_with_policy(org_a, claim_a.id)
+        .find_claim_with_policy(&pool, org_a, claim_a.id)
         .await
         .expect("find with right org");
     assert!(own.is_some(), "org A must read its own claim by id");
@@ -478,7 +478,7 @@ async fn list_policies_returns_only_callers_own_org(pool: PgPool) {
     // Seed a policy owned by org A.
     let repo = InsuranceRepository::new(pool.clone());
     let policy_a = repo
-        .create_policy(org_a, sample_policy("positive-a"))
+        .create_policy(&pool, org_a, sample_policy("positive-a"))
         .await
         .expect("seed policy in org A");
 
