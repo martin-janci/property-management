@@ -1,3 +1,4 @@
+import MapKit
 import SwiftUI
 import shared
 
@@ -256,31 +257,66 @@ struct ListingDetailView: View {
             Text(String(localized: "location"))
                 .font(.headline)
 
-            // Map placeholder
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray5))
-                .frame(height: 160)
-                .overlay {
-                    VStack {
-                        Image(systemName: "map")
-                            .font(.largeTitle)
-                            .foregroundStyle(.secondary)
-                        Text(listing.address)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
+            // Inline map preview when coordinates are available, otherwise a
+            // graceful placeholder. Tapping either opens the full-screen
+            // ListingMapView. The preview is intentionally non-interactive
+            // (no gestures) so the parent ScrollView keeps vertical scrolling.
             Button {
                 coordinator.navigate(to: .listingMap(id: listingId))
             } label: {
-                HStack {
-                    Image(systemName: "map.fill")
-                    Text(String(localized: "view_on_map"))
+                ZStack(alignment: .bottomLeading) {
+                    if let coordinate = coordinate(for: listing) {
+                        Map(
+                            initialPosition: .region(
+                                MKCoordinateRegion(
+                                    center: coordinate,
+                                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                                )
+                            ),
+                            interactionModes: []
+                        ) {
+                            Marker(listing.title, coordinate: coordinate)
+                                .tint(Color.accentColor)
+                        }
+                        .frame(height: 160)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .allowsHitTesting(false)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray5))
+                            .frame(height: 160)
+                            .overlay {
+                                VStack {
+                                    Image(systemName: "map")
+                                        .font(.largeTitle)
+                                        .foregroundStyle(.secondary)
+                                    Text(listing.address)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                    }
+
+                    Label(String(localized: "view_on_map"), systemImage: "map.fill")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .padding(12)
                 }
-                .font(.subheadline)
             }
+            .buttonStyle(.plain)
         }
+    }
+
+    /// Builds a `CLLocationCoordinate2D` only when both lat/long are present.
+    private func coordinate(for listing: ListingDetailModel) -> CLLocationCoordinate2D? {
+        guard let lat = listing.latitude, let lon = listing.longitude else {
+            return nil
+        }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
     }
 
     private func agentCard(_ listing: ListingDetailModel) -> some View {
