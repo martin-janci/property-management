@@ -1363,18 +1363,11 @@ pub struct DsaReportDownloadResponse {
     pub expires_at: DateTime<Utc>,
 }
 
-/// Build a non-disclosing download reference for a DSA report.
-///
-/// PAP-47 / PAP-35: the stored `report_file_path` is an internal storage key
-/// and must never be returned to clients. When a report file exists we expose
-/// only the public API path to the download endpoint (which itself issues a
-/// short-lived presigned URL); otherwise `None`. Never the raw key/filesystem
-/// path.
-fn dsa_report_download_ref(id: Uuid, report_file_path: &Option<String>) -> Option<String> {
-    report_file_path
-        .as_ref()
-        .map(|_| format!("/api/v1/aml-dsa/dsa/reports/{id}/download"))
-}
+// NOTE: `dsa_report_download_ref` is defined once near the top of this module
+// (added by PAP-44). PAP-47 landed an identical second definition here, which
+// collided (E0428) once both were on `dev`; the duplicate has been removed.
+// The shared helper builds the opaque `/api/v1/aml-dsa/dsa/reports/{id}/download`
+// reference and never discloses the internal `report_file_path`.
 
 // ----------------------------------------------------------------------------
 // DSA transparency reports (Epic 67 / Story 67.3) — platform-VLOP model.
