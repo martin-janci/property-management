@@ -6,7 +6,7 @@
 #![allow(clippy::type_complexity)]
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, RequestPrincipal};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -82,6 +82,31 @@ fn require_compliance_role(user: &AuthUser) -> Result<(), (StatusCode, String)> 
             StatusCode::FORBIDDEN,
             "This endpoint requires compliance officer privileges".to_string(),
         )),
+    }
+}
+
+/// Restrict access to platform-operator compliance staff only.
+///
+/// SECURITY (PAP-46): DSA transparency reports are platform-wide — a period
+/// rollup of whole-service moderation metrics with no `organization_id`. Only
+/// the platform operator may read/generate/publish/download them. We gate on
+/// `PrincipalKind::Platform` (resolved from the trusted `users.principal_kind`
+/// column by the `RequestPrincipal` extractor), NOT on the JWT `TenantRole`: a
+/// tenant-scoped admin must never reach these handlers even if their per-org
+/// membership role happens to be SuperAdmin/PlatformAdmin. This mirrors the
+/// `admin-core` platform-principal model and is a distinct guard from
+/// `require_compliance_role`, which correctly gates the per-tenant AML/EDD
+/// handlers and must not be weakened.
+fn require_platform_compliance_role(
+    principal: &RequestPrincipal,
+) -> Result<(), (StatusCode, String)> {
+    if principal.is_platform() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            "This endpoint requires platform-operator compliance privileges".to_string(),
+        ))
     }
 }
 
@@ -1384,9 +1409,9 @@ pub struct DsaReportDownloadResponse {
 /// List DSA transparency reports.
 async fn list_dsa_reports(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<Vec<DsaTransparencyReportResponse>>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let reports = state
         .compliance_repo
@@ -1435,10 +1460,11 @@ async fn list_dsa_reports(
 /// Generate a new DSA transparency report.
 async fn generate_dsa_report(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     user: AuthUser,
     Json(req): Json<GenerateDsaReportRequest>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     // Bound the reporting period: end after start, not in the future, sane span.
     validate_report_period(req.period_start, req.period_end, Utc::now())
@@ -1486,10 +1512,10 @@ async fn generate_dsa_report(
 /// Get a specific DSA report.
 async fn get_dsa_report(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let report = state
         .compliance_repo
@@ -1534,10 +1560,11 @@ async fn get_dsa_report(
 /// Publish a DSA report.
 async fn publish_dsa_report(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let report = state
         .compliance_repo
@@ -1599,10 +1626,10 @@ async fn publish_dsa_report(
 /// client (that was the file-path disclosure flagged in the PAP-35 review).
 async fn download_dsa_report(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DsaReportDownloadResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let report = state
         .compliance_repo
@@ -1668,9 +1695,9 @@ pub struct DsaMetricsResponse {
 /// Get current DSA metrics.
 async fn get_dsa_metrics(
     State(state): State<AppState>,
-    user: AuthUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<DsaMetricsResponse>, (StatusCode, String)> {
-    require_compliance_role(&user)?;
+    require_platform_compliance_role(&principal)?;
 
     let stats = state
         .compliance_repo
@@ -2342,6 +2369,7 @@ async fn get_action_templates(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use db::models::PrincipalKind;
 
     fn sample_upload() -> UploadEddDocumentRequest {
         UploadEddDocumentRequest {
@@ -2523,5 +2551,31 @@ mod tests {
     #[test]
     fn download_ref_none_when_no_file() {
         assert!(dsa_report_download_ref(Uuid::nil(), &None).is_none());
+    }
+
+    // ----- platform-authz boundary (PAP-46) -----
+
+    fn principal(kind: PrincipalKind) -> RequestPrincipal {
+        RequestPrincipal {
+            user_id: Uuid::nil(),
+            kind,
+            effective_org: None,
+        }
+    }
+
+    #[test]
+    fn platform_principal_passes_dsa_guard() {
+        assert!(require_platform_compliance_role(&principal(PrincipalKind::Platform)).is_ok());
+    }
+
+    #[test]
+    fn tenant_scoped_principals_get_403_from_dsa_guard() {
+        // A customer-org admin (Staff principal) — even one whose per-org
+        // membership role is SuperAdmin/PlatformAdmin — must be rejected from
+        // the platform-wide DSA-report handlers, as must portal (Public) users.
+        for kind in [PrincipalKind::Staff, PrincipalKind::Public] {
+            let err = require_platform_compliance_role(&principal(kind)).unwrap_err();
+            assert_eq!(err.0, StatusCode::FORBIDDEN);
+        }
     }
 }
