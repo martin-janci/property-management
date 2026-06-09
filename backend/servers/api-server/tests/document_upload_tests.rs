@@ -986,7 +986,7 @@ async fn test_upload_denied_mime_types_rejected(pool: PgPool) {
 /// test below covers the failing edge end-to-end.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_upload_file_within_limit_succeeds(pool: PgPool) {
-    const ONE_MIB: usize = 1 * 1024 * 1024; // 1 MiB — well within 50 MiB limit
+    const ONE_MIB: usize = 1024 * 1024; // 1 MiB — well within 50 MiB limit
 
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
