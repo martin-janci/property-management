@@ -731,7 +731,6 @@ pub use public_api::{
     WebhookSubscriptionQuery as PublicApiWebhookSubscriptionQuery,
 };
 
-
 // Epic 71: Cross-Cutting Infrastructure
 pub mod infrastructure;
 
