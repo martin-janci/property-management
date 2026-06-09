@@ -753,7 +753,7 @@ async fn get_statistics(
     let out = async {
         let statistics = state
             .insurance_repo
-            .get_statistics(&mut **rls.conn(), org_id)
+            .get_statistics(rls.conn(), org_id)
             .await
             .map_err(|e| db_error("Failed to get statistics", e))?;
 
