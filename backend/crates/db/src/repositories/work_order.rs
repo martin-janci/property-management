@@ -1,4 +1,19 @@
 //! Work orders and maintenance scheduling repository (Epic 20).
+//!
+//! # RLS Integration (PAP-67)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on `work_orders`, `work_order_updates`,
+//! `maintenance_schedules`, and `schedule_executions`. Under `FORCE` the
+//! api-server's owner connection is no longer exempt, so a query issued on a
+//! connection without `app.current_org_id` set collapses to deny-all (own-org
+//! reads return empty, writes fail).
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+//! pool**, so there is no way to issue a query that bypasses RLS. This mirrors
+//! the `budget.rs` / `document.rs` precedent.
 
 use crate::models::{
     AddWorkOrderUpdate, CreateMaintenanceSchedule, CreateWorkOrder, MaintenanceCostSummary,
@@ -7,19 +22,25 @@ use crate::models::{
     WorkOrderUpdate, WorkOrderWithDetails,
 };
 use chrono::NaiveDate;
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for work order and maintenance schedule operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct WorkOrderRepository {
-    pool: PgPool,
-}
+pub struct WorkOrderRepository;
 
 impl WorkOrderRepository {
     /// Create a new repository instance.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // ========================================================================
@@ -27,12 +48,16 @@ impl WorkOrderRepository {
     // ========================================================================
 
     /// Create a new work order.
-    pub async fn create_work_order(
+    pub async fn create_work_order<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         data: CreateWorkOrder,
-    ) -> Result<WorkOrder, sqlx::Error> {
+    ) -> Result<WorkOrder, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO work_orders
@@ -59,14 +84,15 @@ impl WorkOrderRepository {
         .bind(data.tags.unwrap_or_default())
         .bind(sqlx::types::Json(data.metadata.unwrap_or_default()))
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Create work order from a fault (Story 20.2 - fault-triggered work orders).
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_from_fault(
+    pub async fn create_from_fault<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         fault_id: Uuid,
@@ -74,7 +100,10 @@ impl WorkOrderRepository {
         title: &str,
         description: &str,
         priority: &str,
-    ) -> Result<WorkOrder, sqlx::Error> {
+    ) -> Result<WorkOrder, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO work_orders
@@ -91,16 +120,20 @@ impl WorkOrderRepository {
         .bind(description)
         .bind(priority)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Create work order from a maintenance schedule.
-    pub async fn create_from_schedule(
+    pub async fn create_from_schedule<'e, E>(
         &self,
+        executor: E,
         schedule: &MaintenanceSchedule,
         due_date: NaiveDate,
-    ) -> Result<WorkOrder, sqlx::Error> {
+    ) -> Result<WorkOrder, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO work_orders
@@ -123,24 +156,38 @@ impl WorkOrderRepository {
         .bind(schedule.estimated_cost)
         .bind(schedule.id)
         .bind(schedule.created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find work order by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<WorkOrder>, sqlx::Error> {
+    ///
+    /// RLS scopes the result to the connection's org context, so a work order
+    /// owned by another organization is invisible (returns `None`).
+    pub async fn find_by_id<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<WorkOrder>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM work_orders WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List work orders with filters.
-    pub async fn list(
+    pub async fn list<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: WorkOrderQuery,
-    ) -> Result<Vec<WorkOrder>, sqlx::Error> {
+    ) -> Result<Vec<WorkOrder>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -185,16 +232,20 @@ impl WorkOrderRepository {
         .bind(query.due_after)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// List work orders with details (building name, equipment name, assignee name).
-    pub async fn list_with_details(
+    pub async fn list_with_details<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: WorkOrderQuery,
-    ) -> Result<Vec<WorkOrderWithDetails>, sqlx::Error> {
+    ) -> Result<Vec<WorkOrderWithDetails>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -237,19 +288,26 @@ impl WorkOrderRepository {
         .bind(query.priority)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update work order.
+    ///
+    /// Multi-statement (read-modify + status-change log), so it takes a
+    /// connection and reborrows it for each query.
     pub async fn update(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
         user_id: Uuid,
         data: UpdateWorkOrder,
     ) -> Result<WorkOrder, sqlx::Error> {
         // Get old work order for tracking changes
-        let old = self.find_by_id(id).await?.ok_or(sqlx::Error::RowNotFound)?;
+        let old = self
+            .find_by_id(&mut *conn, id)
+            .await?
+            .ok_or(sqlx::Error::RowNotFound)?;
 
         // Update the work order
         let updated: WorkOrder = sqlx::query_as(
@@ -297,13 +355,14 @@ impl WorkOrderRepository {
         .bind(data.resolution_notes)
         .bind(data.tags)
         .bind(data.metadata.map(sqlx::types::Json))
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Track status change
         if let Some(new_status) = &data.status {
             if &old.status != new_status {
                 self.add_update(
+                    &mut *conn,
                     id,
                     user_id,
                     "status_change",
@@ -319,10 +378,13 @@ impl WorkOrderRepository {
     }
 
     /// Delete work order.
-    pub async fn delete(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM work_orders WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -330,6 +392,7 @@ impl WorkOrderRepository {
     /// Assign work order to user or vendor.
     pub async fn assign(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
         user_id: Uuid,
         assigned_to: Option<Uuid>,
@@ -352,7 +415,7 @@ impl WorkOrderRepository {
         .bind(id)
         .bind(assigned_to)
         .bind(vendor_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Track assignment
@@ -365,6 +428,7 @@ impl WorkOrderRepository {
         };
 
         self.add_update(
+            &mut *conn,
             id,
             user_id,
             "assignment",
@@ -378,7 +442,12 @@ impl WorkOrderRepository {
     }
 
     /// Start work on a work order.
-    pub async fn start_work(&self, id: Uuid, user_id: Uuid) -> Result<WorkOrder, sqlx::Error> {
+    pub async fn start_work(
+        &self,
+        conn: &mut PgConnection,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<WorkOrder, sqlx::Error> {
         let updated: WorkOrder = sqlx::query_as(
             r#"
             UPDATE work_orders SET
@@ -390,10 +459,11 @@ impl WorkOrderRepository {
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         self.add_update(
+            &mut *conn,
             id,
             user_id,
             "status_change",
@@ -409,6 +479,7 @@ impl WorkOrderRepository {
     /// Complete work order.
     pub async fn complete(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
         user_id: Uuid,
         actual_cost: Option<rust_decimal::Decimal>,
@@ -429,10 +500,11 @@ impl WorkOrderRepository {
         .bind(id)
         .bind(actual_cost)
         .bind(resolution_notes)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         self.add_update(
+            &mut *conn,
             id,
             user_id,
             "status_change",
@@ -448,11 +520,15 @@ impl WorkOrderRepository {
     /// Put work order on hold.
     pub async fn put_on_hold(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
         user_id: Uuid,
         reason: &str,
     ) -> Result<WorkOrder, sqlx::Error> {
-        let old = self.find_by_id(id).await?.ok_or(sqlx::Error::RowNotFound)?;
+        let old = self
+            .find_by_id(&mut *conn, id)
+            .await?
+            .ok_or(sqlx::Error::RowNotFound)?;
 
         let updated: WorkOrder = sqlx::query_as(
             r#"
@@ -464,10 +540,11 @@ impl WorkOrderRepository {
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         self.add_update(
+            &mut *conn,
             id,
             user_id,
             "status_change",
@@ -481,15 +558,19 @@ impl WorkOrderRepository {
     }
 
     /// Add comment/update to work order.
-    pub async fn add_update(
+    pub async fn add_update<'e, E>(
         &self,
+        executor: E,
         work_order_id: Uuid,
         user_id: Uuid,
         update_type: &str,
         content: &str,
         old_value: Option<&str>,
         new_value: Option<&str>,
-    ) -> Result<WorkOrderUpdate, sqlx::Error> {
+    ) -> Result<WorkOrderUpdate, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO work_order_updates
@@ -504,18 +585,23 @@ impl WorkOrderRepository {
         .bind(content)
         .bind(old_value)
         .bind(new_value)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Add user comment to work order.
-    pub async fn add_comment(
+    pub async fn add_comment<'e, E>(
         &self,
+        executor: E,
         work_order_id: Uuid,
         user_id: Uuid,
         data: AddWorkOrderUpdate,
-    ) -> Result<WorkOrderUpdate, sqlx::Error> {
+    ) -> Result<WorkOrderUpdate, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         self.add_update(
+            executor,
             work_order_id,
             user_id,
             data.update_type.as_deref().unwrap_or("comment"),
@@ -527,12 +613,16 @@ impl WorkOrderRepository {
     }
 
     /// List updates/comments for a work order.
-    pub async fn list_updates(
+    pub async fn list_updates<'e, E>(
         &self,
+        executor: E,
         work_order_id: Uuid,
         limit: i32,
         offset: i32,
-    ) -> Result<Vec<WorkOrderUpdate>, sqlx::Error> {
+    ) -> Result<Vec<WorkOrderUpdate>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM work_order_updates
@@ -544,12 +634,19 @@ impl WorkOrderRepository {
         .bind(work_order_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get work order statistics.
-    pub async fn get_statistics(&self, org_id: Uuid) -> Result<WorkOrderStatistics, sqlx::Error> {
+    pub async fn get_statistics<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<WorkOrderStatistics, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT
@@ -565,16 +662,20 @@ impl WorkOrderRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get overdue work orders.
-    pub async fn list_overdue(
+    pub async fn list_overdue<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         limit: i32,
-    ) -> Result<Vec<WorkOrder>, sqlx::Error> {
+    ) -> Result<Vec<WorkOrder>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM work_orders
@@ -587,7 +688,7 @@ impl WorkOrderRepository {
         )
         .bind(org_id)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -596,12 +697,16 @@ impl WorkOrderRepository {
     // ========================================================================
 
     /// Create a maintenance schedule.
-    pub async fn create_schedule(
+    pub async fn create_schedule<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         data: CreateMaintenanceSchedule,
-    ) -> Result<MaintenanceSchedule, sqlx::Error> {
+    ) -> Result<MaintenanceSchedule, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Calculate first next_due_date based on start_date
         let next_due = data.start_date;
 
@@ -643,27 +748,35 @@ impl WorkOrderRepository {
         ))
         .bind(sqlx::types::Json(data.metadata.unwrap_or_default()))
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find schedule by ID.
-    pub async fn find_schedule_by_id(
+    pub async fn find_schedule_by_id<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<MaintenanceSchedule>, sqlx::Error> {
+    ) -> Result<Option<MaintenanceSchedule>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM maintenance_schedules WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List schedules with filters.
-    pub async fn list_schedules(
+    pub async fn list_schedules<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: ScheduleQuery,
-    ) -> Result<Vec<MaintenanceSchedule>, sqlx::Error> {
+    ) -> Result<Vec<MaintenanceSchedule>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -688,16 +801,20 @@ impl WorkOrderRepository {
         .bind(query.due_before)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update schedule.
-    pub async fn update_schedule(
+    pub async fn update_schedule<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         data: UpdateMaintenanceSchedule,
-    ) -> Result<MaintenanceSchedule, sqlx::Error> {
+    ) -> Result<MaintenanceSchedule, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE maintenance_schedules SET
@@ -744,25 +861,32 @@ impl WorkOrderRepository {
                 .map(|c| sqlx::types::Json(serde_json::json!(c))),
         )
         .bind(data.metadata.map(sqlx::types::Json))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Delete schedule.
-    pub async fn delete_schedule(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_schedule<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM maintenance_schedules WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
 
     /// Activate/deactivate schedule.
-    pub async fn set_schedule_active(
+    pub async fn set_schedule_active<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         is_active: bool,
-    ) -> Result<MaintenanceSchedule, sqlx::Error> {
+    ) -> Result<MaintenanceSchedule, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE maintenance_schedules SET
@@ -774,16 +898,20 @@ impl WorkOrderRepository {
         )
         .bind(id)
         .bind(is_active)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get schedules due for execution.
-    pub async fn get_due_schedules(
+    pub async fn get_due_schedules<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         days_ahead: i32,
-    ) -> Result<Vec<MaintenanceSchedule>, sqlx::Error> {
+    ) -> Result<Vec<MaintenanceSchedule>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM maintenance_schedules
@@ -797,13 +925,17 @@ impl WorkOrderRepository {
         )
         .bind(org_id)
         .bind(days_ahead)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update schedule after work order created.
+    ///
+    /// Multi-statement (records an execution row, then advances the schedule),
+    /// so it takes a connection.
     pub async fn mark_schedule_executed(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
         work_order_id: Uuid,
     ) -> Result<MaintenanceSchedule, sqlx::Error> {
@@ -818,7 +950,7 @@ impl WorkOrderRepository {
         )
         .bind(id)
         .bind(work_order_id)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await?;
 
         // Update schedule next_due_date
@@ -835,13 +967,14 @@ impl WorkOrderRepository {
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// Skip a scheduled maintenance.
     pub async fn skip_schedule_execution(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
         reason: &str,
     ) -> Result<MaintenanceSchedule, sqlx::Error> {
@@ -856,7 +989,7 @@ impl WorkOrderRepository {
         )
         .bind(id)
         .bind(reason)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await?;
 
         // Update next_due_date
@@ -872,17 +1005,21 @@ impl WorkOrderRepository {
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// Get upcoming schedules.
-    pub async fn get_upcoming_schedules(
+    pub async fn get_upcoming_schedules<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         days_ahead: i32,
         limit: i32,
-    ) -> Result<Vec<UpcomingSchedule>, sqlx::Error> {
+    ) -> Result<Vec<UpcomingSchedule>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT
@@ -906,17 +1043,21 @@ impl WorkOrderRepository {
         .bind(org_id)
         .bind(days_ahead)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get execution history for a schedule.
-    pub async fn list_executions(
+    pub async fn list_executions<'e, E>(
         &self,
+        executor: E,
         schedule_id: Uuid,
         limit: i32,
         offset: i32,
-    ) -> Result<Vec<ScheduleExecution>, sqlx::Error> {
+    ) -> Result<Vec<ScheduleExecution>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM schedule_executions
@@ -928,7 +1069,7 @@ impl WorkOrderRepository {
         .bind(schedule_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -937,12 +1078,19 @@ impl WorkOrderRepository {
     // ========================================================================
 
     /// Get service history for equipment.
-    pub async fn get_service_history(
+    ///
+    /// RLS on `work_orders` scopes this to the connection's org, so the query is
+    /// implicitly tenant-bounded even though it is keyed by `equipment_id`.
+    pub async fn get_service_history<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         limit: i32,
         offset: i32,
-    ) -> Result<Vec<ServiceHistoryEntry>, sqlx::Error> {
+    ) -> Result<Vec<ServiceHistoryEntry>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT
@@ -965,17 +1113,21 @@ impl WorkOrderRepository {
         .bind(equipment_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get maintenance cost summary by type.
-    pub async fn get_cost_summary(
+    pub async fn get_cost_summary<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         start_date: NaiveDate,
         end_date: NaiveDate,
-    ) -> Result<Vec<MaintenanceCostSummary>, sqlx::Error> {
+    ) -> Result<Vec<MaintenanceCostSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT
@@ -995,17 +1147,23 @@ impl WorkOrderRepository {
         .bind(org_id)
         .bind(start_date)
         .bind(end_date)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get service history for building.
-    pub async fn get_building_service_history(
+    ///
+    /// RLS on `work_orders` scopes this to the connection's org.
+    pub async fn get_building_service_history<'e, E>(
         &self,
+        executor: E,
         building_id: Uuid,
         limit: i32,
         offset: i32,
-    ) -> Result<Vec<ServiceHistoryEntry>, sqlx::Error> {
+    ) -> Result<Vec<ServiceHistoryEntry>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT
@@ -1028,7 +1186,7 @@ impl WorkOrderRepository {
         .bind(building_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -1037,18 +1195,25 @@ impl WorkOrderRepository {
     // ========================================================================
 
     /// Process due schedules and create work orders.
-    pub async fn process_due_schedules(&self, org_id: Uuid) -> Result<Vec<WorkOrder>, sqlx::Error> {
-        let schedules = self.get_due_schedules(org_id, 0).await?;
+    ///
+    /// Multi-statement loop, so it takes a connection and reborrows it per
+    /// schedule.
+    pub async fn process_due_schedules(
+        &self,
+        conn: &mut PgConnection,
+        org_id: Uuid,
+    ) -> Result<Vec<WorkOrder>, sqlx::Error> {
+        let schedules = self.get_due_schedules(&mut *conn, org_id, 0).await?;
         let mut created_orders = Vec::new();
 
         for schedule in schedules {
             // Create work order from schedule
             let work_order = self
-                .create_from_schedule(&schedule, schedule.next_due_date)
+                .create_from_schedule(&mut *conn, &schedule, schedule.next_due_date)
                 .await?;
 
             // Mark schedule as executed
-            self.mark_schedule_executed(schedule.id, work_order.id)
+            self.mark_schedule_executed(&mut *conn, schedule.id, work_order.id)
                 .await?;
 
             created_orders.push(work_order);
