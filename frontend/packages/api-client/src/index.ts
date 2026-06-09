@@ -30,6 +30,7 @@ export * from './generated';
 export * from './government-portal';
 export * from './integrations';
 export * from './messaging';
+export * from './meters';
 export * from './mfa';
 export * from './migration';
 export * from './neighbors';
