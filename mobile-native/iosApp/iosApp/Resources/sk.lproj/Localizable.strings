@@ -195,7 +195,7 @@
 "label_reduced" = "Znížená cena";
 "label_name_required" = "Meno *";
 "label_email_required" = "E-mail *";
-"label_phone_optional" = "Telï¿½fón (voliteľné)";
+"label_phone_optional" = "Telefón (voliteľné)";
 "label_message" = "Správa";
 
 /* Home Screen (additional) */
@@ -280,7 +280,7 @@
 "inquiry_your_message" = "Vaša správa";
 "inquiry_contact_preference" = "Preferovaný kontakt";
 "inquiry_prefer_contact" = "Preferujem kontakt cez";
-"phone" = "Telï¿½fón";
+"phone" = "Telefón";
 "either" = "Akýkoľvek";
 "send" = "Odoslať";
 
