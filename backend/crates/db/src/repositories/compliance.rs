@@ -542,11 +542,10 @@ impl ComplianceRepository {
     pub async fn get_platform_moderation_queue_stats(
         &self,
     ) -> Result<ModerationQueueStats, SqlxError> {
-        let (pending_count,): (i64,) = sqlx::query_as(
-            r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'pending'"#,
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let (pending_count,): (i64,) =
+            sqlx::query_as(r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'pending'"#)
+                .fetch_one(&self.pool)
+                .await?;
 
         let (under_review_count,): (i64,) = sqlx::query_as(
             r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'under_review'"#,
