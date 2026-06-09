@@ -116,10 +116,13 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 - Multi-language announcements (`Slovak · English` in details kv) — implementation must support per-language body editing + per-language read receipts; v1 may ship single-language only.
 - Mobile bottom-nav must drop the legacy 📢 emoji per SKILL.md non-negotiable.
 - **List error/retry wired (PR #1033):** the designed `error-503` artboard now has a code counterpart — `AnnouncementList` owns the loading/error/empty triad and the error tile carries a retry button (`onRetry → refetch()`, i18n `announcements.failedToLoad` + shared `common.retry`). Skeleton-card loading treatment (8 cards per design) is still TBD; code shows a single spinner.
+- **Comment-threading depth (Story 6.3)**: `AnnouncementComments` renders the discussion thread under the detail view (only when `commentsEnabled`). Threads are **capped at depth 3** for the reply affordance — the `Reply` button is suppressed once `depth >= 3`, and indentation (`marginLeft`) is clamped at `min(depth, 3) * 24px`. Deeper replies still render (so a server that returns depth-4+ data won't lose comments) but can't be replied to from the web UI; new replies fold into the depth-3 ancestor. Soft-deleted comments collapse to a `[This comment has been deleted]` tombstone (no content, no actions). Delete affordance shows for the comment owner OR a manager (`technical_manager` / `property_manager`). Any change to the max depth must stay in sync with the backend's comment-nesting limit and the mobile detail screen.
 
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-06-09 — agent: feat-6-3-announce-comments-web-ui — Coverage 6-3: added AnnouncementComments.test.tsx (14 cases) covering threading/replies, depth-3 reply cap, deleted-comment tombstone, add/reply wiring (parentId), owner/manager delete affordance, disabled + empty + loading states, Ctrl+Enter submit. Feature (component + api-client hooks + page wiring) already shipped under gap-6-3; this closes the test-coverage gap (mirrors #1190/#1196 pattern). Clarified comment-threading depth in Notes > Specific. ppt-web test/typecheck/biome clean.
 
 - 2026-06-09 — agent: Coverage 6-2 — announcement web viewing + acknowledgment verified live; apiStatus flipped to reflect wired backend; route-wiring tests added.
 
