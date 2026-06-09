@@ -119,7 +119,7 @@ async fn seed_moderation_case(pool: &PgPool, org_id: Uuid, reported_by: Uuid) ->
            RETURNING id"#,
     )
     .bind(Uuid::new_v4())
-    .bind(Uuid::new_v4())
+    .bind(reported_by)
     .bind(org_id)
     .bind(reported_by)
     .fetch_one(pool)
