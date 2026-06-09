@@ -8,7 +8,9 @@
 //! so every query MUST run on a connection that has `app.current_org_id` set or
 //! it collapses to deny-all. Each handler therefore acquires an [`RlsConnection`]
 //! (which validates tenant membership and sets the org/user GUCs on a dedicated
-//! connection) and passes `&mut **rls.conn()` to the repository. The
+//! connection) and passes that connection to the repository (`&mut **rls.conn()`
+//! to the generic-`Executor` methods, `rls.conn()` to the `&mut PgConnection`
+//! ones, which deref-coerce). The
 //! authoritative organization is `rls.tenant_id()` — the tenant the caller was
 //! validated against — not a client-supplied `organization_id`, so the SQL org
 //! filter and the RLS context can never disagree. Cross-tenant access is blocked
@@ -226,7 +228,7 @@ async fn get_dashboard(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .get_fund_dashboard(&mut **rls.conn(), org_id)
+        .get_fund_dashboard(rls.conn(), org_id)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to get dashboard: {}", e)));
@@ -243,7 +245,7 @@ async fn get_fund_health(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .get_fund_health_report(&mut **rls.conn(), org_id, fund_id)
+        .get_fund_health_report(rls.conn(), org_id, fund_id)
         .await
         .map(Json)
         .map_err(|e| repo_error("get health report", "Fund not found", e));
@@ -266,7 +268,7 @@ async fn list_schedules(
     let out = state
         .reserve_fund_repo
         .list_contribution_schedules(
-            &mut **rls.conn(),
+            rls.conn(),
             org_id,
             fund_id,
             query.active_only.unwrap_or(false),
@@ -288,7 +290,7 @@ async fn create_schedule(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .create_contribution_schedule(&mut **rls.conn(), org_id, fund_id, req)
+        .create_contribution_schedule(rls.conn(), org_id, fund_id, req)
         .await
         .map(Json)
         .map_err(|e| repo_error("create schedule", "Fund not found", e));
@@ -349,7 +351,7 @@ async fn record_transaction(
     let user_id = rls.user_id();
     let out = state
         .reserve_fund_repo
-        .record_transaction(&mut **rls.conn(), org_id, fund_id, req, user_id)
+        .record_transaction(rls.conn(), org_id, fund_id, req, user_id)
         .await
         .map(Json)
         .map_err(|e| repo_error("record transaction", "Fund not found", e));
@@ -367,7 +369,7 @@ async fn transfer_funds(
     let user_id = rls.user_id();
     let out = state
         .reserve_fund_repo
-        .transfer_funds(&mut **rls.conn(), org_id, req, user_id)
+        .transfer_funds(rls.conn(), org_id, req, user_id)
         .await
         .map(Json)
         .map_err(|e| repo_error("transfer funds", "Fund not found", e));
@@ -388,7 +390,7 @@ async fn list_policies(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .list_investment_policies(&mut **rls.conn(), org_id, fund_id)
+        .list_investment_policies(rls.conn(), org_id, fund_id)
         .await
         .map(Json)
         .map_err(|e| repo_error("list policies", "Fund not found", e));
@@ -406,7 +408,7 @@ async fn create_policy(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .create_investment_policy(&mut **rls.conn(), org_id, fund_id, req)
+        .create_investment_policy(rls.conn(), org_id, fund_id, req)
         .await
         .map(Json)
         .map_err(|e| repo_error("create policy", "Fund not found", e));
@@ -423,7 +425,7 @@ async fn get_active_policy(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .get_active_investment_policy(&mut **rls.conn(), org_id, fund_id)
+        .get_active_investment_policy(rls.conn(), org_id, fund_id)
         .await
         .map(Json)
         .map_err(|e| repo_error("get active policy", "Fund not found", e));
@@ -445,7 +447,7 @@ async fn create_projection(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .create_projection(&mut **rls.conn(), org_id, fund_id, req)
+        .create_projection(rls.conn(), org_id, fund_id, req)
         .await
         .map(Json)
         .map_err(|e| repo_error("create projection", "Fund not found", e));
@@ -462,7 +464,7 @@ async fn get_current_projection(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .get_current_projection(&mut **rls.conn(), org_id, fund_id)
+        .get_current_projection(rls.conn(), org_id, fund_id)
         .await
         .map(Json)
         .map_err(|e| repo_error("get projection", "Fund not found", e));
@@ -479,7 +481,7 @@ async fn get_projection_items(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .get_projection_items(&mut **rls.conn(), org_id, projection_id)
+        .get_projection_items(rls.conn(), org_id, projection_id)
         .await
         .map(Json)
         .map_err(|e| repo_error("get projection items", "Projection not found", e));
@@ -497,7 +499,7 @@ async fn add_projection_items(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .add_projection_items(&mut **rls.conn(), org_id, projection_id, items)
+        .add_projection_items(rls.conn(), org_id, projection_id, items)
         .await
         .map(Json)
         .map_err(|e| repo_error("add projection items", "Projection not found", e));
@@ -518,7 +520,7 @@ async fn list_components(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .list_components(&mut **rls.conn(), org_id, fund_id)
+        .list_components(rls.conn(), org_id, fund_id)
         .await
         .map(Json)
         .map_err(|e| repo_error("list components", "Fund not found", e));
@@ -536,7 +538,7 @@ async fn create_component(
     let org_id = rls.tenant_id();
     let out = state
         .reserve_fund_repo
-        .create_component(&mut **rls.conn(), org_id, fund_id, req)
+        .create_component(rls.conn(), org_id, fund_id, req)
         .await
         .map(Json)
         .map_err(|e| repo_error("create component", "Fund not found", e));
