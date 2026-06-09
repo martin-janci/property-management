@@ -1356,6 +1356,38 @@ pub struct GenerateDsaReportRequest {
     pub period_end: DateTime<Utc>,
 }
 
+/// Short-lived presigned download URL for a DSA report file.
+#[derive(Debug, Serialize)]
+pub struct DsaReportDownloadResponse {
+    pub url: String,
+    pub expires_at: DateTime<Utc>,
+}
+
+/// Build a non-disclosing download reference for a DSA report.
+///
+/// PAP-47 / PAP-35: the stored `report_file_path` is an internal storage key
+/// and must never be returned to clients. When a report file exists we expose
+/// only the public API path to the download endpoint (which itself issues a
+/// short-lived presigned URL); otherwise `None`. Never the raw key/filesystem
+/// path.
+fn dsa_report_download_ref(id: Uuid, report_file_path: &Option<String>) -> Option<String> {
+    report_file_path
+        .as_ref()
+        .map(|_| format!("/api/v1/aml-dsa/dsa/reports/{id}/download"))
+}
+
+// ----------------------------------------------------------------------------
+// DSA transparency reports (Epic 67 / Story 67.3) — platform-VLOP model.
+//
+// Per the PAP-40 -> PAP-47 decision, DSA transparency reporting is a
+// PLATFORM-LEVEL regulatory artifact (32bit is the regulated VLOP/intermediary
+// under the EU DSA), not a per-tenant one. These reports are platform-wide by
+// design: every handler below is gated to platform roles via
+// `require_compliance_role` (SuperAdmin/PlatformAdmin) and accepts NO
+// client-supplied org/tenant filter, so scope cannot be narrowed or injected
+// from request input.
+// ----------------------------------------------------------------------------
+
 /// List DSA transparency reports.
 async fn list_dsa_reports(
     State(state): State<AppState>,
@@ -1568,11 +1600,15 @@ async fn publish_dsa_report(
 }
 
 /// Download DSA report as PDF.
+///
+/// PAP-47 / PAP-35: returns a short-lived presigned URL generated from the
+/// stored storage key — the raw `report_file_path` is NEVER returned to the
+/// client (that was the file-path disclosure flagged in the PAP-35 review).
 async fn download_dsa_report(
     State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<DsaReportDownloadResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
     let report = state
@@ -1588,18 +1624,41 @@ async fn download_dsa_report(
         })?
         .ok_or((StatusCode::NOT_FOUND, format!("Report {} not found", id)))?;
 
-    // Return a scoped, opaque download reference keyed by report id rather than
-    // disclosing the internal filesystem path (`report_file_path`).
-    match dsa_report_download_ref(report.id, &report.report_file_path) {
-        Some(download_url) => Ok(Json(serde_json::json!({
-            "report_id": report.id,
-            "download_url": download_url
-        }))),
-        None => Err((
-            StatusCode::NOT_FOUND,
-            "Report file not yet generated".to_string(),
-        )),
-    }
+    let file_key = report.report_file_path.ok_or((
+        StatusCode::NOT_FOUND,
+        "Report file not yet generated".to_string(),
+    ))?;
+
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        tracing::error!("Storage service not configured — DSA report downloads unavailable");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Report storage is not configured.".to_string(),
+        )
+    })?;
+
+    let filename = format!("dsa-transparency-report-{id}.pdf");
+    let presigned = storage
+        .generate_download_url(
+            &file_key,
+            &filename,
+            "application/pdf",
+            Some(storage.download_ttl_secs()),
+        )
+        .await
+        .map_err(|e| {
+            // Log the internal key for diagnostics; never surface it to the client.
+            tracing::error!(error = %e, report_id = %id, "Failed to presign DSA report download");
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Unable to generate download URL. Please try again later.".to_string(),
+            )
+        })?;
+
+    Ok(Json(DsaReportDownloadResponse {
+        url: presigned.url,
+        expires_at: presigned.expires_at,
+    }))
 }
 
 /// DSA metrics for current period.
