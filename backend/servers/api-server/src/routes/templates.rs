@@ -319,11 +319,12 @@ async fn get_template(
 ) -> Result<Json<TemplateDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
     match state
         .document_template_repo
-        .find_by_id_with_details(id)
+        .find_by_id_with_details(id, tenant.tenant_id)
         .await
     {
         Ok(Some(template)) => {
-            // Verify the template belongs to the requesting user's organization
+            // Defense-in-depth: the query is already org-scoped (PAP-63), so a
+            // cross-tenant row can never reach here. Keep the guard as a belt.
             if template.template.organization_id != tenant.tenant_id {
                 return Err((
                     StatusCode::NOT_FOUND,
@@ -383,8 +384,12 @@ async fn update_template(
         ));
     }
 
-    // Check template exists
-    let existing = match state.document_template_repo.find_by_id(id).await {
+    // Check template exists within the caller's organization (PAP-63)
+    let existing = match state
+        .document_template_repo
+        .find_by_id(id, tenant.tenant_id)
+        .await
+    {
         Ok(Some(t)) => t,
         Ok(None) => {
             return Err((
@@ -454,7 +459,11 @@ async fn update_template(
         placeholders: req.placeholders,
     };
 
-    match state.document_template_repo.update(id, data).await {
+    match state
+        .document_template_repo
+        .update(id, tenant.tenant_id, data)
+        .await
+    {
         Ok(template) => Ok(Json(TemplateActionResponse {
             message: "Template updated".to_string(),
             template,
@@ -504,8 +513,12 @@ async fn delete_template(
         ));
     }
 
-    // Check template exists
-    match state.document_template_repo.find_by_id(id).await {
+    // Check template exists within the caller's organization (PAP-63)
+    match state
+        .document_template_repo
+        .find_by_id(id, tenant.tenant_id)
+        .await
+    {
         Ok(Some(_)) => {}
         Ok(None) => {
             return Err((
@@ -525,7 +538,11 @@ async fn delete_template(
         }
     }
 
-    match state.document_template_repo.delete(id).await {
+    match state
+        .document_template_repo
+        .delete(id, tenant.tenant_id)
+        .await
+    {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(e) => {
             tracing::error!("Failed to delete template: {}", e);
@@ -567,8 +584,8 @@ async fn generate_document(
     let user_id = auth.user_id;
     let org_id = tenant.tenant_id;
 
-    // Get template
-    let template = match state.document_template_repo.find_by_id(id).await {
+    // Get template (scoped to the caller's organization — PAP-63)
+    let template = match state.document_template_repo.find_by_id(id, org_id).await {
         Ok(Some(t)) => t,
         Ok(None) => {
             rls.release().await;
