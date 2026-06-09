@@ -29,6 +29,7 @@ export * from './forms';
 export * from './generated';
 export * from './government-portal';
 export * from './integrations';
+export * from './iot';
 export * from './messaging';
 export * from './mfa';
 export * from './migration';
