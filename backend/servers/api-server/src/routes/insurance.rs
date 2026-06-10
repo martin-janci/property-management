@@ -4,18 +4,26 @@
 //!
 //! # Authentication & tenancy (SECURITY-CRITICAL)
 //!
-//! Every handler derives the owning organization from the verified
-//! [`RequestPrincipal`] (built from the bearer JWT + host-resolved tenant),
-//! never from a client-supplied `organization_id` query param / request-body
-//! field. The previous implementation read tenancy from
-//! `query.building_id.unwrap_or_default()` (a placeholder that resolved to
-//! `Uuid::nil()` when absent) on the list endpoints, and accepted an
-//! `?organization_id=` query param / body `organization_id` on the
-//! get/mutate endpoints. Both let any caller read or mutate another org's
-//! policies/claims (a cross-tenant IDOR) and produced empty/garbage results
-//! for legitimate callers. See issue #826.
+//! # RLS (PAP-67)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on every insurance table, so
+//! each query MUST run on a connection that has `app.current_org_id` set or it
+//! collapses to deny-all. Each handler therefore acquires an [`RlsConnection`]
+//! (which validates tenant membership and sets the org/user GUCs on a dedicated
+//! connection) and passes `&mut **rls.conn()` to the repository. The
+//! authoritative organization is `rls.tenant_id()` — the tenant the caller was
+//! validated against — not a client-supplied `organization_id`, so the SQL org
+//! filter and the RLS context can never disagree. Cross-tenant access is blocked
+//! by RLS: a by-id read of another org's row returns no row (`404`), and a write
+//! targeting another org fails the policy's `WITH CHECK`. `rls.release()` clears
+//! the context before the connection returns to the pool.
+//!
+//! This replaces the previous `RequestPrincipal` + `require_org_id` scheme that
+//! derived the org from the principal but ran every query on a raw pool (issue
+//! #826 closed the client-supplied-org IDOR; PAP-67 closes the deny-all under
+//! `FORCE` and pushes cross-tenant enforcement into the database).
 
-use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -37,27 +45,24 @@ use uuid::Uuid;
 use crate::state::AppState;
 
 // ============================================
-// Helper Functions
+// Error Helpers
 // ============================================
 
-/// Resolve the effective tenant (organization) id from a verified
-/// [`RequestPrincipal`].
-///
-/// Insurance data is per-tenant by definition. A platform-kind principal
-/// hitting the platform host has no `effective_org` — for those callers we
-/// refuse with 403 rather than fall back to a wildcard / nil org. Non-platform
-/// principals without a host-resolved tenant never reach this point because
-/// `RequestPrincipal` rejects them earlier.
-fn require_org_id(principal: &RequestPrincipal) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
-    principal.effective_org.ok_or_else(|| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "TENANT_REQUIRED",
-                "Insurance endpoints require a tenant-resolved request",
-            )),
-        )
-    })
+/// Map a repository error to a `500` with a stable code, logging the cause.
+fn db_error(msg: &'static str, e: sqlx::Error) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!("{}: {:?}", msg, e);
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DB_ERROR", msg)),
+    )
+}
+
+/// Build a `404` response.
+fn not_found(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", msg)),
+    )
 }
 
 // ============================================
@@ -122,8 +127,8 @@ impl From<ListClaimsQuery> for db::models::InsuranceClaimQuery {
 
 /// Request to create a policy.
 ///
-/// The owning organization is derived from the authenticated principal, never
-/// from the request body (issue #826).
+/// The owning organization is derived from the RLS-validated tenant
+/// (`rls.tenant_id()`), never from the request body (issue #826).
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct CreatePolicyRequest {
     #[serde(flatten)]
@@ -284,145 +289,105 @@ pub fn router() -> Router<AppState> {
 /// List insurance policies.
 async fn list_policies(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Query(query): Query<ListPoliciesQuery>,
-    principal: RequestPrincipal,
 ) -> Result<Json<ListPoliciesResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: the org is derived from the verified principal, never from a
-    // client-supplied query param (issue #826 — was `building_id.unwrap_or_default()`).
-    let org_id = require_org_id(&principal)?;
-
-    let policies = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .list_policies(org_id, query.into())
+        .list_policies(&mut **rls.conn(), org_id, query.into())
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(ListPoliciesResponse { policies }))
+        .map(|policies| Json(ListPoliciesResponse { policies }))
+        .map_err(|e| db_error("Failed to list policies", e));
+    rls.release().await;
+    out
 }
 
 /// Create a new insurance policy.
 async fn create_policy(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(payload): Json<CreatePolicyRequest>,
 ) -> Result<Json<InsurancePolicy>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let policy = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .create_policy(org_id, payload.data)
+        .create_policy(&mut **rls.conn(), org_id, payload.data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(policy))
+        .map(Json)
+        .map_err(|e| db_error("Failed to create policy", e));
+    rls.release().await;
+    out
 }
 
 /// Get a policy by ID.
 async fn get_policy(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(policy_id): Path<Uuid>,
-    principal: RequestPrincipal,
 ) -> Result<Json<InsurancePolicy>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let policy = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .find_policy_by_id(org_id, policy_id)
+        .find_policy_by_id(&mut **rls.conn(), org_id, policy_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Policy not found")),
-            )
-        })?;
-
-    Ok(Json(policy))
+        .map_err(|e| db_error("Failed to get policy", e))
+        .and_then(|p| p.map(Json).ok_or_else(|| not_found("Policy not found")));
+    rls.release().await;
+    out
 }
 
 /// Update a policy.
 async fn update_policy(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(policy_id): Path<Uuid>,
-    principal: RequestPrincipal,
     Json(payload): Json<UpdatePolicyRequest>,
 ) -> Result<Json<InsurancePolicy>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let policy = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .update_policy(org_id, policy_id, payload.data)
+        .update_policy(&mut **rls.conn(), org_id, policy_id, payload.data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Policy not found")),
-            )
-        })?;
-
-    Ok(Json(policy))
+        .map_err(|e| db_error("Failed to update policy", e))
+        .and_then(|p| p.map(Json).ok_or_else(|| not_found("Policy not found")));
+    rls.release().await;
+    out
 }
 
 /// Delete a policy.
 async fn delete_policy(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(policy_id): Path<Uuid>,
-    principal: RequestPrincipal,
 ) -> Result<Json<DeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let success = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .delete_policy(org_id, policy_id)
+        .delete_policy(&mut **rls.conn(), org_id, policy_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(DeleteResponse { success }))
+        .map(|success| Json(DeleteResponse { success }))
+        .map_err(|e| db_error("Failed to delete policy", e));
+    rls.release().await;
+    out
 }
 
 /// Get expiring policies.
 async fn get_expiring_policies(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Query(params): Query<ExpiringQuery>,
-    principal: RequestPrincipal,
 ) -> Result<Json<ExpiringPoliciesResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
+    let org_id = rls.tenant_id();
     let days_ahead = params.days_ahead.unwrap_or(30);
-
-    let policies = state
+    let out = state
         .insurance_repo
-        .get_expiring_policies(org_id, days_ahead)
+        .get_expiring_policies(&mut **rls.conn(), org_id, days_ahead)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(ExpiringPoliciesResponse { policies }))
+        .map(|policies| Json(ExpiringPoliciesResponse { policies }))
+        .map_err(|e| db_error("Failed to get expiring policies", e));
+    rls.release().await;
+    out
 }
 
 // ============================================
@@ -432,62 +397,50 @@ async fn get_expiring_policies(
 /// List policy documents.
 async fn list_policy_documents(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(policy_id): Path<Uuid>,
-    _principal: RequestPrincipal,
 ) -> Result<Json<PolicyDocumentsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let documents = state
+    let out = state
         .insurance_repo
-        .list_policy_documents(policy_id)
+        .list_policy_documents(&mut **rls.conn(), policy_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(PolicyDocumentsResponse { documents }))
+        .map(|documents| Json(PolicyDocumentsResponse { documents }))
+        .map_err(|e| db_error("Failed to list policy documents", e));
+    rls.release().await;
+    out
 }
 
 /// Add document to policy.
 async fn add_policy_document(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(policy_id): Path<Uuid>,
-    _principal: RequestPrincipal,
     Json(payload): Json<AddPolicyDocument>,
 ) -> Result<Json<InsurancePolicyDocument>, (StatusCode, Json<ErrorResponse>)> {
-    let document = state
+    let out = state
         .insurance_repo
-        .add_policy_document(policy_id, payload)
+        .add_policy_document(&mut **rls.conn(), policy_id, payload)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(document))
+        .map(Json)
+        .map_err(|e| db_error("Failed to add policy document", e));
+    rls.release().await;
+    out
 }
 
 /// Remove document from policy.
 async fn remove_policy_document(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path((policy_id, document_id)): Path<(Uuid, Uuid)>,
-    _principal: RequestPrincipal,
 ) -> Result<Json<DeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let success = state
+    let out = state
         .insurance_repo
-        .remove_policy_document(policy_id, document_id)
+        .remove_policy_document(&mut **rls.conn(), policy_id, document_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(DeleteResponse { success }))
+        .map(|success| Json(DeleteResponse { success }))
+        .map_err(|e| db_error("Failed to remove policy document", e));
+    rls.release().await;
+    out
 }
 
 // ============================================
@@ -497,89 +450,67 @@ async fn remove_policy_document(
 /// List policy reminders.
 async fn list_reminders(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(policy_id): Path<Uuid>,
-    _principal: RequestPrincipal,
 ) -> Result<Json<RemindersResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let reminders = state
+    let out = state
         .insurance_repo
-        .list_policy_reminders(policy_id)
+        .list_policy_reminders(&mut **rls.conn(), policy_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(RemindersResponse { reminders }))
+        .map(|reminders| Json(RemindersResponse { reminders }))
+        .map_err(|e| db_error("Failed to list reminders", e));
+    rls.release().await;
+    out
 }
 
 /// Create reminder for policy.
 async fn create_reminder(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(policy_id): Path<Uuid>,
-    _principal: RequestPrincipal,
     Json(payload): Json<CreateRenewalReminder>,
 ) -> Result<Json<InsuranceRenewalReminder>, (StatusCode, Json<ErrorResponse>)> {
-    let reminder = state
+    let out = state
         .insurance_repo
-        .create_reminder(policy_id, payload)
+        .create_reminder(&mut **rls.conn(), policy_id, payload)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(reminder))
+        .map(Json)
+        .map_err(|e| db_error("Failed to create reminder", e));
+    rls.release().await;
+    out
 }
 
 /// Update a reminder.
 async fn update_reminder(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(reminder_id): Path<Uuid>,
-    _principal: RequestPrincipal,
     Json(payload): Json<UpdateRenewalReminder>,
 ) -> Result<Json<InsuranceRenewalReminder>, (StatusCode, Json<ErrorResponse>)> {
-    let reminder = state
+    let out = state
         .insurance_repo
-        .update_reminder(reminder_id, payload)
+        .update_reminder(&mut **rls.conn(), reminder_id, payload)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Reminder not found")),
-            )
-        })?;
-
-    Ok(Json(reminder))
+        .map_err(|e| db_error("Failed to update reminder", e))
+        .and_then(|r| r.map(Json).ok_or_else(|| not_found("Reminder not found")));
+    rls.release().await;
+    out
 }
 
 /// Delete a reminder.
 async fn delete_reminder(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(reminder_id): Path<Uuid>,
-    _principal: RequestPrincipal,
 ) -> Result<Json<DeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let success = state
+    let out = state
         .insurance_repo
-        .delete_reminder(reminder_id)
+        .delete_reminder(&mut **rls.conn(), reminder_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(DeleteResponse { success }))
+        .map(|success| Json(DeleteResponse { success }))
+        .map_err(|e| db_error("Failed to delete reminder", e));
+    rls.release().await;
+    out
 }
 
 // ============================================
@@ -589,236 +520,171 @@ async fn delete_reminder(
 /// List insurance claims.
 async fn list_claims(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Query(query): Query<ListClaimsQuery>,
-    principal: RequestPrincipal,
 ) -> Result<Json<ListClaimsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: the org is derived from the verified principal, never from a
-    // client-supplied query param (issue #826 — was `building_id.unwrap_or_default()`).
-    let org_id = require_org_id(&principal)?;
-
-    let claims = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .list_claims(org_id, query.into())
+        .list_claims(&mut **rls.conn(), org_id, query.into())
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(ListClaimsResponse { claims }))
+        .map(|claims| Json(ListClaimsResponse { claims }))
+        .map_err(|e| db_error("Failed to list claims", e));
+    rls.release().await;
+    out
 }
 
 /// Create a new insurance claim.
 async fn create_claim(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(payload): Json<CreateClaimRequest>,
 ) -> Result<Json<InsuranceClaim>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let claim = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .insurance_repo
-        .create_claim(org_id, principal.user_id, payload.data)
+        .create_claim(&mut **rls.conn(), org_id, user_id, payload.data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(claim))
+        .map(Json)
+        .map_err(|e| db_error("Failed to create claim", e));
+    rls.release().await;
+    out
 }
 
 /// Get a claim by ID.
 async fn get_claim(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    principal: RequestPrincipal,
 ) -> Result<Json<InsuranceClaimWithPolicy>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let claim = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .find_claim_with_policy(org_id, claim_id)
+        .find_claim_with_policy(&mut **rls.conn(), org_id, claim_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Claim not found")),
-            )
-        })?;
-
-    Ok(Json(claim))
+        .map_err(|e| db_error("Failed to get claim", e))
+        .and_then(|c| c.map(Json).ok_or_else(|| not_found("Claim not found")));
+    rls.release().await;
+    out
 }
 
 /// Update a claim.
 async fn update_claim(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    principal: RequestPrincipal,
     Json(payload): Json<UpdateClaimRequest>,
 ) -> Result<Json<InsuranceClaim>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let claim = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .update_claim(org_id, claim_id, payload.data)
+        .update_claim(&mut **rls.conn(), org_id, claim_id, payload.data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Claim not found")),
-            )
-        })?;
-
-    Ok(Json(claim))
+        .map_err(|e| db_error("Failed to update claim", e))
+        .and_then(|c| c.map(Json).ok_or_else(|| not_found("Claim not found")));
+    rls.release().await;
+    out
 }
 
 /// Submit a claim for review.
 async fn submit_claim(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    principal: RequestPrincipal,
 ) -> Result<Json<InsuranceClaim>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let claim = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .insurance_repo
-        .submit_claim(org_id, claim_id, principal.user_id)
+        .submit_claim(&mut **rls.conn(), org_id, claim_id, user_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "NOT_FOUND",
-                    "Claim not found or already submitted",
-                )),
-            )
-        })?;
-
-    Ok(Json(claim))
+        .map_err(|e| db_error("Failed to submit claim", e))
+        .and_then(|c| {
+            c.map(Json)
+                .ok_or_else(|| not_found("Claim not found or already submitted"))
+        });
+    rls.release().await;
+    out
 }
 
 /// Review a claim (approve/deny).
 async fn review_claim(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    principal: RequestPrincipal,
     Json(payload): Json<ReviewClaimRequest>,
 ) -> Result<Json<InsuranceClaim>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let claim = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .insurance_repo
         .review_claim(
+            &mut **rls.conn(),
             org_id,
             claim_id,
-            principal.user_id,
+            user_id,
             &payload.status,
             payload.approved_amount,
             payload.denial_reason.as_deref(),
             payload.resolution_notes.as_deref(),
         )
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Claim not found")),
-            )
-        })?;
-
-    Ok(Json(claim))
+        .map_err(|e| db_error("Failed to review claim", e))
+        .and_then(|c| c.map(Json).ok_or_else(|| not_found("Claim not found")));
+    rls.release().await;
+    out
 }
 
 /// Record payment for a claim.
 async fn record_claim_payment(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    principal: RequestPrincipal,
     Json(payload): Json<RecordClaimPaymentRequest>,
 ) -> Result<Json<InsuranceClaim>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let claim = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .record_claim_payment(org_id, claim_id, payload.payment_amount)
+        .record_claim_payment(&mut **rls.conn(), org_id, claim_id, payload.payment_amount)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Claim not found")),
-            )
-        })?;
-
-    Ok(Json(claim))
+        .map_err(|e| db_error("Failed to record claim payment", e))
+        .and_then(|c| c.map(Json).ok_or_else(|| not_found("Claim not found")));
+    rls.release().await;
+    out
 }
 
 /// Delete a claim (only drafts).
 async fn delete_claim(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    principal: RequestPrincipal,
 ) -> Result<Json<DeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let success = state
+    let org_id = rls.tenant_id();
+    let out = state
         .insurance_repo
-        .delete_claim(org_id, claim_id)
+        .delete_claim(&mut **rls.conn(), org_id, claim_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(DeleteResponse { success }))
+        .map(|success| Json(DeleteResponse { success }))
+        .map_err(|e| db_error("Failed to delete claim", e));
+    rls.release().await;
+    out
 }
 
 /// Get claim history.
 async fn get_claim_history(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    _principal: RequestPrincipal,
 ) -> Result<Json<ClaimHistoryResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let history = state
+    let out = state
         .insurance_repo
-        .get_claim_history(claim_id)
+        .get_claim_history(&mut **rls.conn(), claim_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(ClaimHistoryResponse { history }))
+        .map(|history| Json(ClaimHistoryResponse { history }))
+        .map_err(|e| db_error("Failed to get claim history", e));
+    rls.release().await;
+    out
 }
 
 // ============================================
@@ -828,62 +694,50 @@ async fn get_claim_history(
 /// List claim documents.
 async fn list_claim_documents(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    _principal: RequestPrincipal,
 ) -> Result<Json<ClaimDocumentsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let documents = state
+    let out = state
         .insurance_repo
-        .list_claim_documents(claim_id)
+        .list_claim_documents(&mut **rls.conn(), claim_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(ClaimDocumentsResponse { documents }))
+        .map(|documents| Json(ClaimDocumentsResponse { documents }))
+        .map_err(|e| db_error("Failed to list claim documents", e));
+    rls.release().await;
+    out
 }
 
 /// Add document to claim.
 async fn add_claim_document(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(claim_id): Path<Uuid>,
-    _principal: RequestPrincipal,
     Json(payload): Json<AddClaimDocument>,
 ) -> Result<Json<InsuranceClaimDocument>, (StatusCode, Json<ErrorResponse>)> {
-    let document = state
+    let out = state
         .insurance_repo
-        .add_claim_document(claim_id, payload)
+        .add_claim_document(&mut **rls.conn(), claim_id, payload)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(document))
+        .map(Json)
+        .map_err(|e| db_error("Failed to add claim document", e));
+    rls.release().await;
+    out
 }
 
 /// Remove document from claim.
 async fn remove_claim_document(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path((claim_id, document_id)): Path<(Uuid, Uuid)>,
-    _principal: RequestPrincipal,
 ) -> Result<Json<DeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let success = state
+    let out = state
         .insurance_repo
-        .remove_claim_document(claim_id, document_id)
+        .remove_claim_document(&mut **rls.conn(), claim_id, document_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    Ok(Json(DeleteResponse { success }))
+        .map(|success| Json(DeleteResponse { success }))
+        .map_err(|e| db_error("Failed to remove claim document", e));
+    rls.release().await;
+    out
 }
 
 // ============================================
@@ -893,47 +747,37 @@ async fn remove_claim_document(
 /// Get insurance statistics.
 async fn get_statistics(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
 ) -> Result<Json<StatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_org_id(&principal)?;
-    let statistics = state
-        .insurance_repo
-        .get_statistics(org_id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+    let org_id = rls.tenant_id();
+    let out = async {
+        let statistics = state
+            .insurance_repo
+            .get_statistics(rls.conn(), org_id)
+            .await
+            .map_err(|e| db_error("Failed to get statistics", e))?;
 
-    let claims_by_status = state
-        .insurance_repo
-        .get_claim_summary_by_status(org_id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        let claims_by_status = state
+            .insurance_repo
+            .get_claim_summary_by_status(&mut **rls.conn(), org_id)
+            .await
+            .map_err(|e| db_error("Failed to get claim summary", e))?;
 
-    let policies_by_type = state
-        .insurance_repo
-        .get_policy_summary_by_type(org_id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        let policies_by_type = state
+            .insurance_repo
+            .get_policy_summary_by_type(&mut **rls.conn(), org_id)
+            .await
+            .map_err(|e| db_error("Failed to get policy summary", e))?;
 
-    Ok(Json(StatisticsResponse {
-        statistics,
-        claims_by_status,
-        policies_by_type,
-    }))
+        Ok(Json(StatisticsResponse {
+            statistics,
+            claims_by_status,
+            policies_by_type,
+        }))
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 // ============================================

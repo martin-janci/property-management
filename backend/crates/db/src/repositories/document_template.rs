@@ -20,6 +20,10 @@ impl DocumentTemplateRepository {
     }
 
     /// Create a new template.
+    ///
+    /// `template_type` is a Postgres enum (`document_template_type`) but the
+    /// model decodes it as `String`, so every query that returns it must cast
+    /// it to text — `SELECT *` / `RETURNING *` fail to decode (PAP-133).
     pub async fn create(&self, data: CreateTemplate) -> Result<DocumentTemplate, SqlxError> {
         let placeholders = serde_json::to_value(&data.placeholders).unwrap();
 
@@ -30,7 +34,9 @@ impl DocumentTemplateRepository {
                 content, placeholders, created_by
             )
             VALUES ($1, $2, $3, $4::document_template_type, $5, $6, $7)
-            RETURNING *
+            RETURNING id, organization_id, name, description,
+                template_type::text AS template_type, content, placeholders,
+                usage_count, created_by, created_at, updated_at, deleted_at
             "#,
         )
         .bind(data.organization_id)
@@ -58,7 +64,10 @@ impl DocumentTemplateRepository {
     ) -> Result<Option<DocumentTemplate>, SqlxError> {
         sqlx::query_as::<_, DocumentTemplate>(
             r#"
-            SELECT * FROM document_templates
+            SELECT id, organization_id, name, description,
+                template_type::text AS template_type, content, placeholders,
+                usage_count, created_by, created_at, updated_at, deleted_at
+            FROM document_templates
             WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
             "#,
         )
@@ -80,7 +89,10 @@ impl DocumentTemplateRepository {
         let row = sqlx::query(
             r#"
             SELECT
-                t.*,
+                t.id, t.organization_id, t.name, t.description,
+                t.template_type::text AS template_type, t.content,
+                t.placeholders, t.usage_count, t.created_by, t.created_at,
+                t.updated_at, t.deleted_at,
                 u.name as created_by_name
             FROM document_templates t
             JOIN users u ON u.id = t.created_by
@@ -123,7 +135,8 @@ impl DocumentTemplateRepository {
         sqlx::query_as::<_, TemplateSummary>(
             r#"
             SELECT
-                id, name, description, template_type, usage_count,
+                id, name, description,
+                template_type::text AS template_type, usage_count,
                 jsonb_array_length(placeholders) as placeholder_count,
                 created_at
             FROM document_templates
@@ -190,7 +203,9 @@ impl DocumentTemplateRepository {
                 placeholders = COALESCE($7, placeholders),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-            RETURNING *
+            RETURNING id, organization_id, name, description,
+                template_type::text AS template_type, content, placeholders,
+                usage_count, created_by, created_at, updated_at, deleted_at
             "#,
         )
         .bind(id)
