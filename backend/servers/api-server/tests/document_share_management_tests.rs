@@ -271,8 +271,7 @@ async fn test_non_manager_non_creator_is_forbidden(pool: PgPool) {
     // A second user joins the SAME org as a plain resident (not a manager,
     // not the document creator).
     let outsider = TestUser::new();
-    let (outsider_token, _refresh) =
-        common::create_authenticated_user(&app, &outsider).await;
+    let (outsider_token, _refresh) = common::create_authenticated_user(&app, &outsider).await;
     let outsider_id = user_id_for(&pool, &outsider.email).await;
     seed_membership(&pool, org_id, outsider_id, "resident").await;
 
