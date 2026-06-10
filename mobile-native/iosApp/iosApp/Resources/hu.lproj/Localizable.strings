@@ -273,6 +273,7 @@
 "loading_listing" = "Ajánlat betöltése...";
 "failed_to_load_listing" = "Nem sikerült betölteni az ajánlatot";
 "view_on_map" = "Megtekintés térképen";
+"get_directions" = "Útvonal lekérése";
 "contact_via_inquiry" = "Kapcsolatfelvétel érdeklődésen keresztül";
 "send_inquiry" = "Érdeklődés küldése";
 "property" = "Ingatlan";
