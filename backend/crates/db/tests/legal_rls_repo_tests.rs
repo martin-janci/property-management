@@ -280,6 +280,9 @@ async fn legal_repo_force_rls_deny_all_and_fix(pool: PgPool) {
         format!("REVOKE ALL ON organizations FROM \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
-        sqlx::query(sqlx::AssertSqlSafe(stmt)).execute(&pool).await.ok();
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .ok();
     }
 }
