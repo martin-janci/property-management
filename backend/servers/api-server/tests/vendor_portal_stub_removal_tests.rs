@@ -15,13 +15,13 @@
 //!
 //! Two layers of assertion:
 //!
-//!   * **HTTP** — exercises the live router. `create_router` (and thus `TestApp`)
-//!     does NOT layer `host_tenant_middleware`, so `RequestPrincipal` routes get
-//!     no `ResolvedTenant` and authenticated callers are rejected with a 4xx
-//!     (`403 tenant not resolved`). The security-meaningful invariant we pin
-//!     here is the one the bug violated: **the endpoints never return a `200`
-//!     carrying fabricated PII** (no `contact_phone` / `building_address`),
-//!     and an unauthenticated caller is rejected with `401`.
+//!   * **HTTP** — exercises the live router. Since PAP-33 the vendor-portal
+//!     roadmap stub is unmounted from `lib.rs`, so every
+//!     `/api/v1/vendor-portal/*` request 404s at the router. The
+//!     security-meaningful invariant we pin here is the one the bug violated:
+//!     **the endpoints never return a `200` carrying fabricated PII** (no
+//!     `contact_phone` / `building_address`), and callers — authenticated or
+//!     not — get a non-2xx response.
 //!
 //!   * **Repository** — the scoping primitive a future vendor-scoped portal must
 //!     build on. `WorkOrderRepository::list` is org-scoped: a member of Org B
@@ -164,12 +164,14 @@ async fn job_details_never_returns_fabricated_pii(pool: PgPool) {
         "response must not leak the old hard-coded sample PII, got: {body}"
     );
 
-    // Unauthenticated: rejected with 401.
+    // Unauthenticated: rejected. Since PAP-33 unmounted the vendor-portal
+    // roadmap stub from lib.rs, every request 404s before reaching auth —
+    // assert no success (and no PII, above) rather than a specific auth status.
     let resp = app.execute(app.get(&uri).build()).await;
-    assert_eq!(
+    assert_ne!(
         resp.status,
-        StatusCode::UNAUTHORIZED,
-        "unauthenticated vendor-portal access must be 401: {}",
+        StatusCode::OK,
+        "unauthenticated vendor-portal access must be rejected: {}",
         resp.text()
     );
 }
