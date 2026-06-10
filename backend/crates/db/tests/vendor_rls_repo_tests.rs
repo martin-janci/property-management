@@ -139,7 +139,7 @@ async fn vendor_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .expect("set role");
 
         let found = repo
-            .find_by_id(&mut *conn, vendor_a)
+            .find_by_id(&mut *conn, vendor_a, org_a)
             .await
             .expect("find_by_id (no ctx)");
         assert!(
@@ -182,7 +182,7 @@ async fn vendor_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 
         // (2) Own-org row IS now visible through the repo — the fix.
         let found = repo
-            .find_by_id(&mut *conn, vendor_a)
+            .find_by_id(&mut *conn, vendor_a, org_a)
             .await
             .expect("find_by_id (ctx)");
         assert_eq!(
@@ -203,7 +203,7 @@ async fn vendor_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 
         // (3) Org B's vendor stays invisible to an org-A caller.
         let cross = repo
-            .find_by_id(&mut *conn, vendor_b)
+            .find_by_id(&mut *conn, vendor_b, org_a)
             .await
             .expect("find_by_id cross");
         assert!(

@@ -127,6 +127,9 @@ async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     for stmt in [
         format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
         format!("GRANT SELECT, INSERT, UPDATE, DELETE ON emergency_protocols TO \"{role}\""),
+        // get_current_org_not_deleted() is SECURITY INVOKER and reads
+        // `organizations`, so the bound role needs SELECT on it (PAP-133).
+        format!("GRANT SELECT ON organizations TO \"{role}\""),
         // RLS policy helpers must be EXECUTE-able by the bound role.
         format!("GRANT EXECUTE ON FUNCTION get_current_org_id() TO \"{role}\""),
         format!("GRANT EXECUTE ON FUNCTION get_current_org_not_deleted() TO \"{role}\""),

@@ -58,18 +58,19 @@ fn not_found(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
 
 /// Load a vendor by id under the caller's RLS context.
 ///
-/// RLS scopes `find_by_id` to the connection's org, so a vendor owned by
-/// another organization is invisible and surfaces as `404 NOT_FOUND` — the
-/// cross-tenant IDOR guard is now enforced by the database, not an app-level
-/// membership check.
+/// RLS scopes the connection to the caller's org, and the repo query is
+/// additionally org-keyed (PAP-133 defense-in-depth — the org predicate holds
+/// even on a connection whose role bypasses RLS). A vendor owned by another
+/// organization surfaces as `404 NOT_FOUND`.
 async fn load_vendor_for_user(
     state: &AppState,
     rls: &mut RlsConnection,
     vendor_id: Uuid,
 ) -> Result<Vendor, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     state
         .vendor_repo
-        .find_by_id(&mut **rls.conn(), vendor_id)
+        .find_by_id(&mut **rls.conn(), vendor_id, org_id)
         .await
         .map_err(|e| db_error("Failed to load vendor", e))?
         .ok_or_else(|| not_found("Vendor not found"))
@@ -82,9 +83,10 @@ async fn load_contract_for_user(
     rls: &mut RlsConnection,
     contract_id: Uuid,
 ) -> Result<VendorContract, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     state
         .vendor_repo
-        .find_contract_by_id(&mut **rls.conn(), contract_id)
+        .find_contract_by_id(&mut **rls.conn(), contract_id, org_id)
         .await
         .map_err(|e| db_error("Failed to load contract", e))?
         .ok_or_else(|| not_found("Contract not found"))
@@ -97,9 +99,10 @@ async fn load_invoice_for_user(
     rls: &mut RlsConnection,
     invoice_id: Uuid,
 ) -> Result<VendorInvoice, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     state
         .vendor_repo
-        .find_invoice_by_id(&mut **rls.conn(), invoice_id)
+        .find_invoice_by_id(&mut **rls.conn(), invoice_id, org_id)
         .await
         .map_err(|e| db_error("Failed to load invoice", e))?
         .ok_or_else(|| not_found("Invoice not found"))
@@ -386,9 +389,10 @@ async fn update_vendor(
 ) -> Result<Json<Vendor>, (StatusCode, Json<ErrorResponse>)> {
     let out = async {
         load_vendor_for_user(&state, &mut rls, id).await?;
+        let org_id = rls.tenant_id();
         state
             .vendor_repo
-            .update(&mut **rls.conn(), id, data)
+            .update(&mut **rls.conn(), id, org_id, data)
             .await
             .map(Json)
             .map_err(|e| db_error("Failed to update vendor", e))
@@ -405,9 +409,10 @@ async fn delete_vendor(
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let out = async {
         load_vendor_for_user(&state, &mut rls, id).await?;
+        let org_id = rls.tenant_id();
         let deleted = state
             .vendor_repo
-            .delete(&mut **rls.conn(), id)
+            .delete(&mut **rls.conn(), id, org_id)
             .await
             .map_err(|e| db_error("Failed to delete vendor", e))?;
         if deleted {
