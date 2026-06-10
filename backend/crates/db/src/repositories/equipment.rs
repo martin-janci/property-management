@@ -420,6 +420,7 @@ impl EquipmentRepository {
     }
 
     /// Create or update a maintenance prediction.
+    #[allow(clippy::too_many_arguments)]
     pub async fn upsert_prediction<'e, E>(
         &self,
         executor: E,
