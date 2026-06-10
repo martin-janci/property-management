@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-09T22:17:02Z",
-  "last_action": "reset-invalid-feat-prefix",
-  "reason": "picker repeatedly selects feat-* prefixes that violate T21 (gap-N|pm-<role>|NONE); reset to NONE. Tier-1 refill found coverage.json stale (84-2 gap already merged via #1034/#931) — no legitimate new items",
+  "selected_at": "2026-06-10T12:31:29Z",
+  "last_action": "reset",
+  "reason": "target test-esignature-email-status-tracking-backend not claimable this run (WIP at cap, free_slots=0); reset to NONE to keep T21 green (issue #1238 finding 1)",
   "stats_at_selection": {
-    "open": 1,
-    "claimable": 1
+    "open": 0,
+    "claimable": 0
   }
 }

@@ -42,8 +42,8 @@ owner: reality-frontend
 - [x] [m] Empty state (envelope icon + "no_inquiries" + Browse button)
 - [x] [m] Error state
 - [x] [m] Badge count on tab bar driven by NavigationCoordinator.inquiriesBadgeCount
-- [ ] [m] InquiryDetail full screen (Route.inquiryDetail destination is stub Text view in MainTabView)
-- [ ] [m] Real-time updates / WebSocket for new replies (not implemented)
+- [x] [m] InquiryDetail full screen: InquiryDetailView.swift — conversation thread (original msg + realtor replies as MessageBubble), reply composer, listing-context card, closed-inquiry guard
+- [ ] [m] Real-time updates / WebSocket for new replies — explicitly out-of-scope for epic-82; fetch-on-load + reload-after-reply used instead
 - [ ] [m] New Inquiry creation form (Route.newInquiry destination is stub Text view)
 
 ## States
@@ -61,10 +61,13 @@ Auth-gated tab. Maps KMP `Inquiry` → Swift `InquiryPreview` via `KMPBridge.toI
 
 ### Specific (recent)
 
-- `Route.inquiryDetail` and `Route.newInquiry` are handled in `NavigationCoordinator.navigate()` and appended to `inquiriesPath`, but `MainTabView.destinationView()` renders them as placeholder `Text` views.
-- `InquiryStatus` Swift typealias maps from KMP `shared.InquiryStatus` enum (pending/responded/closed).
+- `Route.inquiryDetail` destination is now `InquiryDetailView(inquiryId:)` — the stub Text placeholder noted in the gap-82-1 audit has been replaced. Loads via `GET /api/v1/inquiries/{id}`, replies via `POST /api/v1/inquiries/{id}/replies`.
+- `Route.newInquiry` destination is still a stub Text view in `MainTabView.destinationView()`.
+- `InquiryStatus` Swift typealias maps from KMP `shared.InquiryStatus` enum (pending/responded/closed); Swift UI uses `.replied` for KMP `.responded` (name difference is intentional and documented in `InquiryDetailView.swiftInquiryStatus(from:)`).
+- No streaming/WebSocket: conversation thread is loaded once on `.task {}` and reloaded after each `sendReply()`. `ApiConfig.wsUrl` exists in KMP but is not wired to the inquiry flow.
 
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Inquiries/InquiriesView.swift (epic-82 story 82.5). Detail and newInquiry stubs noted.
 - 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.
+- 2026-06-10 — agent: verify task 82-5; confirmed InquiryDetailView.swift fully implemented (conversation thread + reply composer); no streaming/WebSocket (fetch-on-demand, not in epic-82 scope); PushNotificationManager + tests confirmed; coverage.json updated to done/high.

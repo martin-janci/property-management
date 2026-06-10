@@ -142,7 +142,7 @@ async fn alexa_webhook(
             // Welcome message
             let processor = VoiceCommandProcessor::new(state.llm_document_repo.clone());
             let (result, _) = processor
-                .process_command(device.id, "help", &locale)
+                .process_command(rls.conn(), device.id, "help", &locale)
                 .await
                 .map_err(|e| {
                     tracing::error!("Voice command processing failed: {}", e);
@@ -158,7 +158,7 @@ async fn alexa_webhook(
             let command_text = extract_alexa_command_text(intent);
             let processor = VoiceCommandProcessor::new(state.llm_document_repo.clone());
             let (result, _) = processor
-                .process_command(device.id, &command_text, &locale)
+                .process_command(rls.conn(), device.id, &command_text, &locale)
                 .await
                 .map_err(|e| {
                     tracing::error!("Voice command processing failed: {}", e);
@@ -261,7 +261,7 @@ async fn google_actions_webhook(
     // Process the command
     let processor = VoiceCommandProcessor::new(state.llm_document_repo.clone());
     let (result, _) = processor
-        .process_command(device.id, command_text, locale)
+        .process_command(rls.conn(), device.id, command_text, locale)
         .await
         .map_err(|e| {
             tracing::error!("Voice command processing failed: {}", e);
@@ -434,10 +434,15 @@ async fn oauth_token_exchange(
     // (derived above from the verified access token — never random UUIDs).
     let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
 
-    // Create the voice device with tokens
+    // Create the voice device with tokens.
+    // PAP-108 (PAP-80): the repo is stateless; `voice_assistant_devices` is not
+    // RLS-bound, and this handler is authenticated via `AuthUser` (no
+    // RlsConnection extractor), so the pool is the correct executor here. The
+    // org/user scoping comes from the verified PM access token above.
     let device = state
         .llm_document_repo
         .create_voice_device(
+            &state.db,
             org_id,
             user_id,
             None,
@@ -497,10 +502,13 @@ async fn oauth_token_refresh(
 ) -> Result<Json<VoiceTokenRefreshResult>, (StatusCode, Json<ErrorResponse>)> {
     use integrations::{decrypt_if_available, VoiceOAuthManager, VoicePlatform};
 
-    // Find the device
+    // Find the device.
+    // PAP-108 (PAP-80): this endpoint is called by the voice platform (no PM
+    // principal, no RlsConnection); `voice_assistant_devices` is not RLS-bound,
+    // so the pool is the correct executor for the cross-org device lookup.
     let device = state
         .llm_document_repo
-        .find_voice_device(request.device_id)
+        .find_voice_device(&state.db, request.device_id)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -593,6 +601,7 @@ async fn oauth_token_refresh(
     state
         .llm_document_repo
         .update_voice_device_tokens(
+            &state.db,
             device.id,
             &new_access_encrypted,
             new_refresh_encrypted.as_deref(),

@@ -6,12 +6,11 @@
 //! - Story 64.4: AI Photo Enhancement for Listings
 //! - Story 64.5: Voice Assistant Integration (handlers in [`super::voice`])
 
-use crate::routes::ai::require_tenant_id;
 use crate::routes::ai::voice::{
     link_voice_device, list_voice_commands, list_voice_devices, unlink_voice_device,
 };
 use crate::state::AppState;
-use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -79,10 +78,12 @@ pub fn llm_router() -> Router<AppState> {
 )]
 async fn generate_lease(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<GenerateLeaseRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    // RLS context (org GUC) is set on rls.conn(); tenant_id is the authoritative org.
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let start_time = Instant::now();
 
     // SECURITY (issue #766 / #816): the lease is generated for a specific
@@ -90,21 +91,34 @@ async fn generate_lease(
     // creating the generation request or burning any LLM tokens — otherwise a
     // caller could generate a lease (and have it cost-attributed to their org)
     // against another tenant's unit, leaking the unit's identity/context.
-    let unit_ok = state
-        .llm_document_repo
-        .unit_belongs_to_org(req.unit_id, tenant_id)
-        .await
-        .map_err(|e| {
+    //
+    // Run the pre-LLM DB work on the RLS connection, then release it BEFORE
+    // the (slow) LLM call so we don't pin a pool connection for seconds.
+    let pre_llm = async {
+        let unit_ok = state
+            .llm_document_repo
+            .unit_belongs_to_org(&mut **rls.conn(), req.unit_id, tenant_id)
+            .await?;
+        Ok::<_, sqlx::Error>(unit_ok)
+    }
+    .await;
+
+    let unit_ok = match pre_llm {
+        Ok(ok) => ok,
+        Err(e) => {
+            rls.release().await;
             tracing::error!("Failed to validate unit ownership: {}", e);
-            (
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "INTERNAL_ERROR",
                     "Failed to validate unit",
                 )),
-            )
-        })?;
+            ));
+        }
+    };
     if !unit_ok {
+        rls.release().await;
         // 404 (not 403) mirrors the rest of this module: do not confirm the
         // existence of another tenant's unit to a caller who cannot see it.
         return Err((
@@ -132,25 +146,30 @@ async fn generate_lease(
     let request = state
         .llm_document_repo
         .create_generation_request(
+            &mut **rls.conn(),
             tenant_id,
-            principal.user_id,
+            user_id,
             "lease_generation",
             &provider,
             &model,
             input_data.clone(),
             req.template_id,
         )
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to create generation request: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to create request",
-                )),
-            )
-        })?;
+        .await;
+    // Release before the LLM round-trip; the post-LLM status update runs on
+    // the pool (llm_generation_requests is not RLS-bound) scoped by the row id
+    // we created under this tenant.
+    rls.release().await;
+    let request = request.map_err(|e| {
+        tracing::error!("Failed to create generation request: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to create request",
+            )),
+        )
+    })?;
 
     if !doc_gen_enabled {
         tracing::info!("LLM document generation disabled via feature flag");
@@ -206,6 +225,7 @@ async fn generate_lease(
             let _ = state
                 .llm_document_repo
                 .update_generation_status(
+                    &state.db,
                     request.id,
                     "completed",
                     Some(result_json.clone()),
@@ -248,6 +268,7 @@ async fn generate_lease(
             let _ = state
                 .llm_document_repo
                 .update_generation_status(
+                    &state.db,
                     request.id,
                     "failed",
                     None,
@@ -315,15 +336,17 @@ Respond with well-structured content that can be converted to a professional doc
 
 async fn list_lease_templates(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state
+    let result = state
         .llm_document_repo
-        .list_prompt_templates(Some(tenant_id), Some("lease_generation"))
-        .await
-    {
+        .list_prompt_templates(&mut **rls.conn(), Some(tenant_id), Some("lease_generation"))
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(templates) => Ok(Json(serde_json::json!({ "templates": templates }))),
         Err(e) => {
             tracing::error!("Failed to list templates: {}", e);
@@ -340,18 +363,20 @@ async fn list_lease_templates(
 
 async fn get_lease_template(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     // SECURITY (issue #766 / #816): scope the read to the caller's org so a
     // tenant cannot read another org's prompt template by guessing its id.
     // System templates (org_id NULL) remain readable by everyone.
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let result = state
         .llm_document_repo
-        .find_prompt_template_for_org(id, org_id)
-        .await
-    {
+        .find_prompt_template_for_org(&mut **rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(Some(template)) => Ok(Json(serde_json::json!(template))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -386,10 +411,11 @@ async fn get_lease_template(
 )]
 async fn generate_listing_description(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<GenerateListingDescriptionRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let start_time = Instant::now();
 
     // Check feature flag for document generation
@@ -411,25 +437,30 @@ async fn generate_listing_description(
     let request = state
         .llm_document_repo
         .create_generation_request(
+            &mut **rls.conn(),
             tenant_id,
-            principal.user_id,
+            user_id,
             "listing_description",
             &provider,
             &model,
             input_data.clone(),
             None,
         )
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to create generation request: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to create request",
-                )),
-            )
-        })?;
+        .await;
+    // Release before the LLM round-trip; the post-LLM writes run on the pool
+    // (generated_listing_descriptions / llm_generation_requests are not
+    // RLS-bound) with the org id taken from the verified principal above.
+    rls.release().await;
+    let request = request.map_err(|e| {
+        tracing::error!("Failed to create generation request: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to create request",
+            )),
+        )
+    })?;
 
     // Epic 92.2: Generate listing description using LLM
     let style_str = req.style.as_ref().and_then(|s| s.tone.as_deref());
@@ -494,9 +525,10 @@ async fn generate_listing_description(
     let description = state
         .llm_document_repo
         .create_listing_description(
+            &state.db,
             tenant_id,
             req.listing_id,
-            principal.user_id,
+            user_id,
             &req.language,
             &description_text,
             input_data,
@@ -519,6 +551,7 @@ async fn generate_listing_description(
     let _ = state
         .llm_document_repo
         .update_generation_status(
+            &state.db,
             request.id,
             "completed",
             Some(serde_json::json!({ "description": description_text })),
@@ -591,18 +624,20 @@ Format your response with clear sections for each component."#,
 
 async fn list_listing_descriptions(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(listing_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     // SECURITY (issue #766 / #816): scope the read to the caller's org so a
     // tenant cannot read another org's generated listing descriptions by
     // enumerating a listing id.
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let result = state
         .llm_document_repo
-        .list_listing_descriptions_for_org(listing_id, org_id)
-        .await
-    {
+        .list_listing_descriptions_for_org(&mut **rls.conn(), listing_id, org_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(descriptions) => Ok(Json(serde_json::json!({ "descriptions": descriptions }))),
         Err(e) => {
             tracing::error!("Failed to list descriptions: {}", e);
@@ -616,17 +651,19 @@ async fn list_listing_descriptions(
 
 async fn publish_description(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     // SECURITY (issue #766 / #816): scope the mutate to the caller's org so a
     // tenant cannot publish another org's generated listing description.
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let result = state
         .llm_document_repo
-        .publish_description_for_org(id, org_id)
-        .await
-    {
+        .publish_description_for_org(&mut **rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(Some(desc)) => Ok(Json(serde_json::json!(desc))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -658,23 +695,24 @@ async fn publish_description(
 )]
 async fn enhanced_chat(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<EnhancedChatRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
     // Get escalation config
     let config = state
         .llm_document_repo
-        .get_escalation_config(tenant_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get escalation config: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get config")),
-            )
-        })?;
+        .get_escalation_config(rls.conn(), tenant_id)
+        .await;
+    rls.release().await;
+    let config = config.map_err(|e| {
+        tracing::error!("Failed to get escalation config: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get config")),
+        )
+    })?;
 
     // Placeholder response - real implementation would:
     // 1. Search document embeddings for relevant context
@@ -699,15 +737,17 @@ async fn enhanced_chat(
 
 async fn get_escalation_config(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state
+    let result = state
         .llm_document_repo
-        .get_escalation_config(tenant_id)
-        .await
-    {
+        .get_escalation_config(rls.conn(), tenant_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(config) => Ok(Json(serde_json::json!(config))),
         Err(e) => {
             tracing::error!("Failed to get config: {}", e);
@@ -721,16 +761,18 @@ async fn get_escalation_config(
 
 async fn update_escalation_config(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<UpdateEscalationConfig>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state
+    let result = state
         .llm_document_repo
-        .update_escalation_config(tenant_id, req)
-        .await
-    {
+        .update_escalation_config(&mut **rls.conn(), tenant_id, req)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(config) => Ok(Json(serde_json::json!(config))),
         Err(e) => {
             tracing::error!("Failed to update config: {}", e);
@@ -761,34 +803,37 @@ async fn update_escalation_config(
 )]
 async fn enhance_photo(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<EnhancePhotoRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
     let metadata = serde_json::to_value(&req.options).unwrap_or_default();
 
     let enhancement = state
         .llm_document_repo
         .create_photo_enhancement(
+            &mut **rls.conn(),
             tenant_id,
             req.listing_id,
-            principal.user_id,
+            user_id,
             &req.photo_url,
             &req.enhancement_type,
             metadata,
         )
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to create enhancement: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to create enhancement",
-                )),
-            )
-        })?;
+        .await;
+    rls.release().await;
+    let enhancement = enhancement.map_err(|e| {
+        tracing::error!("Failed to create enhancement: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to create enhancement",
+            )),
+        )
+    })?;
 
     Ok((
         StatusCode::CREATED,
@@ -803,40 +848,51 @@ async fn enhance_photo(
 
 async fn batch_enhance_photos(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<db::models::BatchEnhancePhotosRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
-    let mut enhancements = Vec::new();
-    for photo_url in &req.photo_urls {
-        let enhancement = state
-            .llm_document_repo
-            .create_photo_enhancement(
-                tenant_id,
-                req.listing_id,
-                principal.user_id,
-                photo_url,
-                &req.enhancement_type,
-                serde_json::json!({}),
-            )
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to create enhancement: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "INTERNAL_ERROR",
-                        "Failed to create enhancement",
-                    )),
+    // Run every per-photo INSERT on the same RLS-context connection, then
+    // release once. Errors are captured (not early-returned) so release()
+    // always runs.
+    let result = async {
+        let mut enhancements = Vec::new();
+        for photo_url in &req.photo_urls {
+            let enhancement = state
+                .llm_document_repo
+                .create_photo_enhancement(
+                    &mut **rls.conn(),
+                    tenant_id,
+                    req.listing_id,
+                    user_id,
+                    photo_url,
+                    &req.enhancement_type,
+                    serde_json::json!({}),
                 )
-            })?;
-        enhancements.push(serde_json::json!({
-            "id": enhancement.id,
-            "status": enhancement.status,
-            "original_url": photo_url
-        }));
+                .await?;
+            enhancements.push(serde_json::json!({
+                "id": enhancement.id,
+                "status": enhancement.status,
+                "original_url": photo_url
+            }));
+        }
+        Ok::<_, sqlx::Error>(enhancements)
     }
+    .await;
+    rls.release().await;
+
+    let enhancements = result.map_err(|e| {
+        tracing::error!("Failed to create enhancement: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to create enhancement",
+            )),
+        )
+    })?;
 
     Ok((
         StatusCode::CREATED,
@@ -850,17 +906,19 @@ async fn batch_enhance_photos(
 
 async fn get_photo_enhancement(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     // SECURITY (issue #766 / #816): scope the read to the caller's org so a
     // tenant cannot read another org's photo enhancement by guessing its id.
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let result = state
         .llm_document_repo
-        .find_photo_enhancement_for_org(id, org_id)
-        .await
-    {
+        .find_photo_enhancement_for_org(&mut **rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(Some(enhancement)) => Ok(Json(serde_json::json!(enhancement))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -882,15 +940,17 @@ async fn get_photo_enhancement(
 
 async fn get_ai_statistics(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state
+    let result = state
         .llm_document_repo
-        .get_usage_statistics(tenant_id, None, None)
-        .await
-    {
+        .get_usage_statistics(rls.conn(), tenant_id, None, None)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(stats) => Ok(Json(serde_json::json!(stats))),
         Err(e) => {
             tracing::error!("Failed to get statistics: {}", e);
@@ -915,22 +975,25 @@ pub struct GenerationRequestsQuery {
 
 async fn list_generation_requests(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     axum::extract::Query(query): axum::extract::Query<GenerationRequestsQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state
+    let result = state
         .llm_document_repo
         .list_generation_requests(
+            &mut **rls.conn(),
             tenant_id,
             query.request_type.as_deref(),
             query.status.as_deref(),
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )
-        .await
-    {
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(requests) => Ok(Json(serde_json::json!({ "requests": requests }))),
         Err(e) => {
             tracing::error!("Failed to list requests: {}", e);
@@ -944,18 +1007,20 @@ async fn list_generation_requests(
 
 async fn get_generation_request(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     // SECURITY (issue #766 / #816): scope the read to the caller's org so a
     // tenant cannot read another org's generation request (prompts, results,
     // cost data) by guessing its id.
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let result = state
         .llm_document_repo
-        .find_generation_request_for_org(id, org_id)
-        .await
-    {
+        .find_generation_request_for_org(&mut **rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(Some(request)) => Ok(Json(serde_json::json!(request))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,

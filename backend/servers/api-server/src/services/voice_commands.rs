@@ -12,6 +12,7 @@ use db::models::{
 };
 use db::repositories::LlmDocumentRepository;
 use serde_json::json;
+use sqlx::PgConnection;
 use std::time::Instant;
 use thiserror::Error;
 use uuid::Uuid;
@@ -153,8 +154,13 @@ impl VoiceCommandProcessor {
     }
 
     /// Process a complete voice command from device ID to response.
+    ///
+    /// PAP-108 (PAP-80): the repository is stateless, so the caller supplies
+    /// the connection — in webhook handlers this is the `RlsConnection`'s
+    /// context-set connection (`&mut **rls.conn()`).
     pub async fn process_command(
         &self,
+        conn: &mut PgConnection,
         device_id: Uuid,
         command_text: &str,
         locale: &str,
@@ -164,7 +170,7 @@ impl VoiceCommandProcessor {
         // Find the device
         let device = self
             .llm_document_repo
-            .find_voice_device(device_id)
+            .find_voice_device(&mut *conn, device_id)
             .await?
             .ok_or(VoiceCommandError::DeviceNotFound(device_id))?;
 
@@ -189,6 +195,7 @@ impl VoiceCommandProcessor {
         let history = self
             .llm_document_repo
             .create_voice_command(
+                &mut *conn,
                 device_id,
                 device.user_id,
                 command_text,
@@ -204,7 +211,7 @@ impl VoiceCommandProcessor {
         // Update device last used timestamp
         let _ = self
             .llm_document_repo
-            .update_voice_device_last_used(device_id)
+            .update_voice_device_last_used(&mut *conn, device_id)
             .await;
 
         Ok((

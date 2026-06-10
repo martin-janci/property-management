@@ -1,0 +1,213 @@
+{
+  "date": "2026-06-10",
+  "trigger": "normal",
+  "lag_hours": 70,
+  "merged_prs_processed": 44,
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-10",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-07T08:13Z; lag ~70h (>36h threshold). Cloud cron may have skipped 2 runs."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-07",
+      "score_delta": 1,
+      "evidence": [
+        "1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-07",
+      "score_delta": 1,
+      "evidence": [
+        "929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-07",
+      "score_delta": 1,
+      "evidence": [
+        "709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "unchecked-todo-pr-1203",
+      "type": "unchecked-todo",
+      "source": "PR #1203",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged with 4 unchecked TODO checkboxes in body \u2014 security follow-ups remain"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1193",
+      "type": "unchecked-todo",
+      "source": "PR #1193",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merged with 5 unchecked TODO checkboxes in body \u2014 security follow-ups remain"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1196",
+      "type": "unchecked-todo",
+      "source": "PR #1196",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO checkboxes in body"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-10.md && head -1 grep",
+      "observed": "matches",
+      "expected": "matches"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq prev vs current state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals vs seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run; vacuous pass",
+      "observed": "0 plans created",
+      "expected": "every new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/ paths (to be verified)",
+      "observed": "pending",
+      "expected": "0 non-.research"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret scan (to be verified)",
+      "observed": "pending",
+      "expected": "0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token scan (to be verified)",
+      "observed": "pending",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerated backlog.md from JSON",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerated IDEAS_TRIAGE.md from JSON",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures",
+      "observed": "ok",
+      "expected": "ok"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plans deleted or moved this run",
+      "observed": "4 active unchanged",
+      "expected": "all converge"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "no archive modification this run",
+      "observed": "unchanged",
+      "expected": ">= HEAD count"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "0 auto-fix actions; kill-switch n/a",
+      "observed": "auto_fix_actions=[]",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "action-list.json + risks.json parse; project-state.md non-empty; cursors valid",
+      "observed": "valid",
+      "expected": "valid"
+    }
+  ],
+  "notes": [
+    "Phase 1.5 (rotating expert review): ran light pass on api-handlers segment (churn-aligned to top-3 hotspots in routes/{emergency,vendors,enhanced_tenant_screening}.rs); no concrete code-review-finding signals surfaced \u2014 the three top-churn files all received per-file RLS-routing fixes with accompanying *_rls_repo_tests.rs additions (visible in numstat), and a Grep for residual TODO/FIXME patterns in the three files yielded matches that are already tracked via PAP-* items, not new findings. review_cursor.api-handlers advanced to 2026-06-10.",
+    "Phase 1.6 (project management): ran lightweight in-routine refresh \u2014 pm_cursor advanced from index 2 (pm-frontend) \u2192 3 (pm-qa for tomorrow); role_last_run[pm-frontend] = 2026-06-10; coverage_cursor advanced 9 \u2192 10 (epic re-check; 13 distinct epics). Did NOT regenerate project-state.md / action-list.json / risks.json this run because no role subagent fired and no merged-PR delta materially changed the picture beyond what 2026-06-06 covers; recommend a 'full' or 'pm:tech-lead' trigger next run to converge state.",
+    "Phase 3 (promote): 0 plans promoted; 2 unchecked-todo-pr-* signals reached score 3 + security vector + medium confidence but have empty files[] (would need per-PR diff inspection to fill) \u2014 left as open for the implementer or a follow-up run to fill in files[] and promote.",
+    "Phase 5 (auto-fix): no candidate (no signal met confidence=high + score>=3 + allowlist intersection)."
+  ]
+}

@@ -273,6 +273,7 @@
 "loading_listing" = "Loading listing...";
 "failed_to_load_listing" = "Failed to load listing";
 "view_on_map" = "View on Map";
+"get_directions" = "Get Directions";
 "contact_via_inquiry" = "Contact via inquiry";
 "send_inquiry" = "Send Inquiry";
 "property" = "Property";
@@ -310,4 +311,3 @@
 "enter_email" = "Enter your email";
 "enter_password" = "Enter your password";
 "no_account_prompt" = "Don't have an account?";
-

@@ -14,11 +14,14 @@
 //! org-scoped. A foreign-org `log_id` therefore yields 404, never a
 //! cross-tenant read.
 //!
-//! Tenancy here comes straight from the JWT `tenant_id` claim — the same
-//! mechanism as the reserve-fund suite — so these tests mint a real access
-//! token per org and drive the handlers end-to-end:
-//!   - Org A's token listing photos on Org A's log -> 200 (same-org succeeds).
-//!   - Org B's token listing photos on Org A's log -> 404 (cross-org blocked).
+//! Since the PAP-80 RLS conversion the handlers acquire an `RlsConnection`:
+//! tenancy comes from the validated `X-Tenant-ID` header backed by an active
+//! `organization_members` row (the JWT `tenant_id` claim alone is not a tenant
+//! source). These tests mint a real access token per org, seed the membership
+//! row, send the header, and drive the handlers end-to-end:
+//!   - Org A's context listing photos on Org A's log -> 200 (same-org).
+//!   - Org B's own valid context probing Org A's log -> 404 (org-scoped
+//!     lookup finds no row; cross-org blocked).
 
 #[allow(dead_code)]
 mod common;
@@ -162,6 +165,22 @@ async fn seed_photo(pool: &PgPool, log_id: Uuid) -> Uuid {
     .expect("seed photo")
 }
 
+/// Make `user_id` an active member of `org_id` — required by the
+/// `RlsConnection` membership check.
+async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
+    sqlx::query(
+        r#"
+        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
+        VALUES ($1, $2, 'manager', 'active', NOW())
+        "#,
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed membership");
+}
+
 fn photos_uri(log_id: Uuid) -> String {
     format!("/api/v1/predictive-maintenance/maintenance-logs/{log_id}/photos")
 }
@@ -181,9 +200,14 @@ async fn list_photos_same_org_succeeds(pool: PgPool) {
     let equipment = seed_equipment(&pool, org_a, building).await;
     let log_id = seed_maintenance_log(&pool, org_a, equipment).await;
     let photo_id = seed_photo(&pool, log_id).await;
+    seed_membership(&pool, org_a, user).await;
 
     let token = access_token(user, org_a);
-    let req = app.get(&photos_uri(log_id)).bearer(&token).build();
+    let req = app
+        .get(&photos_uri(log_id))
+        .bearer(&token)
+        .header("X-Tenant-ID", &org_a.to_string())
+        .build();
     let resp = app.execute(req).await;
 
     resp.assert_status(StatusCode::OK);
@@ -217,9 +241,15 @@ async fn list_photos_cross_org_is_not_found(pool: PgPool) {
     let _ = seed_photo(&pool, log_id).await;
     let _ = user_a;
 
-    // Org B token targeting Org A's maintenance log.
+    // Org B's own valid tenant context targeting Org A's maintenance log —
+    // the org-scoped lookup must come up empty (404), not leak.
+    seed_membership(&pool, org_b, user_b).await;
     let token = access_token(user_b, org_b);
-    let req = app.get(&photos_uri(log_id)).bearer(&token).build();
+    let req = app
+        .get(&photos_uri(log_id))
+        .bearer(&token)
+        .header("X-Tenant-ID", &org_b.to_string())
+        .build();
     let resp = app.execute(req).await;
 
     assert_eq!(
@@ -249,10 +279,12 @@ async fn add_photo_cross_org_does_not_insert(pool: PgPool) {
     let log_id = seed_maintenance_log(&pool, org_a, equipment).await;
     let _ = user_a;
 
+    seed_membership(&pool, org_b, user_b).await;
     let token = access_token(user_b, org_b);
     let req = app
         .post(&photos_uri(log_id))
         .bearer(&token)
+        .header("X-Tenant-ID", &org_b.to_string())
         .json(serde_json::json!({ "file_path": "s3://bucket/hijack.jpg" }))
         .build();
     let resp = app.execute(req).await;
