@@ -131,8 +131,14 @@ async fn predictive_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     for stmt in [
         format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
         format!("GRANT SELECT, INSERT, UPDATE, DELETE ON equipment_registry TO \"{role}\""),
-        // RLS policy helper must be EXECUTE-able by the bound role.
-        format!("GRANT EXECUTE ON FUNCTION get_current_org_id() TO \"{role}\""),
+        // RLS policy helpers must be EXECUTE-able by the bound role. The
+        // soft-delete leg (get_current_org_not_deleted) reads `organizations`
+        // as SECURITY INVOKER, so the role also needs SELECT on it.
+        format!(
+            "GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin(), \
+             get_current_org_not_deleted() TO \"{role}\""
+        ),
+        format!("GRANT SELECT ON organizations TO \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
             .execute(&pool)
@@ -239,6 +245,11 @@ async fn predictive_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     set_ctx(&pool, None, None, true).await;
     for stmt in [
         format!("REVOKE ALL ON equipment_registry FROM \"{role}\""),
+        format!("REVOKE ALL ON organizations FROM \"{role}\""),
+        format!(
+            "REVOKE EXECUTE ON FUNCTION get_current_org_id(), is_super_admin(), \
+             get_current_org_not_deleted() FROM \"{role}\""
+        ),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
