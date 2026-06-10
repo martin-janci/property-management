@@ -86,17 +86,24 @@ impl VendorRepository {
         .await
     }
 
-    /// Find vendor by ID.
+    /// Find vendor by ID, scoped to the owning organization.
+    ///
+    /// Cross-tenant safety (PAP-133): RLS is the primary boundary, but by-id
+    /// queries stay org-keyed as defense-in-depth — a connection whose role
+    /// bypasses RLS (superuser pools, BYPASSRLS) must still never resolve
+    /// another tenant's row.
     pub async fn find_by_id<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<Vendor>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as("SELECT * FROM vendors WHERE id = $1")
+        sqlx::query_as("SELECT * FROM vendors WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .fetch_optional(executor)
             .await
     }
@@ -195,11 +202,13 @@ impl VendorRepository {
         .await
     }
 
-    /// Update a vendor.
+    /// Update a vendor, scoped to the owning organization (PAP-133
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
     pub async fn update<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
         data: UpdateVendor,
     ) -> Result<Vendor, sqlx::Error>
     where
@@ -225,7 +234,7 @@ impl VendorRepository {
                 notes = COALESCE($16, notes),
                 metadata = COALESCE($17, metadata),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $18
             RETURNING *
             "#,
         )
@@ -246,17 +255,25 @@ impl VendorRepository {
         .bind(data.is_preferred)
         .bind(&data.notes)
         .bind(data.metadata.map(sqlx::types::Json))
+        .bind(org_id)
         .fetch_one(executor)
         .await
     }
 
-    /// Delete a vendor.
-    pub async fn delete<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    /// Delete a vendor, scoped to the owning organization (PAP-133
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
+    pub async fn delete<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let result = sqlx::query("DELETE FROM vendors WHERE id = $1")
+        let result = sqlx::query("DELETE FROM vendors WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
@@ -450,12 +467,14 @@ impl VendorRepository {
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<VendorContract>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as("SELECT * FROM vendor_contracts WHERE id = $1")
+        sqlx::query_as("SELECT * FROM vendor_contracts WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .fetch_optional(executor)
             .await
     }
@@ -632,12 +651,14 @@ impl VendorRepository {
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<VendorInvoice>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as("SELECT * FROM vendor_invoices WHERE id = $1")
+        sqlx::query_as("SELECT * FROM vendor_invoices WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .fetch_optional(executor)
             .await
     }
