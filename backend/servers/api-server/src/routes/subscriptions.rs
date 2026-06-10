@@ -554,7 +554,7 @@ async fn create_subscription(
 
     let subscription = state
         .subscription_repo
-        .create_subscription(&mut **rls.conn(), org_id, request.data)
+        .create_subscription(rls.conn(), org_id, request.data)
         .await
         .map_err(db_error)?;
 
@@ -887,7 +887,7 @@ async fn set_default_payment_method(
     // is FORCE-RLS-bound, so the raw pool would be deny-all here.
     state
         .subscription_repo
-        .set_default_payment_method(&mut **rls.conn(), org_id, id)
+        .set_default_payment_method(rls.conn(), org_id, id)
         .await
         .map_err(db_error)?;
 
@@ -1403,7 +1403,7 @@ async fn redeem_coupon(
     let redemption = state
         .subscription_repo
         .redeem_coupon(
-            &mut **rls.conn(),
+            rls.conn(),
             coupon.id,
             org_id,
             subscription.map(|s| s.id),
@@ -1440,7 +1440,7 @@ async fn get_statistics(
 
     let stats = state
         .subscription_repo
-        .get_statistics(&mut **rls.conn())
+        .get_statistics(rls.conn())
         .await
         .map_err(db_error)?;
 
