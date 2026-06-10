@@ -278,6 +278,7 @@
 "loading_listing" = "Ładowanie oferty...";
 "failed_to_load_listing" = "Nie udało się załadować oferty";
 "view_on_map" = "Zobacz na mapie";
+"get_directions" = "Wyznacz trasę";
 "contact_via_inquiry" = "Skontaktuj się przez zapytanie";
 "send_inquiry" = "Wyślij zapytanie";
 "property" = "Nieruchomość";
