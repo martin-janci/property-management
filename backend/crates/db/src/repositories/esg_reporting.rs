@@ -1,29 +1,52 @@
 // Epic 136: ESG Reporting Dashboard
 // Repository for ESG (Environmental, Social, Governance) reporting and compliance
+//
+// # RLS Integration (PAP-139 / PAP-72 / PAP-67)
+//
+// Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+// `get_current_org_id()` policy on the ESG tables (`esg_configurations`,
+// `esg_metrics`, `carbon_footprints`, `esg_benchmarks`, `esg_targets`,
+// `esg_reports`, `eu_taxonomy_assessments`, `esg_dashboard_metrics`,
+// `esg_import_jobs`). Under `FORCE` the api-server's owner connection is no
+// longer exempt, so a query issued on a connection without
+// `app.current_org_id` set collapses to deny-all.
+//
+// Every method therefore takes an **executor whose connection already has RLS
+// context set** (org + user GUCs) — in handlers this comes from the
+// `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds
+// **no pool**, so there is no way to issue a query that bypasses RLS. This
+// mirrors the `vendor.rs` / `work_order.rs` / `board_meetings.rs` precedent.
+//
+// Cross-tenant safety (PAP-136 defense-in-depth): RLS is the primary
+// boundary, but every by-id query stays keyed on
+// `(id, organization_id)` — a connection whose role bypasses RLS
+// (superuser pools, BYPASSRLS) must still never resolve another tenant's
+// row. All ESG tables carry their own `organization_id` column, so no
+// EXISTS-through-parent keying is needed.
 
 use chrono::{Datelike, Utc};
 use rust_decimal::Decimal;
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 use crate::models::esg_reporting::*;
-use crate::DbPool;
 
 /// Repository for ESG reporting operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct EsgReportingRepository {
-    pool: DbPool,
-}
+pub struct EsgReportingRepository;
 
 impl EsgReportingRepository {
     /// Create a new repository instance.
-    pub fn new(pool: DbPool) -> Self {
-        Self { pool }
-    }
-
-    /// Get the underlying pool reference.
-    pub fn pool(&self) -> &PgPool {
-        &self.pool
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // =========================================================================
@@ -31,10 +54,14 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Get ESG configuration for an organization.
-    pub async fn get_configuration(
+    pub async fn get_configuration<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Option<EsgConfiguration>, sqlx::Error> {
+    ) -> Result<Option<EsgConfiguration>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgConfiguration>(
             r#"
             SELECT id, organization_id, reporting_currency, default_unit_system,
@@ -46,16 +73,20 @@ impl EsgReportingRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Create or update ESG configuration.
-    pub async fn upsert_configuration(
+    pub async fn upsert_configuration<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         input: CreateEsgConfiguration,
-    ) -> Result<EsgConfiguration, sqlx::Error> {
+    ) -> Result<EsgConfiguration, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgConfiguration>(
             r#"
             INSERT INTO esg_configurations (
@@ -92,7 +123,7 @@ impl EsgReportingRepository {
         .bind(input.carbon_reduction_target_pct)
         .bind(input.target_year)
         .bind(input.baseline_year)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -101,12 +132,16 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Create an ESG metric.
-    pub async fn create_metric(
+    pub async fn create_metric<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         input: CreateEsgMetric,
-    ) -> Result<EsgMetric, sqlx::Error> {
+    ) -> Result<EsgMetric, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgMetric>(
             r#"
             INSERT INTO esg_metrics (
@@ -135,12 +170,20 @@ impl EsgReportingRepository {
         .bind(input.confidence_level)
         .bind(input.notes.as_deref())
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get ESG metric by ID.
-    pub async fn get_metric(&self, id: Uuid) -> Result<Option<EsgMetric>, sqlx::Error> {
+    /// Get ESG metric by ID, scoped to the owning organization.
+    pub async fn get_metric<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<EsgMetric>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgMetric>(
             r#"
             SELECT id, organization_id, building_id, period_start, period_end,
@@ -148,20 +191,25 @@ impl EsgReportingRepository {
                    data_source, confidence_level, verification_status, verified_by,
                    verified_at, notes, supporting_documents, created_at, updated_at, created_by
             FROM esg_metrics
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
     /// List ESG metrics with filters.
-    pub async fn list_metrics(
+    pub async fn list_metrics<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         query: EsgMetricsQuery,
-    ) -> Result<Vec<EsgMetric>, sqlx::Error> {
+    ) -> Result<Vec<EsgMetric>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50).min(100);
         let offset = query.offset.unwrap_or(0);
 
@@ -190,16 +238,21 @@ impl EsgReportingRepository {
         .bind(query.period_end)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update an ESG metric.
-    pub async fn update_metric(
+    /// Update an ESG metric, scoped to the owning organization.
+    pub async fn update_metric<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateEsgMetric,
-    ) -> Result<Option<EsgMetric>, sqlx::Error> {
+    ) -> Result<Option<EsgMetric>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgMetric>(
             r#"
             UPDATE esg_metrics
@@ -209,7 +262,7 @@ impl EsgReportingRepository {
                 confidence_level = COALESCE($5, confidence_level),
                 notes = COALESCE($6, notes),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $7
             RETURNING id, organization_id, building_id, period_start, period_end,
                       category, metric_type, metric_name, value, unit, normalized_value,
                       data_source, confidence_level, verification_status, verified_by,
@@ -222,17 +275,23 @@ impl EsgReportingRepository {
         .bind(input.normalized_value)
         .bind(input.confidence_level)
         .bind(input.notes.as_deref())
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Verify an ESG metric.
-    pub async fn verify_metric(
+    /// Verify an ESG metric, scoped to the owning organization.
+    pub async fn verify_metric<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         verifier_id: Uuid,
         status: &str,
-    ) -> Result<Option<EsgMetric>, sqlx::Error> {
+    ) -> Result<Option<EsgMetric>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgMetric>(
             r#"
             UPDATE esg_metrics
@@ -240,7 +299,7 @@ impl EsgReportingRepository {
                 verified_by = $3,
                 verified_at = NOW(),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $4
             RETURNING id, organization_id, building_id, period_start, period_end,
                       category, metric_type, metric_name, value, unit, normalized_value,
                       data_source, confidence_level, verification_status, verified_by,
@@ -250,15 +309,25 @@ impl EsgReportingRepository {
         .bind(id)
         .bind(status)
         .bind(verifier_id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete an ESG metric.
-    pub async fn delete_metric(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM esg_metrics WHERE id = $1")
+    /// Delete an ESG metric, scoped to the owning organization.
+    pub async fn delete_metric<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query("DELETE FROM esg_metrics WHERE id = $1 AND organization_id = $2")
             .bind(id)
-            .execute(&self.pool)
+            .bind(org_id)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -268,11 +337,15 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Create a carbon footprint record.
-    pub async fn create_carbon_footprint(
+    pub async fn create_carbon_footprint<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         input: CreateCarbonFootprint,
-    ) -> Result<CarbonFootprint, sqlx::Error> {
+    ) -> Result<CarbonFootprint, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Calculate CO2 equivalent
         let co2_equivalent_kg = input.consumption_value * input.emission_factor;
         let co2_per_sqm = input
@@ -314,15 +387,20 @@ impl EsgReportingRepository {
         .bind(co2_per_sqm)
         .bind(input.num_units)
         .bind(co2_per_unit)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get carbon footprint by ID.
-    pub async fn get_carbon_footprint(
+    /// Get carbon footprint by ID, scoped to the owning organization.
+    pub async fn get_carbon_footprint<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<CarbonFootprint>, sqlx::Error> {
+        org_id: Uuid,
+    ) -> Result<Option<CarbonFootprint>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CarbonFootprint>(
             r#"
             SELECT id, organization_id, building_id, year, month, source_type,
@@ -330,20 +408,25 @@ impl EsgReportingRepository {
                    co2_equivalent_kg, area_sqm, co2_per_sqm, num_units, co2_per_unit,
                    calculation_methodology, created_at, updated_at
             FROM carbon_footprints
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
     /// List carbon footprints with filters.
-    pub async fn list_carbon_footprints(
+    pub async fn list_carbon_footprints<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         query: CarbonFootprintQuery,
-    ) -> Result<Vec<CarbonFootprint>, sqlx::Error> {
+    ) -> Result<Vec<CarbonFootprint>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CarbonFootprint>(
             r#"
             SELECT id, organization_id, building_id, year, month, source_type,
@@ -363,16 +446,20 @@ impl EsgReportingRepository {
         .bind(query.building_id)
         .bind(query.year)
         .bind(query.source_type)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get carbon footprint summary by year.
-    pub async fn get_carbon_summary(
+    pub async fn get_carbon_summary<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         year: i32,
-    ) -> Result<Option<CarbonFootprintSummary>, sqlx::Error> {
+    ) -> Result<Option<CarbonFootprintSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CarbonFootprintSummary>(
             r#"
             SELECT
@@ -392,16 +479,26 @@ impl EsgReportingRepository {
         )
         .bind(organization_id)
         .bind(year)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete a carbon footprint record.
-    pub async fn delete_carbon_footprint(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM carbon_footprints WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a carbon footprint record, scoped to the owning organization.
+    pub async fn delete_carbon_footprint<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result =
+            sqlx::query("DELETE FROM carbon_footprints WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(executor)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -410,11 +507,15 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Create an ESG benchmark.
-    pub async fn create_benchmark(
+    pub async fn create_benchmark<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         input: CreateEsgBenchmark,
-    ) -> Result<EsgBenchmark, sqlx::Error> {
+    ) -> Result<EsgBenchmark, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgBenchmark>(
             r#"
             INSERT INTO esg_benchmarks (
@@ -437,16 +538,20 @@ impl EsgReportingRepository {
         .bind(input.source.as_deref())
         .bind(input.effective_date)
         .bind(input.expiry_date)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List ESG benchmarks.
-    pub async fn list_benchmarks(
+    pub async fn list_benchmarks<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         category: Option<EsgBenchmarkCategory>,
-    ) -> Result<Vec<EsgBenchmark>, sqlx::Error> {
+    ) -> Result<Vec<EsgBenchmark>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgBenchmark>(
             r#"
             SELECT id, organization_id, name, category, metric_type, benchmark_value,
@@ -460,16 +565,26 @@ impl EsgReportingRepository {
         )
         .bind(organization_id)
         .bind(category)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Delete an ESG benchmark.
-    pub async fn delete_benchmark(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM esg_benchmarks WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete an ESG benchmark, scoped to the owning organization.
+    pub async fn delete_benchmark<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result =
+            sqlx::query("DELETE FROM esg_benchmarks WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(executor)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -478,11 +593,15 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Create an ESG target.
-    pub async fn create_target(
+    pub async fn create_target<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         input: CreateEsgTarget,
-    ) -> Result<EsgTarget, sqlx::Error> {
+    ) -> Result<EsgTarget, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgTarget>(
             r#"
             INSERT INTO esg_targets (
@@ -506,32 +625,45 @@ impl EsgReportingRepository {
         .bind(input.target_date)
         .bind(input.baseline_value)
         .bind(input.baseline_date)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get ESG target by ID.
-    pub async fn get_target(&self, id: Uuid) -> Result<Option<EsgTarget>, sqlx::Error> {
+    /// Get ESG target by ID, scoped to the owning organization.
+    pub async fn get_target<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<EsgTarget>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgTarget>(
             r#"
             SELECT id, organization_id, building_id, name, category, metric_type,
                    target_value, unit, target_date, baseline_value, baseline_date,
                    current_value, progress_pct, status, created_at, updated_at
             FROM esg_targets
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
     /// List ESG targets.
-    pub async fn list_targets(
+    pub async fn list_targets<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         building_id: Option<Uuid>,
-    ) -> Result<Vec<EsgTarget>, sqlx::Error> {
+    ) -> Result<Vec<EsgTarget>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgTarget>(
             r#"
             SELECT id, organization_id, building_id, name, category, metric_type,
@@ -545,16 +677,21 @@ impl EsgReportingRepository {
         )
         .bind(organization_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update an ESG target.
-    pub async fn update_target(
+    /// Update an ESG target, scoped to the owning organization.
+    pub async fn update_target<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateEsgTarget,
-    ) -> Result<Option<EsgTarget>, sqlx::Error> {
+    ) -> Result<Option<EsgTarget>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Calculate progress if current_value and baseline are available
         sqlx::query_as::<_, EsgTarget>(
             r#"
@@ -570,7 +707,7 @@ impl EsgReportingRepository {
                 END,
                 status = COALESCE($5, status),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $6
             RETURNING id, organization_id, building_id, name, category, metric_type,
                       target_value, unit, target_date, baseline_value, baseline_date,
                       current_value, progress_pct, status, created_at, updated_at
@@ -581,15 +718,25 @@ impl EsgReportingRepository {
         .bind(input.target_date)
         .bind(input.current_value)
         .bind(input.status.as_deref())
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete an ESG target.
-    pub async fn delete_target(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM esg_targets WHERE id = $1")
+    /// Delete an ESG target, scoped to the owning organization.
+    pub async fn delete_target<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query("DELETE FROM esg_targets WHERE id = $1 AND organization_id = $2")
             .bind(id)
-            .execute(&self.pool)
+            .bind(org_id)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -599,12 +746,16 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Create an ESG report.
-    pub async fn create_report(
+    pub async fn create_report<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         input: CreateEsgReport,
-    ) -> Result<EsgReport, sqlx::Error> {
+    ) -> Result<EsgReport, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgReport>(
             r#"
             INSERT INTO esg_reports (
@@ -626,12 +777,20 @@ impl EsgReportingRepository {
         .bind(input.period_end)
         .bind(serde_json::to_value(&input.frameworks).unwrap_or(serde_json::Value::Array(vec![])))
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get ESG report by ID.
-    pub async fn get_report(&self, id: Uuid) -> Result<Option<EsgReport>, sqlx::Error> {
+    /// Get ESG report by ID, scoped to the owning organization.
+    pub async fn get_report<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<EsgReport>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgReport>(
             r#"
             SELECT id, organization_id, report_type, title, description,
@@ -639,20 +798,25 @@ impl EsgReportingRepository {
                    approved_by, approved_at, report_data, summary_scores,
                    pdf_url, xml_url, created_at, updated_at, created_by
             FROM esg_reports
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
     /// List ESG reports.
-    pub async fn list_reports(
+    pub async fn list_reports<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         status: Option<EsgReportStatus>,
-    ) -> Result<Vec<EsgReport>, sqlx::Error> {
+    ) -> Result<Vec<EsgReport>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgReport>(
             r#"
             SELECT id, organization_id, report_type, title, description,
@@ -668,16 +832,21 @@ impl EsgReportingRepository {
         )
         .bind(organization_id)
         .bind(status)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update an ESG report.
-    pub async fn update_report(
+    /// Update an ESG report, scoped to the owning organization.
+    pub async fn update_report<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateEsgReport,
-    ) -> Result<Option<EsgReport>, sqlx::Error> {
+    ) -> Result<Option<EsgReport>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgReport>(
             r#"
             UPDATE esg_reports
@@ -687,7 +856,7 @@ impl EsgReportingRepository {
                 report_data = COALESCE($5, report_data),
                 summary_scores = COALESCE($6, summary_scores),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $7
             RETURNING id, organization_id, report_type, title, description,
                       period_start, period_end, frameworks, status, submitted_at,
                       approved_by, approved_at, report_data, summary_scores,
@@ -700,19 +869,28 @@ impl EsgReportingRepository {
         .bind(input.status)
         .bind(&input.report_data)
         .bind(&input.summary_scores)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Submit an ESG report for review.
-    pub async fn submit_report(&self, id: Uuid) -> Result<Option<EsgReport>, sqlx::Error> {
+    /// Submit an ESG report for review, scoped to the owning organization.
+    pub async fn submit_report<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<EsgReport>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgReport>(
             r#"
             UPDATE esg_reports
             SET status = 'pending_review',
                 submitted_at = NOW(),
                 updated_at = NOW()
-            WHERE id = $1 AND status = 'draft'
+            WHERE id = $1 AND organization_id = $2 AND status = 'draft'
             RETURNING id, organization_id, report_type, title, description,
                       period_start, period_end, frameworks, status, submitted_at,
                       approved_by, approved_at, report_data, summary_scores,
@@ -720,16 +898,22 @@ impl EsgReportingRepository {
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Approve an ESG report.
-    pub async fn approve_report(
+    /// Approve an ESG report, scoped to the owning organization.
+    pub async fn approve_report<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         approver_id: Uuid,
-    ) -> Result<Option<EsgReport>, sqlx::Error> {
+    ) -> Result<Option<EsgReport>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgReport>(
             r#"
             UPDATE esg_reports
@@ -737,7 +921,7 @@ impl EsgReportingRepository {
                 approved_by = $2,
                 approved_at = NOW(),
                 updated_at = NOW()
-            WHERE id = $1 AND status = 'pending_review'
+            WHERE id = $1 AND organization_id = $3 AND status = 'pending_review'
             RETURNING id, organization_id, report_type, title, description,
                       period_start, period_end, frameworks, status, submitted_at,
                       approved_by, approved_at, report_data, summary_scores,
@@ -746,16 +930,28 @@ impl EsgReportingRepository {
         )
         .bind(id)
         .bind(approver_id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete an ESG report.
-    pub async fn delete_report(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM esg_reports WHERE id = $1 AND status = 'draft'")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete an ESG report, scoped to the owning organization.
+    pub async fn delete_report<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query(
+            "DELETE FROM esg_reports WHERE id = $1 AND organization_id = $2 AND status = 'draft'",
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -764,11 +960,15 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Create an EU Taxonomy assessment.
-    pub async fn create_eu_taxonomy_assessment(
+    pub async fn create_eu_taxonomy_assessment<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         input: CreateEuTaxonomyAssessment,
-    ) -> Result<EuTaxonomyAssessment, sqlx::Error> {
+    ) -> Result<EuTaxonomyAssessment, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EuTaxonomyAssessment>(
             r#"
             INSERT INTO eu_taxonomy_assessments (
@@ -799,15 +999,20 @@ impl EsgReportingRepository {
         .bind(input.primary_energy_demand)
         .bind(input.meets_nzeb_standard)
         .bind(input.notes.as_deref())
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get EU Taxonomy assessment by ID.
-    pub async fn get_eu_taxonomy_assessment(
+    /// Get EU Taxonomy assessment by ID, scoped to the owning organization.
+    pub async fn get_eu_taxonomy_assessment<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<EuTaxonomyAssessment>, sqlx::Error> {
+        org_id: Uuid,
+    ) -> Result<Option<EuTaxonomyAssessment>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EuTaxonomyAssessment>(
             r#"
             SELECT id, organization_id, building_id, year, climate_mitigation_eligible,
@@ -819,20 +1024,25 @@ impl EsgReportingRepository {
                    oecd_guidelines_compliance, un_guiding_principles,
                    overall_alignment_pct, notes, created_at, updated_at
             FROM eu_taxonomy_assessments
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
     /// List EU Taxonomy assessments.
-    pub async fn list_eu_taxonomy_assessments(
+    pub async fn list_eu_taxonomy_assessments<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         year: Option<i32>,
-    ) -> Result<Vec<EuTaxonomyAssessment>, sqlx::Error> {
+    ) -> Result<Vec<EuTaxonomyAssessment>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EuTaxonomyAssessment>(
             r#"
             SELECT id, organization_id, building_id, year, climate_mitigation_eligible,
@@ -851,16 +1061,21 @@ impl EsgReportingRepository {
         )
         .bind(organization_id)
         .bind(year)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update EU Taxonomy assessment.
-    pub async fn update_eu_taxonomy_assessment(
+    /// Update EU Taxonomy assessment, scoped to the owning organization.
+    pub async fn update_eu_taxonomy_assessment<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateEuTaxonomyAssessment,
-    ) -> Result<Option<EuTaxonomyAssessment>, sqlx::Error> {
+    ) -> Result<Option<EuTaxonomyAssessment>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Calculate overall alignment based on DNSH criteria
         sqlx::query_as::<_, EuTaxonomyAssessment>(
             r#"
@@ -900,7 +1115,7 @@ impl EsgReportingRepository {
                     )
                 END,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $16
             RETURNING id, organization_id, building_id, year, climate_mitigation_eligible,
                       climate_mitigation_aligned, climate_mitigation_revenue_pct,
                       climate_adaptation_eligible, climate_adaptation_aligned,
@@ -926,7 +1141,8 @@ impl EsgReportingRepository {
         .bind(input.oecd_guidelines_compliance)
         .bind(input.un_guiding_principles)
         .bind(input.notes.as_deref())
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
@@ -935,12 +1151,16 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Get ESG dashboard metrics.
-    pub async fn get_dashboard_metrics(
+    pub async fn get_dashboard_metrics<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         year: i32,
         building_id: Option<Uuid>,
-    ) -> Result<Option<EsgDashboardMetrics>, sqlx::Error> {
+    ) -> Result<Option<EsgDashboardMetrics>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgDashboardMetrics>(
             r#"
             SELECT id, organization_id, building_id, year, month,
@@ -960,22 +1180,30 @@ impl EsgReportingRepository {
         .bind(organization_id)
         .bind(year)
         .bind(building_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Refresh ESG dashboard metrics (recalculate from source data).
+    ///
+    /// Multi-statement: composes `get_carbon_summary` and an upsert on the
+    /// same RLS-context connection, hence `&mut PgConnection`.
     pub async fn refresh_dashboard_metrics(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         year: i32,
         building_id: Option<Uuid>,
     ) -> Result<EsgDashboardMetrics, sqlx::Error> {
         // Get carbon footprint data
-        let carbon = self.get_carbon_summary(organization_id, year).await?;
+        let carbon = self
+            .get_carbon_summary(&mut *conn, organization_id, year)
+            .await?;
 
         // Get previous year for YoY comparison
-        let prev_carbon = self.get_carbon_summary(organization_id, year - 1).await?;
+        let prev_carbon = self
+            .get_carbon_summary(&mut *conn, organization_id, year - 1)
+            .await?;
 
         let yoy_change = match (&carbon, &prev_carbon) {
             (Some(c), Some(p)) if p.total_co2_kg > Decimal::ZERO => {
@@ -1012,7 +1240,7 @@ impl EsgReportingRepository {
         .bind(carbon.as_ref().map(|c| &c.total_co2_kg))
         .bind(carbon.as_ref().and_then(|c| c.avg_co2_per_sqm.as_ref()))
         .bind(yoy_change)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
@@ -1021,12 +1249,16 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Create an import job.
-    pub async fn create_import_job(
+    pub async fn create_import_job<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         input: CreateEsgImportJob,
-    ) -> Result<EsgImportJob, sqlx::Error> {
+    ) -> Result<EsgImportJob, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgImportJob>(
             r#"
             INSERT INTO esg_import_jobs (
@@ -1045,31 +1277,44 @@ impl EsgReportingRepository {
         .bind(&input.data_type)
         .bind(input.rows_total)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get import job by ID.
-    pub async fn get_import_job(&self, id: Uuid) -> Result<Option<EsgImportJob>, sqlx::Error> {
+    /// Get import job by ID, scoped to the owning organization.
+    pub async fn get_import_job<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<EsgImportJob>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgImportJob>(
             r#"
             SELECT id, organization_id, file_name, file_url, data_type, status,
                    rows_total, rows_processed, rows_failed, error_log,
                    started_at, completed_at, created_at, created_by
             FROM esg_import_jobs
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
     /// List import jobs.
-    pub async fn list_import_jobs(
+    pub async fn list_import_jobs<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Vec<EsgImportJob>, sqlx::Error> {
+    ) -> Result<Vec<EsgImportJob>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, EsgImportJob>(
             r#"
             SELECT id, organization_id, file_name, file_url, data_type, status,
@@ -1082,19 +1327,25 @@ impl EsgReportingRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update import job status.
-    pub async fn update_import_job_status(
+    /// Update import job status, scoped to the owning organization.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn update_import_job_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         status: &str,
         rows_processed: Option<i32>,
         rows_failed: Option<i32>,
         error_log: Option<serde_json::Value>,
-    ) -> Result<Option<EsgImportJob>, sqlx::Error> {
+    ) -> Result<Option<EsgImportJob>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let now = Utc::now();
         let started_at = if status == "processing" {
             Some(now)
@@ -1116,7 +1367,7 @@ impl EsgReportingRepository {
                 error_log = COALESCE($5, error_log),
                 started_at = COALESCE($6, started_at),
                 completed_at = COALESCE($7, completed_at)
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $8
             RETURNING id, organization_id, file_name, file_url, data_type, status,
                       rows_total, rows_processed, rows_failed, error_log,
                       started_at, completed_at, created_at, created_by
@@ -1129,7 +1380,8 @@ impl EsgReportingRepository {
         .bind(&error_log)
         .bind(started_at)
         .bind(completed_at)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
@@ -1138,10 +1390,14 @@ impl EsgReportingRepository {
     // =========================================================================
 
     /// Get ESG statistics for an organization.
-    pub async fn get_statistics(
+    pub async fn get_statistics<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<EsgStatistics, sqlx::Error> {
+    ) -> Result<EsgStatistics, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let current_year = Utc::now().naive_utc().date().year();
 
         sqlx::query_as::<_, EsgStatistics>(
@@ -1162,7 +1418,7 @@ impl EsgReportingRepository {
         )
         .bind(organization_id)
         .bind(current_year)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 }
