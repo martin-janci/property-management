@@ -279,11 +279,13 @@ impl VendorRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    /// Set vendor as preferred.
+    /// Set vendor as preferred, scoped to the owning organization (PAP-129
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
     pub async fn set_preferred<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
         is_preferred: bool,
     ) -> Result<Vendor, sqlx::Error>
     where
@@ -292,12 +294,13 @@ impl VendorRepository {
         sqlx::query_as(
             r#"
             UPDATE vendors SET is_preferred = $2, updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $3
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(is_preferred)
+        .bind(org_id)
         .fetch_one(executor)
         .await
     }
@@ -387,39 +390,59 @@ impl VendorRepository {
         .await
     }
 
-    /// Delete a contact.
+    /// Delete a contact, scoped to the owning organization through the owning
+    /// vendor (`vendor_contacts` has no `organization_id` column — PAP-129
+    /// defense-in-depth, see [`find_by_id`](Self::find_by_id)).
     pub async fn delete_contact<'e, E>(
         &self,
         executor: E,
         contact_id: Uuid,
+        org_id: Uuid,
     ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let result = sqlx::query("DELETE FROM vendor_contacts WHERE id = $1")
-            .bind(contact_id)
-            .execute(executor)
-            .await?;
+        let result = sqlx::query(
+            r#"
+            DELETE FROM vendor_contacts vc
+            USING vendors v
+            WHERE vc.id = $1 AND v.id = vc.vendor_id AND v.organization_id = $2
+            "#,
+        )
+        .bind(contact_id)
+        .bind(org_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
     /// Resolve the `vendor_id` that owns `contact_id`, if any. Used by the
     /// route layer to derive the owning vendor before deleting a contact.
     ///
-    /// Under RLS the lookup is already org-scoped: a contact belonging to
-    /// another org is invisible and returns `None`.
+    /// Scoped to the owning organization through the vendor row (PAP-129): a
+    /// contact whose vendor belongs to another org resolves to `None`, even on
+    /// a connection whose role bypasses RLS.
     pub async fn find_contact_vendor_id<'e, E>(
         &self,
         executor: E,
         contact_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<Uuid>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_scalar("SELECT vendor_id FROM vendor_contacts WHERE id = $1")
-            .bind(contact_id)
-            .fetch_optional(executor)
-            .await
+        sqlx::query_scalar(
+            r#"
+            SELECT vc.vendor_id
+            FROM vendor_contacts vc
+            JOIN vendors v ON v.id = vc.vendor_id
+            WHERE vc.id = $1 AND v.organization_id = $2
+            "#,
+        )
+        .bind(contact_id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await
     }
 
     // ==================== Vendor Contracts ====================
@@ -512,11 +535,13 @@ impl VendorRepository {
         .await
     }
 
-    /// Update a contract.
+    /// Update a contract, scoped to the owning organization (PAP-129
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
     pub async fn update_contract<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
         data: UpdateVendorContract,
     ) -> Result<VendorContract, sqlx::Error>
     where
@@ -539,7 +564,7 @@ impl VendorRepository {
                 terms = COALESCE($13, terms),
                 metadata = COALESCE($14, metadata),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $15
             RETURNING *
             "#,
         )
@@ -557,19 +582,28 @@ impl VendorRepository {
         .bind(data.auto_renew)
         .bind(data.terms.map(sqlx::types::Json))
         .bind(data.metadata.map(sqlx::types::Json))
+        .bind(org_id)
         .fetch_one(executor)
         .await
     }
 
-    /// Delete a contract.
-    pub async fn delete_contract<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    /// Delete a contract, scoped to the owning organization (PAP-129
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
+    pub async fn delete_contract<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let result = sqlx::query("DELETE FROM vendor_contracts WHERE id = $1")
-            .bind(id)
-            .execute(executor)
-            .await?;
+        let result =
+            sqlx::query("DELETE FROM vendor_contracts WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(executor)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -698,11 +732,13 @@ impl VendorRepository {
         .await
     }
 
-    /// Update an invoice.
+    /// Update an invoice, scoped to the owning organization (PAP-129
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
     pub async fn update_invoice<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
         data: UpdateVendorInvoice,
     ) -> Result<VendorInvoice, sqlx::Error>
     where
@@ -723,7 +759,7 @@ impl VendorRepository {
                 line_items = COALESCE($11, line_items),
                 metadata = COALESCE($12, metadata),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $13
             RETURNING *
             "#,
         )
@@ -739,15 +775,18 @@ impl VendorRepository {
         .bind(&data.description)
         .bind(data.line_items.map(sqlx::types::Json))
         .bind(data.metadata.map(sqlx::types::Json))
+        .bind(org_id)
         .fetch_one(executor)
         .await
     }
 
-    /// Approve an invoice.
+    /// Approve an invoice, scoped to the owning organization (PAP-129
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
     pub async fn approve_invoice<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
         user_id: Uuid,
     ) -> Result<VendorInvoice, sqlx::Error>
     where
@@ -760,21 +799,24 @@ impl VendorRepository {
                 approved_by = $2,
                 approved_at = NOW(),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $3
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(user_id)
+        .bind(org_id)
         .fetch_one(executor)
         .await
     }
 
-    /// Reject an invoice.
+    /// Reject an invoice, scoped to the owning organization (PAP-129
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
     pub async fn reject_invoice<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
         user_id: Uuid,
         reason: &str,
     ) -> Result<VendorInvoice, sqlx::Error>
@@ -788,22 +830,25 @@ impl VendorRepository {
                 rejected_by = $2,
                 rejection_reason = $3,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $4
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(user_id)
         .bind(reason)
+        .bind(org_id)
         .fetch_one(executor)
         .await
     }
 
-    /// Record payment for an invoice.
+    /// Record payment for an invoice, scoped to the owning organization
+    /// (PAP-129 defense-in-depth — see [`find_by_id`](Self::find_by_id)).
     pub async fn record_payment<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
         amount: Decimal,
         method: Option<&str>,
         reference: Option<&str>,
@@ -823,7 +868,7 @@ impl VendorRepository {
                     ELSE 'partially_paid'
                 END,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $5
             RETURNING *
             "#,
         )
@@ -831,19 +876,28 @@ impl VendorRepository {
         .bind(amount)
         .bind(method)
         .bind(reference)
+        .bind(org_id)
         .fetch_one(executor)
         .await
     }
 
-    /// Delete an invoice.
-    pub async fn delete_invoice<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    /// Delete an invoice, scoped to the owning organization (PAP-129
+    /// defense-in-depth — see [`find_by_id`](Self::find_by_id)).
+    pub async fn delete_invoice<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let result = sqlx::query("DELETE FROM vendor_invoices WHERE id = $1")
-            .bind(id)
-            .execute(executor)
-            .await?;
+        let result =
+            sqlx::query("DELETE FROM vendor_invoices WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(executor)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
