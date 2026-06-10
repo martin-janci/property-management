@@ -16,6 +16,12 @@ on:
   # Weekly security tests (Story 80.1)
   schedule:
     - cron: '0 3 * * 0'  # Every Sunday at 3am UTC
+  # Manual gate verification. Version-bump pushes use GITHUB_TOKEN and
+  # never trigger this workflow, so a fix that lands just before a bump
+  # can leave dev's tip with no Backend run at all (PAP-123) — this
+  # gives maintainers a direct lever instead of waiting for the next
+  # backend/** merge.
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
