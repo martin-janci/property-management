@@ -259,7 +259,7 @@ async fn update_maintenance(
     let tenant_id = rls.tenant_id();
     let out = match state
         .equipment_repo
-        .update_maintenance(&mut **rls.conn(), id, tenant_id, req)
+        .update_maintenance(rls.conn(), id, tenant_id, req)
         .await
     {
         Ok(record) => Ok(Json(serde_json::json!(record))),
