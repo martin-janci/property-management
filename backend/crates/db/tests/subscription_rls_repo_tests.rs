@@ -150,9 +150,17 @@ async fn subscription_repo_force_rls_deny_all_and_fix(pool: PgPool) {
         // create_subscription's plan lookup reads subscription_plans (public
         // read policy, not FORCE-bound).
         format!("GRANT SELECT ON subscription_plans TO \"{role}\""),
+        // The 00179 policy is `org = get_current_org_id() AND
+        // get_current_org_not_deleted()`; the soft-delete helper is SECURITY
+        // INVOKER and reads `organizations`, so the bound role needs SELECT
+        // there too (else ctx-set reads fail "permission denied for table
+        // organizations" — the no-ctx deny-all leg passes anyway because the
+        // NULL org short-circuits before the soft-delete check).
+        format!("GRANT SELECT ON organizations TO \"{role}\""),
         // RLS policy helpers must be EXECUTE-able by the bound role.
         format!("GRANT EXECUTE ON FUNCTION get_current_org_id() TO \"{role}\""),
         format!("GRANT EXECUTE ON FUNCTION get_current_org_not_deleted() TO \"{role}\""),
+        format!("GRANT EXECUTE ON FUNCTION is_super_admin() TO \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
             .execute(&pool)
@@ -293,6 +301,7 @@ async fn subscription_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     for stmt in [
         format!("REVOKE ALL ON organization_subscriptions FROM \"{role}\""),
         format!("REVOKE ALL ON subscription_plans FROM \"{role}\""),
+        format!("REVOKE ALL ON organizations FROM \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
