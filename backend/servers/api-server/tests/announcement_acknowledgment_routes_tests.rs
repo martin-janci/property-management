@@ -51,8 +51,7 @@ use common::TestApp;
 // ──────────────────────────────────────────────────────────────────────────────
 
 /// Must match `TestConfig::default().jwt_secret`.
-const JWT_SECRET: &str =
-    "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // JWT helpers
@@ -233,11 +232,7 @@ fn authed_get(uri: &str, token: &str, org_id: Uuid) -> Request<Body> {
 
 /// Return `(read_at IS NOT NULL, acknowledged_at IS NOT NULL)` for the given
 /// (announcement, user) pair, or `None` if no row exists.
-async fn read_record(
-    pool: &PgPool,
-    announcement_id: Uuid,
-    user_id: Uuid,
-) -> Option<(bool, bool)> {
+async fn read_record(pool: &PgPool, announcement_id: Uuid, user_id: Uuid) -> Option<(bool, bool)> {
     sqlx::query_as::<_, (bool, bool)>(
         r#"
         SELECT
@@ -306,7 +301,10 @@ async fn mark_read_persists_read_record(pool: PgPool) {
     );
     let (has_read_at, has_acked_at) = row.unwrap();
     assert!(has_read_at, "read_at must be set after mark-read");
-    assert!(!has_acked_at, "acknowledged_at must NOT be set by mark-read");
+    assert!(
+        !has_acked_at,
+        "acknowledged_at must NOT be set by mark-read"
+    );
 }
 
 /// Calling mark-read a second time is idempotent — the endpoint returns 200
@@ -345,7 +343,10 @@ async fn mark_read_is_idempotent(pool: PgPool) {
     .fetch_one(&pool)
     .await
     .expect("count announcement_reads");
-    assert_eq!(count, 1, "idempotent mark-read must not create duplicate rows");
+    assert_eq!(
+        count, 1,
+        "idempotent mark-read must not create duplicate rows"
+    );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -397,7 +398,10 @@ async fn acknowledge_persists_acknowledgment(pool: PgPool) {
     );
     let (has_read_at, has_acked_at) = row.unwrap();
     assert!(has_read_at, "read_at must be set after acknowledge");
-    assert!(has_acked_at, "acknowledged_at must be set after acknowledge");
+    assert!(
+        has_acked_at,
+        "acknowledged_at must be set after acknowledge"
+    );
 }
 
 /// Acknowledge is idempotent: a second call MUST NOT overwrite the original
@@ -575,7 +579,9 @@ async fn acknowledgment_stats_reflect_read_and_ack(pool: PgPool) {
     // Resident marks as read.
     let res_token = mint_token(resident_id, org_id, "resident");
     let read_uri = format!("/api/v1/announcements/{announcement_id}/read");
-    let read_resp = app.execute(authed_post(&read_uri, &res_token, org_id)).await;
+    let read_resp = app
+        .execute(authed_post(&read_uri, &res_token, org_id))
+        .await;
     assert_eq!(
         read_resp.status,
         StatusCode::OK,
@@ -598,7 +604,9 @@ async fn acknowledgment_stats_reflect_read_and_ack(pool: PgPool) {
     // Manager queries the acknowledgment stats.
     let mgr_token = mint_token(manager_id, org_id, "manager");
     let stats_uri = format!("/api/v1/announcements/{announcement_id}/acknowledgments");
-    let stats_resp = app.execute(authed_get(&stats_uri, &mgr_token, org_id)).await;
+    let stats_resp = app
+        .execute(authed_get(&stats_uri, &mgr_token, org_id))
+        .await;
     assert_eq!(
         stats_resp.status,
         StatusCode::OK,
