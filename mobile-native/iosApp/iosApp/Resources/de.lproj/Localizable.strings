@@ -273,6 +273,7 @@
 "loading_listing" = "Angebot wird geladen...";
 "failed_to_load_listing" = "Angebot konnte nicht geladen werden";
 "view_on_map" = "Auf Karte anzeigen";
+"get_directions" = "Route abrufen";
 "contact_via_inquiry" = "Über Anfrage kontaktieren";
 "send_inquiry" = "Anfrage senden";
 "property" = "Immobilie";
