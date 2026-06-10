@@ -2,22 +2,49 @@
 //!
 //! Provides database operations for Integration Marketplace, Connector Framework,
 //! Webhooks, and Developer Portal.
+//!
+//! # RLS Integration (PAP-110, parent PAP-80)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on six tables this repo queries:
+//! `organization_integrations`, `organization_connectors`,
+//! `connector_execution_logs`, `webhook_subscriptions`, `webhook_deliveries`,
+//! and `integration_ratings` (write side). Under `FORCE` the api-server's
+//! owner connection is no longer exempt, so a query issued on a connection
+//! without `app.current_org_id` set collapses to deny-all (own-org reads
+//! return empty, writes fail).
+//!
+//! The repository therefore holds **no pool**: every method takes an executor
+//! supplied by the caller. Handlers touching the org-scoped tables above pass
+//! the `RlsConnection` extractor's context-set connection (`&mut **rls.conn()`);
+//! handlers for the global, non-`FORCE` catalog tables (marketplace,
+//! connectors, docs, developer portal) pass the app pool directly — the owner
+//! role remains exempt there, matching prior behavior. Single-statement
+//! methods take a generic `Executor`; multi-statement methods take
+//! `&mut PgConnection` and run inside an explicit transaction. This mirrors
+//! the `work_order.rs` / `budget.rs` / `document.rs` precedent.
 
 use crate::models::api_ecosystem::*;
 use crate::DbPool;
 use common::AppError;
+use sqlx::{Connection, Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 /// Repository for API Ecosystem operations.
+///
+/// Stateless: every method receives an executor from the caller. Org-scoped
+/// (FORCE-RLS) queries must run on an RLS-context-set connection.
 #[derive(Clone)]
-pub struct ApiEcosystemRepository {
-    pool: DbPool,
-}
+pub struct ApiEcosystemRepository;
 
 impl ApiEcosystemRepository {
     /// Create a new repository instance.
-    pub fn new(pool: DbPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs).
+    pub fn new(_pool: DbPool) -> Self {
+        Self
     }
 
     // ============================================
@@ -25,10 +52,14 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// List marketplace integrations with optional filtering.
-    pub async fn list_marketplace_integrations(
+    pub async fn list_marketplace_integrations<'e, E>(
         &self,
+        executor: E,
         query: &MarketplaceIntegrationQuery,
-    ) -> Result<Vec<MarketplaceIntegrationSummary>, AppError> {
+    ) -> Result<Vec<MarketplaceIntegrationSummary>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50).min(100) as i64;
         let offset = query.offset.unwrap_or(0) as i64;
 
@@ -58,7 +89,7 @@ impl ApiEcosystemRepository {
         .bind(query.sort_by.as_ref())
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -66,17 +97,21 @@ impl ApiEcosystemRepository {
     }
 
     /// Get a marketplace integration by ID.
-    pub async fn get_marketplace_integration(
+    pub async fn get_marketplace_integration<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<MarketplaceIntegration>, AppError> {
+    ) -> Result<Option<MarketplaceIntegration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let integration = sqlx::query_as::<_, MarketplaceIntegration>(
             r#"
             SELECT * FROM marketplace_integrations WHERE id = $1
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -84,17 +119,21 @@ impl ApiEcosystemRepository {
     }
 
     /// Get a marketplace integration by slug.
-    pub async fn get_marketplace_integration_by_slug(
+    pub async fn get_marketplace_integration_by_slug<'e, E>(
         &self,
+        executor: E,
         slug: &str,
-    ) -> Result<Option<MarketplaceIntegration>, AppError> {
+    ) -> Result<Option<MarketplaceIntegration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let integration = sqlx::query_as::<_, MarketplaceIntegration>(
             r#"
             SELECT * FROM marketplace_integrations WHERE slug = $1
             "#,
         )
         .bind(slug)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -102,10 +141,14 @@ impl ApiEcosystemRepository {
     }
 
     /// Create a new marketplace integration (admin only).
-    pub async fn create_marketplace_integration(
+    pub async fn create_marketplace_integration<'e, E>(
         &self,
+        executor: E,
         req: &CreateMarketplaceIntegration,
-    ) -> Result<MarketplaceIntegration, AppError> {
+    ) -> Result<MarketplaceIntegration, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let integration = sqlx::query_as::<_, MarketplaceIntegration>(
             r#"
             INSERT INTO marketplace_integrations (
@@ -133,7 +176,7 @@ impl ApiEcosystemRepository {
         .bind(&req.pricing_info)
         .bind(req.is_premium.unwrap_or(false))
         .bind(&req.required_scopes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -141,11 +184,15 @@ impl ApiEcosystemRepository {
     }
 
     /// Update a marketplace integration.
-    pub async fn update_marketplace_integration(
+    pub async fn update_marketplace_integration<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         req: &UpdateMarketplaceIntegration,
-    ) -> Result<Option<MarketplaceIntegration>, AppError> {
+    ) -> Result<Option<MarketplaceIntegration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let integration = sqlx::query_as::<_, MarketplaceIntegration>(
             r#"
             UPDATE marketplace_integrations SET
@@ -188,7 +235,7 @@ impl ApiEcosystemRepository {
         .bind(req.is_featured)
         .bind(req.is_premium)
         .bind(&req.required_scopes)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -196,10 +243,17 @@ impl ApiEcosystemRepository {
     }
 
     /// Delete a marketplace integration.
-    pub async fn delete_marketplace_integration(&self, id: Uuid) -> Result<bool, AppError> {
+    pub async fn delete_marketplace_integration<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM marketplace_integrations WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -207,9 +261,13 @@ impl ApiEcosystemRepository {
     }
 
     /// Get integration category counts.
-    pub async fn get_integration_category_counts(
+    pub async fn get_integration_category_counts<'e, E>(
         &self,
-    ) -> Result<Vec<IntegrationCategoryCount>, AppError> {
+        executor: E,
+    ) -> Result<Vec<IntegrationCategoryCount>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let counts = sqlx::query_as::<_, IntegrationCategoryCount>(
             r#"
             SELECT category, COUNT(*) as count
@@ -219,7 +277,7 @@ impl ApiEcosystemRepository {
             ORDER BY count DESC
             "#,
         )
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -233,8 +291,13 @@ impl ApiEcosystemRepository {
     /// Install an integration for an organization.
     /// Uses a transaction to ensure atomicity between installation and install count increment.
     /// Only increments install_count for new installations, not reinstalls.
+    ///
+    /// Multi-statement: takes `&mut PgConnection` (an RLS-context-set
+    /// connection — `organization_integrations` is FORCE-RLS) and opens the
+    /// transaction on it.
     pub async fn install_integration(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         user_id: Uuid,
         req: &InstallIntegration,
@@ -246,8 +309,7 @@ impl ApiEcosystemRepository {
             .map(|c| serde_json::to_string(c).unwrap_or_default());
 
         // Use a transaction to ensure atomicity
-        let mut tx = self
-            .pool
+        let mut tx = conn
             .begin()
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
@@ -312,10 +374,14 @@ impl ApiEcosystemRepository {
     }
 
     /// List organization integrations.
-    pub async fn list_organization_integrations(
+    pub async fn list_organization_integrations<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Vec<OrganizationIntegration>, AppError> {
+    ) -> Result<Vec<OrganizationIntegration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let integrations = sqlx::query_as::<_, OrganizationIntegration>(
             r#"
             SELECT * FROM organization_integrations
@@ -324,7 +390,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -334,11 +400,15 @@ impl ApiEcosystemRepository {
     /// Uninstall an integration.
     /// Note: `org_integration_id` is the primary key (id) of the organization_integrations record,
     /// not the marketplace integration_id.
-    pub async fn uninstall_integration(
+    pub async fn uninstall_integration<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         org_integration_id: Uuid,
-    ) -> Result<bool, AppError> {
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             UPDATE organization_integrations
@@ -348,7 +418,7 @@ impl ApiEcosystemRepository {
         )
         .bind(organization_id)
         .bind(org_integration_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -360,7 +430,14 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// List connectors for an integration.
-    pub async fn list_connectors(&self, integration_id: Uuid) -> Result<Vec<Connector>, AppError> {
+    pub async fn list_connectors<'e, E>(
+        &self,
+        executor: E,
+        integration_id: Uuid,
+    ) -> Result<Vec<Connector>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connectors = sqlx::query_as::<_, Connector>(
             r#"
             SELECT * FROM connectors
@@ -369,7 +446,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(integration_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -377,14 +454,21 @@ impl ApiEcosystemRepository {
     }
 
     /// Get a connector by ID.
-    pub async fn get_connector(&self, id: Uuid) -> Result<Option<Connector>, AppError> {
+    pub async fn get_connector<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<Connector>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connector = sqlx::query_as::<_, Connector>(
             r#"
             SELECT * FROM connectors WHERE id = $1
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -392,7 +476,14 @@ impl ApiEcosystemRepository {
     }
 
     /// Create a new connector.
-    pub async fn create_connector(&self, req: &CreateConnector) -> Result<Connector, AppError> {
+    pub async fn create_connector<'e, E>(
+        &self,
+        executor: E,
+        req: &CreateConnector,
+    ) -> Result<Connector, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connector = sqlx::query_as::<_, Connector>(
             r#"
             INSERT INTO connectors (
@@ -420,7 +511,7 @@ impl ApiEcosystemRepository {
         .bind(&req.supported_actions)
         .bind(&req.error_mapping)
         .bind(&req.data_transformations)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -428,11 +519,15 @@ impl ApiEcosystemRepository {
     }
 
     /// Update a connector.
-    pub async fn update_connector(
+    pub async fn update_connector<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         req: &UpdateConnector,
-    ) -> Result<Option<Connector>, AppError> {
+    ) -> Result<Option<Connector>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connector = sqlx::query_as::<_, Connector>(
             r#"
             UPDATE connectors SET
@@ -469,7 +564,7 @@ impl ApiEcosystemRepository {
         .bind(&req.supported_actions)
         .bind(&req.error_mapping)
         .bind(&req.data_transformations)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -477,10 +572,13 @@ impl ApiEcosystemRepository {
     }
 
     /// Delete a connector.
-    pub async fn delete_connector(&self, id: Uuid) -> Result<bool, AppError> {
+    pub async fn delete_connector<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM connectors WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -489,10 +587,14 @@ impl ApiEcosystemRepository {
 
     /// List connector actions.
     /// Maps DB columns to model fields for schema compatibility.
-    pub async fn list_connector_actions(
+    pub async fn list_connector_actions<'e, E>(
         &self,
+        executor: E,
         connector_id: Uuid,
-    ) -> Result<Vec<ConnectorAction>, AppError> {
+    ) -> Result<Vec<ConnectorAction>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let actions = sqlx::query_as::<_, ConnectorAction>(
             r#"
             SELECT
@@ -507,7 +609,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(connector_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -519,19 +621,38 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// List enhanced webhook subscriptions for an organization.
-    pub async fn list_enhanced_webhooks(
+    ///
+    /// Selects with the same column aliasing as the create/update RETURNING:
+    /// the DB schema (00102) has no `auth_type`/`status`/`retry_policy`/...
+    /// columns, so a `SELECT *` cannot decode into the enhanced model. This
+    /// was masked pre-fix because the raw-pool read returned zero rows under
+    /// FORCE RLS (deny-all) and never reached the decoder.
+    pub async fn list_enhanced_webhooks<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Vec<EnhancedWebhookSubscription>, AppError> {
+    ) -> Result<Vec<EnhancedWebhookSubscription>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let subscriptions = sqlx::query_as::<_, EnhancedWebhookSubscription>(
             r#"
-            SELECT * FROM webhook_subscriptions
+            SELECT
+                id, organization_id, name, description, url,
+                'hmac_sha256' as auth_type, NULL::jsonb as auth_config,
+                events, NULL::jsonb as filters, NULL::jsonb as payload_template,
+                CASE WHEN is_active THEN 'active' ELSE 'inactive' END as status,
+                headers, retry_config as retry_policy,
+                NULL::int4 as rate_limit_requests, NULL::int4 as rate_limit_window_seconds,
+                30000 as timeout_ms, TRUE as verify_ssl,
+                created_by, created_at, updated_at
+            FROM webhook_subscriptions
             WHERE organization_id = $1
             ORDER BY created_at DESC
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -539,17 +660,34 @@ impl ApiEcosystemRepository {
     }
 
     /// Get a webhook subscription by ID.
-    pub async fn get_enhanced_webhook(
+    ///
+    /// RLS scopes this by-id read to the connection's org: another org's
+    /// subscription is invisible and surfaces as `None` (`404`). Uses the
+    /// same column aliasing as [`Self::list_enhanced_webhooks`] — see there.
+    pub async fn get_enhanced_webhook<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<EnhancedWebhookSubscription>, AppError> {
+    ) -> Result<Option<EnhancedWebhookSubscription>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let subscription = sqlx::query_as::<_, EnhancedWebhookSubscription>(
             r#"
-            SELECT * FROM webhook_subscriptions WHERE id = $1
+            SELECT
+                id, organization_id, name, description, url,
+                'hmac_sha256' as auth_type, NULL::jsonb as auth_config,
+                events, NULL::jsonb as filters, NULL::jsonb as payload_template,
+                CASE WHEN is_active THEN 'active' ELSE 'inactive' END as status,
+                headers, retry_config as retry_policy,
+                NULL::int4 as rate_limit_requests, NULL::int4 as rate_limit_window_seconds,
+                30000 as timeout_ms, TRUE as verify_ssl,
+                created_by, created_at, updated_at
+            FROM webhook_subscriptions WHERE id = $1
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -557,10 +695,17 @@ impl ApiEcosystemRepository {
     }
 
     /// Delete a webhook subscription.
-    pub async fn delete_enhanced_webhook(&self, id: Uuid) -> Result<bool, AppError> {
+    pub async fn delete_enhanced_webhook<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM webhook_subscriptions WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -572,17 +717,21 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// Get a developer registration by ID.
-    pub async fn get_developer_registration(
+    pub async fn get_developer_registration<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<DeveloperRegistration>, AppError> {
+    ) -> Result<Option<DeveloperRegistration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let registration = sqlx::query_as::<_, DeveloperRegistration>(
             r#"
             SELECT * FROM developer_accounts WHERE id = $1
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -590,10 +739,14 @@ impl ApiEcosystemRepository {
     }
 
     /// List API keys for a developer.
-    pub async fn list_developer_api_keys(
+    pub async fn list_developer_api_keys<'e, E>(
         &self,
+        executor: E,
         developer_id: Uuid,
-    ) -> Result<Vec<DeveloperApiKey>, AppError> {
+    ) -> Result<Vec<DeveloperApiKey>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let keys = sqlx::query_as::<_, DeveloperApiKey>(
             r#"
             SELECT * FROM developer_api_keys
@@ -602,7 +755,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(developer_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -610,7 +763,15 @@ impl ApiEcosystemRepository {
     }
 
     /// Revoke an API key.
-    pub async fn revoke_api_key(&self, key_id: Uuid, revoked_by: Uuid) -> Result<bool, AppError> {
+    pub async fn revoke_api_key<'e, E>(
+        &self,
+        executor: E,
+        key_id: Uuid,
+        revoked_by: Uuid,
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             UPDATE developer_api_keys SET
@@ -622,7 +783,7 @@ impl ApiEcosystemRepository {
         )
         .bind(key_id)
         .bind(revoked_by)
-        .execute(&self.pool)
+        .execute(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -634,12 +795,16 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// List ratings for an integration.
-    pub async fn list_integration_ratings(
+    pub async fn list_integration_ratings<'e, E>(
         &self,
+        executor: E,
         integration_id: Uuid,
         limit: i32,
         offset: i32,
-    ) -> Result<Vec<IntegrationRatingWithUser>, AppError> {
+    ) -> Result<Vec<IntegrationRatingWithUser>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let ratings = sqlx::query_as::<_, IntegrationRatingWithUser>(
             r#"
             SELECT
@@ -656,7 +821,7 @@ impl ApiEcosystemRepository {
         .bind(integration_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -664,13 +829,17 @@ impl ApiEcosystemRepository {
     }
 
     /// Create an integration rating.
-    pub async fn create_integration_rating(
+    pub async fn create_integration_rating<'e, E>(
         &self,
+        executor: E,
         integration_id: Uuid,
         organization_id: Uuid,
         user_id: Uuid,
         req: &CreateIntegrationRating,
-    ) -> Result<IntegrationRating, AppError> {
+    ) -> Result<IntegrationRating, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let rating = sqlx::query_as::<_, IntegrationRating>(
             r#"
             INSERT INTO integration_ratings (
@@ -686,7 +855,7 @@ impl ApiEcosystemRepository {
         .bind(user_id)
         .bind(req.rating)
         .bind(&req.review)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -694,11 +863,15 @@ impl ApiEcosystemRepository {
     }
 
     /// Get an organization integration by ID.
-    pub async fn get_organization_integration(
+    pub async fn get_organization_integration<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         integration_id: Uuid,
-    ) -> Result<Option<OrganizationIntegration>, AppError> {
+    ) -> Result<Option<OrganizationIntegration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let integration = sqlx::query_as::<_, OrganizationIntegration>(
             r#"
             SELECT * FROM organization_integrations
@@ -707,7 +880,7 @@ impl ApiEcosystemRepository {
         )
         .bind(organization_id)
         .bind(integration_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -715,12 +888,16 @@ impl ApiEcosystemRepository {
     }
 
     /// Update an organization integration.
-    pub async fn update_organization_integration(
+    pub async fn update_organization_integration<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         integration_id: Uuid,
         req: &UpdateOrganizationIntegration,
-    ) -> Result<Option<OrganizationIntegration>, AppError> {
+    ) -> Result<Option<OrganizationIntegration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let integration = sqlx::query_as::<_, OrganizationIntegration>(
             r#"
             UPDATE organization_integrations SET
@@ -735,7 +912,7 @@ impl ApiEcosystemRepository {
         .bind(integration_id)
         .bind(&req.configuration)
         .bind(req.enabled)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -752,10 +929,14 @@ impl ApiEcosystemRepository {
     /// - endpoint_path -> path
     /// - request_schema -> input_schema
     /// - response_schema -> output_schema
-    pub async fn create_connector_action(
+    pub async fn create_connector_action<'e, E>(
         &self,
+        executor: E,
         req: &CreateConnectorAction,
-    ) -> Result<ConnectorAction, AppError> {
+    ) -> Result<ConnectorAction, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let action = sqlx::query_as::<_, ConnectorAction>(
             r#"
             INSERT INTO connector_actions (
@@ -779,7 +960,7 @@ impl ApiEcosystemRepository {
         .bind(&req.request_schema)
         .bind(&req.response_schema)
         .bind(&req.pagination_config)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -789,11 +970,15 @@ impl ApiEcosystemRepository {
     /// List connector execution logs.
     /// Note: DB schema uses org_connector_id (FK to organization_connectors), not organization_id.
     /// We join through organization_connectors to filter by organization.
-    pub async fn list_connector_execution_logs(
+    pub async fn list_connector_execution_logs<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         query: &ConnectorExecutionQuery,
-    ) -> Result<Vec<ConnectorExecutionLog>, AppError> {
+    ) -> Result<Vec<ConnectorExecutionLog>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50).min(100) as i64;
         let offset = query.offset.unwrap_or(0).max(0) as i64;
 
@@ -836,7 +1021,7 @@ impl ApiEcosystemRepository {
         .bind(query.status.as_ref())
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -850,12 +1035,16 @@ impl ApiEcosystemRepository {
     /// Create an enhanced webhook subscription.
     /// Note: DB schema has simpler columns than the enhanced model. We map enhanced
     /// fields to what the DB supports and return a compatible struct.
-    pub async fn create_enhanced_webhook(
+    pub async fn create_enhanced_webhook<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         req: &CreateEnhancedWebhookSubscription,
-    ) -> Result<EnhancedWebhookSubscription, AppError> {
+    ) -> Result<EnhancedWebhookSubscription, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Serialize retry_policy as JSON for retry_config column
         let retry_config_json = req
             .retry_policy
@@ -892,7 +1081,7 @@ impl ApiEcosystemRepository {
         .bind(&req.headers)
         .bind(&retry_config_json)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -900,11 +1089,15 @@ impl ApiEcosystemRepository {
     }
 
     /// Update an enhanced webhook subscription.
-    pub async fn update_enhanced_webhook(
+    pub async fn update_enhanced_webhook<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         req: &UpdateEnhancedWebhookSubscription,
-    ) -> Result<Option<EnhancedWebhookSubscription>, AppError> {
+    ) -> Result<Option<EnhancedWebhookSubscription>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Serialize retry_policy as JSON
         let retry_policy_json = req
             .retry_policy
@@ -945,7 +1138,7 @@ impl ApiEcosystemRepository {
         .bind(&req.headers)
         .bind(&retry_policy_json)
         .bind(is_active)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -953,15 +1146,36 @@ impl ApiEcosystemRepository {
     }
 
     /// List webhook delivery logs.
-    pub async fn list_webhook_delivery_logs(
+    pub async fn list_webhook_delivery_logs<'e, E>(
         &self,
+        executor: E,
         webhook_id: Uuid,
         limit: i32,
         offset: i32,
-    ) -> Result<Vec<EnhancedWebhookDeliveryLog>, AppError> {
+    ) -> Result<Vec<EnhancedWebhookDeliveryLog>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        // Aliased projection: the 00102 `webhook_deliveries` schema has no
+        // `event_id`/`attempts`/`created_at`/... columns the enhanced model
+        // expects, so a `SELECT *` cannot decode (masked pre-fix by the
+        // FORCE-RLS deny-all returning zero rows).
         let logs = sqlx::query_as::<_, EnhancedWebhookDeliveryLog>(
             r#"
-            SELECT * FROM webhook_deliveries
+            SELECT
+                id, subscription_id, event_type,
+                id as event_id,
+                payload, NULL::jsonb as transformed_payload,
+                status,
+                attempt_number as attempts,
+                delivered_at as last_attempt_at,
+                next_retry_at,
+                NULL::jsonb as request_headers,
+                response_status, response_headers, response_body,
+                error_message, NULL::text as error_code,
+                duration_ms, NULL::text as ip_address,
+                delivered_at as created_at
+            FROM webhook_deliveries
             WHERE subscription_id = $1
             ORDER BY delivered_at DESC
             LIMIT $2 OFFSET $3
@@ -970,7 +1184,7 @@ impl ApiEcosystemRepository {
         .bind(webhook_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -978,10 +1192,14 @@ impl ApiEcosystemRepository {
     }
 
     /// Get webhook statistics.
-    pub async fn get_webhook_statistics(
+    pub async fn get_webhook_statistics<'e, E>(
         &self,
+        executor: E,
         webhook_id: Uuid,
-    ) -> Result<EnhancedWebhookStatistics, AppError> {
+    ) -> Result<EnhancedWebhookStatistics, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Query basic stats
         let row = sqlx::query(
             r#"
@@ -999,7 +1217,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(webhook_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1039,11 +1257,15 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// Register a developer.
-    pub async fn register_developer(
+    pub async fn register_developer<'e, E>(
         &self,
+        executor: E,
         user_id: Uuid,
         req: &CreateDeveloperRegistration,
-    ) -> Result<DeveloperRegistration, AppError> {
+    ) -> Result<DeveloperRegistration, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let registration = sqlx::query_as::<_, DeveloperRegistration>(
             r#"
             INSERT INTO developer_accounts (
@@ -1057,7 +1279,7 @@ impl ApiEcosystemRepository {
         .bind(&req.company_name)
         .bind(&req.website)
         .bind(&req.use_case)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1065,17 +1287,21 @@ impl ApiEcosystemRepository {
     }
 
     /// Get developer registration by user ID.
-    pub async fn get_developer_registration_by_user(
+    pub async fn get_developer_registration_by_user<'e, E>(
         &self,
+        executor: E,
         user_id: Uuid,
-    ) -> Result<Option<DeveloperRegistration>, AppError> {
+    ) -> Result<Option<DeveloperRegistration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let registration = sqlx::query_as::<_, DeveloperRegistration>(
             r#"
             SELECT * FROM developer_accounts WHERE user_id = $1
             "#,
         )
         .bind(user_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1083,12 +1309,16 @@ impl ApiEcosystemRepository {
     }
 
     /// Review a developer registration (approve/reject).
-    pub async fn review_developer_registration(
+    pub async fn review_developer_registration<'e, E>(
         &self,
+        executor: E,
         developer_id: Uuid,
         reviewer_id: Uuid,
         req: &ReviewDeveloperRegistration,
-    ) -> Result<Option<DeveloperRegistration>, AppError> {
+    ) -> Result<Option<DeveloperRegistration>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let registration = sqlx::query_as::<_, DeveloperRegistration>(
             r#"
             UPDATE developer_accounts SET
@@ -1102,7 +1332,7 @@ impl ApiEcosystemRepository {
         .bind(developer_id)
         .bind(&req.status)
         .bind(reviewer_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1110,13 +1340,17 @@ impl ApiEcosystemRepository {
     }
 
     /// Create a developer API key.
-    pub async fn create_developer_api_key(
+    pub async fn create_developer_api_key<'e, E>(
         &self,
+        executor: E,
         developer_id: Uuid,
         req: &CreateDeveloperApiKey,
         key_prefix: &str,
         key_hash: &str,
-    ) -> Result<DeveloperApiKey, AppError> {
+    ) -> Result<DeveloperApiKey, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Calculate expiration from expires_in_days
         let expires_at = req
             .expires_in_days
@@ -1138,7 +1372,7 @@ impl ApiEcosystemRepository {
         .bind(&req.scopes)
         .bind(req.is_sandbox.unwrap_or(false))
         .bind(expires_at)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1147,19 +1381,29 @@ impl ApiEcosystemRepository {
 
     /// Rotate (replace) a developer API key.
     /// Preserves all settings from the old key including is_sandbox.
+    ///
+    /// Multi-statement: takes `&mut PgConnection` and runs the
+    /// revoke-old/insert-new pair inside a transaction so a failure cannot
+    /// leave the developer with the old key revoked and no replacement.
     pub async fn rotate_developer_api_key(
         &self,
+        conn: &mut PgConnection,
         key_id: Uuid,
         revoked_by: Uuid,
         new_key_prefix: &str,
         new_key_hash: &str,
     ) -> Result<Option<DeveloperApiKey>, AppError> {
+        let mut tx = conn
+            .begin()
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+
         // First, get the existing key info
         let existing = sqlx::query_as::<_, DeveloperApiKey>(
             r#"SELECT * FROM developer_api_keys WHERE id = $1 AND revoked_at IS NULL"#,
         )
         .bind(key_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *tx)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1180,7 +1424,7 @@ impl ApiEcosystemRepository {
         )
         .bind(key_id)
         .bind(revoked_by)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1202,9 +1446,13 @@ impl ApiEcosystemRepository {
         .bind(&old_key.rate_limit_tier)
         .bind(old_key.is_sandbox) // Preserve sandbox setting
         .bind(old_key.expires_at)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
+
+        tx.commit()
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(Some(new_key))
     }
@@ -1214,10 +1462,14 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// List pre-built integration connections for an organization.
-    pub async fn list_prebuilt_connections(
+    pub async fn list_prebuilt_connections<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Vec<PreBuiltIntegrationConnection>, AppError> {
+    ) -> Result<Vec<PreBuiltIntegrationConnection>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connections = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
             r#"
             SELECT * FROM prebuilt_integration_connections
@@ -1226,7 +1478,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1234,11 +1486,15 @@ impl ApiEcosystemRepository {
     }
 
     /// Get a pre-built integration connection by type.
-    pub async fn get_prebuilt_connection(
+    pub async fn get_prebuilt_connection<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         integration_type: &str,
-    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError> {
+    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
             r#"
             SELECT * FROM prebuilt_integration_connections
@@ -1247,7 +1503,7 @@ impl ApiEcosystemRepository {
         )
         .bind(organization_id)
         .bind(integration_type)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1255,12 +1511,16 @@ impl ApiEcosystemRepository {
     }
 
     /// Create a pre-built integration connection.
-    pub async fn create_prebuilt_connection(
+    pub async fn create_prebuilt_connection<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         req: &CreatePreBuiltIntegrationConnection,
-    ) -> Result<PreBuiltIntegrationConnection, AppError> {
+    ) -> Result<PreBuiltIntegrationConnection, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
             r#"
             INSERT INTO prebuilt_integration_connections (
@@ -1278,7 +1538,7 @@ impl ApiEcosystemRepository {
         .bind(&req.integration_type)
         .bind(&req.configuration)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1286,12 +1546,16 @@ impl ApiEcosystemRepository {
     }
 
     /// Update a pre-built integration connection.
-    pub async fn update_prebuilt_connection(
+    pub async fn update_prebuilt_connection<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         integration_type: &str,
         req: &UpdatePreBuiltIntegrationConnection,
-    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError> {
+    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
             r#"
             UPDATE prebuilt_integration_connections SET
@@ -1306,7 +1570,7 @@ impl ApiEcosystemRepository {
         .bind(integration_type)
         .bind(&req.configuration)
         .bind(req.sync_enabled)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1314,17 +1578,21 @@ impl ApiEcosystemRepository {
     }
 
     /// Delete a pre-built integration connection.
-    pub async fn delete_prebuilt_connection(
+    pub async fn delete_prebuilt_connection<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         integration_type: &str,
-    ) -> Result<bool, AppError> {
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"DELETE FROM prebuilt_integration_connections WHERE organization_id = $1 AND integration_type = $2"#,
         )
         .bind(organization_id)
         .bind(integration_type)
-        .execute(&self.pool)
+        .execute(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1332,14 +1600,18 @@ impl ApiEcosystemRepository {
     }
 
     /// Update pre-built integration connection with OAuth tokens.
-    pub async fn update_prebuilt_connection_tokens(
+    pub async fn update_prebuilt_connection_tokens<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         integration_type: &str,
         access_token: &str,
         refresh_token: Option<&str>,
         expires_at: Option<chrono::DateTime<chrono::Utc>>,
-    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError> {
+    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
             r#"
             UPDATE prebuilt_integration_connections SET
@@ -1357,7 +1629,7 @@ impl ApiEcosystemRepository {
         .bind(access_token)
         .bind(refresh_token)
         .bind(expires_at)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1365,13 +1637,17 @@ impl ApiEcosystemRepository {
     }
 
     /// Record sync result for pre-built integration.
-    pub async fn record_prebuilt_sync(
+    pub async fn record_prebuilt_sync<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         integration_type: &str,
         success: bool,
         error: Option<&str>,
-    ) -> Result<(), AppError> {
+    ) -> Result<(), AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query(
             r#"
             UPDATE prebuilt_integration_connections SET
@@ -1386,7 +1662,7 @@ impl ApiEcosystemRepository {
         .bind(integration_type)
         .bind(success)
         .bind(error)
-        .execute(&self.pool)
+        .execute(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1398,10 +1674,14 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// List all published API documentation.
-    pub async fn list_api_documentation(
+    pub async fn list_api_documentation<'e, E>(
         &self,
+        executor: E,
         published_only: bool,
-    ) -> Result<Vec<ApiDocumentation>, AppError> {
+    ) -> Result<Vec<ApiDocumentation>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let docs = if published_only {
             sqlx::query_as::<_, ApiDocumentation>(
                 r#"
@@ -1410,7 +1690,7 @@ impl ApiEcosystemRepository {
                 ORDER BY category, order_index, title
                 "#,
             )
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
         } else {
             sqlx::query_as::<_, ApiDocumentation>(
@@ -1419,7 +1699,7 @@ impl ApiEcosystemRepository {
                 ORDER BY category, order_index, title
                 "#,
             )
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
         }
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -1428,17 +1708,21 @@ impl ApiEcosystemRepository {
     }
 
     /// Get API documentation by slug.
-    pub async fn get_api_documentation(
+    pub async fn get_api_documentation<'e, E>(
         &self,
+        executor: E,
         slug: &str,
-    ) -> Result<Option<ApiDocumentation>, AppError> {
+    ) -> Result<Option<ApiDocumentation>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let doc = sqlx::query_as::<_, ApiDocumentation>(
             r#"
             SELECT * FROM api_documentation WHERE slug = $1
             "#,
         )
         .bind(slug)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1446,10 +1730,14 @@ impl ApiEcosystemRepository {
     }
 
     /// Create API documentation.
-    pub async fn create_api_documentation(
+    pub async fn create_api_documentation<'e, E>(
         &self,
+        executor: E,
         req: &CreateApiDocumentation,
-    ) -> Result<ApiDocumentation, AppError> {
+    ) -> Result<ApiDocumentation, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let doc = sqlx::query_as::<_, ApiDocumentation>(
             r#"
             INSERT INTO api_documentation (slug, title, content, category, order_index, is_published)
@@ -1463,7 +1751,7 @@ impl ApiEcosystemRepository {
         .bind(&req.category)
         .bind(req.order_index.unwrap_or(0))
         .bind(req.is_published.unwrap_or(false))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1471,11 +1759,15 @@ impl ApiEcosystemRepository {
     }
 
     /// Update API documentation.
-    pub async fn update_api_documentation(
+    pub async fn update_api_documentation<'e, E>(
         &self,
+        executor: E,
         slug: &str,
         req: &UpdateApiDocumentation,
-    ) -> Result<Option<ApiDocumentation>, AppError> {
+    ) -> Result<Option<ApiDocumentation>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let doc = sqlx::query_as::<_, ApiDocumentation>(
             r#"
             UPDATE api_documentation SET
@@ -1495,7 +1787,7 @@ impl ApiEcosystemRepository {
         .bind(&req.category)
         .bind(req.order_index)
         .bind(req.is_published)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1503,10 +1795,17 @@ impl ApiEcosystemRepository {
     }
 
     /// Delete API documentation.
-    pub async fn delete_api_documentation(&self, slug: &str) -> Result<bool, AppError> {
+    pub async fn delete_api_documentation<'e, E>(
+        &self,
+        executor: E,
+        slug: &str,
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM api_documentation WHERE slug = $1")
             .bind(slug)
-            .execute(&self.pool)
+            .execute(executor)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1514,10 +1813,14 @@ impl ApiEcosystemRepository {
     }
 
     /// List code samples for an endpoint.
-    pub async fn list_code_samples(
+    pub async fn list_code_samples<'e, E>(
         &self,
+        executor: E,
         endpoint_path: &str,
-    ) -> Result<Vec<ApiCodeSample>, AppError> {
+    ) -> Result<Vec<ApiCodeSample>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let samples = sqlx::query_as::<_, ApiCodeSample>(
             r#"
             SELECT * FROM api_code_samples
@@ -1526,7 +1829,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(endpoint_path)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1534,10 +1837,14 @@ impl ApiEcosystemRepository {
     }
 
     /// Create a code sample.
-    pub async fn create_code_sample(
+    pub async fn create_code_sample<'e, E>(
         &self,
+        executor: E,
         req: &CreateApiCodeSample,
-    ) -> Result<ApiCodeSample, AppError> {
+    ) -> Result<ApiCodeSample, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let sample = sqlx::query_as::<_, ApiCodeSample>(
             r#"
             INSERT INTO api_code_samples (endpoint_path, http_method, language, code, description)
@@ -1550,7 +1857,7 @@ impl ApiEcosystemRepository {
         .bind(&req.language)
         .bind(&req.code)
         .bind(&req.description)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1562,10 +1869,14 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// Get sandbox environment for a developer.
-    pub async fn get_sandbox_environment(
+    pub async fn get_sandbox_environment<'e, E>(
         &self,
+        executor: E,
         developer_id: Uuid,
-    ) -> Result<Option<SandboxConfig>, AppError> {
+    ) -> Result<Option<SandboxConfig>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let sandbox = sqlx::query_as::<_, SandboxConfig>(
             r#"
             SELECT * FROM developer_sandboxes
@@ -1576,7 +1887,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(developer_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1584,12 +1895,16 @@ impl ApiEcosystemRepository {
     }
 
     /// Create sandbox environment for a developer.
-    pub async fn create_sandbox_environment(
+    pub async fn create_sandbox_environment<'e, E>(
         &self,
+        executor: E,
         developer_id: Uuid,
         req: &CreateSandboxConfig,
         expires_at: Option<chrono::DateTime<chrono::Utc>>,
-    ) -> Result<SandboxConfig, AppError> {
+    ) -> Result<SandboxConfig, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let configuration = serde_json::json!({
             "test_mode": true,
             "seed_data": req.seed_test_data.unwrap_or(true)
@@ -1607,7 +1922,7 @@ impl ApiEcosystemRepository {
         .bind(&configuration)
         .bind(req.seed_test_data.unwrap_or(true))
         .bind(expires_at)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1619,10 +1934,14 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// Get developer usage statistics.
-    pub async fn get_developer_usage_stats(
+    pub async fn get_developer_usage_stats<'e, E>(
         &self,
+        executor: E,
         developer_id: Uuid,
-    ) -> Result<DeveloperUsageStats, AppError> {
+    ) -> Result<DeveloperUsageStats, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Query API usage statistics for the developer
         let row = sqlx::query(
             r#"
@@ -1638,7 +1957,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(developer_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1655,7 +1974,13 @@ impl ApiEcosystemRepository {
     }
 
     /// Get developer portal statistics (admin).
-    pub async fn get_developer_portal_stats(&self) -> Result<DeveloperPortalStatistics, AppError> {
+    pub async fn get_developer_portal_stats<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<DeveloperPortalStatistics, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query(
             r#"
             SELECT
@@ -1669,7 +1994,7 @@ impl ApiEcosystemRepository {
                 COALESCE((SELECT SUM(request_count) FROM developer_api_usage WHERE date >= date_trunc('month', CURRENT_DATE)), 0) as api_calls_this_month
             "#,
         )
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1688,10 +2013,14 @@ impl ApiEcosystemRepository {
     }
 
     /// Get ecosystem dashboard for an organization.
-    pub async fn get_ecosystem_dashboard(
+    pub async fn get_ecosystem_dashboard<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<ApiEcosystemDashboard, AppError> {
+    ) -> Result<ApiEcosystemDashboard, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query(
             r#"
             SELECT
@@ -1709,7 +2038,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1735,10 +2064,14 @@ impl ApiEcosystemRepository {
     }
 
     /// Get ecosystem statistics for an organization.
-    pub async fn get_ecosystem_statistics(
+    pub async fn get_ecosystem_statistics<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<ApiEcosystemStatistics, AppError> {
+    ) -> Result<ApiEcosystemStatistics, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query(
             r#"
             SELECT
@@ -1756,7 +2089,7 @@ impl ApiEcosystemRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1774,14 +2107,17 @@ impl ApiEcosystemRepository {
     }
 
     /// List all connectors (no integration filter).
-    pub async fn list_all_connectors(&self) -> Result<Vec<Connector>, AppError> {
+    pub async fn list_all_connectors<'e, E>(&self, executor: E) -> Result<Vec<Connector>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connectors = sqlx::query_as::<_, Connector>(
             r#"
             SELECT * FROM connectors
             ORDER BY name
             "#,
         )
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 

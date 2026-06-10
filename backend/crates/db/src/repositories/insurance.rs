@@ -1,8 +1,25 @@
 //! Insurance repository for Epic 22.
 //!
 //! Handles all database operations for insurance policies, claims, and reminders.
+//!
+//! # RLS Integration (PAP-67)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on every insurance table (`insurance_policies`,
+//! `insurance_claims`, `insurance_claim_documents`, `insurance_claim_history`,
+//! `insurance_policy_documents`, `insurance_renewal_reminders`). Under `FORCE`
+//! the api-server's owner connection is no longer exempt, so a query issued on a
+//! connection without `app.current_org_id` set collapses to deny-all (own-org
+//! reads return empty, writes fail).
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+//! pool**, so there is no way to issue a query that bypasses RLS. This mirrors
+//! the `work_order.rs` / `budget.rs` precedent. The explicit `organization_id`
+//! filters are retained as defence-in-depth alongside the RLS policy.
 
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 use crate::models::{
@@ -16,20 +33,21 @@ use crate::models::{
 use crate::DbPool;
 
 /// Repository for insurance management operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct InsuranceRepository {
-    pool: DbPool,
-}
+pub struct InsuranceRepository;
 
 impl InsuranceRepository {
     /// Create a new InsuranceRepository.
-    pub fn new(pool: DbPool) -> Self {
-        Self { pool }
-    }
-
-    /// Get the database pool reference.
-    pub fn pool(&self) -> &PgPool {
-        &self.pool
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: DbPool) -> Self {
+        Self
     }
 
     // ============================================
@@ -37,11 +55,15 @@ impl InsuranceRepository {
     // ============================================
 
     /// Create a new insurance policy.
-    pub async fn create_policy(
+    pub async fn create_policy<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         data: CreateInsurancePolicy,
-    ) -> Result<InsurancePolicy, sqlx::Error> {
+    ) -> Result<InsurancePolicy, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsurancePolicy>(
             r#"
             INSERT INTO insurance_policies (
@@ -75,31 +97,39 @@ impl InsuranceRepository {
         .bind(data.auto_renew)
         .bind(&data.terms)
         .bind(&data.metadata)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find insurance policy by ID.
-    pub async fn find_policy_by_id(
+    pub async fn find_policy_by_id<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         policy_id: Uuid,
-    ) -> Result<Option<InsurancePolicy>, sqlx::Error> {
+    ) -> Result<Option<InsurancePolicy>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsurancePolicy>(
             "SELECT * FROM insurance_policies WHERE id = $1 AND organization_id = $2",
         )
         .bind(policy_id)
         .bind(organization_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List insurance policies with filters.
-    pub async fn list_policies(
+    pub async fn list_policies<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         query: InsurancePolicyQuery,
-    ) -> Result<Vec<InsurancePolicy>, sqlx::Error> {
+    ) -> Result<Vec<InsurancePolicy>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -126,17 +156,21 @@ impl InsuranceRepository {
         .bind(query.expiring_within_days)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update an insurance policy.
-    pub async fn update_policy(
+    pub async fn update_policy<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         policy_id: Uuid,
         data: UpdateInsurancePolicy,
-    ) -> Result<Option<InsurancePolicy>, sqlx::Error> {
+    ) -> Result<Option<InsurancePolicy>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsurancePolicy>(
             r#"
             UPDATE insurance_policies SET
@@ -189,32 +223,40 @@ impl InsuranceRepository {
         .bind(data.auto_renew)
         .bind(&data.terms)
         .bind(&data.metadata)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Delete an insurance policy.
-    pub async fn delete_policy(
+    pub async fn delete_policy<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         policy_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result =
             sqlx::query("DELETE FROM insurance_policies WHERE id = $1 AND organization_id = $2")
                 .bind(policy_id)
                 .bind(organization_id)
-                .execute(&self.pool)
+                .execute(executor)
                 .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Get expiring policies.
-    pub async fn get_expiring_policies(
+    pub async fn get_expiring_policies<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         days_ahead: i32,
-    ) -> Result<Vec<ExpiringPolicy>, sqlx::Error> {
+    ) -> Result<Vec<ExpiringPolicy>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ExpiringPolicy>(
             r#"
             SELECT
@@ -236,7 +278,7 @@ impl InsuranceRepository {
         )
         .bind(organization_id)
         .bind(days_ahead)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -245,11 +287,15 @@ impl InsuranceRepository {
     // ============================================
 
     /// Add document to policy.
-    pub async fn add_policy_document(
+    pub async fn add_policy_document<'e, E>(
         &self,
+        executor: E,
         policy_id: Uuid,
         data: AddPolicyDocument,
-    ) -> Result<InsurancePolicyDocument, sqlx::Error> {
+    ) -> Result<InsurancePolicyDocument, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsurancePolicyDocument>(
             r#"
             INSERT INTO insurance_policy_documents (policy_id, document_id, document_type)
@@ -260,35 +306,43 @@ impl InsuranceRepository {
         .bind(policy_id)
         .bind(data.document_id)
         .bind(&data.document_type)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List policy documents.
-    pub async fn list_policy_documents(
+    pub async fn list_policy_documents<'e, E>(
         &self,
+        executor: E,
         policy_id: Uuid,
-    ) -> Result<Vec<InsurancePolicyDocument>, sqlx::Error> {
+    ) -> Result<Vec<InsurancePolicyDocument>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsurancePolicyDocument>(
             "SELECT * FROM insurance_policy_documents WHERE policy_id = $1 ORDER BY created_at DESC",
         )
         .bind(policy_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Remove document from policy.
-    pub async fn remove_policy_document(
+    pub async fn remove_policy_document<'e, E>(
         &self,
+        executor: E,
         policy_id: Uuid,
         document_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             "DELETE FROM insurance_policy_documents WHERE policy_id = $1 AND document_id = $2",
         )
         .bind(policy_id)
         .bind(document_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
@@ -299,12 +353,16 @@ impl InsuranceRepository {
     // ============================================
 
     /// Create a new insurance claim.
-    pub async fn create_claim(
+    pub async fn create_claim<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         submitted_by: Uuid,
         data: CreateInsuranceClaim,
-    ) -> Result<InsuranceClaim, sqlx::Error> {
+    ) -> Result<InsuranceClaim, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaim>(
             r#"
             INSERT INTO insurance_claims (
@@ -328,31 +386,39 @@ impl InsuranceRepository {
         .bind(&data.currency)
         .bind(submitted_by)
         .bind(&data.metadata)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find insurance claim by ID.
-    pub async fn find_claim_by_id(
+    pub async fn find_claim_by_id<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         claim_id: Uuid,
-    ) -> Result<Option<InsuranceClaim>, sqlx::Error> {
+    ) -> Result<Option<InsuranceClaim>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaim>(
             "SELECT * FROM insurance_claims WHERE id = $1 AND organization_id = $2",
         )
         .bind(claim_id)
         .bind(organization_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Find insurance claim with policy details.
-    pub async fn find_claim_with_policy(
+    pub async fn find_claim_with_policy<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         claim_id: Uuid,
-    ) -> Result<Option<InsuranceClaimWithPolicy>, sqlx::Error> {
+    ) -> Result<Option<InsuranceClaimWithPolicy>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaimWithPolicy>(
             r#"
             SELECT
@@ -368,16 +434,20 @@ impl InsuranceRepository {
         )
         .bind(claim_id)
         .bind(organization_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List insurance claims with filters.
-    pub async fn list_claims(
+    pub async fn list_claims<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         query: InsuranceClaimQuery,
-    ) -> Result<Vec<InsuranceClaimWithPolicy>, sqlx::Error> {
+    ) -> Result<Vec<InsuranceClaimWithPolicy>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -411,17 +481,21 @@ impl InsuranceRepository {
         .bind(query.incident_date_to)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update an insurance claim.
-    pub async fn update_claim(
+    pub async fn update_claim<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         claim_id: Uuid,
         data: UpdateInsuranceClaim,
-    ) -> Result<Option<InsuranceClaim>, sqlx::Error> {
+    ) -> Result<Option<InsuranceClaim>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaim>(
             r#"
             UPDATE insurance_claims SET
@@ -468,17 +542,21 @@ impl InsuranceRepository {
         .bind(&data.resolution_notes)
         .bind(&data.denial_reason)
         .bind(&data.metadata)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Submit a claim.
-    pub async fn submit_claim(
+    pub async fn submit_claim<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         claim_id: Uuid,
         submitted_by: Uuid,
-    ) -> Result<Option<InsuranceClaim>, sqlx::Error> {
+    ) -> Result<Option<InsuranceClaim>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaim>(
             r#"
             UPDATE insurance_claims SET
@@ -493,15 +571,16 @@ impl InsuranceRepository {
         .bind(claim_id)
         .bind(organization_id)
         .bind(submitted_by)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Review a claim (approve, deny, etc.).
     /// Only claims with status: submitted, under_review, or information_requested can be reviewed.
     #[allow(clippy::too_many_arguments)]
-    pub async fn review_claim(
+    pub async fn review_claim<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         claim_id: Uuid,
         reviewed_by: Uuid,
@@ -509,7 +588,10 @@ impl InsuranceRepository {
         approved_amount: Option<rust_decimal::Decimal>,
         denial_reason: Option<&str>,
         resolution_notes: Option<&str>,
-    ) -> Result<Option<InsuranceClaim>, sqlx::Error> {
+    ) -> Result<Option<InsuranceClaim>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaim>(
             r#"
             UPDATE insurance_claims SET
@@ -532,18 +614,22 @@ impl InsuranceRepository {
         .bind(approved_amount)
         .bind(denial_reason)
         .bind(resolution_notes)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Record payment for a claim.
     /// Only claims with status: approved or partially_approved can receive payments.
-    pub async fn record_claim_payment(
+    pub async fn record_claim_payment<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         claim_id: Uuid,
         payment_amount: rust_decimal::Decimal,
-    ) -> Result<Option<InsuranceClaim>, sqlx::Error> {
+    ) -> Result<Option<InsuranceClaim>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaim>(
             r#"
             UPDATE insurance_claims SET
@@ -561,37 +647,45 @@ impl InsuranceRepository {
         .bind(claim_id)
         .bind(organization_id)
         .bind(payment_amount)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Delete an insurance claim.
-    pub async fn delete_claim(
+    pub async fn delete_claim<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         claim_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             "DELETE FROM insurance_claims WHERE id = $1 AND organization_id = $2 AND status = 'draft'",
         )
         .bind(claim_id)
         .bind(organization_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Get claim history.
-    pub async fn get_claim_history(
+    pub async fn get_claim_history<'e, E>(
         &self,
+        executor: E,
         claim_id: Uuid,
-    ) -> Result<Vec<InsuranceClaimHistory>, sqlx::Error> {
+    ) -> Result<Vec<InsuranceClaimHistory>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaimHistory>(
             "SELECT * FROM insurance_claim_history WHERE claim_id = $1 ORDER BY created_at DESC",
         )
         .bind(claim_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -600,11 +694,15 @@ impl InsuranceRepository {
     // ============================================
 
     /// Add document to claim.
-    pub async fn add_claim_document(
+    pub async fn add_claim_document<'e, E>(
         &self,
+        executor: E,
         claim_id: Uuid,
         data: AddClaimDocument,
-    ) -> Result<InsuranceClaimDocument, sqlx::Error> {
+    ) -> Result<InsuranceClaimDocument, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaimDocument>(
             r#"
             INSERT INTO insurance_claim_documents (claim_id, document_id, document_type)
@@ -615,35 +713,43 @@ impl InsuranceRepository {
         .bind(claim_id)
         .bind(data.document_id)
         .bind(&data.document_type)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List claim documents.
-    pub async fn list_claim_documents(
+    pub async fn list_claim_documents<'e, E>(
         &self,
+        executor: E,
         claim_id: Uuid,
-    ) -> Result<Vec<InsuranceClaimDocument>, sqlx::Error> {
+    ) -> Result<Vec<InsuranceClaimDocument>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceClaimDocument>(
             "SELECT * FROM insurance_claim_documents WHERE claim_id = $1 ORDER BY created_at DESC",
         )
         .bind(claim_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Remove document from claim.
-    pub async fn remove_claim_document(
+    pub async fn remove_claim_document<'e, E>(
         &self,
+        executor: E,
         claim_id: Uuid,
         document_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             "DELETE FROM insurance_claim_documents WHERE claim_id = $1 AND document_id = $2",
         )
         .bind(claim_id)
         .bind(document_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
@@ -654,11 +760,15 @@ impl InsuranceRepository {
     // ============================================
 
     /// Create renewal reminder.
-    pub async fn create_reminder(
+    pub async fn create_reminder<'e, E>(
         &self,
+        executor: E,
         policy_id: Uuid,
         data: CreateRenewalReminder,
-    ) -> Result<InsuranceRenewalReminder, sqlx::Error> {
+    ) -> Result<InsuranceRenewalReminder, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceRenewalReminder>(
             r#"
             INSERT INTO insurance_renewal_reminders (policy_id, days_before_expiry, reminder_type)
@@ -669,29 +779,37 @@ impl InsuranceRepository {
         .bind(policy_id)
         .bind(data.days_before_expiry)
         .bind(&data.reminder_type)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List policy reminders.
-    pub async fn list_policy_reminders(
+    pub async fn list_policy_reminders<'e, E>(
         &self,
+        executor: E,
         policy_id: Uuid,
-    ) -> Result<Vec<InsuranceRenewalReminder>, sqlx::Error> {
+    ) -> Result<Vec<InsuranceRenewalReminder>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceRenewalReminder>(
             "SELECT * FROM insurance_renewal_reminders WHERE policy_id = $1 ORDER BY days_before_expiry DESC",
         )
         .bind(policy_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update renewal reminder.
-    pub async fn update_reminder(
+    pub async fn update_reminder<'e, E>(
         &self,
+        executor: E,
         reminder_id: Uuid,
         data: UpdateRenewalReminder,
-    ) -> Result<Option<InsuranceRenewalReminder>, sqlx::Error> {
+    ) -> Result<Option<InsuranceRenewalReminder>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, InsuranceRenewalReminder>(
             r#"
             UPDATE insurance_renewal_reminders SET
@@ -707,34 +825,52 @@ impl InsuranceRepository {
         .bind(data.days_before_expiry)
         .bind(&data.reminder_type)
         .bind(data.is_active)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Delete renewal reminder.
-    pub async fn delete_reminder(&self, reminder_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_reminder<'e, E>(
+        &self,
+        executor: E,
+        reminder_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM insurance_renewal_reminders WHERE id = $1")
             .bind(reminder_id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Mark reminder as sent.
-    pub async fn mark_reminder_sent(&self, reminder_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn mark_reminder_sent<'e, E>(
+        &self,
+        executor: E,
+        reminder_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result =
             sqlx::query("UPDATE insurance_renewal_reminders SET sent_at = NOW() WHERE id = $1")
                 .bind(reminder_id)
-                .execute(&self.pool)
+                .execute(executor)
                 .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Get pending reminders to send.
+    ///
+    /// Multi-statement (a join read, then a per-policy lookup), so it takes a
+    /// connection and reborrows it for each query.
     pub async fn get_pending_reminders(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
     ) -> Result<Vec<(InsuranceRenewalReminder, InsurancePolicy)>, sqlx::Error> {
         // Get reminders that are due and haven't been sent
@@ -752,13 +888,13 @@ impl InsuranceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         let mut results = Vec::new();
         for reminder in reminders {
             if let Some(policy) = self
-                .find_policy_by_id(organization_id, reminder.policy_id)
+                .find_policy_by_id(&mut *conn, organization_id, reminder.policy_id)
                 .await?
             {
                 results.push((reminder, policy));
@@ -773,8 +909,12 @@ impl InsuranceRepository {
     // ============================================
 
     /// Get insurance statistics for organization.
+    ///
+    /// Multi-statement (policy + claim aggregates), so it takes a connection and
+    /// reborrows it for each query.
     pub async fn get_statistics(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
     ) -> Result<InsuranceStatistics, sqlx::Error> {
         let policy_stats = sqlx::query_as::<_, (i64, i64, i64, Option<rust_decimal::Decimal>, Option<rust_decimal::Decimal>)>(
@@ -790,7 +930,7 @@ impl InsuranceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let claim_stats = sqlx::query_as::<_, (i64, i64, Option<rust_decimal::Decimal>, Option<rust_decimal::Decimal>)>(
@@ -805,7 +945,7 @@ impl InsuranceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         Ok(InsuranceStatistics {
@@ -822,10 +962,14 @@ impl InsuranceRepository {
     }
 
     /// Get claim summary by status.
-    pub async fn get_claim_summary_by_status(
+    pub async fn get_claim_summary_by_status<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Vec<ClaimStatusSummary>, sqlx::Error> {
+    ) -> Result<Vec<ClaimStatusSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ClaimStatusSummary>(
             r#"
             SELECT
@@ -841,15 +985,19 @@ impl InsuranceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get policy summary by type.
-    pub async fn get_policy_summary_by_type(
+    pub async fn get_policy_summary_by_type<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Vec<PolicyTypeSummary>, sqlx::Error> {
+    ) -> Result<Vec<PolicyTypeSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, PolicyTypeSummary>(
             r#"
             SELECT
@@ -864,7 +1012,7 @@ impl InsuranceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 }

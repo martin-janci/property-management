@@ -222,6 +222,14 @@ async fn documents_force_rls_blocks_cross_tenant_read(pool: PgPool) {
     .execute(&pool)
     .await
     .ok();
+    // DROP OWNED severs every remaining privilege this role holds in the
+    // test database — the explicit REVOKEs above keep missing the RLS
+    // helper-function EXECUTE grants, so DROP ROLE failed with "objects
+    // depend on it" and leaked the cluster-global role (PAP-134).
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "DROP ROLE IF EXISTS \"{role}\""
     )))

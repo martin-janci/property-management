@@ -4,9 +4,9 @@
 //!   - #614  RequireCapability / role check on `PUT /api/v1/reports/schedules/{id}`
 //!   - #624  Cross-tenant mutation: caller in Org B could update Org A's schedule
 //!   - #696  Original test suite only proved the outer JWT gate worked — the
-//!          RBAC predicate (`rls.role().is_manager()`) and the cross-tenant
-//!          WHERE clause (`AND organization_id = $caller_org_id`) were never
-//!          exercised because every request was sent without a Bearer JWT.
+//!     RBAC predicate (`rls.role().is_manager()`) and the cross-tenant
+//!     WHERE clause (`AND organization_id = $caller_org_id`) were never
+//!     exercised because every request was sent without a Bearer JWT.
 //!
 //! # What these tests verify
 //!
