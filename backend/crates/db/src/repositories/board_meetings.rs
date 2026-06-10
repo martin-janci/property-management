@@ -1,8 +1,33 @@
 //! Epic 143: Board Meeting Management Repository
 //!
 //! This module provides database operations for board meeting management.
+//!
+//! # RLS Integration (PAP-137 / PAP-67 / PAP-80)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on the board-meeting tables (`board_members`,
+//! `board_meetings`, `meeting_agenda_items`, `meeting_motions`, `motion_votes`,
+//! `meeting_attendance`, `meeting_minutes`, `meeting_action_items`,
+//! `meeting_documents`). Under `FORCE` the api-server's owner connection is no
+//! longer exempt, so a query issued on a connection without
+//! `app.current_org_id` set collapses to deny-all.
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds
+//! **no pool**, so there is no way to issue a query that bypasses RLS. This
+//! mirrors the `vendor.rs` / `work_order.rs` / `budget.rs` precedent.
+//!
+//! Cross-tenant safety (PAP-133 defense-in-depth): RLS is the primary
+//! boundary, but by-id queries stay org-keyed — a connection whose role
+//! bypasses RLS (superuser pools, BYPASSRLS) must still never resolve another
+//! tenant's row. `board_members` and `board_meetings` carry their own
+//! `organization_id`; child tables (`meeting_agenda_items`, `meeting_motions`,
+//! `motion_votes`, `meeting_attendance`, `meeting_minutes`,
+//! `meeting_action_items`, `meeting_documents`) are keyed through the root
+//! `board_meetings.organization_id` via `EXISTS`.
 
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 use crate::models::board_meetings::{
@@ -17,15 +42,21 @@ use crate::models::board_meetings::{
 };
 
 /// Repository for board meeting operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Debug, Clone)]
-pub struct BoardMeetingRepository {
-    pool: PgPool,
-}
+pub struct BoardMeetingRepository;
 
 impl BoardMeetingRepository {
     /// Create a new repository instance.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // ========================================================================
@@ -33,12 +64,16 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Create a new board member.
-    pub async fn create_board_member(
+    pub async fn create_board_member<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         appointed_by: Uuid,
         input: CreateBoardMember,
-    ) -> Result<BoardMember, sqlx::Error> {
+    ) -> Result<BoardMember, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BoardMember>(
             r#"
             INSERT INTO board_members (
@@ -59,24 +94,39 @@ impl BoardMeetingRepository {
         .bind(input.sms_notifications.unwrap_or(false))
         .bind(appointed_by)
         .bind(input.notes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get a board member by ID.
-    pub async fn get_board_member(&self, id: Uuid) -> Result<Option<BoardMember>, sqlx::Error> {
-        sqlx::query_as::<_, BoardMember>("SELECT * FROM board_members WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+    /// Get a board member by ID, scoped to the owning organization.
+    pub async fn get_board_member<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<BoardMember>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, BoardMember>(
+            "SELECT * FROM board_members WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await
     }
 
     /// List board members with optional filters.
-    pub async fn list_board_members(
+    pub async fn list_board_members<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: BoardMemberQuery,
-    ) -> Result<Vec<BoardMemberSummary>, sqlx::Error> {
+    ) -> Result<Vec<BoardMemberSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let page = query.page.unwrap_or(1).max(1);
         let per_page = query.per_page.unwrap_or(50).min(100);
         let offset = (page - 1) * per_page;
@@ -101,16 +151,24 @@ impl BoardMeetingRepository {
         .bind(query.is_active)
         .bind(per_page)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update a board member.
-    pub async fn update_board_member(
+    /// Update a board member, scoped to the owning organization.
+    ///
+    /// Returns `None` when no row matches `(id, org_id)` — including the
+    /// cross-tenant case, which is indistinguishable from "not found".
+    pub async fn update_board_member<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateBoardMember,
-    ) -> Result<BoardMember, sqlx::Error> {
+    ) -> Result<Option<BoardMember>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BoardMember>(
             r#"
             UPDATE board_members SET
@@ -122,7 +180,7 @@ impl BoardMeetingRepository {
                 sms_notifications = COALESCE($7, sms_notifications),
                 notes = COALESCE($8, notes),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $9
             RETURNING *
             "#,
         )
@@ -134,16 +192,27 @@ impl BoardMeetingRepository {
         .bind(input.email_notifications)
         .bind(input.sms_notifications)
         .bind(input.notes)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete a board member.
-    pub async fn delete_board_member(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM board_members WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a board member, scoped to the owning organization.
+    pub async fn delete_board_member<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result =
+            sqlx::query("DELETE FROM board_members WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(executor)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -152,12 +221,16 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Create a new board meeting.
-    pub async fn create_meeting(
+    pub async fn create_meeting<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         created_by: Uuid,
         input: CreateBoardMeeting,
-    ) -> Result<BoardMeeting, sqlx::Error> {
+    ) -> Result<BoardMeeting, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BoardMeeting>(
             r#"
             INSERT INTO board_meetings (
@@ -188,31 +261,53 @@ impl BoardMeetingRepository {
         .bind(input.secretary_id)
         .bind(input.description)
         .bind(created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get a meeting by ID.
-    pub async fn get_meeting(&self, id: Uuid) -> Result<Option<BoardMeeting>, sqlx::Error> {
-        sqlx::query_as::<_, BoardMeeting>("SELECT * FROM board_meetings WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+    /// Get a meeting by ID, scoped to the owning organization.
+    pub async fn get_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<BoardMeeting>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, BoardMeeting>(
+            "SELECT * FROM board_meetings WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await
     }
 
     /// Get meeting detail with all related data.
-    pub async fn get_meeting_detail(&self, id: Uuid) -> Result<Option<MeetingDetail>, sqlx::Error> {
-        let meeting = match self.get_meeting(id).await? {
+    ///
+    /// Org validation happens on the root meeting fetch: when the meeting does
+    /// not belong to `org_id` this returns `Ok(None)` and no child data is
+    /// read. The child queries stay org-keyed regardless (defense-in-depth).
+    pub async fn get_meeting_detail(
+        &self,
+        conn: &mut PgConnection,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<MeetingDetail>, sqlx::Error> {
+        let meeting = match self.get_meeting(&mut *conn, id, org_id).await? {
             Some(m) => m,
             None => return Ok(None),
         };
 
-        let agenda_items = self.list_agenda_items(id).await?;
-        let motions = self.list_meeting_motions(id).await?;
-        let attendance = self.list_meeting_attendance(id).await?;
-        let action_items = self.list_meeting_action_items(id).await?;
-        let documents = self.list_meeting_documents(id).await?;
-        let minutes = self.get_meeting_minutes(id).await?;
+        let agenda_items = self.list_agenda_items(&mut *conn, id, org_id).await?;
+        let motions = self.list_meeting_motions(&mut *conn, id, org_id).await?;
+        let attendance = self.list_meeting_attendance(&mut *conn, id, org_id).await?;
+        let action_items = self
+            .list_meeting_action_items(&mut *conn, id, org_id)
+            .await?;
+        let documents = self.list_meeting_documents(&mut *conn, id, org_id).await?;
+        let minutes = self.get_meeting_minutes(&mut *conn, id, org_id).await?;
 
         Ok(Some(MeetingDetail {
             meeting,
@@ -226,11 +321,15 @@ impl BoardMeetingRepository {
     }
 
     /// List meetings with optional filters.
-    pub async fn list_meetings(
+    pub async fn list_meetings<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: MeetingQuery,
-    ) -> Result<Vec<MeetingSummary>, sqlx::Error> {
+    ) -> Result<Vec<MeetingSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let page = query.page.unwrap_or(1).max(1);
         let per_page = query.per_page.unwrap_or(20).min(100);
         let offset = (page - 1) * per_page;
@@ -261,16 +360,21 @@ impl BoardMeetingRepository {
         .bind(query.to_date)
         .bind(per_page)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update a meeting.
-    pub async fn update_meeting(
+    /// Update a meeting, scoped to the owning organization.
+    pub async fn update_meeting<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateBoardMeeting,
-    ) -> Result<BoardMeeting, sqlx::Error> {
+    ) -> Result<Option<BoardMeeting>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BoardMeeting>(
             r#"
             UPDATE board_meetings SET
@@ -297,7 +401,7 @@ impl BoardMeetingRepository {
                 description = COALESCE($22, description),
                 notes = COALESCE($23, notes),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $24
             RETURNING *
             "#,
         )
@@ -324,66 +428,104 @@ impl BoardMeetingRepository {
         .bind(input.secretary_id)
         .bind(input.description)
         .bind(input.notes)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Start a meeting.
-    pub async fn start_meeting(&self, id: Uuid) -> Result<BoardMeeting, sqlx::Error> {
+    /// Start a meeting, scoped to the owning organization.
+    pub async fn start_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<BoardMeeting>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BoardMeeting>(
             r#"
             UPDATE board_meetings SET
                 status = 'in_progress',
                 actual_start = NOW(),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// End a meeting.
-    pub async fn end_meeting(&self, id: Uuid) -> Result<BoardMeeting, sqlx::Error> {
+    /// End a meeting, scoped to the owning organization.
+    pub async fn end_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<BoardMeeting>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BoardMeeting>(
             r#"
             UPDATE board_meetings SET
                 status = 'completed',
                 actual_end = NOW(),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Cancel a meeting.
-    pub async fn cancel_meeting(&self, id: Uuid) -> Result<BoardMeeting, sqlx::Error> {
+    /// Cancel a meeting, scoped to the owning organization.
+    pub async fn cancel_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<BoardMeeting>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BoardMeeting>(
             r#"
             UPDATE board_meetings SET
                 status = 'cancelled',
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete a meeting.
-    pub async fn delete_meeting(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM board_meetings WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a meeting, scoped to the owning organization.
+    pub async fn delete_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result =
+            sqlx::query("DELETE FROM board_meetings WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(executor)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -392,11 +534,18 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Add an agenda item.
-    pub async fn add_agenda_item(
+    ///
+    /// Callers must validate that `input.meeting_id` belongs to the caller's
+    /// organization first (root-meeting fetch via [`Self::get_meeting`]).
+    pub async fn add_agenda_item<'e, E>(
         &self,
+        executor: E,
         added_by: Uuid,
         input: CreateAgendaItem,
-    ) -> Result<MeetingAgendaItem, sqlx::Error> {
+    ) -> Result<MeetingAgendaItem, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingAgendaItem>(
             r#"
             INSERT INTO meeting_agenda_items (
@@ -419,40 +568,75 @@ impl BoardMeetingRepository {
         .bind(input.presenter_name)
         .bind(input.document_ids.as_deref())
         .bind(added_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get an agenda item.
-    pub async fn get_agenda_item(
+    /// Get an agenda item, keyed through the root meeting's organization.
+    pub async fn get_agenda_item<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<MeetingAgendaItem>, sqlx::Error> {
-        sqlx::query_as::<_, MeetingAgendaItem>("SELECT * FROM meeting_agenda_items WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+        org_id: Uuid,
+    ) -> Result<Option<MeetingAgendaItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, MeetingAgendaItem>(
+            r#"
+            SELECT i.* FROM meeting_agenda_items i
+            WHERE i.id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = i.meeting_id AND bm.organization_id = $2
+                )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await
     }
 
-    /// List agenda items for a meeting.
-    pub async fn list_agenda_items(
+    /// List agenda items for a meeting, keyed through the root meeting's
+    /// organization.
+    pub async fn list_agenda_items<'e, E>(
         &self,
+        executor: E,
         meeting_id: Uuid,
-    ) -> Result<Vec<MeetingAgendaItem>, sqlx::Error> {
+        org_id: Uuid,
+    ) -> Result<Vec<MeetingAgendaItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingAgendaItem>(
-            "SELECT * FROM meeting_agenda_items WHERE meeting_id = $1 ORDER BY display_order",
+            r#"
+            SELECT i.* FROM meeting_agenda_items i
+            WHERE i.meeting_id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = i.meeting_id AND bm.organization_id = $2
+                )
+            ORDER BY i.display_order
+            "#,
         )
         .bind(meeting_id)
-        .fetch_all(&self.pool)
+        .bind(org_id)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update an agenda item.
-    pub async fn update_agenda_item(
+    /// Update an agenda item, keyed through the root meeting's organization.
+    pub async fn update_agenda_item<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateAgendaItem,
-    ) -> Result<MeetingAgendaItem, sqlx::Error> {
+    ) -> Result<Option<MeetingAgendaItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingAgendaItem>(
             r#"
             UPDATE meeting_agenda_items SET
@@ -474,6 +658,11 @@ impl BoardMeetingRepository {
                 follow_up_due_date = COALESCE($17, follow_up_due_date),
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_agenda_items.meeting_id
+                        AND bm.organization_id = $18
+                )
             RETURNING *
             "#,
         )
@@ -494,16 +683,22 @@ impl BoardMeetingRepository {
         .bind(input.follow_up_required)
         .bind(input.follow_up_assignee)
         .bind(input.follow_up_due_date)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Complete an agenda item.
-    pub async fn complete_agenda_item(
+    /// Complete an agenda item, keyed through the root meeting's organization.
+    pub async fn complete_agenda_item<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         outcome: Option<String>,
-    ) -> Result<MeetingAgendaItem, sqlx::Error> {
+    ) -> Result<Option<MeetingAgendaItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingAgendaItem>(
             r#"
             UPDATE meeting_agenda_items SET
@@ -511,21 +706,46 @@ impl BoardMeetingRepository {
                 outcome = COALESCE($2, outcome),
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_agenda_items.meeting_id
+                        AND bm.organization_id = $3
+                )
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(outcome)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete an agenda item.
-    pub async fn delete_agenda_item(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM meeting_agenda_items WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete an agenda item, keyed through the root meeting's organization.
+    pub async fn delete_agenda_item<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM meeting_agenda_items
+            WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_agenda_items.meeting_id
+                        AND bm.organization_id = $2
+                )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -534,11 +754,18 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Create a motion.
-    pub async fn create_motion(
+    ///
+    /// Callers must validate that `input.meeting_id` belongs to the caller's
+    /// organization first (root-meeting fetch via [`Self::get_meeting`]).
+    pub async fn create_motion<'e, E>(
         &self,
+        executor: E,
         proposed_by: Uuid,
         input: CreateMotion,
-    ) -> Result<MeetingMotion, sqlx::Error> {
+    ) -> Result<MeetingMotion, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMotion>(
             r#"
             INSERT INTO meeting_motions (
@@ -557,26 +784,50 @@ impl BoardMeetingRepository {
         .bind(proposed_by)
         .bind(input.effective_date)
         .bind(input.notes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get a motion.
-    pub async fn get_motion(&self, id: Uuid) -> Result<Option<MeetingMotion>, sqlx::Error> {
-        sqlx::query_as::<_, MeetingMotion>("SELECT * FROM meeting_motions WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+    /// Get a motion, keyed through the root meeting's organization.
+    pub async fn get_motion<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<MeetingMotion>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, MeetingMotion>(
+            r#"
+            SELECT mm.* FROM meeting_motions mm
+            WHERE mm.id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = mm.meeting_id AND bm.organization_id = $2
+                )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await
     }
 
-    /// Get motion detail with votes.
-    pub async fn get_motion_detail(&self, id: Uuid) -> Result<Option<MotionDetail>, sqlx::Error> {
-        let motion = match self.get_motion(id).await? {
+    /// Get motion detail with votes, keyed through the root meeting's
+    /// organization. Org validation happens on the root motion fetch.
+    pub async fn get_motion_detail(
+        &self,
+        conn: &mut PgConnection,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<MotionDetail>, sqlx::Error> {
+        let motion = match self.get_motion(&mut *conn, id, org_id).await? {
             Some(m) => m,
             None => return Ok(None),
         };
 
-        let votes = self.list_motion_votes(id).await?;
+        let votes = self.list_motion_votes(&mut *conn, id, org_id).await?;
 
         let vote_summary = VoteSummary {
             total_votes: votes.len() as i32,
@@ -595,25 +846,44 @@ impl BoardMeetingRepository {
         }))
     }
 
-    /// List motions for a meeting.
-    pub async fn list_meeting_motions(
+    /// List motions for a meeting, keyed through the root meeting's
+    /// organization.
+    pub async fn list_meeting_motions<'e, E>(
         &self,
+        executor: E,
         meeting_id: Uuid,
-    ) -> Result<Vec<MeetingMotion>, sqlx::Error> {
+        org_id: Uuid,
+    ) -> Result<Vec<MeetingMotion>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMotion>(
-            "SELECT * FROM meeting_motions WHERE meeting_id = $1 ORDER BY created_at",
+            r#"
+            SELECT mm.* FROM meeting_motions mm
+            WHERE mm.meeting_id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = mm.meeting_id AND bm.organization_id = $2
+                )
+            ORDER BY mm.created_at
+            "#,
         )
         .bind(meeting_id)
-        .fetch_all(&self.pool)
+        .bind(org_id)
+        .fetch_all(executor)
         .await
     }
 
     /// List motions with filters.
-    pub async fn list_motions(
+    pub async fn list_motions<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: MotionQuery,
-    ) -> Result<Vec<MotionSummary>, sqlx::Error> {
+    ) -> Result<Vec<MotionSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let page = query.page.unwrap_or(1).max(1);
         let per_page = query.per_page.unwrap_or(20).min(100);
         let offset = (page - 1) * per_page;
@@ -642,16 +912,21 @@ impl BoardMeetingRepository {
         .bind(query.proposed_by)
         .bind(per_page)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Second a motion.
-    pub async fn second_motion(
+    /// Second a motion, keyed through the root meeting's organization.
+    pub async fn second_motion<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         seconded_by: Uuid,
-    ) -> Result<MeetingMotion, sqlx::Error> {
+    ) -> Result<Option<MeetingMotion>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMotion>(
             r#"
             UPDATE meeting_motions SET
@@ -659,17 +934,31 @@ impl BoardMeetingRepository {
                 status = 'seconded',
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_motions.meeting_id
+                        AND bm.organization_id = $3
+                )
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(seconded_by)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Start voting on a motion.
-    pub async fn start_motion_voting(&self, id: Uuid) -> Result<MeetingMotion, sqlx::Error> {
+    /// Start voting on a motion, keyed through the root meeting's organization.
+    pub async fn start_motion_voting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<MeetingMotion>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMotion>(
             r#"
             UPDATE meeting_motions SET
@@ -677,17 +966,35 @@ impl BoardMeetingRepository {
                 voting_started_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_motions.meeting_id
+                        AND bm.organization_id = $2
+                )
             RETURNING *
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// End voting on a motion and calculate result.
-    pub async fn end_motion_voting(&self, id: Uuid) -> Result<MeetingMotion, sqlx::Error> {
-        // First count votes
+    /// End voting on a motion and calculate result, keyed through the root
+    /// meeting's organization. Returns `None` when the motion does not belong
+    /// to `org_id`.
+    pub async fn end_motion_voting(
+        &self,
+        conn: &mut PgConnection,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<MeetingMotion>, sqlx::Error> {
+        // Org validation on the root motion fetch before counting votes.
+        if self.get_motion(&mut *conn, id, org_id).await?.is_none() {
+            return Ok(None);
+        }
+
+        // Count votes
         let vote_counts: (i64, i64, i64, i64) = sqlx::query_as(
             r#"
             SELECT
@@ -700,7 +1007,7 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let (in_favor, opposed, abstain, recused) = vote_counts;
@@ -721,6 +1028,11 @@ impl BoardMeetingRepository {
                 voting_ended_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_motions.meeting_id
+                        AND bm.organization_id = $7
+                )
             RETURNING *
             "#,
         )
@@ -730,16 +1042,22 @@ impl BoardMeetingRepository {
         .bind(opposed as i32)
         .bind(abstain as i32)
         .bind(recused as i32)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(&mut *conn)
         .await
     }
 
-    /// Update a motion.
-    pub async fn update_motion(
+    /// Update a motion, keyed through the root meeting's organization.
+    pub async fn update_motion<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateMotion,
-    ) -> Result<MeetingMotion, sqlx::Error> {
+    ) -> Result<Option<MeetingMotion>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMotion>(
             r#"
             UPDATE meeting_motions SET
@@ -751,6 +1069,11 @@ impl BoardMeetingRepository {
                 notes = COALESCE($7, notes),
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_motions.meeting_id
+                        AND bm.organization_id = $8
+                )
             RETURNING *
             "#,
         )
@@ -761,16 +1084,36 @@ impl BoardMeetingRepository {
         .bind(input.resolution_text)
         .bind(input.effective_date)
         .bind(input.notes)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete a motion.
-    pub async fn delete_motion(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM meeting_motions WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a motion, keyed through the root meeting's organization.
+    pub async fn delete_motion<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM meeting_motions
+            WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_motions.meeting_id
+                        AND bm.organization_id = $2
+                )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -779,11 +1122,18 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Cast a vote on a motion.
-    pub async fn cast_vote(
+    ///
+    /// Callers must validate that `input.motion_id` belongs to the caller's
+    /// organization first (root-motion fetch via [`Self::get_motion`]).
+    pub async fn cast_vote<'e, E>(
         &self,
+        executor: E,
         board_member_id: Uuid,
         input: CastVote,
-    ) -> Result<MotionVote, sqlx::Error> {
+    ) -> Result<MotionVote, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MotionVote>(
             r#"
             INSERT INTO motion_votes (motion_id, board_member_id, vote, recusal_reason)
@@ -799,16 +1149,36 @@ impl BoardMeetingRepository {
         .bind(board_member_id)
         .bind(input.vote)
         .bind(input.recusal_reason)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// List votes for a motion.
-    pub async fn list_motion_votes(&self, motion_id: Uuid) -> Result<Vec<MotionVote>, sqlx::Error> {
-        sqlx::query_as::<_, MotionVote>("SELECT * FROM motion_votes WHERE motion_id = $1")
-            .bind(motion_id)
-            .fetch_all(&self.pool)
-            .await
+    /// List votes for a motion, keyed through the root meeting's organization.
+    pub async fn list_motion_votes<'e, E>(
+        &self,
+        executor: E,
+        motion_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Vec<MotionVote>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, MotionVote>(
+            r#"
+            SELECT mv.* FROM motion_votes mv
+            WHERE mv.motion_id = $1
+                AND EXISTS (
+                    SELECT 1
+                    FROM meeting_motions mm
+                    JOIN board_meetings bm ON bm.id = mm.meeting_id
+                    WHERE mm.id = mv.motion_id AND bm.organization_id = $2
+                )
+            "#,
+        )
+        .bind(motion_id)
+        .bind(org_id)
+        .fetch_all(executor)
+        .await
     }
 
     // ========================================================================
@@ -816,11 +1186,18 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Record attendance.
-    pub async fn record_attendance(
+    ///
+    /// Callers must validate that `input.meeting_id` belongs to the caller's
+    /// organization first (root-meeting fetch via [`Self::get_meeting`]).
+    pub async fn record_attendance<'e, E>(
         &self,
+        executor: E,
         marked_by: Uuid,
         input: RecordAttendance,
-    ) -> Result<MeetingAttendance, sqlx::Error> {
+    ) -> Result<MeetingAttendance, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingAttendance>(
             r#"
             INSERT INTO meeting_attendance (
@@ -844,25 +1221,45 @@ impl BoardMeetingRepository {
         .bind(input.guest_affiliation)
         .bind(input.notes)
         .bind(marked_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// List attendance for a meeting.
-    pub async fn list_meeting_attendance(
+    /// List attendance for a meeting, keyed through the root meeting's
+    /// organization.
+    pub async fn list_meeting_attendance<'e, E>(
         &self,
+        executor: E,
         meeting_id: Uuid,
-    ) -> Result<Vec<MeetingAttendance>, sqlx::Error> {
+        org_id: Uuid,
+    ) -> Result<Vec<MeetingAttendance>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingAttendance>(
-            "SELECT * FROM meeting_attendance WHERE meeting_id = $1 ORDER BY arrived_at",
+            r#"
+            SELECT ma.* FROM meeting_attendance ma
+            WHERE ma.meeting_id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = ma.meeting_id AND bm.organization_id = $2
+                )
+            ORDER BY ma.arrived_at
+            "#,
         )
         .bind(meeting_id)
-        .fetch_all(&self.pool)
+        .bind(org_id)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update quorum status for a meeting.
-    pub async fn update_meeting_quorum(&self, meeting_id: Uuid) -> Result<bool, sqlx::Error> {
+    /// Update quorum status for a meeting, scoped to the owning organization.
+    pub async fn update_meeting_quorum(
+        &self,
+        conn: &mut PgConnection,
+        meeting_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
         // Count present attendees
         let present: (i64,) = sqlx::query_as(
             r#"
@@ -872,15 +1269,17 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(meeting_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
-        // Get required quorum
-        let quorum: (Option<i32>,) =
-            sqlx::query_as("SELECT quorum_required FROM board_meetings WHERE id = $1")
-                .bind(meeting_id)
-                .fetch_one(&self.pool)
-                .await?;
+        // Get required quorum (org-keyed root fetch)
+        let quorum: (Option<i32>,) = sqlx::query_as(
+            "SELECT quorum_required FROM board_meetings WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(meeting_id)
+        .bind(org_id)
+        .fetch_one(&mut *conn)
+        .await?;
 
         let quorum_met = present.0 >= quorum.0.unwrap_or(1) as i64;
 
@@ -890,13 +1289,14 @@ impl BoardMeetingRepository {
                 quorum_present = $2,
                 quorum_met = $3,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $4
             "#,
         )
         .bind(meeting_id)
         .bind(present.0 as i32)
         .bind(quorum_met)
-        .execute(&self.pool)
+        .bind(org_id)
+        .execute(&mut *conn)
         .await?;
 
         Ok(quorum_met)
@@ -907,11 +1307,18 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Create meeting minutes.
-    pub async fn create_minutes(
+    ///
+    /// Callers must validate that `input.meeting_id` belongs to the caller's
+    /// organization first (root-meeting fetch via [`Self::get_meeting`]).
+    pub async fn create_minutes<'e, E>(
         &self,
+        executor: E,
         prepared_by: Uuid,
         input: CreateMinutes,
-    ) -> Result<MeetingMinutes, sqlx::Error> {
+    ) -> Result<MeetingMinutes, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMinutes>(
             r#"
             INSERT INTO meeting_minutes (
@@ -934,29 +1341,49 @@ impl BoardMeetingRepository {
         .bind(input.adjournment)
         .bind(input.full_content)
         .bind(prepared_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get minutes for a meeting.
-    pub async fn get_meeting_minutes(
+    /// Get minutes for a meeting, keyed through the root meeting's
+    /// organization.
+    pub async fn get_meeting_minutes<'e, E>(
         &self,
+        executor: E,
         meeting_id: Uuid,
-    ) -> Result<Option<MeetingMinutes>, sqlx::Error> {
+        org_id: Uuid,
+    ) -> Result<Option<MeetingMinutes>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMinutes>(
-            "SELECT * FROM meeting_minutes WHERE meeting_id = $1 ORDER BY version DESC LIMIT 1",
+            r#"
+            SELECT m.* FROM meeting_minutes m
+            WHERE m.meeting_id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = m.meeting_id AND bm.organization_id = $2
+                )
+            ORDER BY m.version DESC LIMIT 1
+            "#,
         )
         .bind(meeting_id)
-        .fetch_optional(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Update minutes.
-    pub async fn update_minutes(
+    /// Update minutes, keyed through the root meeting's organization.
+    pub async fn update_minutes<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateMinutes,
-    ) -> Result<MeetingMinutes, sqlx::Error> {
+    ) -> Result<Option<MeetingMinutes>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMinutes>(
             r#"
             UPDATE meeting_minutes SET
@@ -972,6 +1399,11 @@ impl BoardMeetingRepository {
                 full_content = COALESCE($11, full_content),
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_minutes.meeting_id
+                        AND bm.organization_id = $12
+                )
             RETURNING *
             "#,
         )
@@ -986,17 +1418,23 @@ impl BoardMeetingRepository {
         .bind(input.announcements)
         .bind(input.adjournment)
         .bind(input.full_content)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Approve minutes.
-    pub async fn approve_minutes(
+    /// Approve minutes, keyed through the root meeting's organization.
+    pub async fn approve_minutes<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         approved_by: Uuid,
         approval_motion_id: Option<Uuid>,
-    ) -> Result<MeetingMinutes, sqlx::Error> {
+    ) -> Result<Option<MeetingMinutes>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingMinutes>(
             r#"
             UPDATE meeting_minutes SET
@@ -1006,13 +1444,19 @@ impl BoardMeetingRepository {
                 approval_motion_id = $3,
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_minutes.meeting_id
+                        AND bm.organization_id = $4
+                )
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(approved_by)
         .bind(approval_motion_id)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
@@ -1021,11 +1465,18 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Create an action item.
-    pub async fn create_action_item(
+    ///
+    /// Callers must validate that `input.meeting_id` belongs to the caller's
+    /// organization first (root-meeting fetch via [`Self::get_meeting`]).
+    pub async fn create_action_item<'e, E>(
         &self,
+        executor: E,
         created_by: Uuid,
         input: CreateActionItem,
-    ) -> Result<MeetingActionItem, sqlx::Error> {
+    ) -> Result<MeetingActionItem, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingActionItem>(
             r#"
             INSERT INTO meeting_action_items (
@@ -1047,40 +1498,74 @@ impl BoardMeetingRepository {
         .bind(input.priority)
         .bind(input.notes)
         .bind(created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get an action item.
-    pub async fn get_action_item(
+    /// Get an action item, keyed through the root meeting's organization.
+    pub async fn get_action_item<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<MeetingActionItem>, sqlx::Error> {
-        sqlx::query_as::<_, MeetingActionItem>("SELECT * FROM meeting_action_items WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+        org_id: Uuid,
+    ) -> Result<Option<MeetingActionItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, MeetingActionItem>(
+            r#"
+            SELECT ai.* FROM meeting_action_items ai
+            WHERE ai.id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = ai.meeting_id AND bm.organization_id = $2
+                )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await
     }
 
-    /// List action items for a meeting.
-    pub async fn list_meeting_action_items(
+    /// List action items for a meeting, keyed through the root meeting's
+    /// organization.
+    pub async fn list_meeting_action_items<'e, E>(
         &self,
+        executor: E,
         meeting_id: Uuid,
-    ) -> Result<Vec<MeetingActionItem>, sqlx::Error> {
+        org_id: Uuid,
+    ) -> Result<Vec<MeetingActionItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingActionItem>(
-            "SELECT * FROM meeting_action_items WHERE meeting_id = $1 ORDER BY created_at",
+            r#"
+            SELECT ai.* FROM meeting_action_items ai
+            WHERE ai.meeting_id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = ai.meeting_id AND bm.organization_id = $2
+                )
+            ORDER BY ai.created_at
+            "#,
         )
         .bind(meeting_id)
-        .fetch_all(&self.pool)
+        .bind(org_id)
+        .fetch_all(executor)
         .await
     }
 
     /// List action items with filters.
-    pub async fn list_action_items(
+    pub async fn list_action_items<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: ActionItemQuery,
-    ) -> Result<Vec<ActionItemSummary>, sqlx::Error> {
+    ) -> Result<Vec<ActionItemSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let page = query.page.unwrap_or(1).max(1);
         let per_page = query.per_page.unwrap_or(20).min(100);
         let offset = (page - 1) * per_page;
@@ -1110,16 +1595,21 @@ impl BoardMeetingRepository {
         .bind(query.overdue_only)
         .bind(per_page)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update an action item.
-    pub async fn update_action_item(
+    /// Update an action item, keyed through the root meeting's organization.
+    pub async fn update_action_item<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         input: UpdateActionItem,
-    ) -> Result<MeetingActionItem, sqlx::Error> {
+    ) -> Result<Option<MeetingActionItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingActionItem>(
             r#"
             UPDATE meeting_action_items SET
@@ -1134,6 +1624,11 @@ impl BoardMeetingRepository {
                 completion_notes = COALESCE($10, completion_notes),
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_action_items.meeting_id
+                        AND bm.organization_id = $11
+                )
             RETURNING *
             "#,
         )
@@ -1147,16 +1642,22 @@ impl BoardMeetingRepository {
         .bind(input.priority)
         .bind(input.notes)
         .bind(input.completion_notes)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Complete an action item.
-    pub async fn complete_action_item(
+    /// Complete an action item, keyed through the root meeting's organization.
+    pub async fn complete_action_item<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
+        org_id: Uuid,
         completion_notes: Option<String>,
-    ) -> Result<MeetingActionItem, sqlx::Error> {
+    ) -> Result<Option<MeetingActionItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingActionItem>(
             r#"
             UPDATE meeting_action_items SET
@@ -1165,21 +1666,46 @@ impl BoardMeetingRepository {
                 completion_notes = COALESCE($2, completion_notes),
                 updated_at = NOW()
             WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_action_items.meeting_id
+                        AND bm.organization_id = $3
+                )
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(completion_notes)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete an action item.
-    pub async fn delete_action_item(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM meeting_action_items WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete an action item, keyed through the root meeting's organization.
+    pub async fn delete_action_item<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM meeting_action_items
+            WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_action_items.meeting_id
+                        AND bm.organization_id = $2
+                )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -1188,11 +1714,18 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Upload a meeting document.
-    pub async fn upload_document(
+    ///
+    /// Callers must validate that `input.meeting_id` belongs to the caller's
+    /// organization first (root-meeting fetch via [`Self::get_meeting`]).
+    pub async fn upload_document<'e, E>(
         &self,
+        executor: E,
         uploaded_by: Uuid,
         input: UploadMeetingDocument,
-    ) -> Result<MeetingDocument, sqlx::Error> {
+    ) -> Result<MeetingDocument, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingDocument>(
             r#"
             INSERT INTO meeting_documents (
@@ -1216,29 +1749,63 @@ impl BoardMeetingRepository {
         .bind(input.is_public.unwrap_or(false))
         .bind(input.board_only.unwrap_or(true))
         .bind(uploaded_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// List documents for a meeting.
-    pub async fn list_meeting_documents(
+    /// List documents for a meeting, keyed through the root meeting's
+    /// organization.
+    pub async fn list_meeting_documents<'e, E>(
         &self,
+        executor: E,
         meeting_id: Uuid,
-    ) -> Result<Vec<MeetingDocument>, sqlx::Error> {
+        org_id: Uuid,
+    ) -> Result<Vec<MeetingDocument>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingDocument>(
-            "SELECT * FROM meeting_documents WHERE meeting_id = $1 ORDER BY created_at",
+            r#"
+            SELECT md.* FROM meeting_documents md
+            WHERE md.meeting_id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = md.meeting_id AND bm.organization_id = $2
+                )
+            ORDER BY md.created_at
+            "#,
         )
         .bind(meeting_id)
-        .fetch_all(&self.pool)
+        .bind(org_id)
+        .fetch_all(executor)
         .await
     }
 
-    /// Delete a document.
-    pub async fn delete_document(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM meeting_documents WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a document, keyed through the root meeting's organization.
+    pub async fn delete_document<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM meeting_documents
+            WHERE id = $1
+                AND EXISTS (
+                    SELECT 1 FROM board_meetings bm
+                    WHERE bm.id = meeting_documents.meeting_id
+                        AND bm.organization_id = $2
+                )
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(executor)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -1247,7 +1814,11 @@ impl BoardMeetingRepository {
     // ========================================================================
 
     /// Get meeting dashboard data.
-    pub async fn get_dashboard(&self, org_id: Uuid) -> Result<MeetingDashboard, sqlx::Error> {
+    pub async fn get_dashboard(
+        &self,
+        conn: &mut PgConnection,
+        org_id: Uuid,
+    ) -> Result<MeetingDashboard, sqlx::Error> {
         let upcoming_meetings = sqlx::query_as::<_, MeetingSummary>(
             r#"
             SELECT
@@ -1264,7 +1835,7 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         let recent_meetings = sqlx::query_as::<_, MeetingSummary>(
@@ -1282,7 +1853,7 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         let open_action_items = sqlx::query_as::<_, ActionItemSummary>(
@@ -1300,7 +1871,7 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         let pending_minutes: (i64,) = sqlx::query_as(
@@ -1314,17 +1885,17 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let board_member_count: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM board_members WHERE organization_id = $1 AND is_active = true",
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
-        let statistics = self.get_latest_statistics(org_id).await?;
+        let statistics = self.get_latest_statistics(&mut *conn, org_id).await?;
 
         Ok(MeetingDashboard {
             upcoming_meetings,
@@ -1337,23 +1908,31 @@ impl BoardMeetingRepository {
     }
 
     /// Get latest statistics for organization.
-    pub async fn get_latest_statistics(
+    pub async fn get_latest_statistics<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Option<MeetingStatistics>, sqlx::Error> {
+    ) -> Result<Option<MeetingStatistics>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingStatistics>(
             "SELECT * FROM meeting_statistics WHERE organization_id = $1 ORDER BY calculated_at DESC LIMIT 1",
         )
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Get meeting type counts.
-    pub async fn get_meeting_type_counts(
+    pub async fn get_meeting_type_counts<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Vec<MeetingTypeCount>, sqlx::Error> {
+    ) -> Result<Vec<MeetingTypeCount>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MeetingTypeCount>(
             r#"
             SELECT meeting_type, COUNT(*) as count
@@ -1364,15 +1943,19 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get motion status counts.
-    pub async fn get_motion_status_counts(
+    pub async fn get_motion_status_counts<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Vec<MotionStatusCount>, sqlx::Error> {
+    ) -> Result<Vec<MotionStatusCount>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, MotionStatusCount>(
             r#"
             SELECT mm.status, COUNT(*) as count
@@ -1384,16 +1967,21 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Get board member attendance history.
+    /// Get board member attendance history, scoped to the owning organization.
     pub async fn get_member_attendance_history(
         &self,
+        conn: &mut PgConnection,
         board_member_id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<AttendanceHistory>, sqlx::Error> {
-        let member = match self.get_board_member(board_member_id).await? {
+        let member = match self
+            .get_board_member(&mut *conn, board_member_id, org_id)
+            .await?
+        {
             Some(m) => m,
             None => return Ok(None),
         };
@@ -1411,7 +1999,7 @@ impl BoardMeetingRepository {
             "#,
         )
         .bind(board_member_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let (total, attended, absent, excused, remote) = attendance;
