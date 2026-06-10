@@ -22,4 +22,26 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-06-04T21:45:08Z"
+    },
+    {
+      "task_id": "bug-esignature-webhook-idempotency-guard",
+      "branch": "auto-impl/bug-esignature-webhook-idempotency-guard",
+      "status": "merged",
+      "claimed_at": "2026-06-03T21:35:59Z",
+      "last_updated": "2026-06-04T02:03:54Z",
+      "status_changed_at": "2026-06-04T02:03:54Z",
+      "pr_number": 1034,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1034",
+      "merged_at": "2026-06-04T00:05:46Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=4056532ff7276419d1e5a4e039ff6e0e1e386788 note=correct-terminal-guard-after-hmac-IG3-met;posted-as-COMMENT(self-approve-blocked);non-blocking-app-level-race-note;head-moved-from-f50f7c9",
+      "last_reviewed_oid": "4056532ff7276419d1e5a4e039ff6e0e1e386788",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-06-04T01:49:07Z"
     }]}
