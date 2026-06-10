@@ -1,4 +1,25 @@
 //! LLM Document repository (Epic 64: Advanced AI & LLM Capabilities).
+//!
+//! # RLS Integration (PAP-108 / PAP-80 / PAP-67)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on `document_embeddings` (the RAG store this
+//! repo reads and writes). Under `FORCE` the api-server's owner connection is
+//! no longer exempt, so a query issued on a connection without
+//! `app.current_org_id` set collapses to deny-all (own-org reads return empty,
+//! writes fail the policy `WITH CHECK`) — which silently broke RAG context
+//! retrieval on `dev`.
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+//! pool**, so there is no way to issue a query that bypasses RLS. This mirrors
+//! the `work_order.rs` / `vendor.rs` / `sentiment.rs` precedent.
+//!
+//! The non-RLS tables this repo touches (`llm_generation_requests`,
+//! `voice_assistant_devices`, …) keep their application-level `organization_id`
+//! / `user_id` guards; callers without a tenant principal (the voice-platform
+//! OAuth refresh webhook) may run those methods on a plain pool connection.
 
 use crate::models::llm_document::{
     generation_status, AiEscalationConfig, AiUsageStatistics, DocumentEmbedding,
@@ -6,21 +27,26 @@ use crate::models::llm_document::{
     ProviderStats, RagStatistics, RequestTypeStats, UpdateEscalationConfig, VoiceAssistantDevice,
     VoiceCommandHistory,
 };
-use crate::DbPool;
 use chrono::{DateTime, Utc};
-use sqlx::Error as SqlxError;
+use sqlx::{Error as SqlxError, Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for LLM document generation operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct LlmDocumentRepository {
-    pool: DbPool,
-}
+pub struct LlmDocumentRepository;
 
 impl LlmDocumentRepository {
     /// Create a new LlmDocumentRepository.
-    pub fn new(pool: DbPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the caller).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // =========================================================================
@@ -29,8 +55,9 @@ impl LlmDocumentRepository {
 
     /// Create a new LLM generation request.
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_generation_request(
+    pub async fn create_generation_request<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         request_type: &str,
@@ -38,7 +65,10 @@ impl LlmDocumentRepository {
         model: &str,
         input_data: serde_json::Value,
         prompt_template_id: Option<Uuid>,
-    ) -> Result<LlmGenerationRequest, SqlxError> {
+    ) -> Result<LlmGenerationRequest, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmGenerationRequest>(
             r#"
             INSERT INTO llm_generation_requests (
@@ -57,20 +87,24 @@ impl LlmDocumentRepository {
         .bind(&input_data)
         .bind(prompt_template_id)
         .bind(generation_status::PENDING)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find a generation request by ID.
-    pub async fn find_generation_request(
+    pub async fn find_generation_request<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<LlmGenerationRequest>, SqlxError> {
+    ) -> Result<Option<LlmGenerationRequest>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmGenerationRequest>(
             "SELECT * FROM llm_generation_requests WHERE id = $1",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -80,17 +114,21 @@ impl LlmDocumentRepository {
     /// `None` for both "not found" and "belongs to another tenant" so a caller
     /// in org B cannot read org A's generation request (an IDOR information
     /// leak: prompts, results, cost data).
-    pub async fn find_generation_request_for_org(
+    pub async fn find_generation_request_for_org<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<LlmGenerationRequest>, SqlxError> {
+    ) -> Result<Option<LlmGenerationRequest>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmGenerationRequest>(
             "SELECT * FROM llm_generation_requests WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -101,11 +139,15 @@ impl LlmDocumentRepository {
     /// (`units.building_id -> buildings.organization_id`), so this checks the
     /// join rather than a direct column. Returns `true` only when a unit with
     /// that id exists under the caller's org.
-    pub async fn unit_belongs_to_org(
+    pub async fn unit_belongs_to_org<'e, E>(
         &self,
+        executor: E,
         unit_id: Uuid,
         org_id: Uuid,
-    ) -> Result<bool, SqlxError> {
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let exists: Option<bool> = sqlx::query_scalar(
             r#"
             SELECT TRUE
@@ -116,15 +158,16 @@ impl LlmDocumentRepository {
         )
         .bind(unit_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
         Ok(exists.unwrap_or(false))
     }
 
     /// Update generation request status.
     #[allow(clippy::too_many_arguments)]
-    pub async fn update_generation_status(
+    pub async fn update_generation_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         result: Option<serde_json::Value>,
@@ -132,7 +175,10 @@ impl LlmDocumentRepository {
         tokens_used: Option<i32>,
         cost_cents: Option<i32>,
         latency_ms: Option<i32>,
-    ) -> Result<Option<LlmGenerationRequest>, SqlxError> {
+    ) -> Result<Option<LlmGenerationRequest>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let completed_at =
             if status == generation_status::COMPLETED || status == generation_status::FAILED {
                 Some(Utc::now())
@@ -162,19 +208,23 @@ impl LlmDocumentRepository {
         .bind(cost_cents)
         .bind(latency_ms)
         .bind(completed_at)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List generation requests for an organization.
-    pub async fn list_generation_requests(
+    pub async fn list_generation_requests<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         request_type: Option<&str>,
         status: Option<&str>,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<LlmGenerationRequest>, SqlxError> {
+    ) -> Result<Vec<LlmGenerationRequest>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmGenerationRequest>(
             r#"
             SELECT * FROM llm_generation_requests
@@ -190,7 +240,7 @@ impl LlmDocumentRepository {
         .bind(status)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -200,8 +250,9 @@ impl LlmDocumentRepository {
 
     /// Create a prompt template.
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_prompt_template(
+    pub async fn create_prompt_template<'e, E>(
         &self,
+        executor: E,
         organization_id: Option<Uuid>,
         name: &str,
         description: Option<&str>,
@@ -213,7 +264,10 @@ impl LlmDocumentRepository {
         model: &str,
         temperature: Option<f32>,
         max_tokens: Option<i32>,
-    ) -> Result<LlmPromptTemplate, SqlxError> {
+    ) -> Result<LlmPromptTemplate, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmPromptTemplate>(
             r#"
             INSERT INTO llm_prompt_templates (
@@ -237,18 +291,22 @@ impl LlmDocumentRepository {
         .bind(temperature)
         .bind(max_tokens)
         .bind(organization_id.is_none()) // is_system = true if no org
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find a prompt template by ID.
-    pub async fn find_prompt_template(
+    pub async fn find_prompt_template<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<LlmPromptTemplate>, SqlxError> {
+    ) -> Result<Option<LlmPromptTemplate>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmPromptTemplate>("SELECT * FROM llm_prompt_templates WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
@@ -259,11 +317,15 @@ impl LlmDocumentRepository {
     /// (`is_system = TRUE`, `organization_id IS NULL`) template shared across
     /// all tenants. Returns `None` for "not found" and for "another tenant's
     /// org-specific template" so org B cannot read org A's prompt templates.
-    pub async fn find_prompt_template_for_org(
+    pub async fn find_prompt_template_for_org<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<LlmPromptTemplate>, SqlxError> {
+    ) -> Result<Option<LlmPromptTemplate>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmPromptTemplate>(
             r#"
             SELECT * FROM llm_prompt_templates
@@ -272,16 +334,20 @@ impl LlmDocumentRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Find the default template for a request type.
-    pub async fn find_default_template(
+    pub async fn find_default_template<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         request_type: &str,
-    ) -> Result<Option<LlmPromptTemplate>, SqlxError> {
+    ) -> Result<Option<LlmPromptTemplate>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // First try org-specific, then system default
         sqlx::query_as::<_, LlmPromptTemplate>(
             r#"
@@ -297,16 +363,20 @@ impl LlmDocumentRepository {
         )
         .bind(organization_id)
         .bind(request_type)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List prompt templates.
-    pub async fn list_prompt_templates(
+    pub async fn list_prompt_templates<'e, E>(
         &self,
+        executor: E,
         organization_id: Option<Uuid>,
         request_type: Option<&str>,
-    ) -> Result<Vec<LlmPromptTemplate>, SqlxError> {
+    ) -> Result<Vec<LlmPromptTemplate>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmPromptTemplate>(
             r#"
             SELECT * FROM llm_prompt_templates
@@ -318,14 +388,15 @@ impl LlmDocumentRepository {
         )
         .bind(organization_id)
         .bind(request_type)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update a prompt template.
     #[allow(clippy::too_many_arguments)]
-    pub async fn update_prompt_template(
+    pub async fn update_prompt_template<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         name: Option<&str>,
         description: Option<&str>,
@@ -337,7 +408,10 @@ impl LlmDocumentRepository {
         temperature: Option<f32>,
         max_tokens: Option<i32>,
         is_active: Option<bool>,
-    ) -> Result<Option<LlmPromptTemplate>, SqlxError> {
+    ) -> Result<Option<LlmPromptTemplate>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, LlmPromptTemplate>(
             r#"
             UPDATE llm_prompt_templates SET
@@ -368,7 +442,7 @@ impl LlmDocumentRepository {
         .bind(temperature)
         .bind(max_tokens)
         .bind(is_active)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -378,8 +452,9 @@ impl LlmDocumentRepository {
 
     /// Create a generated listing description.
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_listing_description(
+    pub async fn create_listing_description<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         listing_id: Option<Uuid>,
         user_id: Uuid,
@@ -388,7 +463,10 @@ impl LlmDocumentRepository {
         property_details: serde_json::Value,
         photo_analysis: Option<serde_json::Value>,
         generation_request_id: Uuid,
-    ) -> Result<GeneratedListingDescription, SqlxError> {
+    ) -> Result<GeneratedListingDescription, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, GeneratedListingDescription>(
             r#"
             INSERT INTO generated_listing_descriptions (
@@ -408,33 +486,41 @@ impl LlmDocumentRepository {
         .bind(&property_details)
         .bind(&photo_analysis)
         .bind(generation_request_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find a generated description by ID.
-    pub async fn find_listing_description(
+    pub async fn find_listing_description<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<GeneratedListingDescription>, SqlxError> {
+    ) -> Result<Option<GeneratedListingDescription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, GeneratedListingDescription>(
             "SELECT * FROM generated_listing_descriptions WHERE id = $1",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List descriptions for a listing.
-    pub async fn list_listing_descriptions(
+    pub async fn list_listing_descriptions<'e, E>(
         &self,
+        executor: E,
         listing_id: Uuid,
-    ) -> Result<Vec<GeneratedListingDescription>, SqlxError> {
+    ) -> Result<Vec<GeneratedListingDescription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, GeneratedListingDescription>(
             "SELECT * FROM generated_listing_descriptions WHERE listing_id = $1 ORDER BY generated_at DESC",
         )
         .bind(listing_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -445,11 +531,15 @@ impl LlmDocumentRepository {
     /// generated listing descriptions owned by org A by enumerating a
     /// `listing_id`. Returns an empty vec for both "no descriptions" and
     /// "listing belongs to another tenant", so existence is never leaked.
-    pub async fn list_listing_descriptions_for_org(
+    pub async fn list_listing_descriptions_for_org<'e, E>(
         &self,
+        executor: E,
         listing_id: Uuid,
         org_id: Uuid,
-    ) -> Result<Vec<GeneratedListingDescription>, SqlxError> {
+    ) -> Result<Vec<GeneratedListingDescription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, GeneratedListingDescription>(
             r#"
             SELECT * FROM generated_listing_descriptions
@@ -459,17 +549,21 @@ impl LlmDocumentRepository {
         )
         .bind(listing_id)
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update edited description.
-    pub async fn update_edited_description(
+    pub async fn update_edited_description<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         edited_description: &str,
         edited_by: Uuid,
-    ) -> Result<Option<GeneratedListingDescription>, SqlxError> {
+    ) -> Result<Option<GeneratedListingDescription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, GeneratedListingDescription>(
             r#"
             UPDATE generated_listing_descriptions SET
@@ -483,20 +577,24 @@ impl LlmDocumentRepository {
         .bind(id)
         .bind(edited_description)
         .bind(edited_by)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Mark description as published.
-    pub async fn publish_description(
+    pub async fn publish_description<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<GeneratedListingDescription>, SqlxError> {
+    ) -> Result<Option<GeneratedListingDescription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, GeneratedListingDescription>(
             "UPDATE generated_listing_descriptions SET is_published = TRUE WHERE id = $1 RETURNING *",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -506,11 +604,15 @@ impl LlmDocumentRepository {
     /// `organization_id = $2` guard ensures a caller in org B cannot publish
     /// (mutate) a generated listing description owned by org A. Returns `None`
     /// for both "not found" and "belongs to another tenant".
-    pub async fn publish_description_for_org(
+    pub async fn publish_description_for_org<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<GeneratedListingDescription>, SqlxError> {
+    ) -> Result<Option<GeneratedListingDescription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, GeneratedListingDescription>(
             r#"
             UPDATE generated_listing_descriptions
@@ -521,7 +623,7 @@ impl LlmDocumentRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -530,15 +632,24 @@ impl LlmDocumentRepository {
     // =========================================================================
 
     /// Create a document embedding.
-    pub async fn create_embedding(
+    ///
+    /// `document_embeddings` is FORCE-RLS (migration 00179): the executor's
+    /// connection MUST carry the org GUC or the INSERT fails the policy
+    /// `WITH CHECK`.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_embedding<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         document_id: Uuid,
         chunk_index: i32,
         chunk_text: &str,
         embedding: Option<Vec<f32>>,
         metadata: serde_json::Value,
-    ) -> Result<DocumentEmbedding, SqlxError> {
+    ) -> Result<DocumentEmbedding, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, DocumentEmbedding>(
             r#"
             INSERT INTO document_embeddings (
@@ -562,28 +673,39 @@ impl LlmDocumentRepository {
                 .and_then(|e| serde_json::to_value(e).ok()),
         )
         .bind(&metadata)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find embeddings for a document.
-    pub async fn find_document_embeddings(
+    pub async fn find_document_embeddings<'e, E>(
         &self,
+        executor: E,
         document_id: Uuid,
-    ) -> Result<Vec<DocumentEmbedding>, SqlxError> {
+    ) -> Result<Vec<DocumentEmbedding>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, DocumentEmbedding>(
             "SELECT * FROM document_embeddings WHERE document_id = $1 ORDER BY chunk_index",
         )
         .bind(document_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Delete embeddings for a document.
-    pub async fn delete_document_embeddings(&self, document_id: Uuid) -> Result<u64, SqlxError> {
+    pub async fn delete_document_embeddings<'e, E>(
+        &self,
+        executor: E,
+        document_id: Uuid,
+    ) -> Result<u64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM document_embeddings WHERE document_id = $1")
             .bind(document_id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected())
     }
@@ -592,12 +714,16 @@ impl LlmDocumentRepository {
     ///
     /// This is a fallback method when pgvector is not available.
     /// For production RAG capability, use `search_documents_by_embedding` instead.
-    pub async fn search_documents_by_text(
+    pub async fn search_documents_by_text<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         search_text: &str,
         limit: i32,
-    ) -> Result<Vec<DocumentEmbedding>, SqlxError> {
+    ) -> Result<Vec<DocumentEmbedding>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, DocumentEmbedding>(
             r#"
             SELECT * FROM document_embeddings
@@ -610,7 +736,7 @@ impl LlmDocumentRepository {
         .bind(organization_id)
         .bind(search_text)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -620,11 +746,15 @@ impl LlmDocumentRepository {
 
     /// Update embedding vector for an existing document chunk.
     /// Used after generating embeddings via LLM client.
-    pub async fn update_embedding_vector(
+    pub async fn update_embedding_vector<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         embedding: Vec<f32>,
-    ) -> Result<Option<DocumentEmbedding>, SqlxError> {
+    ) -> Result<Option<DocumentEmbedding>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Store embedding as JSONB for now (works without pgvector extension)
         // In production with pgvector enabled, this would use vector type directly
         let embedding_json = serde_json::to_value(&embedding).unwrap_or_default();
@@ -640,7 +770,7 @@ impl LlmDocumentRepository {
         )
         .bind(id)
         .bind(&embedding_json)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -651,8 +781,12 @@ impl LlmDocumentRepository {
     /// Otherwise, falls back to application-level cosine similarity calculation.
     ///
     /// Returns document chunks ordered by relevance (highest similarity first).
+    ///
+    /// Multi-statement: takes `&mut PgConnection` so every query runs on the
+    /// same RLS-context connection.
     pub async fn search_documents_by_embedding(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         query_embedding: &[f32],
         limit: i32,
@@ -665,7 +799,7 @@ impl LlmDocumentRepository {
         let pgvector_available: Option<bool> = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector')",
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         if pgvector_available == Some(true) {
@@ -684,7 +818,7 @@ impl LlmDocumentRepository {
             .bind(organization_id)
             .bind(serde_json::to_value(query_embedding).unwrap_or_default())
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *conn)
             .await?;
 
             // Calculate similarity scores for the results
@@ -721,7 +855,7 @@ impl LlmDocumentRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         // Calculate cosine similarity for each document
@@ -754,8 +888,12 @@ impl LlmDocumentRepository {
 
     /// Bulk create embeddings for a document (for chunked text).
     /// Story 97.2: Efficient batch embedding creation for RAG indexing.
+    ///
+    /// Multi-statement: takes `&mut PgConnection` so every chunk INSERT runs
+    /// on the same RLS-context connection.
     pub async fn create_embeddings_batch(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         document_id: Uuid,
         chunks: Vec<(String, serde_json::Value)>, // (chunk_text, metadata)
@@ -765,6 +903,7 @@ impl LlmDocumentRepository {
         for (index, (chunk_text, metadata)) in chunks.into_iter().enumerate() {
             let embedding = self
                 .create_embedding(
+                    &mut *conn,
                     organization_id,
                     document_id,
                     index as i32,
@@ -781,11 +920,15 @@ impl LlmDocumentRepository {
 
     /// Get documents that need embedding generation (embedding is null).
     /// Story 97.2: Used by background job to process pending embeddings.
-    pub async fn get_pending_embeddings(
+    pub async fn get_pending_embeddings<'e, E>(
         &self,
+        executor: E,
         organization_id: Option<Uuid>,
         limit: i32,
-    ) -> Result<Vec<DocumentEmbedding>, SqlxError> {
+    ) -> Result<Vec<DocumentEmbedding>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, DocumentEmbedding>(
             r#"
             SELECT * FROM document_embeddings
@@ -797,17 +940,21 @@ impl LlmDocumentRepository {
         )
         .bind(organization_id)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Count documents with and without embeddings for an organization.
     /// Story 97.2: Used to track RAG indexing progress.
     /// Story 103.5: Now also tracks pgvector migration status.
-    pub async fn count_embedding_status(
+    pub async fn count_embedding_status<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<(i64, i64), SqlxError> {
+    ) -> Result<(i64, i64), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let counts: (i64, i64) = sqlx::query_as(
             r#"
             SELECT
@@ -818,7 +965,7 @@ impl LlmDocumentRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(counts)
@@ -832,8 +979,12 @@ impl LlmDocumentRepository {
     ///
     /// This method uses the SQL function created in migration 00079_create_pgvector.sql.
     /// Falls back to application-level search if pgvector is not available.
+    ///
+    /// Multi-statement: takes `&mut PgConnection` so every query runs on the
+    /// same RLS-context connection.
     pub async fn search_documents_pgvector(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         query_embedding: &[f32],
         limit: i32,
@@ -845,7 +996,7 @@ impl LlmDocumentRepository {
         let pgvector_available: Option<bool> = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'search_similar_documents')",
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         if pgvector_available == Some(true) {
@@ -869,7 +1020,7 @@ impl LlmDocumentRepository {
             .bind(&embedding_str)
             .bind(limit)
             .bind(min_sim)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *conn)
             .await?;
 
             // Convert to DocumentEmbedding format
@@ -893,21 +1044,31 @@ impl LlmDocumentRepository {
         }
 
         // Fallback to the existing application-level search
-        self.search_documents_by_embedding(organization_id, query_embedding, limit, min_similarity)
-            .await
+        self.search_documents_by_embedding(
+            conn,
+            organization_id,
+            query_embedding,
+            limit,
+            min_similarity,
+        )
+        .await
     }
 
     /// Get RAG statistics for an organization using the v_rag_statistics view (Story 103.5).
+    ///
+    /// Multi-statement: takes `&mut PgConnection` so every query runs on the
+    /// same RLS-context connection.
     #[allow(clippy::type_complexity)]
     pub async fn get_rag_statistics(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
     ) -> Result<RagStatistics, SqlxError> {
         // Check if the view exists
         let view_exists: Option<bool> = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM information_schema.views WHERE table_name = 'v_rag_statistics')",
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         if view_exists == Some(true) {
@@ -922,7 +1083,7 @@ impl LlmDocumentRepository {
                 "#,
                 )
                 .bind(organization_id)
-                .fetch_optional(&self.pool)
+                .fetch_optional(&mut *conn)
                 .await?;
 
             if let Some((
@@ -959,12 +1120,18 @@ impl LlmDocumentRepository {
     /// Migrate pending JSONB embeddings to pgvector format (Story 103.5).
     ///
     /// Returns the number of embeddings migrated.
-    pub async fn migrate_embeddings_to_pgvector(&self) -> Result<i64, SqlxError> {
+    ///
+    /// Multi-statement: takes `&mut PgConnection` so every query runs on the
+    /// same RLS-context connection.
+    pub async fn migrate_embeddings_to_pgvector(
+        &self,
+        conn: &mut PgConnection,
+    ) -> Result<i64, SqlxError> {
         // Check if the migration function exists
         let function_exists: Option<bool> = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'migrate_jsonb_to_vector')",
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         if function_exists == Some(true) {
@@ -972,19 +1139,19 @@ impl LlmDocumentRepository {
             let before_count: i64 = sqlx::query_scalar(
                 "SELECT COUNT(*) FROM document_embeddings WHERE embedding_vector IS NOT NULL",
             )
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await?;
 
             // Run migration function
             sqlx::query("SELECT migrate_jsonb_to_vector()")
-                .execute(&self.pool)
+                .execute(&mut *conn)
                 .await?;
 
             // Get count after migration
             let after_count: i64 = sqlx::query_scalar(
                 "SELECT COUNT(*) FROM document_embeddings WHERE embedding_vector IS NOT NULL",
             )
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await?;
 
             return Ok(after_count - before_count);
@@ -998,8 +1165,12 @@ impl LlmDocumentRepository {
     // =========================================================================
 
     /// Get or create escalation config for an organization.
+    ///
+    /// Multi-statement (SELECT then conditional INSERT): takes
+    /// `&mut PgConnection` so both run on the same RLS-context connection.
     pub async fn get_escalation_config(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
     ) -> Result<AiEscalationConfig, SqlxError> {
         // Try to find existing config
@@ -1007,7 +1178,7 @@ impl LlmDocumentRepository {
             "SELECT * FROM ai_escalation_configs WHERE organization_id = $1",
         )
         .bind(organization_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         if let Some(config) = existing {
@@ -1025,16 +1196,20 @@ impl LlmDocumentRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// Update escalation config.
-    pub async fn update_escalation_config(
+    pub async fn update_escalation_config<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         update: UpdateEscalationConfig,
-    ) -> Result<AiEscalationConfig, SqlxError> {
+    ) -> Result<AiEscalationConfig, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let topics_json = update
             .auto_escalate_topics
             .map(|t| serde_json::to_value(&t).unwrap_or_default());
@@ -1056,7 +1231,7 @@ impl LlmDocumentRepository {
         .bind(&update.escalation_email)
         .bind(&update.escalation_webhook_url)
         .bind(&topics_json)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -1065,15 +1240,20 @@ impl LlmDocumentRepository {
     // =========================================================================
 
     /// Create a photo enhancement record.
-    pub async fn create_photo_enhancement(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_photo_enhancement<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         listing_id: Option<Uuid>,
         user_id: Uuid,
         original_photo_url: &str,
         enhancement_type: &str,
         metadata: serde_json::Value,
-    ) -> Result<PhotoEnhancement, SqlxError> {
+    ) -> Result<PhotoEnhancement, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, PhotoEnhancement>(
             r#"
             INSERT INTO photo_enhancements (
@@ -1090,18 +1270,22 @@ impl LlmDocumentRepository {
         .bind(original_photo_url)
         .bind(enhancement_type)
         .bind(&metadata)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find photo enhancement by ID.
-    pub async fn find_photo_enhancement(
+    pub async fn find_photo_enhancement<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<PhotoEnhancement>, SqlxError> {
+    ) -> Result<Option<PhotoEnhancement>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, PhotoEnhancement>("SELECT * FROM photo_enhancements WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
@@ -1110,24 +1294,29 @@ impl LlmDocumentRepository {
     /// `org_id` must originate from the verified request principal. Returns
     /// `None` for both "not found" and "belongs to another tenant" so a caller
     /// in org B cannot read org A's photo enhancement record.
-    pub async fn find_photo_enhancement_for_org(
+    pub async fn find_photo_enhancement_for_org<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<PhotoEnhancement>, SqlxError> {
+    ) -> Result<Option<PhotoEnhancement>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, PhotoEnhancement>(
             "SELECT * FROM photo_enhancements WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Update photo enhancement status and result.
     #[allow(clippy::too_many_arguments)]
-    pub async fn update_photo_enhancement(
+    pub async fn update_photo_enhancement<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         enhanced_photo_url: Option<&str>,
@@ -1135,7 +1324,10 @@ impl LlmDocumentRepository {
         error_message: Option<&str>,
         processing_time_ms: Option<i32>,
         cost_cents: Option<i32>,
-    ) -> Result<Option<PhotoEnhancement>, SqlxError> {
+    ) -> Result<Option<PhotoEnhancement>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let completed_at = if status == "completed" || status == "failed" {
             Some(Utc::now())
         } else {
@@ -1164,20 +1356,24 @@ impl LlmDocumentRepository {
         .bind(processing_time_ms)
         .bind(cost_cents)
         .bind(completed_at)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List photo enhancements for a listing.
-    pub async fn list_photo_enhancements(
+    pub async fn list_photo_enhancements<'e, E>(
         &self,
+        executor: E,
         listing_id: Uuid,
-    ) -> Result<Vec<PhotoEnhancement>, SqlxError> {
+    ) -> Result<Vec<PhotoEnhancement>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, PhotoEnhancement>(
             "SELECT * FROM photo_enhancements WHERE listing_id = $1 ORDER BY created_at DESC",
         )
         .bind(listing_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -1187,8 +1383,9 @@ impl LlmDocumentRepository {
 
     /// Create a voice assistant device link.
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_voice_device(
+    pub async fn create_voice_device<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         unit_id: Option<Uuid>,
@@ -1199,7 +1396,10 @@ impl LlmDocumentRepository {
         refresh_token_encrypted: Option<&str>,
         token_expires_at: Option<DateTime<Utc>>,
         capabilities: serde_json::Value,
-    ) -> Result<VoiceAssistantDevice, SqlxError> {
+    ) -> Result<VoiceAssistantDevice, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceAssistantDevice>(
             r#"
             INSERT INTO voice_assistant_devices (
@@ -1221,56 +1421,75 @@ impl LlmDocumentRepository {
         .bind(refresh_token_encrypted)
         .bind(token_expires_at)
         .bind(&capabilities)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find voice device by ID.
-    pub async fn find_voice_device(
+    pub async fn find_voice_device<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<VoiceAssistantDevice>, SqlxError> {
+    ) -> Result<Option<VoiceAssistantDevice>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceAssistantDevice>(
             "SELECT * FROM voice_assistant_devices WHERE id = $1",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Find voice device by external device ID.
-    pub async fn find_voice_device_by_device_id(
+    pub async fn find_voice_device_by_device_id<'e, E>(
         &self,
+        executor: E,
         platform: &str,
         device_id: &str,
-    ) -> Result<Option<VoiceAssistantDevice>, SqlxError> {
+    ) -> Result<Option<VoiceAssistantDevice>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceAssistantDevice>(
             "SELECT * FROM voice_assistant_devices WHERE platform = $1 AND device_id = $2 AND is_active = TRUE",
         )
         .bind(platform)
         .bind(device_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List voice devices for a user.
-    pub async fn list_user_voice_devices(
+    pub async fn list_user_voice_devices<'e, E>(
         &self,
+        executor: E,
         user_id: Uuid,
-    ) -> Result<Vec<VoiceAssistantDevice>, SqlxError> {
+    ) -> Result<Vec<VoiceAssistantDevice>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceAssistantDevice>(
             "SELECT * FROM voice_assistant_devices WHERE user_id = $1 AND is_active = TRUE ORDER BY linked_at DESC",
         )
         .bind(user_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update voice device last used timestamp.
-    pub async fn update_voice_device_last_used(&self, id: Uuid) -> Result<(), SqlxError> {
+    pub async fn update_voice_device_last_used<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query("UPDATE voice_assistant_devices SET last_used_at = NOW(), updated_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(())
     }
@@ -1282,17 +1501,21 @@ impl LlmDocumentRepository {
     /// no row is updated — either the `id` does not exist or the device is not
     /// owned by `user_id`.  The handler maps both cases to `404 Not Found`,
     /// giving an attacker no information about whether the target id exists.
-    pub async fn deactivate_voice_device(
+    pub async fn deactivate_voice_device<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         user_id: Uuid,
-    ) -> Result<bool, SqlxError> {
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             "UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1 AND user_id = $2",
         )
         .bind(id)
         .bind(user_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -1303,8 +1526,9 @@ impl LlmDocumentRepository {
 
     /// Create a voice command history entry.
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_voice_command(
+    pub async fn create_voice_command<'e, E>(
         &self,
+        executor: E,
         device_id: Uuid,
         user_id: Uuid,
         command_text: &str,
@@ -1314,7 +1538,10 @@ impl LlmDocumentRepository {
         success: bool,
         error_message: Option<&str>,
         processing_time_ms: i32,
-    ) -> Result<VoiceCommandHistory, SqlxError> {
+    ) -> Result<VoiceCommandHistory, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceCommandHistory>(
             r#"
             INSERT INTO voice_command_history (
@@ -1334,7 +1561,7 @@ impl LlmDocumentRepository {
         .bind(success)
         .bind(error_message)
         .bind(processing_time_ms)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -1343,16 +1570,20 @@ impl LlmDocumentRepository {
     /// Issue #483: used by `list_voice_commands` to return 404 (not 200
     /// with empty list) on a cross-user probe — matches the disclosure
     /// posture of the unlink handler.
-    pub async fn user_owns_voice_device(
+    pub async fn user_owns_voice_device<'e, E>(
         &self,
+        executor: E,
         device_id: Uuid,
         user_id: Uuid,
-    ) -> Result<bool, SqlxError> {
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row: Option<(Uuid,)> =
             sqlx::query_as("SELECT id FROM voice_assistant_devices WHERE id = $1 AND user_id = $2")
                 .bind(device_id)
                 .bind(user_id)
-                .fetch_optional(&self.pool)
+                .fetch_optional(executor)
                 .await?;
         Ok(row.is_some())
     }
@@ -1363,13 +1594,17 @@ impl LlmDocumentRepository {
     /// preventing cross-tenant IDOR reads.  Returns an empty list (not 404) when
     /// the device does not exist or is not owned by `user_id`, matching the same
     /// conservative disclosure posture used by the deactivate path.
-    pub async fn list_voice_commands(
+    pub async fn list_voice_commands<'e, E>(
         &self,
+        executor: E,
         device_id: Uuid,
         user_id: Uuid,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<VoiceCommandHistory>, SqlxError> {
+    ) -> Result<Vec<VoiceCommandHistory>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceCommandHistory>(
             r#"
             SELECT vch.* FROM voice_command_history vch
@@ -1384,7 +1619,7 @@ impl LlmDocumentRepository {
         .bind(user_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -1394,13 +1629,17 @@ impl LlmDocumentRepository {
 
     /// Update OAuth tokens for a voice device.
     #[allow(clippy::too_many_arguments)]
-    pub async fn update_voice_device_tokens(
+    pub async fn update_voice_device_tokens<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         access_token_encrypted: &str,
         refresh_token_encrypted: Option<&str>,
         token_expires_at: Option<DateTime<Utc>>,
-    ) -> Result<Option<VoiceAssistantDevice>, SqlxError> {
+    ) -> Result<Option<VoiceAssistantDevice>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceAssistantDevice>(
             r#"
             UPDATE voice_assistant_devices SET
@@ -1416,16 +1655,20 @@ impl LlmDocumentRepository {
         .bind(access_token_encrypted)
         .bind(refresh_token_encrypted)
         .bind(token_expires_at)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Find voice devices with expiring tokens that need refresh.
-    pub async fn find_devices_needing_token_refresh(
+    pub async fn find_devices_needing_token_refresh<'e, E>(
         &self,
+        executor: E,
         expiry_threshold: DateTime<Utc>,
         limit: i64,
-    ) -> Result<Vec<VoiceAssistantDevice>, SqlxError> {
+    ) -> Result<Vec<VoiceAssistantDevice>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceAssistantDevice>(
             r#"
             SELECT * FROM voice_assistant_devices
@@ -1440,12 +1683,19 @@ impl LlmDocumentRepository {
         )
         .bind(expiry_threshold)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Clear tokens for a voice device (on revocation or error).
-    pub async fn clear_voice_device_tokens(&self, id: Uuid) -> Result<bool, SqlxError> {
+    pub async fn clear_voice_device_tokens<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             UPDATE voice_assistant_devices SET
@@ -1457,17 +1707,21 @@ impl LlmDocumentRepository {
             "#,
         )
         .bind(id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(result.rows_affected() > 0)
     }
 
     /// Find voice device by user ID and platform.
-    pub async fn find_voice_device_by_user_and_platform(
+    pub async fn find_voice_device_by_user_and_platform<'e, E>(
         &self,
+        executor: E,
         user_id: Uuid,
         platform: &str,
-    ) -> Result<Option<VoiceAssistantDevice>, SqlxError> {
+    ) -> Result<Option<VoiceAssistantDevice>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VoiceAssistantDevice>(
             r#"
             SELECT * FROM voice_assistant_devices
@@ -1480,7 +1734,7 @@ impl LlmDocumentRepository {
         )
         .bind(user_id)
         .bind(platform)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -1489,8 +1743,13 @@ impl LlmDocumentRepository {
     // =========================================================================
 
     /// Get AI usage statistics for an organization.
+    ///
+    /// Multi-statement (totals + by-type + by-provider): takes
+    /// `&mut PgConnection` so every query runs on the same RLS-context
+    /// connection.
     pub async fn get_usage_statistics(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         start_date: Option<DateTime<Utc>>,
         end_date: Option<DateTime<Utc>>,
@@ -1517,7 +1776,7 @@ impl LlmDocumentRepository {
         .bind(organization_id)
         .bind(start)
         .bind(end)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Get by request type
@@ -1538,7 +1797,7 @@ impl LlmDocumentRepository {
         .bind(organization_id)
         .bind(start)
         .bind(end)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         // Get by provider
@@ -1560,7 +1819,7 @@ impl LlmDocumentRepository {
         .bind(organization_id)
         .bind(start)
         .bind(end)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         Ok(AiUsageStatistics {

@@ -463,6 +463,12 @@ async fn send_message(
 
     // Story 97.2: Search for relevant documents using RAG with semantic similarity.
     // Scoped to `tenant_id` derived from the verified principal.
+    //
+    // PAP-108 (PAP-80): `document_embeddings` is FORCE-RLS (migration 00179),
+    // so these reads must run on a connection that carries the org GUC — on the
+    // raw pool the policy collapsed to deny-all and RAG silently returned no
+    // context. Acquire a short-lived RLS-context connection scoped to this
+    // tenant (same pattern as the sentiment block above).
     let mut context_chunks: Vec<ContextChunk> = vec![];
     {
         // Check if semantic search is enabled via feature flag
@@ -472,92 +478,123 @@ async fn send_message(
         let use_semantic_search =
             semantic_search_enabled != "false" && semantic_search_enabled != "0";
 
-        if use_semantic_search {
-            // Try semantic similarity search first (Story 97.2)
-            // Generate embedding for the user's query
-            match state
-                .llm_client
-                .generate_embedding(&req.content, None)
+        let mut rag_conn = match state.db.acquire().await {
+            Ok(mut conn) => {
+                if db::tenant_context::set_request_context(
+                    &mut *conn,
+                    Some(tenant_id),
+                    Some(principal.user_id),
+                    false,
+                )
                 .await
-            {
-                Ok(embedding_result) => {
-                    // Search documents by embedding similarity
-                    match state
-                        .llm_document_repo
-                        .search_documents_by_embedding(
-                            tenant_id,
-                            &embedding_result.embedding,
-                            5,         // Get top 5 relevant chunks
-                            Some(0.6), // Minimum similarity threshold
-                        )
-                        .await
-                    {
-                        Ok(docs_with_scores) => {
-                            for (doc, similarity) in docs_with_scores {
-                                context_chunks.push(ContextChunk {
-                                    source_id: doc.document_id,
-                                    source_title: doc
-                                        .metadata
-                                        .get("title")
-                                        .and_then(|v| v.as_str())
-                                        .unwrap_or("Document")
-                                        .to_string(),
-                                    text: doc.chunk_text.clone(),
-                                    relevance_score: similarity,
-                                });
+                .is_err()
+                {
+                    tracing::warn!("Failed to set RLS context for RAG search");
+                    None
+                } else {
+                    Some(conn)
+                }
+            }
+            Err(e) => {
+                tracing::warn!("Failed to acquire connection for RAG search: {}", e);
+                None
+            }
+        };
+
+        if let Some(conn) = rag_conn.as_mut() {
+            if use_semantic_search {
+                // Try semantic similarity search first (Story 97.2)
+                // Generate embedding for the user's query
+                match state
+                    .llm_client
+                    .generate_embedding(&req.content, None)
+                    .await
+                {
+                    Ok(embedding_result) => {
+                        // Search documents by embedding similarity
+                        match state
+                            .llm_document_repo
+                            .search_documents_by_embedding(
+                                &mut *conn,
+                                tenant_id,
+                                &embedding_result.embedding,
+                                5,         // Get top 5 relevant chunks
+                                Some(0.6), // Minimum similarity threshold
+                            )
+                            .await
+                        {
+                            Ok(docs_with_scores) => {
+                                for (doc, similarity) in docs_with_scores {
+                                    context_chunks.push(ContextChunk {
+                                        source_id: doc.document_id,
+                                        source_title: doc
+                                            .metadata
+                                            .get("title")
+                                            .and_then(|v| v.as_str())
+                                            .unwrap_or("Document")
+                                            .to_string(),
+                                        text: doc.chunk_text.clone(),
+                                        relevance_score: similarity,
+                                    });
+                                }
+                                tracing::debug!(
+                                    "RAG semantic search found {} relevant chunks",
+                                    context_chunks.len()
+                                );
                             }
-                            tracing::debug!(
-                                "RAG semantic search found {} relevant chunks",
-                                context_chunks.len()
-                            );
-                        }
-                        Err(e) => {
-                            tracing::warn!(
-                                "Semantic search failed, falling back to text search: {}",
-                                e
-                            );
+                            Err(e) => {
+                                tracing::warn!(
+                                    "Semantic search failed, falling back to text search: {}",
+                                    e
+                                );
+                            }
                         }
                     }
+                    Err(e) => {
+                        tracing::warn!(
+                            "Failed to generate query embedding, falling back to text search: {}",
+                            e
+                        );
+                    }
                 }
-                Err(e) => {
-                    tracing::warn!(
-                        "Failed to generate query embedding, falling back to text search: {}",
-                        e
-                    );
+            }
+
+            // Fallback to text search if semantic search didn't find results or is disabled
+            if context_chunks.is_empty() {
+                match state
+                    .llm_document_repo
+                    .search_documents_by_text(&mut **conn, tenant_id, &req.content, 3)
+                    .await
+                {
+                    Ok(docs) => {
+                        for doc in docs {
+                            context_chunks.push(ContextChunk {
+                                source_id: doc.document_id,
+                                source_title: doc
+                                    .metadata
+                                    .get("title")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("Document")
+                                    .to_string(),
+                                text: doc.chunk_text.clone(),
+                                relevance_score: 0.5, // Lower score for text match fallback
+                            });
+                        }
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            "Failed to search documents for RAG context (tenant: {}): {}",
+                            tenant_id,
+                            e
+                        );
+                    }
                 }
             }
         }
 
-        // Fallback to text search if semantic search didn't find results or is disabled
-        if context_chunks.is_empty() {
-            match state
-                .llm_document_repo
-                .search_documents_by_text(tenant_id, &req.content, 3)
-                .await
-            {
-                Ok(docs) => {
-                    for doc in docs {
-                        context_chunks.push(ContextChunk {
-                            source_id: doc.document_id,
-                            source_title: doc
-                                .metadata
-                                .get("title")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("Document")
-                                .to_string(),
-                            text: doc.chunk_text.clone(),
-                            relevance_score: 0.5, // Lower score for text match fallback
-                        });
-                    }
-                }
-                Err(e) => {
-                    tracing::warn!(
-                        "Failed to search documents for RAG context (tenant: {}): {}",
-                        tenant_id,
-                        e
-                    );
-                }
-            }
+        // Clear RLS context before the connection returns to the pool.
+        if let Some(mut conn) = rag_conn {
+            let _ = db::tenant_context::clear_request_context(&mut *conn).await;
         }
     }
 
