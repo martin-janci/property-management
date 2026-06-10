@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-10T00:36:50Z",
+  "generated": "2026-06-10T00:48:21Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-mobile-announcements-test",
@@ -186,15 +186,15 @@
     {
       "task_id": "test-airbnb-sync-reconciliation-backend",
       "branch": "auto-impl/test-airbnb-sync-reconciliation-backend",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-09T18:15:51Z",
-      "last_updated": "2026-06-10T00:19:12Z",
-      "status_changed_at": "2026-06-10T00:19:12Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-10T00:48:21Z",
+      "status_changed_at": "2026-06-10T00:48:21Z",
+      "pr_number": 1231,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1231",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": " [sandbox-timeout reclaim #1; dispatcher 2026-06-10: respawned implementer (MCP-push brief), running in background at run end]",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=1231 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=reclaim#1 succeeded; additive airbnb reconcile webhook tests (5 sqlx cases: reconcile-to-cancelled, idempotent re-apply, 2 divergence, sync_external job); cargo check --tests green; clippy fails only on pre-existing admin/mod.rs lib lint unrelated",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
