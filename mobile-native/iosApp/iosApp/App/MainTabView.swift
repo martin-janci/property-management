@@ -112,9 +112,7 @@ struct MainTabView: View {
                 .navigationTitle("Photos")
 
         case .listingMap(let id):
-            // Map view for listing
-            Text("Map for listing: \(id)")
-                .navigationTitle("Location")
+            ListingMapView(listingId: id)
 
         case .favorites:
             FavoritesView()
