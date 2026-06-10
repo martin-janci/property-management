@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-10T20:29:28Z",
+  "generated": "2026-06-10T22:23:47Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-mobile-announcements-test",
@@ -50,48 +50,28 @@
       "quarantine_reason": "reclaim-of-already-merged-task-id (merged via PR #1168, in archive); T3 active+archive dup; PR #1197 red CI. Needs human triage: rename id + salvage edge tests + fix DB test, or close as superseded. [task_id suffixed -v2 by dispatcher: collided with already-merged+archived PR#1168 of same task_id]"
     },
     {
-      "task_id": "verify-document-sharing-promote",
-      "branch": "auto-impl/verify-document-sharing-promote",
-      "status": "review",
-      "claimed_at": "2026-06-10T04:27:41Z",
-      "last_updated": "2026-06-10T20:28:43Z",
-      "status_changed_at": "2026-06-10T10:24:09Z",
-      "pr_number": 1252,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1252",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": " [Phase5.7 cargo-fmt fix pushed; test job now ungated; awaiting re-review]",
-      "reviewer_summary": "verdict=changes note=check-job red: cargo-fmt fails on new file; test-job skipped so sqlx cases never ran; tests otherwise sound",
-      "last_reviewed_oid": "c43d33eee32670c86fc279e6644b513dd8f83ae7",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 1,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "test-esignature-email-status-tracking-backend",
       "branch": "auto-impl/test-esignature-email-status-tracking-ba",
       "status": "review",
       "claimed_at": "2026-06-10T14:25:43Z",
-      "last_updated": "2026-06-10T20:28:43Z",
+      "last_updated": "2026-06-10T22:23:47Z",
       "status_changed_at": "2026-06-10T20:15:22Z",
       "pr_number": 1264,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1264",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": " [Phase5.7 cargo-fmt fix pushed; awaiting re-review]",
-      "reviewer_summary": "verdict=changes note=check-job cargo-fmt fails on new test file; scope/test-logic sound, mechanical fmt fix needed",
-      "last_reviewed_oid": "aba9ca01e3c85af4166bdb7db7c9a0fda3032b8a",
+      "reviewer_summary": "verdict=approve note=ci-green-fmt-fixed; assertions sound; no camelCase bug; squash-merged this run (Phase2 next run will reconcile to merged)",
+      "last_reviewed_oid": "b79129a49a2ae8bca54e6df84527d2b0674b5849",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-10T22:23:47Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     }
   ]
 }
