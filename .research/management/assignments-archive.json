@@ -1,1 +1,25 @@
-PLACEHOLDER_CONTENT_348757_CHARS
+{
+  "archived_at": "2026-06-10T22:23:47Z",
+  "assignments": [
+    {
+      "task_id": "bug-announcer-stale-message",
+      "branch": "auto-impl/bug-announcer-stale-message",
+      "status": "merged",
+      "claimed_at": "2026-06-04T19:38:00Z",
+      "last_updated": "2026-06-04T22:06:31Z",
+      "status_changed_at": "2026-06-04T22:06:31Z",
+      "pr_number": 1084,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1084",
+      "merged_at": "2026-06-04T21:52:54Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=89aa3e3106069dffa511f0fa47651ad74e369683 note=timeout-tracking fix eliminates stale aria-live; test+IG3 present; CI green",
+      "last_reviewed_oid": "89aa3e3106069dffa511f0fa47651ad74e369683",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-06-04T21:45:08Z"
+    }]}
