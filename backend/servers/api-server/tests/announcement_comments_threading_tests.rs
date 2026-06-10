@@ -145,18 +145,20 @@ async fn comment_threading_create_reply_list_delete(pool: PgPool) {
     let top = &list["comments"][0];
     assert_eq!(top["id"].as_str(), Some(parent_id.as_str()));
     let replies = top["replies"].as_array().expect("replies array present");
-    assert_eq!(replies.len(), 1, "the reply must be nested under its parent");
+    assert_eq!(
+        replies.len(),
+        1,
+        "the reply must be nested under its parent"
+    );
     assert_eq!(replies[0]["id"].as_str(), Some(reply_id.as_str()));
 
     // --- delete the reply (author deleting own comment) ---
     let del_resp = app
         .execute(
-            app.delete(&format!(
-                "/api/v1/announcements/{ann}/comments/{reply_id}"
-            ))
-            .bearer(&token)
-            .header("X-Tenant-ID", &org.to_string())
-            .build(),
+            app.delete(&format!("/api/v1/announcements/{ann}/comments/{reply_id}"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .build(),
         )
         .await;
     del_resp.assert_status(StatusCode::OK);
@@ -164,12 +166,10 @@ async fn comment_threading_create_reply_list_delete(pool: PgPool) {
     // --- deleting the same comment again is rejected (already deleted) ---
     let del_again = app
         .execute(
-            app.delete(&format!(
-                "/api/v1/announcements/{ann}/comments/{reply_id}"
-            ))
-            .bearer(&token)
-            .header("X-Tenant-ID", &org.to_string())
-            .build(),
+            app.delete(&format!("/api/v1/announcements/{ann}/comments/{reply_id}"))
+                .bearer(&token)
+                .header("X-Tenant-ID", &org.to_string())
+                .build(),
         )
         .await;
     del_again.assert_status(StatusCode::BAD_REQUEST);
@@ -266,10 +266,8 @@ async fn comment_endpoints_require_auth(pool: PgPool) {
     // Delete (DELETE)
     let delete = app
         .execute(
-            app.delete(&format!(
-                "/api/v1/announcements/{ann}/comments/{comment}"
-            ))
-            .build(),
+            app.delete(&format!("/api/v1/announcements/{ann}/comments/{comment}"))
+                .build(),
         )
         .await;
     delete.assert_status(StatusCode::UNAUTHORIZED);

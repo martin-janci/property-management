@@ -46,7 +46,12 @@ async fn test_pool() -> PgPool {
         .expect("connect to TEST_DATABASE_URL")
 }
 
-async fn set_context(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, super_admin: bool) {
+async fn set_context(
+    pool: &PgPool,
+    org_id: Option<Uuid>,
+    user_id: Option<Uuid>,
+    super_admin: bool,
+) {
     sqlx::query("SELECT set_request_context($1, $2, $3)")
         .bind(org_id)
         .bind(user_id)
@@ -259,13 +264,12 @@ async fn comment_soft_delete_is_tenant_isolated() {
 
     // Confirm org A's comment is still live.
     set_context(&pool, Some(org_a), Some(author_a), false).await;
-    let still_live: Option<bool> = sqlx::query_scalar(
-        "SELECT deleted_at IS NULL FROM announcement_comments WHERE id = $1",
-    )
-    .bind(comment_a)
-    .fetch_optional(&pool)
-    .await
-    .expect("select as org A");
+    let still_live: Option<bool> =
+        sqlx::query_scalar("SELECT deleted_at IS NULL FROM announcement_comments WHERE id = $1")
+            .bind(comment_a)
+            .fetch_optional(&pool)
+            .await
+            .expect("select as org A");
     assert_eq!(
         still_live,
         Some(true),
