@@ -1,57 +1,49 @@
-//! Repo-level behavioral RLS regression test for PAP-80 (parent PAP-67).
+//! Repo-level behavioral RLS regression test for PAP-110 (parent PAP-80 / PAP-67).
 //!
 //! Background
 //! ----------
 //! Migration `00179` (PAP-62) put `FORCE ROW LEVEL SECURITY` + the canonical
-//! `get_current_org_id()` policy on every emergency table (`emergency_protocols`
-//! and the other seven). The production api-server connects as the table OWNER,
-//! which `FORCE` binds. `EmergencyRepository` held a raw `PgPool` and ran every
+//! `get_current_org_id()` policy on six tables `ApiEcosystemRepository`
+//! queries: `organization_integrations`, `organization_connectors`,
+//! `connector_execution_logs`, `webhook_subscriptions`, `webhook_deliveries`,
+//! and `integration_ratings`. The production api-server connects as the table
+//! OWNER, which `FORCE` binds. The repo held a raw `PgPool` and ran every
 //! query WITHOUT ever calling `set_request_context`, so on `dev`
-//! `get_current_org_id()` returned NULL and the policy collapsed to
-//! `organization_id = NULL` → **deny-all**: own-org reads returned empty, writes
-//! failed. (PAP-80.)
+//! `get_current_org_id()` returned NULL and the policies collapsed to
+//! deny-all: own-org webhook/integration reads returned empty and writes
+//! failed. Worse, the by-id webhook reads (`/webhooks/{id}`) had no app-level
+//! org check either, so before `FORCE` they were a cross-tenant IDOR.
 //!
-//! The fix routes the repo through an RLS-context connection (the `RlsConnection`
-//! extractor in handlers sets the org/user GUCs before any query). This test
-//! exercises the *repository methods themselves* on a `FORCE`-bound role and
-//! proves:
+//! The fix makes the repo stateless: every method takes an executor whose
+//! connection already has RLS context set (handlers use the `RlsConnection`
+//! extractor). This test exercises the *repository methods themselves* on a
+//! `FORCE`-bound role and proves, against `webhook_subscriptions`:
 //!
 //!   1. **Deny-all reproduction** — with the role bound but NO context set
 //!      (exactly what the raw-pool repo did on `dev`), an own-org
-//!      `find_protocol_by_id` / `list_protocols` returns nothing.
-//!   2. **Fix** — with `set_request_context(org_a, user_a)` applied first (what
-//!      `RlsConnection` now does), the same repo calls return the own-org row.
-//!   3. **Cross-tenant** — org B's protocol stays invisible to an org-A caller
-//!      even with context set.
-//!   4. **Write path** — a `create_protocol` on a context-set connection succeeds
-//!      and the row is the caller's org (the write-side of deny-all).
+//!      `get_enhanced_webhook` / `list_enhanced_webhooks` returns nothing.
+//!   2. **Fix** — with `set_request_context(org_a, user_a)` applied first,
+//!      the same by-id read returns the own-org subscription.
+//!   3. **Cross-tenant by-id** — org B's webhook is invisible to an org-A
+//!      caller probing org B's subscription id (the IDOR guard, now enforced
+//!      by the database).
+//!   4. **Write path** — `create_enhanced_webhook` succeeds under org-A
+//!      context and the row lands in the caller's org.
 //!
 //! Why this test switches roles
 //! ----------------------------
 //! `#[sqlx::test]` connects as the Postgres SUPERUSER, which bypasses RLS
-//! entirely — even `FORCE` does not bind a superuser, so a behavioral assertion
-//! would pass vacuously. The test creates a plain `NOSUPERUSER NOBYPASSRLS`
-//! role, grants it access, and `SET ROLE`s to it so `FORCE` actually enforces
-//! the policy the way the production owner role experiences it. Mirrors
-//! `vendor_rls_repo_tests.rs` / `work_order_rls_repo_tests.rs` (the PAP-67
-//! precedent PAP-80 follows).
+//! entirely — even `FORCE` does not bind a superuser, so a behavioral
+//! assertion would pass vacuously. The test creates a plain `NOSUPERUSER
+//! NOBYPASSRLS` role, grants it access, and `SET ROLE`s to it so `FORCE`
+//! actually enforces the policy the way the production owner role
+//! experiences it. Mirrors `llm_document_rls_repo_tests.rs` /
+//! `sentiment_rls_repo_tests.rs` (the PAP-67 precedent PAP-80 follows).
 
-use db::models::{CreateEmergencyProtocol, EmergencyProtocolQuery};
-use db::repositories::EmergencyRepository;
+use db::models::CreateEnhancedWebhookSubscription;
+use db::repositories::ApiEcosystemRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-/// `EmergencyProtocolQuery` does not derive `Default`; build an all-`None`
-/// (unfiltered) query for the list assertions.
-fn any_protocols() -> EmergencyProtocolQuery {
-    EmergencyProtocolQuery {
-        building_id: None,
-        protocol_type: None,
-        is_active: None,
-        limit: None,
-        offset: None,
-    }
-}
 
 async fn set_ctx(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, is_super_admin: bool) {
     sqlx::query("SELECT set_request_context($1, $2, $3)")
@@ -71,9 +63,9 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
         RETURNING id
         "#,
     )
-    .bind(format!("Emergency {slug}"))
+    .bind(format!("Ecosystem {slug}"))
     .bind(slug)
-    .bind(format!("{slug}@emergency.test"))
+    .bind(format!("{slug}@ecosystem.test"))
     .fetch_one(pool)
     .await
     .expect("seed org")
@@ -83,7 +75,7 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
-        VALUES ($1, 'test_hash', 'Emergency User', 'active', NOW(), 'public')
+        VALUES ($1, 'test_hash', 'Ecosystem User', 'active', NOW(), 'public')
         RETURNING id
         "#,
     )
@@ -93,42 +85,44 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .expect("seed user")
 }
 
-/// Seed a protocol directly (as superuser, RLS-exempt) for an org.
-async fn seed_protocol(pool: &PgPool, org_id: Uuid, name: &str) -> Uuid {
+/// Seed a webhook subscription directly (as superuser, RLS-exempt) for an org.
+async fn seed_webhook(pool: &PgPool, org_id: Uuid, created_by: Uuid, name: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO emergency_protocols (organization_id, name, protocol_type)
-        VALUES ($1, $2, 'fire')
+        INSERT INTO webhook_subscriptions
+            (organization_id, name, url, secret, events, created_by)
+        VALUES ($1, $2, 'https://example.test/hook', 'whsec_test', ARRAY['integration.installed'], $3)
         RETURNING id
         "#,
     )
     .bind(org_id)
     .bind(name)
+    .bind(created_by)
     .fetch_one(pool)
     .await
-    .expect("seed protocol")
+    .expect("seed webhook subscription")
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
-    let repo = EmergencyRepository::new(pool.clone());
+async fn api_ecosystem_repo_force_rls_deny_all_and_fix(pool: PgPool) {
+    let repo = ApiEcosystemRepository::new(pool.clone());
 
     // --- Seed as superuser / super-admin context (satisfies org roles-trigger). ---
     set_ctx(&pool, None, None, true).await;
-    let org_a = seed_org(&pool, "eforce-a").await;
-    let org_b = seed_org(&pool, "eforce-b").await;
-    let user_a = seed_user(&pool, "a@emergency.test").await;
-    let _user_b = seed_user(&pool, "b@emergency.test").await;
-    let protocol_a = seed_protocol(&pool, org_a, "Fire A").await;
-    let protocol_b = seed_protocol(&pool, org_b, "Fire B").await;
+    let org_a = seed_org(&pool, "ecoforce-a").await;
+    let org_b = seed_org(&pool, "ecoforce-b").await;
+    let user_a = seed_user(&pool, "a@ecosystem.test").await;
+    let user_b = seed_user(&pool, "b@ecosystem.test").await;
+    let hook_a = seed_webhook(&pool, org_a, user_a, "org-a billing hook").await;
+    let hook_b = seed_webhook(&pool, org_b, user_b, "org-b confidential hook").await;
 
     // --- NOSUPERUSER NOBYPASSRLS role so FORCE actually binds. ---
-    let role = format!("ppt_rls_emergency_{}", Uuid::new_v4().simple());
+    let role = format!("ppt_rls_ecosystem_{}", Uuid::new_v4().simple());
     for stmt in [
         format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
-        format!("GRANT SELECT, INSERT, UPDATE, DELETE ON emergency_protocols TO \"{role}\""),
-        // get_current_org_not_deleted() is SECURITY INVOKER and reads
-        // `organizations`, so the bound role needs SELECT on it (PAP-133).
+        format!("GRANT SELECT, INSERT, UPDATE, DELETE ON webhook_subscriptions TO \"{role}\""),
+        // The org-not-deleted policy helper reads `organizations` with invoker
+        // rights, so the bound role needs read access to it.
         format!("GRANT SELECT ON organizations TO \"{role}\""),
         // RLS policy helpers must be EXECUTE-able by the bound role.
         format!("GRANT EXECUTE ON FUNCTION get_current_org_id() TO \"{role}\""),
@@ -142,7 +136,7 @@ async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 
     // ====================================================================
     // (1) DENY-ALL reproduction: role bound, NO context set (the dev raw-pool
-    //     behavior). Own-org reads return nothing.
+    //     behavior). Own-org webhook reads return nothing.
     // ====================================================================
     {
         let mut conn = pool.acquire().await.expect("acquire");
@@ -156,23 +150,24 @@ async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .await
             .expect("set role");
 
-        let found = repo
-            .find_protocol_by_id(&mut *conn, org_a, protocol_a)
+        let by_id = repo
+            .get_enhanced_webhook(&mut *conn, hook_a)
             .await
-            .expect("find_protocol_by_id (no ctx)");
+            .expect("get_enhanced_webhook (no ctx)");
         assert!(
-            found.is_none(),
-            "PAP-80 regression: without RLS context, own-org protocol must be \
+            by_id.is_none(),
+            "PAP-80 regression: without RLS context, the own-org webhook must be \
              invisible (deny-all) — this is what the raw-pool repo did on dev"
         );
 
         let listed = repo
-            .list_protocols(&mut *conn, org_a, any_protocols())
+            .list_enhanced_webhooks(&mut *conn, org_a)
             .await
-            .expect("list_protocols (no ctx)");
+            .expect("list_enhanced_webhooks (no ctx)");
         assert!(
             listed.is_empty(),
-            "PAP-80 regression: without RLS context, list returns deny-all empty"
+            "PAP-80 regression: the org-scoped webhook list silently returned \
+             nothing on the raw pool"
         );
 
         sqlx::query("RESET ROLE")
@@ -182,7 +177,7 @@ async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     }
 
     // ====================================================================
-    // (2) FIX + (3) cross-tenant: set context, drop to bound role, query repo.
+    // (2) FIX + (3) cross-tenant by-id: set context, drop to bound role, query.
     // ====================================================================
     {
         let mut conn = pool.acquire().await.expect("acquire");
@@ -198,35 +193,28 @@ async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .await
             .expect("set role");
 
-        // (2) Own-org row IS now visible through the repo — the fix.
-        let found = repo
-            .find_protocol_by_id(&mut *conn, org_a, protocol_a)
+        // (2) Own-org by-id read IS now visible through the repo — the fix.
+        let by_id = repo
+            .get_enhanced_webhook(&mut *conn, hook_a)
             .await
-            .expect("find_protocol_by_id (ctx)");
+            .expect("get_enhanced_webhook (ctx)")
+            .expect("own-org webhook must be visible with RLS context set");
         assert_eq!(
-            found.map(|p| p.id),
-            Some(protocol_a),
-            "PAP-80 fix: with RLS context set, the repo must return the own-org protocol"
+            by_id.id, hook_a,
+            "PAP-80 fix: with RLS context set, the by-id read returns exactly the own-org webhook"
         );
+        assert_eq!(by_id.organization_id, org_a);
 
-        let listed = repo
-            .list_protocols(&mut *conn, org_a, any_protocols())
-            .await
-            .expect("list_protocols (ctx)");
-        assert_eq!(
-            listed.iter().map(|p| p.id).collect::<Vec<_>>(),
-            vec![protocol_a],
-            "PAP-80 fix: list returns exactly the own-org protocol under context"
-        );
-
-        // (3) Org B's protocol stays invisible to an org-A caller.
+        // (3) Cross-tenant by-id: probing org B's webhook id from an org-A
+        //     context must surface nothing (handler maps None to 404). This
+        //     was an unguarded IDOR before — the handler had no org check.
         let cross = repo
-            .find_protocol_by_id(&mut *conn, org_a, protocol_b)
+            .get_enhanced_webhook(&mut *conn, hook_b)
             .await
-            .expect("find_protocol_by_id cross");
+            .expect("get_enhanced_webhook (cross-tenant probe)");
         assert!(
             cross.is_none(),
-            "cross-tenant: org B's protocol must NOT be visible to an org-A caller"
+            "cross-tenant: org B's webhook must NOT be readable by an org-A caller"
         );
 
         sqlx::query("RESET ROLE")
@@ -255,25 +243,29 @@ async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .expect("set role");
 
         let created = repo
-            .create_protocol(
+            .create_enhanced_webhook(
                 &mut *conn,
                 org_a,
                 user_a,
-                CreateEmergencyProtocol {
-                    building_id: None,
-                    name: "Created under RLS".to_string(),
-                    protocol_type: "fire".to_string(),
+                &CreateEnhancedWebhookSubscription {
+                    name: "org-a created under ctx".to_string(),
                     description: None,
-                    steps: serde_json::json!([]),
-                    contacts: None,
-                    evacuation_info: None,
-                    attachments: None,
-                    is_active: None,
-                    priority: None,
+                    url: "https://example.test/created".to_string(),
+                    auth_type: "hmac_sha256".to_string(),
+                    auth_config: None,
+                    events: vec!["integration.installed".to_string()],
+                    filters: None,
+                    payload_template: None,
+                    headers: None,
+                    retry_policy: None,
+                    rate_limit_requests: None,
+                    rate_limit_window_seconds: None,
+                    timeout_ms: None,
+                    verify_ssl: None,
                 },
             )
             .await
-            .expect("create_protocol under context must succeed");
+            .expect("create_enhanced_webhook under context must succeed");
         assert_eq!(created.organization_id, org_a);
 
         sqlx::query("RESET ROLE")
@@ -285,7 +277,8 @@ async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     // --- Cleanup the test role. ---
     set_ctx(&pool, None, None, true).await;
     for stmt in [
-        format!("REVOKE ALL ON emergency_protocols FROM \"{role}\""),
+        format!("REVOKE ALL ON webhook_subscriptions FROM \"{role}\""),
+        format!("REVOKE ALL ON organizations FROM \"{role}\""),
         // DROP OWNED severs every remaining privilege this role holds in the
         // test database — the explicit REVOKEs above keep missing the RLS
         // helper-function EXECUTE grants, so DROP ROLE failed with "objects

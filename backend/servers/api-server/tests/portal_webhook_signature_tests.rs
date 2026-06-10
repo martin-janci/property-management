@@ -47,7 +47,10 @@ const VIEWS_URI: &str = "/api/v1/webhooks/portals/reality-portal/views";
 /// `std::env::{set_var, remove_var}` are not safe to interleave with `getenv`
 /// on glibc, and integration tests in this binary may run concurrently. Every
 /// test that mutates the webhook-secret env serializes behind this mutex.
-static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+/// Async-aware (`tokio::sync::Mutex`) because the guard must stay held across
+/// the `.await`s of the whole test body — the env var has to remain stable
+/// while `TestApp` boots and the request executes.
+static ENV_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 /// Compute the `sha256=<base64>` header value the verifier expects for `body`.
 fn sign(secret: &str, body: &[u8]) -> String {
@@ -60,7 +63,7 @@ fn sign(secret: &str, body: &[u8]) -> String {
 /// well-formed body) with `401` — never silently accepts an unverified payload.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn unconfigured_secret_rejects_webhook(pool: PgPool) {
-    let _guard = ENV_LOCK.lock().unwrap();
+    let _guard = ENV_LOCK.lock().await;
     std::env::remove_var(PORTAL_SECRET_ENV);
 
     let app = TestApp::new(pool).await;
@@ -85,7 +88,7 @@ async fn unconfigured_secret_rejects_webhook(pool: PgPool) {
 /// rejects with `401` before parsing the body or touching the database.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn invalid_signature_is_rejected(pool: PgPool) {
-    let _guard = ENV_LOCK.lock().unwrap();
+    let _guard = ENV_LOCK.lock().await;
     std::env::set_var(PORTAL_SECRET_ENV, "super-secret-key");
 
     let app = TestApp::new(pool).await;
@@ -112,7 +115,7 @@ async fn invalid_signature_is_rejected(pool: PgPool) {
 /// entirely, the route rejects with `401`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn missing_signature_header_is_rejected(pool: PgPool) {
-    let _guard = ENV_LOCK.lock().unwrap();
+    let _guard = ENV_LOCK.lock().await;
     std::env::set_var(PORTAL_SECRET_ENV, "super-secret-key");
 
     let app = TestApp::new(pool).await;
@@ -141,7 +144,7 @@ async fn missing_signature_header_is_rejected(pool: PgPool) {
 /// signature was accepted rather than rejected as forged.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn valid_signature_is_accepted(pool: PgPool) {
-    let _guard = ENV_LOCK.lock().unwrap();
+    let _guard = ENV_LOCK.lock().await;
     let secret = "super-secret-key";
     std::env::set_var(PORTAL_SECRET_ENV, secret);
 

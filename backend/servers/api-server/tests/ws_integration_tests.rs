@@ -109,25 +109,23 @@ fn refresh_token(user_id: Uuid) -> String {
 /// `sqlx::test` provides an isolated PgPool; we wrap it in `TestApp` to
 /// reuse the same `AppState` construction as the rest of the test suite,
 /// then hand the router to `TestServer`.
-fn build_ws_test_server(pool: PgPool) -> impl std::future::Future<Output = TestServer> {
-    async move {
-        // Ensure JWT_SECRET and RUST_ENV are set before the first TestApp.
-        // TestApp::new does this via its `Once` guards, so we just call it.
-        let test_app = TestApp::new(pool).await;
+async fn build_ws_test_server(pool: PgPool) -> TestServer {
+    // Ensure JWT_SECRET and RUST_ENV are set before the first TestApp.
+    // TestApp::new does this via its `Once` guards, so we just call it.
+    let test_app = TestApp::new(pool).await;
 
-        // Build TestServer with real HTTP transport for WS upgrade support.
-        // `build` returns `TestServer` directly (panics on internal error).
-        TestServerBuilder::new()
-            .http_transport()
-            .build(
-                test_app
-                    .router
-                    .layer(MockConnectInfo(std::net::SocketAddr::from((
-                        [127, 0, 0, 1],
-                        0,
-                    )))),
-            )
-    }
+    // Build TestServer with real HTTP transport for WS upgrade support.
+    // `build` returns `TestServer` directly (panics on internal error).
+    TestServerBuilder::new()
+        .http_transport()
+        .build(
+            test_app
+                .router
+                .layer(MockConnectInfo(std::net::SocketAddr::from((
+                    [127, 0, 0, 1],
+                    0,
+                )))),
+        )
 }
 
 // ============================================================================
@@ -498,10 +496,10 @@ async fn ws_pubsub_fanout_delivers_to_correct_subscriber(pool: PgPool) {
                 .unwrap(),
         );
 
-        let router = api_server::create_router(state).layer(MockConnectInfo(
-            std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
-        ));
-        router
+        api_server::create_router(state).layer(MockConnectInfo(std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            0,
+        ))))
     };
 
     // `build` returns `TestServer` directly (panics on internal failure).

@@ -139,7 +139,7 @@ async fn vendor_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .expect("set role");
 
         let found = repo
-            .find_by_id(&mut *conn, vendor_a)
+            .find_by_id(&mut *conn, vendor_a, org_a)
             .await
             .expect("find_by_id (no ctx)");
         assert!(
@@ -182,7 +182,7 @@ async fn vendor_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 
         // (2) Own-org row IS now visible through the repo — the fix.
         let found = repo
-            .find_by_id(&mut *conn, vendor_a)
+            .find_by_id(&mut *conn, vendor_a, org_a)
             .await
             .expect("find_by_id (ctx)");
         assert_eq!(
@@ -203,7 +203,7 @@ async fn vendor_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 
         // (3) Org B's vendor stays invisible to an org-A caller.
         let cross = repo
-            .find_by_id(&mut *conn, vendor_b)
+            .find_by_id(&mut *conn, vendor_b, org_a)
             .await
             .expect("find_by_id cross");
         assert!(
@@ -272,6 +272,11 @@ async fn vendor_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     set_ctx(&pool, None, None, true).await;
     for stmt in [
         format!("REVOKE ALL ON vendors FROM \"{role}\""),
+        // DROP OWNED severs every remaining privilege this role holds in the
+        // test database — the explicit REVOKEs above keep missing the RLS
+        // helper-function EXECUTE grants, so DROP ROLE failed with "objects
+        // depend on it" and leaked the cluster-global role (PAP-134).
+        format!("DROP OWNED BY \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
