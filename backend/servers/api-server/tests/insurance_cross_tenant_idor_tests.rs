@@ -42,11 +42,9 @@
 #[allow(dead_code)]
 mod common;
 
-use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
-    middleware::Next,
 };
 use chrono::NaiveDate;
 use db::models::{
@@ -58,7 +56,7 @@ use sqlx::PgPool;
 use tower::ServiceExt;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser};
+use common::{create_authenticated_user_with_org, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -91,32 +89,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-/// Look up the user id created by `create_authenticated_user`.
-async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
-        .bind(email)
-        .fetch_one(pool)
-        .await
-        .expect("user id lookup")
-}
-
-/// Grant an active `user_memberships` row so `MembershipRepository::is_active`
-/// (used by `RequestPrincipal`) returns true for `(user, org)`.
-async fn seed_user_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO user_memberships (user_id, organization_id, role)
-        VALUES ($1, $2, 'manager')
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(user_id)
-    .bind(org_id)
-    .execute(pool)
-    .await
-    .expect("seed user_membership");
 }
 
 fn sample_policy(suffix: &str) -> CreateInsurancePolicy {
@@ -431,49 +403,29 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 // ---------------------------------------------------------------------------
 //
 // This is the end-to-end proof that the handler now derives the org from the
-// authenticated principal. We wrap `create_router` with a middleware that
-// injects `ResolvedTenant { Subdomain, org_a }` (standing in for
-// `host_tenant_middleware`, which `TestApp` does not mount), mint a real JWT
-// for a user who has an active membership in org A, and seed one policy in
-// org A.
+// authenticated principal via `RlsConnection`. We mint a real JWT for a user
+// who is an active `organization_members` member of org A (the membership table
+// `ValidatedTenantExtractor` checks), pass `X-Tenant-ID: org_a` (the canonical
+// tenant-resolution path under `TestApp`, which mounts no `host_tenant_middleware`),
+// and seed one policy in org A.
 //
-// On the FIXED code, `list_policies` resolves `org_id = principal.effective_org
-// = org_a` and returns that policy → `policies.len() == 1`.
+// On the FIXED code, `list_policies` resolves `org_id = rls.tenant_id() = org_a`
+// and returns that policy → `policies.len() == 1`.
 //
-// On `main`, `list_policies` ignores the principal and uses
+// On `main`, `list_policies` ignored the principal and used
 // `query.building_id.unwrap_or_default()` = `Uuid::nil()`, so the org-scoped
-// repository query matches nothing → `policies.len() == 0`. This assertion is
+// repository query matched nothing → `policies.len() == 0`. This assertion is
 // what fails on main and passes on the fix.
-
-/// Build a router (the production `create_router`) wrapped so that every
-/// request carries a `ResolvedTenant` for `org_id`, mimicking a real
-/// tenant-resolved host.
-async fn tenant_resolved_app(pool: PgPool, org_id: Uuid) -> (TestApp, axum::Router) {
-    let app = TestApp::new(pool).await;
-    let router = app.router.clone().layer(axum::middleware::from_fn(
-        move |mut req: Request<Body>, next: Next| async move {
-            req.extensions_mut().insert(ResolvedTenant {
-                organization_id: org_id,
-                source: TenantSource::Subdomain,
-            });
-            next.run(req).await
-        },
-    ));
-    (app, router)
-}
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_policies_returns_only_callers_own_org(pool: PgPool) {
-    let org_a = seed_org(&pool, "pos-pol-a").await;
-
-    // Register + verify + login a user → real access-token JWT.
-    let bootstrap = TestApp::new(pool.clone()).await;
+    // Register + verify + login a user and make them an active `org_admin`
+    // member of a fresh org A. `create_authenticated_user_with_org` seeds the
+    // membership into `organization_members` — the table `RlsConnection`'s
+    // `ValidatedTenantExtractor` validates against — and returns org A's id.
+    let app = TestApp::new(pool.clone()).await;
     let user = TestUser::with_email(&format!("pos-pol-{}@ins-idor.test", Uuid::new_v4()));
-    let (access_token, _refresh) = create_authenticated_user(&bootstrap, &user).await;
-    let uid = user_id_for(&pool, &user.email).await;
-
-    // Active membership in org A so `RequestPrincipal` resolves `effective_org`.
-    seed_user_membership(&pool, org_a, uid).await;
+    let (access_token, org_a) = create_authenticated_user_with_org(&app, &user, "pos-pol-a").await;
 
     // Seed a policy owned by org A.
     let repo = InsuranceRepository::new(pool.clone());
@@ -482,17 +434,15 @@ async fn list_policies_returns_only_callers_own_org(pool: PgPool) {
         .await
         .expect("seed policy in org A");
 
-    // Router with org_a as the resolved tenant.
-    let (_app, router) = tenant_resolved_app(pool.clone(), org_a).await;
-
     let request = Request::builder()
         .method(Method::GET)
         .uri("/api/v1/insurance/policies")
         .header(header::AUTHORIZATION, format!("Bearer {access_token}"))
+        .header("X-Tenant-ID", org_a.to_string())
         .body(Body::empty())
         .unwrap();
 
-    let response = router.oneshot(request).await.expect("request");
+    let response = app.router.clone().oneshot(request).await.expect("request");
     assert_eq!(
         response.status(),
         StatusCode::OK,
