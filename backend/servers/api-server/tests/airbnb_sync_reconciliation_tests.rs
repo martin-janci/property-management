@@ -40,11 +40,23 @@
 //!    200 and enqueues no sync job (no matching connection to reconcile to).
 //! 5. **Connection match drives reconcile** — a `reservation_created` for a
 //!    listing that DOES have an active connection is accepted (200) and the
-//!    ledger records the first-seen delivery, proving the dispatch path reached
-//!    the connection lookup rather than short-circuiting.
+//!    handler enqueues exactly one `SYNC_EXTERNAL` background job for the
+//!    matched connection's organization (the dispatch path in step 5 of the
+//!    handler), proving the reconcile reached the connection lookup.
 //!
 //! All payloads carry a unique `event_id` so the ledger never masks the
 //! state-reconciliation assertions we care about.
+//!
+//! # A note on the Postgres enum columns
+//!
+//! `rental_bookings.status` is the Postgres enum `rental_booking_status` and
+//! `rental_bookings.platform` / `rental_platform_connections.platform` are the
+//! enum `rental_platform`. SQLx will not decode a bare enum column into a Rust
+//! `String`, nor bind a Rust `&str` parameter against an enum column without an
+//! explicit cast. So, mirroring the sibling seed/read patterns in
+//! `rental_connection_token_leak_tests.rs` and `db/tests/rls_smoke_tests.rs`,
+//! we (a) write enum values as SQL string literals cast to the enum type and
+//! (b) read enum columns back as `::text`.
 //!
 //! # Secret wiring
 //!
@@ -104,6 +116,10 @@ fn signed_post(body: &str) -> Request<Body> {
 // Fixtures — seed a full rental graph via SQL (org → building → unit →
 // connection → booking). Mirrors the seeding pattern in
 // `rental_connection_token_leak_tests.rs`.
+//
+// `platform` / `status` are Postgres enums; we write them as string literals
+// cast to the enum type so SQLx never has to bind a `&str` against an enum
+// column (which is a bind type mismatch).
 // ---------------------------------------------------------------------------
 
 async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
@@ -151,7 +167,7 @@ async fn seed_unit(pool: &PgPool, building_id: Uuid, designation: &str) -> Uuid 
 
 /// Seed an active Airbnb connection whose `external_property_id` is the Airbnb
 /// listing id — that is the column `find_airbnb_connection_by_listing_id`
-/// matches on.
+/// matches on. `platform` is written as the enum literal `'airbnb'`.
 async fn seed_connection(pool: &PgPool, org_id: Uuid, unit_id: Uuid, listing_id: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
@@ -159,7 +175,7 @@ async fn seed_connection(pool: &PgPool, org_id: Uuid, unit_id: Uuid, listing_id:
             organization_id, unit_id, platform,
             access_token, refresh_token, external_property_id, is_active
         )
-        VALUES ($1, $2, 'airbnb', 'access-tok', 'refresh-tok', $3, true)
+        VALUES ($1, $2, 'airbnb'::rental_platform, 'access-tok', 'refresh-tok', $3, true)
         RETURNING id
         "#,
     )
@@ -173,6 +189,10 @@ async fn seed_connection(pool: &PgPool, org_id: Uuid, unit_id: Uuid, listing_id:
 
 /// Seed a confirmed Airbnb booking keyed by `external_booking_id`
 /// (= the webhook `confirmation_code`). Returns the booking id.
+///
+/// `platform` and `status` are the Postgres enums `rental_platform` and
+/// `rental_booking_status`; we cast the string literals to those enum types
+/// explicitly.
 async fn seed_booking(
     pool: &PgPool,
     org_id: Uuid,
@@ -188,9 +208,9 @@ async fn seed_booking(
             check_in, check_out, status
         )
         VALUES (
-            $1, $2, $3, 'airbnb',
+            $1, $2, $3, 'airbnb'::rental_platform,
             $4, 'Test Guest', 2,
-            DATE '2026-07-01', DATE '2026-07-05', 'confirmed'
+            DATE '2026-07-01', DATE '2026-07-05', 'confirmed'::rental_booking_status
         )
         RETURNING id
         "#,
@@ -204,8 +224,11 @@ async fn seed_booking(
     .expect("seed booking")
 }
 
+/// Read `rental_bookings.status` back. The column is the Postgres enum
+/// `rental_booking_status`, which SQLx cannot decode into a Rust `String`
+/// directly, so we cast it to `::text` in the projection.
 async fn booking_status(pool: &PgPool, booking_id: Uuid) -> String {
-    sqlx::query("SELECT status FROM rental_bookings WHERE id = $1")
+    sqlx::query("SELECT status::text AS status FROM rental_bookings WHERE id = $1")
         .bind(booking_id)
         .fetch_one(pool)
         .await
@@ -229,6 +252,22 @@ async fn ledger_count(pool: &PgPool, event_id: &str) -> i64 {
         .await
         .expect("ledger count")
         .get::<i64, _>("n")
+}
+
+/// Count enqueued `SYNC_EXTERNAL` background jobs for `org_id`.
+///
+/// `job_type` is a plain `VARCHAR` column (see migration 00072), so the text
+/// comparison is correct as-is — no enum cast needed here.
+async fn sync_job_count(pool: &PgPool, org_id: Uuid) -> i64 {
+    sqlx::query(
+        "SELECT COUNT(*) AS n FROM background_jobs \
+         WHERE job_type = 'sync_external' AND org_id = $1",
+    )
+    .bind(org_id)
+    .fetch_one(pool)
+    .await
+    .expect("count sync jobs")
+    .get::<i64, _>("n")
 }
 
 /// Build a signed `reservation_cancelled` payload with a unique `event_id`.
@@ -418,6 +457,13 @@ async fn created_event_for_unknown_listing_is_acknowledged(pool: PgPool) {
 // ===========================================================================
 // 5. Connection match drives reconcile — created event for a connected
 //    listing reaches the dispatch path and enqueues exactly one sync job.
+//
+// The handler's ReservationCreated branch looks the connection up by listing
+// id (`find_airbnb_connection_by_listing_id`), and on a hit enqueues exactly
+// one SYNC_EXTERNAL background job scoped to that connection's organization.
+// The dedup ledger is first-seen for `evt_connected_1`, so the dispatch is not
+// suppressed. We seed an active connection whose `external_property_id` equals
+// the event's `listing_id` so the lookup hits.
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -428,7 +474,16 @@ async fn created_event_for_connected_listing_enqueues_one_sync_job(pool: PgPool)
     let org = seed_org(&pool, "match").await;
     let building = seed_building(&pool, org, "match").await;
     let unit = seed_unit(&pool, building, "M-1").await;
+    // `external_property_id` == the event's `listing_id` so the connection
+    // lookup in the handler hits and drives the enqueue.
     let _conn = seed_connection(&pool, org, unit, "listing-connected").await;
+
+    // Sanity: no sync jobs before the delivery.
+    assert_eq!(
+        sync_job_count(&pool, org).await,
+        0,
+        "no sync jobs should exist before the webhook is delivered"
+    );
 
     let body = created_event("evt_connected_1", "listing-connected", "HMCONN1");
     let resp = app.execute(signed_post(&body)).await;
@@ -446,17 +501,9 @@ async fn created_event_for_connected_listing_enqueues_one_sync_job(pool: PgPool)
         "first-seen connected delivery should be ledgered"
     );
 
-    let jobs: i64 = sqlx::query(
-        "SELECT COUNT(*) AS n FROM background_jobs \
-         WHERE job_type = 'sync_external' AND org_id = $1",
-    )
-    .bind(org)
-    .fetch_one(&pool)
-    .await
-    .expect("count jobs")
-    .get::<i64, _>("n");
     assert_eq!(
-        jobs, 1,
+        sync_job_count(&pool, org).await,
+        1,
         "exactly one SYNC_EXTERNAL job should be enqueued for the matched connection"
     );
 }
