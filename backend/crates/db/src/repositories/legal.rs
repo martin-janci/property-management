@@ -332,7 +332,10 @@ impl LegalRepository {
         user_id: Uuid,
         data: CreateLegalDocumentVersion,
     ) -> Result<Option<LegalDocumentVersion>, sqlx::Error> {
-        if !self.document_in_org(&mut *conn, document_id, org_id).await? {
+        if !self
+            .document_in_org(&mut *conn, document_id, org_id)
+            .await?
+        {
             return Ok(None);
         }
         let version: LegalDocumentVersion = sqlx::query_as(
@@ -369,7 +372,10 @@ impl LegalRepository {
         document_id: Uuid,
         org_id: Uuid,
     ) -> Result<Option<Vec<LegalDocumentVersion>>, sqlx::Error> {
-        if !self.document_in_org(&mut *conn, document_id, org_id).await? {
+        if !self
+            .document_in_org(&mut *conn, document_id, org_id)
+            .await?
+        {
             return Ok(None);
         }
         let versions = sqlx::query_as(
@@ -393,7 +399,10 @@ impl LegalRepository {
         org_id: Uuid,
         version_number: i32,
     ) -> Result<Option<LegalDocumentVersion>, sqlx::Error> {
-        if !self.document_in_org(&mut *conn, document_id, org_id).await? {
+        if !self
+            .document_in_org(&mut *conn, document_id, org_id)
+            .await?
+        {
             return Ok(None);
         }
         sqlx::query_as(
