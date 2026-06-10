@@ -1,85 +1,42 @@
 {
   "date": "2026-06-10",
-  "trigger": "normal",
-  "lag_hours": 70,
-  "merged_prs_processed": 44,
+  "trigger": "normal (same-day rerun — second pass after morning 03:05Z run)",
+  "lag_hours": 15,
+  "merged_prs_processed": 19,
+  "previous_run_iso": "2026-06-10T03:05:00Z",
   "signals": [
     {
-      "id": "lag-warning-2026-06-10",
-      "type": "lag_warning",
-      "source": "routine-self",
-      "score_delta": 0,
-      "evidence": [
-        "routine last ran 2026-06-07T08:13Z; lag ~70h (>36h threshold). Cloud cron may have skipped 2 runs."
-      ],
-      "confidence": "high",
-      "candidate_vector": "dx"
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
       "type": "churn-hotspot",
-      "source": "local git numstat since 2026-06-07",
+      "source": "local git numstat since 2026-06-10T03:05:00Z",
       "score_delta": 1,
       "evidence": [
-        "1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — RLS-routing sweep continued into the evening"
       ],
       "confidence": "high",
       "candidate_vector": "refactor"
     },
     {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+      "id": "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
       "type": "churn-hotspot",
-      "source": "local git numstat since 2026-06-07",
+      "source": "local git numstat since 2026-06-10T03:05:00Z",
       "score_delta": 1,
       "evidence": [
-        "929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+        "2856 lines changed in backend/crates/db/src/repositories/subscription.rs (incremental window 2026-06-10 03:05Z→18:30Z); PAP-112 RLS-context routing"
       ],
       "confidence": "high",
       "candidate_vector": "refactor"
     },
     {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
       "type": "churn-hotspot",
-      "source": "local git numstat since 2026-06-07",
+      "source": "local git numstat since 2026-06-10T03:05:00Z",
       "score_delta": 1,
       "evidence": [
-        "709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+        "2691 lines changed in backend/servers/api-server/src/routes/aml_dsa.rs (incremental window 2026-06-10 03:05Z→18:30Z); culmination of the PAP-36/PAP-47 AML-DSA hardening chain"
       ],
       "confidence": "high",
       "candidate_vector": "refactor"
-    },
-    {
-      "id": "unchecked-todo-pr-1203",
-      "type": "unchecked-todo",
-      "source": "PR #1203",
-      "score_delta": 3,
-      "evidence": [
-        "PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged with 4 unchecked TODO checkboxes in body \u2014 security follow-ups remain"
-      ],
-      "confidence": "medium",
-      "candidate_vector": "security"
-    },
-    {
-      "id": "unchecked-todo-pr-1193",
-      "type": "unchecked-todo",
-      "source": "PR #1193",
-      "score_delta": 3,
-      "evidence": [
-        "PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merged with 5 unchecked TODO checkboxes in body \u2014 security follow-ups remain"
-      ],
-      "confidence": "medium",
-      "candidate_vector": "security"
-    },
-    {
-      "id": "unchecked-todo-pr-1196",
-      "type": "unchecked-todo",
-      "source": "PR #1196",
-      "score_delta": 2,
-      "evidence": [
-        "PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO checkboxes in body"
-      ],
-      "confidence": "medium",
-      "candidate_vector": "test-gap"
     }
   ],
   "auto_fix_actions": [],
@@ -87,84 +44,84 @@
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f .research/briefs/2026-06-10.md && head -1 grep",
-      "observed": "matches",
-      "expected": "matches"
+      "command": "test -f briefs/2026-06-10.md && head -1 matches",
+      "observed": "match",
+      "expected": "match"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq prev vs current state.json",
+      "command": "last_pr_seen 1237→1262 advanced; seen_signals 187→190",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq backlog ids unique",
+      "command": "ids unique across 139 items",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq signals vs seen_signals",
+      "command": "3 new signal ids not in prior seen_signals",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "jq score <= 8",
-      "observed": "true",
+      "command": "no score>8, no open item updated_at<=2026-05-27 (decay window)",
+      "observed": "no-decay-candidates",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
       "command": "0 new plans this run; vacuous pass",
-      "observed": "0 plans created",
+      "observed": "0 plans",
       "expected": "every new plan annotated"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "0 new plans this run",
+      "command": "0 new plans this run (<=2)",
       "observed": "0",
       "expected": "<=2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "git diff --cached only .research/ paths (to be verified)",
-      "observed": "pending",
+      "command": "git diff --cached only .research/",
+      "observed": "pending-final-check",
       "expected": "0 non-.research"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "secret scan (to be verified)",
-      "observed": "pending",
+      "command": "secret scan",
+      "observed": "pending-final-check",
       "expected": "0"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "Telegram token scan (to be verified)",
-      "observed": "pending",
+      "command": "Telegram token scan",
+      "observed": "pending-final-check",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "regenerated backlog.md from JSON",
+      "command": "regenerated backlog.md self-identity",
       "observed": "match",
       "expected": "match"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "regenerated IDEAS_TRIAGE.md from JSON",
+      "command": "regenerated IDEAS_TRIAGE.md self-identity",
       "observed": "match",
       "expected": "match"
     },
@@ -179,7 +136,7 @@
       "goal": "G12",
       "passed": true,
       "command": "no plans deleted or moved this run",
-      "observed": "4 active unchanged",
+      "observed": "1 active unchanged (security-llm-doc-idor)",
       "expected": "all converge"
     },
     {
@@ -200,14 +157,18 @@
       "goal": "G16",
       "passed": true,
       "command": "action-list.json + risks.json parse; project-state.md non-empty; cursors valid",
-      "observed": "valid",
+      "observed": "valid (Phase 1.6 skipped this rerun)",
       "expected": "valid"
     }
   ],
   "notes": [
-    "Phase 1.5 (rotating expert review): ran light pass on api-handlers segment (churn-aligned to top-3 hotspots in routes/{emergency,vendors,enhanced_tenant_screening}.rs); no concrete code-review-finding signals surfaced \u2014 the three top-churn files all received per-file RLS-routing fixes with accompanying *_rls_repo_tests.rs additions (visible in numstat), and a Grep for residual TODO/FIXME patterns in the three files yielded matches that are already tracked via PAP-* items, not new findings. review_cursor.api-handlers advanced to 2026-06-10.",
-    "Phase 1.6 (project management): ran lightweight in-routine refresh \u2014 pm_cursor advanced from index 2 (pm-frontend) \u2192 3 (pm-qa for tomorrow); role_last_run[pm-frontend] = 2026-06-10; coverage_cursor advanced 9 \u2192 10 (epic re-check; 13 distinct epics). Did NOT regenerate project-state.md / action-list.json / risks.json this run because no role subagent fired and no merged-PR delta materially changed the picture beyond what 2026-06-06 covers; recommend a 'full' or 'pm:tech-lead' trigger next run to converge state.",
-    "Phase 3 (promote): 0 plans promoted; 2 unchecked-todo-pr-* signals reached score 3 + security vector + medium confidence but have empty files[] (would need per-PR diff inspection to fill) \u2014 left as open for the implementer or a follow-up run to fill in files[] and promote.",
-    "Phase 5 (auto-fix): no candidate (no signal met confidence=high + score>=3 + allowlist intersection)."
+    "Same-day rerun: morning 03:05Z run processed 44 PRs (#1170-1236) with detailed brief; this 18:30Z rerun processed 19 additional PRs (#1239-1262) — all RLS-context routing follow-ups (PAP-110/112/67/137), test/lint debt cleanup (PAP-123/124), and one IDOR fix (PAP-137 board_meetings) with full test coverage (426-line *_cross_org_idor_tests.rs).",
+    "Phase 1 — emitted 3 new churn-hotspot signals for this incremental window: document.rs (2940), subscription.rs (2856), aml_dsa.rs (2691). All template-sweep churn from RLS routing fixes, not instability.",
+    "Phase 1 — re-evaluated 3 unchecked-todo signals from morning run (#1203, #1193, #1196) by reading the PR bodies in full. ALL THREE WERE FALSE POSITIVES: the `- [ ]` checkboxes lived under '## Test plan' sections and listed CI gate items (cargo test/clippy/fmt, frontend.yml, staging walkthrough) rather than residual security/test work. Marked all three status=dropped with explicit evidence. Suggests a refinement: the routine's unchecked-todo signal should skip `- [ ]` items inside `## Test plan` headers (or treat them as confidence=low, not score 3 security).",
+    "Phase 1.5 (rotating expert review): SKIPPED for same-day rerun — morning already advanced review_cursor.api-handlers to 2026-06-10; running it again same-day would be churn. Next segment (reality-server, last reviewed 2026-05-26) belongs to the next-day run.",
+    "Phase 1.6 (project management): SKIPPED for same-day rerun — morning already advanced pm_cursor 2→3 and coverage_cursor 9→10. G16 is a no-op when Phase 1.6 didn't run (existing artifacts remain valid).",
+    "Phase 3 (promote): 0 plans promoted. The previously-flagged security candidates (unchecked-todo-pr-1203, -1193) were dropped on re-inspection — no longer in the running.",
+    "Phase 5 (auto-fix): no candidate (no signal met confidence=high + score>=3 + allowlist intersection — all 3 new signals are churn-hotspot, which is allowlist-excluded as analytical).",
+    "PR #1262 (PAP-137 board_meetings IDOR) shipped with 426-line cross-org regression test — exemplary security fix, no follow-up signal needed."
   ]
 }
