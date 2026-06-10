@@ -2972,6 +2972,120 @@
       "created_at": "2026-05-20",
       "updated_at": "2026-06-04",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-emergency-rs",
+      "title": "Churn hotspot: 1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-06-07"
+      ],
+      "evidence": [
+        "1021 lines changed in backend/servers/api-server/src/routes/emergency.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/emergency.rs"
+      ],
+      "created_at": "2026-06-10",
+      "updated_at": "2026-06-10",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+      "title": "Churn hotspot: 929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-06-07"
+      ],
+      "evidence": [
+        "929 lines changed in backend/servers/api-server/src/routes/vendors.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/vendors.rs"
+      ],
+      "created_at": "2026-06-10",
+      "updated_at": "2026-06-10",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-enhanced-tenant-screening-rs",
+      "title": "Churn hotspot: 709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening.",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-06-07"
+      ],
+      "evidence": [
+        "709 lines changed in backend/servers/api-server/src/routes/enhanced_tenant_screening.rs (window 2026-06-07\u21922026-06-10); top-3 churn this run"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/enhanced_tenant_screening.rs"
+      ],
+      "created_at": "2026-06-10",
+      "updated_at": "2026-06-10",
+      "plan": null
+    },
+    {
+      "id": "unchecked-todo-pr-1203",
+      "title": "PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "PR #1203"
+      ],
+      "evidence": [
+        "PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged with 4 unchecked TODO checkboxes in body \u2014 security follow-ups remain"
+      ],
+      "files": [],
+      "created_at": "2026-06-10",
+      "updated_at": "2026-06-10",
+      "plan": null
+    },
+    {
+      "id": "unchecked-todo-pr-1193",
+      "title": "PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merg",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "PR #1193"
+      ],
+      "evidence": [
+        "PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merged with 5 unchecked TODO checkboxes in body \u2014 security follow-ups remain"
+      ],
+      "files": [],
+      "created_at": "2026-06-10",
+      "updated_at": "2026-06-10",
+      "plan": null
+    },
+    {
+      "id": "unchecked-todo-pr-1196",
+      "title": "PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO ",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1196"
+      ],
+      "evidence": [
+        "PR #1196 (feat(ppt-web): add missing test coverage for faults feature) merged with 2 unchecked TODO checkboxes in body"
+      ],
+      "files": [],
+      "created_at": "2026-06-10",
+      "updated_at": "2026-06-10",
+      "plan": null
     }
   ]
 }
