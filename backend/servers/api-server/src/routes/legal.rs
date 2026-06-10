@@ -391,7 +391,7 @@ async fn add_version(
     let user_id = rls.user_id();
     let out = state
         .legal_repo
-        .add_document_version(&mut **rls.conn(), id, org_id, user_id, data)
+        .add_document_version(rls.conn(), id, org_id, user_id, data)
         .await
         .map_err(|e| db_error("Failed to add document version", e))
         .and_then(|opt| {
@@ -410,7 +410,7 @@ async fn list_versions(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .list_document_versions(&mut **rls.conn(), id, org_id)
+        .list_document_versions(rls.conn(), id, org_id)
         .await
         .map_err(|e| db_error("Failed to list document versions", e))
         .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Document not found")));
@@ -426,7 +426,7 @@ async fn get_version(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .get_document_version(&mut **rls.conn(), id, org_id, version)
+        .get_document_version(rls.conn(), id, org_id, version)
         .await
         .map_err(|e| db_error("Failed to get document version", e))
         .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Version not found")));
@@ -491,7 +491,7 @@ async fn get_compliance_statistics(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .get_compliance_statistics(&mut **rls.conn(), org_id)
+        .get_compliance_statistics(rls.conn(), org_id)
         .await
         .map(Json)
         .map_err(|e| db_error("Failed to get compliance statistics", e));
@@ -572,7 +572,7 @@ async fn create_verification(
     let user_id = rls.user_id();
     let out = state
         .legal_repo
-        .create_verification(&mut **rls.conn(), id, org_id, user_id, data)
+        .create_verification(rls.conn(), id, org_id, user_id, data)
         .await
         .map_err(|e| db_error("Failed to create compliance verification", e))
         .and_then(|opt| {
@@ -591,7 +591,7 @@ async fn list_verifications(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .list_verifications(&mut **rls.conn(), id, org_id)
+        .list_verifications(rls.conn(), id, org_id)
         .await
         .map_err(|e| db_error("Failed to list compliance verifications", e))
         .and_then(|opt| {
@@ -613,7 +613,7 @@ async fn create_notice(
     let user_id = rls.user_id();
     let out = state
         .legal_repo
-        .create_notice(&mut **rls.conn(), org_id, user_id, payload.data)
+        .create_notice(rls.conn(), org_id, user_id, payload.data)
         .await
         .map(|n| (StatusCode::CREATED, Json(n)))
         .map_err(|e| db_error("Failed to create legal notice", e));
@@ -660,7 +660,7 @@ async fn get_notice_statistics(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .get_notice_statistics(&mut **rls.conn(), org_id)
+        .get_notice_statistics(rls.conn(), org_id)
         .await
         .map(Json)
         .map_err(|e| db_error("Failed to get notice statistics", e));
@@ -731,7 +731,7 @@ async fn send_notice(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .send_notice(&mut **rls.conn(), id, org_id)
+        .send_notice(rls.conn(), id, org_id)
         .await
         .map_err(|e| db_error("Failed to send legal notice", e))
         .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Notice not found")));
@@ -749,7 +749,7 @@ async fn list_recipients(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .list_notice_recipients(&mut **rls.conn(), id, org_id)
+        .list_notice_recipients(rls.conn(), id, org_id)
         .await
         .map_err(|e| db_error("Failed to list notice recipients", e))
         .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Notice not found")));
@@ -766,7 +766,7 @@ async fn acknowledge_notice(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .acknowledge_notice(&mut **rls.conn(), notice_id, recipient_id, org_id, data)
+        .acknowledge_notice(rls.conn(), notice_id, recipient_id, org_id, data)
         .await
         .map_err(|e| db_error("Failed to acknowledge notice", e))
         .and_then(|opt| {
@@ -879,7 +879,7 @@ async fn apply_template(
     let org_id = rls.tenant_id();
     let out = state
         .legal_repo
-        .apply_template(&mut **rls.conn(), org_id, payload.data)
+        .apply_template(rls.conn(), org_id, payload.data)
         .await
         .map(|r| (StatusCode::CREATED, Json(r)))
         .map_err(|e| db_error("Failed to apply compliance template", e));
