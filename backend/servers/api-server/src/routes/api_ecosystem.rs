@@ -1,7 +1,28 @@
 //! API Ecosystem Expansion routes (Epic 150).
 //!
 //! Routes for integration marketplace, connector framework, webhooks, and developer portal.
+//!
+//! # RLS (PAP-110, parent PAP-80)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on the org-scoped tables
+//! behind this router (`organization_integrations`, `organization_connectors`,
+//! `connector_execution_logs`, `webhook_subscriptions`, `webhook_deliveries`,
+//! `integration_ratings`), so queries against them MUST run on a connection
+//! with `app.current_org_id` set or they collapse to deny-all. Handlers that
+//! touch those tables acquire an [`RlsConnection`] (which validates tenant
+//! membership and sets the org/user GUCs on a dedicated connection) and pass
+//! `&mut **rls.conn()` to the repository. The authoritative organization is
+//! `rls.tenant_id()` — the tenant the caller was validated against — not the
+//! client-supplied `{org_id}` path segment (retained for wire compatibility),
+//! so the SQL org filter and the RLS context can never disagree. Cross-tenant
+//! by-id access surfaces as `404` via RLS. `rls.release()` clears the context
+//! before the connection returns to the pool.
+//!
+//! Handlers for the global catalog tables (marketplace, connectors, docs,
+//! developer portal — not FORCE-RLS; the owner role remains exempt) pass the
+//! app pool directly, preserving public/platform-admin access semantics.
 
+use api_core::extractors::RlsConnection;
 use api_core::{AuthUser, TenantExtractor};
 use axum::{
     extract::{Path, Query, State},
@@ -177,6 +198,9 @@ pub fn router() -> Router<AppState> {
 // ==================== Types ====================
 
 /// Organization ID path parameter.
+///
+/// Retained for wire compatibility; the authoritative org for RLS-scoped
+/// handlers is `rls.tenant_id()`.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct OrgIdPath {
     pub org_id: Uuid,
@@ -273,7 +297,7 @@ async fn list_marketplace_integrations(
 ) -> Result<Json<Vec<MarketplaceIntegrationSummary>>, (StatusCode, Json<ErrorResponse>)> {
     let integrations = state
         .api_ecosystem_repo
-        .list_marketplace_integrations(&query)
+        .list_marketplace_integrations(&state.db, &query)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -309,7 +333,7 @@ async fn create_marketplace_integration(
 
     let integration = state
         .api_ecosystem_repo
-        .create_marketplace_integration(&request)
+        .create_marketplace_integration(&state.db, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -333,7 +357,7 @@ async fn get_marketplace_integration(
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
     let integration = state
         .api_ecosystem_repo
-        .get_marketplace_integration(path.id)
+        .get_marketplace_integration(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Integration", path.id))?;
@@ -370,7 +394,7 @@ async fn update_marketplace_integration(
     }
     let integration = state
         .api_ecosystem_repo
-        .update_marketplace_integration(path.id, &request)
+        .update_marketplace_integration(&state.db, path.id, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Integration", path.id))?;
@@ -405,7 +429,7 @@ async fn delete_marketplace_integration(
     }
     let deleted = state
         .api_ecosystem_repo
-        .delete_marketplace_integration(path.id)
+        .delete_marketplace_integration(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -430,7 +454,7 @@ async fn list_integration_categories(
 ) -> Result<Json<Vec<IntegrationCategoryCount>>, (StatusCode, Json<ErrorResponse>)> {
     let categories = state
         .api_ecosystem_repo
-        .get_integration_category_counts()
+        .get_integration_category_counts(&state.db)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -451,6 +475,9 @@ fn default_limit() -> i32 {
 }
 
 /// List integration ratings.
+///
+/// Public read: the `integration_ratings_read` policy is `USING (TRUE)`, so
+/// this works on the plain pool even under `FORCE` RLS.
 #[utoipa::path(
     get,
     path = "/api/v1/ecosystem/marketplace/{id}/ratings",
@@ -469,7 +496,7 @@ async fn list_integration_ratings(
     let offset = query.offset.max(0);
     let ratings = state
         .api_ecosystem_repo
-        .list_integration_ratings(path.id, limit, offset)
+        .list_integration_ratings(&state.db, path.id, limit, offset)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -477,6 +504,9 @@ async fn list_integration_ratings(
 }
 
 /// Create integration rating.
+///
+/// `integration_ratings` writes are FORCE-RLS org-scoped — runs on the
+/// caller's RLS connection; the org is `rls.tenant_id()`.
 #[utoipa::path(
     post,
     path = "/api/v1/ecosystem/marketplace/{id}/ratings",
@@ -489,21 +519,20 @@ async fn list_integration_ratings(
 )]
 async fn create_integration_rating(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<CreateIntegrationRating>,
 ) -> Result<Json<IntegrationRating>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = auth
-        .tenant_id
-        .ok_or_else(|| error_response("MISSING_ORG", "Organization context required"))?;
-
-    let rating = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .api_ecosystem_repo
-        .create_integration_rating(path.id, org_id, auth.user_id, &request)
+        .create_integration_rating(&mut **rls.conn(), path.id, org_id, user_id, &request)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(rating))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// List organization integrations.
@@ -518,16 +547,18 @@ async fn create_integration_rating(
 )]
 async fn list_organization_integrations(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<OrganizationIntegration>>, (StatusCode, Json<ErrorResponse>)> {
-    let integrations = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .list_organization_integrations(path.org_id)
+        .list_organization_integrations(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(integrations))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// Install integration.
@@ -543,104 +574,125 @@ async fn list_organization_integrations(
 )]
 async fn install_integration(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    auth: AuthUser,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
     Json(request): Json<InstallIntegration>,
 ) -> Result<Json<OrganizationIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    let installation = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .api_ecosystem_repo
-        .install_integration(path.org_id, auth.user_id, &request)
+        .install_integration(rls.conn(), org_id, user_id, &request)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(installation))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// Get organization integration.
 async fn get_organization_integration(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIntegrationPath>,
 ) -> Result<Json<OrganizationIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    let integration = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .get_organization_integration(path.org_id, path.id)
+        .get_organization_integration(&mut **rls.conn(), org_id, path.id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Integration", path.id))?;
-
-    Ok(Json(integration))
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Integration", path.id))
+        });
+    rls.release().await;
+    out
 }
 
 /// Update organization integration.
 async fn update_organization_integration(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIntegrationPath>,
     Json(request): Json<UpdateOrganizationIntegration>,
 ) -> Result<Json<OrganizationIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    let integration = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .update_organization_integration(path.org_id, path.id, &request)
+        .update_organization_integration(&mut **rls.conn(), org_id, path.id, &request)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Integration", path.id))?;
-
-    Ok(Json(integration))
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Integration", path.id))
+        });
+    rls.release().await;
+    out
 }
 
 /// Uninstall integration.
 async fn uninstall_integration(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIntegrationPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let uninstalled = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .uninstall_integration(path.org_id, path.id)
+        .uninstall_integration(&mut **rls.conn(), org_id, path.id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    if uninstalled {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err(not_found("Integration", path.id))
-    }
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|uninstalled| {
+            if uninstalled {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Integration", path.id))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 /// Sync integration.
 async fn sync_integration(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIntegrationPath>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify the integration exists
-    let integration = state
-        .api_ecosystem_repo
-        .get_organization_integration(path.org_id, path.id)
-        .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Integration", path.id))?;
+    let org_id = rls.tenant_id();
+    let out = async {
+        // Verify the integration exists (RLS scopes the read to the caller's org)
+        let integration = state
+            .api_ecosystem_repo
+            .get_organization_integration(&mut **rls.conn(), org_id, path.id)
+            .await
+            .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+            .ok_or_else(|| not_found("Integration", path.id))?;
 
-    // In a real implementation, this would trigger an async sync job
-    // For now, we update the last_sync_at timestamp and return success
-    let _ = state
-        .api_ecosystem_repo
-        .update_organization_integration(
-            path.org_id,
-            integration.integration_id,
-            &db::models::UpdateOrganizationIntegration::default(),
-        )
-        .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+        // In a real implementation, this would trigger an async sync job
+        // For now, we update the last_sync_at timestamp and return success
+        let _ = state
+            .api_ecosystem_repo
+            .update_organization_integration(
+                &mut **rls.conn(),
+                org_id,
+                integration.integration_id,
+                &db::models::UpdateOrganizationIntegration::default(),
+            )
+            .await
+            .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
-    Ok(Json(serde_json::json!({
-        "status": "completed",
-        "integration_id": path.id,
-        "records_synced": 0,
-        "synced_at": Utc::now()
-    })))
+        Ok(Json(serde_json::json!({
+            "status": "completed",
+            "integration_id": path.id,
+            "records_synced": 0,
+            "synced_at": Utc::now()
+        })))
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 // ==================== Story 150.2: Connector Framework ====================
@@ -651,7 +703,7 @@ async fn list_connectors(
 ) -> Result<Json<Vec<Connector>>, (StatusCode, Json<ErrorResponse>)> {
     let connectors = state
         .api_ecosystem_repo
-        .list_all_connectors()
+        .list_all_connectors(&state.db)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -677,7 +729,7 @@ async fn create_connector(
 
     let connector = state
         .api_ecosystem_repo
-        .create_connector(&request)
+        .create_connector(&state.db, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -691,7 +743,7 @@ async fn get_connector(
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
     let connector = state
         .api_ecosystem_repo
-        .get_connector(path.id)
+        .get_connector(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Connector", path.id))?;
@@ -718,7 +770,7 @@ async fn update_connector(
 
     let connector = state
         .api_ecosystem_repo
-        .update_connector(path.id, &request)
+        .update_connector(&state.db, path.id, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Connector", path.id))?;
@@ -744,7 +796,7 @@ async fn delete_connector(
 
     let deleted = state
         .api_ecosystem_repo
-        .delete_connector(path.id)
+        .delete_connector(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -762,7 +814,7 @@ async fn list_connector_actions(
 ) -> Result<Json<Vec<ConnectorAction>>, (StatusCode, Json<ErrorResponse>)> {
     let actions = state
         .api_ecosystem_repo
-        .list_connector_actions(path.id)
+        .list_connector_actions(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -778,7 +830,7 @@ async fn create_connector_action(
 ) -> Result<Json<ConnectorAction>, (StatusCode, Json<ErrorResponse>)> {
     let action = state
         .api_ecosystem_repo
-        .create_connector_action(&request)
+        .create_connector_action(&state.db, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -788,17 +840,19 @@ async fn create_connector_action(
 /// List connector execution logs.
 async fn list_connector_logs(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
     Query(query): Query<ConnectorExecutionQuery>,
 ) -> Result<Json<Vec<ConnectorExecutionLog>>, (StatusCode, Json<ErrorResponse>)> {
-    let logs = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .list_connector_execution_logs(path.org_id, &query)
+        .list_connector_execution_logs(&mut **rls.conn(), org_id, &query)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(logs))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 // ==================== Story 150.3: Webhook Management ====================
@@ -806,146 +860,169 @@ async fn list_connector_logs(
 /// List enhanced webhooks.
 async fn list_enhanced_webhooks(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<EnhancedWebhookSubscription>>, (StatusCode, Json<ErrorResponse>)> {
-    let webhooks = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .list_enhanced_webhooks(path.org_id)
+        .list_enhanced_webhooks(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(webhooks))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// Create enhanced webhook.
 async fn create_enhanced_webhook(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    auth: AuthUser,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
     Json(request): Json<CreateEnhancedWebhookSubscription>,
 ) -> Result<Json<EnhancedWebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    let webhook = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .api_ecosystem_repo
-        .create_enhanced_webhook(path.org_id, auth.user_id, &request)
+        .create_enhanced_webhook(&mut **rls.conn(), org_id, user_id, &request)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(webhook))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// Get enhanced webhook.
+///
+/// RLS scopes the by-id read to the caller's org — another org's webhook
+/// surfaces as `404` (previously this read was unscoped: cross-tenant IDOR).
 async fn get_enhanced_webhook(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<EnhancedWebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    let webhook = state
+    let out = state
         .api_ecosystem_repo
-        .get_enhanced_webhook(path.id)
+        .get_enhanced_webhook(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Webhook", path.id))?;
-
-    Ok(Json(webhook))
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Webhook", path.id)));
+    rls.release().await;
+    out
 }
 
 /// Update enhanced webhook.
 async fn update_enhanced_webhook(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<UpdateEnhancedWebhookSubscription>,
 ) -> Result<Json<EnhancedWebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    let webhook = state
+    let out = state
         .api_ecosystem_repo
-        .update_enhanced_webhook(path.id, &request)
+        .update_enhanced_webhook(&mut **rls.conn(), path.id, &request)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Webhook", path.id))?;
-
-    Ok(Json(webhook))
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Webhook", path.id)));
+    rls.release().await;
+    out
 }
 
 /// Delete enhanced webhook.
 async fn delete_enhanced_webhook(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted = state
+    let out = state
         .api_ecosystem_repo
-        .delete_enhanced_webhook(path.id)
+        .delete_enhanced_webhook(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err(not_found("Webhook", path.id))
-    }
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Webhook", path.id))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 /// Test enhanced webhook.
 async fn test_enhanced_webhook(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // Get the webhook to verify it exists and get the URL
-    let webhook = state
-        .api_ecosystem_repo
-        .get_enhanced_webhook(path.id)
-        .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Webhook", path.id))?;
+    let out = async {
+        // Get the webhook to verify it exists and get the URL
+        let webhook = state
+            .api_ecosystem_repo
+            .get_enhanced_webhook(&mut **rls.conn(), path.id)
+            .await
+            .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+            .ok_or_else(|| not_found("Webhook", path.id))?;
 
-    // In a real implementation, we would send a test payload to the webhook URL
-    // For now, we return a simulated response
-    let test_payload = serde_json::json!({
-        "event": "webhook.test",
-        "timestamp": Utc::now(),
-        "subscription_id": webhook.id,
-        "test": true
-    });
+        // In a real implementation, we would send a test payload to the webhook URL
+        // For now, we return a simulated response
+        let test_payload = serde_json::json!({
+            "event": "webhook.test",
+            "timestamp": Utc::now(),
+            "subscription_id": webhook.id,
+            "test": true
+        });
 
-    Ok(Json(serde_json::json!({
-        "success": true,
-        "webhook_id": webhook.id,
-        "url": webhook.url,
-        "test_payload": test_payload,
-        "status_code": 200,
-        "response_time_ms": 150,
-        "message": "Test webhook delivery simulated successfully"
-    })))
+        Ok(Json(serde_json::json!({
+            "success": true,
+            "webhook_id": webhook.id,
+            "url": webhook.url,
+            "test_payload": test_payload,
+            "status_code": 200,
+            "response_time_ms": 150,
+            "message": "Test webhook delivery simulated successfully"
+        })))
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 /// List webhook delivery logs.
 async fn list_webhook_delivery_logs(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<EnhancedWebhookDeliveryLog>>, (StatusCode, Json<ErrorResponse>)> {
     let limit = query.limit.clamp(1, 100);
     let offset = query.offset.max(0);
-    let logs = state
+    let out = state
         .api_ecosystem_repo
-        .list_webhook_delivery_logs(path.id, limit, offset)
+        .list_webhook_delivery_logs(&mut **rls.conn(), path.id, limit, offset)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(logs))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// Get enhanced webhook statistics.
 async fn get_enhanced_webhook_stats(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<EnhancedWebhookStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    let stats = state
+    let out = state
         .api_ecosystem_repo
-        .get_webhook_statistics(path.id)
+        .get_webhook_statistics(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(stats))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// List available webhook event types.
@@ -987,139 +1064,167 @@ async fn list_webhook_event_types(
 /// List pre-built integration connections.
 async fn list_prebuilt_connections(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<PreBuiltIntegrationConnection>>, (StatusCode, Json<ErrorResponse>)> {
-    let connections = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .list_prebuilt_connections(path.org_id)
+        .list_prebuilt_connections(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(connections))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// Create pre-built integration connection.
 async fn create_prebuilt_connection(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    auth: AuthUser,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
     Json(request): Json<CreatePreBuiltIntegrationConnection>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
-    let connection = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .api_ecosystem_repo
-        .create_prebuilt_connection(path.org_id, auth.user_id, &request)
+        .create_prebuilt_connection(&mut **rls.conn(), org_id, user_id, &request)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(connection))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// Get pre-built integration connection.
 async fn get_prebuilt_connection(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<PrebuiltTypePath>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
-    let connection = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .get_prebuilt_connection(path.org_id, &path.integration_type)
+        .get_prebuilt_connection(&mut **rls.conn(), org_id, &path.integration_type)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
-
-    Ok(Json(connection))
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))
+        });
+    rls.release().await;
+    out
 }
 
 /// Update pre-built integration connection.
 async fn update_prebuilt_connection(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<PrebuiltTypePath>,
     Json(request): Json<UpdatePreBuiltIntegrationConnection>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
-    let connection = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .update_prebuilt_connection(path.org_id, &path.integration_type, &request)
+        .update_prebuilt_connection(&mut **rls.conn(), org_id, &path.integration_type, &request)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
-
-    Ok(Json(connection))
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))
+        });
+    rls.release().await;
+    out
 }
 
 /// Delete pre-built integration connection.
 async fn delete_prebuilt_connection(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<PrebuiltTypePath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .delete_prebuilt_connection(path.org_id, &path.integration_type)
+        .delete_prebuilt_connection(&mut **rls.conn(), org_id, &path.integration_type)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err(not_found("Pre-built connection", &path.integration_type))
-    }
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Pre-built connection", &path.integration_type))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 /// Sync pre-built integration.
 async fn sync_prebuilt_connection(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<PrebuiltTypePath>,
     Json(request): Json<SyncPreBuiltIntegrationRequest>,
 ) -> Result<Json<PreBuiltIntegrationSyncResult>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify the connection exists
-    let connection = state
-        .api_ecosystem_repo
-        .get_prebuilt_connection(path.org_id, &path.integration_type)
-        .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+    let org_id = rls.tenant_id();
+    let out = async {
+        // Verify the connection exists
+        let connection = state
+            .api_ecosystem_repo
+            .get_prebuilt_connection(&mut **rls.conn(), org_id, &path.integration_type)
+            .await
+            .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+            .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
 
-    // Check if connection is in a valid state for sync
-    if connection.status != "connected" {
-        return Err(error_response(
-            "INVALID_STATE",
-            "Connection must be in 'connected' status to sync",
-        ));
+        // Check if connection is in a valid state for sync
+        if connection.status != "connected" {
+            return Err(error_response(
+                "INVALID_STATE",
+                "Connection must be in 'connected' status to sync",
+            ));
+        }
+
+        let start_time = Utc::now();
+
+        // In a real implementation, this would:
+        // 1. Use the stored OAuth tokens to authenticate with the external service
+        // 2. Fetch data based on request.entity_types and date range
+        // 3. Transform and store the data locally
+        // 4. Handle errors and retries
+        // For now, we simulate the sync operation
+
+        let _full_sync = request.full_sync.unwrap_or(false);
+        let duration_ms = (Utc::now() - start_time).num_milliseconds() as i32;
+
+        // Record the sync attempt
+        let _ = state
+            .api_ecosystem_repo
+            .record_prebuilt_sync(
+                &mut **rls.conn(),
+                org_id,
+                &path.integration_type,
+                true,
+                None,
+            )
+            .await;
+
+        let result = PreBuiltIntegrationSyncResult {
+            integration_type: path.integration_type.clone(),
+            records_created: 0,
+            records_updated: 0,
+            records_deleted: 0,
+            errors: vec![],
+            synced_at: Utc::now(),
+            duration_ms,
+        };
+
+        Ok(Json(result))
     }
-
-    let start_time = Utc::now();
-
-    // In a real implementation, this would:
-    // 1. Use the stored OAuth tokens to authenticate with the external service
-    // 2. Fetch data based on request.entity_types and date range
-    // 3. Transform and store the data locally
-    // 4. Handle errors and retries
-    // For now, we simulate the sync operation
-
-    let _full_sync = request.full_sync.unwrap_or(false);
-    let duration_ms = (Utc::now() - start_time).num_milliseconds() as i32;
-
-    // Record the sync attempt
-    let _ = state
-        .api_ecosystem_repo
-        .record_prebuilt_sync(path.org_id, &path.integration_type, true, None)
-        .await;
-
-    let result = PreBuiltIntegrationSyncResult {
-        integration_type: path.integration_type,
-        records_created: 0,
-        records_updated: 0,
-        records_deleted: 0,
-        errors: vec![],
-        synced_at: Utc::now(),
-        duration_ms,
-    };
-
-    Ok(Json(result))
+    .await;
+    rls.release().await;
+    out
 }
 
 /// Get OAuth URL for pre-built integration.
@@ -1208,49 +1313,56 @@ fn oauth_env(integration: &str, key: &str) -> Result<String, (StatusCode, Json<E
 /// Handle OAuth callback for pre-built integration.
 async fn handle_prebuilt_oauth_callback(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(path): Path<PrebuiltTypePath>,
     Json(request): Json<OAuthCallbackRequest>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify the connection exists (should have been created when OAuth flow started)
-    let _existing = state
-        .api_ecosystem_repo
-        .get_prebuilt_connection(path.org_id, &path.integration_type)
-        .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+    let org_id = rls.tenant_id();
+    let out = async {
+        // Verify the connection exists (should have been created when OAuth flow started)
+        let _existing = state
+            .api_ecosystem_repo
+            .get_prebuilt_connection(&mut **rls.conn(), org_id, &path.integration_type)
+            .await
+            .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+            .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
 
-    // In a real implementation, we would:
-    // 1. Exchange the authorization code for access/refresh tokens using the integration's token endpoint
-    // 2. Encrypt the tokens before storage
-    // 3. Calculate token expiration time
-    // 4. Update the connection with the tokens
+        // In a real implementation, we would:
+        // 1. Exchange the authorization code for access/refresh tokens using the integration's token endpoint
+        // 2. Encrypt the tokens before storage
+        // 3. Calculate token expiration time
+        // 4. Update the connection with the tokens
 
-    // For now, we simulate the token exchange
-    let simulated_access_token = format!("encrypted_access_token_{}", Uuid::new_v4());
-    let simulated_refresh_token = format!("encrypted_refresh_token_{}", Uuid::new_v4());
-    let token_expires_at = Utc::now() + Duration::hours(1);
+        // For now, we simulate the token exchange
+        let simulated_access_token = format!("encrypted_access_token_{}", Uuid::new_v4());
+        let simulated_refresh_token = format!("encrypted_refresh_token_{}", Uuid::new_v4());
+        let token_expires_at = Utc::now() + Duration::hours(1);
 
-    // Validate state parameter if provided (for CSRF protection)
-    if request.state.is_some() {
-        // In production, verify the state matches what was generated in get_prebuilt_oauth_url
+        // Validate state parameter if provided (for CSRF protection)
+        if request.state.is_some() {
+            // In production, verify the state matches what was generated in get_prebuilt_oauth_url
+        }
+
+        // Update the connection with tokens
+        let connection = state
+            .api_ecosystem_repo
+            .update_prebuilt_connection_tokens(
+                &mut **rls.conn(),
+                org_id,
+                &path.integration_type,
+                &simulated_access_token,
+                Some(&simulated_refresh_token),
+                Some(token_expires_at),
+            )
+            .await
+            .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+            .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+
+        Ok(Json(connection))
     }
-
-    // Update the connection with tokens
-    let connection = state
-        .api_ecosystem_repo
-        .update_prebuilt_connection_tokens(
-            path.org_id,
-            &path.integration_type,
-            &simulated_access_token,
-            Some(&simulated_refresh_token),
-            Some(token_expires_at),
-        )
-        .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
-        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
-
-    Ok(Json(connection))
+    .await;
+    rls.release().await;
+    out
 }
 
 // ==================== Story 150.5: Developer Portal ====================
@@ -1263,7 +1375,7 @@ async fn register_developer(
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
     let registration = state
         .api_ecosystem_repo
-        .register_developer(auth.user_id, &request)
+        .register_developer(&state.db, auth.user_id, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1278,7 +1390,7 @@ async fn get_developer_registration(
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
     let registration = state
         .api_ecosystem_repo
-        .get_developer_registration(path.id)
+        .get_developer_registration(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1304,7 +1416,7 @@ async fn review_developer_registration(
     }
     let registration = state
         .api_ecosystem_repo
-        .review_developer_registration(path.id, auth.user_id, &request)
+        .review_developer_registration(&state.db, path.id, auth.user_id, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1322,7 +1434,7 @@ async fn list_developer_api_keys(
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(path.id)
+            .get_developer_registration(&state.db, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1339,7 +1451,7 @@ async fn list_developer_api_keys(
 
     let keys = state
         .api_ecosystem_repo
-        .list_developer_api_keys(path.id)
+        .list_developer_api_keys(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1374,7 +1486,7 @@ async fn create_developer_api_key(
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(path.id)
+            .get_developer_registration(&state.db, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1405,7 +1517,7 @@ async fn create_developer_api_key(
 
     let api_key = state
         .api_ecosystem_repo
-        .create_developer_api_key(path.id, &request, &key_prefix, &key_hash)
+        .create_developer_api_key(&state.db, path.id, &request, &key_prefix, &key_hash)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1440,7 +1552,7 @@ async fn revoke_developer_api_key(
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     let revoked = state
         .api_ecosystem_repo
-        .revoke_api_key(path.key_id, auth.user_id)
+        .revoke_api_key(&state.db, path.key_id, auth.user_id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1460,7 +1572,7 @@ async fn rotate_developer_api_key(
     // Fetch existing key to determine sandbox status for the new key prefix
     let existing_keys = state
         .api_ecosystem_repo
-        .list_developer_api_keys(path.id)
+        .list_developer_api_keys(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
     let old_key = existing_keys
@@ -1477,9 +1589,17 @@ async fn rotate_developer_api_key(
     let key_prefix = key.chars().take(8).collect::<String>();
     let key_hash = format!("sha256:{}", sha256_simple(&key));
 
+    // The rotate is multi-statement (revoke old + insert new in one
+    // transaction), so it needs a dedicated connection from the pool.
+    let mut conn = state
+        .db
+        .acquire()
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
     let api_key = state
         .api_ecosystem_repo
-        .rotate_developer_api_key(path.key_id, auth.user_id, &key_prefix, &key_hash)
+        .rotate_developer_api_key(&mut conn, path.key_id, auth.user_id, &key_prefix, &key_hash)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("API key", path.key_id))?;
@@ -1507,7 +1627,7 @@ async fn get_developer_usage_stats(
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(path.id)
+            .get_developer_registration(&state.db, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1524,7 +1644,7 @@ async fn get_developer_usage_stats(
 
     let stats = state
         .api_ecosystem_repo
-        .get_developer_usage_stats(path.id)
+        .get_developer_usage_stats(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1542,7 +1662,7 @@ async fn create_sandbox_environment(
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(path.id)
+            .get_developer_registration(&state.db, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1563,7 +1683,7 @@ async fn create_sandbox_environment(
 
     let sandbox = state
         .api_ecosystem_repo
-        .create_sandbox_environment(path.id, &request, expires_at)
+        .create_sandbox_environment(&state.db, path.id, &request, expires_at)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1580,7 +1700,7 @@ async fn get_sandbox_environment(
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(path.id)
+            .get_developer_registration(&state.db, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1597,7 +1717,7 @@ async fn get_sandbox_environment(
 
     let sandbox = state
         .api_ecosystem_repo
-        .get_sandbox_environment(path.id)
+        .get_sandbox_environment(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| error_response("NOT_FOUND", "Sandbox environment not found"))?;
@@ -1616,7 +1736,7 @@ async fn test_sandbox_request(
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(path.id)
+            .get_developer_registration(&state.db, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1634,7 +1754,7 @@ async fn test_sandbox_request(
     // Verify sandbox exists
     let _sandbox = state
         .api_ecosystem_repo
-        .get_sandbox_environment(path.id)
+        .get_sandbox_environment(&state.db, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| error_response("NOT_FOUND", "Sandbox environment not found"))?;
@@ -1712,7 +1832,7 @@ async fn list_api_documentation(
     // Public endpoint - list only published docs
     let docs = state
         .api_ecosystem_repo
-        .list_api_documentation(true)
+        .list_api_documentation(&state.db, true)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1737,7 +1857,7 @@ async fn create_api_documentation(
 
     let doc = state
         .api_ecosystem_repo
-        .create_api_documentation(&request)
+        .create_api_documentation(&state.db, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1751,7 +1871,7 @@ async fn get_api_documentation(
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
     let doc = state
         .api_ecosystem_repo
-        .get_api_documentation(&path.slug)
+        .get_api_documentation(&state.db, &path.slug)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Documentation", &path.slug))?;
@@ -1778,7 +1898,7 @@ async fn update_api_documentation(
 
     let doc = state
         .api_ecosystem_repo
-        .update_api_documentation(&path.slug, &request)
+        .update_api_documentation(&state.db, &path.slug, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Documentation", &path.slug))?;
@@ -1804,7 +1924,7 @@ async fn delete_api_documentation(
 
     let deleted = state
         .api_ecosystem_repo
-        .delete_api_documentation(&path.slug)
+        .delete_api_documentation(&state.db, &path.slug)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1823,7 +1943,7 @@ async fn list_code_samples(
     let endpoint_path = format!("/api/v1/{}", path.slug);
     let samples = state
         .api_ecosystem_repo
-        .list_code_samples(&endpoint_path)
+        .list_code_samples(&state.db, &endpoint_path)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1849,7 +1969,7 @@ async fn create_code_sample(
 
     let sample = state
         .api_ecosystem_repo
-        .create_code_sample(&request)
+        .create_code_sample(&state.db, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1873,7 +1993,7 @@ async fn get_developer_portal_stats(
 
     let stats = state
         .api_ecosystem_repo
-        .get_developer_portal_stats()
+        .get_developer_portal_stats(&state.db)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1885,29 +2005,33 @@ async fn get_developer_portal_stats(
 /// Get API ecosystem dashboard.
 async fn get_ecosystem_dashboard(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
 ) -> Result<Json<ApiEcosystemDashboard>, (StatusCode, Json<ErrorResponse>)> {
-    let dashboard = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .get_ecosystem_dashboard(path.org_id)
+        .get_ecosystem_dashboard(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(dashboard))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
 
 /// Get API ecosystem statistics.
 async fn get_ecosystem_statistics(
     State(state): State<AppState>,
-    _tenant: TenantExtractor,
-    Path(path): Path<OrgIdPath>,
+    mut rls: RlsConnection,
+    Path(_path): Path<OrgIdPath>,
 ) -> Result<Json<ApiEcosystemStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    let stats = state
+    let org_id = rls.tenant_id();
+    let out = state
         .api_ecosystem_repo
-        .get_ecosystem_statistics(path.org_id)
+        .get_ecosystem_statistics(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
-
-    Ok(Json(stats))
+        .map(Json)
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()));
+    rls.release().await;
+    out
 }
