@@ -1,30 +1,34 @@
 //! Subscription and billing repository (Epic 26).
 //!
-//! # RLS Integration
+//! # RLS Integration (PAP-112 / PAP-80 / PAP-67)
 //!
-//! This repository supports two usage patterns:
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on the seven org-scoped billing tables this
+//! repo touches (`organization_subscriptions`, `payment_methods`,
+//! `subscription_invoices`, `invoice_line_items`, `usage_records`,
+//! `subscription_events`, `coupon_redemptions`). Under `FORCE` the
+//! api-server's owner connection is no longer exempt, so a query issued on a
+//! connection without `app.current_org_id` set collapses to deny-all:
+//! own-org reads return empty and writes fail the policy `WITH CHECK`.
 //!
-//! 1. **RLS-aware** (recommended): Use methods with `_rls` suffix that accept an executor
-//!    with RLS context already set (e.g., from `RlsConnection`).
+//! Every method therefore takes an **executor whose connection already has
+//! RLS context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds
+//! **no pool**, so there is no way to issue a query that bypasses RLS. This
+//! mirrors the `work_order.rs` / `vendor.rs` / `llm_document.rs` precedent.
 //!
-//! 2. **Legacy**: Use methods without suffix that use the internal pool. These do NOT
-//!    enforce RLS and should be migrated to the RLS-aware pattern.
+//! Single-statement methods take a generic [`Executor`]; multi-statement
+//! methods (`create_subscription`, `create_invoice`, `get_statistics`) and
+//! the transactional ones (`set_default_payment_method`, `redeem_coupon`)
+//! take `&mut PgConnection` and reborrow. The transactions run on the
+//! context-set connection: `set_request_context` sets session-level GUCs, so
+//! the RLS context survives `BEGIN`/`COMMIT`.
 //!
-//! ## Example
-//!
-//! ```rust,ignore
-//! async fn create_subscription(
-//!     mut rls: RlsConnection,
-//!     State(state): State<AppState>,
-//!     Json(data): Json<CreateOrganizationSubscription>,
-//! ) -> Result<Json<OrganizationSubscription>> {
-//!     let subscription = state.subscription_repo.create_subscription_rls(
-//!         rls.conn(), org_id, data
-//!     ).await?;
-//!     rls.release().await;
-//!     Ok(Json(subscription))
-//! }
-//! ```
+//! `subscription_plans` and `subscription_coupons` are **not** FORCE-bound
+//! (they carry public read policies — plans/coupons are platform-global, not
+//! tenant data), so callers without a tenant principal (the public
+//! `/plans/public` endpoint) may run those read methods on a plain pool
+//! executor.
 
 use crate::models::{
     CancelSubscriptionRequest, ChangePlanRequest, CouponRedemption, CreateOrganizationSubscription,
@@ -37,29 +41,32 @@ use crate::models::{
 };
 use chrono::{Days, Months, Utc};
 use rust_decimal::Decimal;
-use sqlx::{Executor, PgPool, Postgres};
+use sqlx::{Connection, Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for subscription and billing operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`)
+/// query.
 #[derive(Clone)]
-pub struct SubscriptionRepository {
-    pool: PgPool,
-}
+pub struct SubscriptionRepository;
 
 impl SubscriptionRepository {
     /// Create a new SubscriptionRepository.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set
+    /// connection supplied by the caller).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
-
-    // ========================================================================
-    // RLS-aware methods (recommended)
-    // ========================================================================
 
     // ==================== Subscription Plans CRUD ====================
 
-    /// Create a new subscription plan with RLS context.
-    pub async fn create_plan_rls<'e, E>(
+    /// Create a new subscription plan.
+    pub async fn create_plan<'e, E>(
         &self,
         executor: E,
         data: CreateSubscriptionPlan,
@@ -95,8 +102,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Find a subscription plan by ID with RLS context.
-    pub async fn find_plan_by_id_rls<'e, E>(
+    /// Find a subscription plan by ID.
+    pub async fn find_plan_by_id<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -110,8 +117,8 @@ impl SubscriptionRepository {
             .await
     }
 
-    /// Find a subscription plan by name with RLS context.
-    pub async fn find_plan_by_name_rls<'e, E>(
+    /// Find a subscription plan by name.
+    pub async fn find_plan_by_name<'e, E>(
         &self,
         executor: E,
         name: &str,
@@ -125,8 +132,8 @@ impl SubscriptionRepository {
             .await
     }
 
-    /// List all subscription plans with RLS context.
-    pub async fn list_plans_rls<'e, E>(
+    /// List all subscription plans.
+    pub async fn list_plans<'e, E>(
         &self,
         executor: E,
         active_only: bool,
@@ -147,8 +154,12 @@ impl SubscriptionRepository {
         }
     }
 
-    /// List public subscription plans with RLS context.
-    pub async fn list_public_plans_rls<'e, E>(
+    /// List public subscription plans (for display to customers).
+    ///
+    /// `subscription_plans` is not FORCE-bound and carries a public read
+    /// policy, so the public (unauthenticated) plans endpoint may pass a
+    /// plain pool executor here.
+    pub async fn list_public_plans<'e, E>(
         &self,
         executor: E,
     ) -> Result<Vec<SubscriptionPlan>, sqlx::Error>
@@ -162,8 +173,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Update a subscription plan with RLS context.
-    pub async fn update_plan_rls<'e, E>(
+    /// Update a subscription plan.
+    pub async fn update_plan<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -215,8 +226,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Delete a subscription plan with RLS context.
-    pub async fn delete_plan_rls<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    /// Delete a subscription plan.
+    pub async fn delete_plan<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -229,21 +240,19 @@ impl SubscriptionRepository {
 
     // ==================== Organization Subscriptions CRUD ====================
 
-    /// Create a new organization subscription with RLS context.
-    #[allow(deprecated)]
-    pub async fn create_subscription_rls<'e, E>(
+    /// Create a new organization subscription.
+    ///
+    /// Multi-statement (plan lookup for trial-days, then insert), so it takes
+    /// `&mut PgConnection` and runs both statements on the same context-set
+    /// connection.
+    pub async fn create_subscription(
         &self,
-        executor: E,
+        conn: &mut PgConnection,
         org_id: Uuid,
         data: CreateOrganizationSubscription,
-    ) -> Result<OrganizationSubscription, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        // Get plan for trial days calculation - use legacy method since we need a separate query.
-        // TODO: Refactor to accept the plan object as a parameter, or use a JOIN query
-        // within this method to fetch both plan and subscription in one RLS-aware operation.
-        let plan = self.find_plan_by_id(data.plan_id).await?;
+    ) -> Result<OrganizationSubscription, sqlx::Error> {
+        // Get plan for trial days calculation.
+        let plan = self.find_plan_by_id(&mut *conn, data.plan_id).await?;
 
         let billing_cycle = data.billing_cycle.unwrap_or_else(|| "monthly".to_string());
         let now = Utc::now();
@@ -291,12 +300,12 @@ impl SubscriptionRepository {
         .bind(is_trial)
         .bind(data.payment_method_id)
         .bind(&data.metadata)
-        .fetch_one(executor)
+        .fetch_one(&mut *conn)
         .await
     }
 
-    /// Find an organization's subscription with RLS context.
-    pub async fn find_subscription_by_org_rls<'e, E>(
+    /// Find an organization's subscription.
+    pub async fn find_subscription_by_org<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -312,8 +321,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Find a subscription by ID with RLS context.
-    pub async fn find_subscription_by_id_rls<'e, E>(
+    /// Find a subscription by ID.
+    pub async fn find_subscription_by_id<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -327,8 +336,8 @@ impl SubscriptionRepository {
             .await
     }
 
-    /// Get subscription with plan details with RLS context.
-    pub async fn get_subscription_with_plan_rls<'e, E>(
+    /// Get subscription with plan details.
+    pub async fn get_subscription_with_plan<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -355,8 +364,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Update an organization subscription with RLS context.
-    pub async fn update_subscription_rls<'e, E>(
+    /// Update an organization subscription.
+    pub async fn update_subscription<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -384,8 +393,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Change subscription plan with RLS context.
-    pub async fn change_plan_rls<'e, E>(
+    /// Change subscription plan.
+    pub async fn change_plan<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -411,8 +420,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Cancel a subscription with RLS context.
-    pub async fn cancel_subscription_rls<'e, E>(
+    /// Cancel a subscription.
+    pub async fn cancel_subscription<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -448,8 +457,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Reactivate a cancelled subscription with RLS context.
-    pub async fn reactivate_subscription_rls<'e, E>(
+    /// Reactivate a cancelled subscription.
+    pub async fn reactivate_subscription<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -474,8 +483,12 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// List all subscriptions with RLS context (platform admin).
-    pub async fn list_all_subscriptions_rls<'e, E>(
+    /// List all subscriptions (platform admin).
+    ///
+    /// Note: under FORCE RLS the result is scoped to the caller's RLS
+    /// context — the rows visible are those of the org set on the
+    /// connection.
+    pub async fn list_all_subscriptions<'e, E>(
         &self,
         executor: E,
         status: Option<&str>,
@@ -508,8 +521,8 @@ impl SubscriptionRepository {
 
     // ==================== Payment Methods CRUD ====================
 
-    /// Create a payment method with RLS context.
-    pub async fn create_payment_method_rls<'e, E>(
+    /// Create a payment method.
+    pub async fn create_payment_method<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -537,8 +550,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// List payment methods for an organization with RLS context.
-    pub async fn list_payment_methods_rls<'e, E>(
+    /// List payment methods for an organization.
+    pub async fn list_payment_methods<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -554,8 +567,41 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Delete a payment method with RLS context.
-    pub async fn delete_payment_method_rls<'e, E>(
+    /// Set default payment method.
+    ///
+    /// Uses a transaction (on the caller's context-set connection) to ensure
+    /// atomicity — prevents race conditions where concurrent requests could
+    /// result in multiple default payment methods. RLS context is set via
+    /// session-level GUCs, so it survives `BEGIN`/`COMMIT`.
+    pub async fn set_default_payment_method(
+        &self,
+        conn: &mut PgConnection,
+        org_id: Uuid,
+        payment_method_id: Uuid,
+    ) -> Result<(), sqlx::Error> {
+        let mut tx = conn.begin().await?;
+
+        // Reset all to non-default
+        sqlx::query("UPDATE payment_methods SET is_default = false WHERE organization_id = $1")
+            .bind(org_id)
+            .execute(&mut *tx)
+            .await?;
+
+        // Set the specified one as default
+        sqlx::query(
+            "UPDATE payment_methods SET is_default = true WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(payment_method_id)
+        .bind(org_id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
+    }
+
+    /// Delete a payment method.
+    pub async fn delete_payment_method<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -575,15 +621,17 @@ impl SubscriptionRepository {
 
     // ==================== Invoices ====================
 
-    /// Create an invoice with RLS context.
+    /// Create an invoice.
     ///
-    /// Uses a database sequence for atomic invoice number generation to prevent
-    /// race conditions and duplicate invoice numbers under concurrent requests.
+    /// Uses a database sequence for atomic invoice number generation to
+    /// prevent race conditions and duplicate invoice numbers under concurrent
+    /// requests. Multi-statement (sequence fetch, then insert), so it takes
+    /// `&mut PgConnection`; sequences are not subject to RLS, so running
+    /// `nextval` on the context-set connection is fine.
     #[allow(clippy::too_many_arguments)]
-    #[allow(deprecated)]
-    pub async fn create_invoice_rls<'e, E>(
+    pub async fn create_invoice(
         &self,
-        executor: E,
+        conn: &mut PgConnection,
         org_id: Uuid,
         subscription_id: Option<Uuid>,
         subtotal: Decimal,
@@ -591,18 +639,13 @@ impl SubscriptionRepository {
         total_amount: Decimal,
         currency: &str,
         due_date: chrono::NaiveDate,
-    ) -> Result<SubscriptionInvoice, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
+    ) -> Result<SubscriptionInvoice, sqlx::Error> {
         // Generate invoice number atomically using database sequence
-        // This prevents race conditions where concurrent requests could get the same number
-        // Note: We use the pool for sequence generation as sequences are not affected by RLS
         let seq: (i64,) = sqlx::query_as("SELECT nextval('invoice_number_seq')")
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await
             .unwrap_or((
-                // Fallback: use count + timestamp if sequence doesn't exist
+                // Fallback: use timestamp if sequence doesn't exist
                 chrono::Utc::now().timestamp_millis() % 100_000_000,
             ));
         let invoice_number = format!("INV-{:08}", seq.0);
@@ -624,12 +667,12 @@ impl SubscriptionRepository {
         .bind(tax_amount)
         .bind(total_amount)
         .bind(currency)
-        .fetch_one(executor)
+        .fetch_one(&mut *conn)
         .await
     }
 
-    /// Find an invoice by ID with RLS context.
-    pub async fn find_invoice_by_id_rls<'e, E>(
+    /// Find an invoice by ID.
+    pub async fn find_invoice_by_id<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -643,8 +686,8 @@ impl SubscriptionRepository {
             .await
     }
 
-    /// List invoices for an organization with RLS context.
-    pub async fn list_invoices_rls<'e, E>(
+    /// List invoices for an organization.
+    pub async fn list_invoices<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -674,8 +717,11 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// List invoices with details with RLS context (platform admin).
-    pub async fn list_all_invoices_rls<'e, E>(
+    /// List invoices with details (platform admin).
+    ///
+    /// Note: under FORCE RLS the result is scoped to the caller's RLS
+    /// context.
+    pub async fn list_all_invoices<'e, E>(
         &self,
         executor: E,
         query: InvoiceQueryParams,
@@ -705,8 +751,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Mark invoice as paid with RLS context.
-    pub async fn mark_invoice_paid_rls<'e, E>(
+    /// Mark invoice as paid.
+    pub async fn mark_invoice_paid<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -732,8 +778,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Void an invoice with RLS context.
-    pub async fn void_invoice_rls<'e, E>(
+    /// Void an invoice.
+    pub async fn void_invoice<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -755,9 +801,9 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Add line items to an invoice with RLS context.
+    /// Add line items to an invoice.
     #[allow(clippy::too_many_arguments)]
-    pub async fn add_invoice_line_item_rls<'e, E>(
+    pub async fn add_invoice_line_item<'e, E>(
         &self,
         executor: E,
         invoice_id: Uuid,
@@ -790,8 +836,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Get line items for an invoice with RLS context.
-    pub async fn get_invoice_line_items_rls<'e, E>(
+    /// Get line items for an invoice.
+    pub async fn get_invoice_line_items<'e, E>(
         &self,
         executor: E,
         invoice_id: Uuid,
@@ -807,8 +853,8 @@ impl SubscriptionRepository {
 
     // ==================== Usage Records ====================
 
-    /// Record a usage metric with RLS context.
-    pub async fn record_usage_rls<'e, E>(
+    /// Record a usage metric.
+    pub async fn record_usage<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -836,8 +882,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Get usage summary for an organization with RLS context.
-    pub async fn get_usage_summary_rls<'e, E>(
+    /// Get usage summary for an organization.
+    pub async fn get_usage_summary<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -867,8 +913,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Get current usage counts for an organization with RLS context.
-    pub async fn get_current_usage_rls<'e, E>(
+    /// Get current usage counts for an organization.
+    pub async fn get_current_usage<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -897,8 +943,8 @@ impl SubscriptionRepository {
 
     // ==================== Subscription Events ====================
 
-    /// Log a subscription event with RLS context.
-    pub async fn log_event_rls<'e, E>(
+    /// Log a subscription event.
+    pub async fn log_event<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -930,8 +976,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Get subscription events with RLS context.
-    pub async fn get_events_rls<'e, E>(
+    /// Get subscription events.
+    pub async fn get_events<'e, E>(
         &self,
         executor: E,
         org_id: Uuid,
@@ -951,8 +997,8 @@ impl SubscriptionRepository {
 
     // ==================== Coupons ====================
 
-    /// Create a coupon with RLS context.
-    pub async fn create_coupon_rls<'e, E>(
+    /// Create a coupon.
+    pub async fn create_coupon<'e, E>(
         &self,
         executor: E,
         data: CreateSubscriptionCoupon,
@@ -988,8 +1034,8 @@ impl SubscriptionRepository {
         .await
     }
 
-    /// Find a coupon by code with RLS context.
-    pub async fn find_coupon_by_code_rls<'e, E>(
+    /// Find a coupon by code.
+    pub async fn find_coupon_by_code<'e, E>(
         &self,
         executor: E,
         code: &str,
@@ -1003,8 +1049,8 @@ impl SubscriptionRepository {
             .await
     }
 
-    /// List all coupons with RLS context.
-    pub async fn list_coupons_rls<'e, E>(
+    /// List all coupons.
+    pub async fn list_coupons<'e, E>(
         &self,
         executor: E,
         active_only: bool,
@@ -1025,8 +1071,8 @@ impl SubscriptionRepository {
         }
     }
 
-    /// Update a coupon with RLS context.
-    pub async fn update_coupon_rls<'e, E>(
+    /// Update a coupon.
+    pub async fn update_coupon<'e, E>(
         &self,
         executor: E,
         id: Uuid,
@@ -1066,688 +1112,22 @@ impl SubscriptionRepository {
         .await
     }
 
-    // ==================== Statistics ====================
-
-    /// Get subscription statistics with RLS context.
-    pub async fn get_statistics_rls<'e, E>(
-        &self,
-        executor: E,
-    ) -> Result<SubscriptionStatistics, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        // Combined query to get all stats in one round-trip
-        let stats: (i64, i64, i64, i64, Option<Decimal>) = sqlx::query_as(
-            r#"
-            SELECT
-                (SELECT COUNT(*) FROM organization_subscriptions) as total,
-                (SELECT COUNT(*) FROM organization_subscriptions WHERE status = 'active') as active,
-                (SELECT COUNT(*) FROM organization_subscriptions WHERE status = 'trialing') as trial,
-                (SELECT COUNT(*) FROM organization_subscriptions WHERE status = 'cancelled') as cancelled,
-                (SELECT SUM(
-                    CASE WHEN s.billing_cycle = 'annual'
-                        THEN p.annual_price / 12
-                        ELSE p.monthly_price
-                    END
-                )
-                FROM organization_subscriptions s
-                JOIN subscription_plans p ON p.id = s.plan_id
-                WHERE s.status = 'active') as mrr
-            "#,
-        )
-        .fetch_one(executor)
-        .await?;
-
-        let monthly_recurring_revenue = stats.4.unwrap_or(Decimal::ZERO);
-        let annual_recurring_revenue = monthly_recurring_revenue * Decimal::from(12);
-
-        // Get counts by plan - this requires a separate query
-        let by_plan: Vec<PlanSubscriptionCount> = sqlx::query_as(
-            r#"
-            SELECT p.id as plan_id, p.name as plan_name, COUNT(s.id) as count
-            FROM subscription_plans p
-            LEFT JOIN organization_subscriptions s ON s.plan_id = p.id AND s.status = 'active'
-            GROUP BY p.id, p.name
-            ORDER BY count DESC
-            "#,
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(SubscriptionStatistics {
-            total_subscriptions: stats.0,
-            active_subscriptions: stats.1,
-            trial_subscriptions: stats.2,
-            cancelled_subscriptions: stats.3,
-            monthly_recurring_revenue,
-            annual_recurring_revenue,
-            by_plan,
-        })
-    }
-
-    // ========================================================================
-    // Legacy methods (use pool directly - migrate to RLS versions)
-    // ========================================================================
-
-    // ==================== Subscription Plans CRUD ====================
-
-    /// Create a new subscription plan.
-    ///
-    /// **Deprecated**: Use `create_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_plan_rls with RlsConnection instead"
-    )]
-    pub async fn create_plan(
-        &self,
-        data: CreateSubscriptionPlan,
-    ) -> Result<SubscriptionPlan, sqlx::Error> {
-        self.create_plan_rls(&self.pool, data).await
-    }
-
-    /// Find a subscription plan by ID.
-    ///
-    /// **Deprecated**: Use `find_plan_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_plan_by_id_rls with RlsConnection instead"
-    )]
-    pub async fn find_plan_by_id(&self, id: Uuid) -> Result<Option<SubscriptionPlan>, sqlx::Error> {
-        self.find_plan_by_id_rls(&self.pool, id).await
-    }
-
-    /// Find a subscription plan by name.
-    ///
-    /// **Deprecated**: Use `find_plan_by_name_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_plan_by_name_rls with RlsConnection instead"
-    )]
-    pub async fn find_plan_by_name(
-        &self,
-        name: &str,
-    ) -> Result<Option<SubscriptionPlan>, sqlx::Error> {
-        self.find_plan_by_name_rls(&self.pool, name).await
-    }
-
-    /// List all subscription plans.
-    ///
-    /// **Deprecated**: Use `list_plans_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_plans_rls with RlsConnection instead"
-    )]
-    pub async fn list_plans(
-        &self,
-        active_only: bool,
-    ) -> Result<Vec<SubscriptionPlan>, sqlx::Error> {
-        self.list_plans_rls(&self.pool, active_only).await
-    }
-
-    /// List public subscription plans (for display to customers).
-    ///
-    /// **Deprecated**: Use `list_public_plans_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_public_plans_rls with RlsConnection instead"
-    )]
-    pub async fn list_public_plans(&self) -> Result<Vec<SubscriptionPlan>, sqlx::Error> {
-        self.list_public_plans_rls(&self.pool).await
-    }
-
-    /// Update a subscription plan.
-    ///
-    /// **Deprecated**: Use `update_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_plan_rls with RlsConnection instead"
-    )]
-    pub async fn update_plan(
-        &self,
-        id: Uuid,
-        data: UpdateSubscriptionPlan,
-    ) -> Result<SubscriptionPlan, sqlx::Error> {
-        self.update_plan_rls(&self.pool, id, data).await
-    }
-
-    /// Delete a subscription plan.
-    ///
-    /// **Deprecated**: Use `delete_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use delete_plan_rls with RlsConnection instead"
-    )]
-    pub async fn delete_plan(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        self.delete_plan_rls(&self.pool, id).await
-    }
-
-    // ==================== Organization Subscriptions CRUD ====================
-
-    /// Create a new organization subscription.
-    ///
-    /// **Deprecated**: Use `create_subscription_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_subscription_rls with RlsConnection instead"
-    )]
-    #[allow(deprecated)]
-    pub async fn create_subscription(
-        &self,
-        org_id: Uuid,
-        data: CreateOrganizationSubscription,
-    ) -> Result<OrganizationSubscription, sqlx::Error> {
-        self.create_subscription_rls(&self.pool, org_id, data).await
-    }
-
-    /// Find an organization's subscription.
-    ///
-    /// **Deprecated**: Use `find_subscription_by_org_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_subscription_by_org_rls with RlsConnection instead"
-    )]
-    pub async fn find_subscription_by_org(
-        &self,
-        org_id: Uuid,
-    ) -> Result<Option<OrganizationSubscription>, sqlx::Error> {
-        self.find_subscription_by_org_rls(&self.pool, org_id).await
-    }
-
-    /// Find a subscription by ID.
-    ///
-    /// **Deprecated**: Use `find_subscription_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_subscription_by_id_rls with RlsConnection instead"
-    )]
-    pub async fn find_subscription_by_id(
-        &self,
-        id: Uuid,
-    ) -> Result<Option<OrganizationSubscription>, sqlx::Error> {
-        self.find_subscription_by_id_rls(&self.pool, id).await
-    }
-
-    /// Get subscription with plan details.
-    ///
-    /// **Deprecated**: Use `get_subscription_with_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_subscription_with_plan_rls with RlsConnection instead"
-    )]
-    pub async fn get_subscription_with_plan(
-        &self,
-        org_id: Uuid,
-    ) -> Result<Option<SubscriptionWithPlan>, sqlx::Error> {
-        self.get_subscription_with_plan_rls(&self.pool, org_id)
-            .await
-    }
-
-    /// Update an organization subscription.
-    ///
-    /// **Deprecated**: Use `update_subscription_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_subscription_rls with RlsConnection instead"
-    )]
-    pub async fn update_subscription(
-        &self,
-        id: Uuid,
-        data: UpdateOrganizationSubscription,
-    ) -> Result<OrganizationSubscription, sqlx::Error> {
-        self.update_subscription_rls(&self.pool, id, data).await
-    }
-
-    /// Change subscription plan.
-    ///
-    /// **Deprecated**: Use `change_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use change_plan_rls with RlsConnection instead"
-    )]
-    pub async fn change_plan(
-        &self,
-        id: Uuid,
-        data: ChangePlanRequest,
-    ) -> Result<OrganizationSubscription, sqlx::Error> {
-        self.change_plan_rls(&self.pool, id, data).await
-    }
-
-    /// Cancel a subscription.
-    ///
-    /// **Deprecated**: Use `cancel_subscription_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use cancel_subscription_rls with RlsConnection instead"
-    )]
-    pub async fn cancel_subscription(
-        &self,
-        id: Uuid,
-        data: CancelSubscriptionRequest,
-    ) -> Result<OrganizationSubscription, sqlx::Error> {
-        self.cancel_subscription_rls(&self.pool, id, data).await
-    }
-
-    /// Reactivate a cancelled subscription.
-    ///
-    /// **Deprecated**: Use `reactivate_subscription_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use reactivate_subscription_rls with RlsConnection instead"
-    )]
-    pub async fn reactivate_subscription(
-        &self,
-        id: Uuid,
-    ) -> Result<OrganizationSubscription, sqlx::Error> {
-        self.reactivate_subscription_rls(&self.pool, id).await
-    }
-
-    /// List all subscriptions (platform admin).
-    ///
-    /// **Deprecated**: Use `list_all_subscriptions_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_all_subscriptions_rls with RlsConnection instead"
-    )]
-    pub async fn list_all_subscriptions(
-        &self,
-        status: Option<&str>,
-        limit: i32,
-        offset: i32,
-    ) -> Result<Vec<SubscriptionWithPlan>, sqlx::Error> {
-        self.list_all_subscriptions_rls(&self.pool, status, limit, offset)
-            .await
-    }
-
-    // ==================== Payment Methods CRUD ====================
-
-    /// Create a payment method.
-    ///
-    /// **Deprecated**: Use `create_payment_method_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_payment_method_rls with RlsConnection instead"
-    )]
-    pub async fn create_payment_method(
-        &self,
-        org_id: Uuid,
-        data: CreateSubscriptionPaymentMethod,
-    ) -> Result<SubscriptionPaymentMethod, sqlx::Error> {
-        self.create_payment_method_rls(&self.pool, org_id, data)
-            .await
-    }
-
-    /// List payment methods for an organization.
-    ///
-    /// **Deprecated**: Use `list_payment_methods_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_payment_methods_rls with RlsConnection instead"
-    )]
-    pub async fn list_payment_methods(
-        &self,
-        org_id: Uuid,
-    ) -> Result<Vec<SubscriptionPaymentMethod>, sqlx::Error> {
-        self.list_payment_methods_rls(&self.pool, org_id).await
-    }
-
-    /// Set default payment method.
-    ///
-    /// Uses a transaction to ensure atomicity - prevents race conditions where
-    /// concurrent requests could result in multiple default payment methods.
-    ///
-    /// Note: This method uses transactions internally and cannot be easily
-    /// converted to an RLS-aware pattern. Consider using a stored procedure
-    /// or handling the transaction at a higher level.
-    pub async fn set_default_payment_method(
-        &self,
-        org_id: Uuid,
-        payment_method_id: Uuid,
-    ) -> Result<(), sqlx::Error> {
-        let mut tx = self.pool.begin().await?;
-
-        // Reset all to non-default
-        sqlx::query("UPDATE payment_methods SET is_default = false WHERE organization_id = $1")
-            .bind(org_id)
-            .execute(&mut *tx)
-            .await?;
-
-        // Set the specified one as default
-        sqlx::query(
-            "UPDATE payment_methods SET is_default = true WHERE id = $1 AND organization_id = $2",
-        )
-        .bind(payment_method_id)
-        .bind(org_id)
-        .execute(&mut *tx)
-        .await?;
-
-        tx.commit().await?;
-        Ok(())
-    }
-
-    /// Delete a payment method.
-    ///
-    /// **Deprecated**: Use `delete_payment_method_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use delete_payment_method_rls with RlsConnection instead"
-    )]
-    pub async fn delete_payment_method(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
-        self.delete_payment_method_rls(&self.pool, id, org_id).await
-    }
-
-    // ==================== Invoices ====================
-
-    /// Create an invoice.
-    ///
-    /// Uses a database sequence for atomic invoice number generation to prevent
-    /// race conditions and duplicate invoice numbers under concurrent requests.
-    ///
-    /// **Deprecated**: Use `create_invoice_rls` with an RLS-enabled connection instead.
-    #[allow(clippy::too_many_arguments)]
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_invoice_rls with RlsConnection instead"
-    )]
-    #[allow(deprecated)]
-    pub async fn create_invoice(
-        &self,
-        org_id: Uuid,
-        subscription_id: Option<Uuid>,
-        subtotal: Decimal,
-        tax_amount: Option<Decimal>,
-        total_amount: Decimal,
-        currency: &str,
-        due_date: chrono::NaiveDate,
-    ) -> Result<SubscriptionInvoice, sqlx::Error> {
-        self.create_invoice_rls(
-            &self.pool,
-            org_id,
-            subscription_id,
-            subtotal,
-            tax_amount,
-            total_amount,
-            currency,
-            due_date,
-        )
-        .await
-    }
-
-    /// Find an invoice by ID.
-    ///
-    /// **Deprecated**: Use `find_invoice_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_invoice_by_id_rls with RlsConnection instead"
-    )]
-    pub async fn find_invoice_by_id(
-        &self,
-        id: Uuid,
-    ) -> Result<Option<SubscriptionInvoice>, sqlx::Error> {
-        self.find_invoice_by_id_rls(&self.pool, id).await
-    }
-
-    /// List invoices for an organization.
-    ///
-    /// **Deprecated**: Use `list_invoices_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_invoices_rls with RlsConnection instead"
-    )]
-    pub async fn list_invoices(
-        &self,
-        org_id: Uuid,
-        query: InvoiceQueryParams,
-    ) -> Result<Vec<SubscriptionInvoice>, sqlx::Error> {
-        self.list_invoices_rls(&self.pool, org_id, query).await
-    }
-
-    /// List invoices with details (platform admin).
-    ///
-    /// **Deprecated**: Use `list_all_invoices_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_all_invoices_rls with RlsConnection instead"
-    )]
-    pub async fn list_all_invoices(
-        &self,
-        query: InvoiceQueryParams,
-    ) -> Result<Vec<InvoiceWithDetails>, sqlx::Error> {
-        self.list_all_invoices_rls(&self.pool, query).await
-    }
-
-    /// Mark invoice as paid.
-    ///
-    /// **Deprecated**: Use `mark_invoice_paid_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use mark_invoice_paid_rls with RlsConnection instead"
-    )]
-    pub async fn mark_invoice_paid(
-        &self,
-        id: Uuid,
-        payment_method_id: Option<Uuid>,
-    ) -> Result<SubscriptionInvoice, sqlx::Error> {
-        self.mark_invoice_paid_rls(&self.pool, id, payment_method_id)
-            .await
-    }
-
-    /// Void an invoice.
-    ///
-    /// **Deprecated**: Use `void_invoice_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use void_invoice_rls with RlsConnection instead"
-    )]
-    pub async fn void_invoice(&self, id: Uuid) -> Result<SubscriptionInvoice, sqlx::Error> {
-        self.void_invoice_rls(&self.pool, id).await
-    }
-
-    /// Add line items to an invoice.
-    ///
-    /// **Deprecated**: Use `add_invoice_line_item_rls` with an RLS-enabled connection instead.
-    #[allow(clippy::too_many_arguments)]
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use add_invoice_line_item_rls with RlsConnection instead"
-    )]
-    pub async fn add_invoice_line_item(
-        &self,
-        invoice_id: Uuid,
-        description: &str,
-        quantity: Option<Decimal>,
-        unit_price: Decimal,
-        amount: Decimal,
-        item_type: &str,
-        plan_id: Option<Uuid>,
-    ) -> Result<InvoiceLineItem, sqlx::Error> {
-        self.add_invoice_line_item_rls(
-            &self.pool,
-            invoice_id,
-            description,
-            quantity,
-            unit_price,
-            amount,
-            item_type,
-            plan_id,
-        )
-        .await
-    }
-
-    /// Get line items for an invoice.
-    ///
-    /// **Deprecated**: Use `get_invoice_line_items_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_invoice_line_items_rls with RlsConnection instead"
-    )]
-    pub async fn get_invoice_line_items(
-        &self,
-        invoice_id: Uuid,
-    ) -> Result<Vec<InvoiceLineItem>, sqlx::Error> {
-        self.get_invoice_line_items_rls(&self.pool, invoice_id)
-            .await
-    }
-
-    // ==================== Usage Records ====================
-
-    /// Record a usage metric.
-    ///
-    /// **Deprecated**: Use `record_usage_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use record_usage_rls with RlsConnection instead"
-    )]
-    pub async fn record_usage(
-        &self,
-        org_id: Uuid,
-        subscription_id: Option<Uuid>,
-        data: CreateUsageRecord,
-    ) -> Result<UsageRecord, sqlx::Error> {
-        self.record_usage_rls(&self.pool, org_id, subscription_id, data)
-            .await
-    }
-
-    /// Get usage summary for an organization.
-    ///
-    /// **Deprecated**: Use `get_usage_summary_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_usage_summary_rls with RlsConnection instead"
-    )]
-    pub async fn get_usage_summary(
-        &self,
-        org_id: Uuid,
-        period_start: chrono::DateTime<Utc>,
-        period_end: chrono::DateTime<Utc>,
-    ) -> Result<Vec<UsageSummary>, sqlx::Error> {
-        self.get_usage_summary_rls(&self.pool, org_id, period_start, period_end)
-            .await
-    }
-
-    /// Get current usage counts for an organization.
-    ///
-    /// **Deprecated**: Use `get_current_usage_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_current_usage_rls with RlsConnection instead"
-    )]
-    pub async fn get_current_usage(
-        &self,
-        org_id: Uuid,
-    ) -> Result<(i64, i64, i64, i64), sqlx::Error> {
-        self.get_current_usage_rls(&self.pool, org_id).await
-    }
-
-    // ==================== Subscription Events ====================
-
-    /// Log a subscription event.
-    ///
-    /// **Deprecated**: Use `log_event_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use log_event_rls with RlsConnection instead"
-    )]
-    pub async fn log_event(
-        &self,
-        org_id: Uuid,
-        subscription_id: Option<Uuid>,
-        actor_id: Option<Uuid>,
-        data: CreateSubscriptionEvent,
-    ) -> Result<SubscriptionEvent, sqlx::Error> {
-        self.log_event_rls(&self.pool, org_id, subscription_id, actor_id, data)
-            .await
-    }
-
-    /// Get subscription events.
-    ///
-    /// **Deprecated**: Use `get_events_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_events_rls with RlsConnection instead"
-    )]
-    pub async fn get_events(
-        &self,
-        org_id: Uuid,
-        limit: i32,
-    ) -> Result<Vec<SubscriptionEvent>, sqlx::Error> {
-        self.get_events_rls(&self.pool, org_id, limit).await
-    }
-
-    // ==================== Coupons ====================
-
-    /// Create a coupon.
-    ///
-    /// **Deprecated**: Use `create_coupon_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_coupon_rls with RlsConnection instead"
-    )]
-    pub async fn create_coupon(
-        &self,
-        data: CreateSubscriptionCoupon,
-    ) -> Result<SubscriptionCoupon, sqlx::Error> {
-        self.create_coupon_rls(&self.pool, data).await
-    }
-
-    /// Find a coupon by code.
-    ///
-    /// **Deprecated**: Use `find_coupon_by_code_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_coupon_by_code_rls with RlsConnection instead"
-    )]
-    pub async fn find_coupon_by_code(
-        &self,
-        code: &str,
-    ) -> Result<Option<SubscriptionCoupon>, sqlx::Error> {
-        self.find_coupon_by_code_rls(&self.pool, code).await
-    }
-
-    /// List all coupons.
-    ///
-    /// **Deprecated**: Use `list_coupons_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_coupons_rls with RlsConnection instead"
-    )]
-    pub async fn list_coupons(
-        &self,
-        active_only: bool,
-    ) -> Result<Vec<SubscriptionCoupon>, sqlx::Error> {
-        self.list_coupons_rls(&self.pool, active_only).await
-    }
-
-    /// Update a coupon.
-    ///
-    /// **Deprecated**: Use `update_coupon_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_coupon_rls with RlsConnection instead"
-    )]
-    pub async fn update_coupon(
-        &self,
-        id: Uuid,
-        data: UpdateSubscriptionCoupon,
-    ) -> Result<SubscriptionCoupon, sqlx::Error> {
-        self.update_coupon_rls(&self.pool, id, data).await
-    }
-
     /// Redeem a coupon.
     ///
-    /// Uses a transaction with validation to prevent race conditions and over-redemption.
-    /// Checks max_redemptions before incrementing count and inserting redemption record.
-    ///
-    /// Note: This method uses transactions internally and cannot be easily
-    /// converted to an RLS-aware pattern. Consider using a stored procedure
-    /// or handling the transaction at a higher level.
+    /// Uses a transaction (on the caller's context-set connection) with
+    /// validation to prevent race conditions and over-redemption. Checks
+    /// `max_redemptions` before incrementing the count and inserting the
+    /// redemption record. The `coupon_redemptions` insert is FORCE-RLS-bound,
+    /// so this MUST run on a connection with RLS context set for `org_id`.
     pub async fn redeem_coupon(
         &self,
+        conn: &mut PgConnection,
         coupon_id: Uuid,
         org_id: Uuid,
         subscription_id: Option<Uuid>,
         user_id: Uuid,
     ) -> Result<CouponRedemption, sqlx::Error> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = conn.begin().await?;
 
         // Check if coupon exists and has remaining redemptions (with row lock)
         let coupon: Option<(i32, Option<i32>)> = sqlx::query_as(
@@ -1801,13 +1181,60 @@ impl SubscriptionRepository {
 
     /// Get subscription statistics.
     ///
-    /// **Deprecated**: Use `get_statistics_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_statistics_rls with RlsConnection instead"
-    )]
-    #[allow(deprecated)]
-    pub async fn get_statistics(&self) -> Result<SubscriptionStatistics, sqlx::Error> {
-        self.get_statistics_rls(&self.pool).await
+    /// Multi-statement (aggregate stats, then per-plan counts), so it takes
+    /// `&mut PgConnection` and runs both queries on the same context-set
+    /// connection. Under FORCE RLS the figures are scoped to the caller's
+    /// RLS context.
+    pub async fn get_statistics(
+        &self,
+        conn: &mut PgConnection,
+    ) -> Result<SubscriptionStatistics, sqlx::Error> {
+        // Combined query to get all stats in one round-trip
+        let stats: (i64, i64, i64, i64, Option<Decimal>) = sqlx::query_as(
+            r#"
+            SELECT
+                (SELECT COUNT(*) FROM organization_subscriptions) as total,
+                (SELECT COUNT(*) FROM organization_subscriptions WHERE status = 'active') as active,
+                (SELECT COUNT(*) FROM organization_subscriptions WHERE status = 'trialing') as trial,
+                (SELECT COUNT(*) FROM organization_subscriptions WHERE status = 'cancelled') as cancelled,
+                (SELECT SUM(
+                    CASE WHEN s.billing_cycle = 'annual'
+                        THEN p.annual_price / 12
+                        ELSE p.monthly_price
+                    END
+                )
+                FROM organization_subscriptions s
+                JOIN subscription_plans p ON p.id = s.plan_id
+                WHERE s.status = 'active') as mrr
+            "#,
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        let monthly_recurring_revenue = stats.4.unwrap_or(Decimal::ZERO);
+        let annual_recurring_revenue = monthly_recurring_revenue * Decimal::from(12);
+
+        // Get counts by plan - this requires a separate query
+        let by_plan: Vec<PlanSubscriptionCount> = sqlx::query_as(
+            r#"
+            SELECT p.id as plan_id, p.name as plan_name, COUNT(s.id) as count
+            FROM subscription_plans p
+            LEFT JOIN organization_subscriptions s ON s.plan_id = p.id AND s.status = 'active'
+            GROUP BY p.id, p.name
+            ORDER BY count DESC
+            "#,
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        Ok(SubscriptionStatistics {
+            total_subscriptions: stats.0,
+            active_subscriptions: stats.1,
+            trial_subscriptions: stats.2,
+            cancelled_subscriptions: stats.3,
+            monthly_recurring_revenue,
+            annual_recurring_revenue,
+            by_plan,
+        })
     }
 }
