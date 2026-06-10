@@ -5,16 +5,16 @@
 //!   - #624  Cross-tenant mutation via missing org_id in WHERE (update_schedule)
 //!   - #646  pause_schedule and resume_schedule IDOR (no org scope in WHERE)
 //!   - #647  list_executions / get_execution / get_execution_download_url /
-//!            retry_execution IDOR (no org scope)
+//!     retry_execution IDOR (no org scope)
 //!   - #693  The original cross-tenant tests below sent only `X-Tenant-ID`
-//!          (no Bearer JWT), so `AuthUser`/`RlsConnection` returned 401 at the
-//!          outer gate and the `AND organization_id = $caller_org_id` clause in
-//!          `pause`, `resume`, `get_by_id_scoped`, `get_execution_scoped`, and
-//!          `retry_execution_scoped` was never exercised. The companion
-//!          `*_authenticated` tests below send a real Bearer JWT from a
-//!          manager/resident in `org_b` targeting an `org_a` resource, asserting
-//!          the org-scoped WHERE clause produces a 404 — proving the DB-layer
-//!          isolation fires, not the auth gate.
+//!     (no Bearer JWT), so `AuthUser`/`RlsConnection` returned 401 at the
+//!     outer gate and the `AND organization_id = $caller_org_id` clause in
+//!     `pause`, `resume`, `get_by_id_scoped`, `get_execution_scoped`, and
+//!     `retry_execution_scoped` was never exercised. The companion
+//!     `*_authenticated` tests below send a real Bearer JWT from a
+//!     manager/resident in `org_b` targeting an `org_a` resource, asserting
+//!     the org-scoped WHERE clause produces a 404 — proving the DB-layer
+//!     isolation fires, not the auth gate.
 //!
 //! # Audit-matrix note
 //!
