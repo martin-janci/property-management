@@ -286,6 +286,11 @@ async fn emergency_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     set_ctx(&pool, None, None, true).await;
     for stmt in [
         format!("REVOKE ALL ON emergency_protocols FROM \"{role}\""),
+        // DROP OWNED severs every remaining privilege this role holds in the
+        // test database — the explicit REVOKEs above keep missing the RLS
+        // helper-function EXECUTE grants, so DROP ROLE failed with "objects
+        // depend on it" and leaked the cluster-global role (PAP-134).
+        format!("DROP OWNED BY \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
