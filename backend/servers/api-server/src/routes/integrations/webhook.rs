@@ -2,9 +2,13 @@
 //!
 //! Covers two concerns:
 //! 1. **Outbound webhook management** — CRUD for webhook subscriptions,
-//!    test delivery, and delivery logs (Story 61.5).
+//!    test delivery, and delivery logs (Story 61.5). UNMOUNTED (PAP-122):
+//!    the backing schema exists in no migration; see `router()` for the
+//!    remount conditions. The live subscription surface is the
+//!    enhanced-webhook CRUD in `routes/api_ecosystem.rs`.
 //! 2. **Inbound webhook receivers** — endpoints that external systems POST to:
-//!    - E-signature providers (DocuSign, Adobe Sign, HelloSign)
+//!    - E-signature providers (DocuSign, Adobe Sign, HelloSign) — UNMOUNTED
+//!      (PAP-122), writes the migration-less `esignature_workflows` table
 //!    - Booking.com OTA push notifications
 //!    - Portal/listing-site webhooks (public, no auth)
 //!
@@ -27,7 +31,7 @@ use axum::{
     extract::{Path, State},
     http::{header, HeaderMap, StatusCode},
     response::Response,
-    routing::{get, post},
+    routing::post,
     Json, Router,
 };
 use db::models::{
@@ -73,29 +77,20 @@ struct ESignatureWebhookPayload {
 /// Create webhook-surface router.
 pub fn router() -> Router<AppState> {
     Router::new()
-        // Outbound webhook subscriptions (Story 61.5)
-        .route(
-            "/organizations/{org_id}/webhooks",
-            get(list_webhook_subscriptions),
-        )
-        .route(
-            "/organizations/{org_id}/webhooks",
-            post(create_webhook_subscription),
-        )
-        .route("/webhooks/{id}", get(get_webhook_subscription))
-        .route(
-            "/webhooks/{id}",
-            axum::routing::put(update_webhook_subscription),
-        )
-        .route(
-            "/webhooks/{id}",
-            axum::routing::delete(delete_webhook_subscription),
-        )
-        .route("/webhooks/{id}/test", post(test_webhook))
-        .route("/webhooks/{id}/logs", get(list_webhook_logs))
-        .route("/webhooks/{id}/stats", get(get_webhook_stats))
-        // Inbound webhook receivers
-        .route("/esignatures/webhook", post(esignature_webhook))
+        // ROADMAP(PAP-122): outbound webhook-subscription CRUD (Story 61.5)
+        // unmounted — the `IntegrationRepository` SQL behind it expects
+        // `status` / `retry_policy` columns and a `webhook_delivery_logs`
+        // table that exist in no migration, and it duplicates the live,
+        // schema-aligned enhanced-webhook surface in `routes/api_ecosystem.rs`
+        // (which is what `/organizations/{org_id}/webhooks` should keep
+        // serving). Remount only after the Epic-61 migrations land AND the
+        // two surfaces are reconciled onto one column convention.
+        //
+        // ROADMAP(PAP-122): the e-signature inbound receiver is unmounted with
+        // the rest of the e-signature surface — its handler writes
+        // `esignature_workflows`, which exists in no migration.
+        //
+        // Inbound webhook receivers (live)
         .route("/booking/push", post(booking_push_notification))
         .route(
             "/webhooks/portal/{connection_id}",
