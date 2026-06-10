@@ -3,6 +3,14 @@
 //! Covers: integration statistics, calendar connections + sync + events,
 //! accounting exports + settings, e-signature workflows, and video meetings.
 //!
+//! UNMOUNTED (PAP-122): `router()` is not merged into the integrations
+//! router — `calendar_connections`, `calendar_events`, `accounting_exports`,
+//! `accounting_export_settings`, `esignature_workflows`,
+//! `esignature_recipients`, `video_conference_connections`, and
+//! `video_meetings` exist in no migration, so every handler fails at runtime
+//! with undefined-table errors. Remount after the Epic-61 migrations land
+//! (incl. FORCE-RLS policies per migration 00179 conventions).
+//!
 //! # RLS routing (PAP-105 / PAP-80)
 //!
 //! `IntegrationRepository` holds no pool: every handler acquires an

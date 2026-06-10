@@ -1,6 +1,21 @@
 //! Legal document and compliance routes (Epic 25).
+//!
+//! # RLS (PAP-80 / PAP-67)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on all eight
+//! legal/compliance tables, so every query MUST run on a connection that has
+//! `app.current_org_id` set or it collapses to deny-all. Each handler therefore
+//! acquires an [`RlsConnection`] (which authenticates the caller, validates
+//! tenant membership, and sets the org/user GUCs on a dedicated connection) and
+//! passes `&mut **rls.conn()` to the repository. The authoritative organization
+//! is `rls.tenant_id()` — the tenant the caller was validated against — not a
+//! client-supplied `organization_id`, so the SQL org filter and the RLS context
+//! can never disagree. Cross-tenant access is blocked by RLS: a by-id read of
+//! another org's row returns no row (`404`), and a write targeting another org
+//! fails the policy's `WITH CHECK`. `rls.release()` clears the context before
+//! the connection returns to the pool.
 
-use api_core::extractors::AuthUser;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -83,18 +98,34 @@ pub fn router() -> Router<AppState> {
         .route("/audit-trail", post(create_audit_entry))
 }
 
-// ==================== Request/Response Types ====================
+// ==================== Error Helpers ====================
 
-/// Organization query parameter.
-#[derive(Debug, Deserialize, IntoParams)]
-pub struct OrgQuery {
-    pub organization_id: Uuid,
+/// Map a repository error to a `500`, logging the cause under `msg`.
+fn db_error(msg: &str, e: sqlx::Error) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!("{}: {:?}", msg, e);
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+    )
 }
 
+/// Build a `404` response.
+fn not_found(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", msg)),
+    )
+}
+
+// ==================== Request/Response Types ====================
+
 /// Create legal document request wrapper.
+///
+/// `organization_id` is accepted for backwards compatibility but ignored — the
+/// authoritative org is the caller's validated tenant (`rls.tenant_id()`).
 #[derive(Debug, Deserialize)]
 pub struct CreateDocumentRequest {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     #[serde(flatten)]
     pub data: CreateLegalDocument,
 }
@@ -102,7 +133,7 @@ pub struct CreateDocumentRequest {
 /// List legal documents query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListDocumentsQuery {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub building_id: Option<Uuid>,
     pub document_type: Option<String>,
     pub is_confidential: Option<bool>,
@@ -131,7 +162,7 @@ impl From<&ListDocumentsQuery> for LegalDocumentQuery {
 /// Create compliance requirement request wrapper.
 #[derive(Debug, Deserialize)]
 pub struct CreateRequirementRequest {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     #[serde(flatten)]
     pub data: CreateComplianceRequirement,
 }
@@ -139,7 +170,7 @@ pub struct CreateRequirementRequest {
 /// List compliance requirements query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListRequirementsQuery {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub building_id: Option<Uuid>,
     pub category: Option<String>,
     pub status: Option<String>,
@@ -168,7 +199,7 @@ impl From<&ListRequirementsQuery> for ComplianceQuery {
 /// Create legal notice request wrapper.
 #[derive(Debug, Deserialize)]
 pub struct CreateNoticeRequest {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     #[serde(flatten)]
     pub data: CreateLegalNotice,
 }
@@ -176,7 +207,7 @@ pub struct CreateNoticeRequest {
 /// List legal notices query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListNoticesQuery {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub building_id: Option<Uuid>,
     pub notice_type: Option<String>,
     pub priority: Option<String>,
@@ -211,14 +242,14 @@ pub struct CreateTemplateRequest {
 /// List templates query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListTemplatesQuery {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub category: Option<String>,
 }
 
 /// Apply template request.
 #[derive(Debug, Deserialize)]
 pub struct ApplyTemplateRequest {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     #[serde(flatten)]
     pub data: ApplyTemplate,
 }
@@ -226,7 +257,7 @@ pub struct ApplyTemplateRequest {
 /// Create audit entry request wrapper.
 #[derive(Debug, Deserialize)]
 pub struct CreateAuditRequest {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     #[serde(flatten)]
     pub data: CreateAuditTrailEntry,
 }
@@ -234,7 +265,7 @@ pub struct CreateAuditRequest {
 /// Audit trail query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AuditTrailQuery {
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub requirement_id: Option<Uuid>,
     pub document_id: Option<Uuid>,
     pub notice_id: Option<Uuid>,
@@ -242,861 +273,633 @@ pub struct AuditTrailQuery {
     pub offset: Option<i32>,
 }
 
-/// Pagination query.
-#[derive(Debug, Deserialize, IntoParams)]
-pub struct PaginationQuery {
-    pub limit: Option<i32>,
-    pub offset: Option<i32>,
-}
-
-/// Resolve the caller's organization from the authenticated JWT `tenant_id`
-/// claim. Used to org-scope by-id reads/mutations so a foreign-org resource
-/// id surfaces as 404 rather than a cross-tenant leak (IDOR, #829).
-fn org_context(user: &AuthUser) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
-    user.tenant_id.ok_or_else(|| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::forbidden("No organization context")),
-        )
-    })
-}
-
 // ==================== Legal Document Endpoints ====================
 
 async fn create_document(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Json(payload): Json<CreateDocumentRequest>,
 ) -> Result<(StatusCode, Json<LegalDocument>), (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .legal_repo
-        .create_document(payload.organization_id, user.user_id, payload.data)
+        .create_document(&mut **rls.conn(), org_id, user_id, payload.data)
         .await
         .map(|d| (StatusCode::CREATED, Json(d)))
-        .map_err(|e| {
-            tracing::error!("Failed to create legal document: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to create legal document", e));
+    rls.release().await;
+    out
 }
 
 async fn list_documents(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListDocumentsQuery>,
 ) -> Result<Json<Vec<LegalDocument>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_documents(query.organization_id, (&query).into())
+        .list_documents(&mut **rls.conn(), org_id, (&query).into())
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list legal documents: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to list legal documents", e));
+    rls.release().await;
+    out
 }
 
 async fn list_documents_summary(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListDocumentsQuery>,
 ) -> Result<Json<Vec<LegalDocumentSummary>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_documents_with_summary(query.organization_id, (&query).into())
+        .list_documents_with_summary(&mut **rls.conn(), org_id, (&query).into())
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list legal documents: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to list legal documents", e));
+    rls.release().await;
+    out
 }
 
 async fn get_document(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<LegalDocument>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .find_document_by_id(id, org_id)
+        .find_document_by_id(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to get legal document: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to get legal document", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Document not found")));
+    rls.release().await;
+    out
 }
 
 async fn update_document(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateLegalDocument>,
 ) -> Result<Json<LegalDocument>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .update_document(id, org_id, data)
+        .update_document(&mut **rls.conn(), id, org_id, data)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to update legal document: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to update legal document", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Document not found")));
+    rls.release().await;
+    out
 }
 
 async fn delete_document(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .delete_document(id, org_id)
+        .delete_document(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to delete legal document: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
-        ))
-    }
+        .map_err(|e| db_error("Failed to delete legal document", e))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Document not found"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ==================== Document Versions ====================
 
 async fn add_version(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateLegalDocumentVersion>,
 ) -> Result<(StatusCode, Json<LegalDocumentVersion>), (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .legal_repo
-        .add_document_version(id, org_id, user.user_id, data)
+        .add_document_version(&mut **rls.conn(), id, org_id, user_id, data)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to add document version: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(|v| (StatusCode::CREATED, Json(v)))
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to add document version", e))
+        .and_then(|opt| {
+            opt.map(|v| (StatusCode::CREATED, Json(v)))
+                .ok_or_else(|| not_found("Document not found"))
+        });
+    rls.release().await;
+    out
 }
 
 async fn list_versions(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<LegalDocumentVersion>>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_document_versions(id, org_id)
+        .list_document_versions(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to list document versions: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to list document versions", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Document not found")));
+    rls.release().await;
+    out
 }
 
 async fn get_version(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path((id, version)): Path<(Uuid, i32)>,
 ) -> Result<Json<LegalDocumentVersion>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .get_document_version(id, org_id, version)
+        .get_document_version(&mut **rls.conn(), id, org_id, version)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to get document version: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Version not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to get document version", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Version not found")));
+    rls.release().await;
+    out
 }
 
 // ==================== Compliance Requirements ====================
 
 async fn create_requirement(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Json(payload): Json<CreateRequirementRequest>,
 ) -> Result<(StatusCode, Json<ComplianceRequirement>), (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .create_requirement(payload.organization_id, payload.data)
+        .create_requirement(&mut **rls.conn(), org_id, payload.data)
         .await
         .map(|r| (StatusCode::CREATED, Json(r)))
-        .map_err(|e| {
-            tracing::error!("Failed to create compliance requirement: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to create compliance requirement", e));
+    rls.release().await;
+    out
 }
 
 async fn list_requirements(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListRequirementsQuery>,
 ) -> Result<Json<Vec<ComplianceRequirement>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_requirements(query.organization_id, (&query).into())
+        .list_requirements(&mut **rls.conn(), org_id, (&query).into())
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list compliance requirements: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to list compliance requirements", e));
+    rls.release().await;
+    out
 }
 
 async fn list_requirements_with_details(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListRequirementsQuery>,
 ) -> Result<Json<Vec<ComplianceRequirementWithDetails>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_requirements_with_details(query.organization_id, (&query).into())
+        .list_requirements_with_details(&mut **rls.conn(), org_id, (&query).into())
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list compliance requirements: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to list compliance requirements", e));
+    rls.release().await;
+    out
 }
 
 async fn get_compliance_statistics(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Query(query): Query<OrgQuery>,
+    mut rls: RlsConnection,
 ) -> Result<Json<ComplianceStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .get_compliance_statistics(query.organization_id)
+        .get_compliance_statistics(&mut **rls.conn(), org_id)
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to get compliance statistics: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to get compliance statistics", e));
+    rls.release().await;
+    out
 }
 
 async fn get_requirement(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ComplianceRequirement>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .find_requirement_by_id(id, org_id)
+        .find_requirement_by_id(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to get compliance requirement: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Requirement not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to get compliance requirement", e))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Requirement not found"))
+        });
+    rls.release().await;
+    out
 }
 
 async fn update_requirement(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateComplianceRequirement>,
 ) -> Result<Json<ComplianceRequirement>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .update_requirement(id, org_id, data)
+        .update_requirement(&mut **rls.conn(), id, org_id, data)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to update compliance requirement: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Requirement not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to update compliance requirement", e))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Requirement not found"))
+        });
+    rls.release().await;
+    out
 }
 
 async fn delete_requirement(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .delete_requirement(id, org_id)
+        .delete_requirement(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to delete compliance requirement: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Requirement not found")),
-        ))
-    }
+        .map_err(|e| db_error("Failed to delete compliance requirement", e))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Requirement not found"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ==================== Compliance Verifications ====================
 
 async fn create_verification(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateComplianceVerification>,
 ) -> Result<(StatusCode, Json<ComplianceVerification>), (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .legal_repo
-        .create_verification(id, org_id, user.user_id, data)
+        .create_verification(&mut **rls.conn(), id, org_id, user_id, data)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to create compliance verification: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(|v| (StatusCode::CREATED, Json(v)))
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Requirement not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to create compliance verification", e))
+        .and_then(|opt| {
+            opt.map(|v| (StatusCode::CREATED, Json(v)))
+                .ok_or_else(|| not_found("Requirement not found"))
+        });
+    rls.release().await;
+    out
 }
 
 async fn list_verifications(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ComplianceVerification>>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_verifications(id, org_id)
+        .list_verifications(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to list compliance verifications: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Requirement not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to list compliance verifications", e))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Requirement not found"))
+        });
+    rls.release().await;
+    out
 }
 
 // ==================== Legal Notices ====================
 
 async fn create_notice(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Json(payload): Json<CreateNoticeRequest>,
 ) -> Result<(StatusCode, Json<LegalNotice>), (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .legal_repo
-        .create_notice(payload.organization_id, user.user_id, payload.data)
+        .create_notice(&mut **rls.conn(), org_id, user_id, payload.data)
         .await
         .map(|n| (StatusCode::CREATED, Json(n)))
-        .map_err(|e| {
-            tracing::error!("Failed to create legal notice: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to create legal notice", e));
+    rls.release().await;
+    out
 }
 
 async fn list_notices(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListNoticesQuery>,
 ) -> Result<Json<Vec<LegalNotice>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_notices(query.organization_id, (&query).into())
+        .list_notices(&mut **rls.conn(), org_id, (&query).into())
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list legal notices: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to list legal notices", e));
+    rls.release().await;
+    out
 }
 
 async fn list_notices_with_recipients(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListNoticesQuery>,
 ) -> Result<Json<Vec<NoticeWithRecipients>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_notices_with_recipients(query.organization_id, (&query).into())
+        .list_notices_with_recipients(&mut **rls.conn(), org_id, (&query).into())
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list legal notices: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to list legal notices", e));
+    rls.release().await;
+    out
 }
 
 async fn get_notice_statistics(
     State(state): State<AppState>,
-    _user: AuthUser,
-    Query(query): Query<OrgQuery>,
+    mut rls: RlsConnection,
 ) -> Result<Json<NoticeStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .get_notice_statistics(query.organization_id)
+        .get_notice_statistics(&mut **rls.conn(), org_id)
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to get notice statistics: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to get notice statistics", e));
+    rls.release().await;
+    out
 }
 
 async fn get_notice(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<LegalNotice>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .find_notice_by_id(id, org_id)
+        .find_notice_by_id(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to get legal notice: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Notice not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to get legal notice", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Notice not found")));
+    rls.release().await;
+    out
 }
 
 async fn update_notice(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateLegalNotice>,
 ) -> Result<Json<LegalNotice>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .update_notice(id, org_id, data)
+        .update_notice(&mut **rls.conn(), id, org_id, data)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to update legal notice: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Notice not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to update legal notice", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Notice not found")));
+    rls.release().await;
+    out
 }
 
 async fn delete_notice(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .delete_notice(id, org_id)
+        .delete_notice(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to delete legal notice: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Notice not found")),
-        ))
-    }
+        .map_err(|e| db_error("Failed to delete legal notice", e))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Notice not found"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 async fn send_notice(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<LegalNotice>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .send_notice(id, org_id)
+        .send_notice(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to send legal notice: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Notice not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to send legal notice", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Notice not found")));
+    rls.release().await;
+    out
 }
 
 // ==================== Notice Recipients ====================
 
 async fn list_recipients(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<LegalNoticeRecipient>>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_notice_recipients(id, org_id)
+        .list_notice_recipients(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to list notice recipients: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Notice not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to list notice recipients", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Notice not found")));
+    rls.release().await;
+    out
 }
 
 async fn acknowledge_notice(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path((notice_id, recipient_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<AcknowledgeNotice>,
 ) -> Result<Json<LegalNoticeRecipient>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .acknowledge_notice(notice_id, recipient_id, org_id, data)
+        .acknowledge_notice(&mut **rls.conn(), notice_id, recipient_id, org_id, data)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to acknowledge notice: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "NOT_FOUND",
-                    "Notice or recipient not found",
-                )),
-            )
-        })
+        .map_err(|e| db_error("Failed to acknowledge notice", e))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Notice or recipient not found"))
+        });
+    rls.release().await;
+    out
 }
 
 // ==================== Compliance Templates ====================
 
 async fn create_template(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Json(payload): Json<CreateTemplateRequest>,
 ) -> Result<(StatusCode, Json<ComplianceTemplate>), (StatusCode, Json<ErrorResponse>)> {
-    state
+    // Authoritative org is the caller's tenant; a tenant cannot create a global
+    // (NULL-org) system template through this endpoint.
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .create_template(payload.organization_id, payload.data)
+        .create_template(&mut **rls.conn(), Some(org_id), payload.data)
         .await
         .map(|t| (StatusCode::CREATED, Json(t)))
-        .map_err(|e| {
-            tracing::error!("Failed to create compliance template: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to create compliance template", e));
+    rls.release().await;
+    out
 }
 
 async fn list_templates(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListTemplatesQuery>,
 ) -> Result<Json<Vec<ComplianceTemplate>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .list_templates(query.organization_id, query.category)
+        .list_templates(&mut **rls.conn(), org_id, query.category)
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list compliance templates: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to list compliance templates", e));
+    rls.release().await;
+    out
 }
 
 async fn get_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ComplianceTemplate>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .find_template_by_id(id, org_id)
+        .find_template_by_id(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to get compliance template: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Template not found")),
-            )
-        })
+        .map_err(|e| db_error("Failed to get compliance template", e))
+        .and_then(|opt| opt.map(Json).ok_or_else(|| not_found("Template not found")));
+    rls.release().await;
+    out
 }
 
 async fn update_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateComplianceTemplate>,
 ) -> Result<Json<ComplianceTemplate>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .update_template(id, org_id, data)
+        .update_template(&mut **rls.conn(), id, org_id, data)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to update compliance template: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new(
-                    "NOT_FOUND",
-                    "Template not found (or is system template)",
-                )),
-            )
-        })
+        .map_err(|e| db_error("Failed to update compliance template", e))
+        .and_then(|opt| {
+            opt.map(Json)
+                .ok_or_else(|| not_found("Template not found (or is system template)"))
+        });
+    rls.release().await;
+    out
 }
 
 async fn delete_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .delete_template(id, org_id)
+        .delete_template(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to delete compliance template: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "NOT_FOUND",
-                "Template not found (or is system template)",
-            )),
-        ))
-    }
+        .map_err(|e| db_error("Failed to delete compliance template", e))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Template not found (or is system template)"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 async fn apply_template(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Json(payload): Json<ApplyTemplateRequest>,
 ) -> Result<(StatusCode, Json<Vec<ComplianceRequirement>>), (StatusCode, Json<ErrorResponse>)> {
-    let org_id = org_context(&user)?;
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
-        .apply_template(org_id, payload.data)
+        .apply_template(&mut **rls.conn(), org_id, payload.data)
         .await
         .map(|r| (StatusCode::CREATED, Json(r)))
-        .map_err(|e| {
-            tracing::error!("Failed to apply compliance template: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to apply compliance template", e));
+    rls.release().await;
+    out
 }
 
 // ==================== Audit Trail ====================
 
 async fn list_audit_trail(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<AuditTrailQuery>,
 ) -> Result<Json<Vec<ComplianceAuditTrail>>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .legal_repo
         .list_audit_trail(
-            query.organization_id,
+            &mut **rls.conn(),
+            org_id,
             query.requirement_id,
             query.document_id,
             query.notice_id,
@@ -1105,30 +908,24 @@ async fn list_audit_trail(
         )
         .await
         .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to list audit trail: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to list audit trail", e));
+    rls.release().await;
+    out
 }
 
 async fn create_audit_entry(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Json(payload): Json<CreateAuditRequest>,
 ) -> Result<(StatusCode, Json<ComplianceAuditTrail>), (StatusCode, Json<ErrorResponse>)> {
-    state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .legal_repo
-        .create_audit_entry(payload.organization_id, user.user_id, payload.data)
+        .create_audit_entry(&mut **rls.conn(), org_id, user_id, payload.data)
         .await
         .map(|a| (StatusCode::CREATED, Json(a)))
-        .map_err(|e| {
-            tracing::error!("Failed to create audit entry: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })
+        .map_err(|e| db_error("Failed to create audit entry", e));
+    rls.release().await;
+    out
 }

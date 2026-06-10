@@ -8,7 +8,7 @@ implementations:
   ios-swiftui:
     component: ListingDetailView
     route: Route.listingDetail(id:)
-    buildStatus: in-progress
+    buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
@@ -54,8 +54,9 @@ owner: reality-frontend
 - [x] [m] Share button (system share sheet)
 - [x] [m] Loading state (ProgressView in NavigationStack)
 - [x] [m] Error state with retry
-- [ ] [m] Full-screen photo gallery (Route.listingGallery in Route enum, NavigationCoordinator case handled, but destination is stub Text view)
-- [ ] [m] Map full-screen expansion (Route.listingMap destination is stub Text view)
+- [x] [m] Full-screen photo gallery — implemented inline via `.fullScreenCover` (`PhotoGalleryView`) with paged `TabView`, pinch-to-zoom + double-tap-to-zoom (`ZoomablePhotoPage`). The legacy `Route.listingGallery` route is no longer used by this surface.
+- [x] [m] Inline map preview in location section (non-interactive `Map`, marker, falls back to placeholder when lat/long absent)
+- [x] [m] Map full-screen expansion — `Route.listingMap` now resolves to `ListingMapView` (MapKit `Map` + marker + "Get Directions" hand-off to Apple Maps). Previously a stub `Text` view.
 - [ ] [m] Price history chart (not implemented)
 
 ## States
@@ -72,10 +73,14 @@ Detail view accessible from HomeView (featured/recent cards), SearchView (search
 
 ### Specific (recent)
 
-- Favorite toggle calls `favoritesRepository.addFavorite` / `removeFavorite` via `DependencyContainer.shared.favoritesRepository`. No optimistic update currently — state refreshed after server response.
-- `Route.listingGallery` and `Route.listingMap` are registered in both `Route.swift` and `NavigationCoordinator.navigate()` but destination views in `MainTabView.destinationView()` are stub `Text` placeholders.
+- Favorite toggle is now driven by the app-wide `FavoritesService` (`@Environment`), shared with `FavoritesView`. The service applies an **optimistic** update with automatic revert on server error, so the heart reflects the new state immediately (delivered in PR #641). The earlier "no optimistic update" note is obsolete.
+- Full-screen photo gallery is handled **inline** by a private `PhotoGalleryView` presented via `.fullScreenCover` (paged `TabView`, pinch + double-tap zoom). The `Route.listingGallery` enum case is now effectively dead for this surface; `MainTabView.destinationView(.listingGallery)` is still a stub `Text` placeholder but is unreachable from listing-detail.
+- `Route.listingMap` destination is now the real `ListingMapView` (`Features/Listing/ListingMapView.swift`): a MapKit `Map` with a marker for the listing coordinate and a "Get Directions" button that hands off to Apple Maps via `MKMapItem.openInMaps`. It re-fetches the listing by id (route only carries the id) reusing `listingRepository` + `KMPBridge.toListingDetail`. The detail screen's location section now shows a non-interactive inline `Map` preview (tappable → `ListingMapView`) with a placeholder fallback when lat/long are nil.
+- New i18n key added across all 6 locales (`en/sk/cs/de/pl/hu`): `get_directions`. The map empty-state reuses the existing `location_unavailable` key (no duplicate added).
+- `ListingMapView.swift` is auto-included by XcodeGen (`project.yml` globs `sources: - path: iosApp`); no `project.pbxproj` edit required.
 
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Listing/ListingDetailView.swift (epic-82 story 82.4). Gallery and map stub gaps noted.
 - 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.
+- 2026-06-09 — agent: coverage 82-4 polish — implemented `ListingMapView` (MapKit) replacing the `Route.listingMap` stub, added inline non-interactive map preview to the detail location section, added the `get_directions` string to all 6 locales (map empty-state reuses the existing `location_unavailable` key). Reconciled stale checklist/notes: full-screen gallery and optimistic favorites are DONE (delivered inline + via FavoritesService/PR #641). Flipped `buildStatus: in-progress → shipped`. Swift/MapKit authored without a mac; needs `xcodegen generate` + `xcodebuild` on macOS to compile-verify.
