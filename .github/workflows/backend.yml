@@ -48,11 +48,15 @@ jobs:
         working-directory: backend
         run: cargo fmt --all -- --check
 
+      # `--all-targets` includes test/bench targets — without it, test-only
+      # lint debt lands silently and the documented local pre-flight
+      # (`cargo clippy --workspace --all-targets -- -D warnings`) diverges
+      # from CI (PAP-124).
       - name: Clippy
         working-directory: backend
         env:
           SQLX_OFFLINE: true
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: RLS Enforcement Check
         working-directory: backend
