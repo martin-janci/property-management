@@ -195,13 +195,13 @@ async fn repo_risk_model_is_scoped_to_owning_org(pool: PgPool) {
 
     let repo = EnhancedTenantScreeningRepository::new(pool.clone());
     let model_a = repo
-        .create_risk_model(org_a, user_a, sample_model("Model A"))
+        .create_risk_model(&pool, org_a, user_a, sample_model("Model A"))
         .await
         .expect("create model A");
 
     // The owning org reads its model.
     let own = repo
-        .get_risk_model(org_a, model_a.id)
+        .get_risk_model(&pool, org_a, model_a.id)
         .await
         .expect("get model with right org");
     assert!(own.is_some(), "org A must read its own risk model by id");
@@ -209,7 +209,7 @@ async fn repo_risk_model_is_scoped_to_owning_org(pool: PgPool) {
 
     // A foreign org gets nothing (closed IDOR).
     let cross = repo
-        .get_risk_model(org_b, model_a.id)
+        .get_risk_model(&pool, org_b, model_a.id)
         .await
         .expect("get model with wrong org");
     assert!(
@@ -229,19 +229,19 @@ async fn repo_provider_config_is_scoped_to_owning_org(pool: PgPool) {
 
     let repo = EnhancedTenantScreeningRepository::new(pool.clone());
     let config_a = repo
-        .create_provider_config(org_a, sample_provider("Provider A"))
+        .create_provider_config(&pool, org_a, sample_provider("Provider A"))
         .await
         .expect("create provider A");
 
     let own = repo
-        .get_provider_config(org_a, config_a.id)
+        .get_provider_config(&pool, org_a, config_a.id)
         .await
         .expect("get config with right org");
     assert!(own.is_some(), "org A must read its own provider config");
     assert_eq!(own.unwrap().id, config_a.id);
 
     let cross = repo
-        .get_provider_config(org_b, config_a.id)
+        .get_provider_config(&pool, org_b, config_a.id)
         .await
         .expect("get config with wrong org");
     assert!(
@@ -262,7 +262,7 @@ async fn repo_ai_result_is_scoped_to_owning_org(pool: PgPool) {
     let user_a = seed_user(&pool, "ai-a@screening-idor.test").await;
     let repo = EnhancedTenantScreeningRepository::new(pool.clone());
     let model_a = repo
-        .create_risk_model(org_a, user_a, sample_model("AI Model A"))
+        .create_risk_model(&pool, org_a, user_a, sample_model("AI Model A"))
         .await
         .expect("create model A");
     let screening_a = seed_screening(&pool, org_a, "ai-a").await;
@@ -270,7 +270,7 @@ async fn repo_ai_result_is_scoped_to_owning_org(pool: PgPool) {
 
     // The owning org reads the AI result for its screening.
     let own = repo
-        .get_ai_result_by_screening(org_a, screening_a)
+        .get_ai_result_by_screening(&pool, org_a, screening_a)
         .await
         .expect("get ai result with right org");
     assert!(own.is_some(), "org A must read its own screening AI result");
@@ -278,7 +278,7 @@ async fn repo_ai_result_is_scoped_to_owning_org(pool: PgPool) {
 
     // A foreign org gets nothing — the risk score / recommendation never leaks.
     let cross = repo
-        .get_ai_result_by_screening(org_b, screening_a)
+        .get_ai_result_by_screening(&pool, org_b, screening_a)
         .await
         .expect("get ai result with wrong org");
     assert!(
@@ -286,9 +286,12 @@ async fn repo_ai_result_is_scoped_to_owning_org(pool: PgPool) {
         "org B must not read org A's screening AI result"
     );
 
+    // The complete-data aggregate (multi-statement) takes a connection.
+    let mut conn = pool.acquire().await.expect("acquire conn");
+
     // The complete-data aggregate is likewise closed for the foreign org.
     let cross_complete = repo
-        .get_complete_screening_data(org_b, screening_a)
+        .get_complete_screening_data(&mut *conn, org_b, screening_a)
         .await
         .expect("complete data with wrong org");
     assert!(
@@ -298,7 +301,7 @@ async fn repo_ai_result_is_scoped_to_owning_org(pool: PgPool) {
 
     // ...and open for the owner.
     let own_complete = repo
-        .get_complete_screening_data(org_a, screening_a)
+        .get_complete_screening_data(&mut *conn, org_a, screening_a)
         .await
         .expect("complete data with right org");
     assert!(

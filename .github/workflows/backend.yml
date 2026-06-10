@@ -16,6 +16,12 @@ on:
   # Weekly security tests (Story 80.1)
   schedule:
     - cron: '0 3 * * 0'  # Every Sunday at 3am UTC
+  # Manual gate verification. Version-bump pushes use GITHUB_TOKEN and
+  # never trigger this workflow, so a fix that lands just before a bump
+  # can leave dev's tip with no Backend run at all (PAP-123) — this
+  # gives maintainers a direct lever instead of waiting for the next
+  # backend/** merge.
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -141,7 +147,10 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           RUST_ENV: development
-        run: cargo test --workspace
+        # --no-fail-fast: report every failing test binary in one run.
+        # Without it, one red binary masks all later ones (alphabetical
+        # order), so the gate peels failures one merge at a time (PAP-123).
+        run: cargo test --workspace --no-fail-fast
 
       # WS pub/sub fanout — closes issue #681. The test
       # `ws_pubsub_fanout_delivers_to_correct_subscriber` in

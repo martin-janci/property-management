@@ -9,10 +9,10 @@
 import type {
   ConsumptionHistoryResponse,
   ConsumptionQuery,
+  ListMeterReadingsResponse,
   ListMetersQuery,
   ListMetersResponse,
   ListReadingsQuery,
-  ListMeterReadingsResponse,
   Meter,
   MeterReading,
   MeterResponse,

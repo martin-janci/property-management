@@ -273,6 +273,7 @@
 "loading_listing" = "Načítava sa ponuka...";
 "failed_to_load_listing" = "Nepodarilo sa načítať ponuku";
 "view_on_map" = "Zobraziť na mape";
+"get_directions" = "Navigovať";
 "contact_via_inquiry" = "Kontaktovať cez dopyt";
 "send_inquiry" = "Odoslať dopyt";
 "property" = "Nehnuteľnosť";

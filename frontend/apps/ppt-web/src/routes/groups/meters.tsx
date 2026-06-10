@@ -31,7 +31,6 @@ import { useQueries } from '@tanstack/react-query';
 import { lazy } from 'react';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
-import { useOrganization } from '../../hooks/useOrganization';
 import type {
   Meter as UiMeter,
   MeterReading as UiMeterReading,
@@ -40,6 +39,7 @@ import type {
   ReadingStatus as UiReadingStatus,
   ValidationResult,
 } from '../../features/meters/types';
+import { useOrganization } from '../../hooks/useOrganization';
 
 // Meters feature pages (Epic 12) — lazy-loaded for code splitting.
 const MetersPage = lazy(() =>
@@ -114,8 +114,7 @@ function mapApiMeterToUi(meter: ApiMeter): UiMeter {
     unit: meter.unit_of_measure as UiMeterUnit,
     location: meter.location ?? undefined,
     installationDate: meter.installed_at ?? undefined,
-    lastReadingValue:
-      meter.current_reading != null ? Number(meter.current_reading) : undefined,
+    lastReadingValue: meter.current_reading != null ? Number(meter.current_reading) : undefined,
     lastReadingDate: meter.last_reading_date ?? undefined,
     isActive: meter.is_active,
     createdAt: meter.created_at,
@@ -140,7 +139,7 @@ function mapApiReadingToUi(reading: ApiMeterReading): UiMeterReading {
     validatedById: reading.validated_by ?? undefined,
     validatedAt: reading.validated_at ?? undefined,
     rejectionReason:
-      reading.status === 'rejected' ? reading.validation_notes ?? undefined : undefined,
+      reading.status === 'rejected' ? (reading.validation_notes ?? undefined) : undefined,
     notes: reading.validation_notes ?? undefined,
     createdAt: reading.created_at,
     updatedAt: reading.updated_at,
@@ -263,12 +262,7 @@ function EditReadingPageRoute() {
   const readingQuery = useReading(readingId);
   const submitReading = useSubmitReading();
 
-  if (
-    meterQuery.isLoading ||
-    readingQuery.isLoading ||
-    !meterQuery.data ||
-    !readingQuery.data
-  ) {
+  if (meterQuery.isLoading || readingQuery.isLoading || !meterQuery.data || !readingQuery.data) {
     const isLoading = meterQuery.isLoading || readingQuery.isLoading;
     return (
       <MeterLoadingNotice
@@ -374,13 +368,7 @@ function ReadingComparisonPageRoute() {
  * Lightweight loading / not-found notice for single-entity routes while their
  * fetch is in flight (or when the entity is missing).
  */
-function MeterLoadingNotice({
-  onBack,
-  isLoading,
-}: {
-  onBack: () => void;
-  isLoading?: boolean;
-}) {
+function MeterLoadingNotice({ onBack, isLoading }: { onBack: () => void; isLoading?: boolean }) {
   return (
     <div className="mx-auto max-w-md py-16 text-center">
       <h1 className="text-lg font-semibold text-gray-900">

@@ -1,22 +1,43 @@
 // Epic 135: Enhanced Tenant Screening with AI Risk Scoring
 // Repository for AI-powered tenant screening operations
+//
+// # RLS Integration (PAP-67 / PAP-74)
+//
+// Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+// `get_current_org_id()` policy on the screening tables (`screening_*`,
+// `ai_risk_scoring_models`). Under `FORCE` the api-server's owner connection is
+// no longer exempt, so a query issued on a connection without
+// `app.current_org_id` set collapses to deny-all (own-org reads return empty,
+// writes fail).
+//
+// Every method therefore takes an **executor whose connection already has RLS
+// context set** (org + user GUCs) — in handlers this comes from the
+// `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+// pool**, so there is no way to issue a query that bypasses RLS. This mirrors
+// the `work_order.rs` / `budget.rs` precedent.
 
 use rust_decimal::Decimal;
-use sqlx::PgPool;
+use sqlx::{Acquire, Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 use crate::models::enhanced_tenant_screening::*;
 
 /// Repository for enhanced tenant screening operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Debug, Clone)]
-pub struct EnhancedTenantScreeningRepository {
-    pool: PgPool,
-}
+pub struct EnhancedTenantScreeningRepository;
 
 impl EnhancedTenantScreeningRepository {
     /// Create a new repository instance.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // =========================================================================
@@ -24,12 +45,16 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create a new AI risk scoring model.
-    pub async fn create_risk_model(
+    pub async fn create_risk_model<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         req: CreateAiRiskScoringModel,
-    ) -> Result<AiRiskScoringModel, sqlx::Error> {
+    ) -> Result<AiRiskScoringModel, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO ai_risk_scoring_models (
@@ -86,58 +111,79 @@ impl EnhancedTenantScreeningRepository {
         .bind(req.poor_threshold.unwrap_or(20))
         .bind(req.auto_approve_threshold)
         .bind(req.auto_reject_threshold)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get AI risk scoring model by ID, scoped to the owning organization.
     ///
     /// Issue #834 (cross-tenant PII): models carry provider weighting / scoring
-    /// configuration. The `organization_id = $2` predicate stops a caller from
-    /// another org reading a foreign model by guessing its UUID.
-    pub async fn get_risk_model(
+    /// configuration. The `organization_id = $2` predicate is defense-in-depth
+    /// alongside RLS — under FORCE-RLS a foreign model is already invisible.
+    pub async fn get_risk_model<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         id: Uuid,
-    ) -> Result<Option<AiRiskScoringModel>, sqlx::Error> {
+    ) -> Result<Option<AiRiskScoringModel>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM ai_risk_scoring_models WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Get active AI risk scoring model for organization.
-    pub async fn get_active_risk_model(
+    pub async fn get_active_risk_model<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Option<AiRiskScoringModel>, sqlx::Error> {
+    ) -> Result<Option<AiRiskScoringModel>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM ai_risk_scoring_models WHERE organization_id = $1 AND is_active = true",
         )
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List all risk models for organization.
-    pub async fn list_risk_models(
+    pub async fn list_risk_models<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Vec<AiRiskScoringModel>, sqlx::Error> {
+    ) -> Result<Vec<AiRiskScoringModel>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM ai_risk_scoring_models WHERE organization_id = $1 ORDER BY created_at DESC",
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Activate a risk model (deactivates others).
-    pub async fn activate_risk_model(&self, org_id: Uuid, id: Uuid) -> Result<(), sqlx::Error> {
-        let mut tx = self.pool.begin().await?;
+    ///
+    /// Multi-statement (deactivate-all then activate-one), so it takes a
+    /// connection and runs both writes inside a transaction on that
+    /// RLS-context-bearing connection.
+    pub async fn activate_risk_model(
+        &self,
+        conn: &mut PgConnection,
+        org_id: Uuid,
+        id: Uuid,
+    ) -> Result<(), sqlx::Error> {
+        let mut tx = conn.begin().await?;
 
         // Deactivate all models for org
         sqlx::query(
@@ -160,10 +206,15 @@ impl EnhancedTenantScreeningRepository {
     }
 
     /// Delete a risk model.
-    pub async fn delete_risk_model(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    ///
+    /// RLS scopes the delete to the caller's org; a foreign id matches no row.
+    pub async fn delete_risk_model<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM ai_risk_scoring_models WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -173,11 +224,15 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create screening provider config.
-    pub async fn create_provider_config(
+    pub async fn create_provider_config<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         req: CreateScreeningProviderConfig,
-    ) -> Result<ScreeningProviderConfig, sqlx::Error> {
+    ) -> Result<ScreeningProviderConfig, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Note: In production, encrypt api_key and api_secret before storing
         sqlx::query_as(
             r#"
@@ -196,7 +251,7 @@ impl EnhancedTenantScreeningRepository {
         .bind(req.rate_limit_per_hour.unwrap_or(100))
         .bind(req.priority.unwrap_or(1))
         .bind(req.cost_per_check)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -205,39 +260,51 @@ impl EnhancedTenantScreeningRepository {
     /// Issue #834: provider configs hold third-party integration settings
     /// (endpoints, rate limits, cost). Scope by org so a foreign caller cannot
     /// read another tenant's provider wiring by UUID.
-    pub async fn get_provider_config(
+    pub async fn get_provider_config<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         id: Uuid,
-    ) -> Result<Option<ScreeningProviderConfig>, sqlx::Error> {
+    ) -> Result<Option<ScreeningProviderConfig>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM screening_provider_configs WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List provider configs for organization.
-    pub async fn list_provider_configs(
+    pub async fn list_provider_configs<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Vec<ScreeningProviderConfig>, sqlx::Error> {
+    ) -> Result<Vec<ScreeningProviderConfig>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM screening_provider_configs WHERE organization_id = $1 ORDER BY priority",
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// List active provider configs by type.
-    pub async fn list_active_providers_by_type(
+    pub async fn list_active_providers_by_type<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         provider_type: ScreeningProviderType,
-    ) -> Result<Vec<ScreeningProviderConfig>, sqlx::Error> {
+    ) -> Result<Vec<ScreeningProviderConfig>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM screening_provider_configs
@@ -247,17 +314,23 @@ impl EnhancedTenantScreeningRepository {
         )
         .bind(org_id)
         .bind(provider_type)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update provider status.
-    pub async fn update_provider_status(
+    ///
+    /// RLS scopes the update to the caller's org; a foreign id matches no row.
+    pub async fn update_provider_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: ProviderIntegrationStatus,
         error_message: Option<&str>,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query(
             r#"
             UPDATE screening_provider_configs
@@ -268,16 +341,25 @@ impl EnhancedTenantScreeningRepository {
         .bind(id)
         .bind(status)
         .bind(error_message)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(())
     }
 
     /// Delete provider config.
-    pub async fn delete_provider_config(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    ///
+    /// RLS scopes the delete to the caller's org; a foreign id matches no row.
+    pub async fn delete_provider_config<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM screening_provider_configs WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -287,13 +369,17 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create AI screening result.
-    pub async fn create_ai_result(
+    pub async fn create_ai_result<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         screening_id: Uuid,
         model: &AiRiskScoringModel,
         component_scores: ComponentScores,
-    ) -> Result<ScreeningAiResult, sqlx::Error> {
+    ) -> Result<ScreeningAiResult, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Calculate weighted score
         let ai_risk_score = calculate_weighted_score(model, &component_scores);
         let risk_category = AiRiskCategory::from_score(ai_risk_score, model);
@@ -327,45 +413,59 @@ impl EnhancedTenantScreeningRepository {
         .bind(component_scores.reference_quality)
         .bind(&recommendation)
         .bind(get_recommendation_reason(ai_risk_score, &risk_category))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get AI result by screening ID.
     /// Get the AI result for a screening, scoped to the owning organization.
     ///
     /// Issue #834 (cross-tenant PII): AI results carry risk scores and
     /// recommendations. Scoping by `organization_id` closes the IDOR where any
     /// org could read another org's result by guessing the screening UUID.
-    pub async fn get_ai_result_by_screening(
+    pub async fn get_ai_result_by_screening<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         screening_id: Uuid,
-    ) -> Result<Option<ScreeningAiResult>, sqlx::Error> {
+    ) -> Result<Option<ScreeningAiResult>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM screening_ai_results WHERE screening_id = $1 AND organization_id = $2",
         )
         .bind(screening_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Get AI result by ID.
-    pub async fn get_ai_result(&self, id: Uuid) -> Result<Option<ScreeningAiResult>, sqlx::Error> {
+    pub async fn get_ai_result<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<ScreeningAiResult>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM screening_ai_results WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List AI results for organization.
-    pub async fn list_ai_results(
+    pub async fn list_ai_results<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         limit: i32,
         offset: i32,
-    ) -> Result<Vec<ScreeningAiResult>, sqlx::Error> {
+    ) -> Result<Vec<ScreeningAiResult>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM screening_ai_results
@@ -377,7 +477,7 @@ impl EnhancedTenantScreeningRepository {
         .bind(org_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -386,11 +486,15 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create risk factor.
-    pub async fn create_risk_factor(
+    pub async fn create_risk_factor<'e, E>(
         &self,
+        executor: E,
         ai_result_id: Uuid,
         req: CreateScreeningRiskFactor,
-    ) -> Result<ScreeningRiskFactor, sqlx::Error> {
+    ) -> Result<ScreeningRiskFactor, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO screening_risk_factors (
@@ -412,28 +516,36 @@ impl EnhancedTenantScreeningRepository {
         .bind(&req.source_data)
         .bind(req.is_compliant)
         .bind(&req.compliance_notes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get risk factors for AI result.
-    pub async fn get_risk_factors(
+    pub async fn get_risk_factors<'e, E>(
         &self,
+        executor: E,
         ai_result_id: Uuid,
-    ) -> Result<Vec<ScreeningRiskFactor>, sqlx::Error> {
+    ) -> Result<Vec<ScreeningRiskFactor>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM screening_risk_factors WHERE ai_result_id = $1 ORDER BY score_impact DESC",
         )
         .bind(ai_result_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get negative/critical risk factors.
-    pub async fn get_negative_risk_factors(
+    pub async fn get_negative_risk_factors<'e, E>(
         &self,
+        executor: E,
         ai_result_id: Uuid,
-    ) -> Result<Vec<ScreeningRiskFactor>, sqlx::Error> {
+    ) -> Result<Vec<ScreeningRiskFactor>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM screening_risk_factors
@@ -442,7 +554,7 @@ impl EnhancedTenantScreeningRepository {
             "#,
         )
         .bind(ai_result_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -451,11 +563,15 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create credit result.
-    pub async fn create_credit_result(
+    pub async fn create_credit_result<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         req: CreateScreeningCreditResult,
-    ) -> Result<ScreeningCreditResult, sqlx::Error> {
+    ) -> Result<ScreeningCreditResult, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO screening_credit_results (
@@ -491,25 +607,28 @@ impl EnhancedTenantScreeningRepository {
         .bind(req.bankruptcies_count)
         .bind(req.most_recent_bankruptcy_date)
         .bind(req.public_records_count)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get credit result by screening ID.
     /// Get the credit result for a screening, scoped to the owning organization.
     ///
     /// Issue #834: credit results are sensitive PII (FICO scores, accounts).
-    pub async fn get_credit_result_by_screening(
+    pub async fn get_credit_result_by_screening<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         screening_id: Uuid,
-    ) -> Result<Option<ScreeningCreditResult>, sqlx::Error> {
+    ) -> Result<Option<ScreeningCreditResult>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM screening_credit_results WHERE screening_id = $1 AND organization_id = $2",
         )
         .bind(screening_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -518,11 +637,15 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create background result.
-    pub async fn create_background_result(
+    pub async fn create_background_result<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         req: CreateScreeningBackgroundResult,
-    ) -> Result<ScreeningBackgroundResult, sqlx::Error> {
+    ) -> Result<ScreeningBackgroundResult, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO screening_background_results (
@@ -550,7 +673,7 @@ impl EnhancedTenantScreeningRepository {
         .bind(req.identity_match_score)
         .bind(req.ssn_verified)
         .bind(req.address_history_verified)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -558,17 +681,21 @@ impl EnhancedTenantScreeningRepository {
     ///
     /// Issue #834: background results are sensitive PII (criminal records,
     /// identity verification).
-    pub async fn get_background_result_by_screening(
+    pub async fn get_background_result_by_screening<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         screening_id: Uuid,
-    ) -> Result<Option<ScreeningBackgroundResult>, sqlx::Error> {
+    ) -> Result<Option<ScreeningBackgroundResult>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM screening_background_results WHERE screening_id = $1 AND organization_id = $2",
         )
         .bind(screening_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -577,11 +704,15 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create eviction result.
-    pub async fn create_eviction_result(
+    pub async fn create_eviction_result<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         req: CreateScreeningEvictionResult,
-    ) -> Result<ScreeningEvictionResult, sqlx::Error> {
+    ) -> Result<ScreeningEvictionResult, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO screening_eviction_results (
@@ -602,24 +733,28 @@ impl EnhancedTenantScreeningRepository {
         .bind(req.most_recent_eviction_date)
         .bind(&req.eviction_records)
         .bind(req.unlawful_detainer_count)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get eviction result by screening ID, scoped to the owning organization.
     ///
     /// Issue #834: eviction history is sensitive PII.
-    pub async fn get_eviction_result_by_screening(
+    pub async fn get_eviction_result_by_screening<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         screening_id: Uuid,
-    ) -> Result<Option<ScreeningEvictionResult>, sqlx::Error> {
+    ) -> Result<Option<ScreeningEvictionResult>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM screening_eviction_results WHERE screening_id = $1 AND organization_id = $2",
         )
         .bind(screening_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -628,11 +763,15 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create queue item.
-    pub async fn create_queue_item(
+    pub async fn create_queue_item<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         req: CreateScreeningQueueItem,
-    ) -> Result<ScreeningRequestQueueItem, sqlx::Error> {
+    ) -> Result<ScreeningRequestQueueItem, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO screening_request_queue (
@@ -647,15 +786,21 @@ impl EnhancedTenantScreeningRepository {
         .bind(req.check_type)
         .bind(req.provider_config_id)
         .bind(req.priority.unwrap_or(5))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get pending queue items.
-    pub async fn get_pending_queue_items(
+    ///
+    /// RLS scopes the rows to the caller's org under FORCE-RLS.
+    pub async fn get_pending_queue_items<'e, E>(
         &self,
+        executor: E,
         limit: i32,
-    ) -> Result<Vec<ScreeningRequestQueueItem>, sqlx::Error> {
+    ) -> Result<Vec<ScreeningRequestQueueItem>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM screening_request_queue
@@ -665,17 +810,24 @@ impl EnhancedTenantScreeningRepository {
             "#,
         )
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update queue item status.
-    pub async fn update_queue_item_status(
+    ///
+    /// Exactly one branch runs (one statement), so a generic executor suffices.
+    /// RLS scopes the update to the caller's org; a foreign id matches no row.
+    pub async fn update_queue_item_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         error: Option<&str>,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         match status {
             "processing" => {
                 sqlx::query(
@@ -683,7 +835,7 @@ impl EnhancedTenantScreeningRepository {
                 )
                 .bind(id)
                 .bind(status)
-                .execute(&self.pool)
+                .execute(executor)
                 .await?;
             }
             "completed" => {
@@ -692,7 +844,7 @@ impl EnhancedTenantScreeningRepository {
                 )
                 .bind(id)
                 .bind(status)
-                .execute(&self.pool)
+                .execute(executor)
                 .await?;
             }
             "failed" | "retry" => {
@@ -707,7 +859,7 @@ impl EnhancedTenantScreeningRepository {
                 .bind(id)
                 .bind(status)
                 .bind(error)
-                .execute(&self.pool)
+                .execute(executor)
                 .await?;
             }
             _ => {
@@ -716,7 +868,7 @@ impl EnhancedTenantScreeningRepository {
                 )
                 .bind(id)
                 .bind(status)
-                .execute(&self.pool)
+                .execute(executor)
                 .await?;
             }
         }
@@ -728,12 +880,16 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Create screening report.
-    pub async fn create_report(
+    pub async fn create_report<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         req: CreateScreeningReport,
-    ) -> Result<ScreeningReport, sqlx::Error> {
+    ) -> Result<ScreeningReport, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO screening_reports (
@@ -751,25 +907,28 @@ impl EnhancedTenantScreeningRepository {
         .bind(&req.file_url)
         .bind(req.file_size_bytes)
         .bind(&req.content_hash)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get reports for screening.
     /// Get reports for a screening, scoped to the owning organization.
     ///
     /// Issue #834: screening reports aggregate the sensitive PII above.
-    pub async fn get_reports_by_screening(
+    pub async fn get_reports_by_screening<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         screening_id: Uuid,
-    ) -> Result<Vec<ScreeningReport>, sqlx::Error> {
+    ) -> Result<Vec<ScreeningReport>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM screening_reports WHERE screening_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY generated_at DESC",
         )
         .bind(screening_id)
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -778,7 +937,14 @@ impl EnhancedTenantScreeningRepository {
     // =========================================================================
 
     /// Get screening statistics for organization.
-    pub async fn get_statistics(&self, org_id: Uuid) -> Result<ScreeningStatistics, sqlx::Error> {
+    pub async fn get_statistics<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<ScreeningStatistics, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT
@@ -794,15 +960,19 @@ impl EnhancedTenantScreeningRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get risk category distribution.
-    pub async fn get_risk_distribution(
+    pub async fn get_risk_distribution<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Vec<RiskCategoryDistribution>, sqlx::Error> {
+    ) -> Result<Vec<RiskCategoryDistribution>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             WITH totals AS (
@@ -819,7 +989,7 @@ impl EnhancedTenantScreeningRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -829,27 +999,31 @@ impl EnhancedTenantScreeningRepository {
     /// component lookup is org-scoped. `get_risk_factors` keys off the
     /// AI-result id, which is itself org-scoped above, so it needs no separate
     /// org predicate.
+    ///
+    /// Multi-call: composes the per-artefact helpers above, so it takes a
+    /// connection and reborrows `&mut *conn` for each query.
     pub async fn get_complete_screening_data(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         screening_id: Uuid,
     ) -> Result<CompleteScreeningData, sqlx::Error> {
         let ai_result = self
-            .get_ai_result_by_screening(org_id, screening_id)
+            .get_ai_result_by_screening(&mut *conn, org_id, screening_id)
             .await?;
         let risk_factors = if let Some(ref ai) = ai_result {
-            self.get_risk_factors(ai.id).await?
+            self.get_risk_factors(&mut *conn, ai.id).await?
         } else {
             vec![]
         };
         let credit_result = self
-            .get_credit_result_by_screening(org_id, screening_id)
+            .get_credit_result_by_screening(&mut *conn, org_id, screening_id)
             .await?;
         let background_result = self
-            .get_background_result_by_screening(org_id, screening_id)
+            .get_background_result_by_screening(&mut *conn, org_id, screening_id)
             .await?;
         let eviction_result = self
-            .get_eviction_result_by_screening(org_id, screening_id)
+            .get_eviction_result_by_screening(&mut *conn, org_id, screening_id)
             .await?;
 
         Ok(CompleteScreeningData {
