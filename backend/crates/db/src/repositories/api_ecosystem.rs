@@ -621,6 +621,12 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// List enhanced webhook subscriptions for an organization.
+    ///
+    /// Selects with the same column aliasing as the create/update RETURNING:
+    /// the DB schema (00102) has no `auth_type`/`status`/`retry_policy`/...
+    /// columns, so a `SELECT *` cannot decode into the enhanced model. This
+    /// was masked pre-fix because the raw-pool read returned zero rows under
+    /// FORCE RLS (deny-all) and never reached the decoder.
     pub async fn list_enhanced_webhooks<'e, E>(
         &self,
         executor: E,
@@ -631,7 +637,16 @@ impl ApiEcosystemRepository {
     {
         let subscriptions = sqlx::query_as::<_, EnhancedWebhookSubscription>(
             r#"
-            SELECT * FROM webhook_subscriptions
+            SELECT
+                id, organization_id, name, description, url,
+                'hmac_sha256' as auth_type, NULL::jsonb as auth_config,
+                events, NULL::jsonb as filters, NULL::jsonb as payload_template,
+                CASE WHEN is_active THEN 'active' ELSE 'inactive' END as status,
+                headers, retry_config as retry_policy,
+                NULL::int4 as rate_limit_requests, NULL::int4 as rate_limit_window_seconds,
+                30000 as timeout_ms, TRUE as verify_ssl,
+                created_by, created_at, updated_at
+            FROM webhook_subscriptions
             WHERE organization_id = $1
             ORDER BY created_at DESC
             "#,
@@ -647,7 +662,8 @@ impl ApiEcosystemRepository {
     /// Get a webhook subscription by ID.
     ///
     /// RLS scopes this by-id read to the connection's org: another org's
-    /// subscription is invisible and surfaces as `None` (`404`).
+    /// subscription is invisible and surfaces as `None` (`404`). Uses the
+    /// same column aliasing as [`Self::list_enhanced_webhooks`] — see there.
     pub async fn get_enhanced_webhook<'e, E>(
         &self,
         executor: E,
@@ -658,7 +674,16 @@ impl ApiEcosystemRepository {
     {
         let subscription = sqlx::query_as::<_, EnhancedWebhookSubscription>(
             r#"
-            SELECT * FROM webhook_subscriptions WHERE id = $1
+            SELECT
+                id, organization_id, name, description, url,
+                'hmac_sha256' as auth_type, NULL::jsonb as auth_config,
+                events, NULL::jsonb as filters, NULL::jsonb as payload_template,
+                CASE WHEN is_active THEN 'active' ELSE 'inactive' END as status,
+                headers, retry_config as retry_policy,
+                NULL::int4 as rate_limit_requests, NULL::int4 as rate_limit_window_seconds,
+                30000 as timeout_ms, TRUE as verify_ssl,
+                created_by, created_at, updated_at
+            FROM webhook_subscriptions WHERE id = $1
             "#,
         )
         .bind(id)
@@ -1131,9 +1156,26 @@ impl ApiEcosystemRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // Aliased projection: the 00102 `webhook_deliveries` schema has no
+        // `event_id`/`attempts`/`created_at`/... columns the enhanced model
+        // expects, so a `SELECT *` cannot decode (masked pre-fix by the
+        // FORCE-RLS deny-all returning zero rows).
         let logs = sqlx::query_as::<_, EnhancedWebhookDeliveryLog>(
             r#"
-            SELECT * FROM webhook_deliveries
+            SELECT
+                id, subscription_id, event_type,
+                id as event_id,
+                payload, NULL::jsonb as transformed_payload,
+                status,
+                attempt_number as attempts,
+                delivered_at as last_attempt_at,
+                next_retry_at,
+                NULL::jsonb as request_headers,
+                response_status, response_headers, response_body,
+                error_message, NULL::text as error_code,
+                duration_ms, NULL::text as ip_address,
+                delivered_at as created_at
+            FROM webhook_deliveries
             WHERE subscription_id = $1
             ORDER BY delivered_at DESC
             LIMIT $2 OFFSET $3
