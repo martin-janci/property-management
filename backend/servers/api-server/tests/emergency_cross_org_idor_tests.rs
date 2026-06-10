@@ -9,16 +9,18 @@
 //! `create_incident` (mass-notification + incident lifecycle) were not gated to
 //! managers.
 //!
-//! The fix threads the authenticated `user_id` through a `verify_org_access`
-//! membership check on every org-keyed path (403 for non-members) and gates the
-//! broadcast/incident-create + lifecycle actions behind `verify_org_manager`
-//! (403 for ordinary members). The repository's by-id queries are already keyed
-//! on `(id, organization_id)`, so once the org is verified a foreign UUID
-//! resolves to `None` → `404`.
+//! Since the PAP-80 RLS conversion, every emergency handler acquires an
+//! `RlsConnection`: the tenant comes from the validated `X-Tenant-ID` header
+//! (membership checked against `organization_members`, 403 for non-members),
+//! the client-supplied `organization_id` query/body value is ignored for
+//! scoping, and broadcast/incident lifecycle actions are gated on a manager
+//! role (403 for ordinary members). Repository queries stay keyed on
+//! `(id, organization_id)`, so a foreign UUID resolves to `None` → `404`.
 //!
 //! These tests exercise the HTTP surface end-to-end with real HS256 JWTs:
 //!   1. Seed two orgs (A, B), a member user in each, and a protocol in Org A.
-//!   2. Org B's member probes Org A's resources → rejected (403); no leak/write.
+//!   2. Org B's member targets Org A via `X-Tenant-ID` → rejected (403);
+//!      no leak/write.
 //!   3. Org A's member reads/writes its own org → allowed (2xx) — proving the
 //!      test establishes real org/tenant context (the membership row), so the
 //!      cross-org rejection is NOT a trivial "no context" pass.
@@ -137,7 +139,14 @@ async fn list_protocols_from_other_org_is_rejected(pool: PgPool) {
 
     let token_b = mint_token(user_b, "lst-b@emergency-idor.test");
     let uri = format!("/api/v1/emergency/protocols?organization_id={org_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
 
     assert_eq!(
         resp.status,
@@ -163,7 +172,14 @@ async fn get_protocol_from_other_org_is_rejected(pool: PgPool) {
     let token_b = mint_token(user_b, "get-b@emergency-idor.test");
     // Attacker supplies the VICTIM org id together with the victim protocol id.
     let uri = format!("/api/v1/emergency/protocols/{protocol_a}?organization_id={org_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
 
     assert_eq!(
         resp.status,
@@ -201,6 +217,7 @@ async fn create_protocol_for_other_org_is_rejected(pool: PgPool) {
         .execute(
             app.post("/api/v1/emergency/protocols")
                 .bearer(&token_b)
+                .header("X-Tenant-ID", &org_a.to_string())
                 .json(body)
                 .build(),
         )
@@ -237,7 +254,14 @@ async fn delete_protocol_from_other_org_is_rejected(pool: PgPool) {
 
     let token_b = mint_token(user_b, "del-b@emergency-idor.test");
     let uri = format!("/api/v1/emergency/protocols/{protocol_a}?organization_id={org_a}");
-    let resp = app.execute(app.delete(&uri).bearer(&token_b).build()).await;
+    let resp = app
+        .execute(
+            app.delete(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
 
     assert_eq!(
         resp.status,
@@ -280,6 +304,7 @@ async fn create_broadcast_as_plain_member_is_rejected(pool: PgPool) {
         .execute(
             app.post("/api/v1/emergency/broadcasts")
                 .bearer(&token)
+                .header("X-Tenant-ID", &org_a.to_string())
                 .json(body)
                 .build(),
         )
@@ -320,7 +345,14 @@ async fn get_protocol_for_own_org_succeeds(pool: PgPool) {
 
     let token_a = mint_token(user_a, "own-a@emergency-idor.test");
     let uri = format!("/api/v1/emergency/protocols/{protocol_a}?organization_id={org_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_a).build()).await;
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_a)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
 
     assert_eq!(
         resp.status,
@@ -365,6 +397,7 @@ async fn create_broadcast_as_manager_succeeds(pool: PgPool) {
         .execute(
             app.post("/api/v1/emergency/broadcasts")
                 .bearer(&token)
+                .header("X-Tenant-ID", &org_a.to_string())
                 .json(body)
                 .build(),
         )

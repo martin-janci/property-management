@@ -9,12 +9,13 @@
 //! caller belongs to it. A foreign caller could read/mutate any other org's
 //! vendor, contract or invoice by UUID, or list/write into an arbitrary org.
 //!
-//! The fix threads the authenticated `user_id` through a `verify_org_access`
-//! membership check on the org-keyed paths, and re-derives the org from the
-//! fetched row (`verify_vendor_access` / `verify_contract_access` /
-//! `verify_invoice_access`) for by-id resources — returning `404` on
-//! cross-tenant probes so "missing" and "forbidden" are indistinguishable, and
-//! `403` on org-keyed reads/writes.
+//! Since the PAP-80 RLS conversion, every vendor handler acquires an
+//! `RlsConnection`: the tenant comes from the validated `X-Tenant-ID` header
+//! (membership checked against `organization_members`, 403 for non-members)
+//! and the client-supplied `organization_id` is ignored for scoping. By-id
+//! queries stay keyed on `(id, organization_id)`, so a cross-tenant probe made
+//! with the attacker's own valid tenant context resolves to `None` → `404` —
+//! "missing" and "forbidden" remain indistinguishable.
 //!
 //! These tests exercise the HTTP surface end-to-end with real HS256 JWTs:
 //!   1. Seed two orgs (A, B), a member user in each, and a vendor in Org A.
@@ -144,7 +145,14 @@ async fn list_vendors_from_other_org_is_rejected(pool: PgPool) {
     // User B (member of Org B only) asks for Org A's vendors.
     let token_b = mint_token(user_b, "lst-b@vendor-idor.test");
     let uri = format!("/api/v1/vendors?organization_id={org_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
 
     assert_eq!(
         resp.status,
@@ -169,7 +177,16 @@ async fn get_vendor_from_other_org_is_rejected(pool: PgPool) {
 
     let token_b = mint_token(user_b, "get-b@vendor-idor.test");
     let uri = format!("/api/v1/vendors/{vendor_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+    // Valid context for the attacker's OWN org — the by-id probe must fail on
+    // row scoping (404), not on a missing tenant header.
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_b.to_string())
+                .build(),
+        )
+        .await;
 
     assert_rejected(resp.status, "get_vendor cross-tenant");
     // Specifically: must not 200 with Org A's vendor.
@@ -195,7 +212,14 @@ async fn delete_vendor_from_other_org_is_rejected(pool: PgPool) {
 
     let token_b = mint_token(user_b, "del-b@vendor-idor.test");
     let uri = format!("/api/v1/vendors/{vendor_a}");
-    let resp = app.execute(app.delete(&uri).bearer(&token_b).build()).await;
+    let resp = app
+        .execute(
+            app.delete(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_b.to_string())
+                .build(),
+        )
+        .await;
 
     assert_rejected(resp.status, "delete_vendor cross-tenant");
     assert_ne!(
@@ -233,6 +257,7 @@ async fn update_vendor_from_other_org_is_rejected(pool: PgPool) {
         .execute(
             RequestBuilder::new(Method::PATCH, &uri)
                 .bearer(&token_b)
+                .header("X-Tenant-ID", &org_b.to_string())
                 .json(body)
                 .build(),
         )
@@ -274,6 +299,7 @@ async fn create_vendor_for_other_org_is_rejected(pool: PgPool) {
         .execute(
             app.post("/api/v1/vendors")
                 .bearer(&token_b)
+                .header("X-Tenant-ID", &org_a.to_string())
                 .json(body)
                 .build(),
         )
@@ -309,7 +335,14 @@ async fn get_vendor_for_own_org_succeeds(pool: PgPool) {
 
     let token_a = mint_token(user_a, "own-a@vendor-idor.test");
     let uri = format!("/api/v1/vendors/{vendor_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_a).build()).await;
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_a)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
 
     assert_eq!(
         resp.status,
