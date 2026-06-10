@@ -2,145 +2,11 @@
   "generated": "2026-06-08T06:56:42Z",
   "items": [
     {
-      "id": "gap-8a-3-notification-preference-sync-retry",
-      "action": "[DISPATCHER-DONE 2026-06-07T08:28:01Z: already-implemented on dev - per-channel persistence + login GET snapshot + WS pubsub sync live (PR #472, migration 00177); remaining 8A.3 mobile-push leg tracked separately as gap-8a-3-mobile-push] [retry of gap-8a-3-notification-preference-sync: prior attempt failed on sandbox infra, not logic] Notification preference sync (story 8a-3): persist per-channel notification preferences to the backend and sync them across devices on login; distinct from the realtime delivery pipeline already covered by test-gap-8a-3-notification-realtime-sync.",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-retry 2026-06-07T08:13:56Z (sandbox-failure-after-reclaim)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "resolved": "verified-on-dev 2026-06-07T08:28:01Z by retry implementer (rust-backend); no change needed"
-    },
-    {
-      "id": "test-gap-hotfix-no-test-pr-959-reality-listings-pagination-retry",
-      "action": "[retry of test-gap-hotfix-no-test-pr-959-reality-listings-pagination: prior attempt failed on sandbox infra, not logic] Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-retry 2026-06-07T08:13:56Z (sandbox-failure-after-reclaim)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "gc1_closed": "merged via PR #1154"
-    },
-    {
-      "id": "code-review-mobile-native-kmp-deeplink-token-not-url-decoded",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes \u2014 SSO tokens diverge per platform",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "code-review-mobile-native-kmp-search-stale-response-race",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] SearchScreen stale-response race \u2014 overlapping searches can clobber newer results",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1085-reality",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "test-gap-screen-map-drift-pr-1100-ppt",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "triage-issue-1151",
-      "action": "[RECONCILED-DROP: exact task_id failed (empty-branch) in assignments-archive; re-plan upstream; issue #1151] Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale \u2014 true claimable work = 0 despite metric=53",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "dropped",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "churn-hotspot-mobile-native-listing-detail-kt",
-      "action": "[RECONCILED-DROP: exact task_id failed (empty-branch) in assignments-archive; re-plan upstream; issue #1151] Churn hotspot: ListingDetailScreen.kt \u2014 +1279 LOC this run (gap-82-4 reality mobile favorite toggle)",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "dropped",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "churn-hotspot-mobile-native-search-screen-kt",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: SearchScreen.kt \u2014 +1293 LOC this run (gap-82-3 reality mobile search/filters)",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "code-review-mobile-native-kmp-deeplink-android-bypasses-shared-router",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter \u2014 drift trap",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "refactor-churn-hotspot-mobile-announcements",
-      "action": "[RECONCILED-DONE: exact task_id already merged in assignments-archive; issue #1151 stale-buffer cleanup] Churn hotspot: AnnouncementsScreen.tsx \u2014 4 PRs this run, instability proxy",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
       "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "action": "Churn hotspot: AnnouncementsScreen.test.ts \u2014 4 PRs this run, instability proxy",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "refactor-churn-hotspot-mobile-documents",
-      "action": "[RECONCILED-DROP: exact task_id failed (empty-branch) in assignments-archive; re-plan upstream; issue #1151] Churn hotspot: DocumentsScreen.tsx \u2014 3 PRs this run",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "dropped",
       "source": "dispatcher-tier1-refill 2026-06-07 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
@@ -191,18 +57,6 @@
       "depends_on": []
     },
     {
-      "id": "feat-esignature-webhook-idempotency-guard",
-      "action": "Coverage 84-2: add webhook idempotency guard for e-signature status callbacks so terminal states (completed/declined/voided) are not reprocessed on duplicate webhook delivery. Backend api-server; include a regression test.",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "resolved": "already-implemented+merged on dev (PR #1034 guard + #1119 tests); coverage gap 84-2 was stale; dispatcher no-op 2026-06-08"
-    },
-    {
       "id": "bug-report-schedule-cron-expression-column",
       "action": "Coverage 81-1 (issue #616): report-schedule cron edits round-trip through the overloaded time field; add a dedicated cron_expression column + migration and wire create/update routes to it. Backend api-server + migration with RLS preserved; include a round-trip test.",
       "owner_role": "pm-backend",
@@ -219,28 +73,6 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "feat-admin-web-platform-health-page",
-      "action": "[DROPPED: already shipped on dev gap-10b-3; coverage.json 2026-05-29 stale] Coverage 10b-3: add an admin-web platform-health page consuming the existing health-monitoring API (uptime/metrics surface). Frontend admin-web React SPA; add a screen-map entry.",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "dropped",
-      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "feat-admin-web-system-announcements-component",
-      "action": "[DROPPED: already shipped on dev PR #521/gap-10b-4; coverage.json 2026-05-29 stale] Coverage 10b-4: add the admin-web system-announcements management component (list/create/publish) wired to the existing backend routes; add screen documentation.",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "status": "dropped",
       "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
@@ -347,7 +179,7 @@
     },
     {
       "id": "feat-airbnb-oauth-token-exchange-route",
-      "action": "Coverage 83-1: add the Airbnb OAuth token-exchange route and /integrations/airbnb/* API routes (models already exist). Backend api-server; include tests. Note: external integration \u2014 keep secrets in config.",
+      "action": "Coverage 83-1: add the Airbnb OAuth token-exchange route and /integrations/airbnb/* API routes (models already exist). Backend api-server; include tests. Note: external integration — keep secrets in config.",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -373,17 +205,6 @@
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
-      "id": "feat-swiftui-keychain-token-storage",
-      "action": "[VERIFIED-SHIPPED 2026-06-10: Story 82.5 Keychain+Push already implemented via PR #705; coverage false-gap] Coverage 82-5: implement Keychain integration for auth-token storage in the mobile-native iOS app and evidence the push-notification manager. mobile-native KMP/SwiftUI.",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
@@ -534,7 +355,7 @@
     },
     {
       "id": "feat-mobile-push-fcm-apns-integration",
-      "action": "Coverage 8a-3: implement React Native mobile OS push integration (FCM for Android / APNs for iOS) \u2014 register device token, persist to backend, handle foreground/background notification delivery for the notification-preference pipeline. Mobile (frontend/apps/mobile).",
+      "action": "Coverage 8a-3: implement React Native mobile OS push integration (FCM for Android / APNs for iOS) — register device token, persist to backend, handle foreground/background notification delivery for the notification-preference pipeline. Mobile (frontend/apps/mobile).",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "open",
@@ -545,7 +366,7 @@
     },
     {
       "id": "feat-airbnb-realtime-webhook-handler",
-      "action": "Coverage 83-1: implement the Airbnb realtime webhook handler (inbound reservation/availability change events) \u2014 signature verification, idempotent event processing, and persistence. Backend api-server; pairs with the OAuth token-exchange route work.",
+      "action": "Coverage 83-1: implement the Airbnb realtime webhook handler (inbound reservation/availability change events) — signature verification, idempotent event processing, and persistence. Backend api-server; pairs with the OAuth token-exchange route work.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -556,7 +377,7 @@
     },
     {
       "id": "feat-booking-rate-availability-push",
-      "action": "Coverage 83-2: implement Booking.com rate & availability push (AC-5) end-to-end \u2014 build the OTA rate/availability message and push to the partner endpoint with retry/error handling. Backend api-server; pairs with the OTA XML parsing work.",
+      "action": "Coverage 83-2: implement Booking.com rate & availability push (AC-5) end-to-end — build the OTA rate/availability message and push to the partner endpoint with retry/error handling. Backend api-server; pairs with the OTA XML parsing work.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -567,7 +388,7 @@
     },
     {
       "id": "verify-reality-mobile-search-ac-coverage",
-      "action": "Coverage 82-3: verify reality-mobile (KMP) home/search ACs \u2014 debounced search (AC-2), infinite scroll (AC-4), CoreLocation integration, and FilterSheet \u2014 against the shipped screens; add coverage where evidence is missing and record findings. mobile-native.",
+      "action": "Coverage 82-3: verify reality-mobile (KMP) home/search ACs — debounced search (AC-2), infinite scroll (AC-4), CoreLocation integration, and FilterSheet — against the shipped screens; add coverage where evidence is missing and record findings. mobile-native.",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
@@ -575,18 +396,6 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
-    },
-    {
-      "id": "verify-reality-mobile-inquiries-streaming-conversation",
-      "action": "Coverage 82-5: verify the reality-mobile (KMP) inquiries/account streaming message conversation view and push-notification manager against ACs; confirm streaming conversation behaviour and add coverage where unclear. mobile-native.",
-      "owner_role": "pm-frontend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-tier1-refill 2026-06-08 (coverage.json gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "implementer_summary": "pr=none status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=already-satisfied; InquiryDetailView fully impl (conversation+reply); PushNotificationManager+XCTests confirmed; streaming=fetch-on-demand (WebSocket not in scope); coverage.json+screen-map updated"
     },
     {
       "id": "feat-82-4-swiftui-listing-detail-polish",
