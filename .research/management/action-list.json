@@ -630,6 +630,28 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "feat-esignature-webhook-idempotency-terminal-state-guard-backend",
+      "action": "Coverage 84-2: add a terminal-state idempotency guard to the e-signature inbound webhook handler so envelope events for an already-terminal envelope (completed/declined/voided) are acknowledged (200) without re-applying state transitions or re-firing downstream side effects. Additive guard + unit/integration coverage; pm-backend.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-10T04:27:41Z (coverage.json 84-2 gap: webhook idempotency terminal-state guard missing)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-esignature-email-status-tracking-backend",
+      "action": "Coverage 84-2: additive backend integration tests for the e-signature email-send + status-tracking flow (send -> sent -> viewed -> signed/declined status transitions persisted and surfaced), mirroring existing api-server integration-test harness patterns. Test-only, additive; pm-backend.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-10T04:27:41Z (coverage.json 84-2 gap: email-send + status-tracking polish)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
     }
   ]
 }
