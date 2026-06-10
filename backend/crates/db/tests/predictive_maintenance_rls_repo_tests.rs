@@ -1,0 +1,249 @@
+//! Repo-level behavioral RLS regression test for PAP-111 (parent PAP-80).
+//!
+//! Background
+//! ----------
+//! Migration `00179` (PAP-62) put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on `equipment_registry` (and the rest of the
+//! predictive-maintenance + Epic-11+ cluster). The production api-server
+//! connects as the table OWNER, which `FORCE` binds. `PredictiveMaintenanceRepository`
+//! held a raw `PgPool` and ran every query WITHOUT ever calling
+//! `set_request_context`, so on `dev` `get_current_org_id()` returned NULL and
+//! the policy collapsed to `organization_id = NULL` → **deny-all**: own-org
+//! reads returned empty, writes failed. (PAP-80.)
+//!
+//! The fix routes the repo through an RLS-context connection (the `RlsConnection`
+//! extractor in handlers sets the org/user GUCs before any query). This test
+//! exercises the *repository methods themselves* on a `FORCE`-bound role and
+//! proves:
+//!
+//!   1. **Deny-all reproduction** — with the role bound but NO context set
+//!      (exactly what the raw-pool repo did on `dev`), an own-org `get_equipment`
+//!      / `list_equipment` returns nothing.
+//!   2. **Fix** — with `set_request_context(org_a, user_a)` applied first (what
+//!      `RlsConnection` now does), the same repo calls return the own-org row.
+//!   3. **Cross-tenant** — org B's equipment stays invisible to an org-A caller
+//!      even with context set.
+//!
+//! Why this test switches roles
+//! ----------------------------
+//! `#[sqlx::test]` connects as the Postgres SUPERUSER, which bypasses RLS
+//! entirely — even `FORCE` does not bind a superuser, so a behavioral assertion
+//! would pass vacuously. The test creates a plain `NOSUPERUSER NOBYPASSRLS`
+//! role, grants it access, and `SET ROLE`s to it so `FORCE` actually enforces
+//! the policy the way the production owner role experiences it. Mirrors
+//! `vendor_rls_repo_tests.rs` / `work_order_rls_repo_tests.rs` (the PAP-67/-70
+//! precedent this follows).
+
+use db::models::predictive_maintenance::EquipmentQuery;
+use db::repositories::PredictiveMaintenanceRepository;
+use sqlx::PgPool;
+use uuid::Uuid;
+
+async fn set_ctx(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, is_super_admin: bool) {
+    sqlx::query("SELECT set_request_context($1, $2, $3)")
+        .bind(org_id)
+        .bind(user_id)
+        .bind(is_super_admin)
+        .execute(pool)
+        .await
+        .expect("set_request_context");
+}
+
+async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO organizations (name, slug, contact_email, status)
+        VALUES ($1, $2, $3, 'active')
+        RETURNING id
+        "#,
+    )
+    .bind(format!("PM {slug}"))
+    .bind(slug)
+    .bind(format!("{slug}@pm.test"))
+    .fetch_one(pool)
+    .await
+    .expect("seed org")
+}
+
+async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+        VALUES ($1, 'test_hash', 'PM User', 'active', NOW(), 'public')
+        RETURNING id
+        "#,
+    )
+    .bind(email)
+    .fetch_one(pool)
+    .await
+    .expect("seed user")
+}
+
+async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO buildings (organization_id, street, city, postal_code, country)
+        VALUES ($1, $2, 'Bratislava', '81101', 'Slovakia')
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(format!("{slug} Street 1"))
+    .fetch_one(pool)
+    .await
+    .expect("seed building")
+}
+
+/// Seed an equipment row directly (as superuser, RLS-exempt) for an org.
+async fn seed_equipment(pool: &PgPool, org_id: Uuid, building_id: Uuid, name: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO equipment_registry (organization_id, building_id, name, equipment_type)
+        VALUES ($1, $2, $3, 'hvac')
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .bind(name)
+    .fetch_one(pool)
+    .await
+    .expect("seed equipment")
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn predictive_repo_force_rls_deny_all_and_fix(pool: PgPool) {
+    let repo = PredictiveMaintenanceRepository::new(pool.clone());
+
+    // --- Seed as superuser / super-admin context (satisfies org roles-trigger). ---
+    set_ctx(&pool, None, None, true).await;
+    let org_a = seed_org(&pool, "pmforce-a").await;
+    let org_b = seed_org(&pool, "pmforce-b").await;
+    let user_a = seed_user(&pool, "a@pm.test").await;
+    let _user_b = seed_user(&pool, "b@pm.test").await;
+    let building_a = seed_building(&pool, org_a, "pmforce-a").await;
+    let building_b = seed_building(&pool, org_b, "pmforce-b").await;
+    let equip_a = seed_equipment(&pool, org_a, building_a, "Boiler A").await;
+    let equip_b = seed_equipment(&pool, org_b, building_b, "Boiler B").await;
+
+    // --- NOSUPERUSER NOBYPASSRLS role so FORCE actually binds. ---
+    let role = format!("ppt_rls_pm_{}", Uuid::new_v4().simple());
+    for stmt in [
+        format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
+        format!("GRANT SELECT, INSERT, UPDATE, DELETE ON equipment_registry TO \"{role}\""),
+        // RLS policy helper must be EXECUTE-able by the bound role.
+        format!("GRANT EXECUTE ON FUNCTION get_current_org_id() TO \"{role}\""),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .expect("grant setup");
+    }
+
+    // ====================================================================
+    // (1) DENY-ALL reproduction: role bound, NO context set (the dev raw-pool
+    //     behavior). Own-org by-id read returns nothing.
+    // ====================================================================
+    {
+        let mut conn = pool.acquire().await.expect("acquire");
+        // Explicitly clear any inherited context, then drop to the bound role.
+        sqlx::query("SELECT clear_request_context()")
+            .execute(&mut *conn)
+            .await
+            .expect("clear ctx");
+        sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
+            .execute(&mut *conn)
+            .await
+            .expect("set role");
+
+        let found = repo
+            .get_equipment(&mut *conn, equip_a, org_a)
+            .await
+            .expect("get_equipment (no ctx)");
+        assert!(
+            found.is_none(),
+            "PAP-80 regression: without RLS context, own-org equipment must be \
+             invisible (deny-all) — this is what the raw-pool repo did on dev"
+        );
+
+        let listed = repo
+            .list_equipment(&mut *conn, org_a, EquipmentQuery::default())
+            .await
+            .expect("list_equipment (no ctx)");
+        assert!(
+            listed.is_empty(),
+            "PAP-80 regression: without RLS context, list returns deny-all empty"
+        );
+
+        sqlx::query("RESET ROLE")
+            .execute(&mut *conn)
+            .await
+            .expect("reset role");
+    }
+
+    // ====================================================================
+    // (2) FIX + (3) cross-tenant: set context, drop to bound role, query repo.
+    // ====================================================================
+    {
+        let mut conn = pool.acquire().await.expect("acquire");
+        sqlx::query("SELECT set_request_context($1, $2, $3)")
+            .bind(org_a)
+            .bind(user_a)
+            .bind(false)
+            .execute(&mut *conn)
+            .await
+            .expect("set org-A ctx");
+        sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
+            .execute(&mut *conn)
+            .await
+            .expect("set role");
+
+        // (2) Own-org row IS now visible through the repo — the fix.
+        let found = repo
+            .get_equipment(&mut *conn, equip_a, org_a)
+            .await
+            .expect("get_equipment (ctx)");
+        assert_eq!(
+            found.map(|e| e.id),
+            Some(equip_a),
+            "PAP-80 fix: with RLS context set, the repo must return the own-org equipment"
+        );
+
+        let listed = repo
+            .list_equipment(&mut *conn, org_a, EquipmentQuery::default())
+            .await
+            .expect("list_equipment (ctx)");
+        assert_eq!(
+            listed.iter().map(|e| e.id).collect::<Vec<_>>(),
+            vec![equip_a],
+            "PAP-80 fix: list returns exactly the own-org equipment under context"
+        );
+
+        // (3) Org B's equipment stays invisible to an org-A caller.
+        let cross = repo
+            .get_equipment(&mut *conn, equip_b, org_a)
+            .await
+            .expect("get_equipment cross");
+        assert!(
+            cross.is_none(),
+            "cross-tenant: org B's equipment must NOT be visible to an org-A caller"
+        );
+
+        sqlx::query("RESET ROLE")
+            .execute(&mut *conn)
+            .await
+            .expect("reset role");
+    }
+
+    // --- Cleanup the test role. ---
+    set_ctx(&pool, None, None, true).await;
+    for stmt in [
+        format!("REVOKE ALL ON equipment_registry FROM \"{role}\""),
+        format!("DROP ROLE IF EXISTS \"{role}\""),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .ok();
+    }
+}
