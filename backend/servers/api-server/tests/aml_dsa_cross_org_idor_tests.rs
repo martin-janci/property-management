@@ -11,7 +11,7 @@
 //! - `get_aml_assessment` → `get_aml_assessment(id)`  (assessment / PEP / sanctions leak)
 //! - `get_edd_record`     → `get_edd(id)`             (EDD record / source-of-funds leak)
 //! - `upload_edd_document`/`verify_edd_document`/`add_edd_note`/`complete_edd`
-//!       all gate on `get_edd(id)` → cross-org mutate of another org's EDD subtree
+//!   all gate on `get_edd(id)` → cross-org mutate of another org's EDD subtree
 //!
 //! The `aml_risk_assessments` / `edd_records` tables DO ship FORCE-RLS policies
 //! (migration `00117_rls_edd.sql`) scoped to `get_current_org_id()`, but these

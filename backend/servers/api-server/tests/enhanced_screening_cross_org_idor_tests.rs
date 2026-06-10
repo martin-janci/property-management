@@ -291,7 +291,7 @@ async fn repo_ai_result_is_scoped_to_owning_org(pool: PgPool) {
 
     // The complete-data aggregate is likewise closed for the foreign org.
     let cross_complete = repo
-        .get_complete_screening_data(&mut *conn, org_b, screening_a)
+        .get_complete_screening_data(&mut conn, org_b, screening_a)
         .await
         .expect("complete data with wrong org");
     assert!(
@@ -301,7 +301,7 @@ async fn repo_ai_result_is_scoped_to_owning_org(pool: PgPool) {
 
     // ...and open for the owner.
     let own_complete = repo
-        .get_complete_screening_data(&mut *conn, org_a, screening_a)
+        .get_complete_screening_data(&mut conn, org_a, screening_a)
         .await
         .expect("complete data with right org");
     assert!(
