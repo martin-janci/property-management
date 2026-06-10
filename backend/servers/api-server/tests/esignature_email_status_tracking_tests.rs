@@ -217,24 +217,20 @@ async fn signer_status_at(pool: &PgPool, request_id: Uuid, idx: usize) -> String
 
 /// Read the persisted request status (`pending` / `in_progress` / ...).
 async fn request_status(pool: &PgPool, request_id: Uuid) -> String {
-    sqlx::query_scalar::<_, String>(
-        r#"SELECT status::text FROM signature_requests WHERE id = $1"#,
-    )
-    .bind(request_id)
-    .fetch_one(pool)
-    .await
-    .expect("read request status")
+    sqlx::query_scalar::<_, String>(r#"SELECT status::text FROM signature_requests WHERE id = $1"#)
+        .bind(request_id)
+        .fetch_one(pool)
+        .await
+        .expect("read request status")
 }
 
 /// Read the linked document's `signature_status`.
 async fn document_signature_status(pool: &PgPool, document_id: Uuid) -> String {
-    sqlx::query_scalar::<_, String>(
-        r#"SELECT signature_status FROM documents WHERE id = $1"#,
-    )
-    .bind(document_id)
-    .fetch_one(pool)
-    .await
-    .expect("read document signature_status")
+    sqlx::query_scalar::<_, String>(r#"SELECT signature_status FROM documents WHERE id = $1"#)
+        .bind(document_id)
+        .fetch_one(pool)
+        .await
+        .expect("read document signature_status")
 }
 
 /// GET the request through the authenticated API and return the `signer_counts`
@@ -271,12 +267,22 @@ async fn sent_viewed_signed_lifecycle_persists_and_surfaces(pool: PgPool) {
     // Precondition: signer emailed (sent), request pending, doc pending.
     assert_eq!(signer_status_at(&pool, req.id, 0).await, "sent");
     assert_eq!(request_status(&pool, req.id).await, "pending");
-    assert_eq!(document_signature_status(&pool, req.document_id).await, "pending");
+    assert_eq!(
+        document_signature_status(&pool, req.document_id).await,
+        "pending"
+    );
 
     // (a) viewed — non-terminal, request stays pending.
-    post_signer_event(&app, &req.provider_request_id, "viewed", &email, "viewed", json!({}))
-        .await
-        .assert_status(StatusCode::OK);
+    post_signer_event(
+        &app,
+        &req.provider_request_id,
+        "viewed",
+        &email,
+        "viewed",
+        json!({}),
+    )
+    .await
+    .assert_status(StatusCode::OK);
 
     assert_eq!(
         signer_status_at(&pool, req.id, 0).await,
@@ -390,9 +396,16 @@ async fn multi_signer_progress_to_completed_persists_and_surfaces(pool: PgPool) 
     let second = req.signer_emails[1].clone();
 
     // First signer signs → request in_progress, document partial.
-    post_signer_event(&app, &req.provider_request_id, "signer_signed", &first, "signed", json!({}))
-        .await
-        .assert_status(StatusCode::OK);
+    post_signer_event(
+        &app,
+        &req.provider_request_id,
+        "signer_signed",
+        &first,
+        "signed",
+        json!({}),
+    )
+    .await
+    .assert_status(StatusCode::OK);
 
     assert_eq!(signer_status_at(&pool, req.id, 0).await, "signed");
     assert_eq!(signer_status_at(&pool, req.id, 1).await, "sent");
@@ -431,7 +444,10 @@ async fn multi_signer_progress_to_completed_persists_and_surfaces(pool: PgPool) 
         "completed",
         "both signers signed → completed"
     );
-    assert_eq!(document_signature_status(&pool, req.document_id).await, "signed");
+    assert_eq!(
+        document_signature_status(&pool, req.document_id).await,
+        "signed"
+    );
 
     let counts = get_signer_counts(&app, &req).await;
     assert_eq!(counts.get("signed"), Some(&json!(2)));
@@ -452,9 +468,16 @@ async fn multi_signer_decline_overrides_in_progress(pool: PgPool) {
     let second = req.signer_emails[1].clone();
 
     // First signer signs → in_progress.
-    post_signer_event(&app, &req.provider_request_id, "signer_signed", &first, "signed", json!({}))
-        .await
-        .assert_status(StatusCode::OK);
+    post_signer_event(
+        &app,
+        &req.provider_request_id,
+        "signer_signed",
+        &first,
+        "signed",
+        json!({}),
+    )
+    .await
+    .assert_status(StatusCode::OK);
     assert_eq!(request_status(&pool, req.id).await, "in_progress");
 
     // Second signer declines → a single decline moves the whole request to
@@ -477,7 +500,10 @@ async fn multi_signer_decline_overrides_in_progress(pool: PgPool) {
         "declined",
         "any decline takes precedence over a partial signed state"
     );
-    assert_eq!(document_signature_status(&pool, req.document_id).await, "none");
+    assert_eq!(
+        document_signature_status(&pool, req.document_id).await,
+        "none"
+    );
 
     // Surfaced through GET: one signed, one declined.
     let counts = get_signer_counts(&app, &req).await;
