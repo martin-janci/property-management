@@ -1,6 +1,26 @@
 //! Subscription and billing routes (Epic 26).
+//!
+//! # RLS (PAP-112 / PAP-80)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on the org-scoped billing
+//! tables, so every query MUST run on a connection that has
+//! `app.current_org_id` set or it collapses to deny-all. Each handler
+//! acquires an [`RlsConnection`] (which validates tenant membership and sets
+//! the org/user GUCs on a dedicated connection) and passes
+//! `&mut **rls.conn()` to the repository. The authoritative organization is
+//! `rls.tenant_id()` — the tenant the caller was validated against — so
+//! request bodies/queries that carry an `organization_id` are checked against
+//! it (`403` on mismatch) instead of re-querying membership. Cross-tenant
+//! access is blocked by RLS: a by-id read of another org's row returns no row
+//! (`404`), and a write targeting another org fails the policy `WITH CHECK`.
+//! `rls.release()` clears the context before the connection returns to the
+//! pool.
+//!
+//! The public `/plans/public` endpoint has no tenant principal; it reads
+//! `subscription_plans` (not FORCE-bound, public read policy) on the plain
+//! pool.
 
-use api_core::extractors::{AuthUser, RlsConnection};
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::{header::AUTHORIZATION, HeaderMap, StatusCode},
@@ -111,101 +131,43 @@ fn require_super_admin(
     Ok(user_id)
 }
 
-/// Verify user has access to the organization using RLS connection.
-async fn verify_org_access_rls(
+/// Require that a request-supplied organization id matches the tenant the
+/// caller was validated against.
+///
+/// `RlsConnection` already validates org membership via
+/// `ValidatedTenantExtractor`, so no DB round-trip is needed — only the
+/// equality check. Releases the connection on mismatch.
+async fn ensure_org_matches(
     rls: &mut RlsConnection,
-    user_id: Uuid,
-    org_id: Uuid,
+    organization_id: Uuid,
 ) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
-    let is_member: Option<(bool,)> = sqlx::query_as(
-        "SELECT EXISTS(SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2)",
-    )
-    .bind(user_id)
-    .bind(org_id)
-    .fetch_optional(&mut **rls.conn())
-    .await
-    .map_err(|e| {
-        tracing::error!(error = %e, "Failed to check org membership");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", "Database error")),
-        )
-    })?;
-
-    match is_member {
-        Some((true,)) => Ok(()),
-        _ => Err((
+    if organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
                 "FORBIDDEN",
                 "You do not have access to this organization",
             )),
-        )),
+        ));
     }
+    Ok(())
 }
 
-/// Verify user has access to an invoice by its ID using RLS connection.
-async fn verify_invoice_access_rls(
-    state: &AppState,
-    rls: &mut RlsConnection,
-    user_id: Uuid,
-    invoice_id: Uuid,
-) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
-    // Get invoice to find org_id
-    let invoice = state
-        .subscription_repo
-        .find_invoice_by_id_rls(&mut **rls.conn(), invoice_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to find invoice");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
-            )
-        })?;
-
-    // Verify user has access to this organization
-    verify_org_access_rls(rls, user_id, invoice.organization_id).await?;
-
-    Ok(invoice.organization_id)
-}
-
-/// Verify user has access to a subscription by its ID using RLS connection.
-async fn verify_subscription_access_rls(
-    state: &AppState,
-    rls: &mut RlsConnection,
-    user_id: Uuid,
-    subscription_id: Uuid,
-) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
-    // Get subscription to find org_id
-    let subscription = state
-        .subscription_repo
-        .find_subscription_by_id_rls(&mut **rls.conn(), subscription_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to find subscription");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Subscription not found")),
-            )
-        })?;
-
-    // Verify user has access to this organization
-    verify_org_access_rls(rls, user_id, subscription.organization_id).await?;
-
-    Ok(subscription.organization_id)
+/// Map a repository error: under RLS a cross-tenant (or missing) row surfaces
+/// as `RowNotFound` on mutation paths — translate that to `404` instead of
+/// `500`.
+fn db_error(e: sqlx::Error) -> (StatusCode, Json<ErrorResponse>) {
+    match e {
+        sqlx::Error::RowNotFound => (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Resource not found")),
+        ),
+        _ => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", e.to_string())),
+        ),
+    }
 }
 
 /// Create subscription routes router.
@@ -392,14 +354,9 @@ async fn create_plan(
 
     let plan = state
         .subscription_repo
-        .create_plan_rls(&mut **rls.conn(), data)
+        .create_plan(&mut **rls.conn(), data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok((StatusCode::CREATED, Json(plan)))
@@ -418,20 +375,14 @@ async fn create_plan(
 )]
 async fn list_plans(
     State(state): State<AppState>,
-    _auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<ListPlansQuery>,
 ) -> Result<Json<Vec<SubscriptionPlan>>, (StatusCode, Json<ErrorResponse>)> {
     let plans = state
         .subscription_repo
-        .list_plans_rls(&mut **rls.conn(), query.active_only.unwrap_or(true))
+        .list_plans(&mut **rls.conn(), query.active_only.unwrap_or(true))
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(plans))
@@ -455,19 +406,13 @@ async fn list_plans(
 async fn list_public_plans(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<SubscriptionPlan>>, (StatusCode, Json<ErrorResponse>)> {
-    // Public endpoint - no RLS needed as subscription_plans is not tenant-scoped
-    // Using the legacy method is acceptable here since there's no tenant context
-    #[allow(deprecated)]
+    // No tenant principal here: subscription_plans is not FORCE-bound and
+    // carries a public read policy, so the plain pool is the right executor.
     let plans = state
         .subscription_repo
-        .list_public_plans()
+        .list_public_plans(&state.db)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     Ok(Json(plans))
 }
@@ -487,28 +432,24 @@ async fn list_public_plans(
 )]
 async fn get_plan(
     State(state): State<AppState>,
-    _auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SubscriptionPlan>, (StatusCode, Json<ErrorResponse>)> {
     let plan = state
         .subscription_repo
-        .find_plan_by_id_rls(&mut **rls.conn(), id)
+        .find_plan_by_id(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Plan not found")),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
+
+    let plan = plan.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Plan not found")),
+        )
+    })?;
+
     Ok(Json(plan))
 }
 
@@ -539,14 +480,9 @@ async fn update_plan(
 
     let plan = state
         .subscription_repo
-        .update_plan_rls(&mut **rls.conn(), id, data)
+        .update_plan(&mut **rls.conn(), id, data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(plan))
@@ -577,14 +513,9 @@ async fn delete_plan(
 
     let deleted = state
         .subscription_repo
-        .delete_plan_rls(&mut **rls.conn(), id)
+        .delete_plan(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -608,29 +539,24 @@ async fn delete_plan(
     responses(
         (status = 201, description = "Subscription created", body = OrganizationSubscription),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - organization mismatch"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn create_subscription(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Json(request): Json<CreateSubscriptionRequest>,
 ) -> Result<(StatusCode, Json<OrganizationSubscription>), (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, request.organization_id).await?;
+    ensure_org_matches(&mut rls, request.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let subscription = state
         .subscription_repo
-        .create_subscription_rls(&mut **rls.conn(), request.organization_id, request.data)
+        .create_subscription(&mut **rls.conn(), org_id, request.data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok((StatusCode::CREATED, Json(subscription)))
@@ -650,31 +576,27 @@ async fn create_subscription(
 )]
 async fn get_subscription(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<OrganizationSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let subscription = state
         .subscription_repo
-        .find_subscription_by_org_rls(&mut **rls.conn(), query.organization_id)
+        .find_subscription_by_org(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "No active subscription")),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
+
+    let subscription = subscription.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "No active subscription")),
+        )
+    })?;
+
     Ok(Json(subscription))
 }
 
@@ -692,31 +614,27 @@ async fn get_subscription(
 )]
 async fn get_subscription_with_plan(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<SubscriptionWithPlan>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let subscription = state
         .subscription_repo
-        .get_subscription_with_plan_rls(&mut **rls.conn(), query.organization_id)
+        .get_subscription_with_plan(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "No active subscription")),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
+
+    let subscription = subscription.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "No active subscription")),
+        )
+    })?;
+
     Ok(Json(subscription))
 }
 
@@ -729,30 +647,24 @@ async fn get_subscription_with_plan(
     responses(
         (status = 200, description = "Subscription updated", body = OrganizationSubscription),
         (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Subscription not found"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn update_subscription(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateOrganizationSubscription>,
 ) -> Result<Json<OrganizationSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this subscription's organization
-    let _org_id = verify_subscription_access_rls(&state, &mut rls, auth.user_id, id).await?;
-
+    // RLS scopes the by-id update to the caller's org: a cross-tenant id
+    // matches no row and surfaces as 404.
     let subscription = state
         .subscription_repo
-        .update_subscription_rls(&mut **rls.conn(), id, data)
+        .update_subscription(&mut **rls.conn(), id, data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(subscription))
@@ -767,30 +679,22 @@ async fn update_subscription(
     responses(
         (status = 200, description = "Plan changed", body = OrganizationSubscription),
         (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Subscription not found"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn change_plan(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<ChangePlanRequest>,
 ) -> Result<Json<OrganizationSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this subscription's organization
-    let _org_id = verify_subscription_access_rls(&state, &mut rls, auth.user_id, id).await?;
-
     let subscription = state
         .subscription_repo
-        .change_plan_rls(&mut **rls.conn(), id, data)
+        .change_plan(&mut **rls.conn(), id, data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(subscription))
@@ -805,30 +709,22 @@ async fn change_plan(
     responses(
         (status = 200, description = "Subscription cancelled", body = OrganizationSubscription),
         (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Subscription not found"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn cancel_subscription(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(data): Json<CancelSubscriptionRequest>,
 ) -> Result<Json<OrganizationSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this subscription's organization
-    let _org_id = verify_subscription_access_rls(&state, &mut rls, auth.user_id, id).await?;
-
     let subscription = state
         .subscription_repo
-        .cancel_subscription_rls(&mut **rls.conn(), id, data)
+        .cancel_subscription(&mut **rls.conn(), id, data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(subscription))
@@ -842,29 +738,21 @@ async fn cancel_subscription(
     responses(
         (status = 200, description = "Subscription reactivated", body = OrganizationSubscription),
         (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Subscription not found"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn reactivate_subscription(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<OrganizationSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this subscription's organization
-    let _org_id = verify_subscription_access_rls(&state, &mut rls, auth.user_id, id).await?;
-
     let subscription = state
         .subscription_repo
-        .reactivate_subscription_rls(&mut **rls.conn(), id)
+        .reactivate_subscription(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(subscription))
@@ -894,19 +782,14 @@ async fn list_all_subscriptions(
 
     let subscriptions = state
         .subscription_repo
-        .list_all_subscriptions_rls(
+        .list_all_subscriptions(
             &mut **rls.conn(),
             query.status.as_deref(),
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(subscriptions))
@@ -922,30 +805,25 @@ async fn list_all_subscriptions(
     responses(
         (status = 201, description = "Payment method created", body = SubscriptionPaymentMethod),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - organization mismatch"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn create_payment_method(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<OrgQuery>,
     Json(data): Json<CreateSubscriptionPaymentMethod>,
 ) -> Result<(StatusCode, Json<SubscriptionPaymentMethod>), (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let method = state
         .subscription_repo
-        .create_payment_method_rls(&mut **rls.conn(), query.organization_id, data)
+        .create_payment_method(&mut **rls.conn(), org_id, data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok((StatusCode::CREATED, Json(method)))
@@ -965,23 +843,17 @@ async fn create_payment_method(
 )]
 async fn list_payment_methods(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<Vec<SubscriptionPaymentMethod>>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let methods = state
         .subscription_repo
-        .list_payment_methods_rls(&mut **rls.conn(), query.organization_id)
+        .list_payment_methods(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(methods))
@@ -1004,30 +876,22 @@ async fn list_payment_methods(
 )]
 async fn set_default_payment_method(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
-    // Release RLS connection before calling transaction-based method
-    rls.release().await;
-
-    // Note: set_default_payment_method uses internal transaction, not RLS-aware
-    // This is intentional as documented in the repository
+    // Transactional, but runs on the RLS-context connection: payment_methods
+    // is FORCE-RLS-bound, so the raw pool would be deny-all here.
     state
         .subscription_repo
-        .set_default_payment_method(query.organization_id, id)
+        .set_default_payment_method(&mut **rls.conn(), org_id, id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
+    rls.release().await;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -1049,24 +913,18 @@ async fn set_default_payment_method(
 )]
 async fn delete_payment_method(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(query): Query<OrgQuery>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let deleted = state
         .subscription_repo
-        .delete_payment_method_rls(&mut **rls.conn(), id, query.organization_id)
+        .delete_payment_method(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
 
@@ -1096,27 +954,17 @@ async fn delete_payment_method(
 )]
 async fn list_invoices(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<ListInvoicesQuery>,
 ) -> Result<Json<Vec<SubscriptionInvoice>>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let invoices = state
         .subscription_repo
-        .list_invoices_rls(
-            &mut **rls.conn(),
-            query.organization_id,
-            InvoiceQueryParams::from(&query),
-        )
+        .list_invoices(&mut **rls.conn(), org_id, InvoiceQueryParams::from(&query))
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(invoices))
@@ -1136,31 +984,26 @@ async fn list_invoices(
 )]
 async fn get_invoice(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SubscriptionInvoice>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify access and get the invoice
-    let _org_id = verify_invoice_access_rls(&state, &mut rls, auth.user_id, id).await?;
-
+    // RLS scopes the by-id read to the caller's org: a cross-tenant invoice
+    // is indistinguishable from a missing one (404).
     let invoice = state
         .subscription_repo
-        .find_invoice_by_id_rls(&mut **rls.conn(), id)
+        .find_invoice_by_id(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
+
+    let invoice = invoice.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+        )
+    })?;
+
     Ok(Json(invoice))
 }
 
@@ -1171,29 +1014,37 @@ async fn get_invoice(
     params(("id" = Uuid, Path, description = "Invoice ID")),
     responses(
         (status = 200, description = "Line items retrieved", body = Vec<InvoiceLineItem>),
+        (status = 404, description = "Invoice not found"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn get_invoice_line_items(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<InvoiceLineItem>>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this invoice's organization
-    let _org_id = verify_invoice_access_rls(&state, &mut rls, auth.user_id, id).await?;
+    // Resolve the invoice first so a cross-tenant (RLS-invisible) id keeps
+    // returning 404 rather than an empty list.
+    let invoice = state
+        .subscription_repo
+        .find_invoice_by_id(&mut **rls.conn(), id)
+        .await
+        .map_err(db_error)?;
+
+    if invoice.is_none() {
+        rls.release().await;
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+        ));
+    }
 
     let items = state
         .subscription_repo
-        .get_invoice_line_items_rls(&mut **rls.conn(), id)
+        .get_invoice_line_items(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(items))
@@ -1207,29 +1058,21 @@ async fn get_invoice_line_items(
     responses(
         (status = 200, description = "Invoice marked as paid", body = SubscriptionInvoice),
         (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Invoice not found"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn mark_invoice_paid(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SubscriptionInvoice>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this invoice's organization
-    let _org_id = verify_invoice_access_rls(&state, &mut rls, auth.user_id, id).await?;
-
     let invoice = state
         .subscription_repo
-        .mark_invoice_paid_rls(&mut **rls.conn(), id, None)
+        .mark_invoice_paid(&mut **rls.conn(), id, None)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(invoice))
@@ -1243,29 +1086,21 @@ async fn mark_invoice_paid(
     responses(
         (status = 200, description = "Invoice voided", body = SubscriptionInvoice),
         (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Invoice not found"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn void_invoice(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SubscriptionInvoice>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this invoice's organization
-    let _org_id = verify_invoice_access_rls(&state, &mut rls, auth.user_id, id).await?;
-
     let invoice = state
         .subscription_repo
-        .void_invoice_rls(&mut **rls.conn(), id)
+        .void_invoice(&mut **rls.conn(), id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(invoice))
@@ -1295,14 +1130,9 @@ async fn list_all_invoices(
 
     let invoices = state
         .subscription_repo
-        .list_all_invoices_rls(&mut **rls.conn(), InvoiceQueryParams::from(&query))
+        .list_all_invoices(&mut **rls.conn(), InvoiceQueryParams::from(&query))
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(invoices))
@@ -1318,46 +1148,36 @@ async fn list_all_invoices(
     responses(
         (status = 201, description = "Usage recorded", body = db::models::UsageRecord),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - organization mismatch"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
 )]
 async fn record_usage(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Json(request): Json<RecordUsageRequest>,
 ) -> Result<(StatusCode, Json<db::models::UsageRecord>), (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, request.organization_id).await?;
+    ensure_org_matches(&mut rls, request.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     // Get subscription for org
     let subscription = state
         .subscription_repo
-        .find_subscription_by_org_rls(&mut **rls.conn(), request.organization_id)
+        .find_subscription_by_org(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     let record = state
         .subscription_repo
-        .record_usage_rls(
+        .record_usage(
             &mut **rls.conn(),
-            request.organization_id,
+            org_id,
             subscription.map(|s| s.id),
             request.data,
         )
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok((StatusCode::CREATED, Json(record)))
@@ -1377,12 +1197,11 @@ async fn record_usage(
 )]
 async fn get_usage_summary(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<UsageSummaryQuery>,
 ) -> Result<Json<Vec<UsageSummary>>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let now = Utc::now();
     let period_start = query.period_start.unwrap_or(
@@ -1393,19 +1212,9 @@ async fn get_usage_summary(
 
     let summary = state
         .subscription_repo
-        .get_usage_summary_rls(
-            &mut **rls.conn(),
-            query.organization_id,
-            period_start,
-            period_end,
-        )
+        .get_usage_summary(&mut **rls.conn(), org_id, period_start, period_end)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(summary))
@@ -1425,23 +1234,17 @@ async fn get_usage_summary(
 )]
 async fn get_current_usage(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<OrgQuery>,
 ) -> Result<Json<CurrentUsageResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
 
     let (buildings, units, users, storage) = state
         .subscription_repo
-        .get_current_usage_rls(&mut **rls.conn(), query.organization_id)
+        .get_current_usage(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(CurrentUsageResponse {
@@ -1478,14 +1281,9 @@ async fn create_coupon(
 
     let coupon = state
         .subscription_repo
-        .create_coupon_rls(&mut **rls.conn(), data)
+        .create_coupon(&mut **rls.conn(), data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok((StatusCode::CREATED, Json(coupon)))
@@ -1505,20 +1303,14 @@ async fn create_coupon(
 )]
 async fn list_coupons(
     State(state): State<AppState>,
-    _auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<ListCouponsQuery>,
 ) -> Result<Json<Vec<SubscriptionCoupon>>, (StatusCode, Json<ErrorResponse>)> {
     let coupons = state
         .subscription_repo
-        .list_coupons_rls(&mut **rls.conn(), query.active_only.unwrap_or(true))
+        .list_coupons(&mut **rls.conn(), query.active_only.unwrap_or(true))
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(coupons))
@@ -1534,6 +1326,7 @@ async fn list_coupons(
         (status = 200, description = "Coupon updated", body = SubscriptionCoupon),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden - platform admin only"),
+        (status = 404, description = "Coupon not found"),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Subscriptions"
@@ -1550,14 +1343,9 @@ async fn update_coupon(
 
     let coupon = state
         .subscription_repo
-        .update_coupon_rls(&mut **rls.conn(), id, data)
+        .update_coupon(&mut **rls.conn(), id, data)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(coupon))
@@ -1578,25 +1366,20 @@ async fn update_coupon(
 )]
 async fn redeem_coupon(
     State(state): State<AppState>,
-    auth: AuthUser,
     mut rls: RlsConnection,
     Query(query): Query<OrgQuery>,
     Json(data): Json<RedeemCouponRequest>,
 ) -> Result<Json<CouponRedemption>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user has access to this organization
-    verify_org_access_rls(&mut rls, auth.user_id, query.organization_id).await?;
+    ensure_org_matches(&mut rls, query.organization_id).await?;
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
     // Find the coupon
     let coupon = state
         .subscription_repo
-        .find_coupon_by_code_rls(&mut **rls.conn(), &data.coupon_code)
+        .find_coupon_by_code(&mut **rls.conn(), &data.coupon_code)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
+        .map_err(db_error)?
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
@@ -1610,36 +1393,26 @@ async fn redeem_coupon(
     // Get subscription for org
     let subscription = state
         .subscription_repo
-        .find_subscription_by_org_rls(&mut **rls.conn(), query.organization_id)
+        .find_subscription_by_org(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
-    // Release RLS connection before calling transaction-based method
-    rls.release().await;
-
-    // Note: redeem_coupon uses internal transaction, not RLS-aware
-    // This is intentional as documented in the repository
+    // Transactional, but runs on the RLS-context connection: the
+    // coupon_redemptions insert is FORCE-RLS-bound, so the raw pool would
+    // fail the policy WITH CHECK.
     let redemption = state
         .subscription_repo
         .redeem_coupon(
+            &mut **rls.conn(),
             coupon.id,
-            query.organization_id,
+            org_id,
             subscription.map(|s| s.id),
-            auth.user_id,
+            user_id,
         )
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
+    rls.release().await;
     Ok(Json(redemption))
 }
 
@@ -1667,14 +1440,9 @@ async fn get_statistics(
 
     let stats = state
         .subscription_repo
-        .get_statistics_rls(&mut **rls.conn())
+        .get_statistics(&mut **rls.conn())
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(db_error)?;
 
     rls.release().await;
     Ok(Json(stats))
