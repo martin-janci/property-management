@@ -3,6 +3,7 @@
 use crate::routes::ai::{require_tenant_id, AlertsQuery, PaginationQuery};
 use crate::state::AppState;
 use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -294,59 +295,107 @@ async fn send_message(
         if analyze_sentiment {
             match state.llm_client.analyze_sentiment(&req.content, None).await {
                 Ok(result) => {
-                    // Check if alert should be triggered based on organization thresholds
-                    if let Ok(thresholds) = state.sentiment_repo.get_thresholds(tenant_id).await {
-                        if thresholds.enabled {
-                            // Story 97.4: Check if sentiment requires attention and create alert
-                            let should_alert = result.requires_attention
-                                || (result.score < 0.0
-                                    && result.score.abs() >= thresholds.negative_threshold);
+                    // PAP-80: the sentiment tables are FORCE-RLS, so these
+                    // best-effort writes must run on a connection that carries
+                    // the org GUC (the raw pool collapses to deny-all). Acquire a
+                    // short-lived RLS-context connection scoped to this tenant.
+                    match state.db.acquire().await {
+                        Ok(mut sconn) => {
+                            if db::tenant_context::set_request_context(
+                                &mut *sconn,
+                                Some(tenant_id),
+                                Some(principal.user_id),
+                                false,
+                            )
+                            .await
+                            .is_err()
+                            {
+                                tracing::warn!("Failed to set RLS context for sentiment write");
+                            } else {
+                                // Check if alert should be triggered based on organization thresholds
+                                if let Ok(thresholds) = state
+                                    .sentiment_repo
+                                    .get_thresholds(&mut sconn, tenant_id)
+                                    .await
+                                {
+                                    if thresholds.enabled {
+                                        // Story 97.4: Check if sentiment requires attention and create alert
+                                        let should_alert = result.requires_attention
+                                            || (result.score < 0.0
+                                                && result.score.abs()
+                                                    >= thresholds.negative_threshold);
 
-                            if should_alert {
-                                let alert = CreateSentimentAlert {
-                                    organization_id: tenant_id,
-                                    building_id: None, // Could be extracted from session context
-                                    alert_type: alert_type::SPIKE_NEGATIVE.to_string(),
-                                    threshold_breached: thresholds.negative_threshold,
-                                    current_sentiment: result.score,
-                                    previous_sentiment: None,
-                                    sample_message_ids: vec![user_msg.id],
-                                };
+                                        if should_alert {
+                                            let alert = CreateSentimentAlert {
+                                                organization_id: tenant_id,
+                                                building_id: None, // Could be extracted from session context
+                                                alert_type: alert_type::SPIKE_NEGATIVE.to_string(),
+                                                threshold_breached: thresholds.negative_threshold,
+                                                current_sentiment: result.score,
+                                                previous_sentiment: None,
+                                                sample_message_ids: vec![user_msg.id],
+                                            };
 
-                                if let Err(e) = state.sentiment_repo.create_alert(alert).await {
-                                    tracing::warn!("Failed to create sentiment alert: {}", e);
-                                } else {
-                                    tracing::info!(
-                                        "Created sentiment alert for message {} (score: {:.2})",
-                                        user_msg.id,
-                                        result.score
-                                    );
+                                            if let Err(e) = state
+                                                .sentiment_repo
+                                                .create_alert(&mut *sconn, alert)
+                                                .await
+                                            {
+                                                tracing::warn!(
+                                                    "Failed to create sentiment alert: {}",
+                                                    e
+                                                );
+                                            } else {
+                                                tracing::info!(
+                                                    "Created sentiment alert for message {} (score: {:.2})",
+                                                    user_msg.id,
+                                                    result.score
+                                                );
+                                            }
+                                        }
+
+                                        // Update daily sentiment trend
+                                        let today = chrono::Utc::now().date_naive();
+                                        let (neg, neut, pos) = match result.label.as_str() {
+                                            "negative" => (1, 0, 0),
+                                            "neutral" => (0, 1, 0),
+                                            "positive" => (0, 0, 1),
+                                            _ => (0, 0, 0),
+                                        };
+
+                                        let trend_data = UpsertSentimentTrend {
+                                            organization_id: tenant_id,
+                                            building_id: None,
+                                            date: today,
+                                            avg_sentiment: result.score,
+                                            message_count: 1,
+                                            negative_count: neg,
+                                            neutral_count: neut,
+                                            positive_count: pos,
+                                        };
+
+                                        if let Err(e) = state
+                                            .sentiment_repo
+                                            .upsert_trend(&mut *sconn, trend_data)
+                                            .await
+                                        {
+                                            tracing::warn!(
+                                                "Failed to update sentiment trend: {}",
+                                                e
+                                            );
+                                        }
+                                    }
                                 }
                             }
 
-                            // Update daily sentiment trend
-                            let today = chrono::Utc::now().date_naive();
-                            let (neg, neut, pos) = match result.label.as_str() {
-                                "negative" => (1, 0, 0),
-                                "neutral" => (0, 1, 0),
-                                "positive" => (0, 0, 1),
-                                _ => (0, 0, 0),
-                            };
-
-                            let trend_data = UpsertSentimentTrend {
-                                organization_id: tenant_id,
-                                building_id: None,
-                                date: today,
-                                avg_sentiment: result.score,
-                                message_count: 1,
-                                negative_count: neg,
-                                neutral_count: neut,
-                                positive_count: pos,
-                            };
-
-                            if let Err(e) = state.sentiment_repo.upsert_trend(trend_data).await {
-                                tracing::warn!("Failed to update sentiment trend: {}", e);
-                            }
+                            // Clear context before the connection returns to the pool.
+                            let _ = db::tenant_context::clear_request_context(&mut *sconn).await;
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                "Failed to acquire connection for sentiment write: {}",
+                                e
+                            );
                         }
                     }
 
@@ -802,12 +851,19 @@ pub fn sentiment_router() -> Router<AppState> {
 
 async fn get_trends(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<SentimentTrendQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    // RLS context (org GUC) is set on rls.conn(); tenant_id is the authoritative org.
+    let tenant_id = rls.tenant_id();
 
-    match state.sentiment_repo.list_trends(tenant_id, query).await {
+    let result = state
+        .sentiment_repo
+        .list_trends(&mut **rls.conn(), tenant_id, query)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(trends) => Ok(Json(serde_json::json!({ "trends": trends }))),
         Err(e) => {
             tracing::error!("Failed to get trends: {}", e);
@@ -821,21 +877,24 @@ async fn get_trends(
 
 async fn list_alerts(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<AlertsQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state
+    let result = state
         .sentiment_repo
         .list_alerts(
+            &mut **rls.conn(),
             tenant_id,
             query.acknowledged,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )
-        .await
-    {
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(alerts) => Ok(Json(serde_json::json!({ "alerts": alerts }))),
         Err(e) => {
             tracing::error!("Failed to list alerts: {}", e);
@@ -852,16 +911,19 @@ async fn list_alerts(
 
 async fn acknowledge_alert(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
-    match state
+    let result = state
         .sentiment_repo
-        .acknowledge_alert(alert_id, org_id, principal.user_id)
-        .await
-    {
+        .acknowledge_alert(&mut **rls.conn(), alert_id, org_id, user_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(alert) => Ok(Json(serde_json::json!(alert))),
         Err(sqlx::Error::RowNotFound) => Err((
             StatusCode::NOT_FOUND,
@@ -882,11 +944,17 @@ async fn acknowledge_alert(
 
 async fn get_thresholds(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state.sentiment_repo.get_thresholds(tenant_id).await {
+    let result = state
+        .sentiment_repo
+        .get_thresholds(rls.conn(), tenant_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(thresholds) => Ok(Json(serde_json::json!(thresholds))),
         Err(e) => {
             tracing::error!("Failed to get thresholds: {}", e);
@@ -903,12 +971,18 @@ async fn get_thresholds(
 
 async fn update_thresholds(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<UpdateSentimentThresholds>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state.sentiment_repo.update_thresholds(tenant_id, req).await {
+    let result = state
+        .sentiment_repo
+        .update_thresholds(&mut **rls.conn(), tenant_id, req)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(thresholds) => Ok(Json(serde_json::json!(thresholds))),
         Err(e) => {
             tracing::error!("Failed to update thresholds: {}", e);
@@ -922,56 +996,42 @@ async fn update_thresholds(
 
 async fn get_dashboard(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
+    let org_id = rls.tenant_id();
     let today = chrono::Utc::now().date_naive();
     let thirty_days_ago = today - chrono::Duration::days(30);
 
-    let org_avg = state
-        .sentiment_repo
-        .get_org_average_sentiment(org_id, thirty_days_ago, today)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get org average sentiment: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to get dashboard",
-                )),
-            )
-        })?;
+    // Run all three reads on the same RLS-context connection, then release once.
+    // Errors are captured (not early-returned) so release() always runs.
+    let dashboard = async {
+        let org_avg = state
+            .sentiment_repo
+            .get_org_average_sentiment(&mut **rls.conn(), org_id, thirty_days_ago, today)
+            .await?;
+        let trends = state
+            .sentiment_repo
+            .list_trends(&mut **rls.conn(), org_id, SentimentTrendQuery::default())
+            .await?;
+        let alerts = state
+            .sentiment_repo
+            .list_alerts(&mut **rls.conn(), org_id, Some(false), 5, 0)
+            .await?;
+        Ok::<_, sqlx::Error>((org_avg, trends, alerts))
+    }
+    .await;
+    rls.release().await;
 
-    let trends = state
-        .sentiment_repo
-        .list_trends(org_id, SentimentTrendQuery::default())
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get trends: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to get dashboard",
-                )),
-            )
-        })?;
-
-    let alerts = state
-        .sentiment_repo
-        .list_alerts(org_id, Some(false), 5, 0)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get alerts: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to get dashboard",
-                )),
-            )
-        })?;
+    let (org_avg, trends, alerts) = dashboard.map_err(|e| {
+        tracing::error!("Failed to get dashboard: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to get dashboard",
+            )),
+        )
+    })?;
 
     Ok(Json(serde_json::json!({
         "organization_avg": org_avg,
