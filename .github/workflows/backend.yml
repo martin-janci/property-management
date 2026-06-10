@@ -141,7 +141,10 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
           RUST_ENV: development
-        run: cargo test --workspace
+        # --no-fail-fast: report every failing test binary in one run.
+        # Without it, one red binary masks all later ones (alphabetical
+        # order), so the gate peels failures one merge at a time (PAP-123).
+        run: cargo test --workspace --no-fail-fast
 
       # WS pub/sub fanout — closes issue #681. The test
       # `ws_pubsub_fanout_delivers_to_correct_subscriber` in
