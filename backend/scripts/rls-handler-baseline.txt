@@ -1,0 +1,17 @@
+# Known handler-side raw-pool accesses (state.db / self.db) that merged to dev
+# while the RLS Enforcement CI gate was silently a no-op (ripgrep was not
+# installed on the runner — every `rg … || true` swallowed exit 127 and the
+# script printed green; found during PAP-68).
+#
+# Paths relative to backend/. Baselined files WARN instead of failing
+# --strict; raw-pool access in any file NOT listed here fails CI. When a file
+# is cleaned up, REMOVE its line (the script warns on stale entries).
+
+servers/api-server/src/routes/ai/llm.rs
+servers/api-server/src/routes/ai/sessions.rs
+servers/api-server/src/routes/api_ecosystem.rs
+servers/api-server/src/routes/integrations/sync.rs
+servers/api-server/src/routes/integrations/webhook.rs
+servers/api-server/src/routes/mfa.rs
+servers/api-server/src/routes/subscriptions.rs
+servers/api-server/src/routes/voice_webhooks.rs
