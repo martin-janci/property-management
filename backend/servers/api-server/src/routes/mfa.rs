@@ -1,7 +1,6 @@
 //! Multi-Factor Authentication routes (Epic 9, Story 9.1 + 9.2).
 
 use api_core::extractors::RlsConnection;
-use db::RlsPool;
 use axum::{
     extract::State,
     http::StatusCode,
@@ -1023,7 +1022,7 @@ pub async fn verify_recovery_code(
     let enrolled: Option<bool> =
         sqlx::query_scalar("SELECT enabled FROM user_2fa WHERE user_id = $1")
             .bind(user_id)
-            .fetch_optional(&mut *conn)
+            .fetch_optional(&mut **conn)
             .await
             .map_err(|e| {
                 tracing::error!(error = %e, "recovery/verify: fetch enrollment failed");
@@ -1051,7 +1050,7 @@ pub async fn verify_recovery_code(
         "SELECT id, code_hash FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
     )
     .bind(user_id)
-    .fetch_all(&mut *conn)
+    .fetch_all(&mut **conn)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "recovery/verify: fetch codes failed");
@@ -1147,7 +1146,7 @@ pub async fn verify_recovery_code(
         "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL",
     )
     .bind(matched_id)
-    .execute(&mut *conn)
+    .execute(&mut **conn)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "recovery/verify: mark used failed");
@@ -1176,7 +1175,7 @@ pub async fn verify_recovery_code(
         "SELECT COUNT(*) FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
     )
     .bind(user_id)
-    .fetch_one(&mut *conn)
+    .fetch_one(&mut **conn)
     .await
     .unwrap_or(0);
 
