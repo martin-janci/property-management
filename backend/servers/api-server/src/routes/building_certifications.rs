@@ -1,4 +1,21 @@
 //! Building Certifications routes for Epic 137: Smart Building Certification.
+//!
+//! # RLS (PAP-67 / PAP-80)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on the building-certification
+//! cluster (8 tables), so every query MUST run on a connection that has
+//! `app.current_org_id` set or it collapses to deny-all. Each handler therefore
+//! acquires an [`RlsConnection`] (which validates tenant membership and sets the
+//! org/user GUCs on a dedicated connection) and passes that connection to the
+//! repository (`&mut **rls.conn()` to the generic-`Executor` methods, `rls.conn()`
+//! to the `&mut PgConnection` ones, which deref-coerce). The authoritative
+//! organization is `rls.tenant_id()` — the tenant the caller was validated
+//! against — not a client-supplied `organization_id`, so the SQL org filter and
+//! the RLS context can never disagree. Cross-tenant access is blocked by RLS: a
+//! by-id read of another org's row returns no row (`404`), and a write targeting
+//! another org fails the policy's `WITH CHECK`. `rls.release()` clears the
+//! context before the connection returns to the pool (on both the Ok and Err
+//! paths).
 
 use axum::{
     extract::{Path, Query, State},
@@ -9,7 +26,7 @@ use axum::{
 use serde::Deserialize;
 use uuid::Uuid;
 
-use api_core::extractors::AuthUser;
+use api_core::extractors::RlsConnection;
 use db::models::building_certification::{
     BuildingCertification, CertificationBenchmark, CertificationCost, CertificationCredit,
     CertificationDashboard, CertificationDocument, CertificationFilters, CertificationLevel,
@@ -21,14 +38,6 @@ use db::models::building_certification::{
 };
 
 use crate::state::AppState;
-
-/// Helper to get organization ID from auth user.
-fn get_org_id(auth: &AuthUser) -> Result<Uuid, (StatusCode, String)> {
-    auth.tenant_id.ok_or((
-        StatusCode::BAD_REQUEST,
-        "No organization context".to_string(),
-    ))
-}
 
 /// Create the router for building certifications.
 pub fn router() -> Router<AppState> {
@@ -109,21 +118,26 @@ pub struct AuditLogQuery {
     limit: Option<i64>,
 }
 
+fn internal_error(e: sqlx::Error) -> (StatusCode, String) {
+    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+}
+
 // ==================== Dashboard ====================
 
 /// Get certification dashboard summary.
 async fn get_dashboard(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
 ) -> Result<Json<CertificationDashboard>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .get_dashboard(org_id)
+        .get_dashboard(rls.conn(), org_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 // ==================== Certifications ====================
@@ -131,10 +145,10 @@ async fn get_dashboard(
 /// List certifications with filters.
 async fn list_certifications(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ListCertificationsQuery>,
 ) -> Result<Json<Vec<BuildingCertification>>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
+    let org_id = rls.tenant_id();
 
     let filters = CertificationFilters {
         building_id: query.building_id,
@@ -144,9 +158,10 @@ async fn list_certifications(
         expiring_within_days: query.expiring_within_days,
     };
 
-    state
+    let out = state
         .building_certification_repo
         .list_certifications(
+            &mut **rls.conn(),
             org_id,
             filters,
             query.limit.unwrap_or(50),
@@ -154,112 +169,128 @@ async fn list_certifications(
         )
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a new certification.
 async fn create_certification(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Json(input): Json<CreateBuildingCertification>,
 ) -> Result<(StatusCode, Json<BuildingCertification>), (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .building_certification_repo
-        .create_certification(org_id, input, Some(auth.user_id))
+        .create_certification(&mut **rls.conn(), org_id, input, Some(user_id))
         .await
         .map(|cert| (StatusCode::CREATED, Json(cert)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Get a certification by ID.
 async fn get_certification(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<BuildingCertification>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .get_certification(org_id, cert_id)
+        .get_certification(&mut **rls.conn(), org_id, cert_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .map(Json)
-        .ok_or((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+        .map_err(internal_error)
+        .and_then(|c| {
+            c.map(Json)
+                .ok_or((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+        });
+    rls.release().await;
+    out
 }
 
 /// Get certification with credits summary.
 async fn get_certification_with_credits(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<CertificationWithCredits>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .get_certification_with_credits(org_id, cert_id)
+        .get_certification_with_credits(rls.conn(), org_id, cert_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .map(Json)
-        .ok_or((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+        .map_err(internal_error)
+        .and_then(|c| {
+            c.map(Json)
+                .ok_or((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+        });
+    rls.release().await;
+    out
 }
 
 /// Update a certification.
 async fn update_certification(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
     Json(input): Json<UpdateBuildingCertification>,
 ) -> Result<Json<BuildingCertification>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .update_certification(org_id, cert_id, input)
+        .update_certification(&mut **rls.conn(), org_id, cert_id, input)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .map(Json)
-        .ok_or((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+        .map_err(internal_error)
+        .and_then(|c| {
+            c.map(Json)
+                .ok_or((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+        });
+    rls.release().await;
+    out
 }
 
 /// Delete a certification.
 async fn delete_certification(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .delete_certification(org_id, cert_id)
+        .delete_certification(&mut **rls.conn(), org_id, cert_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err((StatusCode::NOT_FOUND, "Certification not found".to_string()))
-    }
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err((StatusCode::NOT_FOUND, "Certification not found".to_string()))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 /// Get certifications expiring soon.
 async fn get_expiring_certifications(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ExpiringQuery>,
 ) -> Result<Json<Vec<BuildingCertification>>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .get_expiring_certifications(org_id, query.days.unwrap_or(90))
+        .get_expiring_certifications(&mut **rls.conn(), org_id, query.days.unwrap_or(90))
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 // ==================== Credits ====================
@@ -267,91 +298,102 @@ async fn get_expiring_certifications(
 /// List credits for a certification.
 async fn list_credits(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<Vec<CertificationCredit>>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .list_credits(org_id, cert_id)
+        .list_credits(&mut **rls.conn(), org_id, cert_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a certification credit.
 async fn create_credit(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationCredit>,
 ) -> Result<(StatusCode, Json<CertificationCredit>), (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
+    let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
-    state
+    let out = state
         .building_certification_repo
-        .create_credit(org_id, input)
+        .create_credit(&mut **rls.conn(), org_id, input)
         .await
         .map(|credit| (StatusCode::CREATED, Json(credit)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Get a credit by ID.
 async fn get_credit(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path((_cert_id, credit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<CertificationCredit>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .get_credit(org_id, credit_id)
+        .get_credit(&mut **rls.conn(), org_id, credit_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .map(Json)
-        .ok_or((StatusCode::NOT_FOUND, "Credit not found".to_string()))
+        .map_err(internal_error)
+        .and_then(|c| {
+            c.map(Json)
+                .ok_or((StatusCode::NOT_FOUND, "Credit not found".to_string()))
+        });
+    rls.release().await;
+    out
 }
 
 /// Update a credit.
 async fn update_credit(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path((_cert_id, credit_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<UpdateCertificationCredit>,
 ) -> Result<Json<CertificationCredit>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .update_credit(org_id, credit_id, input)
+        .update_credit(&mut **rls.conn(), org_id, credit_id, input)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .map(Json)
-        .ok_or((StatusCode::NOT_FOUND, "Credit not found".to_string()))
+        .map_err(internal_error)
+        .and_then(|c| {
+            c.map(Json)
+                .ok_or((StatusCode::NOT_FOUND, "Credit not found".to_string()))
+        });
+    rls.release().await;
+    out
 }
 
 /// Delete a credit.
 async fn delete_credit(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path((_cert_id, credit_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .delete_credit(org_id, credit_id)
+        .delete_credit(&mut **rls.conn(), org_id, credit_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err((StatusCode::NOT_FOUND, "Credit not found".to_string()))
-    }
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err((StatusCode::NOT_FOUND, "Credit not found".to_string()))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ==================== Documents ====================
@@ -359,56 +401,62 @@ async fn delete_credit(
 /// List documents for a certification.
 async fn list_documents(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<Vec<CertificationDocument>>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .list_documents(org_id, cert_id)
+        .list_documents(&mut **rls.conn(), org_id, cert_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a certification document.
 async fn create_document(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationDocument>,
 ) -> Result<(StatusCode, Json<CertificationDocument>), (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     input.certification_id = cert_id;
 
-    state
+    let out = state
         .building_certification_repo
-        .create_document(org_id, input, Some(auth.user_id))
+        .create_document(&mut **rls.conn(), org_id, input, Some(user_id))
         .await
         .map(|doc| (StatusCode::CREATED, Json(doc)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Delete a document.
 async fn delete_document(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path((_cert_id, doc_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .delete_document(org_id, doc_id)
+        .delete_document(&mut **rls.conn(), org_id, doc_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err((StatusCode::NOT_FOUND, "Document not found".to_string()))
-    }
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err((StatusCode::NOT_FOUND, "Document not found".to_string()))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ==================== Milestones ====================
@@ -416,74 +464,82 @@ async fn delete_document(
 /// List milestones for a certification.
 async fn list_milestones(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<Vec<CertificationMilestone>>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .list_milestones(org_id, cert_id)
+        .list_milestones(&mut **rls.conn(), org_id, cert_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a certification milestone.
 async fn create_milestone(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationMilestone>,
 ) -> Result<(StatusCode, Json<CertificationMilestone>), (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
+    let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
-    state
+    let out = state
         .building_certification_repo
-        .create_milestone(org_id, input)
+        .create_milestone(&mut **rls.conn(), org_id, input)
         .await
         .map(|milestone| (StatusCode::CREATED, Json(milestone)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Update a milestone.
 async fn update_milestone(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path((_cert_id, milestone_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<UpdateCertificationMilestone>,
 ) -> Result<Json<CertificationMilestone>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .update_milestone(org_id, milestone_id, input)
+        .update_milestone(&mut **rls.conn(), org_id, milestone_id, input)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .map(Json)
-        .ok_or((StatusCode::NOT_FOUND, "Milestone not found".to_string()))
+        .map_err(internal_error)
+        .and_then(|m| {
+            m.map(Json)
+                .ok_or((StatusCode::NOT_FOUND, "Milestone not found".to_string()))
+        });
+    rls.release().await;
+    out
 }
 
 /// Delete a milestone.
 async fn delete_milestone(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path((_cert_id, milestone_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    let deleted = state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .delete_milestone(org_id, milestone_id)
+        .delete_milestone(&mut **rls.conn(), org_id, milestone_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err((StatusCode::NOT_FOUND, "Milestone not found".to_string()))
-    }
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err((StatusCode::NOT_FOUND, "Milestone not found".to_string()))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ==================== Benchmarks ====================
@@ -491,35 +547,38 @@ async fn delete_milestone(
 /// List benchmarks for a certification.
 async fn list_benchmarks(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<Vec<CertificationBenchmark>>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .list_benchmarks(org_id, cert_id)
+        .list_benchmarks(&mut **rls.conn(), org_id, cert_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a certification benchmark.
 async fn create_benchmark(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationBenchmark>,
 ) -> Result<(StatusCode, Json<CertificationBenchmark>), (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
+    let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
-    state
+    let out = state
         .building_certification_repo
-        .create_benchmark(org_id, input)
+        .create_benchmark(&mut **rls.conn(), org_id, input)
         .await
         .map(|benchmark| (StatusCode::CREATED, Json(benchmark)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 // ==================== Costs ====================
@@ -527,51 +586,56 @@ async fn create_benchmark(
 /// List costs for a certification.
 async fn list_costs(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<Vec<CertificationCost>>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .list_costs(org_id, cert_id)
+        .list_costs(&mut **rls.conn(), org_id, cert_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a certification cost.
 async fn create_cost(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationCost>,
 ) -> Result<(StatusCode, Json<CertificationCost>), (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     input.certification_id = cert_id;
 
-    state
+    let out = state
         .building_certification_repo
-        .create_cost(org_id, input, Some(auth.user_id))
+        .create_cost(&mut **rls.conn(), org_id, input, Some(user_id))
         .await
         .map(|cost| (StatusCode::CREATED, Json(cost)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Get total costs for a certification.
 async fn get_total_costs(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<rust_decimal::Decimal>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .get_total_costs(org_id, cert_id)
+        .get_total_costs(&mut **rls.conn(), org_id, cert_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 // ==================== Reminders ====================
@@ -579,35 +643,38 @@ async fn get_total_costs(
 /// List reminders for a certification.
 async fn list_reminders(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
 ) -> Result<Json<Vec<CertificationReminder>>, (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .list_reminders(org_id, cert_id)
+        .list_reminders(&mut **rls.conn(), org_id, cert_id)
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a certification reminder.
 async fn create_reminder(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
     Json(mut input): Json<CreateCertificationReminder>,
 ) -> Result<(StatusCode, Json<CertificationReminder>), (StatusCode, String)> {
-    let org_id = get_org_id(&auth)?;
+    let org_id = rls.tenant_id();
     input.certification_id = cert_id;
 
-    state
+    let out = state
         .building_certification_repo
-        .create_reminder(org_id, input)
+        .create_reminder(&mut **rls.conn(), org_id, input)
         .await
         .map(|reminder| (StatusCode::CREATED, Json(reminder)))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 // ==================== Audit Logs ====================
@@ -615,19 +682,25 @@ async fn create_reminder(
 /// List audit logs for a certification.
 async fn list_audit_logs(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(cert_id): Path<Uuid>,
     Query(query): Query<AuditLogQuery>,
 ) -> Result<
     Json<Vec<db::models::building_certification::CertificationAuditLog>>,
     (StatusCode, String),
 > {
-    let org_id = get_org_id(&auth)?;
-
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .building_certification_repo
-        .list_audit_logs(org_id, cert_id, query.limit.unwrap_or(100))
+        .list_audit_logs(
+            &mut **rls.conn(),
+            org_id,
+            cert_id,
+            query.limit.unwrap_or(100),
+        )
         .await
         .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
