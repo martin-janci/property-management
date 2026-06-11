@@ -1567,6 +1567,77 @@ pub struct RoomTypeMapping {
 }
 
 // ============================================
+// Retry Configuration (AC-5 rate/availability push)
+// ============================================
+
+/// Retry policy for OTA rate & availability *push* operations.
+///
+/// Booking.com's Supply XML endpoint is occasionally transient-fail under
+/// load (HTTP 429/5xx) and the OTA push messages are idempotent (each carries
+/// an absolute `Start`/`End`/`InvTypeCode` application control rather than a
+/// delta), so re-sending the same document is safe. This struct controls the
+/// bounded exponential-backoff retry loop used by [`BookingClient::push_rates`]
+/// and [`BookingClient::push_availability`].
+///
+/// This is intentionally a small, push-specific policy distinct from
+/// [`crate::connector::RetryConfig`], which drives the generic [`crate::connector::Connector`]
+/// request/response abstraction. The Booking client talks to `reqwest`
+/// directly (it must hand-roll OTA XML bodies + Basic auth), so it carries its
+/// own lightweight policy rather than routing through the generic connector.
+#[derive(Debug, Clone)]
+pub struct BookingRetryConfig {
+    /// Total number of attempts (1 = no retry). Must be >= 1.
+    pub max_attempts: u32,
+    /// Delay before the first retry, in milliseconds.
+    pub initial_delay_ms: u64,
+    /// Upper bound on any single backoff delay, in milliseconds.
+    pub max_delay_ms: u64,
+    /// Multiplier applied to the delay after each failed attempt.
+    pub backoff_multiplier: u32,
+}
+
+impl Default for BookingRetryConfig {
+    fn default() -> Self {
+        Self {
+            max_attempts: 3,
+            initial_delay_ms: 500,
+            max_delay_ms: 8_000,
+            backoff_multiplier: 2,
+        }
+    }
+}
+
+impl BookingRetryConfig {
+    /// A no-retry policy (single attempt) — useful in tests to keep them fast.
+    pub fn no_retry() -> Self {
+        Self {
+            max_attempts: 1,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        }
+    }
+
+    /// Backoff delay (ms) before the retry that follows `attempt` (0-based:
+    /// `attempt = 0` is the delay after the first attempt failed). Capped at
+    /// [`Self::max_delay_ms`].
+    pub fn delay_for_attempt(&self, attempt: u32) -> u64 {
+        let factor = self.backoff_multiplier.saturating_pow(attempt);
+        self.initial_delay_ms
+            .saturating_mul(factor as u64)
+            .min(self.max_delay_ms)
+    }
+}
+
+/// Whether an HTTP status code returned by the Booking.com endpoint is worth
+/// retrying. Transient server-side / throttling failures are retryable;
+/// client errors (4xx other than 408/429) are not — they indicate a bad
+/// message and will fail identically on retry.
+fn is_retryable_status(status: u16) -> bool {
+    matches!(status, 408 | 425 | 429 | 500 | 502 | 503 | 504)
+}
+
+// ============================================
 // Client Implementation
 // ============================================
 
@@ -1574,6 +1645,7 @@ pub struct RoomTypeMapping {
 pub struct BookingClient {
     client: reqwest::Client,
     credentials: BookingCredentials,
+    retry: BookingRetryConfig,
 }
 
 impl BookingClient {
@@ -1582,6 +1654,7 @@ impl BookingClient {
         Self {
             client: reqwest::Client::new(),
             credentials,
+            retry: BookingRetryConfig::default(),
         }
     }
 
@@ -1595,7 +1668,14 @@ impl BookingClient {
                 password: api_key,
                 api_url: "https://supply-xml.booking.com/hotels/xml".to_string(),
             },
+            retry: BookingRetryConfig::default(),
         }
+    }
+
+    /// Override the retry policy used by the OTA push operations.
+    pub fn with_retry(mut self, retry: BookingRetryConfig) -> Self {
+        self.retry = retry;
+        self
     }
 
     /// Generate the authorization header.
@@ -1606,6 +1686,84 @@ impl BookingClient {
             self.credentials.username, self.credentials.password
         );
         format!("Basic {}", STANDARD.encode(credentials.as_bytes()))
+    }
+
+    /// POST an OTA XML document to the Booking.com endpoint with bounded
+    /// exponential-backoff retry on transient failures (AC-5).
+    ///
+    /// Retries are attempted on:
+    /// * network/transport errors (timeouts, connection resets), and
+    /// * retryable HTTP status codes (see [`is_retryable_status`]).
+    ///
+    /// Non-retryable HTTP errors (e.g. 400/401/403/404) fail immediately with
+    /// [`BookingError::Api`]. When all attempts are exhausted the last error is
+    /// returned. On HTTP success the raw response body is returned for the
+    /// caller to parse the OTA-level `<Success>` / `<Errors>` status.
+    ///
+    /// `op` is a short label used only for tracing.
+    async fn post_ota_with_retry(&self, op: &str, body: String) -> Result<String, BookingError> {
+        let attempts = self.retry.max_attempts.max(1);
+        let mut last_err: Option<BookingError> = None;
+
+        for attempt in 0..attempts {
+            if attempt > 0 {
+                let delay = self.retry.delay_for_attempt(attempt - 1);
+                tracing::warn!(
+                    op,
+                    attempt = attempt + 1,
+                    max = attempts,
+                    delay_ms = delay,
+                    "Retrying Booking.com OTA push after transient failure"
+                );
+                if delay > 0 {
+                    tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
+                }
+            }
+
+            let send_result = self
+                .client
+                .post(&self.credentials.api_url)
+                .header("Authorization", self.generate_auth_header())
+                .header("Content-Type", "application/xml")
+                .body(body.clone())
+                .send()
+                .await;
+
+            let response = match send_result {
+                Ok(resp) => resp,
+                Err(e) => {
+                    // Transport-level failure — always treated as transient.
+                    tracing::warn!(op, error = %e, "Booking.com OTA push transport error");
+                    last_err = Some(BookingError::Network(e));
+                    continue;
+                }
+            };
+
+            let status = response.status();
+            if status.is_success() {
+                return response.text().await.map_err(BookingError::Network);
+            }
+
+            let code = status.as_u16();
+            let error_body = response.text().await.unwrap_or_default();
+
+            if is_retryable_status(code) {
+                tracing::warn!(
+                    op,
+                    status = code,
+                    "Booking.com OTA push returned retryable HTTP status"
+                );
+                last_err = Some(BookingError::Api(format!("HTTP {code}: {error_body}")));
+                continue;
+            }
+
+            // Non-retryable HTTP error: fail fast.
+            return Err(BookingError::Api(format!("HTTP {code}: {error_body}")));
+        }
+
+        Err(last_err.unwrap_or_else(|| {
+            BookingError::PushFailed("push failed with no recorded error".to_string())
+        }))
     }
 
     // ==================== Property Operations ====================
@@ -1818,21 +1976,9 @@ impl BookingClient {
             avail_status_messages: messages,
         };
 
-        let response = self
-            .client
-            .post(&self.credentials.api_url)
-            .header("Authorization", self.generate_auth_header())
-            .header("Content-Type", "application/xml")
-            .body(request.to_xml())
-            .send()
+        let body = self
+            .post_ota_with_retry("push_availability", request.to_xml())
             .await?;
-
-        if !response.status().is_success() {
-            let error = response.text().await.unwrap_or_default();
-            return Err(BookingError::Api(error));
-        }
-
-        let body = response.text().await?;
         let ota_response = OtaHotelAvailNotifRS::from_xml(&body)?;
 
         if !ota_response.success {
@@ -1873,21 +2019,7 @@ impl BookingClient {
 
         let xml = ota_xml::build_rate_amount_notif_rq(hotel_id, &update_tuples)?;
 
-        let response = self
-            .client
-            .post(&self.credentials.api_url)
-            .header("Authorization", self.generate_auth_header())
-            .header("Content-Type", "application/xml")
-            .body(xml)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            let error = response.text().await.unwrap_or_default();
-            return Err(BookingError::Api(error));
-        }
-
-        let body = response.text().await?;
+        let body = self.post_ota_with_retry("push_rates", xml).await?;
         let (success, error) = ota_xml::parse_response_status(&body);
 
         if !success {
@@ -1958,6 +2090,95 @@ impl BookingClient {
 mod tests {
     use super::*;
     use chrono::NaiveDate;
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, Mutex,
+    };
+
+    /// A single scripted HTTP response for [`MockOtaServer`].
+    struct MockResponse {
+        status: u16,
+        body: String,
+    }
+
+    impl MockResponse {
+        fn status(status: u16, body: &str) -> Self {
+            Self {
+                status,
+                body: body.to_string(),
+            }
+        }
+    }
+
+    /// Minimal one-connection-per-request HTTP/1.1 mock server backed by a
+    /// raw `tokio` TCP listener (no extra test deps). Each incoming request is
+    /// answered with the next scripted [`MockResponse`]; once the script is
+    /// exhausted it replies 500. Used to drive the retry/error-handling paths
+    /// of the OTA push without touching the network.
+    struct MockOtaServer {
+        addr: std::net::SocketAddr,
+        hits: Arc<AtomicUsize>,
+    }
+
+    impl MockOtaServer {
+        async fn spawn(responses: Vec<MockResponse>) -> Self {
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let addr = listener.local_addr().unwrap();
+            let hits = Arc::new(AtomicUsize::new(0));
+            let hits_task = hits.clone();
+            let script = Arc::new(Mutex::new(responses.into_iter()));
+
+            tokio::spawn(async move {
+                loop {
+                    let (mut socket, _) = match listener.accept().await {
+                        Ok(pair) => pair,
+                        Err(_) => break,
+                    };
+                    let hits_inner = hits_task.clone();
+                    let script_inner = script.clone();
+                    tokio::spawn(async move {
+                        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+                        // Drain the request (we don't assert on its content
+                        // here; the OTA-body shape is covered by builder tests).
+                        let mut buf = [0u8; 4096];
+                        let _ = socket.read(&mut buf).await;
+
+                        hits_inner.fetch_add(1, Ordering::SeqCst);
+                        let resp = {
+                            let mut it = script_inner.lock().unwrap();
+                            it.next()
+                        };
+                        let (status, body) = match resp {
+                            Some(r) => (r.status, r.body),
+                            None => (500, "<exhausted/>".to_string()),
+                        };
+                        let reason = match status {
+                            200 => "OK",
+                            400 => "Bad Request",
+                            503 => "Service Unavailable",
+                            _ => "Status",
+                        };
+                        let response = format!(
+                            "HTTP/1.1 {status} {reason}\r\nContent-Type: application/xml\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                            body.len()
+                        );
+                        let _ = socket.write_all(response.as_bytes()).await;
+                        let _ = socket.flush().await;
+                    });
+                }
+            });
+
+            Self { addr, hits }
+        }
+
+        fn url(&self) -> String {
+            format!("http://{}/hotels/xml", self.addr)
+        }
+
+        fn hits(&self) -> usize {
+            self.hits.load(Ordering::SeqCst)
+        }
+    }
 
     #[test]
     fn test_credentials_new() {
@@ -2031,6 +2252,160 @@ mod tests {
         let status = BookingReservationStatus::Cancelled;
         let json = serde_json::to_string(&status).unwrap();
         assert_eq!(json, "\"cancelled\"");
+    }
+
+    #[test]
+    fn test_retryable_status_classification() {
+        // Transient server/throttle codes are retryable.
+        for code in [408, 425, 429, 500, 502, 503, 504] {
+            assert!(is_retryable_status(code), "{code} should be retryable");
+        }
+        // Client errors (bad message / auth) are NOT retryable.
+        for code in [400, 401, 403, 404, 409, 422] {
+            assert!(!is_retryable_status(code), "{code} should not be retryable");
+        }
+    }
+
+    #[test]
+    fn test_retry_backoff_is_exponential_and_capped() {
+        let cfg = BookingRetryConfig {
+            max_attempts: 5,
+            initial_delay_ms: 100,
+            max_delay_ms: 1_000,
+            backoff_multiplier: 2,
+        };
+        assert_eq!(cfg.delay_for_attempt(0), 100); // 100 * 2^0
+        assert_eq!(cfg.delay_for_attempt(1), 200); // 100 * 2^1
+        assert_eq!(cfg.delay_for_attempt(2), 400); // 100 * 2^2
+        assert_eq!(cfg.delay_for_attempt(3), 800); // 100 * 2^3
+        assert_eq!(cfg.delay_for_attempt(4), 1_000); // 1600 capped to 1000
+        // Large attempt counts must not overflow.
+        assert_eq!(cfg.delay_for_attempt(64), 1_000);
+    }
+
+    #[test]
+    fn test_retry_config_defaults_and_no_retry() {
+        let def = BookingRetryConfig::default();
+        assert!(def.max_attempts >= 1);
+        let none = BookingRetryConfig::no_retry();
+        assert_eq!(none.max_attempts, 1);
+        assert_eq!(none.delay_for_attempt(0), 0);
+    }
+
+    #[tokio::test]
+    async fn test_push_availability_retries_then_succeeds_on_transient_5xx() {
+        // First call returns 503 (retryable), second returns an OTA success
+        // body. The push must retry and ultimately succeed.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(503, "<busy/>"),
+            MockResponse::status(
+                200,
+                "<OTA_HotelAvailNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelAvailNotifRS>",
+            ),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 3,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: 4,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }];
+
+        let result = client.push_availability("H1", &updates).await;
+        assert!(result.is_ok(), "expected success after retry: {result:?}");
+        assert_eq!(server.hits(), 2, "expected exactly one retry");
+    }
+
+    #[tokio::test]
+    async fn test_push_rates_does_not_retry_on_client_error() {
+        // 400 is non-retryable: the push must fail after a single attempt.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(400, "<bad-request/>"),
+            // Second response should never be consumed.
+            MockResponse::status(200, "<Success/>"),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 4,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![RateUpdate {
+            room_type_id: "DBL".to_string(),
+            rate_plan_code: "STD".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            base_rate: "120.00".parse().unwrap(),
+            currency: "EUR".to_string(),
+            extra_person_rate: None,
+            extra_child_rate: None,
+        }];
+
+        let result = client.push_rates("H1", &updates).await;
+        assert!(result.is_err(), "400 must not be retried into success");
+        assert_eq!(server.hits(), 1, "client error must not be retried");
+    }
+
+    #[tokio::test]
+    async fn test_push_rates_exhausts_retries_on_persistent_5xx() {
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(503, "<busy/>"),
+            MockResponse::status(503, "<busy/>"),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 2,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![RateUpdate {
+            room_type_id: "DBL".to_string(),
+            rate_plan_code: "STD".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            base_rate: "120.00".parse().unwrap(),
+            currency: "EUR".to_string(),
+            extra_person_rate: None,
+            extra_child_rate: None,
+        }];
+
+        let result = client.push_rates("H1", &updates).await;
+        assert!(result.is_err(), "persistent 5xx must fail");
+        assert_eq!(server.hits(), 2, "should exhaust exactly max_attempts");
     }
 
     #[test]
