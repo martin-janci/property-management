@@ -284,7 +284,7 @@ async fn workflow_repo_force_rls_deny_all_and_fix(pool: PgPool) {
                 CreateWorkflowAction {
                     workflow_id: created.id,
                     action_order: 1,
-                    action_type: "notification".to_string(),
+                    action_type: "send_notification".to_string(),
                     action_config: serde_json::json!({}),
                     on_failure: None,
                     retry_count: None,
