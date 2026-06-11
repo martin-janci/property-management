@@ -1058,37 +1058,49 @@ impl MarketplaceRepository {
     }
 
     /// Mark invitation as viewed.
+    ///
+    /// Keyed on `provider_id` as well as `id` so a provider can only act on its
+    /// own invitations. Threading the caller's verified provider id closes the
+    /// cross-provider IDOR (PAP-140): without it any authenticated provider
+    /// could flip another provider's invitation by guessing its UUID.
     pub async fn mark_invitation_viewed(
         &self,
         id: Uuid,
+        provider_id: Uuid,
     ) -> Result<Option<RfqInvitation>, SqlxError> {
         sqlx::query_as::<_, RfqInvitation>(
             r#"
             UPDATE rfq_invitations SET viewed_at = NOW()
-            WHERE id = $1 AND viewed_at IS NULL
+            WHERE id = $1 AND provider_id = $2 AND viewed_at IS NULL
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(provider_id)
         .fetch_optional(&self.pool)
         .await
     }
 
     /// Decline an invitation.
+    ///
+    /// Keyed on `provider_id` as well as `id` (PAP-140) so a provider can only
+    /// decline invitations addressed to it.
     pub async fn decline_invitation(
         &self,
         id: Uuid,
+        provider_id: Uuid,
         reason: Option<String>,
     ) -> Result<Option<RfqInvitation>, SqlxError> {
         sqlx::query_as::<_, RfqInvitation>(
             r#"
             UPDATE rfq_invitations
-            SET declined = TRUE, decline_reason = $2, responded_at = NOW()
-            WHERE id = $1
+            SET declined = TRUE, decline_reason = $3, responded_at = NOW()
+            WHERE id = $1 AND provider_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(provider_id)
         .bind(reason)
         .fetch_optional(&self.pool)
         .await

@@ -184,6 +184,58 @@ async fn seed_portfolio(pool: &PgPool, org_id: Uuid) -> Uuid {
     .expect("seed portfolio")
 }
 
+/// Seed a service-provider profile owned by `user_id`; return its id.
+/// Provider profiles are intentionally cross-org/public (PAP-140 keeps them so);
+/// ownership is by `user_id`, not org.
+async fn seed_provider(pool: &PgPool, user_id: Uuid, slug: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO service_provider_profiles
+            (user_id, company_name, contact_name, contact_email, status)
+        VALUES ($1, $2, 'Contact', $3, 'active')
+        RETURNING id
+        "#,
+    )
+    .bind(user_id)
+    .bind(format!("Provider {slug}"))
+    .bind(format!("{slug}@provider-idor.test"))
+    .fetch_one(pool)
+    .await
+    .expect("seed provider")
+}
+
+/// Seed an RFQ invitation addressed to `provider_id` and return its id.
+async fn seed_invitation(pool: &PgPool, rfq_id: Uuid, provider_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO rfq_invitations (rfq_id, provider_id)
+        VALUES ($1, $2)
+        RETURNING id
+        "#,
+    )
+    .bind(rfq_id)
+    .bind(provider_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed invitation")
+}
+
+/// Seed a verification document for `provider_id` and return its id.
+async fn seed_verification(pool: &PgPool, provider_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO provider_verifications
+            (provider_id, verification_type, document_name, document_number, status)
+        VALUES ($1, 'business_license', 'License.pdf', 'SECRET-DOC-123', 'pending')
+        RETURNING id
+        "#,
+    )
+    .bind(provider_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed verification")
+}
+
 /// Claims shape that matches `api_core::extractors::auth::Claims`. We mint with
 /// this (rather than `JwtService`, which serializes the org as `org_id`) so the
 /// `tenant_id` claim deserializes into `AuthUser.tenant_id` for the
@@ -211,6 +263,29 @@ fn mint_token(user_id: Uuid, email: &str, org_id: Option<Uuid>) -> String {
         token_type: "access".to_string(),
         tenant_id: org_id,
         role: Some("manager".to_string()),
+        email: email.to_string(),
+        name: "MVI User".to_string(),
+    };
+    let secret = TestConfig::default().jwt_secret;
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .expect("encode test JWT")
+}
+
+/// Mint a token carrying an explicit `role` claim (e.g. `super_admin`), used to
+/// exercise the platform-admin gates on the verification/badge endpoints.
+fn mint_token_with_role(user_id: Uuid, email: &str, org_id: Option<Uuid>, role: &str) -> String {
+    let now = chrono::Utc::now().timestamp();
+    let claims = TestClaims {
+        sub: user_id,
+        exp: now + 3600,
+        iat: now,
+        token_type: "access".to_string(),
+        tenant_id: org_id,
+        role: Some(role.to_string()),
         email: email.to_string(),
         name: "MVI User".to_string(),
     };
@@ -378,6 +453,198 @@ async fn list_portfolio_properties_for_own_org_succeeds(pool: PgPool) {
         resp.status,
         StatusCode::OK,
         "Org A member must be able to list its own portfolio properties: {}",
+        resp.text()
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace — RFQ invitations (provider-owned; PAP-140)
+//
+// `mark_invitation_viewed` / `decline_invitation` previously discarded the auth
+// context entirely (zero pre-check), so any authenticated provider could flip
+// another provider's invitation by guessing its UUID. The repo methods now key
+// on the caller's verified provider id.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn decline_invitation_for_other_provider_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "inv-org").await;
+    let user_a = seed_user(&pool, "inv-prov-a@provider-idor.test").await;
+    let user_b = seed_user(&pool, "inv-prov-b@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "inv-a").await;
+    let _provider_b = seed_provider(&pool, user_b, "inv-b").await;
+    let rfq = seed_rfq(&pool, org, user_a).await;
+    let invitation = seed_invitation(&pool, rfq, provider_a).await;
+
+    // Provider B (own profile) tries to decline provider A's invitation → 404.
+    let token_b = mint_token(user_b, "inv-prov-b@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/invitations/{invitation}/decline");
+    let resp = app
+        .execute(
+            app.post(&uri)
+                .bearer(&token_b)
+                .json(serde_json::json!({ "reason": "not interested" }))
+                .build(),
+        )
+        .await;
+
+    assert_not_ok(resp.status, "decline_invitation cross-provider");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn decline_invitation_for_own_provider_succeeds(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "inv-own-org").await;
+    let user_a = seed_user(&pool, "inv-own-a@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "inv-own-a").await;
+    let rfq = seed_rfq(&pool, org, user_a).await;
+    let invitation = seed_invitation(&pool, rfq, provider_a).await;
+
+    let token_a = mint_token(user_a, "inv-own-a@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/invitations/{invitation}/decline");
+    let resp = app
+        .execute(
+            app.post(&uri)
+                .bearer(&token_a)
+                .json(serde_json::json!({ "reason": "busy" }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "Provider must be able to decline its own invitation: {}",
+        resp.text()
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mark_invitation_viewed_for_other_provider_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "inv-view-org").await;
+    let user_a = seed_user(&pool, "inv-view-a@provider-idor.test").await;
+    let user_b = seed_user(&pool, "inv-view-b@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "inv-view-a").await;
+    let _provider_b = seed_provider(&pool, user_b, "inv-view-b").await;
+    let rfq = seed_rfq(&pool, org, user_a).await;
+    let invitation = seed_invitation(&pool, rfq, provider_a).await;
+
+    let token_b = mint_token(user_b, "inv-view-b@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/invitations/{invitation}/view");
+    let resp = app.execute(app.post(&uri).bearer(&token_b).build()).await;
+
+    assert_not_ok(resp.status, "mark_invitation_viewed cross-provider");
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace — verification read (owner-or-platform-admin; PAP-140)
+//
+// `GET /verifications/{id}` returned sensitive document data (numbers, URLs)
+// keyed on id alone. It now requires the owning provider or a platform admin.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_verification_for_other_provider_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user_a = seed_user(&pool, "ver-a@provider-idor.test").await;
+    let user_b = seed_user(&pool, "ver-b@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "ver-a").await;
+    let _provider_b = seed_provider(&pool, user_b, "ver-b").await;
+    let verification = seed_verification(&pool, provider_a).await;
+
+    let token_b = mint_token(user_b, "ver-b@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/verifications/{verification}");
+    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+
+    assert_not_ok(resp.status, "get_verification cross-provider");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_verification_for_owner_succeeds(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user_a = seed_user(&pool, "ver-own-a@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "ver-own-a").await;
+    let verification = seed_verification(&pool, provider_a).await;
+
+    let token_a = mint_token(user_a, "ver-own-a@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/verifications/{verification}");
+    let resp = app.execute(app.get(&uri).bearer(&token_a).build()).await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "Owning provider must be able to read its own verification: {}",
+        resp.text()
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_verification_as_platform_admin_succeeds(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user_a = seed_user(&pool, "ver-adm-a@provider-idor.test").await;
+    let admin = seed_user(&pool, "ver-admin@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "ver-adm-a").await;
+    let verification = seed_verification(&pool, provider_a).await;
+
+    let token = mint_token_with_role(admin, "ver-admin@provider-idor.test", None, "super_admin");
+    let uri = format!("/api/v1/marketplace/verifications/{verification}");
+    let resp = app.execute(app.get(&uri).bearer(&token).build()).await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "Platform admin must be able to read any verification: {}",
+        resp.text()
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace — platform-moderation gates (PAP-140)
+//
+// Verification review and badge revoke were callable by any authenticated user.
+// They now require the platform-admin role; the gate runs before any DB work.
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn review_verification_as_non_admin_is_forbidden(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = seed_user(&pool, "rev-nonadmin@provider-idor.test").await;
+
+    // Non-admin (manager) token; random verification id — the role gate fires first.
+    let token = mint_token(user, "rev-nonadmin@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/verifications/{}/review", Uuid::new_v4());
+    let resp = app
+        .execute(
+            app.post(&uri)
+                .bearer(&token)
+                .json(serde_json::json!({ "status": "verified" }))
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "Non-admin must not be able to review verifications: {}",
+        resp.text()
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn revoke_badge_as_non_admin_is_forbidden(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = seed_user(&pool, "badge-nonadmin@provider-idor.test").await;
+
+    let token = mint_token(user, "badge-nonadmin@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/badges/{}", Uuid::new_v4());
+    let resp = app.execute(app.delete(&uri).bearer(&token).build()).await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "Non-admin must not be able to revoke badges: {}",
         resp.text()
     );
 }
