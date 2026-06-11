@@ -651,6 +651,94 @@
         "at": "2026-06-11T06:27:13Z",
         "by": "dispatcher-exact-id (gc1-reconcile stem-matcher gap)"
       }
+    },
+    {
+      "id": "feat-airbnb-oauth-token-exchange-route-backend",
+      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-airbnb-realtime-webhook-handler-backend",
+      "action": "Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) — signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-airbnb-integration-api-routes-backend",
+      "action": "Coverage 83-1 (AC): add the /integrations/airbnb/* API routes (connect/status/sync) wiring the existing Airbnb models to the api-server router with RLS-preserving handlers. Backend api-server; include route smoke tests.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-web-announcements-faults-api-hooks-wiring",
+      "action": "Coverage 79-1: complete the api-client integration — wire AnnouncementsPage and FaultsPage in ppt-web to the generated TanStack Query API hooks (replace any remaining stubbed/static data), and verify loading/error states. Frontend ppt-web; include component tests for the wired data path.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "verify-dispute-filing-flow-ac-coverage-promote",
+      "action": "Coverage 80-2: verify the dispute-filing flow against the story ACs (UI is shipped but story Status pending, checklist unchecked); add any missing integration/e2e coverage and promote the story ready-for-dev → done. Frontend ppt-web + api-server as needed.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "verify-document-upload-metadata-promote",
+      "action": "Coverage 7a-1: verify document upload + metadata against the story ACs (RLS + capability gates), add any missing integration test coverage, and promote the story from ready-for-dev to done. Backend api-server.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "verify-document-folder-organization-backend-promote",
+      "action": "Coverage 7a-2: verify the document folder-organization backend (CRUD + RLS + capability gates) against the story ACs and add any missing integration test coverage. Backend api-server (mobile slice tracked separately).",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "test-esignature-email-send-status-tracking-backend",
+      "action": "Coverage 84-2: add backend tests for the e-signature email-send + status-tracking path (request sent → delivered/opened/signed transitions), complementing the webhook idempotency guard work. Additive backend tests, no schema change. Backend api-server.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
     }
   ]
 }
