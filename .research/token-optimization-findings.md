@@ -29,25 +29,54 @@ Loaded only on **research-dispatcher / routine** runs (frequent, but not every a
 | `.research/routine-prompt.md` | 76.5 KB | ~19,100 |
 | `.research/implementer-prompt.md` | 19.7 KB | ~4,900 |
 
-## 2. The bash-command corpus (rtk discover, last 30 days)
+## 2. The bash-command corpus — CORRECTED (PAP-162 investigation, 2026-06-11)
 
-- 481 sessions, **12,298 bash commands**. RTK already handles most of them, but **only 13
-  (0.1%) were routed through RTK** in those recorded sessions.
-- `rtk discover` estimates **~1.1M tokens saveable** from commands that RTK *already*
-  supports but that ran raw: `grep -n` (1512×, ~336K tok), `git log` (1079×, ~225K),
-  `gh pr` (601×, ~196K), `find` (350×, ~102K), `head -c` (390×, ~85K), `curl -s` (383×, ~57K),
-  `ls -la` (383×, ~49K).
-- Yet the global `~/.claude/settings.json` **does** configure `PreToolUse: Bash → rtk hook claude`,
-  and `rtk gain` shows 22M tokens already saved overall. **Conclusion:** the rewrite hook is
-  not firing in the agent/cloud heartbeat sessions (likely the runner image lacks the `rtk`
-  binary or the hook, or those sessions use a settings scope without it). This is the single
-  largest measured opportunity and the fix is environment-level, not code.
+> The original §2 read the `rtk discover` "0.1% routed through RTK / ~1.1M saveable" number
+> as a real coverage gap and concluded *"the rewrite hook is not firing in agent/cloud
+> heartbeat sessions."* **PAP-162 disproved that conclusion with end-to-end evidence.**
+> Corrected findings below; the original figures are retained for context but are a
+> measurement artifact, not a coverage gap.
+
+**What `rtk discover` reported:** 481 sessions, 12,298 bash commands, **only 13 (0.1%) "routed
+through RTK"**, **~1.1M tokens "saveable"** from `grep -n`/`git log`/`gh pr`/`find`/`head -c`/
+`curl -s`/`ls -la` that "ran raw."
+
+**What is actually true (measured in a live agent heartbeat session):**
+
+1. **The hook IS installed and IS firing.** `rtk` is on PATH (`/home/dev/.local/bin/rtk`,
+   installed 2026-06-05) and `~/.claude/settings.json` has `PreToolUse: Bash → rtk hook claude`.
+   The hook correctly rewrites bare *and* compound/piped commands
+   (`cd … && git status … | head` → `cd … && rtk git status … | head`).
+2. **The rewrite is honored end-to-end and rtk executes.** Running `git log` / `grep` through
+   the Bash tool in an agent session increments `rtk gain`'s exec counter in real time, and
+   `rtk gain -F` logs 1,184 fallbacks at a **99.6% recovery rate** — i.e. the hook invokes rtk
+   even on commands rtk can't optimize (grep on `/tmp` files, `ps aux`, `rsync`, `wget`).
+3. **`rtk discover`'s 0.1% is a measurement artifact, not coverage.** Claude Code records the
+   model's **pre-hook** command in the transcript JSONL. `rtk discover` parses transcripts, so
+   it can *never* observe a `PreToolUse` rewrite. Proof: `git log --oneline -5` ran through rtk
+   (gain counter incremented) yet is recorded in the transcript as raw `git log --oneline -5`,
+   no `rtk` prefix. Therefore discover reports ~0% **regardless of true coverage** — and the
+   number cannot "jump above 0.1%" by any runner fix.
+4. **The ~1.1M estimate is inflated** on two counts: (a) the 30-day window mostly predates
+   rtk's 2026-06-05 install (rtk's telemetry only has 2026-06-09→11 data), and (b) discover's
+   "MISSED SAVINGS" double-counts commands that *already* routed through rtk (recorded raw) plus
+   fallback commands rtk genuinely can't compress.
+
+**True coverage signal = `rtk gain` (rtk's own exec log, not transcripts):** 22M tokens saved,
+78.4% efficiency, 99.6% recovery, ~5.3K execs over 3 active days. **The hook works as designed;
+there is no runner-config bug and no ~1.1M to recover by "fixing the hook."**
+
+**Genuine (small) residual:** commands rtk does not yet wrap — `rbuild` (cargo/pnpm offload,
+~349×/6d), `ssh` (74×), heredoc `cat`, `until grep` loops. These are *upstream rtk feature
+requests*, not an environment fix. One unverified unknown: if any agents run on **separate**
+cloud-runner infra (different host than this `/home/dev` box), rtk presence there is unconfirmed
+— but every agent heartbeat observable from this host has rtk working.
 
 ## 3. Optimizations ranked by (savings ÷ effort)
 
 | # | Optimization | Est. savings | Effort | Status |
 |---|--------------|-------------|--------|--------|
-| 1 | **Fix RTK coverage in agent/cloud sessions** (ensure `rtk` + PreToolUse hook in runner) | ~1.1M tok / 30d (~37K/day fleet-wide) | Low–Med (config) | → child issue / escalate |
+| 1 | ~~**Fix RTK coverage in agent/cloud sessions**~~ — **RESOLVED, NO FIX NEEDED** (PAP-162): hook fires + rtk executes; the "0.1% / ~1.1M" is a `rtk discover` measurement artifact (transcripts store pre-hook commands). See §2. | ~0 recoverable (already saving 22M via `rtk gain`) | n/a | ✅ closed — investigated PAP-162 |
 | 2 | **Trim `CLAUDE.md`** — move release/hotfix/versioning detail to `docs/git-workflow.md` | ~1,073 tok × every heartbeat | Low | ✅ landed this PR |
 | 3 | **Cached repo map** `docs/repo-map.md` (graphify Phase 1) — read instead of grep fan-out | ~2–10K tok per avoided exploration; recurring | Low | ✅ landed this PR |
 | 4 | **Search/read discipline rule** in `CLAUDE.md` (Explore fan-out, read slices, repo-map first) | indirect, compounding | Low | ✅ landed this PR |
@@ -91,8 +120,10 @@ a smaller slice.
 
 ## 6. Delegated follow-ups (child issues)
 
-- **RTK coverage in agent/cloud runners** (#1) — investigate why the PreToolUse `rtk hook claude`
-  isn't rewriting in heartbeat sessions; ensure the binary + hook ship in the runner. DevOps/Coder.
+- ~~**RTK coverage in agent/cloud runners** (#1)~~ — **DONE (PAP-162):** the hook *is* firing and
+  rtk *is* executing in heartbeat sessions; the "not rewriting" symptom was a `rtk discover`
+  measurement artifact (it reads transcripts, which store the pre-hook command). No runner fix
+  needed. Residual = upstream rtk feature requests for `rbuild`/`ssh`/heredocs. See §2.
 - **Dispatcher `backlog.json` + prompt slimming** (#5, #6) — query/paginate backlog reads;
   factor on-demand sections out of the 131 KB/76 KB prompts. Careful (behavior risk). Coder.
 - **Phase 2 graphify telemetry gate** — instrument/measure symbol-grep frequency; revisit in 2–4 weeks.
