@@ -6,7 +6,3 @@
 # Paths relative to backend/. Baselined files WARN instead of failing
 # --strict; raw-pool access in any file NOT listed here fails CI. When a file
 # is cleaned up, REMOVE its line (the script warns on stale entries).
-
-servers/api-server/src/routes/ai/sessions.rs
-servers/api-server/src/routes/integrations/sync.rs
-servers/api-server/src/routes/subscriptions.rs

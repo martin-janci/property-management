@@ -817,6 +817,26 @@ pub async fn sync_calendar(
         )
     })?;
 
+    // PAP-150: acquire one short-lived org-context connection for the
+    // post-fetch writes below. calendar_events / calendar_connections are not
+    // FORCE-RLS and org scoping was already enforced by the connection lookup
+    // + membership check above, but the RLS gate forbids handler-side raw
+    // `state.db`. The request-scoped RlsConnection was released before the
+    // provider round-trip, so take a fresh guard scoped to the connection's org.
+    let mut sync_guard = db::RlsPool::new(state.db.clone())
+        .acquire_with_rls(connection.organization_id, rls.user_id(), false)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to acquire db connection for calendar sync writes");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Calendar sync failed. Please try again later.",
+                )),
+            )
+        })?;
+
     // Process synced events and store them in the database
     let mut events_created = 0;
     let mut errors: Vec<String> = vec![];
@@ -839,12 +859,13 @@ pub async fn sync_calendar(
         };
 
         // Use upsert to handle duplicates - if event with same source_id exists, skip.
-        // PAP-105 (PAP-80): post-fetch pool write to calendar_events (not
-        // FORCE-RLS); the RLS connection was released before the provider
-        // round-trip and org scoping was enforced by the lookup above.
+        // PAP-105 (PAP-80) / PAP-150: post-fetch write to calendar_events (not
+        // FORCE-RLS); the request RLS connection was released before the
+        // provider round-trip, so this runs on a fresh org-context guard
+        // (org scoping was enforced by the lookup + membership check above).
         match state
             .integration_repo
-            .upsert_calendar_event(&state.db, create_data)
+            .upsert_calendar_event(&mut **sync_guard.conn(), create_data)
             .await
         {
             Ok(created) => {
@@ -863,11 +884,12 @@ pub async fn sync_calendar(
     // This is a simplified implementation - in production you'd match by external_event_id
     let events_updated = sync_result.events_updated.len() as i32;
 
-    // Update sync status (pool write to non-FORCE calendar_connections, see above)
+    // Update sync status (org-context write to non-FORCE calendar_connections, see above)
     let _ = state
         .integration_repo
-        .update_sync_status(&state.db, path.id, "active", None)
+        .update_sync_status(&mut **sync_guard.conn(), path.id, "active", None)
         .await;
+    sync_guard.release().await;
 
     Ok(Json(CalendarSyncResult {
         events_created,

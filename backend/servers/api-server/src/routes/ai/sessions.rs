@@ -327,97 +327,87 @@ async fn send_message(
                     // best-effort writes must run on a connection that carries
                     // the org GUC (the raw pool collapses to deny-all). Acquire a
                     // short-lived RLS-context connection scoped to this tenant.
-                    match state.db.acquire().await {
-                        Ok(mut sconn) => {
-                            if db::tenant_context::set_request_context(
-                                &mut *sconn,
-                                Some(tenant_id),
-                                Some(user_id),
-                                false,
-                            )
-                            .await
-                            .is_err()
+                    // PAP-150: short-lived org-context guard (acquire + set RLS
+                    // context + clear-on-release) instead of a handler-side raw
+                    // `state.db.acquire()` + manual set/clear of the GUCs.
+                    match db::RlsPool::new(state.db.clone())
+                        .acquire_with_rls(tenant_id, user_id, false)
+                        .await
+                    {
+                        Ok(mut sguard) => {
+                            // Check if alert should be triggered based on organization thresholds
+                            if let Ok(thresholds) = state
+                                .sentiment_repo
+                                .get_thresholds(&mut **sguard.conn(), tenant_id)
+                                .await
                             {
-                                tracing::warn!("Failed to set RLS context for sentiment write");
-                            } else {
-                                // Check if alert should be triggered based on organization thresholds
-                                if let Ok(thresholds) = state
-                                    .sentiment_repo
-                                    .get_thresholds(&mut sconn, tenant_id)
-                                    .await
-                                {
-                                    if thresholds.enabled {
-                                        // Story 97.4: Check if sentiment requires attention and create alert
-                                        let should_alert = result.requires_attention
-                                            || (result.score < 0.0
-                                                && result.score.abs()
-                                                    >= thresholds.negative_threshold);
+                                if thresholds.enabled {
+                                    // Story 97.4: Check if sentiment requires attention and create alert
+                                    let should_alert = result.requires_attention
+                                        || (result.score < 0.0
+                                            && result.score.abs() >= thresholds.negative_threshold);
 
-                                        if should_alert {
-                                            let alert = CreateSentimentAlert {
-                                                organization_id: tenant_id,
-                                                building_id: None, // Could be extracted from session context
-                                                alert_type: alert_type::SPIKE_NEGATIVE.to_string(),
-                                                threshold_breached: thresholds.negative_threshold,
-                                                current_sentiment: result.score,
-                                                previous_sentiment: None,
-                                                sample_message_ids: vec![user_msg.id],
-                                            };
-
-                                            if let Err(e) = state
-                                                .sentiment_repo
-                                                .create_alert(&mut *sconn, alert)
-                                                .await
-                                            {
-                                                tracing::warn!(
-                                                    "Failed to create sentiment alert: {}",
-                                                    e
-                                                );
-                                            } else {
-                                                tracing::info!(
-                                                    "Created sentiment alert for message {} (score: {:.2})",
-                                                    user_msg.id,
-                                                    result.score
-                                                );
-                                            }
-                                        }
-
-                                        // Update daily sentiment trend
-                                        let today = chrono::Utc::now().date_naive();
-                                        let (neg, neut, pos) = match result.label.as_str() {
-                                            "negative" => (1, 0, 0),
-                                            "neutral" => (0, 1, 0),
-                                            "positive" => (0, 0, 1),
-                                            _ => (0, 0, 0),
-                                        };
-
-                                        let trend_data = UpsertSentimentTrend {
+                                    if should_alert {
+                                        let alert = CreateSentimentAlert {
                                             organization_id: tenant_id,
-                                            building_id: None,
-                                            date: today,
-                                            avg_sentiment: result.score,
-                                            message_count: 1,
-                                            negative_count: neg,
-                                            neutral_count: neut,
-                                            positive_count: pos,
+                                            building_id: None, // Could be extracted from session context
+                                            alert_type: alert_type::SPIKE_NEGATIVE.to_string(),
+                                            threshold_breached: thresholds.negative_threshold,
+                                            current_sentiment: result.score,
+                                            previous_sentiment: None,
+                                            sample_message_ids: vec![user_msg.id],
                                         };
 
                                         if let Err(e) = state
                                             .sentiment_repo
-                                            .upsert_trend(&mut *sconn, trend_data)
+                                            .create_alert(&mut **sguard.conn(), alert)
                                             .await
                                         {
                                             tracing::warn!(
-                                                "Failed to update sentiment trend: {}",
+                                                "Failed to create sentiment alert: {}",
                                                 e
                                             );
+                                        } else {
+                                            tracing::info!(
+                                                    "Created sentiment alert for message {} (score: {:.2})",
+                                                    user_msg.id,
+                                                    result.score
+                                                );
                                         }
+                                    }
+
+                                    // Update daily sentiment trend
+                                    let today = chrono::Utc::now().date_naive();
+                                    let (neg, neut, pos) = match result.label.as_str() {
+                                        "negative" => (1, 0, 0),
+                                        "neutral" => (0, 1, 0),
+                                        "positive" => (0, 0, 1),
+                                        _ => (0, 0, 0),
+                                    };
+
+                                    let trend_data = UpsertSentimentTrend {
+                                        organization_id: tenant_id,
+                                        building_id: None,
+                                        date: today,
+                                        avg_sentiment: result.score,
+                                        message_count: 1,
+                                        negative_count: neg,
+                                        neutral_count: neut,
+                                        positive_count: pos,
+                                    };
+
+                                    if let Err(e) = state
+                                        .sentiment_repo
+                                        .upsert_trend(&mut **sguard.conn(), trend_data)
+                                        .await
+                                    {
+                                        tracing::warn!("Failed to update sentiment trend: {}", e);
                                     }
                                 }
                             }
 
-                            // Clear context before the connection returns to the pool.
-                            let _ = db::tenant_context::clear_request_context(&mut *sconn).await;
+                            // Clear RLS context + return the connection to the pool.
+                            sguard.release().await;
                         }
                         Err(e) => {
                             tracing::warn!(
@@ -506,30 +496,21 @@ async fn send_message(
         let use_semantic_search =
             semantic_search_enabled != "false" && semantic_search_enabled != "0";
 
-        let mut rag_conn = match state.db.acquire().await {
-            Ok(mut conn) => {
-                if db::tenant_context::set_request_context(
-                    &mut *conn,
-                    Some(tenant_id),
-                    Some(user_id),
-                    false,
-                )
-                .await
-                .is_err()
-                {
-                    tracing::warn!("Failed to set RLS context for RAG search");
-                    None
-                } else {
-                    Some(conn)
-                }
-            }
+        // PAP-150: short-lived org-context guard (acquire + set RLS context +
+        // clear-on-release) instead of a handler-side raw `state.db.acquire()`
+        // + manual set/clear of the GUCs.
+        let mut rag_guard = match db::RlsPool::new(state.db.clone())
+            .acquire_with_rls(tenant_id, user_id, false)
+            .await
+        {
+            Ok(guard) => Some(guard),
             Err(e) => {
                 tracing::warn!("Failed to acquire connection for RAG search: {}", e);
                 None
             }
         };
 
-        if let Some(conn) = rag_conn.as_mut() {
+        if let Some(guard) = rag_guard.as_mut() {
             if use_semantic_search {
                 // Try semantic similarity search first (Story 97.2)
                 // Generate embedding for the user's query
@@ -543,7 +524,7 @@ async fn send_message(
                         match state
                             .llm_document_repo
                             .search_documents_by_embedding(
-                                &mut *conn,
+                                &mut **guard.conn(),
                                 tenant_id,
                                 &embedding_result.embedding,
                                 5,         // Get top 5 relevant chunks
@@ -591,7 +572,7 @@ async fn send_message(
             if context_chunks.is_empty() {
                 match state
                     .llm_document_repo
-                    .search_documents_by_text(&mut **conn, tenant_id, &req.content, 3)
+                    .search_documents_by_text(&mut **guard.conn(), tenant_id, &req.content, 3)
                     .await
                 {
                     Ok(docs) => {
@@ -620,9 +601,9 @@ async fn send_message(
             }
         }
 
-        // Clear RLS context before the connection returns to the pool.
-        if let Some(mut conn) = rag_conn {
-            let _ = db::tenant_context::clear_request_context(&mut *conn).await;
+        // Clear RLS context + return the connection to the pool.
+        if let Some(mut guard) = rag_guard {
+            guard.release().await;
         }
     }
 
