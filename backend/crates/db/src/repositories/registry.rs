@@ -331,8 +331,20 @@ impl RegistryRepository {
         tenant_id: Uuid,
         id: Uuid,
     ) -> Result<Option<VehicleRegistration>, sqlx::Error> {
+        // `vehicle_type` / `status` are Postgres ENUMs; the model decodes them as
+        // `String`, so cast them to text explicitly. A bare `SELECT *` only ever
+        // succeeded because FORCE RLS normally returns zero rows here — see PAP-143
+        // / PAP-136 "deny-all-masked decode" notes.
         sqlx::query_as::<_, VehicleRegistration>(
-            "SELECT * FROM vehicle_registrations WHERE id = $1 AND tenant_id = $2",
+            r#"
+            SELECT id, tenant_id, unit_id, owner_id,
+                   vehicle_type::text AS vehicle_type, make, model, year, color,
+                   license_plate, registration_document_id, insurance_document_id,
+                   parking_spot_id, status::text AS status, reviewed_by, reviewed_at,
+                   rejection_reason, notes, created_at, updated_at
+            FROM vehicle_registrations
+            WHERE id = $1 AND tenant_id = $2
+            "#,
         )
         .bind(id)
         .bind(tenant_id)
@@ -351,9 +363,10 @@ impl RegistryRepository {
             None => return Ok(None),
         };
 
+        // `units` has no `unit_number` column — the display value is `designation`.
         let unit_info: Option<(String, String)> = sqlx::query_as(
             r#"
-            SELECT u.unit_number, b.name as building_name
+            SELECT u.designation AS unit_number, b.name as building_name
             FROM units u
             JOIN buildings b ON b.id = u.building_id
             WHERE u.id = $1
@@ -379,10 +392,16 @@ impl RegistryRepository {
         };
 
         let parking_spot_number = if let Some(spot_id) = registration.parking_spot_id {
-            sqlx::query_scalar::<_, String>("SELECT spot_number FROM parking_spots WHERE id = $1")
-                .bind(spot_id)
-                .fetch_optional(&self.pool)
-                .await?
+            // Defense-in-depth: tenant-scope the secondary lookup like the rest of
+            // registry.rs, so a cross-tenant parking_spot_id can never leak a spot
+            // number even if FORCE RLS is bypassed (e.g. superuser pool). PAP-143.
+            sqlx::query_scalar::<_, String>(
+                "SELECT spot_number FROM parking_spots WHERE id = $1 AND tenant_id = $2",
+            )
+            .bind(spot_id)
+            .bind(tenant_id)
+            .fetch_optional(&self.pool)
+            .await?
         } else {
             None
         };
