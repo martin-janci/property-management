@@ -1,9 +1,85 @@
 {
-  "generated": "2026-06-10T20:28:40Z",
+  "generated": "2026-06-11T22:26:30Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-06-11T22:26:30Z",
+      "prs_scanned": 14,
+      "clean": [
+        1291,
+        1289,
+        1280,
+        1232,
+        1227
+      ],
+      "with_issues": [
+        {
+          "pr": 1297,
+          "issue": 1300,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "core fix correct; test-gap + agency_id/user_id conflation"
+        },
+        {
+          "pr": 1290,
+          "issue": 1301,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "security shape correct; low idempotency wrinkle on mark_invitation_viewed re-view"
+        },
+        {
+          "pr": 1293,
+          "issue": 1303,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "3 dev-portal tables still unforced (oauth-apps/grants/usage-logs)"
+        },
+        {
+          "pr": 1292,
+          "issue": 1304,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "acquire_public clears context (not real RLS); mixed model in disable_mfa; stale comment; no IG3"
+        },
+        {
+          "pr": 1287,
+          "issue": 1305,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "shape correct, public read preserved; test-coverage gaps only"
+        },
+        {
+          "pr": 1281,
+          "issue": 1307,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "fix correct+complete; only gap is RLS policy layer untested under superuser pool"
+        },
+        {
+          "pr": 1295,
+          "issue": 1308,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "json-key-case clean; coverage gap = realtime publish leg under replay untested"
+        },
+        {
+          "pr": 1284,
+          "issue": 1309,
+          "findings": 1,
+          "specialist": "generic",
+          "note": "dangling section-above ref in rebaser+followup prompts; extraction byte-identical"
+        },
+        {
+          "pr": 1283,
+          "issue": 1310,
+          "findings": 2,
+          "specialist": "generic",
+          "note": "projection correct; sufficiency-doc omits IDEAS_TRIAGE/G14 + field-list reads as whitelist (low)"
+        }
+      ]
+    },
     {
       "run_at": "2026-06-10T20:28:40Z",
       "prs_scanned": 15,
