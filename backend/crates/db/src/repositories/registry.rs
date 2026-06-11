@@ -46,7 +46,12 @@ impl RegistryRepository {
                 vaccination_date, vaccination_document_id, special_needs, notes, status
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-            RETURNING *
+            RETURNING
+                id, tenant_id, unit_id, owner_id, pet_name,
+                pet_type::text AS pet_type, breed, pet_size::text AS pet_size,
+                weight_kg, age_years, color, microchip_id, vaccination_date,
+                vaccination_document_id, special_needs, status::text AS status,
+                reviewed_by, reviewed_at, rejection_reason, notes, created_at, updated_at
             "#,
         )
         .bind(tenant_id)
@@ -75,8 +80,20 @@ impl RegistryRepository {
         tenant_id: Uuid,
         id: Uuid,
     ) -> Result<Option<PetRegistration>, sqlx::Error> {
+        // `pet_type` / `pet_size` / `status` are Postgres ENUMs; the model decodes
+        // them as `String`, so cast them to text explicitly. A bare `SELECT *` only
+        // ever succeeded because FORCE RLS normally returns zero rows here — see
+        // PAP-143 / PAP-136 "deny-all-masked decode" notes.
         sqlx::query_as::<_, PetRegistration>(
-            "SELECT * FROM pet_registrations WHERE id = $1 AND tenant_id = $2",
+            r#"
+            SELECT id, tenant_id, unit_id, owner_id, pet_name,
+                   pet_type::text AS pet_type, breed, pet_size::text AS pet_size,
+                   weight_kg, age_years, color, microchip_id, vaccination_date,
+                   vaccination_document_id, special_needs, status::text AS status,
+                   reviewed_by, reviewed_at, rejection_reason, notes, created_at, updated_at
+            FROM pet_registrations
+            WHERE id = $1 AND tenant_id = $2
+            "#,
         )
         .bind(id)
         .bind(tenant_id)
@@ -95,9 +112,10 @@ impl RegistryRepository {
             None => return Ok(None),
         };
 
+        // `units` has no `unit_number` column — the display value is `designation`.
         let unit_info: Option<(String, String)> = sqlx::query_as(
             r#"
-            SELECT u.unit_number, b.name as building_name
+            SELECT u.designation AS unit_number, b.name as building_name
             FROM units u
             JOIN buildings b ON b.id = u.building_id
             WHERE u.id = $1
@@ -164,9 +182,10 @@ impl RegistryRepository {
 
         let registrations = sqlx::query_as::<_, PetRegistrationSummary>(
             r#"
-            SELECT pr.id, pr.unit_id, u.unit_number,
+            SELECT pr.id, pr.unit_id, u.designation AS unit_number,
                    pr.owner_id, COALESCE(usr.name, usr.email) as owner_name,
-                   pr.pet_name, pr.pet_type, pr.breed, pr.pet_size, pr.status, pr.created_at
+                   pr.pet_name, pr.pet_type::text AS pet_type, pr.breed,
+                   pr.pet_size::text AS pet_size, pr.status::text AS status, pr.created_at
             FROM pet_registrations pr
             JOIN units u ON u.id = pr.unit_id
             LEFT JOIN users usr ON usr.id = pr.owner_id
@@ -217,7 +236,12 @@ impl RegistryRepository {
                 notes = COALESCE($13, notes),
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2
-            RETURNING *
+            RETURNING
+                id, tenant_id, unit_id, owner_id, pet_name,
+                pet_type::text AS pet_type, breed, pet_size::text AS pet_size,
+                weight_kg, age_years, color, microchip_id, vaccination_date,
+                vaccination_document_id, special_needs, status::text AS status,
+                reviewed_by, reviewed_at, rejection_reason, notes, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -260,7 +284,12 @@ impl RegistryRepository {
                 rejection_reason = $6,
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2
-            RETURNING *
+            RETURNING
+                id, tenant_id, unit_id, owner_id, pet_name,
+                pet_type::text AS pet_type, breed, pet_size::text AS pet_size,
+                weight_kg, age_years, color, microchip_id, vaccination_date,
+                vaccination_document_id, special_needs, status::text AS status,
+                reviewed_by, reviewed_at, rejection_reason, notes, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -305,7 +334,12 @@ impl RegistryRepository {
                 color, license_plate, registration_document_id, insurance_document_id, notes, status
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-            RETURNING *
+            RETURNING
+                id, tenant_id, unit_id, owner_id,
+                vehicle_type::text AS vehicle_type, make, model, year, color,
+                license_plate, registration_document_id, insurance_document_id,
+                parking_spot_id, status::text AS status, reviewed_by, reviewed_at,
+                rejection_reason, notes, created_at, updated_at
             "#,
         )
         .bind(tenant_id)
@@ -449,14 +483,17 @@ impl RegistryRepository {
 
         let registrations = sqlx::query_as::<_, VehicleRegistrationSummary>(
             r#"
-            SELECT vr.id, vr.unit_id, u.unit_number,
+            SELECT vr.id, vr.unit_id, u.designation AS unit_number,
                    vr.owner_id, COALESCE(usr.name, usr.email) as owner_name,
-                   vr.vehicle_type, vr.make, vr.model, vr.license_plate, vr.status,
+                   vr.vehicle_type::text AS vehicle_type, vr.make, vr.model,
+                   vr.license_plate, vr.status::text AS status,
                    ps.spot_number as parking_spot_number, vr.created_at
             FROM vehicle_registrations vr
             JOIN units u ON u.id = vr.unit_id
             LEFT JOIN users usr ON usr.id = vr.owner_id
-            LEFT JOIN parking_spots ps ON ps.id = vr.parking_spot_id
+            -- Tenant-scope the spot join: parking_spot_id has no FK, so a stale
+            -- cross-tenant id must not leak a foreign spot_number here (PAP-143 DiD).
+            LEFT JOIN parking_spots ps ON ps.id = vr.parking_spot_id AND ps.tenant_id = vr.tenant_id
             WHERE vr.tenant_id = $1
                 AND ($2::uuid IS NULL OR u.building_id = $2)
                 AND ($3::uuid IS NULL OR vr.unit_id = $3)
@@ -502,7 +539,12 @@ impl RegistryRepository {
                 notes = COALESCE($11, notes),
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2
-            RETURNING *
+            RETURNING
+                id, tenant_id, unit_id, owner_id,
+                vehicle_type::text AS vehicle_type, make, model, year, color,
+                license_plate, registration_document_id, insurance_document_id,
+                parking_spot_id, status::text AS status, reviewed_by, reviewed_at,
+                rejection_reason, notes, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -543,7 +585,12 @@ impl RegistryRepository {
                 rejection_reason = $6,
                 updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2
-            RETURNING *
+            RETURNING
+                id, tenant_id, unit_id, owner_id,
+                vehicle_type::text AS vehicle_type, make, model, year, color,
+                license_plate, registration_document_id, insurance_document_id,
+                parking_spot_id, status::text AS status, reviewed_by, reviewed_at,
+                rejection_reason, notes, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -655,7 +702,7 @@ impl RegistryRepository {
             SELECT ps.id, ps.tenant_id, ps.building_id, ps.spot_number, ps.spot_type,
                    ps.floor_level, ps.is_covered, ps.is_reserved, ps.assigned_to_unit_id,
                    ps.monthly_fee, ps.notes, ps.created_at, ps.updated_at,
-                   u.unit_number as assigned_unit_number, b.name as building_name
+                   u.designation as assigned_unit_number, b.name as building_name
             FROM parking_spots ps
             LEFT JOIN units u ON u.id = ps.assigned_to_unit_id
             JOIN buildings b ON b.id = ps.building_id
