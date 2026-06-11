@@ -1,12 +1,12 @@
 {
-  "generated": "2026-06-11T04:19:23Z",
+  "generated": "2026-06-11T06:19:46Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-mobile-announcements-test",
       "branch": "auto-impl/refactor-churn-hotspot-mobile-announceme",
       "status": "review",
       "claimed_at": "2026-06-08T00:12:36Z",
-      "last_updated": "2026-06-11T04:19:23Z",
+      "last_updated": "2026-06-11T06:19:46Z",
       "status_changed_at": "2026-06-08T06:22:20Z",
       "pr_number": 1165,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1165",
@@ -48,30 +48,6 @@
       "merge_attempted_at": null,
       "quarantined_at": "2026-06-09T06:24:38Z",
       "quarantine_reason": "reclaim-of-already-merged-task-id (merged via PR #1168, in archive); T3 active+archive dup; PR #1197 red CI. Needs human triage: rename id + salvage edge tests + fix DB test, or close as superseded. [task_id suffixed -v2 by dispatcher: collided with already-merged+archived PR#1168 of same task_id]"
-    },
-    {
-      "task_id": "test-esignature-email-status-tracking-backend",
-      "branch": "auto-impl/test-esignature-email-status-tracking-ba",
-      "status": "merged",
-      "claimed_at": "2026-06-10T14:25:43Z",
-      "last_updated": "2026-06-11T02:11:28Z",
-      "status_changed_at": "2026-06-11T02:11:28Z",
-      "pr_number": 1264,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1264",
-      "merged_at": "2026-06-10T22:22:58Z",
-      "specialist": null,
-      "implementer_summary": " [Phase5.7 cargo-fmt fix pushed; awaiting re-review]",
-      "reviewer_summary": "verdict=approve note=ci-green-fmt-fixed; assertions sound; no camelCase bug; squash-merged this run (Phase2 next run will reconcile to merged)",
-      "last_reviewed_oid": "b79129a49a2ae8bca54e6df84527d2b0674b5849",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": "2026-06-10T22:23:47Z",
-      "quarantined_at": null,
-      "quarantine_reason": null
     }
   ]
 }
