@@ -1485,28 +1485,13 @@ to Phase 5.5's normal classification.
 **Action.** Spawn ONE Task subagent per qualifying row (cap 2 parallel,
 same as Phase 5.6's rebaser cap — both serialize on `dev` base):
 
-> You are a pre-merge mechanical autofixer for PR #<n>.
->
-> 0. **Workspace isolation (MANDATORY — issue #7).** Run the standard
->    worktree preamble: `TASK_ID=premerge-<n>`, `BRANCH=<row.branch>`.
->    NEVER `gh pr checkout` in the dispatcher's working tree.
-> 1. Invoke `.claude/skills/ppt-pr-merge/SKILL.md` Step 2 (conflict
->    auto-resolution) directly — that's the existing function that
->    rebases against `dev` and regenerates SQLx / Cargo.lock /
->    generated clients. Do NOT call `gh pr merge` from inside the skill
->    yet (Phase 5.5 owns the merge).
-> 2. `git push --force-with-lease origin <branch>`.
-> 3. Re-trigger CI explicitly so we observe the new head's result
->    before Phase 5.5 sees the row:
->    `gh workflow run <workflow-on-the-pr> --ref <branch>` (best-effort).
-> 4. Return EXACTLY:
->    `premerge=<applied|skipped|failed> pr=<n> note=<short>`.
->
-> Failure mode: if the rebase produces any real (non-mechanical) conflict
-> after starting, `git rebase --abort` and return
-> `premerge=failed note=conflict-in:<paths>`. Phase 5.5's normal flow
-> will see `mergeable=CONFLICTING` next run and route to Phase 5.6 as
-> usual — no double-handling.
+> You are a pre-merge mechanical autofixer for PR #<n>, branch `<branch>`.
+> Read `.research/management/premerge-autofix-prompt.md` and follow it exactly
+> — it is your complete instruction set (worktree preamble, ppt-pr-merge Step 2
+> conflict auto-resolution, force-push, CI re-trigger). Substitute the runtime
+> values above wherever the file references `<n>` / `<branch>` /
+> `<workflow-on-the-pr>`. Return ONLY the single
+> `premerge=<applied|skipped|failed> pr=<n> note=<short>` line it specifies.
 
 **Bookkeeping.** Each `premerge=applied` bumps `rebase_attempts += 1`
 (single-owner rule — dispatcher does the write; subagent only returns).
@@ -1608,26 +1593,13 @@ For each row `status == "review"` where:
 Spawn ONE Task subagent (cap 1 parallel — rebases serialize on the same base):
 
 > You are a PR rebaser for a stale approved PR. Inputs: `pr_number=<n>`,
-> `branch=<head_ref>`, `base=dev`. Do this exactly:
->
-> 0. **Workspace isolation (MANDATORY — issue #7).** Run the standard
->    worktree preamble from the "Subagent workspace isolation" section
->    above (export `TASK_ID=pr-<n>`, `BRANCH=<head_ref>`). All subsequent
->    git operations run inside `/tmp/ppt-worktrees/pr-<n>/`. NEVER
->    `gh pr checkout` in the dispatcher's working tree — it displaces
->    `dev` and breaks Phase 6 of this run.
-> 1. `gh pr checkout <n> --repo martin-janci/property-management`
-> 2. `git fetch origin dev`
-> 3. `git rebase origin/dev`
->    - If conflicts ONLY in mechanical paths (sqlx, Cargo.lock, generated
->      openapi/api-client, pnpm-lock.yaml, VERSION) → resolve per
->      `ppt-pr-merge` Step 2 table, `git rebase --continue`.
->    - Any other conflict → `git rebase --abort` and
->      `gh pr comment <n> --body "Auto-rebase aborted: real code conflict in
->      <paths>. Manual rebase required."`, return
->      `rebased=false note=conflict-in:<paths>`.
-> 4. `git push --force-with-lease origin <branch>`
-> 5. Return EXACTLY: `rebased=<true|false> pr=<n> note=<short>`
+> `branch=<head_ref>`, `base=dev`. Read `.research/management/rebaser-prompt.md`
+> and follow it exactly — it is your complete instruction set (worktree
+> preamble, checkout, `git rebase origin/dev`, mechanical-only conflict
+> resolution per ppt-pr-merge Step 2, force-push-with-lease). Substitute the
+> runtime values above wherever the file references `<n>` / `<head_ref>` /
+> `<branch>`. Return ONLY the single `rebased=<true|false> pr=<n> note=<short>`
+> line it specifies. Do NOT touch `rebase_attempts` — the dispatcher owns it.
 
 Capture line. Bump `last_updated = now`.
 
@@ -1689,29 +1661,13 @@ starts with `"verdict=changes"` AND `fix_rounds < 3`:
 
 Spawn ONE Task subagent (cap `DISPATCHER_CLAIM_CAP` parallel, default 6 — same as Phase 4's implementer cap):
 
-> You are the PR follow-up driver. Invoke
-> `.claude/skills/ppt-pr-followup/SKILL.md` in dispatcher mode for PR #<n>.
->
-> 0. **Workspace isolation (MANDATORY — issue #7).** When step 2 below
->    spawns the original specialist via Task, the brief you pass that
->    specialist MUST include the standard worktree preamble from the
->    "Subagent workspace isolation" section above (export
->    `TASK_ID=<task_id>`, `BRANCH=<row.branch>`). The followup script
->    itself runs read-only `gh` calls and is safe in the dispatcher's
->    tree.
-> 1. Run `bash .claude/skills/ppt-pr-followup/scripts/dispatcher-followup.sh --pr <n>`.
-> 2. If the script's stdout contains a `=== ppt-pr-followup respawn brief ===`
->    block, take that brief and spawn the original specialist via the `Task`
->    tool (same channel Phase 4 uses), waiting for it to return.
-> 3. After the spawned implementer returns, set `status=review` on the row
->    and bump `last_updated`. (The script already cleared `reviewer_summary`
->    and flipped `status=in-progress`; this flip back to `review` is what
->    re-arms Phase 5 for a fresh reviewer pass on the new commits.)
-> 4. Return EXACTLY the script's final line, e.g.
->    `followup=respawned pr=<n> specialist=<sp> round=<k>`.
->
-> If the script exits non-zero (failed/round-cap), do not spawn; just return
-> the script's last line.
+> You are the PR follow-up driver for PR #<n>, task `<task_id>`, specialist
+> `<sp>`. Read `.research/management/pr-followup-prompt.md` and follow it
+> exactly — it is your complete instruction set (workspace-isolation brief,
+> `ppt-pr-followup` dispatcher-mode script, respawn-brief handling, post-respawn
+> `status=review` flip). Substitute the runtime values above wherever the file
+> references `<n>` / `<task_id>` / `<row.branch>` / `<sp>` / `<k>`. Return ONLY
+> the single `followup=<...> pr=<n> specialist=<sp> round=<k>` line it specifies.
 
 Capture line. The script already mutated `assignments.json`; this phase
 adds nothing further to the file beyond the post-respawn `status=review`
