@@ -3227,6 +3227,86 @@
       "created_at": "2026-06-11",
       "updated_at": "2026-06-11",
       "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1287-rls-llm-sessions",
+      "title": "AI llm/sessions + integrations sync + subscriptions RLS migration (PR #1287, PAP-169) shipped without a new regression test",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1287",
+        "PAP-169",
+        "PAP-150"
+      ],
+      "evidence": [
+        "PR #1287 (fix(api-server): route ai/sessions + calendar sync + public plans through RLS guard (PAP-169)) merged 2026-06-11T18:04:42Z",
+        "diff touches 6 files (ai/llm.rs +116, ai/sessions.rs +177, integrations/sync.rs +34, subscriptions.rs +10, mfa.rs +9 as PAP-168 hotfix, scripts/rls-handler-baseline.txt) — none under *test* / *spec* / __tests__ / *_test.rs",
+        "PR-body verification claims `check-rls-enforcement.sh --strict exit 0` + `cargo check green` — both are static (CI surface) checks, not behavioral pins for the acquire-with-rls(tenant_id, user_id, false) guard semantics introduced in sentiment write + RAG search + sync_calendar",
+        "Stacked-PR follow-up commit also fixes a broken `&mut *conn` deref in mfa.rs from PR #1292 — the bug landed on dev briefly before this fix, no test pins the correct `&mut **conn` shape"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai/llm.rs",
+        "backend/servers/api-server/src/routes/ai/sessions.rs",
+        "backend/servers/api-server/src/routes/integrations/sync.rs",
+        "backend/servers/api-server/src/routes/subscriptions.rs",
+        "backend/servers/api-server/src/routes/mfa.rs"
+      ],
+      "created_at": "2026-06-11",
+      "updated_at": "2026-06-11",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1289-api-ecosystem",
+      "title": "api_ecosystem.rs RLS migration (PR #1289, PAP-167) — 162-line handler rework shipped without a regression test for the public-connection routing",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1289",
+        "PAP-167",
+        "PAP-150"
+      ],
+      "evidence": [
+        "PR #1289 (fix(api-server): route api_ecosystem.rs catalog handlers off the raw pool (PAP-167)) merged 2026-06-11T14:20:06Z",
+        "diff touches 2 files (api_ecosystem.rs +115/-47, scripts/rls-handler-baseline.txt -1) — none under *test* / *spec* / __tests__ / *_test.rs",
+        "All 40 raw `state.db` handler calls in the file rerouted through a single new `catalog_conn` helper (`RlsPool::acquire_public`); the conversion is behavior-preserving by inspection but no test pins the public-connection semantics (clear-on-acquire RLS context) for marketplace_integrations / connectors / api_documentation / developer_portal endpoints",
+        "rotate_developer_api_key reorganised from a `state.db.acquire()` to the shared `catalog_conn` — transactional safety relies on the pool guard but no end-to-end test covers the rotate path"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/api_ecosystem.rs"
+      ],
+      "created_at": "2026-06-11",
+      "updated_at": "2026-06-11",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1292-mfa-rls",
+      "title": "mfa.rs RLS migration (PR #1292, PAP-168) shipped without a regression test; also landed broken and was hotfixed in PR #1287",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1292",
+        "PR #1287",
+        "PAP-168",
+        "PAP-150"
+      ],
+      "evidence": [
+        "PR #1292 (fix(api-server): convert mfa.rs handler raw-pool to RLS connection (PAP-168)) merged 2026-06-11T17:26:04Z",
+        "diff touches 2 files (mfa.rs +23/-5, scripts/rls-handler-baseline.txt -1) — none under *test* / *spec* / __tests__ / *_test.rs",
+        "PR body's Test plan has 3 unchecked `- [ ]` boxes at merge: `cargo check -p api-server`, `bash scripts/check-rls-enforcement.sh`, `MFA enable/disable/recovery-code flows verified in CI` — verification is CI-side, no regression test pins the new `acquire_public()` route for verify_recovery_code (4 raw queries rerouted) or the `&mut **rls.conn()` swap in disable_mfa",
+        "Landed broken on dev — verify_recovery_code shipped with `&mut *conn` (single deref → `&mut PoolConnection`) which does not satisfy `E: Executor`. PR #1287 re-fixed it to `&mut **conn` two-deref. No test caught the breakage; CI cargo-check did."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/mfa.rs"
+      ],
+      "created_at": "2026-06-11",
+      "updated_at": "2026-06-11",
+      "plan": null
     }
   ]
 }

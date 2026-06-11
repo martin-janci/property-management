@@ -1,89 +1,245 @@
 {
   "date": "2026-06-11",
-  "run_iso": "2026-06-11T14:25:06Z",
+  "run_iso": "2026-06-11T18:26:12Z",
+  "auto_fix_skipped_reason": "no candidate — hotfix-no-test (this run's only new signal type) is not in the Phase-5 allowlist; #1290 was a real-IDOR security fix but shipped with 270 lines of regression tests so it didn't fire any signal; #1291 was a CI workflow comment fix (no test surface applicable). The 7 dependabot dep-update PRs are dep updates themselves, not lockfile-drift sub-shape.",
+  "rerun_context": {
+    "trigger_payload": "(empty — normal incremental same-day rerun, 5th pass today after 03:11Z, 04:30Z, 08:20Z, 14:25Z)",
+    "previous_run_iso": "2026-06-11T14:25:06Z",
+    "elapsed_minutes_since_prior_run": 241,
+    "merged_in_window": [
+      {
+        "number": 1287,
+        "title": "fix(api-server): route ai/sessions + calendar sync + public plans through RLS guard (PAP-169)",
+        "merged_at": "2026-06-11T18:04:42Z",
+        "has_test_diff": false,
+        "fired_signals": [
+          "hotfix-no-test-pr-1287-rls-llm-sessions"
+        ],
+        "note": "PAP-150 burndown across ai/llm.rs (+116), ai/sessions.rs (+177), integrations/sync.rs (+34), subscriptions.rs (+10), mfa.rs (+9 — repairs PR #1292 broken deref). 5 files, 6 handlers, no test diff. PR-body verification is CI-side static checks (check-rls-enforcement.sh, cargo check) — no behavioral pin for acquire_with_rls semantics in sentiment write / RAG search / sync_calendar."
+      },
+      {
+        "number": 1289,
+        "title": "fix(api-server): route api_ecosystem.rs catalog handlers off the raw pool (PAP-167)",
+        "merged_at": "2026-06-11T14:20:06Z",
+        "has_test_diff": false,
+        "fired_signals": [
+          "hotfix-no-test-pr-1289-api-ecosystem"
+        ],
+        "note": "162-line rework: 40 raw state.db handler calls rerouted through new catalog_conn helper (RlsPool::acquire_public). Behavior-preserving by inspection. No regression test pins the public-connection (clear-on-acquire RLS context) semantics for marketplace_integrations / connectors / api_documentation / developer_portal endpoints. rotate_developer_api_key transactional path also reorganised."
+      },
+      {
+        "number": 1290,
+        "title": "fix(api-server): close marketplace provider-side IDOR + admin gaps (PAP-140)",
+        "merged_at": "2026-06-11T16:19:20Z",
+        "has_test_diff": true,
+        "fired_signals": [],
+        "note": "Closes provider-side IDOR on mark_invitation_viewed/decline_invitation (zero pre-check before) + gates platform-moderation endpoints (review_verification, award/revoke_badge, verification queues) on platform-admin. Ships with 270 lines of regression tests in marketplace_voting_investor_cross_org_idor_tests.rs (8 new test fns covering cross-provider invitation, owner-only verification read, admin-only review/badge). No signal fires."
+      },
+      {
+        "number": 1291,
+        "title": "fix(ci): remove empty ${{ }} expression breaking auto-rebase workflow (PAP-176)",
+        "merged_at": "2026-06-11T16:07:40Z",
+        "has_test_diff": false,
+        "fired_signals": [],
+        "note": "1 file, 3 lines (.github/workflows/auto-rebase-stale-drafts.yml comment). CI workflow comment fix — GitHub Actions evaluates ${{ }} in comments too, empty token caused startup failure. No application-code surface for hotfix-no-test; actionlint v1.7.7 verified clean per PR body. Skipped signal-wise."
+      },
+      {
+        "number": 1292,
+        "title": "fix(api-server): convert mfa.rs handler raw-pool to RLS connection (PAP-168)",
+        "merged_at": "2026-06-11T17:26:04Z",
+        "has_test_diff": false,
+        "fired_signals": [
+          "hotfix-no-test-pr-1292-mfa-rls"
+        ],
+        "note": "mfa.rs (+23/-5): disable_mfa recovery-code lookup rerouted to &mut **rls.conn() (handler holds RlsConnection); verify_recovery_code reroutes 4 raw queries through RlsPool::acquire_public(). PR body Test plan has 3 unchecked - [ ] boxes at merge. Landed BROKEN on dev (verify_recovery_code used &mut *conn single deref → does not satisfy E: Executor, 13 compile errors); PR #1287 stacked a hotfix to &mut **conn two-deref. No test pinned correct shape."
+      }
+    ],
+    "opened_in_window": [
+      {
+        "number": 1275,
+        "updated_at": "2026-06-11T18:14:24Z",
+        "title": "chore(deps): bump the npm-minor-patch group across 1 directory with 16 updates",
+        "author": "dependabot[bot]",
+        "note": "rebased by auto-rebase workflow once #1291 fixed CI"
+      },
+      {
+        "number": 1286,
+        "updated_at": "2026-06-11T17:30:21Z",
+        "title": "fix(api-server): route ai/llm.rs post-LLM writes through RLS connection (PAP-150)",
+        "author": "martin-janci",
+        "note": "still open; superseded in part by #1287 squash-merge content"
+      }
+    ],
+    "phases_run": {
+      "phase_1": "ran — 5 merged PRs in window (#1287, #1289, #1290, #1291, #1292), 2 open PRs touched, 0 new issues, 3 hotfix-no-test signals fired (#1287, #1289, #1292)",
+      "phase_1_5": "skipped — same-day rerun (5th pass today). All 5 merged PRs map to api-handlers segment (reviewed 2026-06-10); reality-web is next oldest at 2026-05-28, will run on the next non-same-day routine fire",
+      "phase_1_6": "skipped — same-day rerun (full PM rotation already serviced earlier today; pm_cursor unchanged at next_index=3 = pm-qa; coverage_cursor unchanged at next_index=10)",
+      "phase_2": "ran — 3 new vectors added (test-gap-hotfix-no-test-pr-{1287,1289,1292}, each score 2, vector test-gap); 0 decays (oldest open still 2026-06-01, 10d < 14d window); 0 resolutions (no open backlog item references PAP-140/167/168/169/176 — but the cross-tenant IDOR theme is captured in already-done items)",
+      "phase_3": "ran — no new promotions (3 new vectors all at score 2, below score-3 readiness gate; 2 existing ready plans carry forward intact: security-llm-doc-idor, bug-ios-searchview-uncompilable)",
+      "phase_3_5": "n/a — no new plans this run",
+      "phase_4": "ran — overwrote brief, signals, state; regenerated backlog.md + IDEAS_TRIAGE.md with new timestamp + 3 new vector rows",
+      "phase_5": "ran — no candidate (hotfix-no-test not in allowlist; #1290 had tests so no signal; #1291 CI fix has no test surface)",
+      "phase_6": "ran — stage, gate, commit, push"
+    }
+  },
   "signals": [
     {
       "id": "hotfix-no-test-pr-1288-webhook-rls",
       "type": "hotfix-no-test",
       "source": "PR #1288",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1288 (fix(api-server): route webhook handlers through RLS connections, PAP-170) merged 2026-06-11T13:30:20Z; diff touches 5 files (integration.rs, rental.rs, webhook.rs, voice_webhooks.rs, scripts/rls-handler-baseline.txt), none under *test*/*spec*/__tests__/*_test.rs; PR body claims existing DB coverage for update_esignature_workflow_by_external_id but the 2 new repo methods (find_esignature_workflow_by_external_id, record_airbnb_webhook_event) and the bootstrap-then-bind RLS pattern in oauth_token_refresh are not pinned — re-emitted on 5th same-day rerun, score_delta=0 per G4 (id already in seen_signals from 14:25Z run)"
+    },
+    {
+      "id": "hotfix-no-test-pr-1287-rls-llm-sessions",
+      "type": "hotfix-no-test",
+      "source": "PR #1287",
       "score_delta": 2,
       "confidence": "medium",
       "candidate_vector": "test-gap",
-      "evidence": "PR #1288 (fix(api-server): route webhook handlers through RLS connections, PAP-170) merged 2026-06-11T13:30:20Z; diff touches 5 files (integration.rs, rental.rs, webhook.rs, voice_webhooks.rs, scripts/rls-handler-baseline.txt), none under *test*/*spec*/__tests__/*_test.rs; PR body claims existing DB coverage for update_esignature_workflow_by_external_id but the 2 new repo methods (find_esignature_workflow_by_external_id, record_airbnb_webhook_event) and the bootstrap-then-bind RLS pattern in oauth_token_refresh are not pinned"
+      "evidence": "PR #1287 (fix(api-server): route ai/sessions + calendar sync + public plans through RLS guard, PAP-169) merged 2026-06-11T18:04:42Z; diff touches 6 files (ai/llm.rs +116, ai/sessions.rs +177, integrations/sync.rs +34, subscriptions.rs +10, mfa.rs +9 as PAP-168 hotfix, scripts/rls-handler-baseline.txt -5), none under *test*/*spec*/__tests__/*_test.rs; verification per PR body is `check-rls-enforcement.sh --strict exit 0` + `cargo check green` (static CI checks), no behavioral pin for acquire_with_rls(tenant_id, user_id, false) guard semantics in sentiment write + RAG search + sync_calendar"
+    },
+    {
+      "id": "hotfix-no-test-pr-1289-api-ecosystem",
+      "type": "hotfix-no-test",
+      "source": "PR #1289",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1289 (fix(api-server): route api_ecosystem.rs catalog handlers off the raw pool, PAP-167) merged 2026-06-11T14:20:06Z; diff touches 2 files (api_ecosystem.rs +115/-47, scripts/rls-handler-baseline.txt -1), none under *test*/*spec*/__tests__/*_test.rs; all 40 raw state.db handler calls in the file rerouted through new catalog_conn helper (RlsPool::acquire_public); rotate_developer_api_key transactional path also reorganised — no test pins the rotate behavior on the new guard"
+    },
+    {
+      "id": "hotfix-no-test-pr-1292-mfa-rls",
+      "type": "hotfix-no-test",
+      "source": "PR #1292",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1292 (fix(api-server): convert mfa.rs handler raw-pool to RLS connection, PAP-168) merged 2026-06-11T17:26:04Z; diff touches 2 files (mfa.rs +23/-5, scripts/rls-handler-baseline.txt -1), none under *test*/*spec*/__tests__/*_test.rs; PR body's Test plan ships with 3 unchecked `- [ ]` boxes (cargo check, check-rls-enforcement.sh, MFA flows in CI); the PR landed broken on dev (verify_recovery_code used &mut *conn single deref, 13 compile errors) — fixed in PR #1287 stacked hotfix to &mut **conn. No regression test caught the breakage; only CI cargo-check did"
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — hotfix-no-test is not in the Phase-5 allowlist; the 7 dependabot dep-update PRs (#1273-#1279) are dep updates themselves not lockfile-drift sub-shape; the 2 existing ready plans are multi-file code changes outside the allowlist",
-  "rerun_context": {
-    "trigger_payload": "buffer-low: dispatcher backlog at claimable=14 (<floor 36, <half-floor 18). Please refill action-list from coverage.json partial-with-gaps stories.",
-    "previous_run_iso": "2026-06-11T08:20:00Z",
-    "elapsed_minutes_since_prior_run": 365,
-    "merged_in_window": [
-      { "number": 1227, "title": "fix(db): route building_certification repo through RLS-context connection (PAP-80)", "merged_at": "2026-06-11T09:47:51Z", "has_test_diff": true, "fired_signals": [] },
-      { "number": 1232, "title": "fix(db): route ai_chat repo through RLS-context connection (PAP-103)", "merged_at": "2026-06-11T09:47:54Z", "has_test_diff": true, "fired_signals": [] },
-      { "number": 1270, "title": "fix(api-server): route workflow repo through RLS-context connection (PAP-77)", "merged_at": "2026-06-11T08:55:22Z", "has_test_diff": true, "fired_signals": [] },
-      { "number": 1272, "title": "fix(api-server): cast registry enum reads + designation column on pet/vehicle/parking surface (PAP-158)", "merged_at": "2026-06-11T08:36:13Z", "has_test_diff": true, "fired_signals": [] },
-      { "number": 1280, "title": "chore(repo): cut agent token cost — trim CLAUDE.md, add repo-map + findings (PAP-161)", "merged_at": "2026-06-11T11:19:49Z", "has_test_diff": false, "fired_signals": [], "note": "docs-only, no test required" },
-      { "number": 1281, "title": "fix(api-server): close esg_reporting cross-tenant IDOR — RLS executor + org keying (PAP-139)", "merged_at": "2026-06-11T12:37:12Z", "has_test_diff": true, "fired_signals": [] },
-      { "number": 1283, "title": "perf(research): slim dispatcher/routine reads — backlog.json projection + Phase 8 factoring (PAP-163)", "merged_at": "2026-06-11T11:43:35Z", "has_test_diff": false, "fired_signals": [], "note": "research-side, no test required" },
-      { "number": 1284, "title": "perf(research): extract dispatcher merge-path subagent prompts (PAP-164)", "merged_at": "2026-06-11T12:15:20Z", "has_test_diff": false, "fired_signals": [], "note": "research-side, adds T27 dispatcher-self-test gate" },
-      { "number": 1288, "title": "fix(api-server): route webhook handlers through RLS connections (PAP-170)", "merged_at": "2026-06-11T13:30:20Z", "has_test_diff": false, "fired_signals": ["hotfix-no-test-pr-1288-webhook-rls"], "note": "PR body claims existing DB test coverage but 2 new repo methods + RLS-bootstrap pattern not pinned" }
-    ],
-    "opened_in_window": [
-      { "number": 1273, "title": "chore(deps): bump dtolnay/rust-toolchain (actions-minor-patch)", "created_at": "2026-06-11T10:14:31Z", "author": "dependabot[bot]" },
-      { "number": 1274, "title": "chore(deps): bump the cargo-minor-patch group in /backend with 9 updates", "created_at": "2026-06-11T10:18:32Z", "author": "dependabot[bot]" },
-      { "number": 1275, "title": "chore(deps): bump the npm-minor-patch group across 1 directory with 16 updates", "created_at": "2026-06-11T10:21:00Z", "author": "dependabot[bot]" },
-      { "number": 1276, "title": "chore(deps): bump react-i18next from 16.6.6 to 17.0.8 in /frontend", "created_at": "2026-06-11T10:21:24Z", "author": "dependabot[bot]" },
-      { "number": 1277, "title": "chore(deps): bump expo-device from 55.0.16 to 56.0.4 in /frontend", "created_at": "2026-06-11T10:21:39Z", "author": "dependabot[bot]" },
-      { "number": 1278, "title": "chore(deps): bump expo from 55.0.25 to 56.0.11 in /frontend", "created_at": "2026-06-11T10:22:01Z", "author": "dependabot[bot]" },
-      { "number": 1279, "title": "chore(deps): bump expo-status-bar from 55.0.6 to 56.0.4 in /frontend", "created_at": "2026-06-11T10:22:15Z", "author": "dependabot[bot]" },
-      { "number": 1282, "title": "docs(research): correct RTK coverage finding (PAP-162)", "created_at": "2026-06-11T11:28:00Z", "author": "martin-janci" },
-      { "number": 1285, "title": "fix(api-server): close rental OAuth callback cross-tenant IDOR (PAP-141)", "created_at": "2026-06-11T12:31:00Z", "author": "martin-janci" },
-      { "number": 1286, "title": "fix(api-server): route ai/llm.rs post-LLM writes through RLS connection (PAP-150)", "created_at": "2026-06-11T13:03:00Z", "author": "martin-janci" },
-      { "number": 1287, "title": "fix(api-server): route ai/sessions + calendar sync + public plans through RLS guard (PAP-169)", "created_at": "2026-06-11T13:11:00Z", "author": "martin-janci" },
-      { "number": 1289, "title": "fix(api-server): route api_ecosystem.rs catalog handlers off the raw pool (PAP-167)", "created_at": "2026-06-11T13:36:00Z", "author": "martin-janci" },
-      { "number": 1290, "title": "fix(api-server): close marketplace provider-side IDOR + admin gaps (PAP-140)", "created_at": "2026-06-11T13:46:00Z", "author": "martin-janci" }
-    ],
-    "buffer_low_analysis": {
-      "directive_evaluable": false,
-      "directive_block_reasons": [
-        "coverage.json has no 'partial-with-gaps' status (statuses are 'done'/'partial'; 20 partial stories exist)",
-        "routine-prompt.md Phase 1.6 explicitly forbids running ppt-project-management skill in 'scan' mode in cloud sessions",
-        "the existing 15 open action-list rows are already sourced from 'dispatcher-tier1-refill-coverage' — adding more from coverage requires fresh gap discovery (local scan)"
-      ],
-      "claimable_root_cause": "15 open action-list rows minus 1 in-flight (refactor-churn-hotspot-mobile-announcements-test, PR #1165 in 'review' state, MANUAL-REBASE-blocked since 2026-06-09 — mergeable=dirty, MCP update-branch 422, sandbox git push 403) = 14 claimable",
-      "previous_brief_diagnosis_corrected": "the 08:20Z brief claimed 'all 15 stems collide with archive-terminal rows' — verified this run: zero collisions (all 15 open stems are not in action-list-archive.json at any status). Real cause is normal buffer drain + one stuck assignment.",
-      "next_action_recommended": "local user runs /ppt-project-management scan to discover new coverage gaps; in parallel, manually rebase PR #1165 from a local checkout to unblock the announcements assignment"
-    },
-    "phases_run": {
-      "phase_1": "ran — 9 merged PRs, 13 newly-opened PRs, 0 new issues, 1 hotfix-no-test signal fired (PR #1288 PAP-170)",
-      "phase_1_5": "skipped — same-day rerun (api-handlers reviewed 2026-06-10; ppt-web-ui+reality-server reviewed earlier today; 6h churn window too small)",
-      "phase_1_6": "skipped — same-day rerun (full PM rotation already serviced; pm_cursor unchanged at next_index=3 = pm-qa; coverage_cursor unchanged at next_index=10); buffer-low directive not executable in cloud routine (see buffer_low_analysis)",
-      "phase_2": "ran — 1 new vector added (test-gap-hotfix-no-test-pr-1288-webhook-rls, score 2, vector test-gap); 0 decays (oldest open is 2026-06-01, 10d < 14d window); 0 resolutions (no open backlog item references PAP-{77,80,103,139,150,158,161,163,164,170})",
-      "phase_3": "ran — no new promotions (new vector at score 2 sits below score-3 readiness gate; 2 existing ready plans carry forward intact)",
-      "phase_3_5": "n/a — no new plans this run",
-      "phase_4": "ran — wrote brief, signals, state; regenerated backlog.md + IDEAS_TRIAGE.md with new timestamp + new vector row",
-      "phase_5": "ran — no candidate (hotfix-no-test not in allowlist; no other signal met allowlist + certainty bar)",
-      "phase_6": "ran — stage, gate, commit, push"
-    }
-  },
   "goal_checks": [
-    { "goal": "G1",  "passed": true, "command": "test -f .research/briefs/2026-06-11.md && head -1 .research/briefs/2026-06-11.md | grep -q '^# 2026-06-11$'", "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G2",  "passed": true, "command": "jq --slurpfile prev HEAD:.research/state.json (compare cursors)", "observed": "last_pr_seen 1271 → 1288; last_commit_sha 9af6dce → 21ee98e; last_run_iso 08:20Z → 14:25Z; stats.runs 31 → 32; seen_signals length 192 → 193 — all five advanced", "expected": "true" },
-    { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true (142 items, 142 unique ids)", "expected": "true" },
-    { "goal": "G4",  "passed": true, "command": "no re-emit of cumulative type with score_delta != 0 for any prior-run signal id", "observed": "1 new signal id (hotfix-no-test-pr-1288-webhook-rls), not present in prior seen_signals", "expected": "true" },
-    { "goal": "G5",  "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json && no open items past 14-day decay window", "observed": "no scores >8 (max is 6); oldest open item is 2026-06-01 (10 days, within 14-day window)", "expected": "true" },
-    { "goal": "G6",  "passed": true, "command": "no new plans this run; trivially satisfied", "observed": "0 new plans", "expected": "true" },
-    { "goal": "G7",  "passed": true, "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '.md$'", "observed": "0 ≤ 2", "expected": "≤2" },
-    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
-    { "goal": "G9",  "passed": true, "command": "no secrets / private hostnames in staged diff (briefs/, signals/, state.json, backlog.* are clean)", "observed": "0 matches", "expected": "0" },
-    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md (regenerated view from backlog.json with new timestamp + new vector row)", "observed": "byte-identical match after regen (composite-key stable sort verified)", "expected": "exit 0" },
-    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' line shows 'none'; cursors advanced as expected", "observed": "no failed phases; all advances consistent", "expected": "true" },
-    { "goal": "G12", "passed": true, "command": "every prior-run plan slug still in plans/ or plans/_archive/", "observed": "all 5 active plans + 6 archive plans intact", "expected": "true" },
-    { "goal": "G13", "passed": true, "command": "git ls-files .research/plans/_archive/ count >= git ls-tree HEAD count", "observed": "6 == 6 (no archive change this run)", "expected": "exit 0" },
-    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md (regenerated view from backlog.json vector==triage with new timestamp)", "observed": "byte-identical match after regen — triage rows unchanged; only timestamp updated", "expected": "exit 0" },
-    { "goal": "G15", "passed": true, "command": "auto_fix_actions length checks; idempotency vs auto_fix_history", "observed": "auto_fix_actions=[] (no candidate); kill switch not set; no idempotency violation", "expected": "true" },
-    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped — gate is no-op; coverage_cursor.next_index (10) ∈ [0, 13), pm_cursor.next_index (3) ∈ [0,7]", "observed": "both cursors valid; not advanced since Phase 1.6 didn't run", "expected": "true" },
-    { "goal": "G17", "passed": true, "command": "git diff --cached for Telegram token literals", "observed": "0 matches", "expected": "0" }
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-11.md && head -1 matches '# 2026-06-11'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare state.json vs HEAD: any of last_pr_seen/last_issue_seen/last_commit_sha/seen_signals/hotspot_history/quiet_days changed",
+      "observed": "true (last_pr_seen 1288→1292, last_commit_sha 21ee98e→5d8231e, seen_signals 193→196)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit of seen signal id with score_delta != 0",
+      "observed": "the 1 carry-over signal (hotfix-no-test-pr-1288) was added to seen_signals on the prior run; this run keeps it in signals[] for the brief's audit trail but does NOT re-add to seen_signals — score_delta on item already capped at +2 from prior run",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay check",
+      "observed": "no item > 8; oldest open is 2026-06-01 (10d < 14d window); no decay required",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plans/<slug>.md has 'adversarial pass: …' in brief",
+      "observed": "0 new plans this run — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each has 4 metadata + 11 headings + ≥1 capability + Mode declared + Files-on-disk",
+      "observed": "0 new plans this run — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/private hostnames in staged diff (excluding 4 baseline doc files)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0 (regen matches staged)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty: brief lists failed phases; cursors not advanced",
+      "observed": "no phase failed this run — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present in plans/ or plans/_archive/",
+      "observed": "no plans deleted this run; security-llm-doc-idor.md + bug-ios-searchview-uncompilable.md present in plans/",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ count(plans/_archive/ staged) >= count(plans/_archive/ at HEAD) ]",
+      "observed": "exit 0 (archive count unchanged)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0 (regen matches staged)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length 0 ≤ 3; ≤1 each pr/issue/comment; no signal id duplicates auto_fix_history",
+      "observed": "auto_fix_actions=[]; kill switch not set; no actions taken",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run → gate is a no-op (pm_cursor.next_index unchanged at 3; coverage_cursor.next_index unchanged at 10)",
+      "observed": "pm_cursor unchanged → GC7 advancement clause vacuous; pm_cursor.next_index=3 ∈ [0,7]; coverage_cursor.next_index=10 within [0, #epics)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram bot-token literal in added lines (excluding 4 baseline doc files)",
+      "observed": "0",
+      "expected": "0"
+    }
   ]
 }
