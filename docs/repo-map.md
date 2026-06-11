@@ -1,0 +1,96 @@
+# Repo Map — where things live (read before grepping the tree)
+
+Purpose: a cached, coarse "where-things-live" index so agents resolve *where a feature
+lives* by reading one file instead of fan-out grepping the monorepo. Kept deliberately
+**coarse** (directories, naming conventions, hot files) so it rarely goes stale. For deep
+detail, the nested `CLAUDE.md` files in each subtree are loaded on demand when you work there.
+
+> If something here is wrong, fix it in the same PR as the code change — this file is part
+> of the agent contract. Counts are approximate (snapshot 2026-06).
+
+## Top-level layout
+
+```
+backend/        Rust workspace (Cargo) — api-server, reality-server, deploy-server + crates
+frontend/       pnpm workspace — ppt-web, admin-web, reality-web, mobile + shared packages
+mobile-native/  Kotlin Multiplatform — Reality Portal Android/iOS
+docs/           specs, use-cases, API (typespec/OpenAPI), screen-maps, this map
+scripts/        setup, version bump/sync, health-check, install-hooks
+.research/      research dispatcher/routine, backlog, plans, management artifacts
+.github/        CI workflows (backend.yml, frontend.yml, mobile-native.yml, api-validation.yml, …)
+```
+
+## The naming convention (this is the big time-saver)
+
+A single domain (e.g. `faults`, `leases`, `esg_reporting`) is implemented as a **vertical
+slice with matching file names** across layers. Once you know the domain noun, you know the files:
+
+| Layer | Path pattern | Example (`faults`) |
+|-------|--------------|--------------------|
+| HTTP route/handler | `backend/servers/api-server/src/routes/<domain>.rs` | `routes/faults.rs` |
+| DB repository | `backend/crates/db/src/repositories/<domain>.rs` (often singular) | `repositories/fault.rs` |
+| Migrations | `backend/crates/db/migrations/*.sql` (timestamped, additive) | grep the noun |
+| API contract | `docs/api/typespec/**` → generated OpenAPI → TS/Rust clients | — |
+| Frontend client | `frontend/packages/api-client` (generated) | — |
+
+To find a feature: map the noun → `routes/<noun>.rs` + `repositories/<noun>.rs`. Prefer this
+over `grep -r <noun> backend/`.
+
+## backend/ (Rust workspace)
+
+**Servers** (`backend/servers/`):
+- `api-server` (port 8080) — Property Management API + OAuth provider. ~84 route modules in
+  `src/routes/` (+ subdirs `admin/ ai/ announcements/ documents/ integrations/ organizations/ platform_admin/`).
+  Consumers: ppt-web, admin-web, mobile.
+- `reality-server` (port 8081) — Reality Portal public API. Multi-region via `REGION` env.
+  Consumers: reality-web, mobile-native.
+- `deploy-server` — deployment control plane (has its own migrations).
+
+**Crates** (`backend/crates/`):
+- `common` — `TenantContext`, `TenantRole` (11 roles), core errors/types. Used everywhere.
+- `api-core` — Axum extractors, auth middleware, OpenAPI (utoipa), CORS/tracing.
+- `db` — SQLx pool, models, **~101 repositories** in `src/repositories/`, migrations (~177 sql files).
+- `integrations` — external API clients (Airbnb, Booking.com, portals).
+- `admin-core`, `tenant-ops` — admin + tenant lifecycle logic.
+
+**Security / multi-tenancy hot spots** (touch carefully — see memory & prior IDOR/RLS work):
+- Postgres **RLS** with `app.current_organization_id` GUC → `get_current_org_id()` + FORCE RLS
+  (migration 00179). By-id queries MUST stay org-keyed; CI superuser pool can bypass FORCE RLS.
+- Raw-pool vs RLS-context connection: repos must route through the RLS-context connection
+  (`RlsConnection` / `&mut PgConnection` executor), not a raw pool. See `repositories/mod.rs`.
+- `sqlx` offline data: `cargo sqlx prepare` / `.sqlx/` — regenerate on query changes.
+
+**Largest route files** (likely hot / high-churn): `auth.rs` (~93K), `aml_dsa.rs` (~87K),
+`buildings.rs` (~71K), `infrastructure.rs` (~68K), `api_ecosystem.rs` (~68K), `market_pricing.rs`,
+`marketplace.rs`, `forms.rs`. Largest repos: `document.rs`, `rental.rs`, `lease.rs`, `integration.rs`,
+`api_ecosystem.rs`, `announcement.rs`, `board_meetings.rs`, `budget.rs`.
+
+## frontend/ (pnpm workspace)
+
+**Apps** (`frontend/apps/`):
+- `ppt-web` (`@ppt/web`) — React 19 + Vite SPA, Property Management. Backend: api-server.
+- `admin-web` — React + Vite, super-admin console.
+- `reality-web` (`@ppt/reality-web`) — Next.js 16 SSR/ISR public portal. Backend: reality-server.
+  i18n in `messages/{en,sk,cs,de}.json`.
+- `mobile` (`@ppt/mobile`) — React Native + Expo. Backend: api-server.
+
+**Packages** (`frontend/packages/`):
+- `api-client` (`@ppt/api-client`) — **generated** from `docs/api/generated/by-service/api-server.yaml`.
+- `reality-api-client` — generated from reality-server.yaml.
+- `shared`, `ui-kit`, `admin-ui`, `dev-panel`, `screen-map`, `sitemap`, `vite-plugin-ppt-worktree`.
+
+> API clients are generated — change the **TypeSpec** (`docs/api/typespec/`), not the client by hand.
+
+## mobile-native/ (Kotlin Multiplatform)
+
+`shared/` (KMP shared module, Ktor client), `androidApp/` (Jetpack Compose), `iosApp/` (SwiftUI).
+Versions in `gradle/libs.versions.toml`. Reality Portal only.
+
+## Cross-cutting
+
+- **Versioning:** `VERSION` file is source of truth; `scripts/update-version.sh` propagates.
+- **Tests:** backend `cargo test -p <crate>`; frontend `pnpm test`; mobile `./gradlew test`.
+  Pick the smallest scope — see the `ppt-tests` skill.
+- **CI gates:** `backend.yml`, `frontend.yml`, `mobile-native.yml`, `api-validation.yml` (see CLAUDE.md).
+- **Local stack:** `ppt-dev-stack` skill (`stack up pm-local`).
+- **Remote build:** no local Rust/node toolchain in agent envs — offload via `rbuild` (see memory).
