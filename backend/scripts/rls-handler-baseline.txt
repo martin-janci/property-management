@@ -10,5 +10,4 @@
 servers/api-server/src/routes/ai/llm.rs
 servers/api-server/src/routes/ai/sessions.rs
 servers/api-server/src/routes/integrations/sync.rs
-servers/api-server/src/routes/mfa.rs
 servers/api-server/src/routes/subscriptions.rs
