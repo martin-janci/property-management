@@ -338,7 +338,7 @@ async fn send_message(
                             // Check if alert should be triggered based on organization thresholds
                             if let Ok(thresholds) = state
                                 .sentiment_repo
-                                .get_thresholds(&mut **sguard.conn(), tenant_id)
+                                .get_thresholds(&mut *sguard.conn(), tenant_id)
                                 .await
                             {
                                 if thresholds.enabled {
@@ -524,7 +524,7 @@ async fn send_message(
                         match state
                             .llm_document_repo
                             .search_documents_by_embedding(
-                                &mut **guard.conn(),
+                                &mut *guard.conn(),
                                 tenant_id,
                                 &embedding_result.embedding,
                                 5,         // Get top 5 relevant chunks
