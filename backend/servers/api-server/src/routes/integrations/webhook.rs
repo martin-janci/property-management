@@ -1261,23 +1261,45 @@ pub async fn handle_airbnb_webhook(
                                     "Cancelled via Airbnb webhook".to_string(),
                                 ),
                             };
-                            if let Err(e) = state
+                            // PAP-141: key the status mutation to the booking's
+                            // own organization (`update_booking_status_for_org`)
+                            // rather than the bare id, so a forged/replayed
+                            // webhook can never flip a booking the lookup did
+                            // not legitimately resolve. `booking` was just found
+                            // by (`platform`, `external_id`), so its
+                            // `organization_id` is the authoritative owner.
+                            match state
                                 .rental_repo
-                                .update_booking_status(booking.id, cancel_data)
+                                .update_booking_status_for_org(
+                                    booking.organization_id,
+                                    booking.id,
+                                    cancel_data,
+                                )
                                 .await
                             {
-                                tracing::error!(
-                                    error = %e,
-                                    booking_id = %booking.id,
-                                    confirmation_code = %code,
-                                    "Airbnb webhook: failed to cancel booking"
-                                );
-                            } else {
-                                tracing::info!(
-                                    booking_id = %booking.id,
-                                    confirmation_code = %code,
-                                    "Airbnb webhook: booking cancelled"
-                                );
+                                Ok(Some(_)) => {
+                                    tracing::info!(
+                                        booking_id = %booking.id,
+                                        confirmation_code = %code,
+                                        "Airbnb webhook: booking cancelled"
+                                    );
+                                }
+                                Ok(None) => {
+                                    tracing::warn!(
+                                        booking_id = %booking.id,
+                                        org_id = %booking.organization_id,
+                                        confirmation_code = %code,
+                                        "Airbnb webhook: booking not cancelled (org mismatch on status update)"
+                                    );
+                                }
+                                Err(e) => {
+                                    tracing::error!(
+                                        error = %e,
+                                        booking_id = %booking.id,
+                                        confirmation_code = %code,
+                                        "Airbnb webhook: failed to cancel booking"
+                                    );
+                                }
                             }
                         }
                     }
