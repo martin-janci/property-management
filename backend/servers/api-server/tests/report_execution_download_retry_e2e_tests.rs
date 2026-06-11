@@ -333,9 +333,7 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
 
     // --- First presign: simulates the URL a client originally received. ---
     let before_first = chrono::Utc::now();
-    let first = app
-        .execute(auth_req(Method::GET, &uri, org, &token))
-        .await;
+    let first = app.execute(auth_req(Method::GET, &uri, org, &token)).await;
     assert_eq!(
         first.status,
         StatusCode::OK,
@@ -364,9 +362,7 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
     // --- Re-presign: the client's first URL has 'expired', so it re-requests
     //     the same endpoint. This must yield a brand-new, still-valid window. ---
     let before_second = chrono::Utc::now();
-    let second = app
-        .execute(auth_req(Method::GET, &uri, org, &token))
-        .await;
+    let second = app.execute(auth_req(Method::GET, &uri, org, &token)).await;
     assert_eq!(
         second.status,
         StatusCode::OK,
@@ -375,7 +371,10 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
         second.text(),
     );
     let second_body = second.json_value();
-    let second_url = second_body.get("url").and_then(|v| v.as_str()).unwrap_or("");
+    let second_url = second_body
+        .get("url")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     assert!(
         !second_url.is_empty(),
         "#611 regression: re-presign must carry a non-empty url, body={}",
