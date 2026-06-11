@@ -1,8 +1,7 @@
 //! AI chat sessions (Story 13.1) and sentiment analysis (Story 13.2).
 
-use crate::routes::ai::{require_tenant_id, AlertsQuery, PaginationQuery};
+use crate::routes::ai::{AlertsQuery, PaginationQuery};
 use crate::state::AppState;
-use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
@@ -48,17 +47,21 @@ pub fn ai_chat_router() -> Router<AppState> {
 )]
 async fn create_session(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<CreateChatSession>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: the owning org/user are derived from the verified principal,
-    // never trusted from the request body (prevents IDOR / cross-tenant writes).
-    let organization_id = require_tenant_id(&principal)?;
-    match state
+    // SECURITY: the owning org/user are derived from the RLS-validated request
+    // context, never trusted from the request body (prevents IDOR / cross-tenant
+    // writes). The connection carries RLS context so the INSERT also satisfies
+    // the FORCE-RLS `WITH CHECK` policy.
+    let organization_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let result = state
         .ai_chat_repo
-        .create_session(organization_id, principal.user_id, req)
-        .await
-    {
+        .create_session(&mut **rls.conn(), organization_id, user_id, req)
+        .await;
+    rls.release().await;
+    match result {
         Ok(session) => Ok((StatusCode::CREATED, Json(serde_json::json!(session)))),
         Err(e) => {
             tracing::error!("Failed to create session: {}", e);
@@ -85,18 +88,21 @@ async fn create_session(
 )]
 async fn list_sessions(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state
+    let user_id = rls.user_id();
+    let result = state
         .ai_chat_repo
         .list_user_sessions(
-            principal.user_id,
+            &mut **rls.conn(),
+            user_id,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )
-        .await
-    {
+        .await;
+    rls.release().await;
+    match result {
         Ok(sessions) => Ok(Json(serde_json::json!({ "sessions": sessions }))),
         Err(e) => {
             tracing::error!("Failed to list sessions: {}", e);
@@ -113,15 +119,16 @@ async fn list_sessions(
 
 async fn get_session(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let result = state
         .ai_chat_repo
-        .find_session_by_id(session_id, org_id)
-        .await
-    {
+        .find_session_by_id(&mut **rls.conn(), session_id, org_id)
+        .await;
+    rls.release().await;
+    match result {
         Ok(Some(session)) => Ok(Json(serde_json::json!(session))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -142,11 +149,16 @@ async fn get_session(
 
 async fn delete_session(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(session_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state.ai_chat_repo.delete_session(session_id, org_id).await {
+    let org_id = rls.tenant_id();
+    let result = state
+        .ai_chat_repo
+        .delete_session(&mut **rls.conn(), session_id, org_id)
+        .await;
+    rls.release().await;
+    match result {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,
@@ -167,21 +179,23 @@ async fn delete_session(
 
 async fn list_messages(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(session_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let result = state
         .ai_chat_repo
         .list_session_messages(
+            &mut **rls.conn(),
             session_id,
             org_id,
             query.limit.unwrap_or(100),
             query.offset.unwrap_or(0),
         )
-        .await
-    {
+        .await;
+    rls.release().await;
+    match result {
         Ok(messages) => Ok(Json(serde_json::json!({ "messages": messages }))),
         Err(e) => {
             tracing::error!("Failed to list messages: {}", e);
@@ -216,22 +230,29 @@ const MAX_RESPONSE_TOKENS: u32 = 2048;
 
 async fn send_message(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(session_id): Path<Uuid>,
     Json(req): Json<SendChatMessage>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     let start_time = Instant::now();
 
-    // SECURITY: tenant is now derived from the verified principal, never from
-    // a client-supplied header. Per-tenant features (RAG, sentiment trend
-    // bookkeeping, custom system prompt) require a resolved org; a platform
-    // principal on the platform host has no `effective_org` and is rejected.
-    let tenant_id = require_tenant_id(&principal)?;
+    // SECURITY: tenant is now derived from the RLS-validated request context,
+    // never from a client-supplied header. Per-tenant features (RAG, sentiment
+    // trend bookkeeping, custom system prompt) require a resolved org; a platform
+    // principal on the platform host has no `effective_org` and is rejected by
+    // the `RlsConnection` extractor itself.
+    //
+    // The RLS connection is held for the whole handler (including the LLM call)
+    // because the AI-chat reads/writes must run on a context-set connection.
+    // Early `?` returns leave cleanup to `RlsConnection::drop` (spawns a
+    // context-clear task); the happy path calls `rls.release().await` explicitly.
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
     // Verify session exists and belongs to this tenant.
     let _session = state
         .ai_chat_repo
-        .find_session_by_id(session_id, tenant_id)
+        .find_session_by_id(&mut **rls.conn(), session_id, tenant_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to find session: {}", e);
@@ -254,7 +275,13 @@ async fn send_message(
     // Story 97.1: Load more messages for context, will be truncated to fit token limits
     let history = state
         .ai_chat_repo
-        .list_session_messages(session_id, tenant_id, DEFAULT_HISTORY_LIMIT, 0)
+        .list_session_messages(
+            &mut **rls.conn(),
+            session_id,
+            tenant_id,
+            DEFAULT_HISTORY_LIMIT,
+            0,
+        )
         .await
         .unwrap_or_default();
 
@@ -262,6 +289,7 @@ async fn send_message(
     let user_msg = state
         .ai_chat_repo
         .add_message(
+            rls.conn(),
             session_id,
             "user",
             &req.content,
@@ -304,7 +332,7 @@ async fn send_message(
                             if db::tenant_context::set_request_context(
                                 &mut *sconn,
                                 Some(tenant_id),
-                                Some(principal.user_id),
+                                Some(user_id),
                                 false,
                             )
                             .await
@@ -483,7 +511,7 @@ async fn send_message(
                 if db::tenant_context::set_request_context(
                     &mut *conn,
                     Some(tenant_id),
-                    Some(principal.user_id),
+                    Some(user_id),
                     false,
                 )
                 .await
@@ -754,6 +782,7 @@ async fn send_message(
     let assistant_msg = state
         .ai_chat_repo
         .add_message(
+            rls.conn(),
             session_id,
             "assistant",
             &response_content,
@@ -801,12 +830,15 @@ async fn send_message(
         })
     };
 
+    // Clear RLS context before returning the connection to the pool (happy path).
+    rls.release().await;
+
     Ok((StatusCode::CREATED, Json(response_json)))
 }
 
 async fn provide_feedback(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(message_id): Path<Uuid>,
     Json(req): Json<ProvideFeedback>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
@@ -814,16 +846,18 @@ async fn provide_feedback(
     feedback.message_id = message_id;
 
     // SECURITY (issue #766 / #816): feedback author AND the owning tenant are
-    // both derived from the verified principal, never from the request body or
+    // both derived from the RLS-validated request context, never from the body or
     // the path. The repo only writes when the target message's session belongs
     // to the caller's org — otherwise a caller in org B could attach feedback
     // to (and poison the training signal for) org A's chat messages.
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let result = state
         .ai_chat_repo
-        .add_feedback_for_org(principal.user_id, org_id, feedback)
-        .await
-    {
+        .add_feedback_for_org(&mut **rls.conn(), user_id, org_id, feedback)
+        .await;
+    rls.release().await;
+    match result {
         Ok(Some(fb)) => Ok((StatusCode::CREATED, Json(serde_json::json!(fb)))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -844,20 +878,22 @@ async fn provide_feedback(
 
 async fn list_escalated(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
 
-    match state
+    let result = state
         .ai_chat_repo
         .list_escalated_messages(
+            &mut **rls.conn(),
             tenant_id,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )
-        .await
-    {
+        .await;
+    rls.release().await;
+    match result {
         Ok(messages) => Ok(Json(serde_json::json!({ "messages": messages }))),
         Err(e) => {
             tracing::error!("Failed to list escalated: {}", e);
