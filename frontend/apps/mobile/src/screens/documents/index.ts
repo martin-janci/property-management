@@ -11,3 +11,5 @@ export type { FlatFolder, MoveDocumentSheetProps } from './MoveDocumentSheet';
 export { flattenTree, MoveDocumentSheet } from './MoveDocumentSheet';
 export type { NewFolderSheetProps } from './NewFolderSheet';
 export { NewFolderSheet } from './NewFolderSheet';
+export type { FolderNameValidation, RenameFolderSheetProps } from './RenameFolderSheet';
+export { buildRenamePayload, RenameFolderSheet, validateFolderName } from './RenameFolderSheet';
