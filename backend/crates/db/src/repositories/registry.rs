@@ -45,7 +45,10 @@ impl RegistryRepository {
                 pet_size, weight_kg, age_years, color, microchip_id,
                 vaccination_date, vaccination_document_id, special_needs, notes, status
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            -- pet_type / pet_size / status are ENUM columns; the String binds arrive
+            -- as text, so cast the placeholders explicitly (text -> enum is not an
+            -- implicit assignment cast in Postgres).
+            VALUES ($1, $2, $3, $4, $5::pet_type, $6, $7::pet_size, $8, $9, $10, $11, $12, $13, $14, $15, $16::registry_status)
             RETURNING
                 id, tenant_id, unit_id, owner_id, pet_name,
                 pet_type::text AS pet_type, breed, pet_size::text AS pet_size,
@@ -167,8 +170,8 @@ impl RegistryRepository {
                 AND ($2::uuid IS NULL OR u.building_id = $2)
                 AND ($3::uuid IS NULL OR pr.unit_id = $3)
                 AND ($4::uuid IS NULL OR pr.owner_id = $4)
-                AND ($5::text IS NULL OR pr.status = $5)
-                AND ($6::text IS NULL OR pr.pet_type = $6)
+                AND ($5::text IS NULL OR pr.status::text = $5)
+                AND ($6::text IS NULL OR pr.pet_type::text = $6)
             "#,
         )
         .bind(tenant_id)
@@ -193,8 +196,8 @@ impl RegistryRepository {
                 AND ($2::uuid IS NULL OR u.building_id = $2)
                 AND ($3::uuid IS NULL OR pr.unit_id = $3)
                 AND ($4::uuid IS NULL OR pr.owner_id = $4)
-                AND ($5::text IS NULL OR pr.status = $5)
-                AND ($6::text IS NULL OR pr.pet_type = $6)
+                AND ($5::text IS NULL OR pr.status::text = $5)
+                AND ($6::text IS NULL OR pr.pet_type::text = $6)
             ORDER BY pr.created_at DESC
             LIMIT $7 OFFSET $8
             "#,
@@ -225,7 +228,7 @@ impl RegistryRepository {
             UPDATE pet_registrations SET
                 pet_name = COALESCE($3, pet_name),
                 breed = COALESCE($4, breed),
-                pet_size = COALESCE($5, pet_size),
+                pet_size = COALESCE($5::pet_size, pet_size),
                 weight_kg = COALESCE($6, weight_kg),
                 age_years = COALESCE($7, age_years),
                 color = COALESCE($8, color),
@@ -278,7 +281,7 @@ impl RegistryRepository {
         sqlx::query_as::<_, PetRegistration>(
             r#"
             UPDATE pet_registrations SET
-                status = $3,
+                status = $3::registry_status,
                 reviewed_by = $4,
                 reviewed_at = $5,
                 rejection_reason = $6,
@@ -333,7 +336,9 @@ impl RegistryRepository {
                 tenant_id, unit_id, owner_id, vehicle_type, make, model, year,
                 color, license_plate, registration_document_id, insurance_document_id, notes, status
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            -- vehicle_type / status are ENUM columns; cast the String-bound
+            -- placeholders explicitly (text -> enum is not an implicit cast).
+            VALUES ($1, $2, $3, $4::vehicle_type, $5, $6, $7, $8, $9, $10, $11, $12, $13::registry_status)
             RETURNING
                 id, tenant_id, unit_id, owner_id,
                 vehicle_type::text AS vehicle_type, make, model, year, color,
@@ -468,8 +473,8 @@ impl RegistryRepository {
                 AND ($2::uuid IS NULL OR u.building_id = $2)
                 AND ($3::uuid IS NULL OR vr.unit_id = $3)
                 AND ($4::uuid IS NULL OR vr.owner_id = $4)
-                AND ($5::text IS NULL OR vr.status = $5)
-                AND ($6::text IS NULL OR vr.vehicle_type = $6)
+                AND ($5::text IS NULL OR vr.status::text = $5)
+                AND ($6::text IS NULL OR vr.vehicle_type::text = $6)
             "#,
         )
         .bind(tenant_id)
@@ -498,8 +503,8 @@ impl RegistryRepository {
                 AND ($2::uuid IS NULL OR u.building_id = $2)
                 AND ($3::uuid IS NULL OR vr.unit_id = $3)
                 AND ($4::uuid IS NULL OR vr.owner_id = $4)
-                AND ($5::text IS NULL OR vr.status = $5)
-                AND ($6::text IS NULL OR vr.vehicle_type = $6)
+                AND ($5::text IS NULL OR vr.status::text = $5)
+                AND ($6::text IS NULL OR vr.vehicle_type::text = $6)
             ORDER BY vr.created_at DESC
             LIMIT $7 OFFSET $8
             "#,
@@ -579,7 +584,7 @@ impl RegistryRepository {
         sqlx::query_as::<_, VehicleRegistration>(
             r#"
             UPDATE vehicle_registrations SET
-                status = $3,
+                status = $3::registry_status,
                 reviewed_by = $4,
                 reviewed_at = $5,
                 rejection_reason = $6,

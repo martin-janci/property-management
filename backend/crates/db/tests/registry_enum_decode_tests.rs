@@ -20,7 +20,7 @@
 
 use db::models::{
     registry_status, CreatePetRegistration, CreateVehicleRegistration, PetRegistrationQuery,
-    ReviewRegistration, VehicleRegistrationQuery,
+    ReviewRegistration, UpdatePetRegistration, VehicleRegistrationQuery,
 };
 use db::repositories::RegistryRepository;
 use sqlx::PgPool;
@@ -167,6 +167,32 @@ async fn registry_reads_decode_enums_and_resolve_designation(pool: PgPool) {
     assert_eq!(pet_list[0].pet_size, "medium");
     assert_eq!(pet_list[0].status, registry_status::PENDING);
     assert_eq!(pet_list[0].unit_number.as_deref(), Some("A-101"));
+
+    // update RETURNING decode + the pet_size ENUM encode cast (COALESCE($n::pet_size)).
+    let updated_pet = repo
+        .update_pet_registration(
+            org,
+            pet.id,
+            UpdatePetRegistration {
+                pet_name: None,
+                breed: None,
+                pet_size: Some("large".into()),
+                weight_kg: None,
+                age_years: None,
+                color: None,
+                microchip_id: None,
+                vaccination_date: None,
+                vaccination_document_id: None,
+                special_needs: None,
+                notes: None,
+            },
+        )
+        .await
+        .expect("update pet decodes enums on RETURNING + encodes pet_size")
+        .expect("pet exists");
+    assert_eq!(updated_pet.pet_size, "large");
+    assert_eq!(updated_pet.pet_type, "dog");
+    assert_eq!(updated_pet.status, registry_status::PENDING);
 
     let reviewed_pet = repo
         .review_pet_registration(
