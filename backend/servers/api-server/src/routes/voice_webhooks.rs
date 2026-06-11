@@ -26,6 +26,7 @@ use db::models::{
     VoiceActionResult, VoiceOAuthExchangeRequest, VoiceOAuthExchangeResponse,
     VoiceTokenRefreshRequest, VoiceTokenRefreshResult, WebhookVerificationResult,
 };
+use db::RlsPool;
 use hmac::{Hmac, KeyInit, Mac};
 use integrations::{encrypt_optional_required, encrypt_required, CryptoError, IntegrationCrypto};
 use serde::Deserialize;
@@ -435,14 +436,27 @@ async fn oauth_token_exchange(
     let device_id = format!("{}_{}", request.platform, Uuid::new_v4());
 
     // Create the voice device with tokens.
-    // PAP-108 (PAP-80): the repo is stateless; `voice_assistant_devices` is not
-    // RLS-bound, and this handler is authenticated via `AuthUser` (no
-    // RlsConnection extractor), so the pool is the correct executor here. The
-    // org/user scoping comes from the verified PM access token above.
+    // PAP-170 (PAP-150 P2): bind the verified PM user's org/user RLS context for
+    // the device write instead of touching the raw `state.db` pool.
+    // `voice_assistant_devices` is not RLS-bound today, but binding context is
+    // defense in depth; org/user come from the verified PM access token above.
+    let mut guard = RlsPool::new(state.db.clone())
+        .acquire_with_rls(org_id, user_id, false)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to acquire RLS connection: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DEVICE_CREATION_FAILED",
+                    "Failed to link voice device",
+                )),
+            )
+        })?;
     let device = state
         .llm_document_repo
         .create_voice_device(
-            &state.db,
+            &mut **guard.conn(),
             org_id,
             user_id,
             None,
@@ -503,12 +517,21 @@ async fn oauth_token_refresh(
     use integrations::{decrypt_if_available, VoiceOAuthManager, VoicePlatform};
 
     // Find the device.
-    // PAP-108 (PAP-80): this endpoint is called by the voice platform (no PM
-    // principal, no RlsConnection); `voice_assistant_devices` is not RLS-bound,
-    // so the pool is the correct executor for the cross-org device lookup.
+    // PAP-170 (PAP-150 P5): this endpoint is called by the voice platform (no PM
+    // principal). Bootstrap the device on a context-cleared connection — it is
+    // addressed by an opaque, server-issued device_id and carries its owning
+    // org/user, which we bind below for the token write.
+    let rls_pool = RlsPool::new(state.db.clone());
+    let mut lookup = rls_pool.acquire_public().await.map_err(|e| {
+        tracing::error!("Database error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+        )
+    })?;
     let device = state
         .llm_document_repo
-        .find_voice_device(&state.db, request.device_id)
+        .find_voice_device(&mut **lookup.conn(), request.device_id)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -526,6 +549,7 @@ async fn oauth_token_refresh(
                 )),
             )
         })?;
+    drop(lookup);
 
     // Check if device has refresh token
     let refresh_token_encrypted = match &device.refresh_token_encrypted {
@@ -597,11 +621,24 @@ async fn oauth_token_refresh(
         )
     };
 
-    // Update the device tokens
+    // Update the device tokens under the device's own org/user RLS context.
+    let mut guard = rls_pool
+        .acquire_with_rls(device.organization_id, device.user_id, false)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to acquire RLS connection: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "TOKEN_UPDATE_FAILED",
+                    "Failed to update tokens",
+                )),
+            )
+        })?;
     state
         .llm_document_repo
         .update_voice_device_tokens(
-            &state.db,
+            &mut **guard.conn(),
             device.id,
             &new_access_encrypted,
             new_refresh_encrypted.as_deref(),
