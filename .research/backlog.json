@@ -3159,7 +3159,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "open",
+      "status": "ready",
       "sources": [
         "issue #1266",
         "PR #1257 (verify)"
@@ -3175,7 +3175,7 @@
       ],
       "created_at": "2026-06-11",
       "updated_at": "2026-06-11",
-      "plan": null
+      "plan": "plans/bug-ios-searchview-uncompilable.md"
     },
     {
       "id": "bug-ios-deeplink-info-plist-missing",

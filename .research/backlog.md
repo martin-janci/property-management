@@ -1,10 +1,10 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-06-11 03:13 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-11 04:24 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
-| 3 | bug | `bug-ios-searchview-uncompilable` | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupte | open | 2026-06-11 |  |
+| 3 | bug | `bug-ios-searchview-uncompilable` | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupte | ready | 2026-06-11 | [plan](plans/bug-ios-searchview-uncompilable.md) |
 | 3 | security | `unchecked-todo-pr-1203` | PR #1203 (fix(aml_dsa): close cross-tenant IDOR in moderation + AML-review handlers (PAP-36)) merged | dropped | 2026-06-10 |  |
 | 3 | security | `unchecked-todo-pr-1193` | PR #1193 (fix(aml-dsa): lock DSA reports to platform roles + fix file-path disclosure (PAP-47)) merg | dropped | 2026-06-10 |  |
 | 3 | bug | `bug-schema-drift-runtime-sql-issue-1008` | Schema drift: runtime SQL errors from non-existent columns in voting/messaging/notification paths | done | 2026-06-07 |  |
