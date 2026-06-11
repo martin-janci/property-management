@@ -1,0 +1,55 @@
+{
+  "date": "2026-06-11",
+  "run_iso": "2026-06-11T03:11:00Z",
+  "signals": [
+    {
+      "id": "code-review-mobile-native-kmp-ios-searchview-uncompilable",
+      "type": "code-review-finding",
+      "source": "issue #1266 (follow-up from PR #1257 verify-reality-mobile-search-ac-coverage)",
+      "score_delta": 3,
+      "evidence": [
+        "iOS SearchView.swift (mobile-native/iosApp/iosApp/Features/Search/SearchView.swift) does not compile — performSearch() called ~9 sites but never defined; scheduleSearch(for:) AC-2 debounce never defined; resultsGrid lost ForEach over results + .onAppear { loadMoreResults() } AC-4 trigger; brace balance off by +2 (174/172).",
+        "Born broken: file only ever existed in commit dbbae71 (no prior good version to revert to).",
+        "Android/KMP path (SearchScreen.kt + SearchStateTest) is fine and tested — breakage confined to iOS SwiftUI."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ios-deeplink-info-plist",
+      "type": "code-review-finding",
+      "source": "issue #1267 (follow-up from PR #1256 verify-swiftui-navigation-deeplink-authguard)",
+      "score_delta": 2,
+      "evidence": [
+        "iOS deep-link layer (NavigationCoordinator / DeepLinkHandler / NavigationStateRestorationService) fully implemented + unit-tested (parsing, host allow-list, AC-5 auth guard, SSO CSRF nonce), but dead at runtime: mobile-native/iosApp/Info.plist has no CFBundleURLTypes entry for the realityportal scheme.",
+        "No applinks: associated-domains entitlement either — universal links also dead.",
+        "Affects the SSO realityportal://sso?token=&state= callback path.",
+        "Android counterpart uses scheme=reality (intentionally different, not yet reconciled)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met allowlist (only code-review-finding signals this run; allowlist excludes them — manual implementer path)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-06-11.md && head -1 matches '# 2026-06-11'", "observed": "match", "expected": "match" },
+    { "goal": "G2", "passed": true,  "command": "last_pr_seen 1262→1269, last_issue_seen 1238→1267, last_commit_sha advanced, seen_signals +2", "observed": "advanced", "expected": "advanced" },
+    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique|length))' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative re-emit with score_delta!=0", "observed": "true", "expected": "true" },
+    { "goal": "G5cap", "passed": true,  "command": "max(score) over items ≤ 8", "observed": "true (max=6)", "expected": "true" },
+    { "goal": "G5decay", "passed": true, "command": "no open item older than 14 days requires decay this run (oldest open updated_at = 2026-05-30, 12 days)", "observed": "no decay candidates", "expected": "n/a" },
+    { "goal": "G6", "passed": true,  "command": "no new plans under plans/ this run", "observed": "0 new plans", "expected": "n/a" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans this run; 0 created", "observed": "0", "expected": "≤2" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true,  "command": "no secrets/private hostnames in staged diff (excluding baseline doc files)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "identical", "expected": "identical" },
+    { "goal": "G11", "passed": true, "command": "phase failures listed in brief; corresponding cursors not advanced", "observed": "no phase failures", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan still in plans/ or plans/_archive/", "observed": "all 10 prior plan files present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "ls-files _archive count this run ≥ ls-tree HEAD count", "observed": "6 = 6", "expected": "≥" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "identical", "expected": "identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions length ≤ 3; per-category ≤ 1; idempotency vs auto_fix_history", "observed": "0 actions", "expected": "≤ caps" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid (no-op when Phase 1.6 skipped this run)", "observed": "skipped → no-op", "expected": "n/a" },
+    { "goal": "G17", "passed": true, "command": "no Telegram bot-token literal in staged added lines", "observed": "0", "expected": "0" }
+  ]
+}

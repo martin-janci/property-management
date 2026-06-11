@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-10T18:30:57Z",
+  "last_run_iso": "2026-06-11T03:11:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 1262,
-  "last_issue_seen": 1238,
-  "last_commit_sha": "ebedec1d2462dea8d0c1612ad349a9c33dc96f14",
+  "last_pr_seen": 1269,
+  "last_issue_seen": 1267,
+  "last_commit_sha": "953588997d84ef95f2c51e06ce6b92fca635b37f",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -443,13 +443,15 @@
     "untriaged-issue-952",
     "churn-hotspot-backend-crates-db-src-repositories-document-rs",
     "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
-    "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs"
+    "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
+    "code-review-mobile-native-kmp-ios-searchview-uncompilable",
+    "code-review-mobile-native-kmp-ios-deeplink-info-plist"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-06-10",
     "api-core": "2026-05-29",
-    "reality-server": "2026-05-26",
+    "reality-server": "2026-06-11",
     "ppt-web-ui": "2026-05-27",
     "ppt-web-core": "2026-06-05",
     "reality-web": "2026-05-28",
@@ -457,8 +459,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 28,
-    "vectors_created": 136,
+    "runs": 29,
+    "vectors_created": 138,
     "plans_created": 7,
     "quiet_days": 0,
     "auto_fix_count": 0
