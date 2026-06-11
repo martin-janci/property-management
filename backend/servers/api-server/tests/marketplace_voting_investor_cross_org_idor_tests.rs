@@ -226,7 +226,7 @@ async fn seed_verification(pool: &PgPool, provider_id: Uuid) -> Uuid {
         r#"
         INSERT INTO provider_verifications
             (provider_id, verification_type, document_name, document_number, status)
-        VALUES ($1, 'business_license', 'License.pdf', 'SECRET-DOC-123', 'pending')
+        VALUES ($1, 'license', 'License.pdf', 'SECRET-DOC-123', 'pending')
         RETURNING id
         "#,
     )
