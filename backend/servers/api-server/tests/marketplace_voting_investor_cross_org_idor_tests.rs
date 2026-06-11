@@ -614,7 +614,10 @@ async fn review_verification_as_non_admin_is_forbidden(pool: PgPool) {
 
     // Non-admin (manager) token; random verification id — the role gate fires first.
     let token = mint_token(user, "rev-nonadmin@provider-idor.test", None);
-    let uri = format!("/api/v1/marketplace/verifications/{}/review", Uuid::new_v4());
+    let uri = format!(
+        "/api/v1/marketplace/verifications/{}/review",
+        Uuid::new_v4()
+    );
     let resp = app
         .execute(
             app.post(&uri)
