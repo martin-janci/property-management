@@ -16,12 +16,14 @@
 //! A foreign-org row therefore surfaces as `None` → HTTP 404, never a
 //! cross-tenant read or write.
 //!
-//! Like the reserve-fund suite, legal tenancy comes straight from the JWT
-//! `tenant_id` claim, which `AuthUser` reads without a DB membership lookup.
-//! That lets these tests mint a real access token per org and drive the
-//! handlers end-to-end:
-//!   - Org A's token reading Org A's document -> 200 (same-org succeeds).
-//!   - Org B's token reading Org A's document -> 404 (cross-org is blocked).
+//! Since the PAP-80 RLS conversion the handlers acquire an `RlsConnection`:
+//! tenancy comes from the validated `X-Tenant-ID` header backed by an active
+//! `organization_members` row (the JWT `tenant_id` claim alone is not a tenant
+//! source). These tests mint a real access token per org, seed the membership
+//! row, send the header, and drive the handlers end-to-end:
+//!   - Org A's context reading Org A's document -> 200 (same-org succeeds).
+//!   - Org B's own valid context reading Org A's document -> 404 (org-scoped
+//!     query finds no row; cross-org is blocked).
 
 #[allow(dead_code)]
 mod common;
@@ -125,6 +127,22 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
     .expect("seed document")
 }
 
+/// Make `user_id` an active member of `org_id` — required by the
+/// `RlsConnection` membership check since the PAP-80 conversion.
+async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
+    sqlx::query(
+        r#"
+        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
+        VALUES ($1, $2, 'manager', 'active', NOW())
+        "#,
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed membership");
+}
+
 // ---------------------------------------------------------------------------
 // Test 1: same-org read succeeds (proves real org context is wired)
 // ---------------------------------------------------------------------------
@@ -138,10 +156,12 @@ async fn get_document_same_org_succeeds(pool: PgPool) {
     let org_a = seed_org(&pool, "same-a").await;
     let doc_id = seed_document(&pool, org_a, user).await;
 
+    seed_membership(&pool, org_a, user).await;
     let token = access_token(user, Some(org_a));
     let req = app
         .get(&format!("/api/v1/legal/documents/{doc_id}"))
         .bearer(&token)
+        .header("X-Tenant-ID", &org_a.to_string())
         .build();
     let resp = app.execute(req).await;
 
@@ -170,11 +190,14 @@ async fn get_document_cross_org_is_not_found(pool: PgPool) {
     let org_b = seed_org(&pool, "x-b").await;
     let doc_id = seed_document(&pool, org_a, user_a).await;
 
-    // Org B token targeting Org A's document.
+    // Org B's own valid tenant context targeting Org A's document — the
+    // org-scoped query must come up empty (404), not leak.
+    seed_membership(&pool, org_b, user_b).await;
     let token = access_token(user_b, Some(org_b));
     let req = app
         .get(&format!("/api/v1/legal/documents/{doc_id}"))
         .bearer(&token)
+        .header("X-Tenant-ID", &org_b.to_string())
         .build();
     let resp = app.execute(req).await;
 
@@ -202,9 +225,11 @@ async fn update_document_cross_org_does_not_mutate(pool: PgPool) {
     let org_b = seed_org(&pool, "u-b").await;
     let doc_id = seed_document(&pool, org_a, user_a).await;
 
+    seed_membership(&pool, org_b, user_b).await;
     let token = access_token(user_b, Some(org_b));
     let req = RequestBuilder::new(Method::PATCH, &format!("/api/v1/legal/documents/{doc_id}"))
         .bearer(&token)
+        .header("X-Tenant-ID", &org_b.to_string())
         .json(serde_json::json!({ "title": "Hijacked Document" }))
         .build();
     let resp = app.execute(req).await;
@@ -244,10 +269,12 @@ async fn delete_document_cross_org_does_not_delete(pool: PgPool) {
     let org_b = seed_org(&pool, "d-b").await;
     let doc_id = seed_document(&pool, org_a, user_a).await;
 
+    seed_membership(&pool, org_b, user_b).await;
     let token = access_token(user_b, Some(org_b));
     let req = app
         .delete(&format!("/api/v1/legal/documents/{doc_id}"))
         .bearer(&token)
+        .header("X-Tenant-ID", &org_b.to_string())
         .build();
     let resp = app.execute(req).await;
 
@@ -275,8 +302,10 @@ async fn delete_document_cross_org_does_not_delete(pool: PgPool) {
 // Test 5: a token with no tenant_id claim is rejected (org-context guard)
 // ---------------------------------------------------------------------------
 
-/// Without an organization context the handler cannot scope the query, so it
-/// must refuse with 403 rather than fall back to an unscoped read.
+/// Without an organization context the request cannot be tenant-scoped, so it
+/// must be refused rather than fall back to an unscoped read. Since the
+/// PAP-80 conversion that refusal comes from the `RlsConnection` extractor:
+/// 400 "Missing or invalid X-Tenant-ID header".
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_document_without_tenant_claim_is_forbidden(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -295,8 +324,8 @@ async fn get_document_without_tenant_claim_is_forbidden(pool: PgPool) {
 
     assert_eq!(
         resp.status,
-        StatusCode::FORBIDDEN,
-        "request without org context must be 403, got {} (body: {})",
+        StatusCode::BAD_REQUEST,
+        "request without org context must be rejected, got {} (body: {})",
         resp.status,
         resp.text()
     );

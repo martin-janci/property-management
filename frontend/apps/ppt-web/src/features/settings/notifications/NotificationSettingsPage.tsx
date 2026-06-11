@@ -2,6 +2,7 @@
  * NotificationSettingsPage Component (Epic 8A, Story 8A.1)
  *
  * Settings page for managing notification channel preferences.
+ * Auth is injected via the global token provider — no props required.
  */
 
 import type { NotificationChannel } from '@ppt/api-client';
@@ -13,18 +14,13 @@ import {
 import { useCallback, useState } from 'react';
 import { ChannelToggle, DisableAllWarningDialog } from './components';
 
-interface NotificationSettingsPageProps {
-  baseUrl: string;
-  accessToken: string;
-}
-
-export function NotificationSettingsPage({ baseUrl, accessToken }: NotificationSettingsPageProps) {
+export function NotificationSettingsPage() {
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [pendingChannel, setPendingChannel] = useState<NotificationChannel | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useNotificationPreferences({ baseUrl, accessToken });
-  const updatePreference = useUpdateNotificationPreference({ baseUrl, accessToken });
+  const { data, isLoading, error } = useNotificationPreferences();
+  const updatePreference = useUpdateNotificationPreference();
 
   const handleToggle = useCallback(
     async (channel: NotificationChannel, enabled: boolean) => {
@@ -36,11 +32,10 @@ export function NotificationSettingsPage({ baseUrl, accessToken }: NotificationS
         });
       } catch (err) {
         if (err instanceof ConfirmationRequiredError) {
-          // Show confirmation dialog
+          // Show confirmation dialog before disabling the last active channel.
           setPendingChannel(channel);
           setShowWarningDialog(true);
         } else {
-          // Show error to user
           setUpdateError('Failed to update preference. Please try again.');
         }
       }

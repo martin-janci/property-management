@@ -1,0 +1,60 @@
+# Known repositories that hold a raw pool field, query FORCE-RLS tables, and
+# never call set_request_context (deny-all under FORCE ROW LEVEL SECURITY,
+# RLS-bypass on BYPASSRLS/superuser pools). Detected by
+# check-rls-enforcement.sh (PAP-68 pool-field detector).
+#
+# Every entry here is PRE-EXISTING debt pending conversion to the executor
+# pattern (see document.rs / board_meetings.rs precedent). Baselined entries
+# WARN instead of failing --strict; any repo NOT listed here that regresses
+# to the pattern fails CI. When a repo is converted, REMOVE its line (the
+# script warns on stale entries).
+#
+# One basename per line. Comments after '#'.
+
+# --- PAP-67 original offender set, conversion still pending ---
+work_order.rs        # PAP-67 (no child issue yet; PAP-80 umbrella)
+budget.rs            # PAP-67 (no child issue yet; PAP-80 umbrella)
+esg_reporting.rs     # PAP-72 (blocked on PAP-139)
+form.rs              # PAP-76
+workflow.rs          # PAP-77
+sensor.rs            # PAP-78 marked done but conversion never landed on dev
+reserve_funds.rs     # PAP-79 marked done but conversion never landed on dev
+
+# --- PAP-80 sweep: conversion PRs in flight ---
+ai_chat.rs           # PR #1232 (PAP-144/PAP-145)
+building_certification.rs  # PR #1227 (PAP-144/PAP-145)
+
+# --- PAP-80 sweep: latent raw-pool readers of FORCE-RLS tables (00110-series
+# --- and 00179 migrations), discovered by the PAP-68 detector ---
+agency.rs
+announcement.rs
+automation.rs
+building.rs
+community.rs
+compliance.rs
+critical_notification.rs
+data_export.rs
+device_push_token.rs
+dispute.rs
+edd.rs
+energy.rs
+feature_analytics.rs
+feature_package.rs
+listing.rs
+marketplace.rs
+membership.rs
+messaging.rs
+notification_preference.rs
+onboarding.rs
+organization.rs
+organization_member.rs
+owner_analytics.rs
+platform_admin.rs
+portal.rs
+portfolio_performance.rs
+reality_portal.rs
+rental.rs
+report_schedule.rs
+role.rs
+unified_portal_user.rs
+user_invite.rs

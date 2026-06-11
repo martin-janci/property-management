@@ -124,6 +124,74 @@ class SearchStateTest {
         assertEquals(listOf("a", "b"), merged.map { it.id })
     }
 
+    // ── shouldApplyResponse (stale-response race guard) ──────────────────
+
+    @Test
+    fun shouldApplyResponse_appliesLatestGeneration() {
+        // Response belongs to the generation currently in effect → apply it.
+        assertTrue(SearchState.shouldApplyResponse(responseGeneration = 3, currentGeneration = 3))
+    }
+
+    @Test
+    fun shouldApplyResponse_discardsStaleOlderResponse() {
+        // A slower OLDER request (gen 1) completes after a NEWER one (gen 2) was launched.
+        // Its response must NOT be applied — this is the bug being fixed.
+        assertFalse(SearchState.shouldApplyResponse(responseGeneration = 1, currentGeneration = 2))
+    }
+
+    @Test
+    fun shouldApplyResponse_staleResponseDoesNotOverwriteNewerResult() {
+        // End-to-end shape of the race: a NEWER query's result is already applied; the OLDER
+        // query's response then arrives out of order and must be dropped, leaving the newer
+        // result intact.
+        val currentGeneration = 5L
+        val newerResult = listOf(summary("new-1"), summary("new-2"))
+
+        var applied = newerResult
+
+        // The stale (older) response tries to clobber the state.
+        val staleResponse = listOf(summary("old-1"))
+        if (SearchState.shouldApplyResponse(responseGeneration = 4L, currentGeneration)) {
+            applied = SearchState.mergePage(applied, staleResponse, page = 1)
+        }
+
+        assertEquals(newerResult, applied)
+        assertEquals(listOf("new-1", "new-2"), applied.map { it.id })
+    }
+
+    @Test
+    fun shouldApplyResponse_futureGenerationIsTreatedAsStale() {
+        // A generation ahead of current is impossible by construction; guard rejects it too.
+        assertFalse(SearchState.shouldApplyResponse(responseGeneration = 9, currentGeneration = 7))
+    }
+
+    // ── searchResultMeta ─────────────────────────────────────────────────
+
+    @Test
+    fun searchResultMeta_roomsAndArea_joinedWithSeparator() {
+        assertEquals("3 izby · 84 m²", SearchState.searchResultMeta(rooms = 3, areaSqm = 84.0))
+    }
+
+    @Test
+    fun searchResultMeta_areaTruncatedToWholeNumber() {
+        assertEquals("2 izby · 64 m²", SearchState.searchResultMeta(rooms = 2, areaSqm = 64.9))
+    }
+
+    @Test
+    fun searchResultMeta_onlyRooms() {
+        assertEquals("1 izby", SearchState.searchResultMeta(rooms = 1, areaSqm = null))
+    }
+
+    @Test
+    fun searchResultMeta_onlyArea() {
+        assertEquals("50 m²", SearchState.searchResultMeta(rooms = null, areaSqm = 50.0))
+    }
+
+    @Test
+    fun searchResultMeta_neither_isEmpty() {
+        assertEquals("", SearchState.searchResultMeta(rooms = null, areaSqm = null))
+    }
+
     private fun summary(id: String) =
         ListingSummary(
             id = id,

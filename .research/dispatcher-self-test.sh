@@ -620,6 +620,46 @@ else
 fi
 echo
 
+# --- T27: merge-path subagent prompt extraction integrity (PAP-164) --------
+# PAP-164 moved the verbatim Phase 5 / 5.4 / 5.6 / 5.7 subagent prompts out of
+# dispatcher-prompt.md into .research/management/*-prompt.md (token economy).
+# These sit on the merge-decision hot path, so the extraction MUST stay intact:
+#   (a) each extracted file exists and carries its anchor strings (a truncated,
+#       empty, or corrupted file would silently strip the subagent's rubric —
+#       exactly the failure a live dispatcher dry-run would otherwise catch); AND
+#   (b) dispatcher-prompt.md still POINTS at each file (a spawn site that lost
+#       its pointer would spawn a subagent with no instructions).
+# Hard-fail on any violation — this is the merge hot path.
+echo "T27 merge-path subagent prompt extraction integrity (PAP-164)"
+MGMT_DIR="${MGMT_DIR:-.research/management}"
+# file :: anchor1|anchor2|anchor3  (all anchors must be present, grep -F literal)
+declare -a T27_SPECS=(
+  "pr-reviewer-prompt.md::You are a code reviewer::verdict=<approve|changes>::head_oid"
+  "premerge-autofix-prompt.md::pre-merge mechanical autofixer::premerge=<applied|skipped|failed>::ppt-pr-merge"
+  "rebaser-prompt.md::PR rebaser::rebased=<true|false>"
+  "pr-followup-prompt.md::PR follow-up driver::ppt-pr-followup::followup="
+)
+for spec in "${T27_SPECS[@]}"; do
+  f="${spec%%::*}"
+  rest="${spec#*::}"
+  fpath="$MGMT_DIR/$f"
+  if [ ! -f "$fpath" ]; then fail "missing extracted prompt: $fpath"; continue; fi
+  if ! grep -qF -- "$f" "$PROMPT"; then
+    fail "dispatcher-prompt.md no longer points at $f (spawn site lost its pointer)"
+  fi
+  ok_anchors=1
+  while [ -n "$rest" ]; do
+    anchor="${rest%%::*}"
+    if [ "$anchor" = "$rest" ]; then rest=""; else rest="${rest#*::}"; fi
+    if ! grep -qF -- "$anchor" "$fpath"; then
+      fail "$fpath missing anchor: '$anchor' (extraction corrupted/truncated)"
+      ok_anchors=0
+    fi
+  done
+  [ "$ok_anchors" = "1" ] && note "$f intact + referenced by dispatcher-prompt.md"
+done
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"

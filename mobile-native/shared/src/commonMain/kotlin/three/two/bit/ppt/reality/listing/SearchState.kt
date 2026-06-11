@@ -11,6 +11,11 @@ package three.two.bit.ppt.reality.listing
  *   the reported total, and whether a load is in flight, decide whether to fetch the next page.
  * - [mergePage] — append-or-replace semantics for paginated results (page 1 replaces, later pages
  *   append).
+ * - [shouldApplyResponse] — stale-response guard: given the request generation a response belongs
+ *   to and the generation currently in effect, decide whether the response may be applied. Protects
+ *   the search-as-you-type path from out-of-order completions where a slower OLDER request would
+ *   otherwise clobber the results of a NEWER one.
+ * - [searchResultMeta] — the "rooms · m²" meta line shown on each result card.
  *
  * Epic 82 - Story 82.3: Reality mobile Home & Search (AC-2 debounced search, AC-4 infinite scroll +
  * FilterSheet).
@@ -96,4 +101,45 @@ object SearchState {
         incoming: List<ListingSummary>,
         page: Int,
     ): List<ListingSummary> = if (page <= 1) incoming else existing + incoming
+
+    /**
+     * Stale-response guard for search-as-you-type.
+     *
+     * Each search dispatched from the screen is tagged with a monotonically increasing generation
+     * token (captured at launch time). When the network request completes, the caller passes the
+     * generation the response belongs to ([responseGeneration]) together with the generation that
+     * is currently in effect ([currentGeneration]) — i.e. the token of the most-recently-launched
+     * search. The response may only be applied when it belongs to the latest generation.
+     *
+     * This makes the apply step order-independent: if a slower OLDER request finishes after a NEWER
+     * one was launched, its [responseGeneration] is behind [currentGeneration] and the response is
+     * discarded instead of clobbering the newer (correct) results. A response from a generation
+     * ahead of the current one is impossible by construction and is treated as stale too.
+     *
+     * @param responseGeneration the generation the just-completed response was dispatched under
+     * @param currentGeneration the generation of the most-recently-launched search
+     * @return true when the response is the latest in flight and may be applied
+     */
+    fun shouldApplyResponse(responseGeneration: Long, currentGeneration: Long): Boolean =
+        responseGeneration == currentGeneration
+
+    /**
+     * Meta line for a search-result [ListingCard][three.two.bit.ppt.reality.ui.search.ListingCard]:
+     * room count and floor area joined with " · " (e.g. `3 izby · 84 m²`).
+     *
+     * Pure formatting extracted from the Compose card so it can be unit-tested and reused by the
+     * iOS target. Behaviour is identical to the inline helper it replaced: rooms come first (when
+     * present), then the integer-truncated area in m², and an absent dimension is simply omitted.
+     * With neither dimension present the result is the empty string.
+     *
+     * @param rooms room count, or null when unknown
+     * @param areaSqm floor area in m² (truncated to a whole number for display), or null
+     */
+    fun searchResultMeta(rooms: Int?, areaSqm: Double?): String {
+        val parts = buildList {
+            rooms?.let { add("$it izby") }
+            areaSqm?.toInt()?.let { add("$it m²") }
+        }
+        return parts.joinToString(" · ")
+    }
 }

@@ -141,6 +141,17 @@
         "secretRegeneratedTitle": "Tajomstvo obnovené"
       }
     },
+    "oauthConsent": {
+      "title": "Autorizovať aplikáciu",
+      "lead": "{{app}} žiada o prístup k vášmu účtu.",
+      "approve": "Schváliť",
+      "deny": "Zamietnuť",
+      "loading": "Overovanie požiadavky…",
+      "redirectNotice": "Budete presmerovaní na {{uri}}",
+      "invalidRequest": "Táto autorizačná požiadavka je neplatná alebo neúplná.",
+      "loadError": "Autorizačnú požiadavku nebolo možné overiť: {{message}}",
+      "submitError": "Autorizáciu nebolo možné dokončiť: {{message}}"
+    },
     "onboarding": {
       "title": "Onboarding prehliadky",
       "subtitle": "Prezerajte a spravujte postupné onboarding prehliadky pre používateľov platformy.",

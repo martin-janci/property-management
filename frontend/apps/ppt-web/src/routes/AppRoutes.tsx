@@ -20,11 +20,15 @@ import { disputeRoutes } from './groups/disputes';
 import { documentRoutes, newsRoutes } from './groups/documents';
 import { faultRoutes } from './groups/faults';
 import { financialRoutes } from './groups/financial';
+import { iotRoutes } from './groups/iot';
+import { leaseRoutes } from './groups/leases';
 import { messagingRoutes } from './groups/messaging';
+import { meterRoutes } from './groups/meters';
 import { neighborRoutes } from './groups/neighbors';
 import { outageRoutes } from './groups/outages';
 import { rentalRoutes } from './groups/rentals';
 import { reportRoutes } from './groups/reports';
+import { votingRoutes } from './groups/voting';
 
 export function AppRoutes() {
   return (
@@ -43,6 +47,10 @@ export function AppRoutes() {
       {communityRoutes()}
       {financialRoutes()}
       {rentalRoutes()}
+      {meterRoutes()}
+      {leaseRoutes()}
+      {votingRoutes()}
+      {iotRoutes()}
       {reportRoutes()}
       {buildingRoutes()}
       {settingsRoutes()}

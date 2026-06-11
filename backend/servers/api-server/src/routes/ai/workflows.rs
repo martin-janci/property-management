@@ -1,9 +1,30 @@
 //! Workflow automation (Story 13.6 & 13.7), event handling (Story 94.2),
 //! and the templates marketplace (Story 94.4).
+//!
+//! # RLS (PAP-77)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on the workflow tables,
+//! so every query MUST run on a connection that has `app.current_org_id` set
+//! or it collapses to deny-all. Each database handler therefore acquires an
+//! [`RlsConnection`] (which validates tenant membership and sets the org/user
+//! GUCs on a dedicated connection) and passes `&mut **rls.conn()` to the
+//! repository. The authoritative organization is `rls.tenant_id()` — the
+//! tenant the caller was validated against — never a client-supplied value,
+//! so the SQL org filter and the RLS context can never disagree. By-id repo
+//! queries stay keyed on `(id, organization_id)` (child tables via the parent
+//! workflow) as defense-in-depth, so a cross-tenant probe resolves to no row
+//! → `404` even on an RLS-exempt pool. `rls.release()` clears the context
+//! before the connection returns to the pool. The background
+//! `WorkflowExecutor` acquires its own org-context connections from an
+//! `RlsPool` (org derived from the org-scoped-loaded workflow row).
+//!
+//! Template marketplace endpoints that serve only built-in (non-database)
+//! templates keep the lighter `RequestPrincipal` auth gate.
 
-use crate::routes::ai::{not_found, require_tenant_id};
+use crate::routes::ai::not_found;
 use crate::state::AppState;
 use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -15,8 +36,16 @@ use db::models::{
     get_builtin_templates, template_category, CreateWorkflow, CreateWorkflowAction, ExecutionQuery,
     ImportTemplateRequest, TriggerWorkflow, UpdateWorkflow, WorkflowQuery,
 };
+use db::RlsPool;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+fn internal_error(e: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("INTERNAL_ERROR", e.to_string())),
+    )
+}
 
 // ============================================================================
 // Workflow Router (Story 13.6 & 13.7)
@@ -47,221 +76,234 @@ pub fn workflow_router() -> Router<AppState> {
 
 async fn create_workflow(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<CreateWorkflow>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    // SECURITY: owning org and creator are derived from the verified principal,
-    // never from the request body.
-    let organization_id = require_tenant_id(&principal)?;
-    match state
+    // SECURITY: owning org and creator are derived from the validated tenant
+    // context, never from the request body.
+    let organization_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let result = state
         .workflow_repo
-        .create(organization_id, principal.user_id, req)
-        .await
-    {
+        .create(&mut **rls.conn(), organization_id, user_id, req)
+        .await;
+    rls.release().await;
+    match result {
         Ok(workflow) => Ok((StatusCode::CREATED, Json(serde_json::json!(workflow)))),
         Err(e) => {
             tracing::error!("Failed to create workflow: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to create")),
-            ))
+            Err(internal_error("Failed to create"))
         }
     }
 }
 
 async fn list_workflows(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<WorkflowQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state.workflow_repo.list(tenant_id, query).await {
+    let tenant_id = rls.tenant_id();
+    let result = state
+        .workflow_repo
+        .list(&mut **rls.conn(), tenant_id, query)
+        .await;
+    rls.release().await;
+    match result {
         Ok(workflows) => Ok(Json(serde_json::json!({ "workflows": workflows }))),
         Err(e) => {
             tracing::error!("Failed to list workflows: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
-            ))
+            Err(internal_error("Failed to list"))
         }
     }
 }
 
 async fn get_workflow(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state.workflow_repo.find_by_id_for_org(id, org_id).await {
+    let org_id = rls.tenant_id();
+    let workflow = state
+        .workflow_repo
+        .find_by_id_for_org(&mut **rls.conn(), id, org_id)
+        .await;
+    let result = match workflow {
         Ok(Some(workflow)) => {
             // list_actions is scoped by the same org_id, so we cannot leak
             // actions from a workflow we just verified, but pass org_id
             // anyway for symmetry / future-proofing against ID swaps.
             let actions = state
                 .workflow_repo
-                .list_actions(id, org_id)
-                .await
-                .map_err(|e| {
+                .list_actions(rls.conn(), id, org_id)
+                .await;
+            match actions {
+                Ok(actions) => Ok(Json(serde_json::json!({
+                    "workflow": workflow,
+                    "actions": actions.unwrap_or_default()
+                }))),
+                Err(e) => {
                     tracing::error!("Failed to list actions: {}", e);
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
-                    )
-                })?
-                .unwrap_or_default();
-            Ok(Json(serde_json::json!({
-                "workflow": workflow,
-                "actions": actions
-            })))
+                    Err(internal_error("Failed to get"))
+                }
+            }
         }
         Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to get workflow: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
-            ))
+            Err(internal_error("Failed to get"))
         }
-    }
+    };
+    rls.release().await;
+    result
 }
 
 async fn update_workflow(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkflow>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state.workflow_repo.update(id, org_id, req).await {
+    let org_id = rls.tenant_id();
+    let result = state
+        .workflow_repo
+        .update(&mut **rls.conn(), id, org_id, req)
+        .await;
+    rls.release().await;
+    match result {
         Ok(Some(workflow)) => Ok(Json(serde_json::json!(workflow))),
         Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to update workflow: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to update")),
-            ))
+            Err(internal_error("Failed to update"))
         }
     }
 }
 
 async fn delete_workflow(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state.workflow_repo.delete(id, org_id).await {
+    let org_id = rls.tenant_id();
+    let result = state
+        .workflow_repo
+        .delete(&mut **rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+    match result {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to delete workflow: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to delete")),
-            ))
+            Err(internal_error("Failed to delete"))
         }
     }
 }
 
 async fn list_actions(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state.workflow_repo.list_actions(id, org_id).await {
+    let org_id = rls.tenant_id();
+    let result = state
+        .workflow_repo
+        .list_actions(rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+    match result {
         Ok(Some(actions)) => Ok(Json(serde_json::json!({ "actions": actions }))),
         Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to list actions: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
-            ))
+            Err(internal_error("Failed to list"))
         }
     }
 }
 
 async fn add_action(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateWorkflowAction>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
+    let org_id = rls.tenant_id();
     // Pin the workflow_id to the path parameter so a caller can't
     // shadow-target a different workflow via the JSON body.
     req.workflow_id = id;
-    match state.workflow_repo.add_action(org_id, req).await {
+    let result = state
+        .workflow_repo
+        .add_action(rls.conn(), org_id, req)
+        .await;
+    rls.release().await;
+    match result {
         Ok(Some(action)) => Ok((StatusCode::CREATED, Json(serde_json::json!(action)))),
         Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to add action: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to add")),
-            ))
+            Err(internal_error("Failed to add"))
         }
     }
 }
 
 async fn delete_action(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(action_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state.workflow_repo.delete_action(action_id, org_id).await {
+    let org_id = rls.tenant_id();
+    let result = state
+        .workflow_repo
+        .delete_action(&mut **rls.conn(), action_id, org_id)
+        .await;
+    rls.release().await;
+    match result {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err(not_found("Action not found")),
         Err(e) => {
             tracing::error!("Failed to delete action: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to delete")),
-            ))
+            Err(internal_error("Failed to delete"))
         }
     }
 }
 
 async fn trigger_workflow(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<TriggerWorkflow>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     use crate::services::WorkflowExecutor;
 
-    let org_id = require_tenant_id(&principal)?;
+    let org_id = rls.tenant_id();
 
-    // SECURITY (H1): verify the workflow belongs to the caller's org BEFORE
-    // we hand off to the executor. A 404 (not 403) is the correct response
-    // — distinguishing "no such workflow" from "wrong tenant" would let a
-    // caller enumerate workflow IDs cross-tenant.
-    let workflow_exists = state
+    // SECURITY (H1): load the workflow org-scoped BEFORE handing off to the
+    // executor. A 404 (not 403) is the correct response — distinguishing "no
+    // such workflow" from "wrong tenant" would let a caller enumerate
+    // workflow IDs cross-tenant. The loaded row is what the executor runs:
+    // it never re-fetches by bare ID.
+    let workflow = state
         .workflow_repo
-        .find_by_id_for_org(id, org_id)
-        .await
-        .map_err(|e| {
+        .find_by_id_for_org(&mut **rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+    let workflow = match workflow {
+        Ok(Some(workflow)) => workflow,
+        Ok(None) => return Err(not_found("Workflow not found")),
+        Err(e) => {
             tracing::error!("Failed to load workflow for tenant check: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to trigger")),
-            )
-        })?;
-    if workflow_exists.is_none() {
-        return Err(not_found("Workflow not found"));
-    }
+            return Err(internal_error("Failed to trigger"));
+        }
+    };
 
-    // Create the workflow executor using the repository
-    let executor = WorkflowExecutor::new(state.workflow_repo.clone());
+    // Create the workflow executor; it acquires its own RLS-context
+    // connections (org derived from the row loaded above).
+    let executor =
+        WorkflowExecutor::new(RlsPool::new(state.db.clone()), state.workflow_repo.clone());
 
     // Execute the workflow asynchronously (Epic 94)
     match executor
-        .execute_workflow(id, req.trigger_event, req.context)
+        .execute_workflow(workflow, req.trigger_event, req.context)
         .await
     {
         Ok(execution_id) => {
@@ -281,92 +323,85 @@ async fn trigger_workflow(
         }
         Err(e) => {
             tracing::error!("Failed to trigger workflow: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", e.to_string())),
-            ))
+            Err(internal_error(e))
         }
     }
 }
 
 async fn list_executions(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<ExecutionQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state.workflow_repo.list_executions(tenant_id, query).await {
+    let tenant_id = rls.tenant_id();
+    let result = state
+        .workflow_repo
+        .list_executions(&mut **rls.conn(), tenant_id, query)
+        .await;
+    rls.release().await;
+    match result {
         Ok(executions) => Ok(Json(serde_json::json!({ "executions": executions }))),
         Err(e) => {
             tracing::error!("Failed to list executions: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
-            ))
+            Err(internal_error("Failed to list"))
         }
     }
 }
 
 async fn get_execution(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let execution = state
         .workflow_repo
-        .find_execution_by_id_for_org(id, org_id)
-        .await
-    {
+        .find_execution_by_id_for_org(&mut **rls.conn(), id, org_id)
+        .await;
+    let result = match execution {
         Ok(Some(execution)) => {
             let steps = state
                 .workflow_repo
-                .list_execution_steps_for_org(id, org_id)
-                .await
-                .map_err(|e| {
+                .list_execution_steps_for_org(rls.conn(), id, org_id)
+                .await;
+            match steps {
+                Ok(steps) => Ok(Json(serde_json::json!({
+                    "execution": execution,
+                    "steps": steps.unwrap_or_default()
+                }))),
+                Err(e) => {
                     tracing::error!("Failed to list steps: {}", e);
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
-                    )
-                })?
-                .unwrap_or_default();
-            Ok(Json(serde_json::json!({
-                "execution": execution,
-                "steps": steps
-            })))
+                    Err(internal_error("Failed to get"))
+                }
+            }
         }
         Ok(None) => Err(not_found("Execution not found")),
         Err(e) => {
             tracing::error!("Failed to get execution: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
-            ))
+            Err(internal_error("Failed to get"))
         }
-    }
+    };
+    rls.release().await;
+    result
 }
 
 async fn list_execution_steps(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let org_id = require_tenant_id(&principal)?;
-    match state
+    let org_id = rls.tenant_id();
+    let result = state
         .workflow_repo
-        .list_execution_steps_for_org(id, org_id)
-        .await
-    {
+        .list_execution_steps_for_org(rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+    match result {
         Ok(Some(steps)) => Ok(Json(serde_json::json!({ "steps": steps }))),
         Ok(None) => Err(not_found("Execution not found")),
         Err(e) => {
             tracing::error!("Failed to list steps: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
-            ))
+            Err(internal_error("Failed to list"))
         }
     }
 }
@@ -389,15 +424,20 @@ pub struct WorkflowEventRequest {
 /// Handle workflow trigger events (Story 94.2).
 async fn handle_workflow_event(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<WorkflowEventRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     use crate::services::{WorkflowEvent, WorkflowExecutor};
 
-    let tenant_id = require_tenant_id(&principal)?;
+    // The RlsConnection validated tenant membership; the executor acquires
+    // its own org-context connections, so release this one immediately.
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    rls.release().await;
 
     // Create the workflow executor
-    let executor = WorkflowExecutor::new(state.workflow_repo.clone());
+    let executor =
+        WorkflowExecutor::new(RlsPool::new(state.db.clone()), state.workflow_repo.clone());
 
     // Create the event
     let mut event = WorkflowEvent::new(&req.event_type, tenant_id, req.data);
@@ -405,7 +445,7 @@ async fn handle_workflow_event(
         event = event.with_building(building_id);
     }
     // Set the user who triggered the event
-    event = event.with_user(principal.user_id);
+    event = event.with_user(user_id);
 
     // Handle the event - this finds matching workflows and executes them
     match executor.handle_event(event).await {
@@ -425,10 +465,7 @@ async fn handle_workflow_event(
         }
         Err(e) => {
             tracing::error!("Failed to handle workflow event: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", e.to_string())),
-            ))
+            Err(internal_error(e))
         }
     }
 }
@@ -572,11 +609,12 @@ async fn get_workflow_template(
 /// Import a workflow template.
 async fn import_workflow_template(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<String>,
     Json(req): Json<ImportTemplateRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
     // Get the template
     let (template, actions) = if id.starts_with("builtin-") {
@@ -617,21 +655,20 @@ async fn import_workflow_template(
         conditions: template.conditions,
     };
 
-    // Create the workflow. Org and creator come from the verified principal.
-    let workflow = state
+    // Create the workflow. Org and creator come from the validated tenant
+    // context.
+    let created = state
         .workflow_repo
-        .create(tenant_id, principal.user_id, create_workflow)
-        .await
-        .map_err(|e| {
+        .create(&mut **rls.conn(), tenant_id, user_id, create_workflow)
+        .await;
+    let workflow = match created {
+        Ok(workflow) => workflow,
+        Err(e) => {
+            rls.release().await;
             tracing::error!("Failed to create workflow from template: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to import template",
-                )),
-            )
-        })?;
+            return Err(internal_error("Failed to import template"));
+        }
+    };
 
     // Add actions
     for action in actions {
@@ -649,7 +686,7 @@ async fn import_workflow_template(
         // construction, so this is the correct org scope.
         if let Err(e) = state
             .workflow_repo
-            .add_action(tenant_id, create_action)
+            .add_action(rls.conn(), tenant_id, create_action)
             .await
         {
             tracing::warn!("Failed to add action to imported workflow: {}", e);
@@ -661,6 +698,7 @@ async fn import_workflow_template(
         let _ = state
             .workflow_repo
             .update(
+                &mut **rls.conn(),
                 workflow.id,
                 tenant_id,
                 UpdateWorkflow {
@@ -674,6 +712,8 @@ async fn import_workflow_template(
             )
             .await;
     }
+
+    rls.release().await;
 
     tracing::info!(
         workflow_id = %workflow.id,

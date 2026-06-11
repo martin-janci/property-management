@@ -105,11 +105,69 @@ object DeepLinkRouter {
         for (pair in query.split('&')) {
             val eq = pair.indexOf('=')
             if (eq <= 0) continue
-            if (pair.substring(0, eq) == key) {
-                val value = pair.substring(eq + 1)
+            // The key itself may be percent-encoded; decode before comparing.
+            if (urlDecode(pair.substring(0, eq)) == key) {
+                val value = urlDecode(pair.substring(eq + 1))
                 return value.ifEmpty { null }
             }
         }
         return null
     }
+
+    /**
+     * Percent-decode a query-component string using `application/x-www-form-urlencoded` semantics:
+     * `+` decodes to a space and each `%XX` triplet decodes to the byte `0xXX`, with the resulting
+     * byte sequence interpreted as UTF-8.
+     *
+     * This mirrors Android's `android.net.Uri.getQueryParameter`, which decodes its result. The
+     * shared router previously returned the raw, still-encoded substring, so the same
+     * `reality://sso` deep link produced a decoded token on Android but an encoded token on the
+     * shared/iOS path — breaking SSO validation on iOS. Decoding here makes every platform agree on
+     * the token string.
+     *
+     * Malformed escapes (a `%` not followed by two hex digits) are passed through literally rather
+     * than throwing, matching the lenient behaviour of platform URI decoders.
+     */
+    private fun urlDecode(value: String): String {
+        // Fast path: nothing to decode.
+        if (value.indexOf('%') < 0 && value.indexOf('+') < 0) return value
+
+        val bytes = ArrayList<Byte>(value.length)
+        var i = 0
+        while (i < value.length) {
+            when (val c = value[i]) {
+                '+' -> {
+                    bytes.add(' '.code.toByte())
+                    i += 1
+                }
+                '%' -> {
+                    val hi = if (i + 1 < value.length) hexDigit(value[i + 1]) else -1
+                    val lo = if (i + 2 < value.length) hexDigit(value[i + 2]) else -1
+                    if (hi >= 0 && lo >= 0) {
+                        bytes.add(((hi shl 4) or lo).toByte())
+                        i += 3
+                    } else {
+                        // Not a valid escape — keep the literal '%'.
+                        bytes.add(c.code.toByte())
+                        i += 1
+                    }
+                }
+                else -> {
+                    // Append the raw UTF-8 bytes of this character.
+                    for (b in c.toString().encodeToByteArray()) bytes.add(b)
+                    i += 1
+                }
+            }
+        }
+        return bytes.toByteArray().decodeToString()
+    }
+
+    /** Return the value 0..15 for a hex digit char, or -1 if [c] is not a hex digit. */
+    private fun hexDigit(c: Char): Int =
+        when (c) {
+            in '0'..'9' -> c - '0'
+            in 'a'..'f' -> c - 'a' + 10
+            in 'A'..'F' -> c - 'A' + 10
+            else -> -1
+        }
 }

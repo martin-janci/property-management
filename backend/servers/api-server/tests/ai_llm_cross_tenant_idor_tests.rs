@@ -112,7 +112,7 @@ async fn find_session_by_id_blocks_cross_tenant_read(pool: PgPool) {
 
     // Same-org read succeeds.
     let same_org = repo
-        .find_session_by_id(session_in_a, org_a)
+        .find_session_by_id(&pool, session_in_a, org_a)
         .await
         .expect("query ok");
     assert!(
@@ -122,7 +122,7 @@ async fn find_session_by_id_blocks_cross_tenant_read(pool: PgPool) {
 
     // Cross-org read returns None (the IDOR is blocked).
     let cross_org = repo
-        .find_session_by_id(session_in_a, org_b)
+        .find_session_by_id(&pool, session_in_a, org_b)
         .await
         .expect("query ok");
     assert!(
@@ -165,6 +165,7 @@ async fn add_feedback_for_org_blocks_cross_tenant_write(pool: PgPool) {
     // the repo returns None and writes nothing.
     let cross = repo
         .add_feedback_for_org(
+            &pool,
             user_b,
             org_b,
             ProvideFeedback {
@@ -195,6 +196,7 @@ async fn add_feedback_for_org_blocks_cross_tenant_write(pool: PgPool) {
     // Same-org feedback (user A in org A) succeeds.
     let same = repo
         .add_feedback_for_org(
+            &pool,
             user_a,
             org_a,
             ProvideFeedback {
@@ -292,7 +294,7 @@ async fn list_listing_descriptions_for_org_blocks_cross_tenant_read(pool: PgPool
 
     // Same-org read returns the row.
     let same_org = repo
-        .list_listing_descriptions_for_org(listing_in_a, org_a)
+        .list_listing_descriptions_for_org(&pool, listing_in_a, org_a)
         .await
         .expect("query ok");
     assert_eq!(
@@ -303,7 +305,7 @@ async fn list_listing_descriptions_for_org_blocks_cross_tenant_read(pool: PgPool
 
     // Cross-org read returns nothing (the IDOR is blocked).
     let cross_org = repo
-        .list_listing_descriptions_for_org(listing_in_a, org_b)
+        .list_listing_descriptions_for_org(&pool, listing_in_a, org_b)
         .await
         .expect("query ok");
     assert!(
@@ -314,7 +316,7 @@ async fn list_listing_descriptions_for_org_blocks_cross_tenant_read(pool: PgPool
     // Demonstrate the leak the org predicate closes: the unscoped lookup the
     // pre-fix handler performed returns the row regardless of org.
     let unscoped = repo
-        .list_listing_descriptions(listing_in_a)
+        .list_listing_descriptions(&pool, listing_in_a)
         .await
         .expect("query ok");
     assert_eq!(

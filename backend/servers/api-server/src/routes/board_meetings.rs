@@ -8,9 +8,27 @@
 //! - Attendance tracking
 //! - Minutes management
 //! - Action items
+//!
+//! # RLS (PAP-137)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on the board-meeting
+//! tables, so every query MUST run on a connection that has
+//! `app.current_org_id` set or it collapses to deny-all. Each handler
+//! therefore acquires an [`RlsConnection`] (which validates tenant membership
+//! and sets the org/user GUCs on a dedicated connection) and passes
+//! `&mut **rls.conn()` to the repository. The authoritative organization is
+//! `rls.tenant_id()` — the tenant the caller was validated against — never a
+//! client-supplied value, so the SQL org filter and the RLS context can never
+//! disagree. By-id repo queries stay keyed on `(id, organization_id)` (child
+//! tables via the root meeting) as defense-in-depth, so a cross-tenant probe
+//! resolves to no row → `404` even on an RLS-exempt pool. Child-table inserts
+//! (`agenda`, `motions`, `votes`, `attendance`, `minutes`, `actions`,
+//! `documents`) validate the root meeting/motion org first.
+//! `rls.release()` clears the context before the connection returns to the
+//! pool.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -45,16 +63,25 @@ fn not_found(resource: &str) -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
-fn require_tenant(tenant_id: Option<Uuid>) -> ApiResult<Uuid> {
-    tenant_id.ok_or_else(|| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "UNAUTHORIZED",
-                "Organization context required",
-            )),
-        )
-    })
+/// Validate that `meeting_id` belongs to the caller's organization.
+///
+/// Root-meeting org check for child-table operations (agenda items, motions,
+/// attendance, minutes, action items, documents). A meeting owned by another
+/// organization surfaces as `404 NOT_FOUND` — indistinguishable from a
+/// missing meeting.
+async fn require_meeting_in_org(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    meeting_id: Uuid,
+) -> ApiResult<()> {
+    let org_id = rls.tenant_id();
+    state
+        .board_meeting_repo
+        .get_meeting(&mut **rls.conn(), meeting_id, org_id)
+        .await
+        .map_err(internal_error)?
+        .ok_or_else(|| not_found("Meeting"))?;
+    Ok(())
 }
 
 /// Create router for board meeting endpoints.
@@ -128,16 +155,17 @@ pub fn router() -> Router<AppState> {
 /// Get board meeting dashboard.
 async fn get_dashboard(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingDashboard>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let dashboard = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_dashboard(org_id)
+        .get_dashboard(rls.conn(), org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(dashboard))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -147,96 +175,114 @@ async fn get_dashboard(
 /// List board members.
 async fn list_board_members(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<BoardMemberQuery>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::BoardMemberSummary>>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let members = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_board_members(org_id, query)
+        .list_board_members(&mut **rls.conn(), org_id, query)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(members))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a board member.
 async fn create_board_member(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Json(input): Json<CreateBoardMember>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMember>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let member = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .board_meeting_repo
-        .create_board_member(org_id, user.user_id, input)
+        .create_board_member(&mut **rls.conn(), org_id, user_id, input)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(member))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Get a board member by ID.
 async fn get_board_member(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMember>> {
-    let member = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_board_member(id)
+        .get_board_member(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?
-        .ok_or_else(|| not_found("Board member"))?;
-
-    Ok(Json(member))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Board member")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Update a board member.
 async fn update_board_member(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateBoardMember>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMember>> {
-    let member = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .update_board_member(id, input)
+        .update_board_member(&mut **rls.conn(), id, org_id, input)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(member))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Board member")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Delete a board member.
 async fn delete_board_member(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .delete_board_member(id)
+        .delete_board_member(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(StatusCode::NO_CONTENT)
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Board member"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 /// Get board member attendance history.
 async fn get_member_attendance(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::AttendanceHistory>> {
-    let history = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_member_attendance_history(id)
+        .get_member_attendance_history(rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?
-        .ok_or_else(|| not_found("Board member"))?;
-
-    Ok(Json(history))
+        .map_err(internal_error)
+        .and_then(|h| h.ok_or_else(|| not_found("Board member")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -246,125 +292,150 @@ async fn get_member_attendance(
 /// List meetings.
 async fn list_meetings(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<MeetingQuery>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingSummary>>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let meetings = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_meetings(org_id, query)
+        .list_meetings(&mut **rls.conn(), org_id, query)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(meetings))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a meeting.
 async fn create_meeting(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Json(input): Json<CreateBoardMeeting>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let meeting = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .board_meeting_repo
-        .create_meeting(org_id, user.user_id, input)
+        .create_meeting(&mut **rls.conn(), org_id, user_id, input)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(meeting))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Get a meeting by ID.
 async fn get_meeting(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingDetail>> {
-    let detail = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_meeting_detail(id)
+        .get_meeting_detail(rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?
-        .ok_or_else(|| not_found("Meeting"))?;
-
-    Ok(Json(detail))
+        .map_err(internal_error)
+        .and_then(|d| d.ok_or_else(|| not_found("Meeting")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Update a meeting.
 async fn update_meeting(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateBoardMeeting>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    let meeting = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .update_meeting(id, input)
+        .update_meeting(&mut **rls.conn(), id, org_id, input)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(meeting))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Meeting")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Delete a meeting.
 async fn delete_meeting(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .delete_meeting(id)
+        .delete_meeting(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(StatusCode::NO_CONTENT)
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Meeting"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 /// Start a meeting.
 async fn start_meeting(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    let meeting = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .start_meeting(id)
+        .start_meeting(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(meeting))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Meeting")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// End a meeting.
 async fn end_meeting(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    let meeting = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .end_meeting(id)
+        .end_meeting(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(meeting))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Meeting")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Cancel a meeting.
 async fn cancel_meeting(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::BoardMeeting>> {
-    let meeting = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .cancel_meeting(id)
+        .cancel_meeting(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(meeting))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Meeting")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -374,65 +445,78 @@ async fn cancel_meeting(
 /// List agenda items for a meeting.
 async fn list_agenda_items(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingAgendaItem>>> {
-    let items = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_agenda_items(meeting_id)
+        .list_agenda_items(&mut **rls.conn(), meeting_id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(items))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Add an agenda item.
 async fn add_agenda_item(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<CreateAgendaItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
     input.meeting_id = meeting_id;
-    let item = state
-        .board_meeting_repo
-        .add_agenda_item(user.user_id, input)
-        .await
-        .map_err(internal_error)?;
-
-    Ok(Json(item))
+    let user_id = rls.user_id();
+    let out = async {
+        require_meeting_in_org(&state, &mut rls, meeting_id).await?;
+        state
+            .board_meeting_repo
+            .add_agenda_item(&mut **rls.conn(), user_id, input)
+            .await
+            .map(Json)
+            .map_err(internal_error)
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 /// Get an agenda item.
 async fn get_agenda_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
-    let item = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_agenda_item(id)
+        .get_agenda_item(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?
-        .ok_or_else(|| not_found("Agenda item"))?;
-
-    Ok(Json(item))
+        .map_err(internal_error)
+        .and_then(|i| i.ok_or_else(|| not_found("Agenda item")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Update an agenda item.
 async fn update_agenda_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateAgendaItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
-    let item = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .update_agenda_item(id, input)
+        .update_agenda_item(&mut **rls.conn(), id, org_id, input)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(item))
+        .map_err(internal_error)
+        .and_then(|i| i.ok_or_else(|| not_found("Agenda item")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Complete an agenda item.
@@ -443,32 +527,43 @@ struct CompleteAgendaItemRequest {
 
 async fn complete_agenda_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<CompleteAgendaItemRequest>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAgendaItem>> {
-    let item = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .complete_agenda_item(id, input.outcome)
+        .complete_agenda_item(&mut **rls.conn(), id, org_id, input.outcome)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(item))
+        .map_err(internal_error)
+        .and_then(|i| i.ok_or_else(|| not_found("Agenda item")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Delete an agenda item.
 async fn delete_agenda_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .delete_agenda_item(id)
+        .delete_agenda_item(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(StatusCode::NO_CONTENT)
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Agenda item"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -478,161 +573,205 @@ async fn delete_agenda_item(
 /// List motions for a meeting.
 async fn list_meeting_motions(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingMotion>>> {
-    let motions = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_meeting_motions(meeting_id)
+        .list_meeting_motions(&mut **rls.conn(), meeting_id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(motions))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// List all motions with filters.
 async fn list_motions(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<MotionQuery>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MotionSummary>>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let motions = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_motions(org_id, query)
+        .list_motions(&mut **rls.conn(), org_id, query)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(motions))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create a motion.
 async fn create_motion(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<CreateMotion>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
     input.meeting_id = meeting_id;
-    let motion = state
-        .board_meeting_repo
-        .create_motion(user.user_id, input)
-        .await
-        .map_err(internal_error)?;
-
-    Ok(Json(motion))
+    let user_id = rls.user_id();
+    let out = async {
+        require_meeting_in_org(&state, &mut rls, meeting_id).await?;
+        state
+            .board_meeting_repo
+            .create_motion(&mut **rls.conn(), user_id, input)
+            .await
+            .map(Json)
+            .map_err(internal_error)
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 /// Get a motion by ID.
 async fn get_motion(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MotionDetail>> {
-    let detail = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_motion_detail(id)
+        .get_motion_detail(rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?
-        .ok_or_else(|| not_found("Motion"))?;
-
-    Ok(Json(detail))
+        .map_err(internal_error)
+        .and_then(|d| d.ok_or_else(|| not_found("Motion")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Update a motion.
 async fn update_motion(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateMotion>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
-    let motion = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .update_motion(id, input)
+        .update_motion(&mut **rls.conn(), id, org_id, input)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(motion))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Motion")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Second a motion.
 async fn second_motion(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
-    let motion = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .board_meeting_repo
-        .second_motion(id, user.user_id)
+        .second_motion(&mut **rls.conn(), id, org_id, user_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(motion))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Motion")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Start voting on a motion.
 async fn start_motion_voting(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
-    let motion = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .start_motion_voting(id)
+        .start_motion_voting(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(motion))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Motion")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// End voting on a motion.
 async fn end_motion_voting(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMotion>> {
-    let motion = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .end_motion_voting(id)
+        .end_motion_voting(rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(motion))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Motion")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Cast a vote on a motion.
 async fn cast_vote(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(motion_id): Path<Uuid>,
     Json(mut input): Json<CastVote>,
 ) -> ApiResult<Json<db::models::board_meetings::MotionVote>> {
     input.motion_id = motion_id;
-    // NOTE: In production, we'd look up the board_member_id from user.user_id
-    // For now, we'll use a placeholder - this should be retrieved from the board_members table
-    let board_member_id = motion_id; // Placeholder - should be actual board member lookup
-    let vote = state
-        .board_meeting_repo
-        .cast_vote(board_member_id, input)
-        .await
-        .map_err(internal_error)?;
-
-    Ok(Json(vote))
+    let org_id = rls.tenant_id();
+    let out = async {
+        // Root-motion org check before writing a vote row.
+        state
+            .board_meeting_repo
+            .get_motion(&mut **rls.conn(), motion_id, org_id)
+            .await
+            .map_err(internal_error)?
+            .ok_or_else(|| not_found("Motion"))?;
+        // NOTE: In production, we'd look up the board_member_id from user.user_id
+        // For now, we'll use a placeholder - this should be retrieved from the board_members table
+        let board_member_id = motion_id; // Placeholder - should be actual board member lookup
+        state
+            .board_meeting_repo
+            .cast_vote(&mut **rls.conn(), board_member_id, input)
+            .await
+            .map(Json)
+            .map_err(internal_error)
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 /// Delete a motion.
 async fn delete_motion(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .delete_motion(id)
+        .delete_motion(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(StatusCode::NO_CONTENT)
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Motion"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -642,39 +781,49 @@ async fn delete_motion(
 /// List attendance for a meeting.
 async fn list_attendance(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingAttendance>>> {
-    let attendance = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_meeting_attendance(meeting_id)
+        .list_meeting_attendance(&mut **rls.conn(), meeting_id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(attendance))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Record attendance.
 async fn record_attendance(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<RecordAttendance>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingAttendance>> {
     input.meeting_id = meeting_id;
-    let attendance = state
-        .board_meeting_repo
-        .record_attendance(user.user_id, input)
-        .await
-        .map_err(internal_error)?;
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = async {
+        require_meeting_in_org(&state, &mut rls, meeting_id).await?;
+        let attendance = state
+            .board_meeting_repo
+            .record_attendance(&mut **rls.conn(), user_id, input)
+            .await
+            .map_err(internal_error)?;
 
-    // Update quorum status
-    let _ = state
-        .board_meeting_repo
-        .update_meeting_quorum(meeting_id)
-        .await;
+        // Update quorum status
+        let _ = state
+            .board_meeting_repo
+            .update_meeting_quorum(rls.conn(), meeting_id, org_id)
+            .await;
 
-    Ok(Json(attendance))
+        Ok(Json(attendance))
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -684,50 +833,61 @@ async fn record_attendance(
 /// Get minutes for a meeting.
 async fn get_minutes(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
-    let minutes = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_meeting_minutes(meeting_id)
+        .get_meeting_minutes(&mut **rls.conn(), meeting_id, org_id)
         .await
-        .map_err(internal_error)?
-        .ok_or_else(|| not_found("Minutes"))?;
-
-    Ok(Json(minutes))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Minutes")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Create minutes.
 async fn create_minutes(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<CreateMinutes>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
     input.meeting_id = meeting_id;
-    let minutes = state
-        .board_meeting_repo
-        .create_minutes(user.user_id, input)
-        .await
-        .map_err(internal_error)?;
-
-    Ok(Json(minutes))
+    let user_id = rls.user_id();
+    let out = async {
+        require_meeting_in_org(&state, &mut rls, meeting_id).await?;
+        state
+            .board_meeting_repo
+            .create_minutes(&mut **rls.conn(), user_id, input)
+            .await
+            .map(Json)
+            .map_err(internal_error)
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 /// Update minutes.
 async fn update_minutes(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateMinutes>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
-    let minutes = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .update_minutes(id, input)
+        .update_minutes(&mut **rls.conn(), id, org_id, input)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(minutes))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Minutes")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Approve minutes.
@@ -738,17 +898,27 @@ struct ApproveMinutesRequest {
 
 async fn approve_minutes(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<ApproveMinutesRequest>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingMinutes>> {
-    let minutes = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .board_meeting_repo
-        .approve_minutes(id, user.user_id, input.approval_motion_id)
+        .approve_minutes(
+            &mut **rls.conn(),
+            id,
+            org_id,
+            user_id,
+            input.approval_motion_id,
+        )
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(minutes))
+        .map_err(internal_error)
+        .and_then(|m| m.ok_or_else(|| not_found("Minutes")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -758,81 +928,95 @@ async fn approve_minutes(
 /// List action items for a meeting.
 async fn list_meeting_action_items(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingActionItem>>> {
-    let items = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_meeting_action_items(meeting_id)
+        .list_meeting_action_items(&mut **rls.conn(), meeting_id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(items))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// List all action items with filters.
 async fn list_action_items(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ActionItemQuery>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::ActionItemSummary>>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let items = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_action_items(org_id, query)
+        .list_action_items(&mut **rls.conn(), org_id, query)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(items))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Create an action item.
 async fn create_action_item(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<CreateActionItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
     input.meeting_id = meeting_id;
-    let item = state
-        .board_meeting_repo
-        .create_action_item(user.user_id, input)
-        .await
-        .map_err(internal_error)?;
-
-    Ok(Json(item))
+    let user_id = rls.user_id();
+    let out = async {
+        require_meeting_in_org(&state, &mut rls, meeting_id).await?;
+        state
+            .board_meeting_repo
+            .create_action_item(&mut **rls.conn(), user_id, input)
+            .await
+            .map(Json)
+            .map_err(internal_error)
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 /// Get an action item.
 async fn get_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
-    let item = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_action_item(id)
+        .get_action_item(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?
-        .ok_or_else(|| not_found("Action item"))?;
-
-    Ok(Json(item))
+        .map_err(internal_error)
+        .and_then(|i| i.ok_or_else(|| not_found("Action item")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Update an action item.
 async fn update_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateActionItem>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
-    let item = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .update_action_item(id, input)
+        .update_action_item(&mut **rls.conn(), id, org_id, input)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(item))
+        .map_err(internal_error)
+        .and_then(|i| i.ok_or_else(|| not_found("Action item")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Complete an action item.
@@ -843,32 +1027,43 @@ struct CompleteActionItemRequest {
 
 async fn complete_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(input): Json<CompleteActionItemRequest>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingActionItem>> {
-    let item = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .complete_action_item(id, input.completion_notes)
+        .complete_action_item(&mut **rls.conn(), id, org_id, input.completion_notes)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(item))
+        .map_err(internal_error)
+        .and_then(|i| i.ok_or_else(|| not_found("Action item")))
+        .map(Json);
+    rls.release().await;
+    out
 }
 
 /// Delete an action item.
 async fn delete_action_item(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .delete_action_item(id)
+        .delete_action_item(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(StatusCode::NO_CONTENT)
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Action item"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -878,48 +1073,64 @@ async fn delete_action_item(
 /// List documents for a meeting.
 async fn list_documents(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingDocument>>> {
-    let docs = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .list_meeting_documents(meeting_id)
+        .list_meeting_documents(&mut **rls.conn(), meeting_id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(docs))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Upload a document.
 async fn upload_document(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(meeting_id): Path<Uuid>,
     Json(mut input): Json<UploadMeetingDocument>,
 ) -> ApiResult<Json<db::models::board_meetings::MeetingDocument>> {
     input.meeting_id = meeting_id;
-    let doc = state
-        .board_meeting_repo
-        .upload_document(user.user_id, input)
-        .await
-        .map_err(internal_error)?;
-
-    Ok(Json(doc))
+    let user_id = rls.user_id();
+    let out = async {
+        require_meeting_in_org(&state, &mut rls, meeting_id).await?;
+        state
+            .board_meeting_repo
+            .upload_document(&mut **rls.conn(), user_id, input)
+            .await
+            .map(Json)
+            .map_err(internal_error)
+    }
+    .await;
+    rls.release().await;
+    out
 }
 
 /// Delete a document.
 async fn delete_document(
     State(state): State<AppState>,
-    _user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .delete_document(id)
+        .delete_document(&mut **rls.conn(), id, org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(StatusCode::NO_CONTENT)
+        .map_err(internal_error)
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Document"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -929,29 +1140,31 @@ async fn delete_document(
 /// Get meeting type counts.
 async fn get_meeting_type_counts(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MeetingTypeCount>>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let counts = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_meeting_type_counts(org_id)
+        .get_meeting_type_counts(&mut **rls.conn(), org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(counts))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }
 
 /// Get motion status counts.
 async fn get_motion_status_counts(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
 ) -> ApiResult<Json<Vec<db::models::board_meetings::MotionStatusCount>>> {
-    let org_id = require_tenant(user.tenant_id)?;
-    let counts = state
+    let org_id = rls.tenant_id();
+    let out = state
         .board_meeting_repo
-        .get_motion_status_counts(org_id)
+        .get_motion_status_counts(&mut **rls.conn(), org_id)
         .await
-        .map_err(internal_error)?;
-
-    Ok(Json(counts))
+        .map(Json)
+        .map_err(internal_error);
+    rls.release().await;
+    out
 }

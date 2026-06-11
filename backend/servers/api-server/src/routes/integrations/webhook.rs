@@ -2,18 +2,36 @@
 //!
 //! Covers two concerns:
 //! 1. **Outbound webhook management** — CRUD for webhook subscriptions,
-//!    test delivery, and delivery logs (Story 61.5).
+//!    test delivery, and delivery logs (Story 61.5). UNMOUNTED (PAP-122):
+//!    the backing schema exists in no migration; see `router()` for the
+//!    remount conditions. The live subscription surface is the
+//!    enhanced-webhook CRUD in `routes/api_ecosystem.rs`.
 //! 2. **Inbound webhook receivers** — endpoints that external systems POST to:
-//!    - E-signature providers (DocuSign, Adobe Sign, HelloSign)
+//!    - E-signature providers (DocuSign, Adobe Sign, HelloSign) — UNMOUNTED
+//!      (PAP-122), writes the migration-less `esignature_workflows` table
 //!    - Booking.com OTA push notifications
 //!    - Portal/listing-site webhooks (public, no auth)
+//!
+//! # RLS routing (PAP-105 / PAP-80)
+//!
+//! `webhook_subscriptions` runs under `FORCE ROW LEVEL SECURITY` (migration
+//! `00179`), so every outbound-subscription handler acquires an
+//! [`RlsConnection`] and runs its queries on that context-set connection; the
+//! `{org_id}` path segment must equal `rls.tenant_id()` so the SQL org filter
+//! and the policy can never disagree, and by-id reads of another tenant's
+//! subscription resolve to `None` → `404` via RLS. The inbound receivers have
+//! no request principal: the e-signature receiver writes the non-FORCE
+//! `esignature_workflows` table on the pool (scoped by the provider-signed
+//! envelope id), and must NEVER touch `webhook_subscriptions` that way.
+//! Every authenticated path calls `rls.release().await` before returning.
 
+use api_core::extractors::RlsConnection;
 use axum::{
     body::{Body, Bytes},
     extract::{Path, State},
     http::{header, HeaderMap, StatusCode},
     response::Response,
-    routing::{get, post},
+    routing::post,
     Json, Router,
 };
 use db::models::{
@@ -22,6 +40,7 @@ use db::models::{
     CreateWebhookSubscription, TestWebhookRequest, TestWebhookResponse, UpdateWebhookSubscription,
     WebhookDeliveryLog, WebhookDeliveryQuery, WebhookStatistics, WebhookSubscription,
 };
+use db::RlsPool;
 use hmac::{Hmac, KeyInit, Mac};
 use integrations::booking::ota_xml;
 use integrations::{AirbnbClient, AirbnbWebhookEventType};
@@ -59,29 +78,20 @@ struct ESignatureWebhookPayload {
 /// Create webhook-surface router.
 pub fn router() -> Router<AppState> {
     Router::new()
-        // Outbound webhook subscriptions (Story 61.5)
-        .route(
-            "/organizations/{org_id}/webhooks",
-            get(list_webhook_subscriptions),
-        )
-        .route(
-            "/organizations/{org_id}/webhooks",
-            post(create_webhook_subscription),
-        )
-        .route("/webhooks/{id}", get(get_webhook_subscription))
-        .route(
-            "/webhooks/{id}",
-            axum::routing::put(update_webhook_subscription),
-        )
-        .route(
-            "/webhooks/{id}",
-            axum::routing::delete(delete_webhook_subscription),
-        )
-        .route("/webhooks/{id}/test", post(test_webhook))
-        .route("/webhooks/{id}/logs", get(list_webhook_logs))
-        .route("/webhooks/{id}/stats", get(get_webhook_stats))
-        // Inbound webhook receivers
-        .route("/esignatures/webhook", post(esignature_webhook))
+        // ROADMAP(PAP-122): outbound webhook-subscription CRUD (Story 61.5)
+        // unmounted — the `IntegrationRepository` SQL behind it expects
+        // `status` / `retry_policy` columns and a `webhook_delivery_logs`
+        // table that exist in no migration, and it duplicates the live,
+        // schema-aligned enhanced-webhook surface in `routes/api_ecosystem.rs`
+        // (which is what `/organizations/{org_id}/webhooks` should keep
+        // serving). Remount only after the Epic-61 migrations land AND the
+        // two surfaces are reconciled onto one column convention.
+        //
+        // ROADMAP(PAP-122): the e-signature inbound receiver is unmounted with
+        // the rest of the e-signature surface — its handler writes
+        // `esignature_workflows`, which exists in no migration.
+        //
+        // Inbound webhook receivers (live)
         .route("/booking/push", post(booking_push_notification))
         .route(
             "/webhooks/portal/{connection_id}",
@@ -109,25 +119,40 @@ pub fn router() -> Router<AppState> {
 )]
 pub async fn list_webhook_subscriptions(
     State(state): State<AppState>,
-    auth: api_core::AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<WebhookSubscription>>, (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // PAP-105 (PAP-80): webhook_subscriptions is FORCE-RLS, so the path org
+    // must be the org the RLS context is bound to — a mismatching path org
+    // would silently read as empty. Membership in the tenant is validated by
+    // the extractor.
+    if path.org_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
 
-    let subscriptions = state
+    let result = state
         .integration_repo
-        .list_webhook_subscriptions(path.org_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list webhook subscriptions");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to list webhook subscriptions",
-                )),
-            )
-        })?;
+        .list_webhook_subscriptions(&mut **rls.conn(), path.org_id)
+        .await;
+    rls.release().await;
+
+    let subscriptions = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list webhook subscriptions");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to list webhook subscriptions",
+            )),
+        )
+    })?;
 
     Ok(Json(subscriptions))
 }
@@ -148,30 +173,46 @@ pub async fn list_webhook_subscriptions(
 )]
 pub async fn create_webhook_subscription(
     State(state): State<AppState>,
-    auth: api_core::AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Json(data): Json<CreateWebhookSubscription>,
 ) -> Result<(StatusCode, Json<WebhookSubscription>), (StatusCode, Json<ErrorResponse>)> {
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // PAP-105 (PAP-80): webhook_subscriptions is FORCE-RLS — the INSERT's
+    // org must be the org the RLS context is bound to or the policy
+    // WITH CHECK rejects the write. Membership in the tenant is validated by
+    // the extractor.
+    if path.org_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
+    let user_id = rls.user_id();
 
     let is_production = std::env::var("RUST_ENV")
         .map(|v| v == "production")
         .unwrap_or(false);
 
-    let subscription = state
+    let result = state
         .integration_repo
-        .create_webhook_subscription(path.org_id, auth.user_id, data, is_production)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create webhook subscription");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create webhook subscription",
-                )),
-            )
-        })?;
+        .create_webhook_subscription(&mut **rls.conn(), path.org_id, user_id, data, is_production)
+        .await;
+    rls.release().await;
+
+    let subscription = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to create webhook subscription");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to create webhook subscription",
+            )),
+        )
+    })?;
 
     Ok((StatusCode::CREATED, Json(subscription)))
 }
@@ -193,27 +234,33 @@ pub async fn create_webhook_subscription(
 )]
 pub async fn get_webhook_subscription(
     State(state): State<AppState>,
-    auth: api_core::AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<WebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    let subscription = state
+    // FORCE-RLS scopes the by-id read: another tenant's subscription resolves
+    // to None → 404, indistinguishable from a missing one.
+    let result = state
         .integration_repo
-        .get_webhook_subscription(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get webhook subscription");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get webhook subscription",
-                )),
-            )
-        })?;
+        .get_webhook_subscription(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let subscription = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get webhook subscription");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get webhook subscription",
+            )),
+        )
+    })?;
 
     match subscription {
         Some(s) => {
-            verify_org_access(&state, auth.user_id, s.organization_id).await?;
+            // Defense-in-depth: RLS already guarantees the row is the
+            // caller's org, but keep the explicit membership check.
+            verify_org_access(&state, rls.user_id(), s.organization_id).await?;
             Ok(Json(s))
         }
         None => Err((
@@ -244,51 +291,63 @@ pub async fn get_webhook_subscription(
 )]
 pub async fn update_webhook_subscription(
     State(state): State<AppState>,
-    auth: api_core::AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
     Json(data): Json<UpdateWebhookSubscription>,
 ) -> Result<Json<WebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    let existing = state
+    // FORCE-RLS scopes the by-id read: another tenant's subscription resolves
+    // to None → 404 before any write is attempted.
+    let existing = match state
         .integration_repo
-        .get_webhook_subscription(path.id)
+        .get_webhook_subscription(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get webhook subscription");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(s)) => s,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new(
                     "NOT_FOUND",
                     "Webhook subscription not found",
                 )),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            tracing::error!(error = %e, "Failed to get webhook subscription");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            ));
+        }
+    };
 
-    verify_org_access(&state, auth.user_id, existing.organization_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), existing.organization_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
     let is_production = std::env::var("RUST_ENV")
         .map(|v| v == "production")
         .unwrap_or(false);
 
-    let subscription = state
+    let result = state
         .integration_repo
-        .update_webhook_subscription(path.id, data, is_production)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to update webhook subscription");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to update webhook subscription",
-                )),
-            )
-        })?;
+        .update_webhook_subscription(&mut **rls.conn(), path.id, data, is_production)
+        .await;
+    rls.release().await;
+
+    let subscription = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to update webhook subscription");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to update webhook subscription",
+            )),
+        )
+    })?;
 
     Ok(Json(subscription))
 }
@@ -310,46 +369,58 @@ pub async fn update_webhook_subscription(
 )]
 pub async fn delete_webhook_subscription(
     State(state): State<AppState>,
-    auth: api_core::AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let existing = state
+    // FORCE-RLS scopes the by-id read: another tenant's subscription resolves
+    // to None → 404 before any delete is attempted.
+    let existing = match state
         .integration_repo
-        .get_webhook_subscription(path.id)
+        .get_webhook_subscription(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get webhook subscription");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(s)) => s,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new(
                     "NOT_FOUND",
                     "Webhook subscription not found",
                 )),
-            )
-        })?;
-
-    verify_org_access(&state, auth.user_id, existing.organization_id).await?;
-
-    let deleted = state
-        .integration_repo
-        .delete_webhook_subscription(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to delete webhook subscription");
-            (
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            tracing::error!(error = %e, "Failed to get webhook subscription");
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to delete webhook subscription",
-                )),
-            )
-        })?;
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            ));
+        }
+    };
+
+    if let Err(e) = verify_org_access(&state, rls.user_id(), existing.organization_id).await {
+        rls.release().await;
+        return Err(e);
+    }
+
+    let result = state
+        .integration_repo
+        .delete_webhook_subscription(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let deleted = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to delete webhook subscription");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to delete webhook subscription",
+            )),
+        )
+    })?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -380,24 +451,30 @@ pub async fn delete_webhook_subscription(
 )]
 pub async fn test_webhook(
     State(state): State<AppState>,
-    auth: api_core::AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
     Json(data): Json<TestWebhookRequest>,
 ) -> Result<Json<TestWebhookResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let subscription = state
+    // FORCE-RLS scopes the by-id read: another tenant's subscription resolves
+    // to None → 404. PAP-105 (PAP-80): release the RLS connection right after
+    // the lookup so the (up to 30s) outbound test POST below does not pin a
+    // pool connection.
+    let result = state
         .integration_repo
-        .get_webhook_subscription(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get webhook subscription");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get webhook subscription",
-                )),
-            )
-        })?;
+        .get_webhook_subscription(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let subscription = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get webhook subscription");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get webhook subscription",
+            )),
+        )
+    })?;
 
     let subscription = match subscription {
         Some(s) => s,
@@ -412,7 +489,7 @@ pub async fn test_webhook(
         }
     };
 
-    verify_org_access(&state, auth.user_id, subscription.organization_id).await?;
+    verify_org_access(&state, rls.user_id(), subscription.organization_id).await?;
 
     let test_payload = data.payload.unwrap_or_else(|| {
         serde_json::json!({
@@ -573,30 +650,36 @@ pub async fn test_webhook(
 )]
 pub async fn list_webhook_logs(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<Vec<WebhookDeliveryLog>>, (StatusCode, Json<ErrorResponse>)> {
-    let logs = state
+    let result = state
         .integration_repo
-        .list_webhook_delivery_logs(WebhookDeliveryQuery {
-            subscription_id: Some(path.id),
-            event_type: None,
-            status: None,
-            from_date: None,
-            to_date: None,
-            limit: Some(100),
-            offset: None,
-        })
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list webhook logs");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to list webhook logs",
-                )),
-            )
-        })?;
+        .list_webhook_delivery_logs(
+            &mut **rls.conn(),
+            WebhookDeliveryQuery {
+                subscription_id: Some(path.id),
+                event_type: None,
+                status: None,
+                from_date: None,
+                to_date: None,
+                limit: Some(100),
+                offset: None,
+            },
+        )
+        .await;
+    rls.release().await;
+
+    let logs = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list webhook logs");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to list webhook logs",
+            )),
+        )
+    })?;
 
     Ok(Json(logs))
 }
@@ -615,22 +698,25 @@ pub async fn list_webhook_logs(
 )]
 pub async fn get_webhook_stats(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<WebhookStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    let stats = state
+    let result = state
         .integration_repo
-        .get_webhook_statistics(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get webhook statistics");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get webhook statistics",
-                )),
-            )
-        })?;
+        .get_webhook_statistics(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let stats = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get webhook statistics");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get webhook statistics",
+            )),
+        )
+    })?;
 
     Ok(Json(stats))
 }
@@ -807,15 +893,71 @@ pub async fn esignature_webhook(
         };
 
         if let Some(status) = new_status {
-            if let Err(e) = state
-                .integration_repo
-                .update_esignature_workflow_by_external_id(envelope_id, status)
-                .await
-            {
+            // PAP-170 (PAP-150 P5): inbound provider webhook — no request
+            // principal. Resolve the owning org from the provider-signed
+            // envelope id, then apply the status update under that tenant's RLS
+            // context (defense in depth — the write is confined to the resolved
+            // org instead of running on the raw pool).
+            let rls_pool = RlsPool::new(state.db.clone());
+
+            // Bootstrap read on a context-cleared connection: esignature_workflows
+            // is keyed by the unguessable, provider-signed envelope id.
+            let workflow = match rls_pool.acquire_public().await {
+                Ok(mut lookup) => state
+                    .integration_repo
+                    .find_esignature_workflow_by_external_id(&mut **lookup.conn(), envelope_id)
+                    .await
+                    .unwrap_or_else(|e| {
+                        tracing::warn!(
+                            error = %e,
+                            envelope_id = %envelope_id,
+                            "Failed to resolve workflow org from webhook envelope id"
+                        );
+                        None
+                    }),
+                Err(e) => {
+                    tracing::warn!(
+                        error = %e,
+                        "Failed to acquire connection for e-signature webhook"
+                    );
+                    None
+                }
+            };
+
+            if let Some(wf) = workflow {
+                match rls_pool
+                    .acquire_with_rls(wf.organization_id, wf.created_by, false)
+                    .await
+                {
+                    Ok(mut guard) => {
+                        if let Err(e) = state
+                            .integration_repo
+                            .update_esignature_workflow_by_external_id(
+                                &mut **guard.conn(),
+                                envelope_id,
+                                status,
+                            )
+                            .await
+                        {
+                            tracing::warn!(
+                                error = %e,
+                                envelope_id = %envelope_id,
+                                "Failed to update workflow status from webhook"
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            error = %e,
+                            envelope_id = %envelope_id,
+                            "Failed to bind RLS context for e-signature webhook update"
+                        );
+                    }
+                }
+            } else {
                 tracing::warn!(
-                    error = %e,
                     envelope_id = %envelope_id,
-                    "Failed to update workflow status from webhook"
+                    "E-signature webhook: no workflow matches envelope id, ignoring"
                 );
             }
         }
@@ -1046,17 +1188,16 @@ pub async fn handle_airbnb_webhook(
     // event_id-absent path that could still double-enqueue SYNC_EXTERNAL.
     let dedup_key = airbnb_dedup_key(&event);
     let event_type_label = format!("{:?}", event.event_type);
-    let insert = sqlx::query(
-        "INSERT INTO airbnb_webhook_events (event_id, event_type) \
-         VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING",
-    )
-    .bind(&dedup_key)
-    .bind(&event_type_label)
-    .execute(&state.db)
-    .await;
+    // PAP-170 (PAP-150): the dedup-ledger insert now lives in the repository
+    // layer (`airbnb_webhook_events` is a global, tenant-less table) instead of
+    // a raw `state.db` pool access here. `Ok(false)` ⇒ already seen ⇒ suppress.
+    let recorded = state
+        .rental_repo
+        .record_airbnb_webhook_event(&dedup_key, &event_type_label)
+        .await;
 
-    match insert {
-        Ok(result) if result.rows_affected() == 0 => {
+    match recorded {
+        Ok(false) => {
             tracing::info!(
                 dedup_key = %dedup_key,
                 event_type = %event_type_label,
@@ -1064,7 +1205,7 @@ pub async fn handle_airbnb_webhook(
             );
             return Ok(StatusCode::OK);
         }
-        Ok(_) => {
+        Ok(true) => {
             tracing::debug!(
                 dedup_key = %dedup_key,
                 event_type = %event_type_label,

@@ -1359,108 +1359,25 @@ is unbounded by phase contract; the cost ceiling is the count of pending
 
 For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.headRefOid != row.last_reviewed_oid`):
 
+**Spawn the reviewer subagent** with the verbatim prompt at
+`.research/management/pr-reviewer-prompt.md`. Do NOT inline the rubric here —
+pass the Task subagent the runtime values for this row, then a one-line
+instruction to read that file and follow it exactly, e.g.:
+
 > You are a code reviewer for PR #<n>. Task: `<task_id>: <action>`. Specialist:
 > `<sp>`. Owner: `<role>`. The implementer flagged: `scope_drift=<bool>`,
-> `code_reuse_warn=<short|none>`.
->
-> 0. **Dedup guard (NEW — issue #3: prevents duplicate bot reviews when two
->    dispatcher runs overlap before the Phase 1 skip-gate kicks in).** Before
->    posting anything, check existing reviews on this PR:
->
->    ```bash
->    HEAD_OID=$(gh pr view <n> --repo martin-janci/property-management --json headRefOid --jq .headRefOid)
->    EXISTING=$(gh api repos/martin-janci/property-management/pulls/<n>/reviews \
->      --jq '[.[] | select(.user.type=="Bot" or (.user.login|test("^claude|^github-actions"))) | {sha:.commit_id, state, at:.submitted_at}] | sort_by(.at) | last')
->    EX_SHA=$(echo "$EXISTING" | jq -r '.sha // empty')
->    EX_STATE=$(echo "$EXISTING" | jq -r '.state // empty')
->    EX_AT=$(echo "$EXISTING" | jq -r '.at // empty')
->    ```
->
->    If `$EX_SHA == $HEAD_OID` AND `$EX_STATE` in `{APPROVED, CHANGES_REQUESTED}`
->    AND `(now - $EX_AT) < 2h`: a bot review for this exact SHA already exists.
->    SKIP posting a new review. Map state → verdict (`APPROVED→approve`,
->    `CHANGES_REQUESTED→changes`) and return:
->    `verdict=<v> head_oid=$HEAD_OID note=dedup-existing-review-at-$EX_AT`.
->
-> 1. **Smart-triage metadata pull (issue #9 — token spending).** Do NOT
->    `gh pr diff <n>` blind — for big PRs that's 50-100k tokens of unfiltered
->    text into your context, most of it lockfile / generated-client noise.
->    Pull metadata first:
->
->    ```bash
->    gh pr view <n> --repo martin-janci/property-management \
->      --json title,body,checks,headRefOid,files \
->      --jq '{title, body, headRefOid,
->             checks: [.checks[] | {name, conclusion}],
->             files: [.files[] | {path, additions, deletions}]
->                    | sort_by(-(.additions + .deletions))}'
->    ```
->
->    You now have: title/body, CI status, and every changed file ranked by
->    LOC. **Total cost: a few hundred tokens** regardless of PR size.
->
-> 1.5. **Triage which files actually need a full diff.** Apply these rules
->      in order and build the path-include / path-exclude lists:
->
->    | Path pattern | Decision |
->    |---|---|
->    | `**/*auth*`, `**/*security*`, `**/middleware/*`, `**/jwt*`, `**/rbac*`, `**/rls*` | **MUST full-diff** (hot path) |
->    | `backend/crates/db/migrations/**` | **MUST full-diff** + check for `DROP`, `NOT NULL`, `DEFAULT` clauses |
->    | `**/Cargo.lock`, `**/pnpm-lock.yaml`, `frontend/packages/api-client/src/**` (generated) | **SKIP** — note in body, do not diff |
->    | Files with `additions + deletions > 800` LOC | **Header + tail only**: `gh pr diff <n> -- <path> \| head -200; echo '...'; gh pr diff <n> -- <path> \| tail -100` |
->    | Test files (`**/tests/**`, `**/*_test.rs`, `**/*.test.ts`) | **Skim**: read assertions but don't deeply audit fixtures |
->    | Everything else | Full diff per file via `gh pr diff <n> -- <path>` |
->
->    Heuristic limit: target ≤ 25k tokens of diff content into your context
->    across all `gh pr diff` calls combined. If the budget is blown by hot-path
->    files alone, that's fine — security review needs the bytes. But never
->    spend the budget on lockfile diffs or generated clients.
->
-> 2. After triage, run the targeted diff calls. Example for a typical PR:
->    ```bash
->    # Hot-path mandatory:
->    gh pr diff <n> -- 'backend/**/auth*' 'backend/**/security*' 'backend/**/middleware/*'
->    # Migration check:
->    gh pr diff <n> -- 'backend/crates/db/migrations/*'
->    # Normal-LOC files (under 800 each):
->    gh pr diff <n> -- 'backend/servers/api-server/src/routes/documents/*' \
->                    -- ':!**/generated/**'
->    # Big file headers only:
->    gh pr diff <n> -- 'backend/servers/api-server/src/routes/admin/big.rs' | head -200
->    ```
->
->    For tiny PRs (`additions + deletions < 500` total), skip the triage
->    overhead — the full `gh pr diff <n>` is cheap and clearer. Triage pays
->    off above ~1k LOC of changes.
->
-> 3. Review against `.claude/skills/ppt-implement/agents/<sp>.md` conventions,
->    security (RLS for db-migration, auth for pm-security), regressions, tests,
->    verify bands (Tested/Built/CI parity).
-> 4. **If `scope_drift=true`**: explicitly judge whether the off-area changes
->    are necessary, and if not, demand a revert in the changes verdict.
-> 5. **If `code_reuse_warn != none`**: explicitly judge whether the new code
->    duplicates an existing helper named in the warning, and if so, demand
->    delegation in the changes verdict.
-> 6. **JSON-key-case sanity check (NEW — item #5)**: if the triage in step 1.5
->    found any Rust test paths in the changeset, run the check on **just those
->    paths** (issue #9 — don't reload the full diff):
->
->    ```bash
->    # Find DTOs the tests touch that carry rename_all = camelCase
->    rg -n '#\[serde\(rename_all\s*=\s*"camelCase"\)\]' backend/ --type rust | head -20
->    # Path-filtered diff for snake_case JSON accessors in test files only
->    gh pr diff <n> -- 'backend/**/tests/**' 'backend/**/*_test.rs' \
->      | rg -n '^\+.*json\[\s*"[a-z]+_[a-z_]+"\s*\]' | head -20
->    ```
->
->    Skip the check entirely if no Rust test paths are in the changeset.
->    If both produce hits AND they refer to the same DTO type, demand a fix
->    in the changes verdict (this is the bug class that bit PR #473 on 2026-05-24).
-> 7. `gh pr review <n> --approve --body '<summary>'` OR
->    `gh pr review <n> --request-changes --body '<bullet list>'`.
->
-> Return EXACTLY (one line):
-> `verdict=<approve|changes> head_oid=<PR.headRefOid> note=<short>`
+> `code_reuse_warn=<short|none>`. Read `.research/management/pr-reviewer-prompt.md`
+> and follow it exactly — it is your complete instruction set (dedup guard,
+> smart-triage, hot-path rules, JSON-key-case check (item #5), verdict steps).
+> Substitute the runtime values
+> above wherever the file references `<n>` / `<task_id>` / `<action>` / `<sp>` /
+> `<role>` / `scope_drift` / `code_reuse_warn`. Return ONLY the single
+> `verdict=<approve|changes> head_oid=<PR.headRefOid> note=<short>` line it specifies.
+
+The subagent reads its ~100-line triage rubric/schema in its own context, so
+those lines never load into the dispatcher run. Keep the spawn config above,
+the capture/invariant logic, and the human-gate sweep below inline — they are
+dispatcher-side.
 
 Capture → `reviewer_summary`, **`last_reviewed_oid = head_oid` (item #10 — MANDATORY)**,
 `last_updated = now`. STATUS UNCHANGED.
@@ -1568,28 +1485,13 @@ to Phase 5.5's normal classification.
 **Action.** Spawn ONE Task subagent per qualifying row (cap 2 parallel,
 same as Phase 5.6's rebaser cap — both serialize on `dev` base):
 
-> You are a pre-merge mechanical autofixer for PR #<n>.
->
-> 0. **Workspace isolation (MANDATORY — issue #7).** Run the standard
->    worktree preamble: `TASK_ID=premerge-<n>`, `BRANCH=<row.branch>`.
->    NEVER `gh pr checkout` in the dispatcher's working tree.
-> 1. Invoke `.claude/skills/ppt-pr-merge/SKILL.md` Step 2 (conflict
->    auto-resolution) directly — that's the existing function that
->    rebases against `dev` and regenerates SQLx / Cargo.lock /
->    generated clients. Do NOT call `gh pr merge` from inside the skill
->    yet (Phase 5.5 owns the merge).
-> 2. `git push --force-with-lease origin <branch>`.
-> 3. Re-trigger CI explicitly so we observe the new head's result
->    before Phase 5.5 sees the row:
->    `gh workflow run <workflow-on-the-pr> --ref <branch>` (best-effort).
-> 4. Return EXACTLY:
->    `premerge=<applied|skipped|failed> pr=<n> note=<short>`.
->
-> Failure mode: if the rebase produces any real (non-mechanical) conflict
-> after starting, `git rebase --abort` and return
-> `premerge=failed note=conflict-in:<paths>`. Phase 5.5's normal flow
-> will see `mergeable=CONFLICTING` next run and route to Phase 5.6 as
-> usual — no double-handling.
+> You are a pre-merge mechanical autofixer for PR #<n>, branch `<branch>`.
+> Read `.research/management/premerge-autofix-prompt.md` and follow it exactly
+> — it is your complete instruction set (worktree preamble, ppt-pr-merge Step 2
+> conflict auto-resolution, force-push, CI re-trigger). Substitute the runtime
+> values above wherever the file references `<n>` / `<branch>` /
+> `<workflow-on-the-pr>`. Return ONLY the single
+> `premerge=<applied|skipped|failed> pr=<n> note=<short>` line it specifies.
 
 **Bookkeeping.** Each `premerge=applied` bumps `rebase_attempts += 1`
 (single-owner rule — dispatcher does the write; subagent only returns).
@@ -1691,26 +1593,13 @@ For each row `status == "review"` where:
 Spawn ONE Task subagent (cap 1 parallel — rebases serialize on the same base):
 
 > You are a PR rebaser for a stale approved PR. Inputs: `pr_number=<n>`,
-> `branch=<head_ref>`, `base=dev`. Do this exactly:
->
-> 0. **Workspace isolation (MANDATORY — issue #7).** Run the standard
->    worktree preamble from the "Subagent workspace isolation" section
->    above (export `TASK_ID=pr-<n>`, `BRANCH=<head_ref>`). All subsequent
->    git operations run inside `/tmp/ppt-worktrees/pr-<n>/`. NEVER
->    `gh pr checkout` in the dispatcher's working tree — it displaces
->    `dev` and breaks Phase 6 of this run.
-> 1. `gh pr checkout <n> --repo martin-janci/property-management`
-> 2. `git fetch origin dev`
-> 3. `git rebase origin/dev`
->    - If conflicts ONLY in mechanical paths (sqlx, Cargo.lock, generated
->      openapi/api-client, pnpm-lock.yaml, VERSION) → resolve per
->      `ppt-pr-merge` Step 2 table, `git rebase --continue`.
->    - Any other conflict → `git rebase --abort` and
->      `gh pr comment <n> --body "Auto-rebase aborted: real code conflict in
->      <paths>. Manual rebase required."`, return
->      `rebased=false note=conflict-in:<paths>`.
-> 4. `git push --force-with-lease origin <branch>`
-> 5. Return EXACTLY: `rebased=<true|false> pr=<n> note=<short>`
+> `branch=<head_ref>`, `base=dev`. Read `.research/management/rebaser-prompt.md`
+> and follow it exactly — it is your complete instruction set (worktree
+> preamble, checkout, `git rebase origin/dev`, mechanical-only conflict
+> resolution per ppt-pr-merge Step 2, force-push-with-lease). Substitute the
+> runtime values above wherever the file references `<n>` / `<head_ref>` /
+> `<branch>`. Return ONLY the single `rebased=<true|false> pr=<n> note=<short>`
+> line it specifies. Do NOT touch `rebase_attempts` — the dispatcher owns it.
 
 Capture line. Bump `last_updated = now`.
 
@@ -1772,29 +1661,13 @@ starts with `"verdict=changes"` AND `fix_rounds < 3`:
 
 Spawn ONE Task subagent (cap `DISPATCHER_CLAIM_CAP` parallel, default 6 — same as Phase 4's implementer cap):
 
-> You are the PR follow-up driver. Invoke
-> `.claude/skills/ppt-pr-followup/SKILL.md` in dispatcher mode for PR #<n>.
->
-> 0. **Workspace isolation (MANDATORY — issue #7).** When step 2 below
->    spawns the original specialist via Task, the brief you pass that
->    specialist MUST include the standard worktree preamble from the
->    "Subagent workspace isolation" section above (export
->    `TASK_ID=<task_id>`, `BRANCH=<row.branch>`). The followup script
->    itself runs read-only `gh` calls and is safe in the dispatcher's
->    tree.
-> 1. Run `bash .claude/skills/ppt-pr-followup/scripts/dispatcher-followup.sh --pr <n>`.
-> 2. If the script's stdout contains a `=== ppt-pr-followup respawn brief ===`
->    block, take that brief and spawn the original specialist via the `Task`
->    tool (same channel Phase 4 uses), waiting for it to return.
-> 3. After the spawned implementer returns, set `status=review` on the row
->    and bump `last_updated`. (The script already cleared `reviewer_summary`
->    and flipped `status=in-progress`; this flip back to `review` is what
->    re-arms Phase 5 for a fresh reviewer pass on the new commits.)
-> 4. Return EXACTLY the script's final line, e.g.
->    `followup=respawned pr=<n> specialist=<sp> round=<k>`.
->
-> If the script exits non-zero (failed/round-cap), do not spawn; just return
-> the script's last line.
+> You are the PR follow-up driver for PR #<n>, task `<task_id>`, specialist
+> `<sp>`. Read `.research/management/pr-followup-prompt.md` and follow it
+> exactly — it is your complete instruction set (workspace-isolation brief,
+> `ppt-pr-followup` dispatcher-mode script, respawn-brief handling, post-respawn
+> `status=review` flip). Substitute the runtime values above wherever the file
+> references `<n>` / `<task_id>` / `<row.branch>` / `<sp>` / `<k>`. Return ONLY
+> the single `followup=<...> pr=<n> specialist=<sp> round=<k>` line it specifies.
 
 Capture line. The script already mutated `assignments.json`; this phase
 adds nothing further to the file beyond the post-respawn `status=review`
@@ -2140,191 +2013,18 @@ fi
 worth the extra cost for a temporary instrumented phase). NOT parallel
 with anything else — this is the last thing the run does.
 
-> You are the dispatcher self-review agent. Your job is NOT to narrate the
-> run. Your job is to detect systemic issues across the last 8 dispatcher
-> commits and propose concrete fixes. Output TWO files:
->
-> 1. A short narrative report at
->    `.research/self-improvement/<iso8601-utc>.md` (≤60 lines markdown).
-> 2. An updated structured findings backlog at
->    `.research/self-improvement/findings.json` (you append/upsert findings;
->    you do NOT rewrite from scratch — see "Findings persistence" below).
->
-> ### Inputs (use bash)
->
-> ```bash
-> # 1. This run's Phase 7 summary
-> git log -1 --format="%H%n%s%n%n%b"
->
-> # 2. Last 8 dispatcher commits — counter trend
-> git log --grep="chore(research): dispatcher" --pretty="%ai %s" -8
->
-> # 3. Last 8 commit bodies — for cross-run structured-skip aggregation
-> git log --grep="chore(research): dispatcher" -8 --format="--RUN %H %ai%n%b%n"
->
-> # 4. Self-test (mandatory — failing test is a finding by itself)
-> bash .research/dispatcher-self-test.sh 2>&1 | tail -40
->
-> # 5. Active assignments shape
-> jq '{active: (.assignments | length),
->      by_status: (.assignments | group_by(.status) | map({s: .[0].status, n: length})),
->      oldest_review: (.assignments | map(select(.status=="review")) | sort_by(.status_changed_at) | first | {task_id, age_h: ((now - (.status_changed_at|fromdateiso8601))/3600|floor)})}' \
->   .research/management/assignments.json
->
-> # 6. Archive count only (do NOT load contents)
-> jq '.assignments | length' .research/management/assignments-archive.json
->
-> # 7. Existing findings backlog (so you can update recurrence counts, not duplicate)
-> jq '.findings | map({id: .finding_id, status, last_seen, recurrence})' \
->   .research/self-improvement/findings.json 2>/dev/null || echo '[]'
-> ```
->
-> ### Inputs you must NOT read
->
-> - `.research/management/assignments-archive.json` content
-> - `.research/management/action-list-archive.json` content
-> - `.research/management/coverage.json`
-> - `.research/dispatcher-prompt.md` (you ARE this routine; reading yourself is wasteful)
->
-> ### Detection rubric
->
-> Walk the last 8 commit bodies. For each Phase 7 structured line
-> (`Dup-skipped`, `Same-epic skipped`, `Sandbox reclaims`, `Empty branches`,
-> `Failed-dep cascades`, `Scope-drift`, `Code-reuse warnings`, `CI-stuck`,
-> `Approved+CI-pending`, `Review dedup-skipped`, `Hang alerts WARN/ALERT`,
-> `Tier 2 response`, `Disk warning`, `Self-test FAIL`), count occurrences.
->
-> A counter qualifies as a **finding** when ANY of these hold:
->
-> - Recurrence ≥ 3 of the same reason code (e.g. `Dup-skipped reason=open-pr`
->   firing on 3+ distinct stems in 8 runs → upstream planner bug, not noise).
-> - Hang alert ALERT (>7d) referencing the same task_id across ≥2 runs.
-> - Self-test FAIL repeating the same `T<N>` across ≥2 runs.
-> - A single-occurrence event where the symptom is severe AND root cause is
->   identifiable (e.g. one `disk_warning` plus identifiable cleanup target).
->
-> Each finding gets ONE structured row. Same root cause → same `finding_id`;
-> on repeat runs you UPDATE recurrence/last_seen, not append a duplicate.
->
-> ### Finding row schema
->
-> ```jsonc
-> {
->   "finding_id":   "fp-<short-kebab>",   // STABLE across runs. Derive from
->                                          // root cause, not symptom (e.g.
->                                          // "fp-planner-emits-impl-suffix-duplicates"
->                                          // — same id for every recurrence).
->   "first_seen":   "iso-8601",
->   "last_seen":    "iso-8601",
->   "recurrence":   3,                    // number of dispatcher commits in
->                                          // which this finding's evidence
->                                          // was observed (NOT count of
->                                          // events; one bad run = +1).
->   "severity":     "low|medium|high",    // high = blocks throughput / data
->                                          //   integrity; medium = wastes
->                                          //   tokens or operator time;
->                                          //   low = aesthetic / non-load-bearing
->   "category":     "planner|claim|review|merge|infra|spec|self-test",
->   "symptom":      "<1-line counter evidence — what the Phase 7 lines showed>",
->   "evidence":     ["<commit_sha>: <one-line excerpt>", "…"],   // ≥2 datapoints
->   "root_cause":   "<1-2 sentences — why this is happening>",
->   "proposed_fix": "<concrete: file:line+description, OR new self-test T<N>, OR new prompt section>",
->   "effort":       "small|medium|large",  // small = single-file prompt edit;
->                                           // medium = new skill section + test;
->                                           // large = code change in dispatcher
->                                           //   harness or new phase
->   "status":       "open|acknowledged|resolved|wontfix",
->   "operator_notes": ""                  // operator hand-writes; agent
->                                          // leaves this untouched on update
-> }
-> ```
->
-> ### Findings persistence (read-modify-write, NOT rewrite)
->
-> ```bash
-> # Load existing findings (or empty array if file is absent)
-> EXISTING=$(jq '.findings // []' .research/self-improvement/findings.json 2>/dev/null || echo '[]')
-> ```
->
-> For each finding you detect:
->
-> 1. Compute `finding_id` from the root cause (deterministic — same root
->    cause must produce the same id across runs).
-> 2. If `finding_id` exists in `EXISTING`:
->    - `recurrence += 1`; `last_seen = now`; refresh `evidence` (append the
->      new commit sha, keep at most the last 5).
->    - Do NOT touch `status` (operator owns it) or `operator_notes`.
->    - Do NOT touch `severity` unless the recurrence count crossed a
->      threshold that demands it (e.g. recurrence ≥ 5 → bump low→medium).
-> 3. If new: emit a fresh row with `recurrence: 1`, `status: "open"`,
->    `first_seen = last_seen = now`.
->
-> Write the merged result back to `findings.json`:
->
-> ```jsonc
-> {
->   "schema_version": 1,
->   "generated_at":   "<iso-8601>",
->   "generated_by":   "<commit sha that triggered this self-review>",
->   "findings": [ ...merged... ]
-> }
-> ```
->
-> Sort findings by (severity desc, recurrence desc, last_seen desc) before
-> writing so the file is stable across runs.
->
-> ### Narrative report (`.research/self-improvement/<iso8601-utc>.md`)
->
-> ≤60 lines markdown. Format:
->
-> ```markdown
-> # Dispatcher self-review — <iso8601-utc>
->
-> Commit: <sha> — <short subject>
->
-> ## Run shape
-> Claimed=<C> Reviewed=<R> Merged-attempts=<M> Merged-now=<X>
-> Failed=<F> Active=<A> Buffer=<claimable>/<open> dep-blocked=<n>
-> Hang alerts: WARN=<n> ALERT=<n>  Self-test: <pass|FAIL T<N>>
->
-> ## New findings this run
-> <one line per NEWLY-OPENED finding_id, format:
->  `- fp-<id> [severity] — <symptom>; fix: <proposed_fix one-liner>`>
-> <or "None">
->
-> ## Recurring findings (≥2 runs, still open)
-> <one line per existing finding whose recurrence bumped this run.
->  `- fp-<id> [recurrence=N, severity] — <symptom>`>
-> <or "None">
->
-> ## Anomalies this run (single occurrence, watching)
-> <bullets for non-recurring events that don't qualify as findings yet>
-> <or "None">
->
-> ## Self-test tail
-> <last 6 lines of dispatcher-self-test.sh verbatim>
-> ```
->
-> ### Hard constraints
->
-> 1. The narrative report path is EXACTLY
->    `.research/self-improvement/$(date -u +%Y-%m-%dT%H-%M-%SZ).md`.
->    The findings backlog path is EXACTLY
->    `.research/self-improvement/findings.json`.
-> 2. You MAY write to those two paths. You MAY NOT modify anything else —
->    no edits to `assignments.json`, `action-list.json`, prompts, or skills.
->    Even if you spot an obvious one-line bug, you write it under
->    `proposed_fix` and stop.
-> 3. Do NOT commit. Phase 6 has already pushed the dispatcher commit; both
->    files live uncommitted so they show up in `git status`. The operator
->    decides whether to commit `findings.json` updates.
-> 4. NEVER auto-resolve a finding. Only the operator sets `status` away
->    from `open`. (Exception: if the proposed fix file:line referenced in
->    an open finding has been changed in the last 8 commits, you MAY mark
->    `status: "acknowledged"` with `operator_notes` UNTOUCHED — meaning
->    "fix appears to have landed; operator please confirm and close".)
-> 5. Return EXACTLY (one line):
->    `selfreview=ok path=<narrative-path> findings_total=<N> findings_new=<K> findings_acknowledged=<A> notes=<short>`
+**Spawn the self-review subagent** with the verbatim prompt at
+`.research/self-improvement/reviewer-prompt.md`. Do NOT inline it here —
+pass the Task subagent a one-line instruction to read that file and follow
+it exactly, e.g.:
+
+> Read `.research/self-improvement/reviewer-prompt.md` and follow it exactly.
+> It is your complete instruction set; you are the dispatcher self-review
+> agent. Return only the single `selfreview=ok …` status line specified there.
+
+The subagent reads its rubric/schema/templates in its own context, so those
+~185 lines never load into the dispatcher run. Keep the off-switch, spawn
+mechanics, and return-line capture below inline — they are dispatcher-side.
 
 Capture the return line into the Phase 7 summary stdout as one extra line:
 

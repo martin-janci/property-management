@@ -5,9 +5,9 @@
 //! other Epic-64 LLM endpoints; they live in their own module purely for size
 //! and are exposed `pub(crate)` so the router constructor can reference them.
 
-use crate::routes::ai::{require_tenant_id, PaginationQuery};
+use crate::routes::ai::PaginationQuery;
 use crate::state::AppState;
-use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -23,17 +23,19 @@ use uuid::Uuid;
 
 pub(crate) async fn list_voice_devices(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // Voice devices are scoped to the user; require_tenant_id still gates
-    // platform-host callers out of a per-tenant API surface.
-    let _ = require_tenant_id(&principal)?;
+    // Voice devices are scoped to the user; the RlsConnection extractor still
+    // gates platform-host callers out of a per-tenant API surface.
+    let user_id = rls.user_id();
 
-    match state
+    let result = state
         .llm_document_repo
-        .list_user_voice_devices(principal.user_id)
-        .await
-    {
+        .list_user_voice_devices(&mut **rls.conn(), user_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(devices) => Ok(Json(serde_json::json!({ "devices": devices }))),
         Err(e) => {
             tracing::error!("Failed to list devices: {}", e);
@@ -57,10 +59,11 @@ pub(crate) async fn list_voice_devices(
 )]
 pub(crate) async fn link_voice_device(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Json(req): Json<LinkVoiceDeviceRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
     // Generate a unique device ID: platform prefix + UUID for debugging and uniqueness.
     // Format: "google_assistant_550e8400-e29b-41d4-a716-446655440000"
@@ -69,14 +72,21 @@ pub(crate) async fn link_voice_device(
 
     // Story 98.1: Implement OAuth token exchange using auth_code from request.
     // Exchange the authorization code for access and refresh tokens from the voice platform.
-    let (access_token_encrypted, refresh_token_encrypted, token_expires_at) =
-        exchange_voice_oauth_tokens(&req.platform, &req.auth_code).await?;
+    let oauth_result = exchange_voice_oauth_tokens(&req.platform, &req.auth_code).await;
+    let (access_token_encrypted, refresh_token_encrypted, token_expires_at) = match oauth_result {
+        Ok(tokens) => tokens,
+        Err(e) => {
+            rls.release().await;
+            return Err(e);
+        }
+    };
 
     let device = state
         .llm_document_repo
         .create_voice_device(
+            &mut **rls.conn(),
             tenant_id,
-            principal.user_id,
+            user_id,
             req.unit_id,
             &req.platform,
             &device_id,
@@ -86,17 +96,18 @@ pub(crate) async fn link_voice_device(
             token_expires_at,
             serde_json::json!(["check_balance", "report_fault", "check_announcements"]),
         )
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to link device: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to link device",
-                )),
-            )
-        })?;
+        .await;
+    rls.release().await;
+    let device = device.map_err(|e| {
+        tracing::error!("Failed to link device: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "INTERNAL_ERROR",
+                "Failed to link device",
+            )),
+        )
+    })?;
 
     Ok((
         StatusCode::CREATED,
@@ -225,17 +236,20 @@ async fn exchange_voice_oauth_tokens(
 
 pub(crate) async fn unlink_voice_device(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     // Scope the deactivation to the caller's own devices.  A non-owned or
     // non-existent id both return false from the repository and are mapped to
     // 404, giving an attacker no information about whether the target id exists.
-    match state
+    let user_id = rls.user_id();
+    let result = state
         .llm_document_repo
-        .deactivate_voice_device(id, principal.user_id)
-        .await
-    {
+        .deactivate_voice_device(&mut **rls.conn(), id, user_id)
+        .await;
+    rls.release().await;
+
+    match result {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,
@@ -253,45 +267,47 @@ pub(crate) async fn unlink_voice_device(
 
 pub(crate) async fn list_voice_commands(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(device_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
+
     // Issue #483: unify disclosure posture with unlink_voice_device — was
     // returning HTTP 200 + empty list for not-owned devices, which leaks
     // device-UUID existence. Return 404 instead.
-    match state
-        .llm_document_repo
-        .user_owns_voice_device(device_id, principal.user_id)
-        .await
-    {
-        Ok(true) => {}
-        Ok(false) => {
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Device not found")),
-            ));
+    //
+    // Both reads run on the same RLS-context connection; errors are captured
+    // (not early-returned) so release() always runs.
+    let result = async {
+        let owns = state
+            .llm_document_repo
+            .user_owns_voice_device(&mut **rls.conn(), device_id, user_id)
+            .await?;
+        if !owns {
+            return Ok(None);
         }
-        Err(e) => {
-            tracing::error!("Failed to verify voice device ownership: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
-            ));
-        }
+        let commands = state
+            .llm_document_repo
+            .list_voice_commands(
+                &mut **rls.conn(),
+                device_id,
+                user_id,
+                query.limit.unwrap_or(50),
+                query.offset.unwrap_or(0),
+            )
+            .await?;
+        Ok::<_, sqlx::Error>(Some(commands))
     }
+    .await;
+    rls.release().await;
 
-    match state
-        .llm_document_repo
-        .list_voice_commands(
-            device_id,
-            principal.user_id,
-            query.limit.unwrap_or(50),
-            query.offset.unwrap_or(0),
-        )
-        .await
-    {
-        Ok(commands) => Ok(Json(serde_json::json!({ "commands": commands }))),
+    match result {
+        Ok(Some(commands)) => Ok(Json(serde_json::json!({ "commands": commands }))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Device not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to list commands: {}", e);
             Err((

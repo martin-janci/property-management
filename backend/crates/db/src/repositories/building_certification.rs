@@ -1,6 +1,34 @@
 //! Building Certification Repository for Epic 137: Smart Building Certification.
+//!
+//! # RLS Integration (PAP-67 / PAP-80)
+//!
+//! Migration `00179` (PAP-62) put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on the building-certification cluster:
+//! `building_certifications`, `certification_credits`, `certification_documents`,
+//! `certification_milestones`, `certification_benchmarks`,
+//! `certification_audit_logs`, `certification_costs`, and
+//! `certification_reminders` (8 tables). Under `FORCE` the api-server's
+//! table-owner connection is no longer exempt, so a query issued on a connection
+//! without `app.current_org_id` set collapses to deny-all (own-org reads return
+//! empty, writes fail the policy `WITH CHECK`).
+//!
+//! This repository therefore holds **no pool**. Every method takes an executor
+//! whose connection already has RLS context set — in handlers this comes from
+//! the `RlsConnection` extractor via `&mut **rls.conn()`:
+//!
+//! * single-statement methods take a generic `executor: E`;
+//! * multi-statement methods that compose helpers take `conn: &mut PgConnection`
+//!   and reborrow `&mut *conn` per call.
+//!
+//! Because the repo cannot reach a raw pool, there is no path that bypasses RLS.
+//! This mirrors the `work_order.rs` / `reserve_funds.rs` precedent.
+//!
+//! The explicit `organization_id = $n` predicates are retained as
+//! defense-in-depth: the authoritative org is the caller's `rls.tenant_id()`,
+//! so the SQL filter and the RLS context can never disagree, and cross-tenant
+//! by-id reads return no row (→ 404) under both layers.
 
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 use crate::models::building_certification::{
@@ -13,34 +41,38 @@ use crate::models::building_certification::{
     CreateCertificationReminder, UpdateBuildingCertification, UpdateCertificationCredit,
     UpdateCertificationMilestone,
 };
-use crate::DbPool;
 
 /// Repository for building certification operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct BuildingCertificationRepository {
-    pool: DbPool,
-}
+pub struct BuildingCertificationRepository;
 
 impl BuildingCertificationRepository {
     /// Create a new repository instance.
-    pub fn new(pool: DbPool) -> Self {
-        Self { pool }
-    }
-
-    /// Get the pool reference for tests.
-    pub fn pool(&self) -> &PgPool {
-        &self.pool
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // ==================== Building Certifications ====================
 
     /// Create a new building certification.
-    pub async fn create_certification(
+    pub async fn create_certification<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         input: CreateBuildingCertification,
         user_id: Option<Uuid>,
-    ) -> Result<BuildingCertification, sqlx::Error> {
+    ) -> Result<BuildingCertification, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let percentage = if let (Some(achieved), Some(possible)) =
             (input.total_points_achieved, input.total_points_possible)
         {
@@ -96,16 +128,25 @@ impl BuildingCertificationRepository {
         .bind(input.certification_fee)
         .bind(input.annual_fee)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get a certification by ID.
-    pub async fn get_certification(
+    /// Get a certification by ID, scoped to the caller's organization.
+    ///
+    /// Returns `None` if the certification does not exist **or** belongs to a
+    /// different organization, so cross-tenant by-id reads (IDOR) surface as a
+    /// 404. Under FORCE-RLS the connection's org context is a second,
+    /// database-enforced guard on top of the explicit predicate.
+    pub async fn get_certification<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<Option<BuildingCertification>, sqlx::Error> {
+    ) -> Result<Option<BuildingCertification>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BuildingCertification>(
             r#"
             SELECT * FROM building_certifications
@@ -114,18 +155,22 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List certifications with filters.
-    pub async fn list_certifications(
+    pub async fn list_certifications<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         filters: CertificationFilters,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<BuildingCertification>, sqlx::Error> {
+    ) -> Result<Vec<BuildingCertification>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let mut query =
             String::from("SELECT * FROM building_certifications WHERE organization_id = $1");
         let mut param_count = 1;
@@ -178,16 +223,24 @@ impl BuildingCertificationRepository {
             q = q.bind(days);
         }
 
-        q.bind(limit).bind(offset).fetch_all(&self.pool).await
+        q.bind(limit).bind(offset).fetch_all(executor).await
     }
 
-    /// Update a certification.
-    pub async fn update_certification(
+    /// Update a certification, scoped to the caller's organization.
+    ///
+    /// The `organization_id = $1` predicate means an update targeting another
+    /// org's certification matches zero rows and surfaces as `None` (→ 404),
+    /// not a silent cross-tenant write.
+    pub async fn update_certification<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
         input: UpdateBuildingCertification,
-    ) -> Result<Option<BuildingCertification>, sqlx::Error> {
+    ) -> Result<Option<BuildingCertification>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BuildingCertification>(
             r#"
             UPDATE building_certifications SET
@@ -238,16 +291,20 @@ impl BuildingCertificationRepository {
         .bind(input.certification_fee)
         .bind(input.annual_fee)
         .bind(input.total_investment)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete a certification.
-    pub async fn delete_certification(
+    /// Delete a certification, scoped to the caller's organization.
+    pub async fn delete_certification<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             DELETE FROM building_certifications
@@ -256,19 +313,23 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Get certification with credits summary.
+    ///
+    /// Multi-statement (org-scoped fetch + aggregate), so it takes a connection
+    /// and reborrows it per query.
     pub async fn get_certification_with_credits(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         cert_id: Uuid,
     ) -> Result<Option<CertificationWithCredits>, sqlx::Error> {
-        let cert = self.get_certification(org_id, cert_id).await?;
+        let cert = self.get_certification(&mut *conn, org_id, cert_id).await?;
 
         if let Some(certification) = cert {
             let credits_summary: (i64, i64, i64, i64) = sqlx::query_as(
@@ -284,7 +345,7 @@ impl BuildingCertificationRepository {
             )
             .bind(org_id)
             .bind(cert_id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await?;
 
             Ok(Some(CertificationWithCredits {
@@ -302,11 +363,15 @@ impl BuildingCertificationRepository {
     // ==================== Certification Credits ====================
 
     /// Create a certification credit.
-    pub async fn create_credit(
+    pub async fn create_credit<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         input: CreateCertificationCredit,
-    ) -> Result<CertificationCredit, sqlx::Error> {
+    ) -> Result<CertificationCredit, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationCredit>(
             r#"
             INSERT INTO certification_credits (
@@ -339,16 +404,20 @@ impl BuildingCertificationRepository {
         .bind(&input.notes)
         .bind(input.responsible_user_id)
         .bind(input.due_date)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get a credit by ID.
-    pub async fn get_credit(
+    /// Get a credit by ID, scoped to the caller's organization.
+    pub async fn get_credit<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         credit_id: Uuid,
-    ) -> Result<Option<CertificationCredit>, sqlx::Error> {
+    ) -> Result<Option<CertificationCredit>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationCredit>(
             r#"
             SELECT * FROM certification_credits
@@ -357,16 +426,20 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(credit_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List credits for a certification.
-    pub async fn list_credits(
+    pub async fn list_credits<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<Vec<CertificationCredit>, sqlx::Error> {
+    ) -> Result<Vec<CertificationCredit>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationCredit>(
             r#"
             SELECT * FROM certification_credits
@@ -376,17 +449,21 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update a credit.
-    pub async fn update_credit(
+    /// Update a credit, scoped to the caller's organization.
+    pub async fn update_credit<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         credit_id: Uuid,
         input: UpdateCertificationCredit,
-    ) -> Result<Option<CertificationCredit>, sqlx::Error> {
+    ) -> Result<Option<CertificationCredit>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationCredit>(
             r#"
             UPDATE certification_credits SET
@@ -427,12 +504,20 @@ impl BuildingCertificationRepository {
         .bind(&input.notes)
         .bind(input.responsible_user_id)
         .bind(input.due_date)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete a credit.
-    pub async fn delete_credit(&self, org_id: Uuid, credit_id: Uuid) -> Result<bool, sqlx::Error> {
+    /// Delete a credit, scoped to the caller's organization.
+    pub async fn delete_credit<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        credit_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             DELETE FROM certification_credits
@@ -441,7 +526,7 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(credit_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
@@ -450,12 +535,16 @@ impl BuildingCertificationRepository {
     // ==================== Certification Documents ====================
 
     /// Create a certification document.
-    pub async fn create_document(
+    pub async fn create_document<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         input: CreateCertificationDocument,
         user_id: Option<Uuid>,
-    ) -> Result<CertificationDocument, sqlx::Error> {
+    ) -> Result<CertificationDocument, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationDocument>(
             r#"
             INSERT INTO certification_documents (
@@ -476,16 +565,20 @@ impl BuildingCertificationRepository {
         .bind(input.file_size_bytes)
         .bind(&input.file_type)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List documents for a certification.
-    pub async fn list_documents(
+    pub async fn list_documents<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<Vec<CertificationDocument>, sqlx::Error> {
+    ) -> Result<Vec<CertificationDocument>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationDocument>(
             r#"
             SELECT * FROM certification_documents
@@ -495,12 +588,20 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Delete a document.
-    pub async fn delete_document(&self, org_id: Uuid, doc_id: Uuid) -> Result<bool, sqlx::Error> {
+    /// Delete a document, scoped to the caller's organization.
+    pub async fn delete_document<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        doc_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             DELETE FROM certification_documents
@@ -509,7 +610,7 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(doc_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
@@ -518,11 +619,15 @@ impl BuildingCertificationRepository {
     // ==================== Certification Milestones ====================
 
     /// Create a certification milestone.
-    pub async fn create_milestone(
+    pub async fn create_milestone<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         input: CreateCertificationMilestone,
-    ) -> Result<CertificationMilestone, sqlx::Error> {
+    ) -> Result<CertificationMilestone, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationMilestone>(
             r#"
             INSERT INTO certification_milestones (
@@ -542,16 +647,20 @@ impl BuildingCertificationRepository {
         .bind(input.depends_on_milestone_id)
         .bind(input.assigned_to)
         .bind(&input.notes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List milestones for a certification.
-    pub async fn list_milestones(
+    pub async fn list_milestones<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<Vec<CertificationMilestone>, sqlx::Error> {
+    ) -> Result<Vec<CertificationMilestone>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationMilestone>(
             r#"
             SELECT * FROM certification_milestones
@@ -561,17 +670,21 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
-    /// Update a milestone.
-    pub async fn update_milestone(
+    /// Update a milestone, scoped to the caller's organization.
+    pub async fn update_milestone<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         milestone_id: Uuid,
         input: UpdateCertificationMilestone,
-    ) -> Result<Option<CertificationMilestone>, sqlx::Error> {
+    ) -> Result<Option<CertificationMilestone>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationMilestone>(
             r#"
             UPDATE certification_milestones SET
@@ -600,16 +713,20 @@ impl BuildingCertificationRepository {
         .bind(input.depends_on_milestone_id)
         .bind(input.assigned_to)
         .bind(&input.notes)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
-    /// Delete a milestone.
-    pub async fn delete_milestone(
+    /// Delete a milestone, scoped to the caller's organization.
+    pub async fn delete_milestone<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         milestone_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             DELETE FROM certification_milestones
@@ -618,18 +735,22 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(milestone_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Get upcoming milestones across all certifications.
-    pub async fn get_upcoming_milestones(
+    pub async fn get_upcoming_milestones<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         days_ahead: i32,
-    ) -> Result<Vec<CertificationMilestone>, sqlx::Error> {
+    ) -> Result<Vec<CertificationMilestone>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationMilestone>(
             r#"
             SELECT * FROM certification_milestones
@@ -641,18 +762,22 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(days_ahead)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     // ==================== Certification Benchmarks ====================
 
     /// Create a certification benchmark.
-    pub async fn create_benchmark(
+    pub async fn create_benchmark<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         input: CreateCertificationBenchmark,
-    ) -> Result<CertificationBenchmark, sqlx::Error> {
+    ) -> Result<CertificationBenchmark, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationBenchmark>(
             r#"
             INSERT INTO certification_benchmarks (
@@ -676,16 +801,20 @@ impl BuildingCertificationRepository {
         .bind(input.percentile_rank)
         .bind(input.measurement_period_start)
         .bind(input.measurement_period_end)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List benchmarks for a certification.
-    pub async fn list_benchmarks(
+    pub async fn list_benchmarks<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<Vec<CertificationBenchmark>, sqlx::Error> {
+    ) -> Result<Vec<CertificationBenchmark>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationBenchmark>(
             r#"
             SELECT * FROM certification_benchmarks
@@ -695,19 +824,23 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     // ==================== Certification Costs ====================
 
     /// Create a certification cost.
-    pub async fn create_cost(
+    pub async fn create_cost<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         input: CreateCertificationCost,
         user_id: Option<Uuid>,
-    ) -> Result<CertificationCost, sqlx::Error> {
+    ) -> Result<CertificationCost, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationCost>(
             r#"
             INSERT INTO certification_costs (
@@ -730,16 +863,20 @@ impl BuildingCertificationRepository {
         .bind(&input.vendor_name)
         .bind(input.vendor_id)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List costs for a certification.
-    pub async fn list_costs(
+    pub async fn list_costs<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<Vec<CertificationCost>, sqlx::Error> {
+    ) -> Result<Vec<CertificationCost>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationCost>(
             r#"
             SELECT * FROM certification_costs
@@ -749,16 +886,20 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get total costs for a certification.
-    pub async fn get_total_costs(
+    pub async fn get_total_costs<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<rust_decimal::Decimal, sqlx::Error> {
+    ) -> Result<rust_decimal::Decimal, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result: (rust_decimal::Decimal,) = sqlx::query_as(
             r#"
             SELECT COALESCE(SUM(amount), 0) as total
@@ -768,7 +909,7 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(result.0)
@@ -777,11 +918,15 @@ impl BuildingCertificationRepository {
     // ==================== Certification Reminders ====================
 
     /// Create a certification reminder.
-    pub async fn create_reminder(
+    pub async fn create_reminder<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         input: CreateCertificationReminder,
-    ) -> Result<CertificationReminder, sqlx::Error> {
+    ) -> Result<CertificationReminder, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationReminder>(
             r#"
             INSERT INTO certification_reminders (
@@ -804,16 +949,20 @@ impl BuildingCertificationRepository {
             serde_json::to_value(input.notify_roles.unwrap_or_default())
                 .unwrap_or(serde_json::Value::Array(vec![])),
         )
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List reminders for a certification.
-    pub async fn list_reminders(
+    pub async fn list_reminders<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
-    ) -> Result<Vec<CertificationReminder>, sqlx::Error> {
+    ) -> Result<Vec<CertificationReminder>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationReminder>(
             r#"
             SELECT * FROM certification_reminders
@@ -823,7 +972,7 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(cert_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -831,8 +980,9 @@ impl BuildingCertificationRepository {
 
     /// Create an audit log entry.
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_audit_log(
+    pub async fn create_audit_log<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
         action: &str,
@@ -842,7 +992,10 @@ impl BuildingCertificationRepository {
         new_value: Option<serde_json::Value>,
         user_id: Option<Uuid>,
         notes: Option<&str>,
-    ) -> Result<CertificationAuditLog, sqlx::Error> {
+    ) -> Result<CertificationAuditLog, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationAuditLog>(
             r#"
             INSERT INTO certification_audit_logs (
@@ -861,17 +1014,21 @@ impl BuildingCertificationRepository {
         .bind(new_value)
         .bind(user_id)
         .bind(notes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get audit logs for a certification.
-    pub async fn list_audit_logs(
+    pub async fn list_audit_logs<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         cert_id: Uuid,
         limit: i64,
-    ) -> Result<Vec<CertificationAuditLog>, sqlx::Error> {
+    ) -> Result<Vec<CertificationAuditLog>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CertificationAuditLog>(
             r#"
             SELECT * FROM certification_audit_logs
@@ -883,14 +1040,21 @@ impl BuildingCertificationRepository {
         .bind(org_id)
         .bind(cert_id)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     // ==================== Dashboard ====================
 
     /// Get certification dashboard summary.
-    pub async fn get_dashboard(&self, org_id: Uuid) -> Result<CertificationDashboard, sqlx::Error> {
+    ///
+    /// Multi-statement (several aggregates + upcoming-milestones lookup), so it
+    /// takes a connection and reborrows it per query.
+    pub async fn get_dashboard(
+        &self,
+        conn: &mut PgConnection,
+        org_id: Uuid,
+    ) -> Result<CertificationDashboard, sqlx::Error> {
         // Get counts
         let counts: (i64, i64, i64, i64, rust_decimal::Decimal) = sqlx::query_as(
             r#"
@@ -905,7 +1069,7 @@ impl BuildingCertificationRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Get counts by program
@@ -919,7 +1083,7 @@ impl BuildingCertificationRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         // Get counts by level
@@ -936,11 +1100,11 @@ impl BuildingCertificationRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         // Get upcoming milestones
-        let upcoming_milestones = self.get_upcoming_milestones(org_id, 30).await?;
+        let upcoming_milestones = self.get_upcoming_milestones(&mut *conn, org_id, 30).await?;
 
         Ok(CertificationDashboard {
             total_certifications: counts.0,
@@ -961,11 +1125,15 @@ impl BuildingCertificationRepository {
     }
 
     /// Get certifications expiring soon.
-    pub async fn get_expiring_certifications(
+    pub async fn get_expiring_certifications<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         days_ahead: i32,
-    ) -> Result<Vec<BuildingCertification>, sqlx::Error> {
+    ) -> Result<Vec<BuildingCertification>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, BuildingCertification>(
             r#"
             SELECT * FROM building_certifications
@@ -978,7 +1146,7 @@ impl BuildingCertificationRepository {
         )
         .bind(org_id)
         .bind(days_ahead)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 }

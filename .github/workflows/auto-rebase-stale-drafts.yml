@@ -101,7 +101,8 @@ jobs:
           git fetch origin dev
 
           # Iterate using jq -r index access so we never interpolate PR
-          # data into the shell via `${{ }}` (env-var indirection pattern).
+          # data into the shell via GitHub Actions expressions (env-var
+          # indirection pattern).
           for i in $(seq 0 $((COUNT - 1))); do
             PR=$(echo "$CANDIDATES"   | jq -r ".[$i].number")
             HEAD=$(echo "$CANDIDATES" | jq -r ".[$i].head")

@@ -1,7 +1,11 @@
 /**
  * Advanced Notifications API (Epic 40)
+ *
+ * Uses the centralised authenticated fetch helper so auth token handling is
+ * consistent with the rest of the api-client (see lib/fetch.ts, #486).
  */
 
+import { authenticatedFetchJson } from '../lib/fetch';
 import type {
   AdvancedPreferencesResponse,
   CategoryPreferencesResponse,
@@ -24,48 +28,21 @@ const API_BASE = '/api/v1/users/me/notification-preferences';
 /**
  * Fetch category-based notification preferences.
  */
-export async function getCategoryPreferences(
-  baseUrl: string,
-  accessToken: string
-): Promise<CategoryPreferencesResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/categories`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to fetch category preferences');
-  }
-
-  return response.json();
+export async function getCategoryPreferences(): Promise<CategoryPreferencesResponse> {
+  return authenticatedFetchJson<CategoryPreferencesResponse>(`${API_BASE}/categories`);
 }
 
 /**
  * Update preferences for a specific category.
  */
 export async function updateCategoryPreference(
-  baseUrl: string,
-  accessToken: string,
   category: NotificationCategory,
   request: UpdateCategoryPreferenceRequest
 ): Promise<CategoryPreferencesResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/categories/${category}`, {
+  return authenticatedFetchJson<CategoryPreferencesResponse>(`${API_BASE}/categories/${category}`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(request),
   });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to update category preference');
-  }
-
-  return response.json();
 }
 
 // ============================================================================
@@ -75,47 +52,20 @@ export async function updateCategoryPreference(
 /**
  * Fetch quiet hours configuration.
  */
-export async function getQuietHours(
-  baseUrl: string,
-  accessToken: string
-): Promise<QuietHoursResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/quiet-hours`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to fetch quiet hours');
-  }
-
-  return response.json();
+export async function getQuietHours(): Promise<QuietHoursResponse> {
+  return authenticatedFetchJson<QuietHoursResponse>(`${API_BASE}/quiet-hours`);
 }
 
 /**
  * Update quiet hours configuration.
  */
 export async function updateQuietHours(
-  baseUrl: string,
-  accessToken: string,
   request: UpdateQuietHoursRequest
 ): Promise<QuietHoursResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/quiet-hours`, {
+  return authenticatedFetchJson<QuietHoursResponse>(`${API_BASE}/quiet-hours`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(request),
   });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to update quiet hours');
-  }
-
-  return response.json();
 }
 
 // ============================================================================
@@ -125,47 +75,20 @@ export async function updateQuietHours(
 /**
  * Fetch digest configuration.
  */
-export async function getDigestPreferences(
-  baseUrl: string,
-  accessToken: string
-): Promise<DigestResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/digest`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to fetch digest preferences');
-  }
-
-  return response.json();
+export async function getDigestPreferences(): Promise<DigestResponse> {
+  return authenticatedFetchJson<DigestResponse>(`${API_BASE}/digest`);
 }
 
 /**
  * Update digest preferences.
  */
 export async function updateDigestPreferences(
-  baseUrl: string,
-  accessToken: string,
   request: UpdateDigestRequest
 ): Promise<DigestResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/digest`, {
+  return authenticatedFetchJson<DigestResponse>(`${API_BASE}/digest`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(request),
   });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to update digest preferences');
-  }
-
-  return response.json();
 }
 
 // ============================================================================
@@ -175,47 +98,20 @@ export async function updateDigestPreferences(
 /**
  * Fetch notification grouping configuration.
  */
-export async function getGroupingPreferences(
-  baseUrl: string,
-  accessToken: string
-): Promise<GroupingResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/grouping`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to fetch grouping preferences');
-  }
-
-  return response.json();
+export async function getGroupingPreferences(): Promise<GroupingResponse> {
+  return authenticatedFetchJson<GroupingResponse>(`${API_BASE}/grouping`);
 }
 
 /**
  * Update notification grouping preferences.
  */
 export async function updateGroupingPreferences(
-  baseUrl: string,
-  accessToken: string,
   request: UpdateGroupingRequest
 ): Promise<GroupingResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/grouping`, {
+  return authenticatedFetchJson<GroupingResponse>(`${API_BASE}/grouping`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(request),
   });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to update grouping preferences');
-  }
-
-  return response.json();
 }
 
 // ============================================================================
@@ -225,43 +121,6 @@ export async function updateGroupingPreferences(
 /**
  * Fetch all advanced notification preferences at once.
  */
-export async function getAdvancedPreferences(
-  baseUrl: string,
-  accessToken: string
-): Promise<AdvancedPreferencesResponse> {
-  const response = await fetch(`${baseUrl}${API_BASE}/advanced`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    await handleErrorResponse(response, 'Failed to fetch advanced preferences');
-  }
-
-  return response.json();
-}
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-/**
- * Handle error responses from the API.
- *
- * Expected API error format: { error: { message: string, code?: string } }
- * Falls back to checking errorData.message if error.message is not present.
- */
-async function handleErrorResponse(response: Response, defaultMessage: string): Promise<never> {
-  let errorMessage = defaultMessage;
-  try {
-    const errorData = await response.json();
-    // Try standard API error format first, then fall back to direct message
-    errorMessage = errorData.error?.message || errorData.message || defaultMessage;
-  } catch {
-    // Response is not JSON, use default message
-  }
-  throw new Error(errorMessage);
+export async function getAdvancedPreferences(): Promise<AdvancedPreferencesResponse> {
+  return authenticatedFetchJson<AdvancedPreferencesResponse>(`${API_BASE}/advanced`);
 }

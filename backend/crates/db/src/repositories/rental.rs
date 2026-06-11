@@ -2316,6 +2316,33 @@ impl RentalRepository {
         Ok(conn)
     }
 
+    /// Record an inbound Airbnb webhook delivery in the dedup ledger.
+    ///
+    /// Airbnb guarantees at-least-once delivery; this inserts the delivery's
+    /// dedup key into the global `airbnb_webhook_events` ledger and reports
+    /// whether the row was newly recorded. `ON CONFLICT DO NOTHING` makes a
+    /// re-delivery a no-op, so `Ok(false)` means "already seen — suppress".
+    ///
+    /// PAP-170 (PAP-150): `airbnb_webhook_events` is a global, tenant-less dedup
+    /// table (no `organization_id`), so this lives in the repository layer
+    /// instead of a raw `state.db` pool access inside the webhook handler.
+    pub async fn record_airbnb_webhook_event(
+        &self,
+        event_id: &str,
+        event_type: &str,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            "INSERT INTO airbnb_webhook_events (event_id, event_type) \
+             VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING",
+        )
+        .bind(event_id)
+        .bind(event_type)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
     /// Get Airbnb status for organization (aggregated from all connections).
     pub async fn get_airbnb_status(
         &self,

@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-07T16:15:10Z",
-  "last_action": "empty",
-  "reason": "no gap-/pm- epic in pool; pick-target-epic emitted full-task-id prefix failing self-test T21 — finish-first inert; backlog stale (7 open backlog items already terminal) so Tier-1 found 0 valid refills",
+  "selected_at": "2026-06-11T20:16:01Z",
+  "last_action": "reset",
+  "reason": "picker selected non-conforming target bug-ios-deeplink-info-plist-missing (full task_id, not gap-N/pm-role); reset to NONE to keep T21 green (issue #1238 finding 1). Task still claimed via normal pool.",
   "stats_at_selection": {
-    "open": 11,
-    "claimable": 9
+    "open": 29,
+    "claimable": 29
   }
 }
