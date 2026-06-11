@@ -14,6 +14,19 @@
 //! | S3 | no  | The 409 "would disable all" guard fires **before** any publish, so a rejected update never emits a spurious `preference.updated`. |
 //! | S4 | yes (`#[ignore]`) | A real PATCH publishes `preference.updated` to `notifications:{user_id}` on Redis with `{channel, enabled}` payload; a different user's channel receives nothing (isolation). |
 //!
+//! Coverage 8a-3 (idempotent apply) — additive no-Redis cases that lock down the
+//! *idempotency* half of the realtime-sync contract (S1–S4 covered the publish
+//! leg). A realtime client may replay the same PATCH on reconnect, or two tabs
+//! may push the same desired state; the handler MUST converge on the same
+//! persisted state and the same HTTP outcome regardless of how many times the
+//! identical update is applied:
+//!
+//! | Case | Requires Redis | Asserts |
+//! |------|----------------|---------|
+//! | S5 | no  | Re-applying `enabled:false` to the same channel twice both return 200 and the channel stays disabled — `update_channel_rls` is an idempotent `UPDATE ... SET enabled=$3`, so a replayed PATCH is a safe no-op, not an error. |
+//! | S6 | no  | Re-applying `enabled:true` to an already-enabled channel both return 200 and never trips the "would disable all" 409 (the guard only runs on `!enabled`) — a redundant enable is always idempotent. |
+//! | S7 | no  | Disabling an **already-disabled** channel does not 409 even when another channel is the only enabled one: the guard keys off the *current* state of the channel being patched (`current.enabled`), so a replayed disable of a channel that is already off can never be the "last enabled" channel — proving repeated applies don't spuriously block. |
+//!
 //! The no-Redis cases run in CI (the default `AppState` has `pubsub_service =
 //! None`). The Redis case mirrors the `#[ignore]` style of the fanout test in
 //! `ws_integration_tests.rs` — run locally with:
@@ -182,6 +195,179 @@ async fn disable_all_guard_blocks_before_publish(pool: PgPool) {
         in_app["enabled"],
         json!(true),
         "S3: a 409-rejected disable-all must leave in_app enabled (no update, no spurious publish)"
+    );
+}
+
+// ============================================================================
+// S5 — idempotent disable: re-applying enabled:false is a safe 200 no-op
+// ============================================================================
+
+/// A realtime client may replay the same PATCH (reconnect, duplicate tab, retry
+/// after a dropped response). Disabling the email channel twice in a row must
+/// return 200 both times and leave email disabled — `update_channel_rls` is a
+/// plain `UPDATE ... SET enabled=$3`, so a redundant disable converges on the
+/// same persisted state rather than erroring. push + in_app stay enabled, so the
+/// disable-all guard never enters the picture for either apply.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn repeated_disable_is_idempotent(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s5").await;
+
+    // Apply the identical "disable email" PATCH twice; both must succeed.
+    for attempt in 0..2 {
+        let req = app
+            .patch("/api/v1/users/me/notification-preferences/email")
+            .bearer(&access_token)
+            .header("X-Tenant-ID", &org.to_string())
+            .json(json!({ "enabled": false, "confirmDisableAll": false }))
+            .build();
+        let resp = app.execute(req).await;
+        resp.assert_status(StatusCode::OK);
+        assert_eq!(
+            resp.json_value()["preference"]["enabled"],
+            json!(false),
+            "S5: apply #{attempt} must report email disabled"
+        );
+    }
+
+    // Final persisted state: email disabled, exactly once (idempotent — not
+    // toggled, not duplicated).
+    let get = app
+        .get("/api/v1/users/me/notification-preferences")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .build();
+    let body = app.execute(get).await.json_value();
+    let prefs = body["preferences"].as_array().expect("preferences array");
+    let email: Vec<_> = prefs
+        .iter()
+        .filter(|p| p["channel"] == json!("email"))
+        .collect();
+    assert_eq!(
+        email.len(),
+        1,
+        "S5: email must appear exactly once after a repeated disable (no duplicate rows)"
+    );
+    assert_eq!(
+        email[0]["enabled"],
+        json!(false),
+        "S5: email must remain disabled after the second identical PATCH"
+    );
+}
+
+// ============================================================================
+// S6 — idempotent enable: re-applying enabled:true never trips the 409 guard
+// ============================================================================
+
+/// The "would disable all" guard runs only on `!enabled`, so a redundant enable
+/// can never produce a 409. Re-enabling an already-enabled channel twice must
+/// return 200 both times and leave the channel enabled — the enable path has no
+/// state-dependent rejection, making it unconditionally idempotent.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn repeated_enable_is_idempotent_and_never_conflicts(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s6").await;
+
+    // in_app starts enabled by default; re-enable it twice.
+    for attempt in 0..2 {
+        let req = app
+            .patch("/api/v1/users/me/notification-preferences/in_app")
+            .bearer(&access_token)
+            .header("X-Tenant-ID", &org.to_string())
+            .json(json!({ "enabled": true, "confirmDisableAll": false }))
+            .build();
+        let resp = app.execute(req).await;
+        // A redundant enable must never be a 409 (the disable-all guard is gated
+        // on `!enabled`) — it is an unconditional 200.
+        resp.assert_status(StatusCode::OK);
+        assert_eq!(
+            resp.json_value()["preference"]["enabled"],
+            json!(true),
+            "S6: apply #{attempt} must report in_app enabled"
+        );
+    }
+
+    let get = app
+        .get("/api/v1/users/me/notification-preferences")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .build();
+    let body = app.execute(get).await.json_value();
+    let in_app = body["preferences"]
+        .as_array()
+        .expect("preferences array")
+        .iter()
+        .find(|p| p["channel"] == json!("in_app"))
+        .expect("in_app channel present");
+    assert_eq!(
+        in_app["enabled"],
+        json!(true),
+        "S6: in_app must remain enabled after repeated identical enables"
+    );
+}
+
+// ============================================================================
+// S7 — disabling an already-disabled channel never 409s, even as "last write"
+// ============================================================================
+
+/// The disable-all guard keys off the *current* state of the channel being
+/// patched: `would_disable_all = enabled_count == 1 && current.enabled`. A
+/// channel that is already disabled has `current.enabled == false`, so re-
+/// disabling it can never be the last-enabled channel — the guard cannot fire.
+///
+/// Setup: disable email (push + in_app still on), then disable push (in_app is
+/// now the only enabled channel). Re-disabling the already-off email channel
+/// must still return 200 — a replayed disable of an off channel is a pure no-op
+/// and must not be mistaken for "disabling the last channel". in_app stays on.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn redisable_of_off_channel_never_conflicts(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s7").await;
+
+    // Disable email then push — in_app becomes the sole enabled channel.
+    for channel in ["email", "push"] {
+        let req = app
+            .patch(&format!(
+                "/api/v1/users/me/notification-preferences/{channel}"
+            ))
+            .bearer(&access_token)
+            .header("X-Tenant-ID", &org.to_string())
+            .json(json!({ "enabled": false, "confirmDisableAll": false }))
+            .build();
+        app.execute(req).await.assert_status(StatusCode::OK);
+    }
+
+    // Re-disable the already-disabled email channel without confirmation. Even
+    // though in_app is the only enabled channel, this must NOT 409: email is
+    // already off, so it is not the "last enabled" channel.
+    let req = app
+        .patch("/api/v1/users/me/notification-preferences/email")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .json(json!({ "enabled": false, "confirmDisableAll": false }))
+        .build();
+    app.execute(req).await.assert_status(StatusCode::OK);
+
+    // in_app must still be enabled — the no-op redisable changed nothing.
+    let get = app
+        .get("/api/v1/users/me/notification-preferences")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .build();
+    let body = app.execute(get).await.json_value();
+    let in_app = body["preferences"]
+        .as_array()
+        .expect("preferences array")
+        .iter()
+        .find(|p| p["channel"] == json!("in_app"))
+        .expect("in_app channel present");
+    assert_eq!(
+        in_app["enabled"],
+        json!(true),
+        "S7: in_app must stay enabled — re-disabling an already-off channel is a no-op, not a last-channel disable"
     );
 }
 
