@@ -1,12 +1,12 @@
 {
-  "generated": "2026-06-11T02:11:28Z",
+  "generated": "2026-06-11T04:19:23Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-mobile-announcements-test",
       "branch": "auto-impl/refactor-churn-hotspot-mobile-announceme",
       "status": "review",
       "claimed_at": "2026-06-08T00:12:36Z",
-      "last_updated": "2026-06-10T20:28:43Z",
+      "last_updated": "2026-06-11T04:19:23Z",
       "status_changed_at": "2026-06-08T06:22:20Z",
       "pr_number": 1165,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1165",
