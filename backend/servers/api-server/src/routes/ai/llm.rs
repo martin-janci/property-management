@@ -18,6 +18,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
+use db::RlsPool;
 use db::models::{
     EnhancePhotoRequest, EnhancedChatRequest, GenerateLeaseRequest,
     GenerateListingDescriptionRequest, UpdateEscalationConfig,
@@ -156,9 +157,10 @@ async fn generate_lease(
             req.template_id,
         )
         .await;
-    // Release before the LLM round-trip; the post-LLM status update runs on
-    // the pool (llm_generation_requests is not RLS-bound) scoped by the row id
-    // we created under this tenant.
+    // Release the request-scoped RLS connection before the (slow) LLM
+    // round-trip so we don't pin a pooled connection across it. The post-LLM
+    // status update re-acquires a short-lived org-context connection via
+    // RlsPool::acquire_with_rls (PAP-150: no handler-side raw `state.db`).
     rls.release().await;
     let request = request.map_err(|e| {
         tracing::error!("Failed to create generation request: {}", e);
@@ -220,21 +222,28 @@ async fn generate_lease(
 
     match result {
         Ok(lease_result) => {
-            // Update the generation request with the result
+            // Update the generation request with the result on a short-lived
+            // org-context connection (best-effort; status row is non-critical).
             let result_json = serde_json::to_value(&lease_result).unwrap_or_default();
-            let _ = state
-                .llm_document_repo
-                .update_generation_status(
-                    &state.db,
-                    request.id,
-                    "completed",
-                    Some(result_json.clone()),
-                    None,
-                    Some(lease_result.tokens_used),
-                    None,
-                    Some(latency_ms),
-                )
-                .await;
+            if let Ok(mut guard) = RlsPool::new(state.db.clone())
+                .acquire_with_rls(tenant_id, user_id, false)
+                .await
+            {
+                let _ = state
+                    .llm_document_repo
+                    .update_generation_status(
+                        &mut **guard.conn(),
+                        request.id,
+                        "completed",
+                        Some(result_json.clone()),
+                        None,
+                        Some(lease_result.tokens_used),
+                        None,
+                        Some(latency_ms),
+                    )
+                    .await;
+                guard.release().await;
+            }
 
             tracing::info!(
                 "Lease generated successfully for unit {} (tokens: {}, latency: {}ms)",
@@ -264,20 +273,27 @@ async fn generate_lease(
             tracing::error!("Lease generation failed: {}", e);
             let error_msg = format!("{}", e);
 
-            // Update the generation request with the error
-            let _ = state
-                .llm_document_repo
-                .update_generation_status(
-                    &state.db,
-                    request.id,
-                    "failed",
-                    None,
-                    Some(&error_msg),
-                    None,
-                    None,
-                    Some(latency_ms),
-                )
-                .await;
+            // Update the generation request with the error on a short-lived
+            // org-context connection (best-effort).
+            if let Ok(mut guard) = RlsPool::new(state.db.clone())
+                .acquire_with_rls(tenant_id, user_id, false)
+                .await
+            {
+                let _ = state
+                    .llm_document_repo
+                    .update_generation_status(
+                        &mut **guard.conn(),
+                        request.id,
+                        "failed",
+                        None,
+                        Some(&error_msg),
+                        None,
+                        None,
+                        Some(latency_ms),
+                    )
+                    .await;
+                guard.release().await;
+            }
 
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -521,11 +537,28 @@ async fn generate_listing_description(
 
     let latency_ms = start_time.elapsed().as_millis() as i32;
 
+    // Persist on a short-lived org-context connection (the request-scoped RLS
+    // conn was released before the LLM round-trip above). PAP-150: no
+    // handler-side raw `state.db`.
+    let mut gen_guard = RlsPool::new(state.db.clone())
+        .acquire_with_rls(tenant_id, user_id, false)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to acquire db connection: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to store description",
+                )),
+            )
+        })?;
+
     // Store the generated description
-    let description = state
+    let description = match state
         .llm_document_repo
         .create_listing_description(
-            &state.db,
+            &mut **gen_guard.conn(),
             tenant_id,
             req.listing_id,
             user_id,
@@ -536,22 +569,26 @@ async fn generate_listing_description(
             request.id,
         )
         .await
-        .map_err(|e| {
+    {
+        Ok(d) => d,
+        Err(e) => {
+            gen_guard.release().await;
             tracing::error!("Failed to store description: {}", e);
-            (
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "INTERNAL_ERROR",
                     "Failed to store description",
                 )),
-            )
-        })?;
+            ));
+        }
+    };
 
-    // Update the generation request status
+    // Update the generation request status (best-effort).
     let _ = state
         .llm_document_repo
         .update_generation_status(
-            &state.db,
+            &mut **gen_guard.conn(),
             request.id,
             "completed",
             Some(serde_json::json!({ "description": description_text })),
@@ -561,6 +598,7 @@ async fn generate_listing_description(
             Some(latency_ms),
         )
         .await;
+    gen_guard.release().await;
 
     tracing::info!(
         "Listing description generated for listing {:?} in {} (tokens: {}, latency: {}ms)",
