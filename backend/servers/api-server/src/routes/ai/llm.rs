@@ -18,11 +18,11 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
-use db::RlsPool;
 use db::models::{
     EnhancePhotoRequest, EnhancedChatRequest, GenerateLeaseRequest,
     GenerateListingDescriptionRequest, UpdateEscalationConfig,
 };
+use db::RlsPool;
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use uuid::Uuid;
