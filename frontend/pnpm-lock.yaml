@@ -56,8 +56,8 @@ importers:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
       react-i18next:
-        specifier: ^16.5.1
-        version: 16.6.6(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
+        specifier: ^17.0.8
+        version: 17.0.8(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
       react-router-dom:
         specifier: ^6.21.0
         version: 6.30.3(react-dom@19.2.0)(react@19.2.0)
@@ -165,8 +165,8 @@ importers:
         specifier: 19.2.0
         version: 19.2.0
       react-i18next:
-        specifier: ^16.5.1
-        version: 16.6.6(i18next@25.10.10)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
+        specifier: ^17.0.8
+        version: 17.0.8(i18next@25.10.10)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
       react-native:
         specifier: 0.85.3
         version: 0.85.3(@babel/core@7.29.7)(@react-native/jest-preset@0.85.3)(@types/react@19.2.14)(react@19.2.0)
@@ -259,8 +259,8 @@ importers:
         specifier: ^7.77.0
         version: 7.77.0(react@19.2.0)
       react-i18next:
-        specifier: ^16.5.1
-        version: 16.6.6(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
+        specifier: ^17.0.8
+        version: 17.0.8(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
       react-pdf:
         specifier: ^10.4.1
         version: 10.4.1(@types/react@19.2.14)(react-dom@19.2.0)(react@19.2.0)
@@ -1547,7 +1547,6 @@ packages:
   /@babel/runtime@7.29.7:
     resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
-    dev: true
 
   /@babel/template@7.29.7:
     resolution: {integrity: sha512-puq+Gf35oI24FeN11LkoUQFqv9uwNeWpxXZi/Ji3rRIoKAzKnxRaZ+Gkj0vKS9ZCiTESfng1N9LyOyXvo+m+Gg==}
@@ -1741,6 +1740,16 @@ packages:
     dependencies:
       '@emnapi/wasi-threads': 1.2.1
       tslib: 2.8.1
+    dev: true
+    optional: true
+
+  /@emnapi/core@1.11.0:
+    resolution: {integrity: sha512-l9Oo58x0HOP5znGzVhYW9U3e5wVuA4LAZU2AGezTmkhO1CgQRFDhDg4nneHsu/t3WniXg9QrG2nIXL/ZS8ln8Q==}
+    requiresBuild: true
+    dependencies:
+      '@emnapi/wasi-threads': 1.2.2
+      tslib: 2.8.1
+    dev: false
     optional: true
 
   /@emnapi/runtime@1.10.0:
@@ -1748,6 +1757,15 @@ packages:
     requiresBuild: true
     dependencies:
       tslib: 2.8.1
+    dev: true
+    optional: true
+
+  /@emnapi/runtime@1.11.0:
+    resolution: {integrity: sha512-55coeOFKHv1ywEcUXJtWU5f+Jr/W5tZDvZig8DLKSwUN1JpROQ4rk/SNOQiFWmaR/VKF4zuFyW1B8JduOSv6Pg==}
+    requiresBuild: true
+    dependencies:
+      tslib: 2.8.1
+    dev: false
     optional: true
 
   /@emnapi/wasi-threads@1.2.1:
@@ -1755,6 +1773,15 @@ packages:
     requiresBuild: true
     dependencies:
       tslib: 2.8.1
+    dev: true
+    optional: true
+
+  /@emnapi/wasi-threads@1.2.2:
+    resolution: {integrity: sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==}
+    requiresBuild: true
+    dependencies:
+      tslib: 2.8.1
+    dev: false
     optional: true
 
   /@esbuild/aix-ppc64@0.28.0:
@@ -2769,7 +2796,7 @@ packages:
     cpu: [wasm32]
     requiresBuild: true
     dependencies:
-      '@emnapi/runtime': 1.10.0
+      '@emnapi/runtime': 1.11.0
     dev: false
     optional: true
 
@@ -3279,14 +3306,14 @@ packages:
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
     requiresBuild: true
     dependencies:
-      '@emnapi/core': 1.10.0
-      '@emnapi/runtime': 1.10.0
+      '@emnapi/core': 1.11.0
+      '@emnapi/runtime': 1.11.0
       '@tybys/wasm-util': 0.10.2
     dev: false
     optional: true
 
-  /@napi-rs/wasm-runtime@1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0):
-    resolution: {integrity: sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow==}
+  /@napi-rs/wasm-runtime@1.1.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0):
+    resolution: {integrity: sha512-AWPoBRJ9tsnVhor4sjO7rkni+7p+2IAEFj6cx06UgP10jkQHqay/36uRV/bFkgrh18D9vb4cr8Q0Pthskgzy+Q==}
     requiresBuild: true
     peerDependencies:
       '@emnapi/core': ^1.7.1
@@ -4056,7 +4083,7 @@ packages:
     dependencies:
       '@emnapi/core': 1.10.0
       '@emnapi/runtime': 1.10.0
-      '@napi-rs/wasm-runtime': 1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
+      '@napi-rs/wasm-runtime': 1.1.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
     dev: true
     optional: true
 
@@ -8043,14 +8070,14 @@ packages:
     resolution: {integrity: sha512-9GKkJURaB2iyYoEExKnedzAHzxmKtSi+k0tsZUvMoU27tBZJElchYt7JH/Ai/XzYAI9lCAaV7u5HZSI8J5Z+wQ==}
     engines: {node: '>=20.19.4'}
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       flow-enums-runtime: 0.0.6
 
   /metro-runtime@0.84.4:
     resolution: {integrity: sha512-Jibypds4g7AhzdRKY+kDoj51s5EXMwgyp5ddtlreDAsWefMdOx+agWqgm0H2XSZ/ueanHHVM89fnf5OJnlxa8Q==}
     engines: {node: ^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0}
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       flow-enums-runtime: 0.0.6
 
   /metro-source-map@0.83.7:
@@ -8945,10 +8972,10 @@ packages:
       react: 19.2.0
     dev: false
 
-  /react-i18next@16.6.6(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3):
-    resolution: {integrity: sha512-ZgL2HUoW34UKUkOV7uSQFE1CDnRPD+tCR3ywSuWH7u2iapnz86U8Bi3Vrs620qNDzCf1F47NxglCEkchCTDOHw==}
+  /react-i18next@17.0.8(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3):
+    resolution: {integrity: sha512-0ooKbGLU8JXhe1zwpQUWIeXSgLPOfwJmgheWRIUpcoA0CpyabpGhayjdG+/eA5esC1AQ8h2jWpXjJfzQzeDOCw==}
     peerDependencies:
-      i18next: '>= 25.10.9'
+      i18next: '>= 26.2.0'
       react: 19.2.0
       react-dom: '*'
       react-native: '*'
@@ -8961,7 +8988,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       html-parse-stringify: 3.0.1
       i18next: 25.10.10(typescript@5.9.3)
       react: 19.2.0
@@ -8970,10 +8997,10 @@ packages:
       use-sync-external-store: 1.6.0(react@19.2.0)
     dev: false
 
-  /react-i18next@16.6.6(i18next@25.10.10)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3):
-    resolution: {integrity: sha512-ZgL2HUoW34UKUkOV7uSQFE1CDnRPD+tCR3ywSuWH7u2iapnz86U8Bi3Vrs620qNDzCf1F47NxglCEkchCTDOHw==}
+  /react-i18next@17.0.8(i18next@25.10.10)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3):
+    resolution: {integrity: sha512-0ooKbGLU8JXhe1zwpQUWIeXSgLPOfwJmgheWRIUpcoA0CpyabpGhayjdG+/eA5esC1AQ8h2jWpXjJfzQzeDOCw==}
     peerDependencies:
-      i18next: '>= 25.10.9'
+      i18next: '>= 26.2.0'
       react: 19.2.0
       react-dom: '*'
       react-native: '*'
@@ -8986,7 +9013,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       html-parse-stringify: 3.0.1
       i18next: 25.10.10(typescript@5.9.3)
       react: 19.2.0
