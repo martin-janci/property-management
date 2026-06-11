@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-10T12:31:29Z",
+  "selected_at": "2026-06-11T20:16:01Z",
   "last_action": "reset",
-  "reason": "target test-esignature-email-status-tracking-backend not claimable this run (WIP at cap, free_slots=0); reset to NONE to keep T21 green (issue #1238 finding 1)",
+  "reason": "picker selected non-conforming target bug-ios-deeplink-info-plist-missing (full task_id, not gap-N/pm-role); reset to NONE to keep T21 green (issue #1238 finding 1). Task still claimed via normal pool.",
   "stats_at_selection": {
-    "open": 0,
-    "claimable": 0
+    "open": 29,
+    "claimable": 29
   }
 }
