@@ -3200,6 +3200,33 @@
       "created_at": "2026-06-11",
       "updated_at": "2026-06-11",
       "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1288-webhook-rls",
+      "title": "Webhook handlers RLS migration (PR #1288, PAP-170) shipped without a new regression test for repo-layer methods",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1288",
+        "PAP-170"
+      ],
+      "evidence": [
+        "PR #1288 (fix(api-server): route webhook handlers through RLS connections (PAP-170)) merged 2026-06-11T13:30:20Z",
+        "diff touches 5 files (integration.rs, rental.rs, webhook.rs, voice_webhooks.rs, scripts/rls-handler-baseline.txt) — none under *test* / *spec* / __tests__ / *_test.rs",
+        "PR body claims existing DB-backed tests exercise `update_esignature_workflow_by_external_id` but two NEW repo methods (`find_esignature_workflow_by_external_id`, `record_airbnb_webhook_event`) ship without a test diff",
+        "voice_webhook OAuth exchange/refresh now binds RLS context for the device write — no regression test pins the org-context-vs-pool behavioral change"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs",
+        "backend/crates/db/src/repositories/integration.rs",
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "created_at": "2026-06-11",
+      "updated_at": "2026-06-11",
+      "plan": null
     }
   ]
 }

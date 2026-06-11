@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-11T08:20:00Z",
-  "last_run_ms": 60000,
-  "last_pr_seen": 1271,
+  "last_run_iso": "2026-06-11T14:25:06Z",
+  "last_run_ms": 4500,
+  "last_pr_seen": 1288,
   "last_issue_seen": 1267,
-  "last_commit_sha": "9af6dce5db9838cf20ece5b889f109395f906bcd",
+  "last_commit_sha": "21ee98e123fa86dd54f468c3b05b0adca54ebc26",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -445,7 +445,8 @@
     "churn-hotspot-backend-crates-db-src-repositories-subscription-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-aml-dsa-rs",
     "code-review-mobile-native-kmp-ios-searchview-uncompilable",
-    "code-review-mobile-native-kmp-ios-deeplink-info-plist"
+    "code-review-mobile-native-kmp-ios-deeplink-info-plist",
+    "hotfix-no-test-pr-1288-webhook-rls"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -459,8 +460,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 31,
-    "vectors_created": 138,
+    "runs": 32,
+    "vectors_created": 139,
     "plans_created": 8,
     "quiet_days": 0,
     "auto_fix_count": 0

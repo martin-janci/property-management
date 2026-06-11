@@ -1,169 +1,89 @@
 {
   "date": "2026-06-11",
-  "run_iso": "2026-06-11T08:20:00Z",
-  "signals": [],
+  "run_iso": "2026-06-11T14:25:06Z",
+  "signals": [
+    {
+      "id": "hotfix-no-test-pr-1288-webhook-rls",
+      "type": "hotfix-no-test",
+      "source": "PR #1288",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1288 (fix(api-server): route webhook handlers through RLS connections, PAP-170) merged 2026-06-11T13:30:20Z; diff touches 5 files (integration.rs, rental.rs, webhook.rs, voice_webhooks.rs, scripts/rls-handler-baseline.txt), none under *test*/*spec*/__tests__/*_test.rs; PR body claims existing DB coverage for update_esignature_workflow_by_external_id but the 2 new repo methods (find_esignature_workflow_by_external_id, record_airbnb_webhook_event) and the bootstrap-then-bind RLS pattern in oauth_token_refresh are not pinned"
+    }
+  ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — no signal matched the allowlist + certainty bar this run",
+  "auto_fix_skipped_reason": "no candidate — hotfix-no-test is not in the Phase-5 allowlist; the 7 dependabot dep-update PRs (#1273-#1279) are dep updates themselves not lockfile-drift sub-shape; the 2 existing ready plans are multi-file code changes outside the allowlist",
   "rerun_context": {
-    "trigger_payload": "buffer-low: 0 truly-claimable action-list items (14 open but all archived-failed/merged); planner refill with fresh task_ids requested",
-    "previous_run_iso": "2026-06-11T04:30:00Z",
-    "elapsed_minutes_since_prior_run": 230,
+    "trigger_payload": "buffer-low: dispatcher backlog at claimable=14 (<floor 36, <half-floor 18). Please refill action-list from coverage.json partial-with-gaps stories.",
+    "previous_run_iso": "2026-06-11T08:20:00Z",
+    "elapsed_minutes_since_prior_run": 365,
     "merged_in_window": [
-      {
-        "number": 1271,
-        "title": "fix(api-server): tenant-scope registry parking_spot lookup + repair vehicle-registration by-id read (PAP-143)",
-        "merged_at": "2026-06-11T07:48:54Z",
-        "has_test_diff": true,
-        "fired_signals": []
-      }
+      { "number": 1227, "title": "fix(db): route building_certification repo through RLS-context connection (PAP-80)", "merged_at": "2026-06-11T09:47:51Z", "has_test_diff": true, "fired_signals": [] },
+      { "number": 1232, "title": "fix(db): route ai_chat repo through RLS-context connection (PAP-103)", "merged_at": "2026-06-11T09:47:54Z", "has_test_diff": true, "fired_signals": [] },
+      { "number": 1270, "title": "fix(api-server): route workflow repo through RLS-context connection (PAP-77)", "merged_at": "2026-06-11T08:55:22Z", "has_test_diff": true, "fired_signals": [] },
+      { "number": 1272, "title": "fix(api-server): cast registry enum reads + designation column on pet/vehicle/parking surface (PAP-158)", "merged_at": "2026-06-11T08:36:13Z", "has_test_diff": true, "fired_signals": [] },
+      { "number": 1280, "title": "chore(repo): cut agent token cost — trim CLAUDE.md, add repo-map + findings (PAP-161)", "merged_at": "2026-06-11T11:19:49Z", "has_test_diff": false, "fired_signals": [], "note": "docs-only, no test required" },
+      { "number": 1281, "title": "fix(api-server): close esg_reporting cross-tenant IDOR — RLS executor + org keying (PAP-139)", "merged_at": "2026-06-11T12:37:12Z", "has_test_diff": true, "fired_signals": [] },
+      { "number": 1283, "title": "perf(research): slim dispatcher/routine reads — backlog.json projection + Phase 8 factoring (PAP-163)", "merged_at": "2026-06-11T11:43:35Z", "has_test_diff": false, "fired_signals": [], "note": "research-side, no test required" },
+      { "number": 1284, "title": "perf(research): extract dispatcher merge-path subagent prompts (PAP-164)", "merged_at": "2026-06-11T12:15:20Z", "has_test_diff": false, "fired_signals": [], "note": "research-side, adds T27 dispatcher-self-test gate" },
+      { "number": 1288, "title": "fix(api-server): route webhook handlers through RLS connections (PAP-170)", "merged_at": "2026-06-11T13:30:20Z", "has_test_diff": false, "fired_signals": ["hotfix-no-test-pr-1288-webhook-rls"], "note": "PR body claims existing DB test coverage but 2 new repo methods + RLS-bootstrap pattern not pinned" }
     ],
     "opened_in_window": [
-      {
-        "number": 1270,
-        "title": "fix(api-server): route workflow repo through RLS-context connection (PAP-77)",
-        "created_at": "2026-06-11T07:06:25Z"
-      },
-      {
-        "number": 1272,
-        "title": "fix(api-server): cast registry enum reads + designation column on pet/vehicle/parking surface (PAP-158)",
-        "created_at": "2026-06-11T08:12:18Z"
-      }
+      { "number": 1273, "title": "chore(deps): bump dtolnay/rust-toolchain (actions-minor-patch)", "created_at": "2026-06-11T10:14:31Z", "author": "dependabot[bot]" },
+      { "number": 1274, "title": "chore(deps): bump the cargo-minor-patch group in /backend with 9 updates", "created_at": "2026-06-11T10:18:32Z", "author": "dependabot[bot]" },
+      { "number": 1275, "title": "chore(deps): bump the npm-minor-patch group across 1 directory with 16 updates", "created_at": "2026-06-11T10:21:00Z", "author": "dependabot[bot]" },
+      { "number": 1276, "title": "chore(deps): bump react-i18next from 16.6.6 to 17.0.8 in /frontend", "created_at": "2026-06-11T10:21:24Z", "author": "dependabot[bot]" },
+      { "number": 1277, "title": "chore(deps): bump expo-device from 55.0.16 to 56.0.4 in /frontend", "created_at": "2026-06-11T10:21:39Z", "author": "dependabot[bot]" },
+      { "number": 1278, "title": "chore(deps): bump expo from 55.0.25 to 56.0.11 in /frontend", "created_at": "2026-06-11T10:22:01Z", "author": "dependabot[bot]" },
+      { "number": 1279, "title": "chore(deps): bump expo-status-bar from 55.0.6 to 56.0.4 in /frontend", "created_at": "2026-06-11T10:22:15Z", "author": "dependabot[bot]" },
+      { "number": 1282, "title": "docs(research): correct RTK coverage finding (PAP-162)", "created_at": "2026-06-11T11:28:00Z", "author": "martin-janci" },
+      { "number": 1285, "title": "fix(api-server): close rental OAuth callback cross-tenant IDOR (PAP-141)", "created_at": "2026-06-11T12:31:00Z", "author": "martin-janci" },
+      { "number": 1286, "title": "fix(api-server): route ai/llm.rs post-LLM writes through RLS connection (PAP-150)", "created_at": "2026-06-11T13:03:00Z", "author": "martin-janci" },
+      { "number": 1287, "title": "fix(api-server): route ai/sessions + calendar sync + public plans through RLS guard (PAP-169)", "created_at": "2026-06-11T13:11:00Z", "author": "martin-janci" },
+      { "number": 1289, "title": "fix(api-server): route api_ecosystem.rs catalog handlers off the raw pool (PAP-167)", "created_at": "2026-06-11T13:36:00Z", "author": "martin-janci" },
+      { "number": 1290, "title": "fix(api-server): close marketplace provider-side IDOR + admin gaps (PAP-140)", "created_at": "2026-06-11T13:46:00Z", "author": "martin-janci" }
     ],
-    "truly_claimable_check": {
-      "action_list_open_items": 15,
-      "note": "post-GC1-drain count; trigger payload reported 14 — diff is one row landing in the window between dispatcher snapshot and routine read. All 15 stems collide with archive-terminal rows (`done`/`merged`). Truly-claimable = 0. Routine cannot fix this — the upstream action-list classification needs a delivery-PM rebuild pass."
+    "buffer_low_analysis": {
+      "directive_evaluable": false,
+      "directive_block_reasons": [
+        "coverage.json has no 'partial-with-gaps' status (statuses are 'done'/'partial'; 20 partial stories exist)",
+        "routine-prompt.md Phase 1.6 explicitly forbids running ppt-project-management skill in 'scan' mode in cloud sessions",
+        "the existing 15 open action-list rows are already sourced from 'dispatcher-tier1-refill-coverage' — adding more from coverage requires fresh gap discovery (local scan)"
+      ],
+      "claimable_root_cause": "15 open action-list rows minus 1 in-flight (refactor-churn-hotspot-mobile-announcements-test, PR #1165 in 'review' state, MANUAL-REBASE-blocked since 2026-06-09 — mergeable=dirty, MCP update-branch 422, sandbox git push 403) = 14 claimable",
+      "previous_brief_diagnosis_corrected": "the 08:20Z brief claimed 'all 15 stems collide with archive-terminal rows' — verified this run: zero collisions (all 15 open stems are not in action-list-archive.json at any status). Real cause is normal buffer drain + one stuck assignment.",
+      "next_action_recommended": "local user runs /ppt-project-management scan to discover new coverage gaps; in parallel, manually rebase PR #1165 from a local checkout to unblock the announcements assignment"
     },
     "phases_run": {
-      "phase_1": "ran — 1 merged PR, 2 open PRs, 0 new issues, 0 new churn signals (incremental window too small for hotspot bar)",
-      "phase_1_5": "skipped — same-day rerun, no new code churn surface to scan; review_cursor unchanged",
-      "phase_1_6": "skipped — same-day rerun (full PM rotation already serviced; pm_cursor unchanged at next_index=3 = pm-qa; coverage_cursor unchanged at next_index=10)",
-      "phase_2": "ran — no backlog deltas (no new signals, no decays)",
-      "phase_3": "ran — no new promotions (2 existing ready plans carry forward)",
+      "phase_1": "ran — 9 merged PRs, 13 newly-opened PRs, 0 new issues, 1 hotfix-no-test signal fired (PR #1288 PAP-170)",
+      "phase_1_5": "skipped — same-day rerun (api-handlers reviewed 2026-06-10; ppt-web-ui+reality-server reviewed earlier today; 6h churn window too small)",
+      "phase_1_6": "skipped — same-day rerun (full PM rotation already serviced; pm_cursor unchanged at next_index=3 = pm-qa; coverage_cursor unchanged at next_index=10); buffer-low directive not executable in cloud routine (see buffer_low_analysis)",
+      "phase_2": "ran — 1 new vector added (test-gap-hotfix-no-test-pr-1288-webhook-rls, score 2, vector test-gap); 0 decays (oldest open is 2026-06-01, 10d < 14d window); 0 resolutions (no open backlog item references PAP-{77,80,103,139,150,158,161,163,164,170})",
+      "phase_3": "ran — no new promotions (new vector at score 2 sits below score-3 readiness gate; 2 existing ready plans carry forward intact)",
       "phase_3_5": "n/a — no new plans this run",
-      "phase_4": "ran — wrote brief, signals, state",
-      "phase_5": "ran — no candidate (no signal met allowlist + certainty bar)",
+      "phase_4": "ran — wrote brief, signals, state; regenerated backlog.md + IDEAS_TRIAGE.md with new timestamp + new vector row",
+      "phase_5": "ran — no candidate (hotfix-no-test not in allowlist; no other signal met allowlist + certainty bar)",
       "phase_6": "ran — stage, gate, commit, push"
     }
   },
   "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f .research/briefs/2026-06-11.md && head -1 .research/briefs/2026-06-11.md | grep -q '^# 2026-06-11$'",
-      "observed": "exit 0",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq --slurpfile prev HEAD:.research/state.json (compare cursors)",
-      "observed": "last_pr_seen 1269 → 1271; last_commit_sha 8930136 → 9af6dce5db9838cf20ece5b889f109395f906bcd; stats.runs 30 → 31 — all three advanced",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "no signals emitted this run; trivially satisfied",
-      "observed": "signals[] empty; no re-emit",
-      "expected": "true"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json && no open items past 14-day decay window",
-      "observed": "no scores >8; oldest open item is 2026-06-01 (10 days, within 14-day window)",
-      "expected": "true"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "no new plans this run; trivially satisfied",
-      "observed": "0 new plans",
-      "expected": "true"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '.md$'",
-      "observed": "0 ≤ 2",
-      "expected": "≤2"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
-      "observed": "0 (only .research/ paths staged)",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "no secrets / private hostnames in staged diff (briefs/, signals/, state.json, backlog.* are clean)",
-      "observed": "0 matches",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "diff -q .research/backlog.md (regenerated view from backlog.json with new timestamp)",
-      "observed": "matches — backlog.json content unchanged this run, only timestamp on rendered view updated",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "brief 'Phases that failed' line shows 'none'; cursors advanced as expected",
-      "observed": "no failed phases; all advances consistent",
-      "expected": "true"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "every prior-run plan slug still in plans/ or plans/_archive/",
-      "observed": "all 5 active plans + 6 archive plans intact",
-      "expected": "true"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "git ls-files .research/plans/_archive/ count >= git ls-tree HEAD count",
-      "observed": "6 == 6 (no archive change this run)",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "diff -q .research/IDEAS_TRIAGE.md (regenerated view from backlog.json vector==triage with new timestamp)",
-      "observed": "matches — triage rows unchanged, only timestamp on rendered view updated",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto_fix_actions length checks; idempotency vs auto_fix_history",
-      "observed": "auto_fix_actions=[] (no candidate); kill switch not set; no idempotency violation",
-      "expected": "true"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "Phase 1.6 skipped — gate is no-op; coverage_cursor.next_index (10) ∈ [0, 13), pm_cursor.next_index (3) ∈ [0,7]",
-      "observed": "both cursors valid; not advanced since Phase 1.6 didn't run",
-      "expected": "true"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "git diff --cached for Telegram token literals",
-      "observed": "0 matches",
-      "expected": "0"
-    }
+    { "goal": "G1",  "passed": true, "command": "test -f .research/briefs/2026-06-11.md && head -1 .research/briefs/2026-06-11.md | grep -q '^# 2026-06-11$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2",  "passed": true, "command": "jq --slurpfile prev HEAD:.research/state.json (compare cursors)", "observed": "last_pr_seen 1271 → 1288; last_commit_sha 9af6dce → 21ee98e; last_run_iso 08:20Z → 14:25Z; stats.runs 31 → 32; seen_signals length 192 → 193 — all five advanced", "expected": "true" },
+    { "goal": "G3",  "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' .research/backlog.json", "observed": "true (142 items, 142 unique ids)", "expected": "true" },
+    { "goal": "G4",  "passed": true, "command": "no re-emit of cumulative type with score_delta != 0 for any prior-run signal id", "observed": "1 new signal id (hotfix-no-test-pr-1288-webhook-rls), not present in prior seen_signals", "expected": "true" },
+    { "goal": "G5",  "passed": true, "command": "jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json && no open items past 14-day decay window", "observed": "no scores >8 (max is 6); oldest open item is 2026-06-01 (10 days, within 14-day window)", "expected": "true" },
+    { "goal": "G6",  "passed": true, "command": "no new plans this run; trivially satisfied", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G7",  "passed": true, "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '.md$'", "observed": "0 ≤ 2", "expected": "≤2" },
+    { "goal": "G8",  "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0 (only .research/ paths staged)", "expected": "0" },
+    { "goal": "G9",  "passed": true, "command": "no secrets / private hostnames in staged diff (briefs/, signals/, state.json, backlog.* are clean)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q .research/backlog.md /tmp/backlog.regen.md (regenerated view from backlog.json with new timestamp + new vector row)", "observed": "byte-identical match after regen (composite-key stable sort verified)", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' line shows 'none'; cursors advanced as expected", "observed": "no failed phases; all advances consistent", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan slug still in plans/ or plans/_archive/", "observed": "all 5 active plans + 6 archive plans intact", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "git ls-files .research/plans/_archive/ count >= git ls-tree HEAD count", "observed": "6 == 6 (no archive change this run)", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md (regenerated view from backlog.json vector==triage with new timestamp)", "observed": "byte-identical match after regen — triage rows unchanged; only timestamp updated", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions length checks; idempotency vs auto_fix_history", "observed": "auto_fix_actions=[] (no candidate); kill switch not set; no idempotency violation", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped — gate is no-op; coverage_cursor.next_index (10) ∈ [0, 13), pm_cursor.next_index (3) ∈ [0,7]", "observed": "both cursors valid; not advanced since Phase 1.6 didn't run", "expected": "true" },
+    { "goal": "G17", "passed": true, "command": "git diff --cached for Telegram token literals", "observed": "0 matches", "expected": "0" }
   ]
 }
