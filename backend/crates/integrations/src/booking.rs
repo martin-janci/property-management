@@ -2279,7 +2279,7 @@ mod tests {
         assert_eq!(cfg.delay_for_attempt(2), 400); // 100 * 2^2
         assert_eq!(cfg.delay_for_attempt(3), 800); // 100 * 2^3
         assert_eq!(cfg.delay_for_attempt(4), 1_000); // 1600 capped to 1000
-        // Large attempt counts must not overflow.
+                                                     // Large attempt counts must not overflow.
         assert_eq!(cfg.delay_for_attempt(64), 1_000);
     }
 
