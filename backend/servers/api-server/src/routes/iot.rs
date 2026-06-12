@@ -280,7 +280,12 @@ async fn add_batch_readings(
         .sensor_repo
         .create_batch_readings(&mut **rls.conn(), id, req.readings)
         .await
-        .map(|count| (StatusCode::CREATED, Json(serde_json::json!({ "inserted": count }))))
+        .map(|count| {
+            (
+                StatusCode::CREATED,
+                Json(serde_json::json!({ "inserted": count })),
+            )
+        })
         .map_err(|e| db_error("Failed to add batch readings", e));
     rls.release().await;
     out
@@ -514,7 +519,11 @@ async fn list_threshold_templates(
     let org_id = rls.tenant_id();
     let out = state
         .sensor_repo
-        .list_threshold_templates(&mut **rls.conn(), Some(org_id), query.sensor_type.as_deref())
+        .list_threshold_templates(
+            &mut **rls.conn(),
+            Some(org_id),
+            query.sensor_type.as_deref(),
+        )
         .await
         .map(|templates| Json(serde_json::json!({ "templates": templates })))
         .map_err(|e| db_error("Failed to list templates", e));
