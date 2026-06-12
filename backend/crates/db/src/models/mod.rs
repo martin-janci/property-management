@@ -21,6 +21,7 @@ pub mod messaging;
 pub mod meter;
 pub mod notification_preference;
 pub mod oauth;
+pub mod idoklad;
 pub mod organization;
 pub mod organization_member;
 pub mod password_reset;
