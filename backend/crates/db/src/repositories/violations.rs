@@ -120,31 +120,33 @@ impl ViolationRepository {
         }
     }
 
-    /// Update a community rule.
+    /// Update a community rule (tenant-scoped).
     pub async fn update_rule(
         &self,
         rule_id: Uuid,
+        org_id: Uuid,
         req: UpdateCommunityRule,
     ) -> Result<CommunityRule, sqlx::Error> {
         sqlx::query_as::<_, CommunityRule>(
             r#"
             UPDATE community_rules SET
-                title = COALESCE($2, title),
-                description = COALESCE($3, description),
-                first_offense_fine = COALESCE($4, first_offense_fine),
-                second_offense_fine = COALESCE($5, second_offense_fine),
-                third_offense_fine = COALESCE($6, third_offense_fine),
-                max_fine = COALESCE($7, max_fine),
-                fine_escalation_days = COALESCE($8, fine_escalation_days),
-                expiry_date = COALESCE($9, expiry_date),
-                is_active = COALESCE($10, is_active),
-                requires_board_approval = COALESCE($11, requires_board_approval),
+                title = COALESCE($3, title),
+                description = COALESCE($4, description),
+                first_offense_fine = COALESCE($5, first_offense_fine),
+                second_offense_fine = COALESCE($6, second_offense_fine),
+                third_offense_fine = COALESCE($7, third_offense_fine),
+                max_fine = COALESCE($8, max_fine),
+                fine_escalation_days = COALESCE($9, fine_escalation_days),
+                expiry_date = COALESCE($10, expiry_date),
+                is_active = COALESCE($11, is_active),
+                requires_board_approval = COALESCE($12, requires_board_approval),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(rule_id)
+        .bind(org_id)
         .bind(&req.title)
         .bind(&req.description)
         .bind(req.first_offense_fine)
@@ -159,12 +161,14 @@ impl ViolationRepository {
         .await
     }
 
-    /// Delete a community rule.
-    pub async fn delete_rule(&self, rule_id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM community_rules WHERE id = $1")
-            .bind(rule_id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete a community rule (tenant-scoped).
+    pub async fn delete_rule(&self, rule_id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+        let result =
+            sqlx::query("DELETE FROM community_rules WHERE id = $1 AND organization_id = $2")
+                .bind(rule_id)
+                .bind(org_id)
+                .execute(&self.pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -336,10 +340,11 @@ impl ViolationRepository {
         .await
     }
 
-    /// Update a violation.
+    /// Update a violation (tenant-scoped).
     pub async fn update_violation(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
         req: UpdateViolation,
     ) -> Result<Violation, sqlx::Error> {
         let now = if req.status == Some(ViolationStatus::Resolved) {
@@ -351,18 +356,19 @@ impl ViolationRepository {
         sqlx::query_as::<_, Violation>(
             r#"
             UPDATE violations SET
-                severity = COALESCE($2, severity),
-                status = COALESCE($3, status),
-                assigned_to = COALESCE($4, assigned_to),
-                resolution_notes = COALESCE($5, resolution_notes),
-                resolution_type = COALESCE($6, resolution_type),
-                resolved_at = COALESCE($7, resolved_at),
+                severity = COALESCE($3, severity),
+                status = COALESCE($4, status),
+                assigned_to = COALESCE($5, assigned_to),
+                resolution_notes = COALESCE($6, resolution_notes),
+                resolution_type = COALESCE($7, resolution_type),
+                resolved_at = COALESCE($8, resolved_at),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(violation_id)
+        .bind(org_id)
         .bind(req.severity)
         .bind(req.status)
         .bind(req.assigned_to)
@@ -373,24 +379,26 @@ impl ViolationRepository {
         .await
     }
 
-    /// Assign a violation to staff.
+    /// Assign a violation to staff (tenant-scoped).
     pub async fn assign_violation(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
         assigned_to: Uuid,
     ) -> Result<Violation, sqlx::Error> {
         sqlx::query_as::<_, Violation>(
             r#"
             UPDATE violations SET
-                assigned_to = $2,
+                assigned_to = $3,
                 status = CASE WHEN status = 'reported' THEN 'under_review' ELSE status END,
                 reviewed_at = CASE WHEN reviewed_at IS NULL THEN NOW() ELSE reviewed_at END,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(violation_id)
+        .bind(org_id)
         .bind(assigned_to)
         .fetch_one(&self.pool)
         .await
@@ -442,12 +450,26 @@ impl ViolationRepository {
         .await
     }
 
-    /// Delete evidence.
-    pub async fn delete_evidence(&self, evidence_id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM violation_evidence WHERE id = $1")
-            .bind(evidence_id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete evidence (tenant-scoped via parent violation).
+    pub async fn delete_evidence(
+        &self,
+        evidence_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM violation_evidence ve
+            WHERE ve.id = $1
+              AND EXISTS (
+                  SELECT 1 FROM violations v
+                  WHERE v.id = ve.violation_id AND v.organization_id = $2
+              )
+            "#,
+        )
+        .bind(evidence_id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -537,25 +559,27 @@ impl ViolationRepository {
         .await
     }
 
-    /// Update an enforcement action.
+    /// Update an enforcement action (tenant-scoped).
     pub async fn update_enforcement_action(
         &self,
         action_id: Uuid,
+        org_id: Uuid,
         req: UpdateEnforcementAction,
     ) -> Result<EnforcementAction, sqlx::Error> {
         sqlx::query_as::<_, EnforcementAction>(
             r#"
             UPDATE enforcement_actions SET
-                status = COALESCE($2, status),
-                notice_sent_at = COALESCE($3, notice_sent_at),
-                notice_method = COALESCE($4, notice_method),
-                notes = COALESCE($5, notes),
+                status = COALESCE($3, status),
+                notice_sent_at = COALESCE($4, notice_sent_at),
+                notice_method = COALESCE($5, notice_method),
+                notes = COALESCE($6, notes),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(action_id)
+        .bind(org_id)
         .bind(req.status)
         .bind(req.notice_sent_at)
         .bind(&req.notice_method)
@@ -564,10 +588,11 @@ impl ViolationRepository {
         .await
     }
 
-    /// Mark enforcement action as sent.
+    /// Mark enforcement action as sent (tenant-scoped).
     pub async fn mark_action_sent(
         &self,
         action_id: Uuid,
+        org_id: Uuid,
         method: &str,
     ) -> Result<EnforcementAction, sqlx::Error> {
         sqlx::query_as::<_, EnforcementAction>(
@@ -575,13 +600,14 @@ impl ViolationRepository {
             UPDATE enforcement_actions SET
                 status = 'sent',
                 notice_sent_at = NOW(),
-                notice_method = $2,
+                notice_method = $3,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(action_id)
+        .bind(org_id)
         .bind(method)
         .fetch_one(&self.pool)
         .await
@@ -646,17 +672,6 @@ impl ViolationRepository {
         .await
     }
 
-    /// Get an appeal by ID.
-    pub async fn get_appeal(
-        &self,
-        appeal_id: Uuid,
-    ) -> Result<Option<ViolationAppeal>, sqlx::Error> {
-        sqlx::query_as::<_, ViolationAppeal>("SELECT * FROM violation_appeals WHERE id = $1")
-            .bind(appeal_id)
-            .fetch_optional(&self.pool)
-            .await
-    }
-
     /// Get a single appeal scoped to an organization (tenant-safe read).
     pub async fn get_appeal_for_org(
         &self,
@@ -700,10 +715,11 @@ impl ViolationRepository {
         .await
     }
 
-    /// Update an appeal.
+    /// Update an appeal (tenant-scoped).
     pub async fn update_appeal(
         &self,
         appeal_id: Uuid,
+        org_id: Uuid,
         req: UpdateViolationAppeal,
         decided_by: Option<Uuid>,
     ) -> Result<ViolationAppeal, sqlx::Error> {
@@ -716,20 +732,21 @@ impl ViolationRepository {
         sqlx::query_as::<_, ViolationAppeal>(
             r#"
             UPDATE violation_appeals SET
-                status = COALESCE($2, status),
-                hearing_date = COALESCE($3, hearing_date),
-                hearing_location = COALESCE($4, hearing_location),
-                hearing_notes = COALESCE($5, hearing_notes),
-                decision = COALESCE($6, decision),
-                decision_date = COALESCE($7, decision_date),
-                decided_by = COALESCE($8, decided_by),
-                fine_adjustment = COALESCE($9, fine_adjustment),
+                status = COALESCE($3, status),
+                hearing_date = COALESCE($4, hearing_date),
+                hearing_location = COALESCE($5, hearing_location),
+                hearing_notes = COALESCE($6, hearing_notes),
+                decision = COALESCE($7, decision),
+                decision_date = COALESCE($8, decision_date),
+                decided_by = COALESCE($9, decided_by),
+                fine_adjustment = COALESCE($10, fine_adjustment),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(appeal_id)
+        .bind(org_id)
         .bind(req.status)
         .bind(req.hearing_date)
         .bind(&req.hearing_location)
@@ -742,10 +759,13 @@ impl ViolationRepository {
         .await
     }
 
-    /// Decide on an appeal.
+    /// Decide on an appeal (tenant-scoped). The lookup and every cascade write
+    /// are keyed by `org_id` so a caller cannot decide another tenant's appeal
+    /// or mutate its violation / enforcement-action records.
     pub async fn decide_appeal(
         &self,
         appeal_id: Uuid,
+        org_id: Uuid,
         approved: bool,
         decision: &str,
         fine_adjustment: Option<Decimal>,
@@ -757,25 +777,27 @@ impl ViolationRepository {
             AppealStatus::Denied
         };
 
-        // Get the appeal to update related records
+        // Get the appeal (org-scoped) to update related records
         let appeal = self
-            .get_appeal(appeal_id)
+            .get_appeal_for_org(appeal_id, org_id)
             .await?
             .ok_or(sqlx::Error::RowNotFound)?;
 
         // If approved, update violation status
         if approved {
-            sqlx::query("UPDATE violations SET status = 'dismissed', resolution_notes = $2, updated_at = NOW() WHERE id = $1")
+            sqlx::query("UPDATE violations SET status = 'dismissed', resolution_notes = $2, updated_at = NOW() WHERE id = $1 AND organization_id = $3")
                 .bind(appeal.violation_id)
                 .bind(format!("Appeal approved: {}", decision))
+                .bind(org_id)
                 .execute(&self.pool)
                 .await?;
         } else {
             // If denied, restore violation to confirmed
             sqlx::query(
-                "UPDATE violations SET status = 'confirmed', updated_at = NOW() WHERE id = $1",
+                "UPDATE violations SET status = 'confirmed', updated_at = NOW() WHERE id = $1 AND organization_id = $2",
             )
             .bind(appeal.violation_id)
+            .bind(org_id)
             .execute(&self.pool)
             .await?;
         }
@@ -784,10 +806,11 @@ impl ViolationRepository {
         if let (Some(action_id), Some(adjustment)) = (appeal.enforcement_action_id, fine_adjustment)
         {
             sqlx::query(
-                "UPDATE enforcement_actions SET fine_amount = GREATEST(0, fine_amount - $2), updated_at = NOW() WHERE id = $1",
+                "UPDATE enforcement_actions SET fine_amount = GREATEST(0, fine_amount - $2), updated_at = NOW() WHERE id = $1 AND organization_id = $3",
             )
             .bind(action_id)
             .bind(adjustment)
+            .bind(org_id)
             .execute(&self.pool)
             .await?;
         }
@@ -795,17 +818,18 @@ impl ViolationRepository {
         sqlx::query_as::<_, ViolationAppeal>(
             r#"
             UPDATE violation_appeals SET
-                status = $2,
-                decision = $3,
+                status = $3,
+                decision = $4,
                 decision_date = NOW(),
-                decided_by = $4,
-                fine_adjustment = $5,
+                decided_by = $5,
+                fine_adjustment = $6,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(appeal_id)
+        .bind(org_id)
         .bind(status)
         .bind(decision)
         .bind(decided_by)
@@ -876,6 +900,19 @@ impl ViolationRepository {
         req: RecordFinePayment,
         recorded_by: Uuid,
     ) -> Result<FinePayment, sqlx::Error> {
+        // Verify the enforcement action belongs to this org before recording a
+        // payment against it (prevents cross-tenant payment injection).
+        let owns_action: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM enforcement_actions WHERE id = $1 AND organization_id = $2)",
+        )
+        .bind(action_id)
+        .bind(org_id)
+        .fetch_one(&self.pool)
+        .await?;
+        if !owns_action {
+            return Err(sqlx::Error::RowNotFound);
+        }
+
         // Record the payment
         let payment = sqlx::query_as::<_, FinePayment>(
             r#"
@@ -899,7 +936,7 @@ impl ViolationRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        // Update enforcement action paid amount
+        // Update enforcement action paid amount (tenant-scoped)
         sqlx::query(
             r#"
             UPDATE enforcement_actions SET
@@ -907,11 +944,12 @@ impl ViolationRepository {
                 paid_at = CASE WHEN COALESCE(paid_amount, 0) + $2 >= fine_amount THEN NOW() ELSE paid_at END,
                 status = CASE WHEN COALESCE(paid_amount, 0) + $2 >= fine_amount THEN 'paid' ELSE status END,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $3
             "#,
         )
         .bind(action_id)
         .bind(req.amount)
+        .bind(org_id)
         .execute(&self.pool)
         .await?;
 
