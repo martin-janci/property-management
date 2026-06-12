@@ -2422,6 +2422,61 @@ impl RentalRepository {
         Ok(conn)
     }
 
+    /// Create or update a Booking.com OAuth connection (Coverage 83-2).
+    ///
+    /// Mirrors [`Self::upsert_airbnb_connection`] but with `platform =
+    /// 'booking'`.  Tokens are expected to be already encrypted by the caller.
+    pub async fn upsert_booking_oauth_connection(
+        &self,
+        org_id: Uuid,
+        unit_id: Option<Uuid>,
+        access_token: &str,
+        refresh_token: Option<&str>,
+        expires_at: Option<chrono::DateTime<Utc>>,
+        external_property_id: Option<&str>,
+    ) -> Result<RentalPlatformConnection, SqlxError> {
+        let effective_unit_id = match unit_id {
+            Some(id) => id,
+            None => {
+                let existing = self.find_booking_connection_by_org(org_id).await?;
+                existing.map(|c| c.unit_id).unwrap_or_else(Uuid::nil)
+            }
+        };
+
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            r#"
+            INSERT INTO rental_platform_connections (
+                organization_id, unit_id, platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, is_active
+            )
+            VALUES ($1, $2, 'booking', $3, $4, $5, $3, $4, $6, true)
+            ON CONFLICT (unit_id, platform) DO UPDATE SET
+                access_token             = $3,
+                refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
+                encrypted_token          = $3,
+                encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
+                token_expires_at         = $5,
+                external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
+                is_active                = true,
+                sync_error               = NULL,
+                updated_at               = NOW()
+            RETURNING *
+            "#,
+        )
+        .bind(org_id)
+        .bind(effective_unit_id)
+        .bind(access_token)
+        .bind(refresh_token)
+        .bind(expires_at)
+        .bind(external_property_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(conn)
+    }
+
     /// Store listing ID mapping for Airbnb connection.
     pub async fn update_airbnb_listing_mapping(
         &self,
