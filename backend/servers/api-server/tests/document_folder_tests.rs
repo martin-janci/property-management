@@ -47,24 +47,37 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 
 async fn seed_org_f(pool: &PgPool, tag: &str) -> Uuid {
+    // Embed a UUID fragment so slug/contact_email are globally unique within the
+    // test run. Without this, parallel `#[sqlx::test]` workers that happen to
+    // share the same Postgres instance (or a reused template DB) collide on the
+    // organizations UNIQUE(slug) and UNIQUE(contact_email) constraints, causing
+    // spurious test failures. Pattern mirrors common::seed_org.
+    let uid = Uuid::new_v4();
     sqlx::query_scalar::<_, Uuid>(
         "INSERT INTO organizations (name, slug, contact_email, status) \
          VALUES ($1,$2,$3,'active') RETURNING id",
     )
     .bind(format!("FolderTest {tag}"))
-    .bind(format!("folder-test-{tag}"))
-    .bind(format!("{tag}@folder-test.example"))
+    .bind(format!("folder-test-{tag}-{uid}"))
+    .bind(format!("{tag}-{uid}@folder-test.example"))
     .fetch_one(pool)
     .await
     .expect("seed_org_f")
 }
 
-async fn seed_user_f(pool: &PgPool, email: &str) -> Uuid {
+/// Seed a user with a unique email derived from `tag` + a UUID fragment.
+///
+/// Using hardcoded email strings caused spurious UNIQUE-constraint panics when
+/// the same test binary was re-run against a non-ephemeral Postgres (or when the
+/// test database was not properly dropped after a failed run). UUID-suffixed
+/// addresses guarantee per-invocation uniqueness regardless of teardown state.
+async fn seed_user_f(pool: &PgPool, tag: &str) -> Uuid {
+    let uid = Uuid::new_v4();
     sqlx::query_scalar::<_, Uuid>(
         "INSERT INTO users (email, password_hash, name, status, email_verified_at) \
          VALUES ($1,'test_hash','FolderTest User','active',NOW()) RETURNING id",
     )
-    .bind(email)
+    .bind(format!("{tag}-{uid}@folder-test.example"))
     .fetch_one(pool)
     .await
     .expect("seed_user_f")
@@ -407,7 +420,7 @@ async fn test_cross_org_folder_idor_is_rejected(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_a = seed_org_f(&pool, "idor-a").await;
     let org_b = seed_org_f(&pool, "idor-b").await;
-    let user_a = seed_user_f(&pool, "idor-user@folder-test.example").await;
+    let user_a = seed_user_f(&pool, "idor-a-owner").await;
     let _ = seed_folder_f(&pool, org_a, None, "OrgA Folder", user_a).await;
 
     let count_before: i64 =
@@ -480,11 +493,11 @@ async fn test_cross_org_folder_idor_authenticated_get_returns_404(pool: PgPool) 
     let org_b = seed_org_f(&pool, "idor-auth-get-b").await;
 
     // Seed an Org A user + folder (the IDOR target).
-    let user_a = seed_user_f(&pool, "owner-get@folder-test.example").await;
+    let user_a = seed_user_f(&pool, "idor-auth-get-a-owner").await;
     let folder_in_a = seed_folder_f(&pool, org_a, None, "OrgA Folder", user_a).await;
 
     // Attacker: a real user with a Manager membership in Org B.
-    let attacker = seed_user_f(&pool, "attacker-get@folder-test.example").await;
+    let attacker = seed_user_f(&pool, "idor-auth-get-b-attacker").await;
     seed_member_f(&pool, org_b, attacker, "manager").await;
     let token = mint_jwt_with_role(attacker, "manager");
 
@@ -532,10 +545,10 @@ async fn test_cross_org_folder_idor_authenticated_update_returns_404(pool: PgPoo
     let org_a = seed_org_f(&pool, "idor-auth-put-a").await;
     let org_b = seed_org_f(&pool, "idor-auth-put-b").await;
 
-    let user_a = seed_user_f(&pool, "owner-put@folder-test.example").await;
+    let user_a = seed_user_f(&pool, "idor-auth-put-a-owner").await;
     let folder_in_a = seed_folder_f(&pool, org_a, None, "OrgA Original", user_a).await;
 
-    let attacker = seed_user_f(&pool, "attacker-put@folder-test.example").await;
+    let attacker = seed_user_f(&pool, "idor-auth-put-b-attacker").await;
     seed_member_f(&pool, org_b, attacker, "manager").await;
     let token = mint_jwt_with_role(attacker, "manager");
 
@@ -581,10 +594,10 @@ async fn test_cross_org_folder_idor_authenticated_delete_returns_404(pool: PgPoo
     let org_a = seed_org_f(&pool, "idor-auth-del-a").await;
     let org_b = seed_org_f(&pool, "idor-auth-del-b").await;
 
-    let user_a = seed_user_f(&pool, "owner-del@folder-test.example").await;
+    let user_a = seed_user_f(&pool, "idor-auth-del-a-owner").await;
     let folder_in_a = seed_folder_f(&pool, org_a, None, "OrgA Survivor", user_a).await;
 
-    let attacker = seed_user_f(&pool, "attacker-del@folder-test.example").await;
+    let attacker = seed_user_f(&pool, "idor-auth-del-b-attacker").await;
     seed_member_f(&pool, org_b, attacker, "manager").await;
     let token = mint_jwt_with_role(attacker, "manager");
 
@@ -639,7 +652,7 @@ async fn test_cross_org_folder_idor_authenticated_delete_returns_404(pool: PgPoo
 async fn test_folder_depth_limit_returns_bad_request(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "depth-limit").await;
-    let user_id = seed_user_f(&pool, "depth-mgr@folder-test.example").await;
+    let user_id = seed_user_f(&pool, "depth-limit-mgr").await;
     seed_member_f(&pool, org_id, user_id, "manager").await;
 
     // Seed levels 1-5 directly (bypasses HTTP; trigger fires at INSERT).
@@ -775,7 +788,7 @@ async fn test_folder_id_fk_constraint_exists(pool: PgPool) {
 async fn test_create_folder_manager_succeeds(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "create-ok").await;
-    let user_id = seed_user_f(&pool, "create-mgr@folder-test.example").await;
+    let user_id = seed_user_f(&pool, "create-ok-mgr").await;
     seed_member_f(&pool, org_id, user_id, "manager").await;
     let token = mint_jwt_with_role(user_id, "manager");
 
@@ -834,7 +847,7 @@ async fn test_create_folder_manager_succeeds(pool: PgPool) {
 async fn test_move_document_into_folder_succeeds(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "move-ok").await;
-    let user_id = seed_user_f(&pool, "move-mgr@folder-test.example").await;
+    let user_id = seed_user_f(&pool, "move-ok-mgr").await;
     seed_member_f(&pool, org_id, user_id, "manager").await;
     let token = mint_jwt_with_role(user_id, "manager");
 
@@ -884,7 +897,7 @@ async fn test_move_document_into_folder_succeeds(pool: PgPool) {
 async fn test_delete_folder_detaches_documents_to_root(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "del-detach").await;
-    let user_id = seed_user_f(&pool, "del-mgr@folder-test.example").await;
+    let user_id = seed_user_f(&pool, "del-detach-mgr").await;
     seed_member_f(&pool, org_id, user_id, "manager").await;
     let token = mint_jwt_with_role(user_id, "manager");
 
@@ -947,7 +960,7 @@ async fn test_delete_folder_detaches_documents_to_root(pool: PgPool) {
 async fn test_update_folder_into_descendant_is_rejected(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "circular").await;
-    let user_id = seed_user_f(&pool, "circ-mgr@folder-test.example").await;
+    let user_id = seed_user_f(&pool, "circular-mgr").await;
     seed_member_f(&pool, org_id, user_id, "manager").await;
     let token = mint_jwt_with_role(user_id, "manager");
 

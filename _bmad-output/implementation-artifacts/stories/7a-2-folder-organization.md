@@ -1,12 +1,14 @@
 # Story 7A.2: Folder Organization
 
-Status: done
+Status: review
 
-> Backend verified 2026-06-12 (coverage 7a-2). All three acceptance criteria are
-> satisfied by the api-server implementation; folder integration tests were
-> rescued from a never-compiled test subtree and extended with positive
-> happy-path coverage. See **Verification Notes (Backend)** below. The mobile
-> slice is tracked separately and is out of scope for this verification.
+> Backend verification in progress (PR #1316). The api-server implementation
+> satisfies all three acceptance criteria. The integration test binary was
+> rescued from a never-compiled subtree and extended with positive happy-path
+> coverage; however the CI `test` job was red (FK teardown ordering / seed
+> isolation defect in the new test helpers). A fix was applied in PR #1316
+> round 1 (UUID-randomised seed helpers). Status will advance to `done` once
+> CI is green.
 
 ## Story
 
@@ -193,10 +195,16 @@ delete-all semantics.
   (AC-3), and `test_update_folder_into_descendant_is_rejected` (hierarchy-cycle guard).
 - Verify: `cargo test -p api-server --test document_folder_tests --no-run` → compiles (exit 0);
   `cargo fmt --all` clean. (Runtime execution requires a live Postgres via `#[sqlx::test]`.)
+- **Fix applied (round 1):** `seed_user_f` and `seed_org_f` helpers now embed `Uuid::new_v4()`
+  in the email / slug to prevent unique-constraint panics on non-ephemeral or reused Postgres
+  instances. All callers updated from hardcoded email strings to tag-based calls. Local runtime
+  verification was not possible (no live Postgres in this environment); runtime pass deferred to
+  the CI `test` job.
 
 ## Change Log
 
 | Date | Change |
-|------|--------|
+|------| -------|
 | 2025-12-21 | Story created |
-| 2026-06-12 | Backend verified (coverage 7a-2): ACs 1–3 traced to api-server impl; folder integration tests rescued from a never-compiled subtree + positive AC coverage added; AC-3 cascade caveat recorded. Status ready-for-dev → done. |
+| 2026-06-12 | Backend verified (coverage 7a-2): ACs 1–3 traced to api-server impl; folder integration tests rescued from a never-compiled subtree + positive AC coverage added; AC-3 cascade caveat recorded. |
+| 2026-06-12 | PR #1316 round 1: reverted premature done promotion (CI red — FK/isolation defect in seed helpers). Fixed: UUID-randomised seed_user_f / seed_org_f helpers to prevent unique-constraint panics on re-run. Status review pending green CI. |

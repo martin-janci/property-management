@@ -58,7 +58,7 @@ development_status:
   6-6-neighbor-information: done
   # Epic 7A: Basic Document Management
   7a-1-document-upload-metadata: ready-for-dev
-  7a-2-folder-organization: done
+  7a-2-folder-organization: review  # CI test job red (document_folder_tests FK/isolation fix in PR #1316 round 1); reverted from done pending green CI
   7a-3-permission-based-access: ready-for-dev
   7a-4-document-download-preview: ready-for-dev
   7a-5-document-sharing: ready-for-dev
@@ -88,7 +88,7 @@ development_status:
 
 # ──────────────────────────────────────────────────────────────────────
 # TEST-HARDENING BATCH — post-merge follow-ups (issues #480-#487)
-# Slotted: 2026-05-25 | Priority: medium
+# Slotted: 2026-05-26 | Priority: medium
 # Rule: dependent stories MUST NOT be promoted to `done` until each follow-up
 #       issue in this batch is either CLOSED or explicitly DEFERRED.
 # ──────────────────────────────────────────────────────────────────────
