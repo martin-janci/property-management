@@ -58,7 +58,7 @@ development_status:
   6-6-neighbor-information: done
   # Epic 7A: Basic Document Management
   7a-1-document-upload-metadata: ready-for-dev
-  7a-2-folder-organization: ready-for-dev
+  7a-2-folder-organization: done
   7a-3-permission-based-access: ready-for-dev
   7a-4-document-download-preview: ready-for-dev
   7a-5-document-sharing: ready-for-dev
