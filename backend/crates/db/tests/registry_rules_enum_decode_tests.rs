@@ -64,7 +64,10 @@ async fn registry_rules_decode_allowed_pet_types_enum_array(pool: PgPool) {
         .await
         .expect("upsert_registry_rules decodes enum array on RETURNING");
 
-    assert_eq!(rules.allowed_pet_types, Some(vec!["dog".into(), "cat".into()]));
+    assert_eq!(
+        rules.allowed_pet_types,
+        Some(vec!["dog".into(), "cat".into()])
+    );
 
     // 2. Read back (test SELECT decode cast)
     let fetched_rules = repo
@@ -73,7 +76,10 @@ async fn registry_rules_decode_allowed_pet_types_enum_array(pool: PgPool) {
         .expect("get_registry_rules decodes enum array")
         .expect("rules exist");
 
-    assert_eq!(fetched_rules.allowed_pet_types, Some(vec!["dog".into(), "cat".into()]));
+    assert_eq!(
+        fetched_rules.allowed_pet_types,
+        Some(vec!["dog".into(), "cat".into()])
+    );
 
     // 3. Update existing (test ON CONFLICT DO UPDATE encode/bind cast)
     let updated_rules = repo

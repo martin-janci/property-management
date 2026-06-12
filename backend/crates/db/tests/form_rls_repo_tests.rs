@@ -184,10 +184,7 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .expect("set role");
 
         // (2) Own-org form IS now visible — the fix.
-        let found = repo
-            .get(&mut conn, org_a, form_a)
-            .await
-            .expect("get (ctx)");
+        let found = repo.get(&mut conn, org_a, form_a).await.expect("get (ctx)");
         assert_eq!(
             found.map(|f| f.id),
             Some(form_a),
