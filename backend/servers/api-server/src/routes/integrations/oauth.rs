@@ -16,7 +16,10 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use integrations::{AirbnbClient, AirbnbListing, AirbnbOAuthConfig, AirbnbReservation};
+use integrations::{
+    AirbnbClient, AirbnbListing, AirbnbOAuthConfig, AirbnbReservation, BookingOAuthClient,
+    BookingOAuthConfig,
+};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -54,6 +57,165 @@ pub fn router() -> Router<AppState> {
             "/organizations/{org_id}/airbnb/reservations",
             get(list_airbnb_reservations),
         )
+        // Booking.com server-side OAuth token exchange (Coverage 83-2).
+        .route(
+            "/organizations/{org_id}/booking/token/exchange",
+            post(booking_token_exchange),
+        )
+}
+
+// ==================== Booking.com Token Exchange (POST) ====================
+
+/// Request body for the server-side Booking.com OAuth token-exchange endpoint.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct BookingTokenExchangeRequest {
+    /// The authorization code obtained from the Booking.com OAuth redirect.
+    pub code: String,
+    /// Optional override for the redirect URI used during the authorize call.
+    pub redirect_uri: Option<String>,
+    /// Optional Booking.com hotel/property ID to associate with the connection.
+    pub property_id: Option<String>,
+}
+
+/// Response from the Booking.com server-side token-exchange endpoint.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct BookingTokenExchangeResponse {
+    pub success: bool,
+    pub connection_id: Option<Uuid>,
+    pub message: String,
+}
+
+/// Exchange a Booking.com authorization code for access/refresh tokens (POST).
+///
+/// Secrets (`BOOKING_CLIENT_ID`, `BOOKING_CLIENT_SECRET`,
+/// `INTEGRATION_ENCRYPTION_KEY`) must be present in server config — they are
+/// never accepted in the request body. Fails closed (503) when Booking.com is
+/// not configured, and refuses to store tokens (500) when encryption is absent.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/booking/token/exchange",
+    params(OrgIdPath),
+    request_body = BookingTokenExchangeRequest,
+    responses(
+        (status = 200, description = "Token exchange successful", body = BookingTokenExchangeResponse),
+        (status = 400, description = "Invalid or expired authorization code"),
+        (status = 403, description = "Caller is not a member of the organisation"),
+        (status = 503, description = "Booking.com integration is not configured on this server")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Booking.com"
+)]
+pub async fn booking_token_exchange(
+    State(state): State<AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+    Json(body): Json<BookingTokenExchangeRequest>,
+) -> Result<Json<BookingTokenExchangeResponse>, (StatusCode, Json<ErrorResponse>)> {
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        "Booking.com server-side token exchange requested"
+    );
+
+    if body.code.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "MISSING_CODE",
+                "Authorization code is required",
+            )),
+        ));
+    }
+
+    // IDOR guard — caller must belong to the target org.
+    verify_org_access(&state, auth.user_id, path.org_id).await?;
+
+    let client_id = state.booking_config.client_id.clone();
+    let client_secret = state.booking_config.client_secret.clone();
+    let redirect_uri = body
+        .redirect_uri
+        .clone()
+        .unwrap_or_else(|| state.booking_config.redirect_uri.clone());
+
+    // Fail closed when Booking.com is not configured on this server.
+    if client_id.is_empty() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Booking.com integration is not configured on this server",
+            )),
+        ));
+    }
+
+    let client = BookingOAuthClient::new(BookingOAuthConfig {
+        client_id,
+        client_secret,
+        redirect_uri,
+    });
+
+    let tokens = client.exchange_code(&body.code).await.map_err(|e| {
+        tracing::error!(error = %e, "Booking.com token exchange failed");
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "TOKEN_EXCHANGE_FAILED",
+                "Failed to exchange authorization code for tokens",
+            )),
+        )
+    })?;
+
+    // Encrypt before storage — fail closed if the key is missing.
+    let crypto = integrations::IntegrationCrypto::try_from_env();
+    let encryption_unavailable = |e: integrations::CryptoError| {
+        tracing::error!(error = %e, "Refusing to store Booking.com tokens without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration token encryption is not configured",
+            )),
+        )
+    };
+    let encrypted_access = integrations::encrypt_required(crypto.as_ref(), &tokens.access_token)
+        .map_err(encryption_unavailable)?;
+    let encrypted_refresh =
+        integrations::encrypt_optional_required(crypto.as_ref(), tokens.refresh_token.as_deref())
+            .map_err(encryption_unavailable)?;
+
+    let connection = state
+        .rental_repo
+        .upsert_booking_oauth_connection(
+            path.org_id,
+            None,
+            &encrypted_access,
+            encrypted_refresh.as_deref(),
+            tokens.expires_at,
+            body.property_id.as_deref(),
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to store Booking.com connection after token exchange");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to store connection",
+                )),
+            )
+        })?;
+
+    tracing::info!(
+        connection_id = %connection.id,
+        org_id = %path.org_id,
+        "Booking.com server-side token exchange completed"
+    );
+
+    Ok(Json(BookingTokenExchangeResponse {
+        success: true,
+        connection_id: Some(connection.id),
+        message: "Booking.com connected successfully".to_string(),
+    }))
 }
 
 // ==================== Token Exchange (POST) ====================
@@ -699,4 +861,61 @@ pub async fn airbnb_oauth_callback(
         message: "Airbnb connected successfully".to_string(),
         listings_count,
     }))
+}
+
+// ==================== Tests ====================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_booking_token_exchange_request_deserialization_full() {
+        let json = r#"{"code":"auth-code-123","redirect_uri":"https://app.example.com/booking/callback","property_id":"hotel-9876"}"#;
+        let req: BookingTokenExchangeRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "auth-code-123");
+        assert_eq!(req.redirect_uri.as_deref(), Some("https://app.example.com/booking/callback"));
+        assert_eq!(req.property_id.as_deref(), Some("hotel-9876"));
+    }
+
+    #[test]
+    fn test_booking_token_exchange_request_minimal() {
+        let json = r#"{"code":"auth-code-only"}"#;
+        let req: BookingTokenExchangeRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "auth-code-only");
+        assert!(req.redirect_uri.is_none());
+        assert!(req.property_id.is_none());
+    }
+
+    #[test]
+    fn test_booking_token_exchange_request_missing_code_fails() {
+        let json = r#"{"redirect_uri":"https://example.com/cb"}"#;
+        let parsed: Result<BookingTokenExchangeRequest, _> = serde_json::from_str(json);
+        assert!(parsed.is_err(), "missing code must fail to deserialize");
+    }
+
+    #[test]
+    fn test_booking_token_exchange_response_serialization() {
+        let id = Uuid::new_v4();
+        let resp = BookingTokenExchangeResponse {
+            success: true,
+            connection_id: Some(id),
+            message: "Booking.com connected successfully".to_string(),
+        };
+        let value: serde_json::Value = serde_json::to_value(&resp).unwrap();
+        assert_eq!(value["success"], serde_json::json!(true));
+        assert_eq!(value["connection_id"], serde_json::json!(id.to_string()));
+    }
+
+    #[test]
+    fn test_booking_token_exchange_response_failure_shape() {
+        let resp = BookingTokenExchangeResponse {
+            success: false,
+            connection_id: None,
+            message: "failed".to_string(),
+        };
+        let value: serde_json::Value = serde_json::to_value(&resp).unwrap();
+        assert_eq!(value["success"], serde_json::json!(false));
+        assert!(value["connection_id"].is_null());
+    }
 }
