@@ -1,9 +1,25 @@
 //! IoT routes (Epic 14: IoT & Smart Building).
 //!
 //! Handles sensor registration, data ingestion, dashboards, alerts, and correlations.
+//!
+//! # RLS (PAP-67)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on every sensor table
+//! (`sensors`, `sensor_readings`, `sensor_alerts`, `sensor_thresholds`,
+//! `sensor_threshold_templates`, `sensor_fault_correlations`), so every query
+//! MUST run on a connection that has `app.current_org_id` set or it collapses to
+//! deny-all. Each handler therefore acquires an [`RlsConnection`] (which
+//! validates tenant membership and sets the org/user GUCs on a dedicated
+//! connection) and passes `&mut **rls.conn()` to the repository. The
+//! authoritative organization is `rls.tenant_id()` — the tenant the caller was
+//! validated against — not a client-supplied `organization_id`, so the SQL org
+//! filter and the RLS context can never disagree. Cross-tenant access is blocked
+//! by RLS: a by-id read of another org's row returns no row (`404`), and a write
+//! targeting another org fails the policy's `WITH CHECK`. `rls.release()` clears
+//! the context before the connection returns to the pool.
 
 use crate::state::AppState;
-use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -21,33 +37,38 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 // ============================================================================
-// Helper Functions
+// Error Helpers
 // ============================================================================
-//
-// SECURITY: The previous `extract_tenant_context` helper deserialized the
-// client-supplied `X-Tenant-Context` JSON header directly into a
-// `TenantContext`. No JWT verification — any unauthenticated caller could
-// forge tenancy. That helper has been deleted; every handler now goes
-// through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
 
-/// Resolve the effective tenant id from a verified [`RequestPrincipal`].
-///
-/// IoT endpoints are per-tenant by definition (sensor inventory, alerts,
-/// dashboards). A platform-kind principal hitting the platform host has no
-/// `effective_org` — for those callers we refuse with 403 rather than fall
-/// back to a wildcard.
-fn require_tenant_id(
-    principal: &RequestPrincipal,
-) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
-    principal.effective_org.ok_or_else(|| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "TENANT_REQUIRED",
-                "IoT endpoints require a tenant-resolved request",
-            )),
-        )
-    })
+/// Map a repository error to a `500` with a stable code, logging the cause.
+fn db_error(msg: &'static str, e: sqlx::Error) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!("{}: {:?}", msg, e);
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("INTERNAL_ERROR", msg)),
+    )
+}
+
+/// Build a `404` response.
+fn not_found(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", msg)),
+    )
+}
+
+/// Map a `fetch_one` error from a by-id write to either `404` (the row is not
+/// visible under the caller's RLS context — cross-tenant or genuinely missing)
+/// or `500` for any other database failure.
+fn write_error(
+    msg: &'static str,
+    not_found_msg: &'static str,
+    e: sqlx::Error,
+) -> (StatusCode, Json<ErrorResponse>) {
+    match e {
+        sqlx::Error::RowNotFound => not_found(not_found_msg),
+        other => db_error(msg, other),
+    }
 }
 
 // ============================================================================
@@ -115,23 +136,20 @@ pub fn sensor_router() -> Router<AppState> {
 )]
 async fn create_sensor(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
-    Json(req): Json<CreateSensor>,
+    mut rls: RlsConnection,
+    Json(mut req): Json<CreateSensor>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.create(req).await {
-        Ok(sensor) => Ok((StatusCode::CREATED, Json(serde_json::json!(sensor)))),
-        Err(e) => {
-            tracing::error!("Failed to create sensor: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to create sensor",
-                )),
-            ))
-        }
-    }
+    // Pin the new sensor to the caller's validated org so the INSERT's
+    // organization_id and the RLS WITH CHECK can never disagree.
+    req.organization_id = rls.tenant_id();
+    let out = state
+        .sensor_repo
+        .create(&mut **rls.conn(), req)
+        .await
+        .map(|sensor| (StatusCode::CREATED, Json(serde_json::json!(sensor))))
+        .map_err(|e| db_error("Failed to create sensor", e));
+    rls.release().await;
+    out
 }
 
 #[utoipa::path(
@@ -146,93 +164,73 @@ async fn create_sensor(
 )]
 async fn list_sensors(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<SensorQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state.sensor_repo.list(tenant_id, query).await {
-        Ok(sensors) => Ok(Json(serde_json::json!({ "sensors": sensors }))),
-        Err(e) => {
-            tracing::error!("Failed to list sensors: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to list sensors",
-                )),
-            ))
-        }
-    }
+    let org_id = rls.tenant_id();
+    let out = state
+        .sensor_repo
+        .list(&mut **rls.conn(), org_id, query)
+        .await
+        .map(|sensors| Json(serde_json::json!({ "sensors": sensors })))
+        .map_err(|e| db_error("Failed to list sensors", e));
+    rls.release().await;
+    out
 }
 
 async fn get_sensor(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.find_by_id(id).await {
-        Ok(Some(sensor)) => Ok(Json(serde_json::json!(sensor))),
-        Ok(None) => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Sensor not found")),
-        )),
-        Err(e) => {
-            tracing::error!("Failed to get sensor: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get sensor")),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .find_by_id(&mut **rls.conn(), id)
+        .await
+        .map_err(|e| db_error("Failed to get sensor", e))
+        .and_then(|maybe| match maybe {
+            Some(sensor) => Ok(Json(serde_json::json!(sensor))),
+            None => Err(not_found("Sensor not found")),
+        });
+    rls.release().await;
+    out
 }
 
 async fn update_sensor(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSensor>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.update(id, req).await {
-        Ok(sensor) => Ok(Json(serde_json::json!(sensor))),
-        Err(e) => {
-            tracing::error!("Failed to update sensor: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to update sensor",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .update(&mut **rls.conn(), id, req)
+        .await
+        .map(|sensor| Json(serde_json::json!(sensor)))
+        .map_err(|e| write_error("Failed to update sensor", "Sensor not found", e));
+    rls.release().await;
+    out
 }
 
 async fn delete_sensor(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.delete(id).await {
-        Ok(true) => Ok(StatusCode::NO_CONTENT),
-        Ok(false) => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Sensor not found")),
-        )),
-        Err(e) => {
-            tracing::error!("Failed to delete sensor: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to delete sensor",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .delete(&mut **rls.conn(), id)
+        .await
+        .map_err(|e| db_error("Failed to delete sensor", e))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Sensor not found"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -241,86 +239,59 @@ async fn delete_sensor(
 
 async fn list_readings(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(query): Query<ReadingQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.list_readings(id, query).await {
-        Ok(readings) => Ok(Json(serde_json::json!({ "readings": readings }))),
-        Err(e) => {
-            tracing::error!("Failed to list readings: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to list readings",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .list_readings(&mut **rls.conn(), id, query)
+        .await
+        .map(|readings| Json(serde_json::json!({ "readings": readings })))
+        .map_err(|e| db_error("Failed to list readings", e));
+    rls.release().await;
+    out
 }
 
 async fn add_reading(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorReading>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
     req.sensor_id = id;
-
-    match state.sensor_repo.create_reading(req).await {
-        Ok(reading) => Ok((StatusCode::CREATED, Json(serde_json::json!(reading)))),
-        Err(e) => {
-            tracing::error!("Failed to add reading: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to add reading",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .create_reading(&mut **rls.conn(), req)
+        .await
+        .map(|reading| (StatusCode::CREATED, Json(serde_json::json!(reading))))
+        .map_err(|e| db_error("Failed to add reading", e));
+    rls.release().await;
+    out
 }
 
 async fn add_batch_readings(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<BatchSensorReadings>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state
+    let out = state
         .sensor_repo
-        .create_batch_readings(id, req.readings)
+        .create_batch_readings(&mut **rls.conn(), id, req.readings)
         .await
-    {
-        Ok(count) => Ok((
-            StatusCode::CREATED,
-            Json(serde_json::json!({ "inserted": count })),
-        )),
-        Err(e) => {
-            tracing::error!("Failed to add batch readings: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to add batch readings",
-                )),
-            ))
-        }
-    }
+        .map(|count| (StatusCode::CREATED, Json(serde_json::json!({ "inserted": count }))))
+        .map_err(|e| db_error("Failed to add batch readings", e));
+    rls.release().await;
+    out
 }
 
 async fn get_aggregated_readings(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(query): Query<ReadingQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
     let aggregation = query
         .aggregation
         .clone()
@@ -330,23 +301,14 @@ async fn get_aggregated_readings(
         .unwrap_or_else(|| chrono::Utc::now() - chrono::Duration::hours(24));
     let to = query.to_time.unwrap_or_else(chrono::Utc::now);
 
-    match state
+    let out = state
         .sensor_repo
-        .list_aggregated_readings(id, from, to, &aggregation)
+        .list_aggregated_readings(&mut **rls.conn(), id, from, to, &aggregation)
         .await
-    {
-        Ok(readings) => Ok(Json(serde_json::json!({ "aggregated_readings": readings }))),
-        Err(e) => {
-            tracing::error!("Failed to get aggregated readings: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to get aggregated readings",
-                )),
-            ))
-        }
-    }
+        .map(|readings| Json(serde_json::json!({ "aggregated_readings": readings })))
+        .map_err(|e| db_error("Failed to get aggregated readings", e));
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -355,94 +317,71 @@ async fn get_aggregated_readings(
 
 async fn list_thresholds(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.list_thresholds(id).await {
-        Ok(thresholds) => Ok(Json(serde_json::json!({ "thresholds": thresholds }))),
-        Err(e) => {
-            tracing::error!("Failed to list thresholds: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to list thresholds",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .list_thresholds(&mut **rls.conn(), id)
+        .await
+        .map(|thresholds| Json(serde_json::json!({ "thresholds": thresholds })))
+        .map_err(|e| db_error("Failed to list thresholds", e));
+    rls.release().await;
+    out
 }
 
 async fn create_threshold(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorThreshold>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
     req.sensor_id = id;
-
-    match state.sensor_repo.create_threshold(req).await {
-        Ok(threshold) => Ok((StatusCode::CREATED, Json(serde_json::json!(threshold)))),
-        Err(e) => {
-            tracing::error!("Failed to create threshold: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to create threshold",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .create_threshold(&mut **rls.conn(), req)
+        .await
+        .map(|threshold| (StatusCode::CREATED, Json(serde_json::json!(threshold))))
+        .map_err(|e| db_error("Failed to create threshold", e));
+    rls.release().await;
+    out
 }
 
 async fn update_threshold(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(threshold_id): Path<Uuid>,
     Json(req): Json<UpdateSensorThreshold>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.update_threshold(threshold_id, req).await {
-        Ok(threshold) => Ok(Json(serde_json::json!(threshold))),
-        Err(e) => {
-            tracing::error!("Failed to update threshold: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to update threshold",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .update_threshold(&mut **rls.conn(), threshold_id, req)
+        .await
+        .map(|threshold| Json(serde_json::json!(threshold)))
+        .map_err(|e| write_error("Failed to update threshold", "Threshold not found", e));
+    rls.release().await;
+    out
 }
 
 async fn delete_threshold(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(threshold_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.delete_threshold(threshold_id).await {
-        Ok(true) => Ok(StatusCode::NO_CONTENT),
-        Ok(false) => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Threshold not found")),
-        )),
-        Err(e) => {
-            tracing::error!("Failed to delete threshold: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to delete threshold",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .delete_threshold(&mut **rls.conn(), threshold_id)
+        .await
+        .map_err(|e| db_error("Failed to delete threshold", e))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Threshold not found"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -451,52 +390,36 @@ async fn delete_threshold(
 
 async fn list_sensor_alerts(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(mut query): Query<AlertQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let org_id = rls.tenant_id();
     query.sensor_id = Some(id);
-
-    match state.sensor_repo.list_alerts(tenant_id, query).await {
-        Ok(alerts) => Ok(Json(serde_json::json!({ "alerts": alerts }))),
-        Err(e) => {
-            tracing::error!("Failed to list alerts: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to list alerts",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .list_alerts(&mut **rls.conn(), org_id, query)
+        .await
+        .map(|alerts| Json(serde_json::json!({ "alerts": alerts })))
+        .map_err(|e| db_error("Failed to list alerts", e));
+    rls.release().await;
+    out
 }
 
 async fn acknowledge_alert(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-
-    match state
+    let user_id = rls.user_id();
+    let out = state
         .sensor_repo
-        .acknowledge_alert(alert_id, principal.user_id)
+        .acknowledge_alert(&mut **rls.conn(), alert_id, user_id)
         .await
-    {
-        Ok(alert) => Ok(Json(serde_json::json!(alert))),
-        Err(e) => {
-            tracing::error!("Failed to acknowledge alert: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to acknowledge alert",
-                )),
-            ))
-        }
-    }
+        .map(|alert| Json(serde_json::json!(alert)))
+        .map_err(|e| write_error("Failed to acknowledge alert", "Alert not found", e));
+    rls.release().await;
+    out
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -506,29 +429,19 @@ pub struct ResolveAlertRequest {
 
 async fn resolve_alert(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
     Json(req): Json<ResolveAlertRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
     // Pass resolved_value as Option - NULL is valid when value wasn't captured
-    match state
+    let out = state
         .sensor_repo
-        .resolve_alert(alert_id, req.resolved_value)
+        .resolve_alert(&mut **rls.conn(), alert_id, req.resolved_value)
         .await
-    {
-        Ok(alert) => Ok(Json(serde_json::json!(alert))),
-        Err(e) => {
-            tracing::error!("Failed to resolve alert: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to resolve alert",
-                )),
-            ))
-        }
-    }
+        .map(|alert| Json(serde_json::json!(alert)))
+        .map_err(|e| write_error("Failed to resolve alert", "Alert not found", e));
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -537,73 +450,56 @@ async fn resolve_alert(
 
 async fn list_correlations(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.list_correlations_for_sensor(id).await {
-        Ok(correlations) => Ok(Json(serde_json::json!({ "correlations": correlations }))),
-        Err(e) => {
-            tracing::error!("Failed to list correlations: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to list correlations",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .list_correlations_for_sensor(&mut **rls.conn(), id)
+        .await
+        .map(|correlations| Json(serde_json::json!({ "correlations": correlations })))
+        .map_err(|e| db_error("Failed to list correlations", e));
+    rls.release().await;
+    out
 }
 
 async fn create_correlation(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorFaultCorrelation>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
     req.sensor_id = id;
-    req.created_by = Some(principal.user_id);
-
-    match state.sensor_repo.create_correlation(req).await {
-        Ok(correlation) => Ok((StatusCode::CREATED, Json(serde_json::json!(correlation)))),
-        Err(e) => {
-            tracing::error!("Failed to create correlation: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to create correlation",
-                )),
-            ))
-        }
-    }
+    req.created_by = Some(rls.user_id());
+    let out = state
+        .sensor_repo
+        .create_correlation(&mut **rls.conn(), req)
+        .await
+        .map(|correlation| (StatusCode::CREATED, Json(serde_json::json!(correlation))))
+        .map_err(|e| db_error("Failed to create correlation", e));
+    rls.release().await;
+    out
 }
 
 async fn delete_correlation(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(correlation_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state.sensor_repo.delete_correlation(correlation_id).await {
-        Ok(true) => Ok(StatusCode::NO_CONTENT),
-        Ok(false) => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Correlation not found")),
-        )),
-        Err(e) => {
-            tracing::error!("Failed to delete correlation: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to delete correlation",
-                )),
-            ))
-        }
-    }
+    let out = state
+        .sensor_repo
+        .delete_correlation(&mut **rls.conn(), correlation_id)
+        .await
+        .map_err(|e| db_error("Failed to delete correlation", e))
+        .and_then(|deleted| {
+            if deleted {
+                Ok(StatusCode::NO_CONTENT)
+            } else {
+                Err(not_found("Correlation not found"))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -612,28 +508,18 @@ async fn delete_correlation(
 
 async fn list_threshold_templates(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<TemplateQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state
+    let org_id = rls.tenant_id();
+    let out = state
         .sensor_repo
-        .list_threshold_templates(Some(tenant_id), query.sensor_type.as_deref())
+        .list_threshold_templates(&mut **rls.conn(), Some(org_id), query.sensor_type.as_deref())
         .await
-    {
-        Ok(templates) => Ok(Json(serde_json::json!({ "templates": templates }))),
-        Err(e) => {
-            tracing::error!("Failed to list templates: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to list templates",
-                )),
-            ))
-        }
-    }
+        .map(|templates| Json(serde_json::json!({ "templates": templates })))
+        .map_err(|e| db_error("Failed to list templates", e));
+    rls.release().await;
+    out
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -643,28 +529,18 @@ pub struct TemplateQuery {
 
 async fn apply_template(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ApplyTemplateRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    match state
+    let out = state
         .sensor_repo
-        .apply_threshold_template(template_id, req.sensor_id)
+        .apply_threshold_template(&mut **rls.conn(), template_id, req.sensor_id)
         .await
-    {
-        Ok(threshold) => Ok((StatusCode::CREATED, Json(serde_json::json!(threshold)))),
-        Err(e) => {
-            tracing::error!("Failed to apply template: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to apply template",
-                )),
-            ))
-        }
-    }
+        .map(|threshold| (StatusCode::CREATED, Json(serde_json::json!(threshold))))
+        .map_err(|e| write_error("Failed to apply template", "Template not found", e));
+    rls.release().await;
+    out
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -678,28 +554,18 @@ pub struct ApplyTemplateRequest {
 
 async fn get_dashboard(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    mut rls: RlsConnection,
     Query(query): Query<DashboardQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
-
-    match state
+    let org_id = rls.tenant_id();
+    let out = state
         .sensor_repo
-        .get_dashboard(tenant_id, query.building_id)
+        .get_dashboard(&mut **rls.conn(), org_id, query.building_id)
         .await
-    {
-        Ok(dashboard) => Ok(Json(serde_json::json!(dashboard))),
-        Err(e) => {
-            tracing::error!("Failed to get dashboard: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to get dashboard",
-                )),
-            ))
-        }
-    }
+        .map(|dashboard| Json(serde_json::json!(dashboard)))
+        .map_err(|e| db_error("Failed to get dashboard", e));
+    rls.release().await;
+    out
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]

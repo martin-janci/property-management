@@ -1,9 +1,26 @@
 //! Reserve Fund Management routes for Epic 141.
 //!
 //! REST API endpoints for HOA/Condo reserve fund management.
+//!
+//! # RLS (PAP-67 / PAP-79)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on the reserve-fund cluster,
+//! so every query MUST run on a connection that has `app.current_org_id` set or
+//! it collapses to deny-all. Each handler therefore acquires an [`RlsConnection`]
+//! (which validates tenant membership and sets the org/user GUCs on a dedicated
+//! connection) and passes that connection to the repository (`&mut **rls.conn()`
+//! to the generic-`Executor` methods, `rls.conn()` to the `&mut PgConnection`
+//! ones, which deref-coerce). The
+//! authoritative organization is `rls.tenant_id()` — the tenant the caller was
+//! validated against — not a client-supplied `organization_id`, so the SQL org
+//! filter and the RLS context can never disagree. Cross-tenant access is blocked
+//! by RLS: a by-id read of another org's row returns no row (`404`), and a write
+//! targeting another org fails the policy's `WITH CHECK`. `rls.release()` clears
+//! the context before the connection returns to the pool (both on the Ok and Err
+//! paths).
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -101,10 +118,6 @@ fn internal_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
-fn forbidden_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
-    (StatusCode::FORBIDDEN, Json(ErrorResponse::forbidden(msg)))
-}
-
 fn not_found_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {
     (StatusCode::NOT_FOUND, Json(ErrorResponse::not_found(msg)))
 }
@@ -134,121 +147,110 @@ fn repo_error(
 /// List reserve funds.
 async fn list_funds(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<FundListQuery>,
 ) -> ApiResult<Json<Vec<ReserveFund>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let funds = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
         .list_funds(
+            &mut **rls.conn(),
             org_id,
             query.fund_type,
             query.building_id,
             query.active_only.unwrap_or(false),
         )
         .await
-        .map_err(|e| internal_error(&format!("Failed to list funds: {}", e)))?;
-
-    Ok(Json(funds))
+        .map(Json)
+        .map_err(|e| internal_error(&format!("Failed to list funds: {}", e)));
+    rls.release().await;
+    out
 }
 
 /// Create a reserve fund.
 async fn create_fund(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<CreateReserveFund>,
 ) -> ApiResult<Json<ReserveFund>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let fund = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .reserve_fund_repo
-        .create_fund(org_id, req, user.user_id)
+        .create_fund(&mut **rls.conn(), org_id, req, user_id)
         .await
-        .map_err(|e| internal_error(&format!("Failed to create fund: {}", e)))?;
-
-    Ok(Json(fund))
+        .map(Json)
+        .map_err(|e| internal_error(&format!("Failed to create fund: {}", e)));
+    rls.release().await;
+    out
 }
 
 /// Get a reserve fund by ID.
 async fn get_fund(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
 ) -> ApiResult<Json<ReserveFund>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let fund = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .get_fund(org_id, fund_id)
+        .get_fund(&mut **rls.conn(), org_id, fund_id)
         .await
-        .map_err(|e| internal_error(&format!("Failed to get fund: {}", e)))?
-        .ok_or_else(|| not_found_error("Fund not found"))?;
-
-    Ok(Json(fund))
+        .map_err(|e| internal_error(&format!("Failed to get fund: {}", e)))
+        .and_then(|f| f.map(Json).ok_or_else(|| not_found_error("Fund not found")));
+    rls.release().await;
+    out
 }
 
 /// Update a reserve fund.
 async fn update_fund(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
     Json(req): Json<UpdateReserveFund>,
 ) -> ApiResult<Json<ReserveFund>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let fund = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .update_fund(org_id, fund_id, req)
+        .update_fund(&mut **rls.conn(), org_id, fund_id, req)
         .await
-        .map_err(|e| repo_error("update fund", "Fund not found", e))?;
-
-    Ok(Json(fund))
+        .map(Json)
+        .map_err(|e| repo_error("update fund", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Get fund dashboard.
 async fn get_dashboard(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
 ) -> ApiResult<Json<FundDashboard>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let dashboard = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .get_fund_dashboard(org_id)
+        .get_fund_dashboard(rls.conn(), org_id)
         .await
-        .map_err(|e| internal_error(&format!("Failed to get dashboard: {}", e)))?;
-
-    Ok(Json(dashboard))
+        .map(Json)
+        .map_err(|e| internal_error(&format!("Failed to get dashboard: {}", e)));
+    rls.release().await;
+    out
 }
 
 /// Get fund health report.
 async fn get_fund_health(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
 ) -> ApiResult<Json<FundHealthReport>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let report = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .get_fund_health_report(org_id, fund_id)
+        .get_fund_health_report(rls.conn(), org_id, fund_id)
         .await
-        .map_err(|e| repo_error("get health report", "Fund not found", e))?;
-
-    Ok(Json(report))
+        .map(Json)
+        .map_err(|e| repo_error("get health report", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -258,61 +260,60 @@ async fn get_fund_health(
 /// List contribution schedules.
 async fn list_schedules(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
     Query(query): Query<ActiveOnlyQuery>,
 ) -> ApiResult<Json<Vec<FundContributionSchedule>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let schedules = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .list_contribution_schedules(org_id, fund_id, query.active_only.unwrap_or(false))
+        .list_contribution_schedules(
+            rls.conn(),
+            org_id,
+            fund_id,
+            query.active_only.unwrap_or(false),
+        )
         .await
-        .map_err(|e| repo_error("list schedules", "Fund not found", e))?;
-
-    Ok(Json(schedules))
+        .map(Json)
+        .map_err(|e| repo_error("list schedules", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Create a contribution schedule.
 async fn create_schedule(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
     Json(req): Json<CreateContributionSchedule>,
 ) -> ApiResult<Json<FundContributionSchedule>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let schedule = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .create_contribution_schedule(org_id, fund_id, req)
+        .create_contribution_schedule(rls.conn(), org_id, fund_id, req)
         .await
-        .map_err(|e| repo_error("create schedule", "Fund not found", e))?;
-
-    Ok(Json(schedule))
+        .map(Json)
+        .map_err(|e| repo_error("create schedule", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Update a contribution schedule.
 async fn update_schedule(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path((_fund_id, schedule_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateContributionSchedule>,
 ) -> ApiResult<Json<FundContributionSchedule>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let schedule = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .update_contribution_schedule(org_id, schedule_id, req)
+        .update_contribution_schedule(&mut **rls.conn(), org_id, schedule_id, req)
         .await
-        .map_err(|e| repo_error("update schedule", "Schedule not found", e))?;
-
-    Ok(Json(schedule))
+        .map(Json)
+        .map_err(|e| repo_error("update schedule", "Schedule not found", e));
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -322,62 +323,58 @@ async fn update_schedule(
 /// List transactions.
 async fn list_transactions(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
     Query(mut query): Query<TransactionQuery>,
 ) -> ApiResult<Json<Vec<FundTransaction>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
+    let org_id = rls.tenant_id();
     query.fund_id = Some(fund_id);
 
-    let transactions = state
+    let out = state
         .reserve_fund_repo
-        .list_transactions(org_id, query)
+        .list_transactions(&mut **rls.conn(), org_id, query)
         .await
-        .map_err(|e| internal_error(&format!("Failed to list transactions: {}", e)))?;
-
-    Ok(Json(transactions))
+        .map(Json)
+        .map_err(|e| internal_error(&format!("Failed to list transactions: {}", e)));
+    rls.release().await;
+    out
 }
 
 /// Record a transaction.
 async fn record_transaction(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
     Json(req): Json<RecordFundTransaction>,
 ) -> ApiResult<Json<FundTransaction>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let transaction = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .reserve_fund_repo
-        .record_transaction(org_id, fund_id, req, user.user_id)
+        .record_transaction(rls.conn(), org_id, fund_id, req, user_id)
         .await
-        .map_err(|e| repo_error("record transaction", "Fund not found", e))?;
-
-    Ok(Json(transaction))
+        .map(Json)
+        .map_err(|e| repo_error("record transaction", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Transfer funds between accounts.
 async fn transfer_funds(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<FundTransferRequest>,
 ) -> ApiResult<Json<(FundTransaction, FundTransaction)>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let transactions = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .reserve_fund_repo
-        .transfer_funds(org_id, req, user.user_id)
+        .transfer_funds(rls.conn(), org_id, req, user_id)
         .await
-        .map_err(|e| repo_error("transfer funds", "Fund not found", e))?;
-
-    Ok(Json(transactions))
+        .map(Json)
+        .map_err(|e| repo_error("transfer funds", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -387,59 +384,53 @@ async fn transfer_funds(
 /// List investment policies.
 async fn list_policies(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<FundInvestmentPolicy>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let policies = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .list_investment_policies(org_id, fund_id)
+        .list_investment_policies(rls.conn(), org_id, fund_id)
         .await
-        .map_err(|e| repo_error("list policies", "Fund not found", e))?;
-
-    Ok(Json(policies))
+        .map(Json)
+        .map_err(|e| repo_error("list policies", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Create an investment policy.
 async fn create_policy(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
     Json(req): Json<CreateInvestmentPolicy>,
 ) -> ApiResult<Json<FundInvestmentPolicy>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let policy = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .create_investment_policy(org_id, fund_id, req)
+        .create_investment_policy(rls.conn(), org_id, fund_id, req)
         .await
-        .map_err(|e| repo_error("create policy", "Fund not found", e))?;
-
-    Ok(Json(policy))
+        .map(Json)
+        .map_err(|e| repo_error("create policy", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Get active investment policy.
 async fn get_active_policy(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
 ) -> ApiResult<Json<Option<FundInvestmentPolicy>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let policy = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .get_active_investment_policy(org_id, fund_id)
+        .get_active_investment_policy(rls.conn(), org_id, fund_id)
         .await
-        .map_err(|e| repo_error("get active policy", "Fund not found", e))?;
-
-    Ok(Json(policy))
+        .map(Json)
+        .map_err(|e| repo_error("get active policy", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -449,79 +440,71 @@ async fn get_active_policy(
 /// Create a projection.
 async fn create_projection(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
     Json(req): Json<CreateFundProjection>,
 ) -> ApiResult<Json<FundProjection>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let projection = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .create_projection(org_id, fund_id, req)
+        .create_projection(rls.conn(), org_id, fund_id, req)
         .await
-        .map_err(|e| repo_error("create projection", "Fund not found", e))?;
-
-    Ok(Json(projection))
+        .map(Json)
+        .map_err(|e| repo_error("create projection", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Get current projection.
 async fn get_current_projection(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
 ) -> ApiResult<Json<Option<FundProjection>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let projection = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .get_current_projection(org_id, fund_id)
+        .get_current_projection(rls.conn(), org_id, fund_id)
         .await
-        .map_err(|e| repo_error("get projection", "Fund not found", e))?;
-
-    Ok(Json(projection))
+        .map(Json)
+        .map_err(|e| repo_error("get projection", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Get projection items.
 async fn get_projection_items(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path((_fund_id, projection_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<Json<Vec<FundProjectionItem>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let items = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .get_projection_items(org_id, projection_id)
+        .get_projection_items(rls.conn(), org_id, projection_id)
         .await
-        .map_err(|e| repo_error("get projection items", "Projection not found", e))?;
-
-    Ok(Json(items))
+        .map(Json)
+        .map_err(|e| repo_error("get projection items", "Projection not found", e));
+    rls.release().await;
+    out
 }
 
 /// Add projection items.
 async fn add_projection_items(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path((_fund_id, projection_id)): Path<(Uuid, Uuid)>,
     Json(items): Json<Vec<CreateProjectionItem>>,
 ) -> ApiResult<Json<Vec<FundProjectionItem>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let created = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .add_projection_items(org_id, projection_id, items)
+        .add_projection_items(rls.conn(), org_id, projection_id, items)
         .await
-        .map_err(|e| repo_error("add projection items", "Projection not found", e))?;
-
-    Ok(Json(created))
+        .map(Json)
+        .map_err(|e| repo_error("add projection items", "Projection not found", e));
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -531,60 +514,54 @@ async fn add_projection_items(
 /// List components.
 async fn list_components(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<FundComponent>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let components = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .list_components(org_id, fund_id)
+        .list_components(rls.conn(), org_id, fund_id)
         .await
-        .map_err(|e| repo_error("list components", "Fund not found", e))?;
-
-    Ok(Json(components))
+        .map(Json)
+        .map_err(|e| repo_error("list components", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Create a component.
 async fn create_component(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(fund_id): Path<Uuid>,
     Json(req): Json<CreateFundComponent>,
 ) -> ApiResult<Json<FundComponent>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let component = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .create_component(org_id, fund_id, req)
+        .create_component(rls.conn(), org_id, fund_id, req)
         .await
-        .map_err(|e| repo_error("create component", "Fund not found", e))?;
-
-    Ok(Json(component))
+        .map(Json)
+        .map_err(|e| repo_error("create component", "Fund not found", e));
+    rls.release().await;
+    out
 }
 
 /// Update a component.
 async fn update_component(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path((_fund_id, component_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateFundComponent>,
 ) -> ApiResult<Json<FundComponent>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let component = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .update_component(org_id, component_id, req)
+        .update_component(&mut **rls.conn(), org_id, component_id, req)
         .await
-        .map_err(|e| repo_error("update component", "Component not found", e))?;
-
-    Ok(Json(component))
+        .map(Json)
+        .map_err(|e| repo_error("update component", "Component not found", e));
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -594,55 +571,51 @@ async fn update_component(
 /// List active alerts.
 async fn list_alerts(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
 ) -> ApiResult<Json<Vec<FundAlert>>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let alerts = state
+    let org_id = rls.tenant_id();
+    let out = state
         .reserve_fund_repo
-        .list_active_alerts(org_id)
+        .list_active_alerts(&mut **rls.conn(), org_id)
         .await
-        .map_err(|e| internal_error(&format!("Failed to list alerts: {}", e)))?;
-
-    Ok(Json(alerts))
+        .map(Json)
+        .map_err(|e| internal_error(&format!("Failed to list alerts: {}", e)));
+    rls.release().await;
+    out
 }
 
 /// Acknowledge an alert.
 async fn acknowledge_alert(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> ApiResult<Json<FundAlert>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let alert = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .reserve_fund_repo
-        .acknowledge_alert(org_id, alert_id, user.user_id)
+        .acknowledge_alert(&mut **rls.conn(), org_id, alert_id, user_id)
         .await
-        .map_err(|e| repo_error("acknowledge alert", "Alert not found", e))?;
-
-    Ok(Json(alert))
+        .map(Json)
+        .map_err(|e| repo_error("acknowledge alert", "Alert not found", e));
+    rls.release().await;
+    out
 }
 
 /// Resolve an alert.
 async fn resolve_alert(
     State(state): State<AppState>,
-    user: AuthUser,
+    mut rls: RlsConnection,
     Path(alert_id): Path<Uuid>,
 ) -> ApiResult<Json<FundAlert>> {
-    let org_id = user
-        .tenant_id
-        .ok_or_else(|| forbidden_error("No organization context"))?;
-
-    let alert = state
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let out = state
         .reserve_fund_repo
-        .resolve_alert(org_id, alert_id, user.user_id)
+        .resolve_alert(&mut **rls.conn(), org_id, alert_id, user_id)
         .await
-        .map_err(|e| repo_error("resolve alert", "Alert not found", e))?;
-
-    Ok(Json(alert))
+        .map(Json)
+        .map_err(|e| repo_error("resolve alert", "Alert not found", e));
+    rls.release().await;
+    out
 }
