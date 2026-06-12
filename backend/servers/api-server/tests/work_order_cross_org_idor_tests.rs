@@ -38,9 +38,15 @@
 //!
 //! # TestApp wiring note
 //!
-//! `TestApp` mounts the full router but no `host_tenant_middleware`. The
-//! work-order routes use `AuthUser` (bearer JWT) and derive the org from the
-//! request/resource, so no `X-Tenant-ID` header is involved here.
+//! `TestApp` mounts the full router but no `host_tenant_middleware`. Since
+//! PAP-179 the work-order routes acquire an `RlsConnection`, which resolves the
+//! caller's org via `ValidatedTenantExtractor` — that requires an `X-Tenant-ID`
+//! header naming an org the caller is an active member of. Every request below
+//! therefore sets `X-Tenant-ID` to the caller's own org (Org B for the
+//! attacker, Org A for the legitimate member). The cross-tenant rejections then
+//! come from `verify_org_access` against the *resource's* org (the membership
+//! gate is bypassed at the DB layer here because the `#[sqlx::test]` pool
+//! connects as a superuser, so `FORCE` RLS does not bind).
 
 #[allow(dead_code)]
 mod common;
@@ -174,6 +180,7 @@ async fn get_work_order_from_other_org_is_rejected(pool: PgPool) {
         .execute(
             app.get(&format!("/api/v1/work-orders/{}", wo_in_a))
                 .bearer(&b_token)
+                .header("X-Tenant-ID", &org_b.to_string())
                 .build(),
         )
         .await;
@@ -222,6 +229,7 @@ async fn update_work_order_from_other_org_is_rejected(pool: PgPool) {
             axum::http::header::AUTHORIZATION,
             format!("Bearer {}", b_token),
         )
+        .header("X-Tenant-ID", org_b.to_string())
         .header(axum::http::header::CONTENT_TYPE, "application/json")
         .body(axum::body::Body::from(
             json!({ "title": "hijacked-title" }).to_string(),
@@ -275,6 +283,7 @@ async fn delete_work_order_from_other_org_is_rejected(pool: PgPool) {
         .execute(
             app.delete(&format!("/api/v1/work-orders/{}", wo_in_a))
                 .bearer(&b_token)
+                .header("X-Tenant-ID", &org_b.to_string())
                 .build(),
         )
         .await;
@@ -327,6 +336,7 @@ async fn create_work_order_for_other_org_is_rejected(pool: PgPool) {
         .execute(
             app.post("/api/v1/work-orders")
                 .bearer(&b_token)
+                .header("X-Tenant-ID", &org_b.to_string())
                 .json(json!({
                     "organization_id": org_a,
                     "building_id": building_a,
@@ -382,6 +392,7 @@ async fn get_work_order_same_org_succeeds(pool: PgPool) {
         .execute(
             app.get(&format!("/api/v1/work-orders/{}", wo_in_a))
                 .bearer(&token)
+                .header("X-Tenant-ID", &org_a.to_string())
                 .build(),
         )
         .await;
