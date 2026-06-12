@@ -50,10 +50,11 @@ pub use airbnb::{
 pub use booking::{
     map_reservation_status as map_booking_status, AvailStatusMessage, AvailabilityUpdate,
     BookingAddress, BookingClient, BookingContact, BookingCredentials, BookingError, BookingGuest,
-    BookingProperty, BookingReservation, BookingReservationStatus, BookingRoomType,
-    LosRestrictions, OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelResNotifRQ,
-    OtaHotelResNotifRS, OtaReadRQ, OtaReadRS, OtaReservationNotification, PropertyMapping,
-    RateUpdate, RoomTypeMapping,
+    BookingOAuthClient, BookingOAuthConfig, BookingOAuthTokens, BookingProperty, BookingReservation,
+    BookingReservationStatus, BookingRoomType, LosRestrictions, OtaHotelAvailNotifRQ,
+    OtaHotelAvailNotifRS, OtaHotelResNotifRQ, OtaHotelResNotifRS, OtaReadRQ, OtaReadRS,
+    OtaReservationNotification, PropertyMapping, RateUpdate, RoomTypeMapping,
+    BOOKING_OAUTH_AUTH_URL, BOOKING_OAUTH_TOKEN_URL,
 };
 
 // Story 83.3: Portal Webhooks
