@@ -874,7 +874,10 @@ mod tests {
         let json = r#"{"code":"auth-code-123","redirect_uri":"https://app.example.com/booking/callback","property_id":"hotel-9876"}"#;
         let req: BookingTokenExchangeRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.code, "auth-code-123");
-        assert_eq!(req.redirect_uri.as_deref(), Some("https://app.example.com/booking/callback"));
+        assert_eq!(
+            req.redirect_uri.as_deref(),
+            Some("https://app.example.com/booking/callback")
+        );
         assert_eq!(req.property_id.as_deref(), Some("hotel-9876"));
     }
 
