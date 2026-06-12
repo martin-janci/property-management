@@ -49,7 +49,11 @@ impl SensorRepository {
     // ========================================================================
 
     /// Create a new sensor.
-    pub async fn create<'e, E>(&self, executor: E, data: CreateSensor) -> Result<Sensor, sqlx::Error>
+    pub async fn create<'e, E>(
+        &self,
+        executor: E,
+        data: CreateSensor,
+    ) -> Result<Sensor, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -89,7 +93,11 @@ impl SensorRepository {
     }
 
     /// Get sensor by ID.
-    pub async fn find_by_id<'e, E>(&self, executor: E, id: Uuid) -> Result<Option<Sensor>, sqlx::Error>
+    pub async fn find_by_id<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<Sensor>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -729,7 +737,11 @@ impl SensorRepository {
     }
 
     /// Delete a correlation.
-    pub async fn delete_correlation<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    pub async fn delete_correlation<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
