@@ -139,6 +139,7 @@ async fn get_fund_same_org_succeeds(pool: PgPool) {
     let req = app
         .get(&format!("/api/v1/reserve-funds/{fund_id}"))
         .bearer(&token)
+        .header("X-Tenant-ID", &org_a.to_string())
         .build();
     let resp = app.execute(req).await;
 
@@ -172,6 +173,7 @@ async fn get_fund_cross_org_is_not_found(pool: PgPool) {
     let req = app
         .get(&format!("/api/v1/reserve-funds/{fund_id}"))
         .bearer(&token)
+        .header("X-Tenant-ID", &org_b.to_string())
         .build();
     let resp = app.execute(req).await;
 
@@ -203,6 +205,7 @@ async fn update_fund_cross_org_does_not_mutate(pool: PgPool) {
     let req = app
         .put(&format!("/api/v1/reserve-funds/{fund_id}"))
         .bearer(&token)
+        .header("X-Tenant-ID", &org_b.to_string())
         .json(serde_json::json!({ "name": "Hijacked Fund" }))
         .build();
     let resp = app.execute(req).await;
