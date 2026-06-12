@@ -1,4 +1,20 @@
 //! IoT sensor repository (Epic 14).
+//!
+//! # RLS Integration (PAP-67)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on every sensor table (`sensors`,
+//! `sensor_readings`, `sensor_alerts`, `sensor_thresholds`,
+//! `sensor_threshold_templates`, `sensor_fault_correlations`). Under `FORCE`
+//! the api-server's owner connection is no longer exempt, so a query issued on
+//! a connection without `app.current_org_id` set collapses to deny-all (own-org
+//! reads return empty, writes fail).
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+//! pool**, so there is no way to issue a query that bypasses RLS. This mirrors
+//! the `work_order.rs` / `budget.rs` precedent.
 
 use crate::models::{
     AggregatedReading, AlertQuery, CreateSensor, CreateSensorAlert, CreateSensorFaultCorrelation,
@@ -7,19 +23,25 @@ use crate::models::{
     SensorTypeCount, UpdateSensor, UpdateSensorThreshold,
 };
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for IoT sensor operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct SensorRepository {
-    pool: PgPool,
-}
+pub struct SensorRepository;
 
 impl SensorRepository {
     /// Create a new repository instance.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // ========================================================================
@@ -27,7 +49,14 @@ impl SensorRepository {
     // ========================================================================
 
     /// Create a new sensor.
-    pub async fn create(&self, data: CreateSensor) -> Result<Sensor, sqlx::Error> {
+    pub async fn create<'e, E>(
+        &self,
+        executor: E,
+        data: CreateSensor,
+    ) -> Result<Sensor, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO sensors
@@ -59,20 +88,35 @@ impl SensorRepository {
         .bind(data.installed_at)
         .bind(sqlx::types::Json(data.metadata.unwrap_or_default()))
         .bind(data.created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get sensor by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Sensor>, sqlx::Error> {
+    pub async fn find_by_id<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<Sensor>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM sensors WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List sensors with filters.
-    pub async fn list(&self, org_id: Uuid, query: SensorQuery) -> Result<Vec<Sensor>, sqlx::Error> {
+    pub async fn list<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        query: SensorQuery,
+    ) -> Result<Vec<Sensor>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -97,12 +141,20 @@ impl SensorRepository {
         .bind(query.search)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update a sensor.
-    pub async fn update(&self, id: Uuid, data: UpdateSensor) -> Result<Sensor, sqlx::Error> {
+    pub async fn update<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        data: UpdateSensor,
+    ) -> Result<Sensor, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE sensors SET
@@ -136,26 +188,33 @@ impl SensorRepository {
         .bind(data.model)
         .bind(data.firmware_version)
         .bind(data.metadata.map(sqlx::types::Json))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Delete a sensor.
-    pub async fn delete(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM sensors WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
 
     /// Update sensor status and timestamps.
-    pub async fn update_status(
+    pub async fn update_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         last_error: Option<&str>,
-    ) -> Result<Sensor, sqlx::Error> {
+    ) -> Result<Sensor, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE sensors SET
@@ -171,12 +230,19 @@ impl SensorRepository {
         .bind(id)
         .bind(status)
         .bind(last_error)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get sensors count by type.
-    pub async fn count_by_type(&self, org_id: Uuid) -> Result<Vec<SensorTypeCount>, sqlx::Error> {
+    pub async fn count_by_type<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<Vec<SensorTypeCount>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT sensor_type, COUNT(*) as count
@@ -187,7 +253,7 @@ impl SensorRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -196,8 +262,12 @@ impl SensorRepository {
     // ========================================================================
 
     /// Create a sensor reading.
+    ///
+    /// Multi-statement (INSERT reading + UPDATE parent sensor), so it takes a
+    /// connection and reborrows it for each query.
     pub async fn create_reading(
         &self,
+        conn: &mut PgConnection,
         data: CreateSensorReading,
     ) -> Result<SensorReading, sqlx::Error> {
         // Also update the sensor's last_reading_at
@@ -214,7 +284,7 @@ impl SensorRepository {
         .bind(data.quality.unwrap_or_else(|| "good".to_string()))
         .bind(data.raw_data.map(sqlx::types::Json))
         .bind(data.timestamp)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Update sensor status
@@ -223,18 +293,22 @@ impl SensorRepository {
         )
         .bind(data.sensor_id)
         .bind(reading.timestamp)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await?;
 
         Ok(reading)
     }
 
     /// Get readings for a sensor.
-    pub async fn list_readings(
+    pub async fn list_readings<'e, E>(
         &self,
+        executor: E,
         sensor_id: Uuid,
         query: ReadingQuery,
-    ) -> Result<Vec<SensorReading>, sqlx::Error> {
+    ) -> Result<Vec<SensorReading>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(100);
         let from = query
             .from_time
@@ -255,18 +329,22 @@ impl SensorRepository {
         .bind(from)
         .bind(to)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get aggregated readings.
-    pub async fn list_aggregated_readings(
+    pub async fn list_aggregated_readings<'e, E>(
         &self,
+        executor: E,
         sensor_id: Uuid,
         from: DateTime<Utc>,
         to: DateTime<Utc>,
         interval: &str,
-    ) -> Result<Vec<AggregatedReading>, sqlx::Error> {
+    ) -> Result<Vec<AggregatedReading>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let interval_sql = match interval {
             "minute" => "date_trunc('minute', timestamp)",
             "hour" => "date_trunc('hour', timestamp)",
@@ -296,15 +374,19 @@ impl SensorRepository {
             .bind(sensor_id)
             .bind(from)
             .bind(to)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
     }
 
     /// Get latest reading for a sensor.
-    pub async fn get_latest_reading(
+    pub async fn get_latest_reading<'e, E>(
         &self,
+        executor: E,
         sensor_id: Uuid,
-    ) -> Result<Option<SensorReading>, sqlx::Error> {
+    ) -> Result<Option<SensorReading>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM sensor_readings
@@ -314,7 +396,7 @@ impl SensorRepository {
             "#,
         )
         .bind(sensor_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -323,10 +405,14 @@ impl SensorRepository {
     // ========================================================================
 
     /// Create a threshold.
-    pub async fn create_threshold(
+    pub async fn create_threshold<'e, E>(
         &self,
+        executor: E,
         data: CreateSensorThreshold,
-    ) -> Result<SensorThreshold, sqlx::Error> {
+    ) -> Result<SensorThreshold, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO sensor_thresholds
@@ -344,27 +430,35 @@ impl SensorRepository {
         .bind(data.critical_value)
         .bind(data.critical_high)
         .bind(data.alert_cooldown_minutes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get thresholds for a sensor.
-    pub async fn list_thresholds(
+    pub async fn list_thresholds<'e, E>(
         &self,
+        executor: E,
         sensor_id: Uuid,
-    ) -> Result<Vec<SensorThreshold>, sqlx::Error> {
+    ) -> Result<Vec<SensorThreshold>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM sensor_thresholds WHERE sensor_id = $1 ORDER BY metric")
             .bind(sensor_id)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
     }
 
     /// Update a threshold.
-    pub async fn update_threshold(
+    pub async fn update_threshold<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         data: UpdateSensorThreshold,
-    ) -> Result<SensorThreshold, sqlx::Error> {
+    ) -> Result<SensorThreshold, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE sensor_thresholds SET
@@ -388,25 +482,32 @@ impl SensorRepository {
         .bind(data.critical_high)
         .bind(data.enabled)
         .bind(data.alert_cooldown_minutes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Delete a threshold.
-    pub async fn delete_threshold(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_threshold<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM sensor_thresholds WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
 
     /// Get threshold templates.
-    pub async fn list_threshold_templates(
+    pub async fn list_threshold_templates<'e, E>(
         &self,
+        executor: E,
         org_id: Option<Uuid>,
         sensor_type: Option<&str>,
-    ) -> Result<Vec<SensorThresholdTemplate>, sqlx::Error> {
+    ) -> Result<Vec<SensorThresholdTemplate>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM sensor_threshold_templates
@@ -417,7 +518,7 @@ impl SensorRepository {
         )
         .bind(org_id)
         .bind(sensor_type)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -426,7 +527,14 @@ impl SensorRepository {
     // ========================================================================
 
     /// Create an alert.
-    pub async fn create_alert(&self, data: CreateSensorAlert) -> Result<SensorAlert, sqlx::Error> {
+    pub async fn create_alert<'e, E>(
+        &self,
+        executor: E,
+        data: CreateSensorAlert,
+    ) -> Result<SensorAlert, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO sensor_alerts
@@ -441,16 +549,20 @@ impl SensorRepository {
         .bind(data.triggered_value)
         .bind(data.threshold_value)
         .bind(data.message)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List alerts with filters.
-    pub async fn list_alerts(
+    pub async fn list_alerts<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: AlertQuery,
-    ) -> Result<Vec<SensorAlert>, sqlx::Error> {
+    ) -> Result<Vec<SensorAlert>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -480,17 +592,21 @@ impl SensorRepository {
         .bind(query.to_time)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Resolve an alert.
     /// resolved_value is optional - if None, only resolved_at is set.
-    pub async fn resolve_alert(
+    pub async fn resolve_alert<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         resolved_value: Option<f64>,
-    ) -> Result<SensorAlert, sqlx::Error> {
+    ) -> Result<SensorAlert, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE sensor_alerts SET
@@ -502,16 +618,20 @@ impl SensorRepository {
         )
         .bind(id)
         .bind(resolved_value)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Acknowledge an alert.
-    pub async fn acknowledge_alert(
+    pub async fn acknowledge_alert<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         user_id: Uuid,
-    ) -> Result<SensorAlert, sqlx::Error> {
+    ) -> Result<SensorAlert, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE sensor_alerts SET
@@ -523,12 +643,19 @@ impl SensorRepository {
         )
         .bind(id)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Count unresolved alerts.
-    pub async fn count_unresolved_alerts(&self, org_id: Uuid) -> Result<i64, sqlx::Error> {
+    pub async fn count_unresolved_alerts<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<i64, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(*) FROM sensor_alerts a
@@ -537,7 +664,7 @@ impl SensorRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
         Ok(result.0)
     }
@@ -547,10 +674,14 @@ impl SensorRepository {
     // ========================================================================
 
     /// Create a sensor-fault correlation.
-    pub async fn create_correlation(
+    pub async fn create_correlation<'e, E>(
         &self,
+        executor: E,
         data: CreateSensorFaultCorrelation,
-    ) -> Result<SensorFaultCorrelation, sqlx::Error> {
+    ) -> Result<SensorFaultCorrelation, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO sensor_fault_correlations
@@ -571,46 +702,65 @@ impl SensorRepository {
         .bind(data.sensor_data_end)
         .bind(data.summary)
         .bind(data.created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get correlations for a fault.
-    pub async fn list_correlations_for_fault(
+    pub async fn list_correlations_for_fault<'e, E>(
         &self,
+        executor: E,
         fault_id: Uuid,
-    ) -> Result<Vec<SensorFaultCorrelation>, sqlx::Error> {
+    ) -> Result<Vec<SensorFaultCorrelation>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM sensor_fault_correlations WHERE fault_id = $1")
             .bind(fault_id)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
     }
 
     /// Get correlations for a sensor.
-    pub async fn list_correlations_for_sensor(
+    pub async fn list_correlations_for_sensor<'e, E>(
         &self,
+        executor: E,
         sensor_id: Uuid,
-    ) -> Result<Vec<SensorFaultCorrelation>, sqlx::Error> {
+    ) -> Result<Vec<SensorFaultCorrelation>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM sensor_fault_correlations WHERE sensor_id = $1")
             .bind(sensor_id)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
     }
 
     /// Delete a correlation.
-    pub async fn delete_correlation(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_correlation<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM sensor_fault_correlations WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
 
     /// Get sensors near a location (for auto-correlation).
-    pub async fn get_sensors_for_building(
+    pub async fn get_sensors_for_building<'e, E>(
         &self,
+        executor: E,
         building_id: Uuid,
-    ) -> Result<Vec<Sensor>, sqlx::Error> {
+    ) -> Result<Vec<Sensor>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM sensors
@@ -619,13 +769,17 @@ impl SensorRepository {
             "#,
         )
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Create batch readings using efficient bulk insert.
+    ///
+    /// Multi-statement (bulk INSERT + UPDATE parent sensor), so it takes a
+    /// connection and reborrows it for each query.
     pub async fn create_batch_readings(
         &self,
+        conn: &mut PgConnection,
         sensor_id: Uuid,
         readings: Vec<crate::models::SingleReading>,
     ) -> Result<i64, sqlx::Error> {
@@ -666,22 +820,26 @@ impl SensorRepository {
                 .bind(reading.timestamp);
         }
 
-        query_builder.execute(&self.pool).await?;
+        query_builder.execute(&mut *conn).await?;
 
         // Update sensor status
         sqlx::query(
             "UPDATE sensors SET last_reading_at = NOW(), last_seen_at = NOW(), status = 'active' WHERE id = $1",
         )
         .bind(sensor_id)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await?;
 
         Ok(count)
     }
 
     /// Apply threshold template to a sensor.
+    ///
+    /// Multi-statement (SELECT template + upsert threshold), so it takes a
+    /// connection and reborrows it for each query.
     pub async fn apply_threshold_template(
         &self,
+        conn: &mut PgConnection,
         template_id: Uuid,
         sensor_id: Uuid,
     ) -> Result<SensorThreshold, sqlx::Error> {
@@ -689,7 +847,7 @@ impl SensorRepository {
         let template: SensorThresholdTemplate =
             sqlx::query_as("SELECT * FROM sensor_threshold_templates WHERE id = $1")
                 .bind(template_id)
-                .fetch_one(&self.pool)
+                .fetch_one(&mut *conn)
                 .await?;
 
         // Create threshold from template
@@ -715,13 +873,17 @@ impl SensorRepository {
         .bind(template.warning_high)
         .bind(template.critical_value)
         .bind(template.critical_high)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// Get dashboard data for an organization.
+    ///
+    /// Multi-statement (six aggregate reads), so it takes a connection and
+    /// reborrows it for each query.
     pub async fn get_dashboard(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         building_id: Option<Uuid>,
     ) -> Result<crate::models::SensorDashboard, sqlx::Error> {
@@ -731,7 +893,7 @@ impl SensorRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let (active,): (i64,) = sqlx::query_as(
@@ -739,7 +901,7 @@ impl SensorRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let (offline,): (i64,) = sqlx::query_as(
@@ -747,7 +909,7 @@ impl SensorRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Count unresolved alerts
@@ -761,7 +923,7 @@ impl SensorRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Get sensors by type
@@ -776,7 +938,7 @@ impl SensorRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         // Get recent alerts
@@ -791,7 +953,7 @@ impl SensorRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         Ok(crate::models::SensorDashboard {
