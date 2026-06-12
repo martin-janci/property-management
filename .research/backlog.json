@@ -3385,6 +3385,68 @@
       "created_at": "2026-06-12",
       "updated_at": "2026-06-12",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/iot.rs (+278/-403 in PR #1321/#1322 PAP-151 re-land + fmt)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1321 commit",
+        "PR #1322 commit"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/iot.rs +263/-397 (660 line-changes) in PR #1321 (PAP-151 sensor + reserve_funds RLS executor-pattern re-land) — handler rework wiring sensor_repo through rls.conn() (or &mut **rls.conn()) instead of pool. Adds rls.release().await after each repo call. PR #1322 immediate fmt fixup added +15/-6 more (21 line-changes). Combined 681 line-changes. First runs_seen entry."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/iot.rs"
+      ],
+      "created_at": "2026-06-12",
+      "updated_at": "2026-06-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/reserve_funds.rs (+228/-255 in PR #1321 PAP-151 re-land)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1321 commit"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/reserve_funds.rs +228/-255 (483 line-changes) in PR #1321 (PAP-151 sensor + reserve_funds RLS executor-pattern re-land) — routes route reserve_funds_repo through rls.conn() / acquire_with_rls. Re-land of PAP-79 work that was marked done but never landed on dev (the done≠landed merge-stall pattern). Ships with reserve_funds_rls_repo_tests.rs (287 lines, new file). First runs_seen entry."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reserve_funds.rs"
+      ],
+      "created_at": "2026-06-12",
+      "updated_at": "2026-06-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/sensor.rs (+248/-86 in PR #1321/#1322 PAP-151 re-land + fmt)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1321 commit",
+        "PR #1322 commit"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/sensor.rs +233/-83 (316 line-changes) in PR #1321 (PAP-151 sensor + reserve_funds RLS executor-pattern re-land) — repo methods take generic Executor<Postgres> so callers can pass either pool or transaction; supports the new acquire_with_rls flow. Ships alongside sensor_rls_repo_tests.rs (252 lines, new file). PR #1322 fmt fixup added +15/-3 (18 line-changes). Combined 334 line-changes. First runs_seen entry."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/sensor.rs"
+      ],
+      "created_at": "2026-06-12",
+      "updated_at": "2026-06-12",
+      "plan": null
     }
   ]
 }
