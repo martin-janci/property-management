@@ -1045,22 +1045,11 @@ async fn get_dashboard(
     mut rls: RlsConnection,
     Query(query): Query<BuildingQuery>,
 ) -> impl IntoResponse {
-    // The dashboard currently performs multiple queries using the legacy
-    // repository method, which internally uses the shared pool rather than
-    // the RLS-bound connection provided here. This means the queries do not
-    // all run on a single RLS-enforced connection.
-    //
-    // For full RLS support, this handler (or the repository) needs to be
-    // refactored so all dashboard queries execute using `rls.conn()`, either
-    // by:
-    //   - moving the dashboard logic to use the RLS connection inside a
-    //     single transaction, or
-    //   - rewriting the dashboard logic into a combined query (or small set
-    //     of queries) that can run via the RLS-aware connection.
-    #[allow(deprecated)]
+    // All dashboard queries run on the RLS-bound connection so RLS policies
+    // are enforced consistently across the budget, alert and reserve lookups.
     match state
         .budget_repo
-        .get_dashboard(query.organization_id, query.building_id)
+        .get_dashboard(rls.conn(), query.organization_id, query.building_id)
         .await
     {
         Ok(dashboard) => {
@@ -1499,21 +1488,11 @@ async fn record_reserve_transaction(
     Path(id): Path<Uuid>,
     Json(data): Json<RecordReserveTransaction>,
 ) -> impl IntoResponse {
-    // The current implementation of record_reserve_transaction requires the
-    // reserve fund's current balance and therefore issues multiple queries.
-    //
-    // This bypasses the RLS-aware API for now and uses a deprecated method.
-    // TODO(epic-24): Refactor this into a single RLS-compatible operation:
-    //   * either implement record_reserve_transaction as a database stored
-    //     procedure that atomically reads the balance and records the
-    //     transaction under RLS, or
-    //   * introduce a record_reserve_transaction_rls(...) repository method
-    //     that performs the required queries within a transaction using
-    //     RlsConnection so that RLS policies are correctly enforced.
-    #[allow(deprecated)]
+    // Reads the reserve fund's current balance and records the transaction on
+    // the same RLS-bound connection so both queries run under RLS context.
     match state
         .budget_repo
-        .record_reserve_transaction(id, auth.user_id, data)
+        .record_reserve_transaction(rls.conn(), id, auth.user_id, data)
         .await
     {
         Ok(txn) => {
@@ -1567,12 +1546,10 @@ async fn get_reserve_projection(
     Query(query): Query<ProjectionQuery>,
 ) -> impl IntoResponse {
     let years = query.years.unwrap_or(5);
-    // The generate_reserve_projection method requires multiple queries
-    // and uses the pool directly. For full RLS support, this would need
-    // to be refactored.
+    // Reads the fund and its planned withdrawals on the RLS-bound connection.
     match state
         .budget_repo
-        .generate_reserve_projection(id, years)
+        .generate_reserve_projection(rls.conn(), id, years)
         .await
     {
         Ok(projection) => {
