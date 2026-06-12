@@ -1,0 +1,264 @@
+{
+  "date": "2026-06-12",
+  "run_iso": "2026-06-12T03:09:00Z",
+  "auto_fix_skipped_reason": "no candidate — closed-not-merged-pr is dep-update-noise variant (action=ignore, no allowlist match); churn-hotspot is analytical signal (cumulative type, never in Phase-5 allowlist); 0 screen-map-drift, 0 fixme-in-merged-code, 0 stalled-review eligible",
+  "rerun_context": {
+    "trigger_payload": "(empty — normal incremental routine; first run for 2026-06-12; previous run was 2026-06-11T18:31:49Z 5th-pass)",
+    "previous_run_iso": "2026-06-11T18:26:12Z",
+    "elapsed_hours_since_prior_run": 8,
+    "merged_in_window": [
+      {
+        "number": 1293,
+        "title": "fix(api-server): FORCE-RLS api_ecosystem catalog + developer-portal tables (PAP-171)",
+        "merged_at": "2026-06-11T18:26:27Z",
+        "has_test_diff": true,
+        "fired_signals": [
+          "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs"
+        ],
+        "note": "Adds migration 00180 + 416-line behavioral RLS test (api_ecosystem_developer_force_rls_tests.rs). 8 tables now FORCE ROW LEVEL SECURITY; handlers rerouted to acquire_with_rls. Defense-in-depth follow-up to PAP-167. Closes the owner-bypass gap. HAS TESTS — no hotfix-no-test signal."
+      },
+      {
+        "number": 1294,
+        "title": "feat: Booking.com OTA rate & availability push retry/error handling (epic-83 story 83.2 AC-5)",
+        "merged_at": "2026-06-11T22:20:25Z",
+        "has_test_diff": true,
+        "fired_signals": [
+          "churn-hotspot-backend-crates-integrations-src-booking-rs"
+        ],
+        "note": "+404/-29 in booking.rs: BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP OTA server (test_retry_*, test_push_*). All retry/error paths exercised. HAS TESTS — no hotfix-no-test signal."
+      },
+      {
+        "number": 1295,
+        "title": "test: idempotent-apply tests for notification-preference realtime sync (coverage 8a-3)",
+        "merged_at": "2026-06-11T20:24:42Z",
+        "has_test_diff": true,
+        "fired_signals": [],
+        "note": "Test-only PR (3 new test cases S5/S6/S7). No application code change. Follow-up issue #1308 surfaces realtime publish-leg replay-coverage gap — already in seen_signals via untriaged-issue rule? No — issue #1308 has the 'follow-up' label, so it's NOT untriaged. No new signal."
+      },
+      {
+        "number": 1296,
+        "title": "verify: report execution-history presigned-download retry (coverage 81-2)",
+        "merged_at": "2026-06-11T22:18:01Z",
+        "has_test_diff": true,
+        "fired_signals": [],
+        "note": "Test-only PR. No signal."
+      },
+      {
+        "number": 1297,
+        "title": "fix(reality-server): scope portal import/feed by-id endpoints to owner (PAP-142)",
+        "merged_at": "2026-06-11T20:00:38Z",
+        "has_test_diff": true,
+        "fired_signals": [
+          "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs"
+        ],
+        "note": "7 repo methods + 7 handlers now scoped on user_id/agency_id. 226-line cross-tenant IDOR regression test (portal_imports_cross_org_idor_tests.rs). HAS TESTS — no hotfix-no-test. Follow-up issue #1300 surfaces a handler-level test gap (repo tests do not cover the extractor wiring) and an ownership-model mismatch (feed_subscriptions.agency_id holds user_id) — both labeled follow-up, not untriaged."
+      },
+      {
+        "number": 1311,
+        "title": "verify: document RLS + capability gates and AC-mapped tests (story 7A.3)",
+        "merged_at": "2026-06-12T02:08:32Z",
+        "has_test_diff": true,
+        "fired_signals": [],
+        "note": "Test-only verify + story-status flip (ready-for-dev → done). 89 lines of AC-mapped tests in document_access_test.rs. No production code change. Resolves a long-standing coverage item; no signal."
+      },
+      {
+        "number": 1312,
+        "title": "chore(research): dispatcher 2026-06-11 22:35 state delta",
+        "merged_at": "2026-06-11T22:46:48Z",
+        "has_test_diff": false,
+        "fired_signals": [],
+        "note": "Dispatcher state delta — touches only .research/management/. Outside this routine's signal scope."
+      },
+      {
+        "number": 1315,
+        "title": "chore(research): dispatcher 2026-06-12 02:30 state delta",
+        "merged_at": "2026-06-12T02:32:23Z",
+        "has_test_diff": false,
+        "fired_signals": [],
+        "note": "Dispatcher state delta — touches only .research/management/. Outside this routine's signal scope."
+      }
+    ],
+    "closed_unmerged_in_window": [
+      {
+        "number": 1274,
+        "title": "chore(deps): bump the cargo-minor-patch group in /backend with 9 updates",
+        "closed_at": "2026-06-12T02:14:35Z",
+        "fired_signals": [
+          "closed-not-merged-pr-1274"
+        ],
+        "note": "Dependabot stale PR superseded by fresh #1313 (10 updates) after auto-rebase workflow fix landed in PR #1291."
+      }
+    ],
+    "phases_run": {
+      "phase_1": "ran — 8 merged PRs in window (5 application code, 3 research-only); 1 closed-unmerged dependabot; 12 issues created (all labeled 'follow-up' or 'from-merged-review' — not untriaged); 0 stalled-review signals fire (oldest open PR #988 last updated 2026-06-08, only 4d ago < 7d threshold); 4 signals total: 1 closed-not-merged + 3 churn-hotspots",
+      "phase_1_5": "skipped — same-day rerun (8h after the 2026-06-11T18:31:49Z 5th-pass run). All 4 merged code PRs map to the api-handlers / api-core / db-repositories segments — api-handlers was reviewed 2026-06-10 and ppt-web-ui 2026-06-11; api-core last reviewed 2026-05-29 (next oldest after reality-web 2026-05-28); will run next non-same-day fire.",
+      "phase_1_6": "skipped — same-day rerun. The dispatcher already wrote project-state.md / action-list.json / assignments.json at 02:34Z and 03:04Z today. pm_cursor unchanged at next_index=3 (pm-qa); coverage_cursor unchanged at next_index=10. Will resume on next non-same-day routine fire.",
+      "phase_2": "ran — 4 new items appended to backlog.json (1 dx + 3 refactor, all at score 1, all confidence=high); 0 decays (no open item with updated_at <= 2026-05-29); 0 resolutions (no open backlog item references PAP-140/142/167/168/169/170/171 by id).",
+      "phase_3": "ran — no new promotions (all 4 new signals at score 1, well below score-3 readiness gate; security fast-track inapplicable — no security-vector signals this run); 2 existing ready plans intact: bug-ios-searchview-uncompilable.md, security-llm-doc-idor.md.",
+      "phase_3_5": "n/a — no new plans this run.",
+      "phase_4": "ran — wrote brief, signals, state; regenerated backlog.md + IDEAS_TRIAGE.md with new timestamp + 4 new backlog rows.",
+      "phase_5": "ran — no candidate (allowlist check above); auto_fix_actions empty.",
+      "phase_6": "running — stage, gate, commit, push."
+    }
+  },
+  "signals": [
+    {
+      "id": "closed-not-merged-pr-1274",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1274",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "PR #1274 (chore(deps): bump the cargo-minor-patch group in /backend with 9 updates) closed without merge at 2026-06-12T02:14:35Z; superseded by fresh dependabot bump PR #1313 (cargo-minor-patch group, 10 updates) opened 2026-06-12T02:14:41Z. Auto-rebase workflow now functional after PR #1291 fix; dependabot's rebase replaced the stale PR rather than rebasing it."
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1294 commit 7ccce8a",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/crates/integrations/src/booking.rs +404/-29 (433 line-changes) in PR #1294 (feat-booking-rate-availability-push-v2, epic-83 story 83.2). Hotspot due to Booking.com OTA retry/error handling — adds BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP server. First runs_seen entry."
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1293 commit 1e50156",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/servers/api-server/src/routes/api_ecosystem.rs +106/-27 (133 line-changes) in PR #1293 (PAP-171 FORCE-RLS catalog + developer-portal). Second touch in 24h after PR #1289 (PAP-167); same file rerouted from catalog_conn (acquire_public) to rls_conn (acquire_with_rls) — RLS migration churn pattern."
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1297 commit 8c711c6",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "backend/crates/db/src/repositories/reality_portal.rs +59/-28 (87 line-changes) in PR #1297 (PAP-142 IDOR scoping for import jobs + feed subscriptions). 7 repo methods now require user_id/agency_id second-arg + WHERE-clause scoping. Paired with reality-server/src/routes/imports.rs +38/-19 in same PR."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-12.md && head -1 matches '# 2026-06-12'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged state.json vs HEAD",
+      "observed": "true (last_pr_seen 1292→1316, last_commit_sha 5d8231e→208fa26, seen_signals 196→200, hotspot_history 48→51, vectors_created 142→146)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal de-dup check (non-cumulative re-emit with score_delta!=0)",
+      "observed": "0 violators — all 4 new signals are fresh ids; the 3 churn-hotspots are cumulative-allowlisted so score_delta=1 is fine on first emission",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay check",
+      "observed": "no item > 8 (cap holds); no open item with updated_at <= 2026-05-29 → decay vacuously satisfied",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plans/<slug>.md has 'adversarial pass:' in brief",
+      "observed": "0 new plans this run → vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count <= 2",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets/private hosts in staged diff (excluding 4 baseline doc files)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0 (byte-identical)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failed this run — vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or plans/_archive/",
+      "observed": "all 5 prior plans present (bug-ios-searchview-uncompilable, p0-10-mock-route-wiring, security-llm-doc-idor, security-realtors-mark-inquiry-read-idor in plans/_archive/, test-gap-inquiry-idor-regression in plans/_archive/)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ count(plans/_archive/ staged) >= count(plans/_archive/ HEAD) ]",
+      "observed": "staged=7 HEAD=7 → exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0 (byte-identical)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length 0 ≤ 3; idempotency vs auto_fix_history",
+      "observed": "auto_fix_actions=[]; kill switch not set; phase 5 ran with no candidate",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → gate no-op; pm_cursor & coverage_cursor unchanged vs HEAD",
+      "observed": "pm_cursor.next_index=3 ∈ [0,7]; coverage_cursor.next_index=10 within [0, #epics); advancement clause vacuous (pm_cursor unchanged)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep Telegram bot-token literal in added lines (excluding 4 baseline doc files)",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

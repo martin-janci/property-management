@@ -3307,6 +3307,84 @@
       "created_at": "2026-06-11",
       "updated_at": "2026-06-11",
       "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1274",
+      "title": "PR #1274 (cargo-minor-patch group, /backend, 9 updates) closed unmerged — superseded by #1313 after auto-rebase fix landed",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1274"
+      ],
+      "evidence": [
+        "PR #1274 (chore(deps): bump the cargo-minor-patch group in /backend with 9 updates) closed without merge at 2026-06-12T02:14:35Z; superseded by fresh dependabot bump PR #1313 (cargo-minor-patch group, 10 updates) opened 2026-06-12T02:14:41Z. Auto-rebase workflow now functional after PR #1291 fix; dependabot's rebase replaced the stale PR rather than rebasing it."
+      ],
+      "files": [],
+      "created_at": "2026-06-12",
+      "updated_at": "2026-06-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "title": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1294 commit 7ccce8a"
+      ],
+      "evidence": [
+        "backend/crates/integrations/src/booking.rs +404/-29 (433 line-changes) in PR #1294 (feat-booking-rate-availability-push-v2, epic-83 story 83.2). Hotspot due to Booking.com OTA retry/error handling — adds BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP server. First runs_seen entry."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ],
+      "created_at": "2026-06-12",
+      "updated_at": "2026-06-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/api_ecosystem.rs (+106/−27 in PR #1293 PAP-171; second touch in 24h)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1293 commit 1e50156"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/api_ecosystem.rs +106/-27 (133 line-changes) in PR #1293 (PAP-171 FORCE-RLS catalog + developer-portal). Second touch in 24h after PR #1289 (PAP-167); same file rerouted from catalog_conn (acquire_public) to rls_conn (acquire_with_rls) — RLS migration churn pattern."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/api_ecosystem.rs"
+      ],
+      "created_at": "2026-06-12",
+      "updated_at": "2026-06-12",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1297 commit 8c711c6"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/reality_portal.rs +59/-28 (87 line-changes) in PR #1297 (PAP-142 IDOR scoping for import jobs + feed subscriptions). 7 repo methods now require user_id/agency_id second-arg + WHERE-clause scoping. Paired with reality-server/src/routes/imports.rs +38/-19 in same PR."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ],
+      "created_at": "2026-06-12",
+      "updated_at": "2026-06-12",
+      "plan": null
     }
   ]
 }
