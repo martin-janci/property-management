@@ -13,7 +13,6 @@
 
 # --- PAP-67 original offender set, conversion still pending ---
 esg_reporting.rs     # PAP-72 (blocked on PAP-139)
-form.rs              # PAP-76
 workflow.rs          # PAP-77
 
 # --- PAP-80 sweep: conversion PRs in flight ---
