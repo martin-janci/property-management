@@ -13,7 +13,6 @@
 
 # --- PAP-67 original offender set, conversion still pending ---
 work_order.rs        # PAP-67 (PAP-151 child: full executor conversion + route migration)
-budget.rs            # PAP-67 (PAP-151 child: dual-API cleanup, drop pool field + deprecated wrappers)
 esg_reporting.rs     # PAP-72 (blocked on PAP-139)
 form.rs              # PAP-76
 workflow.rs          # PAP-77

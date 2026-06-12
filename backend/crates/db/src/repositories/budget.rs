@@ -4,13 +4,11 @@
 //!
 //! # RLS Integration
 //!
-//! This repository supports two usage patterns:
-//!
-//! 1. **RLS-aware** (recommended): Use methods with `_rls` suffix that accept an executor
-//!    with RLS context already set (e.g., from `RlsConnection`).
-//!
-//! 2. **Legacy**: Use methods without suffix that use the internal pool. These do NOT
-//!    enforce RLS and should be migrated to the RLS-aware pattern.
+//! All methods take an executor with RLS context already set (e.g. from an
+//! `RlsConnection`): single-query CRUD methods carry the `_rls` suffix and
+//! accept any `Executor`, while the multi-query reserve/dashboard helpers
+//! take `&mut PgConnection` so they can reborrow across queries. The
+//! repository holds no pool — there is no non-RLS code path.
 //!
 //! ## Example
 //!
@@ -42,15 +40,17 @@ use sqlx::{Executor, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for budget and financial planning operations.
+///
+/// Stateless: every method runs against a caller-supplied RLS-bound
+/// executor/connection. The `_pool` argument to [`Self::new`] is retained
+/// only so the construction site stays uniform with other repositories.
 #[derive(Clone)]
-pub struct BudgetRepository {
-    pool: PgPool,
-}
+pub struct BudgetRepository;
 
 impl BudgetRepository {
     /// Create a new budget repository.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // ===========================================
@@ -1296,523 +1296,34 @@ impl BudgetRepository {
     }
 
     // ===========================================
-    // Legacy Budget Operations (deprecated)
+    // Reserve & Dashboard Operations (multi-query, RLS-aware)
     // ===========================================
+    //
+    // These methods run several queries that cannot share a single by-value
+    // executor, so they take `&mut PgConnection` and reborrow it per query.
+    // Callers pass `&mut **rls.conn()` so every query runs under the caller's
+    // RLS context. The `budgets` / `reserve_funds` / `capital_plans` /
+    // `budget_variance_alerts` tables are FORCE-RLS, so a non-RLS connection
+    // here is deny-all for own-org traffic.
 
-    /// Create a new budget.
+    /// Record a reserve fund transaction under the caller's RLS context.
     ///
-    /// **Deprecated**: Use `create_budget_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_budget_rls with RlsConnection instead"
-    )]
-    pub async fn create_budget(
-        &self,
-        organization_id: Uuid,
-        user_id: Uuid,
-        data: CreateBudget,
-    ) -> Result<Budget, sqlx::Error> {
-        self.create_budget_rls(&self.pool, organization_id, user_id, data)
-            .await
-    }
-
-    /// Find budget by ID.
-    ///
-    /// **Deprecated**: Use `find_budget_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_budget_by_id_rls with RlsConnection instead"
-    )]
-    pub async fn find_budget_by_id(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<Budget>, sqlx::Error> {
-        self.find_budget_by_id_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    /// List budgets with filters.
-    ///
-    /// **Deprecated**: Use `list_budgets_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_budgets_rls with RlsConnection instead"
-    )]
-    pub async fn list_budgets(
-        &self,
-        organization_id: Uuid,
-        query: BudgetQuery,
-    ) -> Result<Vec<Budget>, sqlx::Error> {
-        self.list_budgets_rls(&self.pool, organization_id, query)
-            .await
-    }
-
-    /// Update a budget.
-    ///
-    /// **Deprecated**: Use `update_budget_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_budget_rls with RlsConnection instead"
-    )]
-    pub async fn update_budget(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-        data: UpdateBudget,
-    ) -> Result<Option<Budget>, sqlx::Error> {
-        self.update_budget_rls(&self.pool, organization_id, id, data)
-            .await
-    }
-
-    /// Submit budget for approval.
-    ///
-    /// **Deprecated**: Use `submit_budget_for_approval_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use submit_budget_for_approval_rls with RlsConnection instead"
-    )]
-    pub async fn submit_budget_for_approval(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<Budget>, sqlx::Error> {
-        self.submit_budget_for_approval_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    /// Approve a budget.
-    ///
-    /// **Deprecated**: Use `approve_budget_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use approve_budget_rls with RlsConnection instead"
-    )]
-    pub async fn approve_budget(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-        approved_by: Uuid,
-    ) -> Result<Option<Budget>, sqlx::Error> {
-        self.approve_budget_rls(&self.pool, organization_id, id, approved_by)
-            .await
-    }
-
-    /// Activate a budget.
-    ///
-    /// **Deprecated**: Use `activate_budget_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use activate_budget_rls with RlsConnection instead"
-    )]
-    pub async fn activate_budget(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<Budget>, sqlx::Error> {
-        self.activate_budget_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    /// Close a budget.
-    ///
-    /// **Deprecated**: Use `close_budget_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use close_budget_rls with RlsConnection instead"
-    )]
-    pub async fn close_budget(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<Budget>, sqlx::Error> {
-        self.close_budget_rls(&self.pool, organization_id, id).await
-    }
-
-    /// Delete a draft budget.
-    ///
-    /// **Deprecated**: Use `delete_budget_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use delete_budget_rls with RlsConnection instead"
-    )]
-    pub async fn delete_budget(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
-        self.delete_budget_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    // ===========================================
-    // Legacy Budget Category Operations (deprecated)
-    // ===========================================
-
-    /// Create a budget category.
-    ///
-    /// **Deprecated**: Use `create_category_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_category_rls with RlsConnection instead"
-    )]
-    pub async fn create_category(
-        &self,
-        organization_id: Uuid,
-        data: CreateBudgetCategory,
-    ) -> Result<BudgetCategory, sqlx::Error> {
-        self.create_category_rls(&self.pool, organization_id, data)
-            .await
-    }
-
-    /// List categories for an organization.
-    ///
-    /// **Deprecated**: Use `list_categories_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_categories_rls with RlsConnection instead"
-    )]
-    pub async fn list_categories(
-        &self,
-        organization_id: Uuid,
-    ) -> Result<Vec<BudgetCategory>, sqlx::Error> {
-        self.list_categories_rls(&self.pool, organization_id).await
-    }
-
-    /// Update a category.
-    ///
-    /// **Deprecated**: Use `update_category_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_category_rls with RlsConnection instead"
-    )]
-    pub async fn update_category(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-        data: UpdateBudgetCategory,
-    ) -> Result<Option<BudgetCategory>, sqlx::Error> {
-        self.update_category_rls(&self.pool, organization_id, id, data)
-            .await
-    }
-
-    /// Delete a category.
-    ///
-    /// **Deprecated**: Use `delete_category_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use delete_category_rls with RlsConnection instead"
-    )]
-    pub async fn delete_category(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
-        self.delete_category_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    // ===========================================
-    // Legacy Budget Item Operations (deprecated)
-    // ===========================================
-
-    /// Add an item to a budget.
-    ///
-    /// **Deprecated**: Use `add_budget_item_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use add_budget_item_rls with RlsConnection instead"
-    )]
-    pub async fn add_budget_item(
-        &self,
-        budget_id: Uuid,
-        data: CreateBudgetItem,
-    ) -> Result<BudgetItem, sqlx::Error> {
-        self.add_budget_item_rls(&self.pool, budget_id, data).await
-    }
-
-    /// List items for a budget.
-    ///
-    /// **Deprecated**: Use `list_budget_items_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_budget_items_rls with RlsConnection instead"
-    )]
-    pub async fn list_budget_items(&self, budget_id: Uuid) -> Result<Vec<BudgetItem>, sqlx::Error> {
-        self.list_budget_items_rls(&self.pool, budget_id).await
-    }
-
-    /// Update a budget item.
-    ///
-    /// **Deprecated**: Use `update_budget_item_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_budget_item_rls with RlsConnection instead"
-    )]
-    pub async fn update_budget_item(
-        &self,
-        id: Uuid,
-        data: UpdateBudgetItem,
-    ) -> Result<Option<BudgetItem>, sqlx::Error> {
-        self.update_budget_item_rls(&self.pool, id, data).await
-    }
-
-    /// Delete a budget item.
-    ///
-    /// **Deprecated**: Use `delete_budget_item_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use delete_budget_item_rls with RlsConnection instead"
-    )]
-    pub async fn delete_budget_item(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        self.delete_budget_item_rls(&self.pool, id).await
-    }
-
-    // ===========================================
-    // Legacy Budget Actuals Operations (deprecated)
-    // ===========================================
-
-    /// Record an actual expense against a budget item.
-    ///
-    /// **Deprecated**: Use `record_actual_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use record_actual_rls with RlsConnection instead"
-    )]
-    pub async fn record_actual(
-        &self,
-        budget_item_id: Uuid,
-        user_id: Uuid,
-        data: RecordBudgetActual,
-    ) -> Result<BudgetActual, sqlx::Error> {
-        self.record_actual_rls(&self.pool, budget_item_id, user_id, data)
-            .await
-    }
-
-    /// List actuals for a budget item.
-    ///
-    /// **Deprecated**: Use `list_actuals_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_actuals_rls with RlsConnection instead"
-    )]
-    pub async fn list_actuals(
-        &self,
-        budget_item_id: Uuid,
-    ) -> Result<Vec<BudgetActual>, sqlx::Error> {
-        self.list_actuals_rls(&self.pool, budget_item_id).await
-    }
-
-    // ===========================================
-    // Legacy Capital Plan Operations (deprecated)
-    // ===========================================
-
-    /// Create a capital plan.
-    ///
-    /// **Deprecated**: Use `create_capital_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_capital_plan_rls with RlsConnection instead"
-    )]
-    pub async fn create_capital_plan(
-        &self,
-        organization_id: Uuid,
-        user_id: Uuid,
-        data: CreateCapitalPlan,
-    ) -> Result<CapitalPlan, sqlx::Error> {
-        self.create_capital_plan_rls(&self.pool, organization_id, user_id, data)
-            .await
-    }
-
-    /// Find capital plan by ID.
-    ///
-    /// **Deprecated**: Use `find_capital_plan_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_capital_plan_by_id_rls with RlsConnection instead"
-    )]
-    pub async fn find_capital_plan_by_id(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<CapitalPlan>, sqlx::Error> {
-        self.find_capital_plan_by_id_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    /// List capital plans with filters.
-    ///
-    /// **Deprecated**: Use `list_capital_plans_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_capital_plans_rls with RlsConnection instead"
-    )]
-    pub async fn list_capital_plans(
-        &self,
-        organization_id: Uuid,
-        query: CapitalPlanQuery,
-    ) -> Result<Vec<CapitalPlan>, sqlx::Error> {
-        self.list_capital_plans_rls(&self.pool, organization_id, query)
-            .await
-    }
-
-    /// Update a capital plan.
-    ///
-    /// **Deprecated**: Use `update_capital_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_capital_plan_rls with RlsConnection instead"
-    )]
-    pub async fn update_capital_plan(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-        data: UpdateCapitalPlan,
-    ) -> Result<Option<CapitalPlan>, sqlx::Error> {
-        self.update_capital_plan_rls(&self.pool, organization_id, id, data)
-            .await
-    }
-
-    /// Start a capital plan.
-    ///
-    /// **Deprecated**: Use `start_capital_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use start_capital_plan_rls with RlsConnection instead"
-    )]
-    pub async fn start_capital_plan(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<CapitalPlan>, sqlx::Error> {
-        self.start_capital_plan_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    /// Complete a capital plan.
-    ///
-    /// **Deprecated**: Use `complete_capital_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use complete_capital_plan_rls with RlsConnection instead"
-    )]
-    pub async fn complete_capital_plan(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-        actual_cost: Decimal,
-    ) -> Result<Option<CapitalPlan>, sqlx::Error> {
-        self.complete_capital_plan_rls(&self.pool, organization_id, id, actual_cost)
-            .await
-    }
-
-    /// Delete a capital plan.
-    ///
-    /// **Deprecated**: Use `delete_capital_plan_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use delete_capital_plan_rls with RlsConnection instead"
-    )]
-    pub async fn delete_capital_plan(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
-        self.delete_capital_plan_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    // ===========================================
-    // Legacy Reserve Fund Operations (deprecated)
-    // ===========================================
-
-    /// Create a reserve fund.
-    ///
-    /// **Deprecated**: Use `create_reserve_fund_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_reserve_fund_rls with RlsConnection instead"
-    )]
-    pub async fn create_reserve_fund(
-        &self,
-        organization_id: Uuid,
-        data: CreateReserveFund,
-    ) -> Result<ReserveFund, sqlx::Error> {
-        self.create_reserve_fund_rls(&self.pool, organization_id, data)
-            .await
-    }
-
-    /// Find reserve fund by ID.
-    ///
-    /// **Deprecated**: Use `find_reserve_fund_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_reserve_fund_by_id_rls with RlsConnection instead"
-    )]
-    pub async fn find_reserve_fund_by_id(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<ReserveFund>, sqlx::Error> {
-        self.find_reserve_fund_by_id_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    /// List reserve funds.
-    ///
-    /// **Deprecated**: Use `list_reserve_funds_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_reserve_funds_rls with RlsConnection instead"
-    )]
-    pub async fn list_reserve_funds(
-        &self,
-        organization_id: Uuid,
-        building_id: Option<Uuid>,
-    ) -> Result<Vec<ReserveFund>, sqlx::Error> {
-        self.list_reserve_funds_rls(&self.pool, organization_id, building_id)
-            .await
-    }
-
-    /// Update a reserve fund.
-    ///
-    /// **Deprecated**: Use `update_reserve_fund_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_reserve_fund_rls with RlsConnection instead"
-    )]
-    pub async fn update_reserve_fund(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-        data: UpdateReserveFund,
-    ) -> Result<Option<ReserveFund>, sqlx::Error> {
-        self.update_reserve_fund_rls(&self.pool, organization_id, id, data)
-            .await
-    }
-
-    /// Record a reserve fund transaction.
-    ///
-    /// **Deprecated**: Use `record_reserve_transaction_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use record_reserve_transaction_rls with RlsConnection instead"
-    )]
-    #[allow(deprecated)]
+    /// Reads the current balance and inserts the transaction on the same
+    /// connection so RLS policies are enforced for both queries.
     pub async fn record_reserve_transaction(
         &self,
+        conn: &mut sqlx::PgConnection,
         reserve_fund_id: Uuid,
         user_id: Uuid,
         data: RecordReserveTransaction,
     ) -> Result<ReserveFundTransaction, sqlx::Error> {
-        // Get current balance using deprecated method (internal use)
         let fund: ReserveFund = sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1")
             .bind(reserve_fund_id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await?;
 
         self.record_reserve_transaction_rls(
-            &self.pool,
+            conn,
             reserve_fund_id,
             user_id,
             fund.current_balance,
@@ -1821,201 +1332,19 @@ impl BudgetRepository {
         .await
     }
 
-    /// List reserve fund transactions.
+    /// Generate a reserve fund projection under the caller's RLS context.
     ///
-    /// **Deprecated**: Use `list_reserve_transactions_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_reserve_transactions_rls with RlsConnection instead"
-    )]
-    pub async fn list_reserve_transactions(
-        &self,
-        reserve_fund_id: Uuid,
-    ) -> Result<Vec<ReserveFundTransaction>, sqlx::Error> {
-        self.list_reserve_transactions_rls(&self.pool, reserve_fund_id)
-            .await
-    }
-
-    // ===========================================
-    // Legacy Financial Forecast Operations (deprecated)
-    // ===========================================
-
-    /// Create a financial forecast.
-    ///
-    /// **Deprecated**: Use `create_forecast_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use create_forecast_rls with RlsConnection instead"
-    )]
-    pub async fn create_forecast(
-        &self,
-        organization_id: Uuid,
-        user_id: Uuid,
-        data: CreateFinancialForecast,
-    ) -> Result<FinancialForecast, sqlx::Error> {
-        self.create_forecast_rls(&self.pool, organization_id, user_id, data)
-            .await
-    }
-
-    /// Find forecast by ID.
-    ///
-    /// **Deprecated**: Use `find_forecast_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_forecast_by_id_rls with RlsConnection instead"
-    )]
-    pub async fn find_forecast_by_id(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<FinancialForecast>, sqlx::Error> {
-        self.find_forecast_by_id_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    /// List forecasts.
-    ///
-    /// **Deprecated**: Use `list_forecasts_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_forecasts_rls with RlsConnection instead"
-    )]
-    pub async fn list_forecasts(
-        &self,
-        organization_id: Uuid,
-        query: ForecastQuery,
-    ) -> Result<Vec<FinancialForecast>, sqlx::Error> {
-        self.list_forecasts_rls(&self.pool, organization_id, query)
-            .await
-    }
-
-    /// Update a forecast.
-    ///
-    /// **Deprecated**: Use `update_forecast_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use update_forecast_rls with RlsConnection instead"
-    )]
-    pub async fn update_forecast(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-        data: UpdateFinancialForecast,
-    ) -> Result<Option<FinancialForecast>, sqlx::Error> {
-        self.update_forecast_rls(&self.pool, organization_id, id, data)
-            .await
-    }
-
-    /// Delete a forecast.
-    ///
-    /// **Deprecated**: Use `delete_forecast_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use delete_forecast_rls with RlsConnection instead"
-    )]
-    pub async fn delete_forecast(
-        &self,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
-        self.delete_forecast_rls(&self.pool, organization_id, id)
-            .await
-    }
-
-    // ===========================================
-    // Legacy Variance Alert Operations (deprecated)
-    // ===========================================
-
-    /// List pending variance alerts for a budget.
-    ///
-    /// **Deprecated**: Use `list_variance_alerts_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use list_variance_alerts_rls with RlsConnection instead"
-    )]
-    pub async fn list_variance_alerts(
-        &self,
-        budget_id: Uuid,
-        acknowledged: Option<bool>,
-    ) -> Result<Vec<BudgetVarianceAlert>, sqlx::Error> {
-        self.list_variance_alerts_rls(&self.pool, budget_id, acknowledged)
-            .await
-    }
-
-    /// Acknowledge a variance alert.
-    ///
-    /// **Deprecated**: Use `acknowledge_alert_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use acknowledge_alert_rls with RlsConnection instead"
-    )]
-    pub async fn acknowledge_alert(
-        &self,
-        id: Uuid,
-        user_id: Uuid,
-        data: AcknowledgeVarianceAlert,
-    ) -> Result<Option<BudgetVarianceAlert>, sqlx::Error> {
-        self.acknowledge_alert_rls(&self.pool, id, user_id, data)
-            .await
-    }
-
-    // ===========================================
-    // Legacy Statistics & Reporting (deprecated)
-    // ===========================================
-
-    /// Get budget summary.
-    ///
-    /// **Deprecated**: Use `get_budget_summary_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_budget_summary_rls with RlsConnection instead"
-    )]
-    pub async fn get_budget_summary(&self, budget_id: Uuid) -> Result<BudgetSummary, sqlx::Error> {
-        self.get_budget_summary_rls(&self.pool, budget_id).await
-    }
-
-    /// Get variance by category.
-    ///
-    /// **Deprecated**: Use `get_category_variance_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_category_variance_rls with RlsConnection instead"
-    )]
-    pub async fn get_category_variance(
-        &self,
-        budget_id: Uuid,
-    ) -> Result<Vec<CategoryVariance>, sqlx::Error> {
-        self.get_category_variance_rls(&self.pool, budget_id).await
-    }
-
-    /// Get yearly capital plan summary.
-    ///
-    /// **Deprecated**: Use `get_yearly_capital_summary_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use get_yearly_capital_summary_rls with RlsConnection instead"
-    )]
-    pub async fn get_yearly_capital_summary(
-        &self,
-        organization_id: Uuid,
-    ) -> Result<Vec<YearlyCapitalSummary>, sqlx::Error> {
-        self.get_yearly_capital_summary_rls(&self.pool, organization_id)
-            .await
-    }
-
-    /// Generate reserve fund projection.
-    ///
-    /// Note: This method requires multiple queries and uses the pool directly.
-    /// For RLS support, fetch data using individual RLS methods and compute projection in caller.
-    #[allow(deprecated)]
+    /// Reads the fund and its planned capital withdrawals on the same
+    /// connection, then computes the multi-year projection in memory.
     pub async fn generate_reserve_projection(
         &self,
+        conn: &mut sqlx::PgConnection,
         reserve_fund_id: Uuid,
         years: i32,
     ) -> Result<Vec<ReserveFundProjection>, sqlx::Error> {
         let fund: ReserveFund = sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1")
             .bind(reserve_fund_id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await?;
 
         // Get planned capital withdrawals
@@ -2034,7 +1363,7 @@ impl BudgetRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         let current_year = chrono::Utc::now().year();
@@ -2066,16 +1395,13 @@ impl BudgetRepository {
         Ok(projections)
     }
 
-    /// Get budget dashboard.
+    /// Get the budget dashboard under the caller's RLS context.
     ///
-    /// **Deprecated**: Use individual RLS methods to build dashboard data instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use individual RLS methods to build dashboard data"
-    )]
-    #[allow(deprecated)]
+    /// Runs every dashboard query on a single connection so RLS policies are
+    /// enforced consistently across the budget, alert and reserve lookups.
     pub async fn get_dashboard(
         &self,
+        conn: &mut sqlx::PgConnection,
         organization_id: Uuid,
         building_id: Option<Uuid>,
     ) -> Result<BudgetDashboard, sqlx::Error> {
@@ -2092,17 +1418,18 @@ impl BudgetRepository {
         )
         .bind(organization_id)
         .bind(building_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         let summary = if let Some(ref budget) = active_budget {
-            Some(self.get_budget_summary(budget.id).await?)
+            Some(self.get_budget_summary_rls(&mut *conn, budget.id).await?)
         } else {
             None
         };
 
         let categories = if let Some(ref budget) = active_budget {
-            self.get_category_variance(budget.id).await?
+            self.get_category_variance_rls(&mut *conn, budget.id)
+                .await?
         } else {
             Vec::new()
         };
@@ -2117,7 +1444,7 @@ impl BudgetRepository {
                 "#,
             )
             .bind(budget.id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await?
         } else {
             (0,)
@@ -2134,7 +1461,7 @@ impl BudgetRepository {
         )
         .bind(organization_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         Ok(BudgetDashboard {

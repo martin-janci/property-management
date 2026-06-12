@@ -1,9 +1,9 @@
 {
-  "generated": "2026-06-08T06:56:42Z",
+  "generated": "2026-06-12T10:20:18Z",
   "items": [
     {
       "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "action": "Churn hotspot: AnnouncementsScreen.test.ts \u2014 4 PRs this run, instability proxy",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
@@ -249,7 +249,7 @@
     },
     {
       "id": "feat-airbnb-oauth-token-exchange-route",
-      "action": "Coverage 83-1: add the Airbnb OAuth token-exchange route and /integrations/airbnb/* API routes (models already exist). Backend api-server; include tests. Note: external integration \u2014 keep secrets in config.",
+      "action": "Coverage 83-1: add the Airbnb OAuth token-exchange route and /integrations/airbnb/* API routes (models already exist). Backend api-server; include tests. Note: external integration — keep secrets in config.",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "done",
@@ -481,7 +481,7 @@
     },
     {
       "id": "feat-mobile-push-fcm-apns-integration",
-      "action": "Coverage 8a-3: implement React Native mobile OS push integration (FCM for Android / APNs for iOS) \u2014 register device token, persist to backend, handle foreground/background notification delivery for the notification-preference pipeline. Mobile (frontend/apps/mobile).",
+      "action": "Coverage 8a-3: implement React Native mobile OS push integration (FCM for Android / APNs for iOS) — register device token, persist to backend, handle foreground/background notification delivery for the notification-preference pipeline. Mobile (frontend/apps/mobile).",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "done",
@@ -499,7 +499,7 @@
     },
     {
       "id": "feat-airbnb-realtime-webhook-handler",
-      "action": "Coverage 83-1: implement the Airbnb realtime webhook handler (inbound reservation/availability change events) \u2014 signature verification, idempotent event processing, and persistence. Backend api-server; pairs with the OAuth token-exchange route work.",
+      "action": "Coverage 83-1: implement the Airbnb realtime webhook handler (inbound reservation/availability change events) — signature verification, idempotent event processing, and persistence. Backend api-server; pairs with the OAuth token-exchange route work.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "done",
@@ -517,7 +517,7 @@
     },
     {
       "id": "feat-booking-rate-availability-push",
-      "action": "[GC-DROP: dup of archived FAILED assignment (pr=None); id+stem collide w/ terminal archive -> unclaimable; re-plan upstream under fresh id] Coverage 83-2: implement Booking.com rate & availability push (AC-5) end-to-end \u2014 build the OTA rate/availability message and push to the partner endpoint with retry/error handling. Backend api-server; pairs with the OTA XML parsing work.",
+      "action": "[GC-DROP: dup of archived FAILED assignment (pr=None); id+stem collide w/ terminal archive -> unclaimable; re-plan upstream under fresh id] Coverage 83-2: implement Booking.com rate & availability push (AC-5) end-to-end — build the OTA rate/availability message and push to the partner endpoint with retry/error handling. Backend api-server; pairs with the OTA XML parsing work.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "dropped",
@@ -528,7 +528,7 @@
     },
     {
       "id": "verify-reality-mobile-search-ac-coverage",
-      "action": "Coverage 82-3: verify reality-mobile (KMP) home/search ACs \u2014 debounced search (AC-2), infinite scroll (AC-4), CoreLocation integration, and FilterSheet \u2014 against the shipped screens; add coverage where evidence is missing and record findings. mobile-native.",
+      "action": "Coverage 82-3: verify reality-mobile (KMP) home/search ACs — debounced search (AC-2), infinite scroll (AC-4), CoreLocation integration, and FilterSheet — against the shipped screens; add coverage where evidence is missing and record findings. mobile-native.",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "done",
@@ -647,7 +647,7 @@
     },
     {
       "id": "feat-airbnb-oauth-token-exchange-route-backend",
-      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code \u2192 access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
+      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -658,7 +658,7 @@
     },
     {
       "id": "feat-airbnb-realtime-webhook-handler-backend",
-      "action": "Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) \u2014 signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.",
+      "action": "Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) — signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -680,7 +680,7 @@
     },
     {
       "id": "feat-web-announcements-faults-api-hooks-wiring",
-      "action": "Coverage 79-1: complete the api-client integration \u2014 wire AnnouncementsPage and FaultsPage in ppt-web to the generated TanStack Query API hooks (replace any remaining stubbed/static data), and verify loading/error states. Frontend ppt-web; include component tests for the wired data path.",
+      "action": "Coverage 79-1: complete the api-client integration — wire AnnouncementsPage and FaultsPage in ppt-web to the generated TanStack Query API hooks (replace any remaining stubbed/static data), and verify loading/error states. Frontend ppt-web; include component tests for the wired data path.",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "open",
@@ -691,7 +691,7 @@
     },
     {
       "id": "verify-dispute-filing-flow-ac-coverage-promote",
-      "action": "[VERIFY-DONE/CANNOT-PROMOTE: AC-1/2/3/5 met+covered; AC-4 draft-saving (useDraftStorage) unimplemented -> story stays partial. Needs NEW impl task for AC-4 draft auto-save (upstream/planner). 2026-06-12] Coverage 80-2: verify the dispute-filing flow against the story ACs (UI is shipped but story Status pending, checklist unchecked); add any missing integration/e2e coverage and promote the story ready-for-dev \u2192 done. Frontend ppt-web + api-server as needed.",
+      "action": "[VERIFY-DONE/CANNOT-PROMOTE: AC-1/2/3/5 met+covered; AC-4 draft-saving (useDraftStorage) unimplemented -> story stays partial. Needs NEW impl task for AC-4 draft auto-save (upstream/planner). 2026-06-12] Coverage 80-2: verify the dispute-filing flow against the story ACs (UI is shipped but story Status pending, checklist unchecked); add any missing integration/e2e coverage and promote the story ready-for-dev → done. Frontend ppt-web + api-server as needed.",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "dropped",
@@ -713,7 +713,7 @@
     },
     {
       "id": "test-esignature-email-send-status-tracking-backend",
-      "action": "[GC: already shipped on dev (esignature_email_status_tracking_tests.rs commit 93959db); coverage 84-2 gap stale; implementer no-op 2026-06-12] Coverage 84-2: add backend tests for the e-signature email-send + status-tracking path (request sent \u2192 delivered/opened/signed transitions), complementing the webhook idempotency guard work. Additive backend tests, no schema change. Backend api-server.",
+      "action": "[GC: already shipped on dev (esignature_email_status_tracking_tests.rs commit 93959db); coverage 84-2 gap stale; implementer no-op 2026-06-12] Coverage 84-2: add backend tests for the e-signature email-send + status-tracking path (request sent → delivered/opened/signed transitions), complementing the webhook idempotency guard work. Additive backend tests, no schema change. Backend api-server.",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "done",
@@ -721,6 +721,314 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "feat-folder-organization-mobile-implementation-frontend",
+      "title": null,
+      "action": "mobile implementation pending (7a-2-folder-organization Folder Organization)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-build-configuration-by-environ-app-icon-variants-dev-mobile",
+      "title": null,
+      "action": "app icon variants with DEV/STG badges not created (85-2-build-configuration Build Configuration by Environment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-build-configuration-by-environ-app-icons-generated-all-mobile",
+      "title": null,
+      "action": "app icons not generated for all sizes (85-2-build-configuration Build Configuration by Environment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-build-configuration-by-environ-build-scripts-created-mobile",
+      "title": null,
+      "action": "build scripts (scripts/build-mobile|android|ios.sh) not created (85-2-build-configuration Build Configuration by Environment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-build-configuration-by-environ-ios-xcconfig-files-mobile",
+      "title": null,
+      "action": "iOS xcconfig files + schemes not created (85-2-build-configuration Build Configuration by Environment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-environment-variable-setup-app-expo-present-mobile",
+      "title": null,
+      "action": "app.config.ts for Expo not present (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-environment-variable-setup-env-setup-documentation-mobile",
+      "title": null,
+      "action": "env setup documentation missing (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-environment-variable-setup-ios-info-lacks-api-base-url-mobile",
+      "title": null,
+      "action": "iOS Info.plist lacks API_BASE_URL/ENVIRONMENT keys (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-environment-variable-setup-react-native-config-metro-bundler-mobile",
+      "title": null,
+      "action": "react-native-config + Metro bundler setup not done (Expo Constants used) (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-announcement-comments-discussi-comments-web-ui-draft-backend",
+      "title": null,
+      "action": "comments web UI in draft PRs #474/#475/#479 — not yet merged (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-announcement-viewing-acknowled-apistatus-stub-until-web-backend",
+      "title": null,
+      "action": "apiStatus stub until web PRs land (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend",
+      "title": null,
+      "action": "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-api-client-integration-for-cor-announcementspage-faultspage-wired-api-frontend",
+      "title": null,
+      "action": "AnnouncementsPage/FaultsPage not fully wired to API hooks (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-api-client-integration-for-cor-feature-integration-incomplete-infra-frontend",
+      "title": null,
+      "action": "feature integration incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-dispute-filing-flow-task-checklist-unchecked-frontend",
+      "title": null,
+      "action": "task checklist unchecked (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-e-signature-email-integration-e-signature-email-send-tracking-backend",
+      "title": null,
+      "action": "e-signature email-send + status-tracking polish; webhook idempotency guard (terminal-state) still missing (84-2-esignature-email E-Signature Email Integration)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-airbnb-oauth-and-sync-no-oauth-token-exchange-backend",
+      "title": null,
+      "action": "no OAuth token exchange route (models only) (83-1-airbnb-integration Airbnb OAuth and Sync)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-navigation-and-routing-auth-guard-evidenced-mobile",
+      "title": null,
+      "action": "auth guard (AC-5) not evidenced (82-2-navigation-routing Navigation and Routing)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "fix-report-schedule-editing-cron-edits-round-trip-through-frontend",
+      "title": null,
+      "action": "cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616) (81-1-report-schedule-editing Report Schedule Editing)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-home-and-search-screens-debounced-search-evidenced-mobile",
+      "title": null,
+      "action": "debounced search (AC-2) not evidenced (82-3-home-search-screens Home and Search Screens)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-home-and-search-screens-filtersheet-location-features-mobile",
+      "title": null,
+      "action": "FilterSheet/location features missing (82-3-home-search-screens Home and Search Screens)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-navigation-and-routing-navigation-state-preservation-mobile",
+      "title": null,
+      "action": "navigation state preservation (AC-4) unverified (82-2-navigation-routing Navigation and Routing)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-swiftui-project-setup-no-epic-82-commits-git-mobile",
+      "title": null,
+      "action": "no epic-82 commits in git log (82-1-swiftui-project-setup SwiftUI Project Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-swiftui-project-setup-no-screen-map-ppt-reality-mobile-docs-mobile",
+      "title": null,
+      "action": "no screen-map for ppt-reality-mobile in docs/screens/ (82-1-swiftui-project-setup SwiftUI Project Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-swiftui-project-setup-vs-implementation-mapping-mobile",
+      "title": null,
+      "action": "story-vs-implementation mapping unclear (epic 82 in epics-007.md targets different scope) (82-1-swiftui-project-setup SwiftUI Project Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "verify-home-and-search-screens-corelocation-integration-confirmed-mobile",
+      "title": null,
+      "action": "CoreLocation integration not confirmed (82-3-home-search-screens Home and Search Screens)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "verify-navigation-and-routing-deep-linking-url-schemes-confirmed-mobile",
+      "title": null,
+      "action": "deep-linking with URL schemes not confirmed (82-2-navigation-routing Navigation and Routing)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
+    },
+    {
+      "id": "feat-airbnb-oauth-and-sync-no-integrations-airbnb-backend",
+      "title": null,
+      "action": "no /integrations/airbnb/* API routes (83-1-airbnb-integration Airbnb OAuth and Sync)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)"
     }
   ]
 }
