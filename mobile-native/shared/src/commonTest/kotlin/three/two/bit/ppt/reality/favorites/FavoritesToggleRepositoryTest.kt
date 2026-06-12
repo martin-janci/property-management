@@ -93,7 +93,10 @@ class FavoritesToggleRepositoryTest {
 
         assertTrue(result.isFailure, "409 should surface as failure, got $result")
         val ex = result.exceptionOrNull()
-        assertTrue(ex is FavoritesException, "expected FavoritesException, got ${ex?.let { it::class }}")
+        assertTrue(
+            ex is FavoritesException,
+            "expected FavoritesException, got ${ex?.let { it::class }}",
+        )
         assertEquals("Already in favorites", ex?.message)
     }
 

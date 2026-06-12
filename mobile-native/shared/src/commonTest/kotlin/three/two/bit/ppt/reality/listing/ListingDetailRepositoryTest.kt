@@ -17,11 +17,11 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 
 /**
- * Repository-level coroutine tests for [ListingRepository.getListingDetail] — the fetch that feeds
- * the Reality Portal listing-detail screen.
+ * Repository-level coroutine tests for [ListingRepository.getListingDetail] — the fetch that
+ * feeds the Reality Portal listing-detail screen.
  *
- * The [ListingModelsContractTest] pins the raw DTO encode/decode; this pins the *render contract* as
- * seen through the repository: the GET hits `/api/v1/listings/{id}`, a 200 decodes a full
+ * The [ListingModelsContractTest] pins the raw DTO encode/decode; this pins the *render contract*
+ * as seen through the repository: the GET hits `/api/v1/listings/{id}`, a 200 decodes a full
  * [ListingDetail] (so the detail screen can render title/price/images/features/realtor), a 404 maps
  * to the user-facing "Listing not found", and other non-2xx surface a [ListingException].
  */
@@ -86,7 +86,8 @@ class ListingDetailRepositoryTest {
           },
           "images": [
             { "id": "img-1", "url": "https://cdn.example.com/a.jpg", "is_primary": true },
-            { "id": "img-2", "url": "https://cdn.example.com/b.jpg", "thumbnail_url": "https://cdn.example.com/b-thumb.jpg" }
+            { "id": "img-2", "url": "https://cdn.example.com/b.jpg",
+              "thumbnail_url": "https://cdn.example.com/b-thumb.jpg" }
           ],
           "features": ["balcony", "elevator", "parking"],
           "energy_rating": "B",
@@ -147,7 +148,10 @@ class ListingDetailRepositoryTest {
 
         assertTrue(result.isFailure, "404 should surface as failure, got $result")
         val ex = result.exceptionOrNull()
-        assertTrue(ex is ListingException, "expected ListingException, got ${ex?.let { it::class }}")
+        assertTrue(
+            ex is ListingException,
+            "expected ListingException, got ${ex?.let { it::class }}",
+        )
         assertEquals("Listing not found", ex?.message)
     }
 
