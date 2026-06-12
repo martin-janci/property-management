@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-12T04:12:45Z",
+  "generated": "2026-06-12T04:30:00Z",
   "assignments": [
     {
       "task_id": "refactor-churn-hotspot-mobile-announcements-test",
@@ -120,23 +120,23 @@
     {
       "task_id": "verify-document-folder-organization-backend-promote",
       "branch": "auto-impl/verify-document-folder-organization-back",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-06-12T02:16:37Z",
-      "last_updated": "2026-06-12T04:12:45Z",
-      "status_changed_at": "2026-06-12T04:12:45Z",
+      "last_updated": "2026-06-12T04:30:00Z",
+      "status_changed_at": "2026-06-12T04:30:00Z",
       "pr_number": 1316,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1316",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=changes note=ci-test-job-red: document_folder_tests binary fails exit101 (teardown FK on document_folders_created_by_fkey/documents_created_by_fkey DELETE FROM users — seed/teardown isolation defect); author verified compile-only (no live PG); promotion to done premature [dispatcher 2026-06-12: Phase 5.7 respawn round 1]",
+      "last_reviewed_oid": "e04775b73c95ea13b84fa02203ffd60a1dd10d65",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     },
     {
