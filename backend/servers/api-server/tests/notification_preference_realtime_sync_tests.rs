@@ -27,6 +27,19 @@
 //! | S6 | no  | Re-applying `enabled:true` to an already-enabled channel both return 200 and never trips the "would disable all" 409 (the guard only runs on `!enabled`) — a redundant enable is always idempotent. |
 //! | S7 | no  | Disabling an **already-disabled** channel does not 409 even when another channel is the only enabled one: the guard keys off the *current* state of the channel being patched (`current.enabled`), so a replayed disable of a channel that is already off can never be the "last enabled" channel — proving repeated applies don't spuriously block. |
 //!
+//! Coverage 8a-3 (create/update edges) — additive no-Redis cases that lock down
+//! the *create* (default provisioning) and *update* (channel-parse + restore +
+//! confirmed disable-all warning) edges the realtime client depends on. These
+//! complement S1–S7: S1–S4 prove the publish leg, S5–S7 the idempotency leg,
+//! and S8–S11 the create/update contract the publish leg is built on:
+//!
+//! | Case | Requires Redis | Asserts |
+//! |------|----------------|---------|
+//! | S8  | no | A freshly-provisioned user's GET returns all three channels (push/email/in_app) **enabled** — the create leg (DB trigger seeds defaults) is what the first realtime sync snapshots. |
+//! | S9  | no | An unknown channel segment is rejected with **400 INVALID_CHANNEL** before any update/publish — a malformed realtime replay can never mutate state or emit a spurious event. |
+//! | S10 | no | A disable→enable round-trip on the same channel converges back to enabled (the *update transition* restoring state, distinct from S6's redundant enable of an already-on channel). |
+//! | S11 | no | Disabling the last enabled channel **with** `confirmDisableAll:true` returns 200 and surfaces the `allDisabledWarning` — the confirmed disable-all path the 409 in S3 guards, proving the update succeeds and the warning rides the response. |
+//!
 //! The no-Redis cases run in CI (the default `AppState` has `pubsub_service =
 //! None`). The Redis case mirrors the `#[ignore]` style of the fanout test in
 //! `ws_integration_tests.rs` — run locally with:
@@ -368,6 +381,237 @@ async fn redisable_of_off_channel_never_conflicts(pool: PgPool) {
         in_app["enabled"],
         json!(true),
         "S7: in_app must stay enabled — re-disabling an already-off channel is a no-op, not a last-channel disable"
+    );
+}
+
+// ============================================================================
+// S8 — create leg: a fresh user's GET returns all channels enabled by default
+// ============================================================================
+
+/// The realtime-sync contract is built on top of the *create* leg: when a user
+/// is provisioned, the DB trigger seeds one preference row per channel, all
+/// enabled. The first GET a connected client issues snapshots that default
+/// state, and every subsequent `preference.updated` is a delta against it. This
+/// test pins the baseline — GET on an untouched user returns exactly the three
+/// channels (push, email, in_app), each enabled, with no all-disabled warning.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn fresh_user_has_all_channels_enabled_by_default(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s8").await;
+
+    let get = app
+        .get("/api/v1/users/me/notification-preferences")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .build();
+    let resp = app.execute(get).await;
+    resp.assert_status(StatusCode::OK);
+
+    let body = resp.json_value();
+    let prefs = body["preferences"]
+        .as_array()
+        .expect("preferences array present");
+
+    // Exactly the three known channels, each enabled.
+    let mut channels: Vec<&str> = prefs
+        .iter()
+        .map(|p| p["channel"].as_str().expect("channel is a string"))
+        .collect();
+    channels.sort_unstable();
+    assert_eq!(
+        channels,
+        vec!["email", "in_app", "push"],
+        "S8: a fresh user must have exactly the three default channels"
+    );
+    for p in prefs {
+        assert_eq!(
+            p["enabled"],
+            json!(true),
+            "S8: every default channel must be enabled (channel={})",
+            p["channel"]
+        );
+    }
+    // All channels enabled ⇒ no all-disabled warning on the create-leg snapshot.
+    assert_eq!(
+        body["allDisabledWarning"],
+        json!(null),
+        "S8: a fresh user with all channels enabled must carry no all-disabled warning"
+    );
+}
+
+// ============================================================================
+// S9 — update guard: an unknown channel is rejected (400) before any mutation
+// ============================================================================
+
+/// A malformed realtime replay (typo'd channel, stale enum value from an older
+/// client) must be rejected at the channel-parse step with 400 INVALID_CHANNEL
+/// — *before* any DB write or `preference.updated` publish. This guarantees the
+/// publish leg can never emit an event for a channel the system doesn't model,
+/// and leaves the user's real preferences untouched.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn unknown_channel_is_rejected_without_mutation(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s9").await;
+
+    let req = app
+        .patch("/api/v1/users/me/notification-preferences/sms")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .json(json!({ "enabled": false, "confirmDisableAll": false }))
+        .build();
+    let resp = app.execute(req).await;
+    resp.assert_status(StatusCode::BAD_REQUEST);
+
+    // The known channels must be untouched — all still enabled (the bad PATCH
+    // could not have mutated state or published a spurious event).
+    let get = app
+        .get("/api/v1/users/me/notification-preferences")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .build();
+    let body = app.execute(get).await.json_value();
+    let all_enabled = body["preferences"]
+        .as_array()
+        .expect("preferences array")
+        .iter()
+        .all(|p| p["enabled"] == json!(true));
+    assert!(
+        all_enabled,
+        "S9: a rejected unknown-channel PATCH must leave every real channel untouched (still enabled)"
+    );
+}
+
+// ============================================================================
+// S10 — update transition: a disable→enable round-trip restores enabled state
+// ============================================================================
+
+/// Distinct from S6 (redundant enable of an already-on channel), this exercises
+/// the *transition* a realtime client most often drives: a user turns a channel
+/// off, then back on. The enable PATCH must flip `current.enabled` false→true
+/// and the persisted state must converge to enabled — proving the update leg
+/// the publish leg rides is a genuine state machine, not a one-way latch.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn disable_then_enable_restores_channel(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s10").await;
+
+    // Disable push.
+    let disable = app
+        .patch("/api/v1/users/me/notification-preferences/push")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .json(json!({ "enabled": false, "confirmDisableAll": false }))
+        .build();
+    let resp = app.execute(disable).await;
+    resp.assert_status(StatusCode::OK);
+    assert_eq!(
+        resp.json_value()["preference"]["enabled"],
+        json!(false),
+        "S10: the disable PATCH must report push disabled"
+    );
+
+    // Re-enable push.
+    let enable = app
+        .patch("/api/v1/users/me/notification-preferences/push")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .json(json!({ "enabled": true, "confirmDisableAll": false }))
+        .build();
+    let resp = app.execute(enable).await;
+    resp.assert_status(StatusCode::OK);
+    assert_eq!(
+        resp.json_value()["preference"]["enabled"],
+        json!(true),
+        "S10: the enable PATCH must report push re-enabled"
+    );
+
+    // Persisted state must converge to enabled.
+    let get = app
+        .get("/api/v1/users/me/notification-preferences")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .build();
+    let body = app.execute(get).await.json_value();
+    let push = body["preferences"]
+        .as_array()
+        .expect("preferences array")
+        .iter()
+        .find(|p| p["channel"] == json!("push"))
+        .expect("push channel present");
+    assert_eq!(
+        push["enabled"],
+        json!(true),
+        "S10: push must persist as enabled after the disable→enable round-trip"
+    );
+}
+
+// ============================================================================
+// S11 — confirmed disable-all: 200 + allDisabledWarning rides the response
+// ============================================================================
+
+/// S3 proves the 409 guard blocks an *unconfirmed* last-channel disable. This is
+/// the other side: with `confirmDisableAll:true` the update must succeed (200),
+/// land the channel as disabled, AND surface `allDisabledWarning` on the
+/// response so a connected client can render the "you may miss updates" notice.
+/// This is the update-leg warning the publish leg notifies clients about.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn confirmed_disable_all_succeeds_with_warning(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s11").await;
+
+    // Disable email + push (in_app becomes the only enabled channel).
+    for channel in ["email", "push"] {
+        let req = app
+            .patch(&format!(
+                "/api/v1/users/me/notification-preferences/{channel}"
+            ))
+            .bearer(&access_token)
+            .header("X-Tenant-ID", &org.to_string())
+            .json(json!({ "enabled": false, "confirmDisableAll": false }))
+            .build();
+        app.execute(req).await.assert_status(StatusCode::OK);
+    }
+
+    // Disable the last channel WITH confirmation — must succeed (200), not 409.
+    let req = app
+        .patch("/api/v1/users/me/notification-preferences/in_app")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .json(json!({ "enabled": false, "confirmDisableAll": true }))
+        .build();
+    let resp = app.execute(req).await;
+    resp.assert_status(StatusCode::OK);
+
+    let body = resp.json_value();
+    assert_eq!(
+        body["preference"]["enabled"],
+        json!(false),
+        "S11: the confirmed disable must land in_app as disabled"
+    );
+    assert!(
+        body["allDisabledWarning"].is_string(),
+        "S11: disabling the last channel must surface an allDisabledWarning on the response"
+    );
+
+    // And it must persist — a re-read shows every channel disabled.
+    let get = app
+        .get("/api/v1/users/me/notification-preferences")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .build();
+    let body = app.execute(get).await.json_value();
+    let all_disabled = body["preferences"]
+        .as_array()
+        .expect("preferences array")
+        .iter()
+        .all(|p| p["enabled"] == json!(false));
+    assert!(
+        all_disabled,
+        "S11: after a confirmed disable-all every channel must be persisted as disabled"
     );
 }
 
