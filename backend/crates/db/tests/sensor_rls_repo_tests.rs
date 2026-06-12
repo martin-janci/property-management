@@ -79,7 +79,13 @@ async fn seed_building(pool: &PgPool, org_id: Uuid, street: &str) -> Uuid {
     .expect("seed building")
 }
 
-async fn seed_sensor(pool: &PgPool, org_id: Uuid, building_id: Uuid, created_by: Uuid, name: &str) -> Uuid {
+async fn seed_sensor(
+    pool: &PgPool,
+    org_id: Uuid,
+    building_id: Uuid,
+    created_by: Uuid,
+    name: &str,
+) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO sensors (organization_id, building_id, name, sensor_type, created_by)
