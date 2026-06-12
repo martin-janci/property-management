@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-12T03:09:00Z",
+  "last_run_iso": "2026-06-12T10:25:00Z",
   "last_run_ms": 4800,
-  "last_pr_seen": 1316,
+  "last_pr_seen": 1322,
   "last_issue_seen": 1310,
-  "last_commit_sha": "208fa26d08a71cb083bf5321b887b40164ceba27",
+  "last_commit_sha": "25d68f64b4c28ececc53898ff1d8edcda561e7f4",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -266,6 +266,21 @@
       "runs_seen": 1,
       "last_seen": "2026-06-12",
       "recent_churn": 87
+    },
+    "backend/servers/api-server/src/routes/iot.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-12",
+      "recent_churn": 681
+    },
+    "backend/servers/api-server/src/routes/reserve_funds.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-12",
+      "recent_churn": 483
+    },
+    "backend/crates/db/src/repositories/sensor.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-12",
+      "recent_churn": 334
     }
   },
   "seen_signals": [
@@ -468,7 +483,10 @@
     "closed-not-merged-pr-1274",
     "churn-hotspot-backend-crates-integrations-src-booking-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs",
-    "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs"
+    "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-sensor-rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -482,8 +500,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 34,
-    "vectors_created": 146,
+    "runs": 35,
+    "vectors_created": 149,
     "plans_created": 8,
     "quiet_days": 0,
     "auto_fix_count": 0
