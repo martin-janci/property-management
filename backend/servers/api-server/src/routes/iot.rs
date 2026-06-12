@@ -262,7 +262,7 @@ async fn add_reading(
     req.sensor_id = id;
     let out = state
         .sensor_repo
-        .create_reading(&mut **rls.conn(), req)
+        .create_reading(rls.conn(), req)
         .await
         .map(|reading| (StatusCode::CREATED, Json(serde_json::json!(reading))))
         .map_err(|e| db_error("Failed to add reading", e));
@@ -278,7 +278,7 @@ async fn add_batch_readings(
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     let out = state
         .sensor_repo
-        .create_batch_readings(&mut **rls.conn(), id, req.readings)
+        .create_batch_readings(rls.conn(), id, req.readings)
         .await
         .map(|count| {
             (
@@ -544,7 +544,7 @@ async fn apply_template(
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     let out = state
         .sensor_repo
-        .apply_threshold_template(&mut **rls.conn(), template_id, req.sensor_id)
+        .apply_threshold_template(rls.conn(), template_id, req.sensor_id)
         .await
         .map(|threshold| (StatusCode::CREATED, Json(serde_json::json!(threshold))))
         .map_err(|e| write_error("Failed to apply template", "Template not found", e));
@@ -569,7 +569,7 @@ async fn get_dashboard(
     let org_id = rls.tenant_id();
     let out = state
         .sensor_repo
-        .get_dashboard(&mut **rls.conn(), org_id, query.building_id)
+        .get_dashboard(rls.conn(), org_id, query.building_id)
         .await
         .map(|dashboard| Json(serde_json::json!(dashboard)))
         .map_err(|e| db_error("Failed to get dashboard", e));
