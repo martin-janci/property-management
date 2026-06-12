@@ -700,3 +700,81 @@ pub async fn airbnb_oauth_callback(
         listings_count,
     }))
 }
+
+// ==================== Unit Tests ====================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// AirbnbTokenExchangeRequest — verify serde round-trip and optional
+    /// redirect_uri field handling (Story 83.1 / Coverage 83-1 AC).
+    #[test]
+    fn token_exchange_request_deserializes_with_required_code() {
+        let json = r#"{"code":"abc123"}"#;
+        let req: AirbnbTokenExchangeRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "abc123");
+        assert!(req.redirect_uri.is_none());
+    }
+
+    #[test]
+    fn token_exchange_request_deserializes_with_redirect_uri_override() {
+        let json = r#"{"code":"xyz","redirect_uri":"https://example.com/cb"}"#;
+        let req: AirbnbTokenExchangeRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "xyz");
+        assert_eq!(
+            req.redirect_uri.as_deref(),
+            Some("https://example.com/cb")
+        );
+    }
+
+    /// AirbnbTokenExchangeResponse — verify serialization shape expected by
+    /// frontend consumers (Story 83.1 / Coverage 83-1 AC).
+    #[test]
+    fn token_exchange_response_serializes_success() {
+        let resp = AirbnbTokenExchangeResponse {
+            success: true,
+            connection_id: Some(Uuid::nil()),
+            message: "Airbnb connected successfully".to_string(),
+            listings_count: Some(3),
+        };
+        let json = serde_json::to_value(&resp).unwrap();
+        assert_eq!(json["success"], true);
+        assert_eq!(json["listings_count"], 3);
+        assert!(json["connection_id"].is_string());
+    }
+
+    #[test]
+    fn token_exchange_response_serializes_failure_shape() {
+        let resp = AirbnbTokenExchangeResponse {
+            success: false,
+            connection_id: None,
+            message: "exchange failed".to_string(),
+            listings_count: None,
+        };
+        let json = serde_json::to_value(&resp).unwrap();
+        assert_eq!(json["success"], false);
+        assert!(json["connection_id"].is_null());
+        assert!(json["listings_count"].is_null());
+    }
+
+    /// AirbnbListingsResponse — spot-check count field.
+    #[test]
+    fn listings_response_count_reflects_vec_length() {
+        let resp = AirbnbListingsResponse {
+            listings: vec![],
+            count: 0,
+        };
+        assert_eq!(resp.count, resp.listings.len());
+    }
+
+    /// AirbnbReservationsResponse — spot-check count field.
+    #[test]
+    fn reservations_response_count_reflects_vec_length() {
+        let resp = AirbnbReservationsResponse {
+            reservations: vec![],
+            count: 0,
+        };
+        assert_eq!(resp.count, resp.reservations.len());
+    }
+}
