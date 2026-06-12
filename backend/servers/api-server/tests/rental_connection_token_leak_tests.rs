@@ -34,6 +34,9 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use db::models::UpdateBookingStatus;
+use db::repositories::RentalRepository;
+
 use common::TestApp;
 
 // Must match `TestConfig::default().jwt_secret` in tests/common/mod.rs — the
@@ -303,5 +306,137 @@ async fn get_connection_without_auth_is_rejected(pool: PgPool) {
     assert!(
         !body.contains(SECRET_ACCESS_TOKEN) && !body.contains(SECRET_REFRESH_TOKEN),
         "unauthenticated response must not contain OAuth tokens: {body}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// PAP-141: the legacy unauthenticated OAuth callbacks
+// (`/api/v1/rentals/oauth/{airbnb,booking}/callback`, Story 98.2) were removed.
+// They trusted a client-supplied connection id from the OAuth `state` parameter
+// with no auth, no org check, and no CSRF-state validation — letting any caller
+// bind tokens to another org's connection. The routes must no longer exist
+// (Airbnb is served securely by Story 83.1 under `/api/v1/integrations/...`).
+// ---------------------------------------------------------------------------
+
+async fn assert_route_removed(app: &TestApp, uri: &str) {
+    let resp = app
+        .execute(
+            Request::builder()
+                .method(Method::GET)
+                .uri(uri)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::NOT_FOUND,
+        "legacy OAuth callback route {uri} must be removed (expected 404), got {}",
+        resp.status
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn legacy_rental_oauth_callback_routes_are_removed(pool: PgPool) {
+    // The rentals router IS mounted here (the connection tests above hit
+    // `/api/v1/rentals/connections/{id}`), so a 404 on the callback paths proves
+    // the route itself is gone, not that the whole router is absent.
+    let app = TestApp::new(pool.clone()).await;
+
+    // A would-be attacker hits the callback with an arbitrary connection id in
+    // `state` and a forged `code`. With the routes gone there is no handler to
+    // bind tokens to a foreign org's connection.
+    let forged_state = format!("{}:attacker-nonce", Uuid::new_v4());
+    assert_route_removed(
+        &app,
+        &format!("/api/v1/rentals/oauth/airbnb/callback?code=forged&state={forged_state}"),
+    )
+    .await;
+    assert_route_removed(
+        &app,
+        &format!("/api/v1/rentals/oauth/booking/callback?code=forged&state={forged_state}"),
+    )
+    .await;
+}
+
+// ---------------------------------------------------------------------------
+// PAP-141: the Airbnb OTA webhook now cancels a booking via
+// `update_booking_status_for_org(booking.organization_id, ...)`. Prove the
+// org-keyed mutation refuses to touch a booking owned by a different org even
+// on the superuser test pool (which bypasses FORCE RLS), so a forged/replayed
+// webhook can never flip another org's booking.
+// ---------------------------------------------------------------------------
+
+async fn seed_booking(pool: &PgPool, org_id: Uuid, unit_id: Uuid) -> Uuid {
+    // `total_amount`/`platform_fee`/`cleaning_fee` are seeded non-null: the
+    // `RentalBooking` model decodes them via `#[sqlx(try_from = "Decimal")]`,
+    // which rejects SQL NULL — an unrelated pre-existing model quirk we sidestep
+    // so this test exercises only the org-scope guard.
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO rental_bookings (
+            organization_id, unit_id, platform, guest_name, check_in, check_out,
+            total_amount, platform_fee, cleaning_fee
+        )
+        VALUES ($1, $2, 'airbnb', 'Guest', '2030-01-10', '2030-01-12', 200.00, 20.00, 30.00)
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(unit_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed booking")
+}
+
+async fn read_status(pool: &PgPool, booking: Uuid) -> String {
+    sqlx::query_scalar::<_, String>("SELECT status::text FROM rental_bookings WHERE id = $1")
+        .bind(booking)
+        .fetch_one(pool)
+        .await
+        .expect("read status")
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn update_booking_status_for_org_ignores_other_org_booking(pool: PgPool) {
+    let repo = RentalRepository::new(pool.clone());
+
+    let org_a = seed_org(&pool, "bk-a").await;
+    let org_b = seed_org(&pool, "bk-b").await;
+    let building_a = seed_building(&pool, org_a, "bk-a").await;
+    let unit_a = seed_unit(&pool, building_a, "BK-1").await;
+    let booking = seed_booking(&pool, org_a, unit_a).await;
+
+    let cancel = UpdateBookingStatus {
+        status: "cancelled".to_string(),
+        cancellation_reason: Some("forged webhook".to_string()),
+    };
+
+    // Org B (attacker) cannot cancel org A's booking — no row matches the org
+    // guard, so the mutation is a no-op and returns None.
+    let cross = repo
+        .update_booking_status_for_org(org_b, booking, cancel.clone())
+        .await
+        .expect("query ok");
+    assert!(
+        cross.is_none(),
+        "cross-org booking status update must be a no-op (None)"
+    );
+    assert_eq!(
+        read_status(&pool, booking).await,
+        "pending",
+        "cross-org update must not change the booking status"
+    );
+
+    // The owning org CAN cancel it (proves the guard is not a false negative).
+    let owned = repo
+        .update_booking_status_for_org(org_a, booking, cancel)
+        .await
+        .expect("query ok");
+    assert!(owned.is_some(), "same-org status update must succeed");
+    assert_eq!(
+        read_status(&pool, booking).await,
+        "cancelled",
+        "same-org update must change the booking status"
     );
 }
