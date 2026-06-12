@@ -79,6 +79,31 @@ impl AirbnbAppConfig {
     }
 }
 
+/// Booking.com OAuth integration configuration loaded once at startup
+/// (Coverage 83-2). Mirrors [`AirbnbAppConfig`]; secrets are never accepted
+/// from a request body and a missing secret fails closed (503).
+#[derive(Debug, Clone, Default)]
+pub struct BookingOAuthAppConfig {
+    /// `BOOKING_CLIENT_ID` — required for any Booking.com OAuth flow.
+    pub client_id: String,
+    /// `BOOKING_CLIENT_SECRET` — required for token exchange.
+    pub client_secret: String,
+    /// `BOOKING_REDIRECT_URI` — the registered OAuth callback URI.
+    pub redirect_uri: String,
+}
+
+impl BookingOAuthAppConfig {
+    /// Load from the standard env vars. Empty strings are preserved so the
+    /// handler can emit `NOT_CONFIGURED` for missing values.
+    pub fn from_env() -> Self {
+        Self {
+            client_id: std::env::var("BOOKING_CLIENT_ID").unwrap_or_default(),
+            client_secret: std::env::var("BOOKING_CLIENT_SECRET").unwrap_or_default(),
+            redirect_uri: std::env::var("BOOKING_REDIRECT_URI").unwrap_or_default(),
+        }
+    }
+}
+
 /// Application state shared across all handlers.
 #[derive(Clone)]
 pub struct AppState {
@@ -249,6 +274,9 @@ pub struct AppState {
     /// Eliminates per-request `std::env::var` reads in Airbnb handlers and
     /// surfaces misconfiguration at boot rather than at runtime.
     pub airbnb_config: AirbnbAppConfig,
+    /// Booking.com OAuth integration configuration loaded once at startup
+    /// (Coverage 83-2). Handlers fail closed when `client_id.is_empty()`.
+    pub booking_config: BookingOAuthAppConfig,
 }
 
 impl AppState {
@@ -524,6 +552,8 @@ impl AppState {
             // Issue #711: Airbnb integration env vars cached at startup so
             // handlers never call `std::env::var` per request.
             airbnb_config: AirbnbAppConfig::from_env(),
+            // Coverage 83-2: Booking.com OAuth env vars cached at startup.
+            booking_config: BookingOAuthAppConfig::from_env(),
         }
     }
 
