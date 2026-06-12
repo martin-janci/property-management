@@ -11,22 +11,21 @@ import three.two.bit.ppt.reality.auth.SsoUserInfo
 /**
  * Story 82-2, AC-5 — Auth guard for Reality Portal mobile navigation.
  *
- * Pins the platform-agnostic contract used by the Compose nav graph and screen-level auth
- * guards:
- * 1. Screens requiring auth (Favorites, Inquiries, Account, profile flows) must observe
- *    [AuthState] and show a "not signed in" prompt — not navigate blindly — when the state
- *    is [AuthState.Unauthenticated] or [AuthState.Error].
+ * Pins the platform-agnostic contract used by the Compose nav graph and screen-level auth guards:
+ * 1. Screens requiring auth (Favorites, Inquiries, Account, profile flows) must observe [AuthState]
+ *    and show a "not signed in" prompt — not navigate blindly — when the state is
+ *    [AuthState.Unauthenticated] or [AuthState.Error].
  * 2. Auth-required screen routes are NOT top-level tab routes (they must not be in
- *    [DeepLinkRouter.TOP_LEVEL_ROUTES]), so the nav graph does not restore their back-stack
- *    without a valid session.
+ *    [DeepLinkRouter.TOP_LEVEL_ROUTES]), so the nav graph does not restore their back-stack without
+ *    a valid session.
  * 3. Auth routes (`auth/login`, `auth/register`, etc.) are equally excluded from the
  *    state-preserving set — they must not appear in TOP_LEVEL_ROUTES.
- * 4. [AuthState] exhaustively partitions into Unauthenticated / Loading / Authenticated /
- *    Error, matching the `when (authState)` branches in FavoritesScreen, InquiriesScreen,
- *    and AccountScreen.
+ * 4. [AuthState] exhaustively partitions into Unauthenticated / Loading / Authenticated / Error,
+ *    matching the `when (authState)` branches in FavoritesScreen, InquiriesScreen, and
+ *    AccountScreen.
  *
- * These tests are framework-free (no Compose, no Android, no HTTP) so they run on the JVM
- * in `./gradlew :shared:jvmTest` and on iOS Simulator via `:shared:iosSimulatorArm64Test`.
+ * These tests are framework-free (no Compose, no Android, no HTTP) so they run on the JVM in
+ * `./gradlew :shared:jvmTest` and on iOS Simulator via `:shared:iosSimulatorArm64Test`.
  */
 class AuthGuardNavigationTest {
 
@@ -60,31 +59,33 @@ class AuthGuardNavigationTest {
     }
 
     /**
-     * AC-5 core invariant: the screen's `when (authState)` must cover every branch so that
-     * neither Unauthenticated nor Error reaches authenticated content.
+     * AC-5 core invariant: the screen's `when (authState)` must cover every branch so that neither
+     * Unauthenticated nor Error reaches authenticated content.
      *
      * This test exercises each sealed subtype so a future subtype addition without a coverage
      * update causes a compile-time `when`-exhaustiveness error in the screen composables.
      */
     @Test
     fun auth_state_all_variants_are_covered_by_guard_logic() {
-        val states: List<AuthState> = listOf(
-            AuthState.Unauthenticated,
-            AuthState.Loading,
-            AuthState.Authenticated(
-                user = SsoUserInfo(userId = "u-1", email = "a@b.com", name = "A"),
-                sessionToken = "t",
-            ),
-            AuthState.Error("err"),
-        )
+        val states: List<AuthState> =
+            listOf(
+                AuthState.Unauthenticated,
+                AuthState.Loading,
+                AuthState.Authenticated(
+                    user = SsoUserInfo(userId = "u-1", email = "a@b.com", name = "A"),
+                    sessionToken = "t",
+                ),
+                AuthState.Error("err"),
+            )
         for (state in states) {
             // Simulate the guard: only Authenticated reaches protected content.
-            val isProtectedContentVisible = when (state) {
-                is AuthState.Unauthenticated -> false
-                is AuthState.Loading -> false
-                is AuthState.Authenticated -> true
-                is AuthState.Error -> false
-            }
+            val isProtectedContentVisible =
+                when (state) {
+                    is AuthState.Unauthenticated -> false
+                    is AuthState.Loading -> false
+                    is AuthState.Authenticated -> true
+                    is AuthState.Error -> false
+                }
             val expectVisible = state is AuthState.Authenticated
             assertEquals(
                 expectVisible,
@@ -102,13 +103,14 @@ class AuthGuardNavigationTest {
      */
     @Test
     fun auth_routes_do_not_preserve_state() {
-        val authRoutes = listOf(
-            "auth/login",
-            "auth/register",
-            "auth/forgot-password",
-            "auth/reset-password",
-            "auth/two-factor",
-        )
+        val authRoutes =
+            listOf(
+                "auth/login",
+                "auth/register",
+                "auth/forgot-password",
+                "auth/reset-password",
+                "auth/two-factor",
+            )
         for (route in authRoutes) {
             assertFalse(
                 DeepLinkRouter.preservesState(route),
@@ -123,15 +125,16 @@ class AuthGuardNavigationTest {
      */
     @Test
     fun protected_routes_do_not_preserve_state() {
-        val protectedRoutes = listOf(
-            "account/profile", // ProfileEdit — requires auth
-            "saved-searches", // SavedSearches — requires auth
-            "agency", // AgencyHub — requires auth (realtor)
-            "agency/inquiries", // AgencyInquiries — requires auth (realtor)
-            "realtor/listings", // MyListings — requires auth (realtor)
-            "realtor/listings/new",
-            "realtor/analytics",
-        )
+        val protectedRoutes =
+            listOf(
+                "account/profile", // ProfileEdit — requires auth
+                "saved-searches", // SavedSearches — requires auth
+                "agency", // AgencyHub — requires auth (realtor)
+                "agency/inquiries", // AgencyInquiries — requires auth (realtor)
+                "realtor/listings", // MyListings — requires auth (realtor)
+                "realtor/listings/new",
+                "realtor/analytics",
+            )
         for (route in protectedRoutes) {
             assertFalse(
                 DeepLinkRouter.preservesState(route),
@@ -171,18 +174,19 @@ class AuthGuardNavigationTest {
         }
 
         // Negative cases: everything else.
-        val nonPreservedRoutes = listOf(
-            "auth/login",
-            "auth/register",
-            "auth/forgot-password",
-            "listing/xyz",
-            "account/profile",
-            "saved-searches",
-            "agency",
-            null,
-            "",
-            "home/sub", // sub-routes of tabs are not tabs themselves
-        )
+        val nonPreservedRoutes =
+            listOf(
+                "auth/login",
+                "auth/register",
+                "auth/forgot-password",
+                "listing/xyz",
+                "account/profile",
+                "saved-searches",
+                "agency",
+                null,
+                "",
+                "home/sub", // sub-routes of tabs are not tabs themselves
+            )
         for (route in nonPreservedRoutes) {
             assertFalse(
                 DeepLinkRouter.preservesState(route),
@@ -194,13 +198,12 @@ class AuthGuardNavigationTest {
     // -------- AC-5: SSO deep-link target is always out-of-band (never navigated) --------
 
     /**
-     * An SSO deep-link (`reality://sso?token=…`) carries credentials and must NEVER be turned
-     * into a nav-graph route. If it were, the token would appear in the back-stack and could be
+     * An SSO deep-link (`reality://sso?token=…`) carries credentials and must NEVER be turned into
+     * a nav-graph route. If it were, the token would appear in the back-stack and could be
      * re-navigated after the session is established — a security flaw.
      *
-     * [DeepLinkRouter.route] returns `null` for [DeepLinkTarget.Sso], ensuring the handler
-     * calls `ssoService.validateAndLogin()` (out-of-band) rather than
-     * `navController.navigate(route)`.
+     * [DeepLinkRouter.route] returns `null` for [DeepLinkTarget.Sso], ensuring the handler calls
+     * `ssoService.validateAndLogin()` (out-of-band) rather than `navController.navigate(route)`.
      */
     @Test
     fun sso_deep_link_target_has_no_nav_route_auth_guard() {
@@ -215,12 +218,13 @@ class AuthGuardNavigationTest {
     /** Navigable deep-link targets (non-SSO) do resolve to a route. */
     @Test
     fun navigable_deep_link_targets_resolve_to_routes() {
-        val navigableTargets: List<Pair<DeepLinkTarget, String>> = listOf(
-            DeepLinkTarget.Listing("abc-123") to "listing/abc-123",
-            DeepLinkTarget.Search to "search",
-            DeepLinkTarget.Favorites to "favorites",
-            DeepLinkTarget.Inquiries to "inquiries",
-        )
+        val navigableTargets: List<Pair<DeepLinkTarget, String>> =
+            listOf(
+                DeepLinkTarget.Listing("abc-123") to "listing/abc-123",
+                DeepLinkTarget.Search to "search",
+                DeepLinkTarget.Favorites to "favorites",
+                DeepLinkTarget.Inquiries to "inquiries",
+            )
         for ((target, expectedRoute) in navigableTargets) {
             assertEquals(
                 expectedRoute,
