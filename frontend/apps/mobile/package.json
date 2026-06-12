@@ -63,5 +63,5 @@
     "react-test-renderer": "^19.2.7",
     "typescript": "^5.3.0"
   },
-  "version": "0.3.192"
+  "version": "0.3.193"
 }
