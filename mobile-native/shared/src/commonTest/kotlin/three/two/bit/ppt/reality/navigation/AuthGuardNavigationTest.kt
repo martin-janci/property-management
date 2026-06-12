@@ -30,7 +30,7 @@ import three.two.bit.ppt.reality.auth.SsoUserInfo
  */
 class AuthGuardNavigationTest {
 
-    // ─── AC-5: AuthState contract ─────────────────────────────────────────────
+    // -------- AC-5: AuthState contract --------
 
     @Test
     fun auth_state_unauthenticated_is_distinct_singleton() {
@@ -94,7 +94,7 @@ class AuthGuardNavigationTest {
         }
     }
 
-    // ─── AC-5: auth-required routes are not top-level / state-preserving ──────
+    // -------- AC-5: auth-required routes are not top-level / state-preserving --------
 
     /**
      * Auth routes must NOT be in TOP_LEVEL_ROUTES — the Compose nav graph must not restore
@@ -124,11 +124,11 @@ class AuthGuardNavigationTest {
     @Test
     fun protected_routes_do_not_preserve_state() {
         val protectedRoutes = listOf(
-            "account/profile",    // ProfileEdit — requires auth
-            "saved-searches",     // SavedSearches — requires auth
-            "agency",             // AgencyHub — requires auth (realtor)
-            "agency/inquiries",   // AgencyInquiries — requires auth (realtor)
-            "realtor/listings",   // MyListings — requires auth (realtor)
+            "account/profile", // ProfileEdit — requires auth
+            "saved-searches", // SavedSearches — requires auth
+            "agency", // AgencyHub — requires auth (realtor)
+            "agency/inquiries", // AgencyInquiries — requires auth (realtor)
+            "realtor/listings", // MyListings — requires auth (realtor)
             "realtor/listings/new",
             "realtor/analytics",
         )
@@ -153,7 +153,7 @@ class AuthGuardNavigationTest {
         assertFalse(DeepLinkRouter.preservesState(null))
     }
 
-    // ─── AC-5: auth guard correctly partitions tab vs. non-tab routes ─────────
+    // -------- AC-5: auth guard correctly partitions tab vs. non-tab routes --------
 
     /**
      * The five bottom-bar tabs are the only state-preserving destinations. All other routes —
@@ -164,7 +164,10 @@ class AuthGuardNavigationTest {
         // Positive cases: the five tabs.
         val preservedRoutes = listOf("home", "search", "favorites", "inquiries", "account")
         for (route in preservedRoutes) {
-            assertTrue(DeepLinkRouter.preservesState(route), "Tab route '$route' must preserve state")
+            assertTrue(
+                DeepLinkRouter.preservesState(route),
+                "Tab route '$route' must preserve state",
+            )
         }
 
         // Negative cases: everything else.
@@ -178,7 +181,7 @@ class AuthGuardNavigationTest {
             "agency",
             null,
             "",
-            "home/sub",  // sub-routes of tabs are not tabs themselves
+            "home/sub", // sub-routes of tabs are not tabs themselves
         )
         for (route in nonPreservedRoutes) {
             assertFalse(
@@ -188,7 +191,7 @@ class AuthGuardNavigationTest {
         }
     }
 
-    // ─── AC-5: SSO deep-link target is always out-of-band (never navigated) ───
+    // -------- AC-5: SSO deep-link target is always out-of-band (never navigated) --------
 
     /**
      * An SSO deep-link (`reality://sso?token=…`) carries credentials and must NEVER be turned
@@ -203,7 +206,10 @@ class AuthGuardNavigationTest {
     fun sso_deep_link_target_has_no_nav_route_auth_guard() {
         val ssoTarget = DeepLinkTarget.Sso("my-secret-token")
         val route = DeepLinkRouter.route(ssoTarget)
-        assertNull(route, "SSO target must not resolve to a nav route (token must not be navigated)")
+        assertNull(
+            route,
+            "SSO target must not resolve to a nav route (token must not be navigated)",
+        )
     }
 
     /** Navigable deep-link targets (non-SSO) do resolve to a route. */
