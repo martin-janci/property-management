@@ -530,7 +530,7 @@ async fn create_form(
     };
 
     let out = repo
-        .create(&mut **rls.conn(), org_id, user_id, create_data)
+        .create(rls.conn(), org_id, user_id, create_data)
         .await
         .map(|form| {
             (
@@ -599,7 +599,7 @@ async fn list_forms(
     };
 
     let out = repo
-        .list(&mut **rls.conn(), org_id, form_query)
+        .list(rls.conn(), org_id, form_query)
         .await
         .map(|(forms, total)| {
             Json(FormListResponse {
@@ -679,7 +679,7 @@ async fn get_form(
     let repo = &state.form_repo;
 
     let out = repo
-        .get_with_details(&mut **rls.conn(), org_id, id)
+        .get_with_details(rls.conn(), org_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get form: {:?}", e);
@@ -789,7 +789,7 @@ async fn update_form(
     };
 
     let out = repo
-        .update(&mut **rls.conn(), org_id, id, user_id, update_data)
+        .update(rls.conn(), org_id, id, user_id, update_data)
         .await
         .map(|form| {
             Json(FormActionResponse {
@@ -1543,7 +1543,7 @@ async fn submit_form(
 
     // Get form details
     let form = repo
-        .get_with_details(&mut **rls.conn(), org_id, id)
+        .get_with_details(rls.conn(), org_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get form: {:?}", e);
@@ -1767,7 +1767,7 @@ async fn list_submissions(
     };
 
     let out = repo
-        .list_submissions(&mut **rls.conn(), org_id, sub_query)
+        .list_submissions(rls.conn(), org_id, sub_query)
         .await
         .map(|(submissions, total)| {
             Json(SubmissionListResponse {
