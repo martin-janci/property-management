@@ -17,8 +17,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 
 /**
- * Repository-level coroutine tests for [ListingRepository.getListingDetail] — the fetch that
- * feeds the Reality Portal listing-detail screen.
+ * Repository-level coroutine tests for [ListingRepository.getListingDetail] — the fetch that feeds
+ * the Reality Portal listing-detail screen.
  *
  * The [ListingModelsContractTest] pins the raw DTO encode/decode; this pins the *render contract*
  * as seen through the repository: the GET hits `/api/v1/listings/{id}`, a 200 decodes a full
