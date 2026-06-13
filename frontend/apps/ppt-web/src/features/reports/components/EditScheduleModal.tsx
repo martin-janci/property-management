@@ -47,6 +47,12 @@ interface FormErrors {
  * can still display a sensible starting value.
  */
 export function scheduleToInitialCron(schedule: ReportSchedule): string {
+  // Prefer the dedicated cron column when the backend returned a usable one.
+  const stored = schedule.cron_expression?.trim();
+  if (stored && isValidCron(stored)) {
+    return stored;
+  }
+
   const [hh, mm] = (schedule.time || '08:00').split(':');
   const h = String(Number(hh) || 0);
   const m = String(Number(mm) || 0);
