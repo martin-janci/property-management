@@ -126,7 +126,10 @@ async fn update_cron_expression_roundtrips_through_dedicated_column(pool: PgPool
 
     // Pre-condition: time is the seeded HH:MM, cron_expression is NULL.
     let (time_before, cron_before) = read_time_and_cron(&pool, schedule).await;
-    assert_eq!(time_before, "08:00", "pre: legacy time must be the HH:MM seed");
+    assert_eq!(
+        time_before, "08:00",
+        "pre: legacy time must be the HH:MM seed"
+    );
     assert!(
         cron_before.is_none(),
         "pre: cron_expression must start NULL, got {:?}",
