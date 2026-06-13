@@ -37,8 +37,12 @@
 //! policy the way the production owner role experiences it. Mirrors
 //! `work_order_rls_repo_tests.rs` (the PAP-67 precedent this follows).
 
-use db::models::reserve_funds::{CreateReserveFund, FundType};
+use chrono::NaiveDate;
+use db::models::reserve_funds::{
+    ContributionFrequency, CreateContributionSchedule, CreateReserveFund, FundType,
+};
 use db::repositories::ReserveFundRepository;
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -102,7 +106,7 @@ async fn seed_fund(pool: &PgPool, org_id: Uuid, name: &str, user_id: Uuid) -> Uu
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn reserve_fund_repo_force_rls_deny_all_and_fix(pool: PgPool) {
-    let repo = ReserveFundRepository::new(pool.clone());
+    let repo = ReserveFundRepository::new();
 
     // --- Seed as superuser / super-admin context (satisfies org roles-trigger). ---
     set_ctx(&pool, None, None, true).await;
@@ -276,6 +280,125 @@ async fn reserve_fund_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let _ = user_b; // seeded for symmetry with org_b's fund
     for stmt in [
         format!("REVOKE ALL ON reserve_funds FROM \"{role}\""),
+        format!("REVOKE ALL ON organizations FROM \"{role}\""),
+        format!("DROP ROLE IF EXISTS \"{role}\""),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .ok();
+    }
+}
+
+/// Child-table IDOR: org-A caller must not see org-B's
+/// `fund_contribution_schedules` via `list_contribution_schedules`, even when
+/// they supply org-B's `fund_id`. The repo's `ensure_fund_in_org` guard
+/// returns RowNotFound for a fund invisible under the caller's RLS context,
+/// and the RLS policy on `fund_contribution_schedules` itself also propagates
+/// the owning fund's `organization_id`.
+///
+/// Additionally verifies that an INSERT into org-B's fund via org-A context
+/// fails (the INSERT-path RLS WITH CHECK guard).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn reserve_fund_child_table_idor_blocked(pool: PgPool) {
+    set_ctx(&pool, None, None, true).await;
+
+    let org_a = seed_org(&pool, "child-rf-a").await;
+    let org_b = seed_org(&pool, "child-rf-b").await;
+    let user_a = seed_user(&pool, "a@child-rf.test").await;
+    let user_b = seed_user(&pool, "b@child-rf.test").await;
+    let fund_b = seed_fund(&pool, org_b, "Fund B", user_b).await;
+    let _ = (org_a, user_a); // seeded for symmetry
+
+    // Seed a contribution schedule for org-B's fund as superuser (RLS-exempt).
+    sqlx::query(
+        "INSERT INTO fund_contribution_schedules          (fund_id, name, amount, frequency, start_date, created_by)          VALUES ($1, 'B Schedule', 500, 'monthly', '2025-01-01', $2)",
+    )
+    .bind(fund_b)
+    .bind(user_b)
+    .execute(&pool)
+    .await
+    .expect("seed contribution schedule for org-B fund");
+
+    let repo = ReserveFundRepository::new();
+
+    let role = format!("ppt_rls_child_rf_{}", Uuid::new_v4().simple());
+    for stmt in [
+        format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
+        format!(
+            "GRANT SELECT, INSERT ON reserve_funds, fund_contribution_schedules TO \"{role}\""
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin(),              get_current_org_not_deleted() TO \"{role}\""
+        ),
+        format!("GRANT SELECT ON organizations TO \"{role}\""),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .expect("grant");
+    }
+
+    {
+        let mut conn = pool.acquire().await.expect("acquire");
+
+        // Org-A context: cross-tenant fund schedules must be blocked.
+        sqlx::query("SELECT set_request_context($1, $2, false)")
+            .bind(org_a)
+            .bind(user_a)
+            .execute(&mut *conn)
+            .await
+            .expect("set org-A ctx");
+        sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
+            .execute(&mut *conn)
+            .await
+            .expect("set role");
+
+        // list_contribution_schedules routes through ensure_fund_in_org which
+        // returns RowNotFound for a fund invisible under org-A's context.
+        let list_result = repo
+            .list_contribution_schedules(&mut *conn, org_a, fund_b, false)
+            .await;
+        let idor_blocked = match &list_result {
+            Ok(rows) => rows.is_empty(),
+            Err(_) => true, // RowNotFound from ensure_fund_in_org
+        };
+        assert!(
+            idor_blocked,
+            "org-A must not see org-B\'s fund_contribution_schedules              (child-table IDOR must be blocked by RLS or the org-scope guard)"
+        );
+
+        // INSERT into org-B's fund from org-A context must fail.
+        let insert_result = repo
+            .create_contribution_schedule(
+                &mut *conn,
+                org_a,
+                fund_b,
+                CreateContributionSchedule {
+                    name: "Hijacked Schedule".to_string(),
+                    description: None,
+                    amount: Decimal::new(100, 0),
+                    frequency: ContributionFrequency::Monthly,
+                    start_date: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+                    end_date: None,
+                    auto_collect: None,
+                },
+            )
+            .await;
+        assert!(
+            insert_result.is_err(),
+            "org-A must not INSERT a schedule into org-B\'s fund              (INSERT-path RLS WITH CHECK or org-scope guard must block the write)"
+        );
+
+        sqlx::query("RESET ROLE").execute(&mut *conn).await.ok();
+    }
+
+    // Cleanup.
+    set_ctx(&pool, None, None, true).await;
+    for stmt in [
+        format!(
+            "REVOKE ALL ON reserve_funds, fund_contribution_schedules FROM \"{role}\""
+        ),
         format!("REVOKE ALL ON organizations FROM \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
