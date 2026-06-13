@@ -1,47 +1,47 @@
-//! iDoklad integration repository (PAP-191).
+//! External accounting provider integration repository (PAP-191).
 
-use crate::models::idoklad::{
-    IdokladConnection, IdokladContact, IdokladIssuedInvoice, IdokladSyncCursor,
-    IdokladPaymentMatchSnapshot,
+use crate::models::accounting_provider::{
+    AccountingProviderConnection, AccountingProviderContact, AccountingProviderIssuedInvoice,
+    AccountingProviderPaymentMatchSnapshot, AccountingProviderSyncCursor,
 };
 use crate::DbPool;
 use sqlx::{Error as SqlxError, Executor, Postgres};
 use uuid::Uuid;
 
-/// Repository for iDoklad integration operations.
+/// Repository for external accounting provider integration operations.
 #[derive(Clone)]
-pub struct IdokladRepository {
+pub struct AccountingProviderRepository {
     pool: DbPool,
 }
 
-impl IdokladRepository {
-    /// Create a new IdokladRepository.
+impl AccountingProviderRepository {
+    /// Create a new AccountingProviderRepository.
     pub fn new(pool: DbPool) -> Self {
         Self { pool }
     }
 
     // ========================================================================
-    // idoklad_connection
+    // accounting_provider_connection
     // ========================================================================
 
     pub async fn upsert_connection_rls<'e, E>(
         &self,
         executor: E,
-        conn: IdokladConnection,
-    ) -> Result<IdokladConnection, SqlxError>
+        conn: AccountingProviderConnection,
+    ) -> Result<AccountingProviderConnection, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let conn = sqlx::query_as::<_, IdokladConnection>(
+        let conn = sqlx::query_as::<_, AccountingProviderConnection>(
             r#"
-            INSERT INTO idoklad_connection (
-                tenant_id, auth_flow, idoklad_name, client_id,
+            INSERT INTO accounting_provider_connection (
+                tenant_id, auth_flow, provider_account_name, client_id,
                 client_secret_enc, refresh_token_enc, updated_at
             )
             VALUES ($1, $2, $3, $4, $5, $6, NOW())
             ON CONFLICT (tenant_id) DO UPDATE SET
                 auth_flow = EXCLUDED.auth_flow,
-                idoklad_name = EXCLUDED.idoklad_name,
+                provider_account_name = EXCLUDED.provider_account_name,
                 client_id = EXCLUDED.client_id,
                 client_secret_enc = EXCLUDED.client_secret_enc,
                 refresh_token_enc = EXCLUDED.refresh_token_enc,
@@ -51,7 +51,7 @@ impl IdokladRepository {
         )
         .bind(conn.tenant_id)
         .bind(conn.auth_flow)
-        .bind(conn.idoklad_name)
+        .bind(conn.provider_account_name)
         .bind(conn.client_id)
         .bind(conn.client_secret_enc)
         .bind(conn.refresh_token_enc)
@@ -65,12 +65,12 @@ impl IdokladRepository {
         &self,
         executor: E,
         tenant_id: Uuid,
-    ) -> Result<Option<IdokladConnection>, SqlxError>
+    ) -> Result<Option<AccountingProviderConnection>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let conn = sqlx::query_as::<_, IdokladConnection>(
-            "SELECT * FROM idoklad_connection WHERE tenant_id = $1",
+        let conn = sqlx::query_as::<_, AccountingProviderConnection>(
+            "SELECT * FROM accounting_provider_connection WHERE tenant_id = $1",
         )
         .bind(tenant_id)
         .fetch_optional(executor)
@@ -80,25 +80,25 @@ impl IdokladRepository {
     }
 
     // ========================================================================
-    // idoklad_contact
+    // accounting_provider_contact
     // ========================================================================
 
     pub async fn upsert_contact_rls<'e, E>(
         &self,
         executor: E,
-        contact: IdokladContact,
-    ) -> Result<IdokladContact, SqlxError>
+        contact: AccountingProviderContact,
+    ) -> Result<AccountingProviderContact, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let contact = sqlx::query_as::<_, IdokladContact>(
+        let contact = sqlx::query_as::<_, AccountingProviderContact>(
             r#"
-            INSERT INTO idoklad_contact (
-                tenant_id, idoklad_id, company_name, ico, dic, email, iban,
+            INSERT INTO accounting_provider_contact (
+                tenant_id, external_id, company_name, ico, dic, email, iban,
                 date_last_change, raw, synced_at
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
-            ON CONFLICT (tenant_id, idoklad_id) DO UPDATE SET
+            ON CONFLICT (tenant_id, external_id) DO UPDATE SET
                 company_name = EXCLUDED.company_name,
                 ico = EXCLUDED.ico,
                 dic = EXCLUDED.dic,
@@ -111,7 +111,7 @@ impl IdokladRepository {
             "#,
         )
         .bind(contact.tenant_id)
-        .bind(contact.idoklad_id)
+        .bind(contact.external_id)
         .bind(contact.company_name)
         .bind(contact.ico)
         .bind(contact.dic)
@@ -126,30 +126,30 @@ impl IdokladRepository {
     }
 
     // ========================================================================
-    // idoklad_issued_invoice
+    // accounting_provider_issued_invoice
     // ========================================================================
 
     pub async fn upsert_invoice_rls<'e, E>(
         &self,
         executor: E,
-        invoice: IdokladIssuedInvoice,
-    ) -> Result<IdokladIssuedInvoice, SqlxError>
+        invoice: AccountingProviderIssuedInvoice,
+    ) -> Result<AccountingProviderIssuedInvoice, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let invoice = sqlx::query_as::<_, IdokladIssuedInvoice>(
+        let invoice = sqlx::query_as::<_, AccountingProviderIssuedInvoice>(
             r#"
-            INSERT INTO idoklad_issued_invoice (
-                tenant_id, idoklad_id, document_number, partner_idoklad_id,
+            INSERT INTO accounting_provider_issued_invoice (
+                tenant_id, external_id, document_number, partner_external_id,
                 variable_symbol, iban, account_number, bank_code, currency,
                 total_with_vat, total_without_vat, payment_status,
                 date_of_issue, date_of_maturity, date_of_payment,
                 date_last_change, raw, synced_at
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())
-            ON CONFLICT (tenant_id, idoklad_id) DO UPDATE SET
+            ON CONFLICT (tenant_id, external_id) DO UPDATE SET
                 document_number = EXCLUDED.document_number,
-                partner_idoklad_id = EXCLUDED.partner_idoklad_id,
+                partner_external_id = EXCLUDED.partner_external_id,
                 variable_symbol = EXCLUDED.variable_symbol,
                 iban = EXCLUDED.iban,
                 account_number = EXCLUDED.account_number,
@@ -168,9 +168,9 @@ impl IdokladRepository {
             "#,
         )
         .bind(invoice.tenant_id)
-        .bind(invoice.idoklad_id)
+        .bind(invoice.external_id)
         .bind(invoice.document_number)
-        .bind(invoice.partner_idoklad_id)
+        .bind(invoice.partner_external_id)
         .bind(invoice.variable_symbol)
         .bind(invoice.iban)
         .bind(invoice.account_number)
@@ -191,7 +191,7 @@ impl IdokladRepository {
     }
 
     // ========================================================================
-    // idoklad_sync_cursor
+    // accounting_provider_sync_cursor
     // ========================================================================
 
     pub async fn get_sync_cursor_rls<'e, E>(
@@ -199,12 +199,12 @@ impl IdokladRepository {
         executor: E,
         tenant_id: Uuid,
         entity: &str,
-    ) -> Result<Option<IdokladSyncCursor>, SqlxError>
+    ) -> Result<Option<AccountingProviderSyncCursor>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let cursor = sqlx::query_as::<_, IdokladSyncCursor>(
-            "SELECT * FROM idoklad_sync_cursor WHERE tenant_id = $1 AND entity = $2",
+        let cursor = sqlx::query_as::<_, AccountingProviderSyncCursor>(
+            "SELECT * FROM accounting_provider_sync_cursor WHERE tenant_id = $1 AND entity = $2",
         )
         .bind(tenant_id)
         .bind(entity)
@@ -217,14 +217,14 @@ impl IdokladRepository {
     pub async fn upsert_sync_cursor_rls<'e, E>(
         &self,
         executor: E,
-        cursor: IdokladSyncCursor,
-    ) -> Result<IdokladSyncCursor, SqlxError>
+        cursor: AccountingProviderSyncCursor,
+    ) -> Result<AccountingProviderSyncCursor, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let cursor = sqlx::query_as::<_, IdokladSyncCursor>(
+        let cursor = sqlx::query_as::<_, AccountingProviderSyncCursor>(
             r#"
-            INSERT INTO idoklad_sync_cursor (
+            INSERT INTO accounting_provider_sync_cursor (
                 tenant_id, entity, last_change_seen, last_run_at, last_status
             )
             VALUES ($1, $2, $3, NOW(), $4)
@@ -246,20 +246,20 @@ impl IdokladRepository {
     }
 
     // ========================================================================
-    // idoklad_payment_match_snapshot
+    // accounting_provider_payment_match_snapshot
     // ========================================================================
 
     pub async fn create_payment_match_rls<'e, E>(
         &self,
         executor: E,
-        match_data: IdokladPaymentMatchSnapshot,
-    ) -> Result<IdokladPaymentMatchSnapshot, SqlxError>
+        match_data: AccountingProviderPaymentMatchSnapshot,
+    ) -> Result<AccountingProviderPaymentMatchSnapshot, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let match_data = sqlx::query_as::<_, IdokladPaymentMatchSnapshot>(
+        let match_data = sqlx::query_as::<_, AccountingProviderPaymentMatchSnapshot>(
             r#"
-            INSERT INTO idoklad_payment_match_snapshot (
+            INSERT INTO accounting_provider_payment_match_snapshot (
                 tenant_id, invoice_id, bank_movement_ref, matched_by,
                 confidence, amount, matched_at
             )

@@ -20,7 +20,7 @@ pub mod financial;
 pub mod granular_notification;
 pub mod health_monitoring;
 pub mod help;
-pub mod idoklad;
+pub mod accounting_provider;
 pub mod accounting;
 pub mod membership;
 pub mod messaging;
@@ -67,7 +67,7 @@ pub mod agency;
 pub mod rental;
 
 pub use ai_chat::AiChatRepository;
-pub use idoklad::IdokladRepository;
+pub use accounting_provider::AccountingProviderRepository;
 pub use accounting::AccountingRepository;
 pub use equipment::EquipmentRepository;
 pub use sentiment::SentimentRepository;

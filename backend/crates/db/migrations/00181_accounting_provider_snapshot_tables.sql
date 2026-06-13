@@ -1,13 +1,13 @@
--- Migration: 00181_idoklad_snapshot_tables
--- PAP-191: iDoklad Fáza 1.3 — Migrations: idoklad_connection + snapshot/cursor tables (FORCE RLS)
+-- Migration: 00181_accounting_provider_snapshot_tables
+-- PAP-191: External accounting provider Fáza 1.3 — Migrations: connection + snapshot/cursor tables (FORCE RLS)
 
 -- ============================================================================
--- idoklad_connection
+-- accounting_provider_connection
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS idoklad_connection (
+CREATE TABLE IF NOT EXISTS accounting_provider_connection (
     tenant_id UUID PRIMARY KEY REFERENCES organizations(id) ON DELETE CASCADE,
     auth_flow TEXT NOT NULL CHECK (auth_flow IN ('ccf', 'acf')),
-    idoklad_name TEXT NOT NULL,
+    provider_account_name TEXT NOT NULL,
     client_id TEXT NOT NULL,
     client_secret_enc TEXT, -- CCF, IntegrationCrypto AES-256-GCM
     refresh_token_enc TEXT, -- ACF only, IntegrationCrypto AES-256-GCM
@@ -16,25 +16,25 @@ CREATE TABLE IF NOT EXISTS idoklad_connection (
 );
 
 -- Trigger for updated_at
-CREATE TRIGGER update_idoklad_connection_updated_at
-    BEFORE UPDATE ON idoklad_connection
+CREATE TRIGGER update_accounting_provider_connection_updated_at
+    BEFORE UPDATE ON accounting_provider_connection
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 -- RLS
-ALTER TABLE idoklad_connection ENABLE ROW LEVEL SECURITY;
-ALTER TABLE idoklad_connection FORCE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_connection ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_connection FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY idoklad_connection_tenant_isolation ON idoklad_connection
+CREATE POLICY accounting_provider_connection_tenant_isolation ON accounting_provider_connection
     FOR ALL USING (tenant_id = get_current_org_id() AND get_current_org_not_deleted());
 
 -- ============================================================================
--- idoklad_contact
+-- accounting_provider_contact
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS idoklad_contact (
+CREATE TABLE IF NOT EXISTS accounting_provider_contact (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    idoklad_id BIGINT NOT NULL,
+    external_id BIGINT NOT NULL,
     company_name TEXT,
     ico TEXT,
     dic TEXT,
@@ -43,27 +43,27 @@ CREATE TABLE IF NOT EXISTS idoklad_contact (
     date_last_change TIMESTAMPTZ NOT NULL,
     raw JSONB NOT NULL,
     synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (tenant_id, idoklad_id)
+    UNIQUE (tenant_id, external_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_idoklad_contact_tenant_last_change ON idoklad_contact(tenant_id, date_last_change);
+CREATE INDEX IF NOT EXISTS idx_accounting_provider_contact_tenant_last_change ON accounting_provider_contact(tenant_id, date_last_change);
 
 -- RLS
-ALTER TABLE idoklad_contact ENABLE ROW LEVEL SECURITY;
-ALTER TABLE idoklad_contact FORCE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_contact ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_contact FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY idoklad_contact_tenant_isolation ON idoklad_contact
+CREATE POLICY accounting_provider_contact_tenant_isolation ON accounting_provider_contact
     FOR ALL USING (tenant_id = get_current_org_id() AND get_current_org_not_deleted());
 
 -- ============================================================================
--- idoklad_issued_invoice
+-- accounting_provider_issued_invoice
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS idoklad_issued_invoice (
+CREATE TABLE IF NOT EXISTS accounting_provider_issued_invoice (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    idoklad_id BIGINT NOT NULL,
+    external_id BIGINT NOT NULL,
     document_number TEXT NOT NULL,
-    partner_idoklad_id BIGINT NOT NULL,
+    partner_external_id BIGINT NOT NULL,
     variable_symbol TEXT,
     iban TEXT,
     account_number TEXT,
@@ -78,24 +78,24 @@ CREATE TABLE IF NOT EXISTS idoklad_issued_invoice (
     date_last_change TIMESTAMPTZ NOT NULL,
     raw JSONB NOT NULL,
     synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (tenant_id, idoklad_id)
+    UNIQUE (tenant_id, external_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_idoklad_invoice_tenant_last_change ON idoklad_issued_invoice(tenant_id, date_last_change);
-CREATE INDEX IF NOT EXISTS idx_idoklad_invoice_tenant_vs ON idoklad_issued_invoice(tenant_id, variable_symbol);
-CREATE INDEX IF NOT EXISTS idx_idoklad_invoice_tenant_status ON idoklad_issued_invoice(tenant_id, payment_status);
+CREATE INDEX IF NOT EXISTS idx_accounting_provider_invoice_tenant_last_change ON accounting_provider_issued_invoice(tenant_id, date_last_change);
+CREATE INDEX IF NOT EXISTS idx_accounting_provider_invoice_tenant_vs ON accounting_provider_issued_invoice(tenant_id, variable_symbol);
+CREATE INDEX IF NOT EXISTS idx_accounting_provider_invoice_tenant_status ON accounting_provider_issued_invoice(tenant_id, payment_status);
 
 -- RLS
-ALTER TABLE idoklad_issued_invoice ENABLE ROW LEVEL SECURITY;
-ALTER TABLE idoklad_issued_invoice FORCE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_issued_invoice ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_issued_invoice FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY idoklad_invoice_tenant_isolation ON idoklad_issued_invoice
+CREATE POLICY accounting_provider_invoice_tenant_isolation ON accounting_provider_issued_invoice
     FOR ALL USING (tenant_id = get_current_org_id() AND get_current_org_not_deleted());
 
 -- ============================================================================
--- idoklad_sync_cursor
+-- accounting_provider_sync_cursor
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS idoklad_sync_cursor (
+CREATE TABLE IF NOT EXISTS accounting_provider_sync_cursor (
     tenant_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     entity TEXT NOT NULL, -- 'contact' | 'issued_invoice'
     last_change_seen TIMESTAMPTZ NOT NULL,
@@ -105,19 +105,19 @@ CREATE TABLE IF NOT EXISTS idoklad_sync_cursor (
 );
 
 -- RLS
-ALTER TABLE idoklad_sync_cursor ENABLE ROW LEVEL SECURITY;
-ALTER TABLE idoklad_sync_cursor FORCE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_sync_cursor ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_sync_cursor FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY idoklad_sync_cursor_tenant_isolation ON idoklad_sync_cursor
+CREATE POLICY accounting_provider_sync_cursor_tenant_isolation ON accounting_provider_sync_cursor
     FOR ALL USING (tenant_id = get_current_org_id() AND get_current_org_not_deleted());
 
 -- ============================================================================
--- idoklad_payment_match_snapshot
+-- accounting_provider_payment_match_snapshot
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS idoklad_payment_match_snapshot (
+CREATE TABLE IF NOT EXISTS accounting_provider_payment_match_snapshot (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    invoice_id UUID NOT NULL REFERENCES idoklad_issued_invoice(id) ON DELETE CASCADE,
+    invoice_id UUID NOT NULL REFERENCES accounting_provider_issued_invoice(id) ON DELETE CASCADE,
     bank_movement_ref TEXT NOT NULL,
     matched_by TEXT NOT NULL, -- 'variable_symbol' | 'iban+amount' | 'manual'
     confidence NUMERIC(4,3) NOT NULL,
@@ -125,11 +125,11 @@ CREATE TABLE IF NOT EXISTS idoklad_payment_match_snapshot (
     matched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_idoklad_match_tenant_invoice ON idoklad_payment_match_snapshot(tenant_id, invoice_id);
+CREATE INDEX IF NOT EXISTS idx_accounting_provider_match_tenant_invoice ON accounting_provider_payment_match_snapshot(tenant_id, invoice_id);
 
 -- RLS
-ALTER TABLE idoklad_payment_match_snapshot ENABLE ROW LEVEL SECURITY;
-ALTER TABLE idoklad_payment_match_snapshot FORCE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_payment_match_snapshot ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting_provider_payment_match_snapshot FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY idoklad_match_tenant_isolation ON idoklad_payment_match_snapshot
+CREATE POLICY accounting_provider_match_tenant_isolation ON accounting_provider_payment_match_snapshot
     FOR ALL USING (tenant_id = get_current_org_id() AND get_current_org_not_deleted());

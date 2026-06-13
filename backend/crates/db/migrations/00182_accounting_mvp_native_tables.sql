@@ -1,6 +1,6 @@
 -- Migration: 00182_accounting_mvp_native_tables
 -- PAP-206: N1 — Accounting MVP: native data model + migrations + FORCE RLS (6 tables)
--- Native data model for the standalone CRM/economic MVP (iDoklad-independent).
+-- Native data model for the standalone CRM/economic MVP (independent of any external accounting provider).
 -- Pattern: follow 00181 / force_*_rls pattern.
 
 -- ============================================================================
