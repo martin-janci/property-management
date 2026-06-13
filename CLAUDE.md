@@ -104,7 +104,7 @@ property-management/
 
 ### Branch Model
 
-- **`dev`** — default integration branch. All feature/bugfix PRs target `dev`.
+- **`dev`** — default integration branch. All feature/bugfix PRs target `dev`. Do not open PRs against `main` unless explicitly instructed.
 - **`main`** — release branch. `dev` is merged into `main` only during releases (version cut + tag).
 - **`hotfix/*`** — branched from `main`, merged back into both `main` and `dev`.
 
@@ -197,7 +197,7 @@ cd backend && cargo test -p api-core          # single crate
 
 # Frontend
 cd frontend && pnpm test                      # all packages
-cd frontend && pnpm typecheck                 # TS check only
+cd frontend && pnpm typecheck                 # TS check only (from frontend/ root; never bare tsc)
 
 # Mobile Native
 cd mobile-native && ./gradlew test
@@ -207,7 +207,7 @@ cd mobile-native && ./gradlew test
 
 ```bash
 # Backend
-cd backend && cargo fmt --all
+cd backend && rustup run 1.94.1 cargo fmt --all # pin toolchain to avoid CI fmt drift
 cd backend && cargo clippy --workspace --all-targets -- -D warnings
 
 # Frontend (Biome)
@@ -258,6 +258,17 @@ Tokens are direct margin. When working in this repo:
   for 60–90 % savings — let the hook rewrite them; don't bypass it.
 - **Protect the prompt cache.** Avoid sub-300 s scheduled waits/polls that bust the 5-min
   Anthropic prompt cache; prefer being re-woken on completion over tight polling.
+
+
+## Headroom Learned Patterns
+
+- **Cargo:** Always `cd backend/` before any `cargo` invocation — running from the repo or worktree root fails.
+- **Rust Toolchain:** Use the pinned toolchain `rustup run 1.94.1 cargo fmt --all` to avoid fmt drift that fails CI. Stable `rustfmt` output differs for key files like `state.rs`.
+- **Frontend Typecheck:** Run `pnpm --filter @ppt/<app-name> typecheck` from the `frontend/` root. Do NOT run `tsc` directly or `pnpm typecheck` from inside an app directory.
+- **Git Ignored Files:** The `.claude/` directory is gitignored. Always use `git add -f .claude/...` when staging skills, settings, or worktree files.
+- **CI Logs:** `gh run view --log-failed` exits non-zero even when producing useful output. Always append `2>&1` and read the log text instead of the exit code.
+- **Fleet MCP:** If `Session not found` occurs, retry at most once; if it persists, the server is disconnected (ask user to reconnect via `/mcp`).
+- **graphify:** Binary at `~/.local/bin/graphify`. Use the venv python at `~/.local/share/uv/tools/graphifyy/bin/python` (stored in `graphify-out/.graphify_python`) for internals.
 
 ## Documentation Index
 
