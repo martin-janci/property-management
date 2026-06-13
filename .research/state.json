@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-12T10:25:00Z",
-  "last_run_ms": 4800,
-  "last_pr_seen": 1322,
-  "last_issue_seen": 1310,
-  "last_commit_sha": "25d68f64b4c28ececc53898ff1d8edcda561e7f4",
+  "last_run_iso": "2026-06-13T04:00:00Z",
+  "last_run_ms": 5200,
+  "last_pr_seen": 1337,
+  "last_issue_seen": 1356,
+  "last_commit_sha": "65b2369",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -281,6 +281,21 @@
       "runs_seen": 1,
       "last_seen": "2026-06-12",
       "recent_churn": 334
+    },
+    "backend/servers/api-server/src/routes/forms.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-13",
+      "recent_churn": 2
+    },
+    "backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-13",
+      "recent_churn": 2
+    },
+    "backend/crates/db/tests/form_rls_repo_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-13",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -486,7 +501,13 @@
     "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-iot-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
-    "churn-hotspot-backend-crates-db-src-repositories-sensor-rs"
+    "churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
+    "stalled-review-pr-988",
+    "untriaged-issue-1331",
+    "dep-update-noise-pr-1333",
+    "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+    "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+    "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -500,8 +521,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 35,
-    "vectors_created": 149,
+    "runs": 36,
+    "vectors_created": 154,
     "plans_created": 8,
     "quiet_days": 0,
     "auto_fix_count": 0
