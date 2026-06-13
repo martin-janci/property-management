@@ -864,8 +864,8 @@ mod tests {
 
     /// Helper: compute a valid HMAC-SHA256 hex signature for `body` under `secret`.
     fn make_signature(body: &str, secret: &str) -> String {
-        let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-            .expect("HMAC accepts any key length");
+        let mut mac =
+            HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts any key length");
         mac.update(body.as_bytes());
         hex::encode(mac.finalize().into_bytes())
     }
@@ -882,7 +882,8 @@ mod tests {
 
     #[test]
     fn test_verify_signature_wrong_secret() {
-        let body = r#"{"event_type":"listing_updated","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let body =
+            r#"{"event_type":"listing_updated","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
         let correct_sig = make_signature(body, "correct");
         assert!(!AirbnbClient::verify_webhook_signature(
             &correct_sig,
@@ -915,7 +916,8 @@ mod tests {
     fn test_verify_signature_wrong_length_rejected() {
         // A signature that is shorter than the 64-hex-char HMAC-SHA256 output
         // must never match even if it is a prefix of the correct signature.
-        let body = r#"{"event_type":"review_received","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let body =
+            r#"{"event_type":"review_received","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
         let secret = "secret";
         let full_sig = make_signature(body, secret);
         let truncated = &full_sig[..32]; // half the HMAC hex length
@@ -926,13 +928,12 @@ mod tests {
 
     #[test]
     fn test_verify_signature_all_zeros_rejected() {
-        let body = r#"{"event_type":"message_received","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let body =
+            r#"{"event_type":"message_received","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
         let secret = "real_secret";
         let all_zeros = "0".repeat(64);
         assert!(!AirbnbClient::verify_webhook_signature(
-            &all_zeros,
-            body,
-            secret
+            &all_zeros, body, secret
         ));
     }
 
@@ -1025,12 +1026,30 @@ mod tests {
     #[test]
     fn test_event_type_serde_snake_case() {
         let cases = [
-            (AirbnbWebhookEventType::ReservationCreated, "\"reservation_created\""),
-            (AirbnbWebhookEventType::ReservationUpdated, "\"reservation_updated\""),
-            (AirbnbWebhookEventType::ReservationCancelled, "\"reservation_cancelled\""),
-            (AirbnbWebhookEventType::ListingUpdated, "\"listing_updated\""),
-            (AirbnbWebhookEventType::MessageReceived, "\"message_received\""),
-            (AirbnbWebhookEventType::ReviewReceived, "\"review_received\""),
+            (
+                AirbnbWebhookEventType::ReservationCreated,
+                "\"reservation_created\"",
+            ),
+            (
+                AirbnbWebhookEventType::ReservationUpdated,
+                "\"reservation_updated\"",
+            ),
+            (
+                AirbnbWebhookEventType::ReservationCancelled,
+                "\"reservation_cancelled\"",
+            ),
+            (
+                AirbnbWebhookEventType::ListingUpdated,
+                "\"listing_updated\"",
+            ),
+            (
+                AirbnbWebhookEventType::MessageReceived,
+                "\"message_received\"",
+            ),
+            (
+                AirbnbWebhookEventType::ReviewReceived,
+                "\"review_received\"",
+            ),
         ];
         for (variant, wire) in cases {
             let serialised = serde_json::to_string(&variant).expect("serialise");
