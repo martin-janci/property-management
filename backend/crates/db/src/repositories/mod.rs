@@ -21,6 +21,7 @@ pub mod granular_notification;
 pub mod health_monitoring;
 pub mod help;
 pub mod idoklad;
+pub mod accounting;
 pub mod membership;
 pub mod messaging;
 pub mod meter;
@@ -67,6 +68,7 @@ pub mod rental;
 
 pub use ai_chat::AiChatRepository;
 pub use idoklad::IdokladRepository;
+pub use accounting::AccountingRepository;
 pub use equipment::EquipmentRepository;
 pub use sentiment::SentimentRepository;
 pub use workflow::{WorkflowRepository, MAX_RETRY_COUNT, MAX_RETRY_DELAY_SECONDS};

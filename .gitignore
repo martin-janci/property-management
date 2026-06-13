@@ -102,3 +102,4 @@ frontend/**/playwright/.cache/
 # === Work directory (local task tracking) ===
 work/
 backend/.DS_Store
+.env.idoklad
