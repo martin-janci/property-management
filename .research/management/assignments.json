@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-13T10:31:38Z",
+  "generated": "2026-06-13T12:19:15Z",
   "assignments": [
     {
       "task_id": "test-oauth-authorization-server-integration-v2",
@@ -216,15 +216,15 @@
       "branch": "auto-impl/bug-ios-searchview-uncompilable",
       "status": "review",
       "claimed_at": "2026-06-13T10:16:40Z",
-      "last_updated": "2026-06-13T10:31:38Z",
+      "last_updated": "2026-06-13T12:18:22Z",
       "status_changed_at": "2026-06-13T10:31:38Z",
       "pr_number": 1357,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1357",
       "merged_at": null,
       "specialist": "ios-swiftui",
       "implementer_summary": "pr=1357 status=done specialist=ios-swiftui scope_drift=true code_reuse_warn=none note=restored performSearch/scheduleSearch/resultsGrid+stale-guard; macOS reviewer must run xcodebuild (Linux runner); drift=mobile-native not in pm-frontend area",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=5a5d7a5df2c70603a805e2ea9cd54f72f3562831 note=iOS SearchView compile fix restores performSearch/scheduleSearch/resultsGrid + buildKMPFilters; tests added; scope_drift label-only (pm-frontend vs pm-mobile area), reuse-clean; self-approve blocked so review not posted",
+      "last_reviewed_oid": "5a5d7a5df2c70603a805e2ea9cd54f72f3562831",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
