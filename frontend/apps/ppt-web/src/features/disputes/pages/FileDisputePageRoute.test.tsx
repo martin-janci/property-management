@@ -78,7 +78,15 @@ vi.mock('./FileDisputePage', () => ({
         disabled={pending}
         onClick={async () => {
           setPending(true);
-          await onSubmit(currentPayload);
+          // The real FileDisputePage catches a rejected onSubmit (the wrapper
+          // re-throws on failure so the page can keep its auto-saved draft);
+          // mirror that here so a failed-filing test doesn't leak an unhandled
+          // rejection.
+          try {
+            await onSubmit(currentPayload);
+          } catch {
+            // swallow — the wrapper already surfaced the error toast
+          }
           setPending(false);
         }}
       >
