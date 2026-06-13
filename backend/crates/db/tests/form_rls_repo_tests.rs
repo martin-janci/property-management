@@ -134,16 +134,16 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     {
         let mut conn = pool.acquire().await.expect("acquire");
         sqlx::query("SELECT clear_request_context()")
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await
             .expect("clear ctx");
         sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await
             .expect("set role");
 
         let found = repo
-            .get(&mut conn, org_a, form_a)
+            .get(&mut *conn, org_a, form_a)
             .await
             .expect("get (no ctx)");
         assert!(
@@ -161,7 +161,7 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
         );
 
         sqlx::query("RESET ROLE")
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await
             .expect("reset role");
     }
@@ -175,16 +175,19 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .bind(org_a)
             .bind(user_a)
             .bind(false)
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await
             .expect("set org-A ctx");
         sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await
             .expect("set role");
 
         // (2) Own-org form IS now visible — the fix.
-        let found = repo.get(&mut conn, org_a, form_a).await.expect("get (ctx)");
+        let found = repo
+            .get(&mut *conn, org_a, form_a)
+            .await
+            .expect("get (ctx)");
         assert_eq!(
             found.map(|f| f.id),
             Some(form_a),
@@ -203,7 +206,7 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 
         // (3) Org B's form stays invisible to an org-A caller.
         let cross = repo
-            .get(&mut conn, org_a, form_b)
+            .get(&mut *conn, org_a, form_b)
             .await
             .expect("cross-tenant get");
         assert!(
@@ -212,7 +215,7 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
         );
 
         sqlx::query("RESET ROLE")
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await
             .expect("reset role");
     }
