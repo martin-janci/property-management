@@ -795,7 +795,15 @@ impl RegistryRepository {
         building_id: Uuid,
     ) -> Result<Option<BuildingRegistryRules>, sqlx::Error> {
         sqlx::query_as::<_, BuildingRegistryRules>(
-            "SELECT * FROM building_registry_rules WHERE building_id = $1 AND tenant_id = $2",
+            r#"
+            SELECT
+                id, tenant_id, building_id, pets_allowed, pets_require_approval,
+                max_pets_per_unit, allowed_pet_types::text[] AS allowed_pet_types,
+                banned_pet_breeds, max_pet_weight, vehicles_require_approval,
+                max_vehicles_per_unit, notes, created_at, updated_at
+            FROM building_registry_rules
+            WHERE building_id = $1 AND tenant_id = $2
+            "#,
         )
         .bind(building_id)
         .bind(tenant_id)
@@ -817,19 +825,24 @@ impl RegistryRepository {
                 max_pets_per_unit, allowed_pet_types, banned_pet_breeds,
                 max_pet_weight, vehicles_require_approval, max_vehicles_per_unit, notes
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            -- allowed_pet_types is pet_type[] enum; cast the text[] bind explicitly.
+            VALUES ($1, $2, $3, $4, $5, $6::text[]::pet_type[], $7, $8, $9, $10, $11)
             ON CONFLICT (tenant_id, building_id) DO UPDATE SET
                 pets_allowed = COALESCE($3, building_registry_rules.pets_allowed),
                 pets_require_approval = COALESCE($4, building_registry_rules.pets_require_approval),
                 max_pets_per_unit = COALESCE($5, building_registry_rules.max_pets_per_unit),
-                allowed_pet_types = COALESCE($6, building_registry_rules.allowed_pet_types),
+                allowed_pet_types = COALESCE($6::text[]::pet_type[], building_registry_rules.allowed_pet_types),
                 banned_pet_breeds = COALESCE($7, building_registry_rules.banned_pet_breeds),
                 max_pet_weight = COALESCE($8, building_registry_rules.max_pet_weight),
                 vehicles_require_approval = COALESCE($9, building_registry_rules.vehicles_require_approval),
                 max_vehicles_per_unit = COALESCE($10, building_registry_rules.max_vehicles_per_unit),
                 notes = COALESCE($11, building_registry_rules.notes),
                 updated_at = NOW()
-            RETURNING *
+            RETURNING
+                id, tenant_id, building_id, pets_allowed, pets_require_approval,
+                max_pets_per_unit, allowed_pet_types::text[] AS allowed_pet_types,
+                banned_pet_breeds, max_pet_weight, vehicles_require_approval,
+                max_vehicles_per_unit, notes, created_at, updated_at
             "#,
         )
         .bind(tenant_id)
