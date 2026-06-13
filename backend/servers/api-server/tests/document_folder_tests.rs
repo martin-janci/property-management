@@ -71,11 +71,17 @@ async fn seed_org_f(pool: &PgPool, tag: &str) -> Uuid {
 /// the same test binary was re-run against a non-ephemeral Postgres (or when the
 /// test database was not properly dropped after a failed run). UUID-suffixed
 /// addresses guarantee per-invocation uniqueness regardless of teardown state.
+///
+/// `principal_kind` is set explicitly to `'staff'` to match the green sibling
+/// integration tests (e.g. `admin_mfa_*_tests.rs`, `principal_platform_host_tests.rs`).
+/// The `RequestPrincipal` extractor reads `users.principal_kind` to classify the
+/// caller; agency-staff endpoints (document folders) require a `staff` principal,
+/// so the seed must pin it rather than relying on the column default.
 async fn seed_user_f(pool: &PgPool, tag: &str) -> Uuid {
     let uid = Uuid::new_v4();
     sqlx::query_scalar::<_, Uuid>(
-        "INSERT INTO users (email, password_hash, name, status, email_verified_at) \
-         VALUES ($1,'test_hash','FolderTest User','active',NOW()) RETURNING id",
+        "INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind) \
+         VALUES ($1,'test_hash','FolderTest User','active',NOW(),'staff') RETURNING id",
     )
     .bind(format!("{tag}-{uid}@folder-test.example"))
     .fetch_one(pool)
