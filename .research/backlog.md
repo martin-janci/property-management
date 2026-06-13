@@ -1,5 +1,5 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-06-12 10:30 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-13 04:00 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
@@ -65,6 +65,11 @@
 | 2 | test-gap | `test-gap-screen-map-drift-reality-listing` | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | closed | 2026-05-25 |  |
 | 2 | refactor | `refactor-dead-dup-handler-modules` | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | done | 2026-05-24 |  |
 | 2 | security | `security-rls-migration-residual` | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, report | done | 2026-05-23 |  |
+| 1 | triage | `triage-issue-1331` | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backen | open | 2026-06-13 |  |
+| 1 | dx | `dx-stalled-review-pr-988` | Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no  | open | 2026-06-13 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-forms-rs` | Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched 2x since 2026-06-12 (window 20 | open | 2026-06-13 |  |
+| 1 | refactor | `churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs` | Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x sin | open | 2026-06-13 |  |
+| 1 | refactor | `churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs` | Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 20 | open | 2026-06-13 |  |
 | 1 | dx | `closed-not-merged-pr-1274` | PR #1274 (cargo-minor-patch group, /backend, 9 updates) closed unmerged — superseded by #1313 after  | open | 2026-06-12 |  |
 | 1 | refactor | `churn-hotspot-backend-crates-integrations-src-booking-rs` | Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retr | open | 2026-06-12 |  |
 | 1 | refactor | `churn-hotspot-backend-servers-api-server-src-routes-api-ecosystem-rs` | Churn hotspot: backend/servers/api-server/src/routes/api_ecosystem.rs (+106/−27 in PR #1293 PAP-171; | open | 2026-06-12 |  |
@@ -152,6 +157,6 @@
 | 1 | triage | `triage-issue-836` | Issue #836 (no labels, OPEN): Code review: Epic 2B-C — Mobile push & device registration (origin/dev | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-845` | Issue #845 (no labels, OPEN): Code review: Epic 14 — IoT alerts, correlations, thresholds (origin/de | done | 2026-05-31 |  |
 | 1 | triage | `triage-issue-849` | Issue #849 (no labels, OPEN): Code review: Epic 10B+143 — Admin impersonation, Help, Board meetings  | done | 2026-05-31 |  |
-| 1 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | open | 2026-05-30 |  |
+| 0 | triage | `triage-issue-779` | Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot) | dropped | 2026-06-13 |  |
 | 0 | bug | `bug-announcer-stale-message` | Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message | dropped | 2026-06-07 |  |
 | 0 | dx | `dx-portfolio-dashboard-stubs` | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op st | dropped | 2026-06-04 |  |

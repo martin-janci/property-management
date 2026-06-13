@@ -227,8 +227,13 @@ async fn work_orders_are_org_scoped(pool: PgPool) {
     let repo = WorkOrderRepository::new(pool.clone());
 
     // Org B sees NOTHING of Org A's jobs.
+    //
+    // The repo is now stateless (PAP-179): every method takes an
+    // RLS-context-bearing executor. This test runs on the `#[sqlx::test]`
+    // superuser pool (RLS bypassed), so the `WHERE organization_id = $1`
+    // predicate is what enforces org-scoping here; we pass `&pool` directly.
     let b_jobs = repo
-        .list(org_b, WorkOrderQuery::default())
+        .list(&pool, org_b, WorkOrderQuery::default())
         .await
         .expect("list org_b work orders");
     assert!(
@@ -243,7 +248,7 @@ async fn work_orders_are_org_scoped(pool: PgPool) {
 
     // Org A sees its own job (the legitimate success case).
     let a_jobs = repo
-        .list(org_a, WorkOrderQuery::default())
+        .list(&pool, org_a, WorkOrderQuery::default())
         .await
         .expect("list org_a work orders");
     assert!(

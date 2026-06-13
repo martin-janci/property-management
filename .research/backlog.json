@@ -3092,17 +3092,18 @@
       "title": "Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot)",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#779"
       ],
       "evidence": [
-        "Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot)"
+        "Issue #779 (no labels, OPEN): Current dev review: consolidated priority rollup (origin/dev snapshot)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [],
       "created_at": "2026-05-30",
-      "updated_at": "2026-05-30",
+      "updated_at": "2026-06-13",
       "plan": null
     },
     {
@@ -3446,6 +3447,104 @@
       ],
       "created_at": "2026-06-12",
       "updated_at": "2026-06-12",
+      "plan": null
+    },
+    {
+      "id": "triage-issue-1331",
+      "title": "Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backend merge pipeline",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "#1331"
+      ],
+      "evidence": [
+        "Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base (#1299, 4d41864) — blocks the entire backend merge pipeline; cites runner /tmp 100% full + 41-min hang"
+      ],
+      "files": [],
+      "created_at": "2026-06-13",
+      "updated_at": "2026-06-13",
+      "plan": null
+    },
+    {
+      "id": "dx-stalled-review-pr-988",
+      "title": "Stalled review: PR #988 (Epic: reusable Playwright E2E framework + sitemap FlowRunner) open 10d, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #988"
+      ],
+      "evidence": [
+        "PR #988 open 10 days (created 2026-06-02, last update 2026-06-08); draft=false; reviewDecision absent; 86 files +5388 −1121"
+      ],
+      "files": [
+        "frontend/packages/e2e/"
+      ],
+      "created_at": "2026-06-13",
+      "updated_at": "2026-06-13",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-06-12"
+      ],
+      "evidence": [
+        "Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched in 2 PRs since 2026-06-12 (PAP-76 RLS + PAP-159 registry enum)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/forms.rs"
+      ],
+      "created_at": "2026-06-13",
+      "updated_at": "2026-06-13",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+      "title": "Churn hotspot: backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-06-12"
+      ],
+      "evidence": [
+        "Churn hotspot: reserve_funds_cross_org_idor_tests.rs touched in 2 PRs (PAP-79 seed-membership + PAP-151 X-Tenant-ID follow-up)"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs"
+      ],
+      "created_at": "2026-06-13",
+      "updated_at": "2026-06-13",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
+      "title": "Churn hotspot: backend/crates/db/tests/form_rls_repo_tests.rs touched 2x since 2026-06-12 (window 2026-06-12→2026-06-13)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-06-12"
+      ],
+      "evidence": [
+        "Churn hotspot: form_rls_repo_tests.rs touched in 2 PRs (PAP-76 forms RLS + PAP-159 registry enum)"
+      ],
+      "files": [
+        "backend/crates/db/tests/form_rls_repo_tests.rs"
+      ],
+      "created_at": "2026-06-13",
+      "updated_at": "2026-06-13",
       "plan": null
     }
   ]

@@ -1,9 +1,18 @@
 //! Form routes (Epic 54: Forms Management).
 //!
 //! Provides endpoints for form templates, fields, and submissions.
+//!
+//! # RLS (PAP-76)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on the form tables so
+//! every query MUST run on a connection that has `app.current_org_id` set.
+//! Each handler acquires an [`RlsConnection`] (authenticates the caller,
+//! validates tenant membership, sets org/user GUCs on a dedicated connection)
+//! and passes `&mut **rls.conn()` to the repository. `rls.release()` clears
+//! the context before the connection returns to the pool.
 
 use crate::state::AppState;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{ConnectInfo, Path, Query, State},
     http::StatusCode,
@@ -391,12 +400,12 @@ pub fn router() -> Router<AppState> {
 )]
 async fn create_form(
     State(state): State<AppState>,
-    auth: AuthUser,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Json(req): Json<CreateFormRequest>,
 ) -> Result<(StatusCode, Json<CreateFormResponse>), (StatusCode, Json<ErrorResponse>)> {
     // Authorization: require manager-level role
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -408,12 +417,14 @@ async fn create_form(
 
     // Validate title
     if req.title.trim().is_empty() {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new("BAD_REQUEST", "Title is required")),
         ));
     }
     if req.title.len() > MAX_TITLE_LENGTH {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -429,6 +440,7 @@ async fn create_form(
     // Validate description
     if let Some(ref desc) = req.description {
         if desc.len() > MAX_DESCRIPTION_LENGTH {
+            rls.release().await;
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse::new(
@@ -444,6 +456,7 @@ async fn create_form(
 
     // Validate fields count
     if req.fields.len() > MAX_FIELDS_PER_FORM {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -453,6 +466,8 @@ async fn create_form(
         ));
     }
 
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let repo = &state.form_repo;
 
     // Validate and convert fields, returning error on malformed JSON
@@ -514,9 +529,18 @@ async fn create_form(
         fields,
     };
 
-    let form = repo
-        .create(tenant.tenant_id, auth.user_id, create_data)
+    let out = repo
+        .create(rls.conn(), org_id, user_id, create_data)
         .await
+        .map(|form| {
+            (
+                StatusCode::CREATED,
+                Json(CreateFormResponse {
+                    id: form.id,
+                    message: "Form created successfully".to_string(),
+                }),
+            )
+        })
         .map_err(|e| {
             tracing::error!("Failed to create form: {:?}", e);
             (
@@ -526,15 +550,9 @@ async fn create_form(
                     "Failed to create form",
                 )),
             )
-        })?;
-
-    Ok((
-        StatusCode::CREATED,
-        Json(CreateFormResponse {
-            id: form.id,
-            message: "Form created successfully".to_string(),
-        }),
-    ))
+        });
+    rls.release().await;
+    out
 }
 
 /// List all forms (Story 54.1).
@@ -551,11 +569,12 @@ async fn create_form(
 )]
 async fn list_forms(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Query(query): Query<ListFormsQuery>,
 ) -> Result<Json<FormListResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Only managers can see all forms including drafts
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -565,6 +584,7 @@ async fn list_forms(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
     let form_query = FormListQuery {
@@ -578,20 +598,26 @@ async fn list_forms(
         sort_order: query.sort_order,
     };
 
-    let (forms, total) = repo.list(tenant.tenant_id, form_query).await.map_err(|e| {
-        tracing::error!("Failed to list forms: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list forms")),
-        )
-    })?;
-
-    Ok(Json(FormListResponse {
-        forms,
-        total,
-        page: query.page.unwrap_or(1),
-        per_page: query.per_page.unwrap_or(20),
-    }))
+    let out = repo
+        .list(rls.conn(), org_id, form_query)
+        .await
+        .map(|(forms, total)| {
+            Json(FormListResponse {
+                forms,
+                total,
+                page: query.page.unwrap_or(1),
+                per_page: query.per_page.unwrap_or(20),
+            })
+        })
+        .map_err(|e| {
+            tracing::error!("Failed to list forms: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list forms")),
+            )
+        });
+    rls.release().await;
+    out
 }
 
 /// List available forms for users (Story 54.2).
@@ -607,13 +633,15 @@ async fn list_forms(
 )]
 async fn list_available_forms(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
 ) -> Result<Json<AvailableFormsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
-    let forms = repo
-        .list_available_forms(tenant.tenant_id, None, "")
+    let out = repo
+        .list_available_forms(&mut **rls.conn(), org_id, None, "")
         .await
+        .map(|forms| Json(AvailableFormsResponse { forms }))
         .map_err(|e| {
             tracing::error!("Failed to list available forms: {:?}", e);
             (
@@ -623,9 +651,9 @@ async fn list_available_forms(
                     "Failed to list available forms",
                 )),
             )
-        })?;
-
-    Ok(Json(AvailableFormsResponse { forms }))
+        });
+    rls.release().await;
+    out
 }
 
 /// Get form details.
@@ -643,13 +671,15 @@ async fn list_available_forms(
 )]
 async fn get_form(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FormDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
+    let is_manager = rls.role().is_manager();
     let repo = &state.form_repo;
 
-    let form = repo
-        .get_with_details(tenant.tenant_id, id)
+    let out = repo
+        .get_with_details(rls.conn(), org_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get form: {:?}", e);
@@ -657,23 +687,28 @@ async fn get_form(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
             )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-            )
-        })?;
-
-    // Non-managers can only see published forms
-    if !tenant.role.is_manager() && form.form.status != form_status::PUBLISHED {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-        ));
-    }
-
-    Ok(Json(FormDetailResponse { form }))
+        })
+        .and_then(|opt| {
+            opt.ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+                )
+            })
+        })
+        .and_then(|form| {
+            // Non-managers can only see published forms
+            if !is_manager && form.form.status != form_status::PUBLISHED {
+                Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+                ))
+            } else {
+                Ok(Json(FormDetailResponse { form }))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 /// Update a form.
@@ -694,12 +729,12 @@ async fn get_form(
 )]
 async fn update_form(
     State(state): State<AppState>,
-    auth: AuthUser,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateFormRequest>,
 ) -> Result<Json<FormActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -709,10 +744,12 @@ async fn update_form(
         ));
     }
 
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let repo = &state.form_repo;
 
     // Check if form exists and is editable
-    let existing = repo.get(tenant.tenant_id, id).await.map_err(|e| {
+    let existing = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
         tracing::error!("Failed to get form: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -728,6 +765,7 @@ async fn update_form(
     })?;
 
     if existing.status != form_status::DRAFT {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -750,9 +788,15 @@ async fn update_form(
         confirmation_message: req.confirmation_message,
     };
 
-    let form = repo
-        .update(tenant.tenant_id, id, auth.user_id, update_data)
+    let out = repo
+        .update(rls.conn(), org_id, id, user_id, update_data)
         .await
+        .map(|form| {
+            Json(FormActionResponse {
+                message: "Form updated successfully".to_string(),
+                form,
+            })
+        })
         .map_err(|e| {
             tracing::error!("Failed to update form: {:?}", e);
             (
@@ -762,12 +806,9 @@ async fn update_form(
                     "Failed to update form",
                 )),
             )
-        })?;
-
-    Ok(Json(FormActionResponse {
-        message: "Form updated successfully".to_string(),
-        form,
-    }))
+        });
+    rls.release().await;
+    out
 }
 
 /// Delete a form.
@@ -786,10 +827,11 @@ async fn update_form(
 )]
 async fn delete_form(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -799,20 +841,25 @@ async fn delete_form(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
-    repo.delete(tenant.tenant_id, id).await.map_err(|e| {
-        tracing::error!("Failed to delete form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "INTERNAL_ERROR",
-                "Failed to delete form",
-            )),
-        )
-    })?;
-
-    Ok(StatusCode::NO_CONTENT)
+    let out = repo
+        .delete(&mut **rls.conn(), org_id, id)
+        .await
+        .map(|_| StatusCode::NO_CONTENT)
+        .map_err(|e| {
+            tracing::error!("Failed to delete form: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to delete form",
+                )),
+            )
+        });
+    rls.release().await;
+    out
 }
 
 /// Publish a form.
@@ -832,11 +879,11 @@ async fn delete_form(
 )]
 async fn publish_form(
     State(state): State<AppState>,
-    auth: AuthUser,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FormActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -846,10 +893,12 @@ async fn publish_form(
         ));
     }
 
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let repo = &state.form_repo;
 
     // Check that form has at least one field
-    let fields = repo.get_fields(id).await.map_err(|e| {
+    let fields = repo.get_fields(&mut **rls.conn(), id).await.map_err(|e| {
         tracing::error!("Failed to get form fields: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -861,6 +910,7 @@ async fn publish_form(
     })?;
 
     if fields.is_empty() {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -870,9 +920,15 @@ async fn publish_form(
         ));
     }
 
-    let form = repo
-        .publish(tenant.tenant_id, id, auth.user_id)
+    let out = repo
+        .publish(&mut **rls.conn(), org_id, id, user_id)
         .await
+        .map(|form| {
+            Json(FormActionResponse {
+                message: "Form published successfully".to_string(),
+                form,
+            })
+        })
         .map_err(|e| {
             tracing::error!("Failed to publish form: {:?}", e);
             (
@@ -882,12 +938,9 @@ async fn publish_form(
                     "Cannot publish form - it may already be published",
                 )),
             )
-        })?;
-
-    Ok(Json(FormActionResponse {
-        message: "Form published successfully".to_string(),
-        form,
-    }))
+        });
+    rls.release().await;
+    out
 }
 
 /// Archive a form.
@@ -906,10 +959,11 @@ async fn publish_form(
 )]
 async fn archive_form(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FormActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -919,23 +973,30 @@ async fn archive_form(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
-    let form = repo.archive(tenant.tenant_id, id).await.map_err(|e| {
-        tracing::error!("Failed to archive form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "INTERNAL_ERROR",
-                "Failed to archive form",
-            )),
-        )
-    })?;
-
-    Ok(Json(FormActionResponse {
-        message: "Form archived successfully".to_string(),
-        form,
-    }))
+    let out = repo
+        .archive(&mut **rls.conn(), org_id, id)
+        .await
+        .map(|form| {
+            Json(FormActionResponse {
+                message: "Form archived successfully".to_string(),
+                form,
+            })
+        })
+        .map_err(|e| {
+            tracing::error!("Failed to archive form: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to archive form",
+                )),
+            )
+        });
+    rls.release().await;
+    out
 }
 
 /// Get form statistics.
@@ -952,9 +1013,10 @@ async fn archive_form(
 )]
 async fn get_statistics(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
 ) -> Result<Json<FormStatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -964,20 +1026,25 @@ async fn get_statistics(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
-    let statistics = repo.get_statistics(tenant.tenant_id).await.map_err(|e| {
-        tracing::error!("Failed to get statistics: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "INTERNAL_ERROR",
-                "Failed to get statistics",
-            )),
-        )
-    })?;
-
-    Ok(Json(FormStatisticsResponse { statistics }))
+    let out = repo
+        .get_statistics(&mut **rls.conn(), org_id)
+        .await
+        .map(|statistics| Json(FormStatisticsResponse { statistics }))
+        .map_err(|e| {
+            tracing::error!("Failed to get statistics: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to get statistics",
+                )),
+            )
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -999,13 +1066,14 @@ async fn get_statistics(
 )]
 async fn list_fields(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FieldsResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
     // Verify form exists and user has access
-    let form = repo.get(tenant.tenant_id, id).await.map_err(|e| {
+    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
         tracing::error!("Failed to get form: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -1014,21 +1082,26 @@ async fn list_fields(
     })?;
 
     if form.is_none() {
+        rls.release().await;
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
         ));
     }
 
-    let fields = repo.get_fields(id).await.map_err(|e| {
-        tracing::error!("Failed to get fields: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get fields")),
-        )
-    })?;
-
-    Ok(Json(FieldsResponse { fields }))
+    let out = repo
+        .get_fields(&mut **rls.conn(), id)
+        .await
+        .map(|fields| Json(FieldsResponse { fields }))
+        .map_err(|e| {
+            tracing::error!("Failed to get fields: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get fields")),
+            )
+        });
+    rls.release().await;
+    out
 }
 
 /// Add a field to a form.
@@ -1049,11 +1122,12 @@ async fn list_fields(
 )]
 async fn add_field(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateFormFieldRequest>,
 ) -> Result<(StatusCode, Json<FieldActionResponse>), (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -1063,10 +1137,11 @@ async fn add_field(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
     // Verify form exists and is editable
-    let form = repo.get(tenant.tenant_id, id).await.map_err(|e| {
+    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
         tracing::error!("Failed to get form: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -1082,6 +1157,7 @@ async fn add_field(
     })?;
 
     if form.status != form_status::DRAFT {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1116,9 +1192,18 @@ async fn add_field(
         conditional_display: None,
     };
 
-    let field = repo
-        .create_field(id, field_data, req.field_order)
+    let out = repo
+        .create_field(&mut **rls.conn(), id, field_data, req.field_order)
         .await
+        .map(|field| {
+            (
+                StatusCode::CREATED,
+                Json(FieldActionResponse {
+                    message: "Field added successfully".to_string(),
+                    field,
+                }),
+            )
+        })
         .map_err(|e| {
             tracing::error!("Failed to add field: {:?}", e);
             (
@@ -1128,15 +1213,9 @@ async fn add_field(
                     "Failed to add field - field key may already exist",
                 )),
             )
-        })?;
-
-    Ok((
-        StatusCode::CREATED,
-        Json(FieldActionResponse {
-            message: "Field added successfully".to_string(),
-            field,
-        }),
-    ))
+        });
+    rls.release().await;
+    out
 }
 
 /// Update a form field.
@@ -1160,11 +1239,12 @@ async fn add_field(
 )]
 async fn update_field(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path((id, field_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateFormFieldRequest>,
 ) -> Result<Json<FieldActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -1174,10 +1254,11 @@ async fn update_field(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
     // Verify form exists and is editable
-    let form = repo.get(tenant.tenant_id, id).await.map_err(|e| {
+    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
         tracing::error!("Failed to get form: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -1193,6 +1274,7 @@ async fn update_field(
     })?;
 
     if form.status != form_status::DRAFT {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1226,21 +1308,24 @@ async fn update_field(
         conditional_display: None,
     };
 
-    let field = repo
-        .update_field(id, field_id, update_data)
+    let out = repo
+        .update_field(&mut **rls.conn(), id, field_id, update_data)
         .await
+        .map(|field| {
+            Json(FieldActionResponse {
+                message: "Field updated successfully".to_string(),
+                field,
+            })
+        })
         .map_err(|e| {
             tracing::error!("Failed to update field: {:?}", e);
             (
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Field not found")),
             )
-        })?;
-
-    Ok(Json(FieldActionResponse {
-        message: "Field updated successfully".to_string(),
-        field,
-    }))
+        });
+    rls.release().await;
+    out
 }
 
 /// Delete a form field.
@@ -1262,10 +1347,11 @@ async fn update_field(
 )]
 async fn delete_field(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path((id, field_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -1275,10 +1361,11 @@ async fn delete_field(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
     // Verify form exists and is editable
-    let form = repo.get(tenant.tenant_id, id).await.map_err(|e| {
+    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
         tracing::error!("Failed to get form: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -1294,6 +1381,7 @@ async fn delete_field(
     })?;
 
     if form.status != form_status::DRAFT {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1303,18 +1391,22 @@ async fn delete_field(
         ));
     }
 
-    repo.delete_field(id, field_id).await.map_err(|e| {
-        tracing::error!("Failed to delete field: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "INTERNAL_ERROR",
-                "Failed to delete field",
-            )),
-        )
-    })?;
-
-    Ok(StatusCode::NO_CONTENT)
+    let out = repo
+        .delete_field(&mut **rls.conn(), id, field_id)
+        .await
+        .map(|_| StatusCode::NO_CONTENT)
+        .map_err(|e| {
+            tracing::error!("Failed to delete field: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to delete field",
+                )),
+            )
+        });
+    rls.release().await;
+    out
 }
 
 /// Reorder form fields.
@@ -1335,11 +1427,12 @@ async fn delete_field(
 )]
 async fn reorder_fields(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<ReorderFieldsRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -1349,10 +1442,11 @@ async fn reorder_fields(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
     // Verify form exists and is editable
-    let form = repo.get(tenant.tenant_id, id).await.map_err(|e| {
+    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
         tracing::error!("Failed to get form: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -1368,6 +1462,7 @@ async fn reorder_fields(
     })?;
 
     if form.status != form_status::DRAFT {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1383,18 +1478,22 @@ async fn reorder_fields(
         .map(|fo| (fo.field_id, fo.order))
         .collect();
 
-    repo.reorder_fields(id, field_orders).await.map_err(|e| {
-        tracing::error!("Failed to reorder fields: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "INTERNAL_ERROR",
-                "Failed to reorder fields",
-            )),
-        )
-    })?;
-
-    Ok(StatusCode::OK)
+    let out = repo
+        .reorder_fields(&mut **rls.conn(), id, field_orders)
+        .await
+        .map(|_| StatusCode::OK)
+        .map_err(|e| {
+            tracing::error!("Failed to reorder fields: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to reorder fields",
+                )),
+            )
+        });
+    rls.release().await;
+    out
 }
 
 // ============================================================================
@@ -1418,8 +1517,7 @@ async fn reorder_fields(
 )]
 async fn submit_form(
     State(state): State<AppState>,
-    auth: AuthUser,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     headers: axum::http::HeaderMap,
     ConnectInfo(addr): ConnectInfo<std::net::SocketAddr>,
     Path(id): Path<Uuid>,
@@ -1438,11 +1536,14 @@ async fn submit_form(
         .get(axum::http::header::USER_AGENT)
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
+
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let repo = &state.form_repo;
 
     // Get form details
     let form = repo
-        .get_with_details(tenant.tenant_id, id)
+        .get_with_details(rls.conn(), org_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get form: {:?}", e);
@@ -1460,6 +1561,7 @@ async fn submit_form(
 
     // Verify form is published
     if form.form.status != form_status::PUBLISHED {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1472,7 +1574,7 @@ async fn submit_form(
     // Check if user already submitted and multiple submissions not allowed
     if !form.form.allow_multiple_submissions {
         let has_submitted = repo
-            .has_user_submitted(id, auth.user_id)
+            .has_user_submitted(&mut **rls.conn(), id, user_id)
             .await
             .map_err(|e| {
                 tracing::error!("Failed to check submission: {:?}", e);
@@ -1486,6 +1588,7 @@ async fn submit_form(
             })?;
 
         if has_submitted {
+            rls.release().await;
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse::new(
@@ -1499,6 +1602,7 @@ async fn submit_form(
     // Check deadline
     if let Some(deadline) = form.form.submission_deadline {
         if chrono::Utc::now() > deadline {
+            rls.release().await;
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse::new(
@@ -1520,6 +1624,7 @@ async fn submit_form(
                     .map(|s| s.is_empty())
                     .unwrap_or(false)
             {
+                rls.release().await;
                 return Err((
                     StatusCode::BAD_REQUEST,
                     Json(ErrorResponse::new(
@@ -1533,6 +1638,7 @@ async fn submit_form(
 
     // Check signature requirement
     if form.form.require_signatures && req.signature_data.is_none() {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1570,18 +1676,33 @@ async fn submit_form(
         },
     };
 
-    let submission = repo
-        .submit(FormSubmissionParams {
-            org_id: tenant.tenant_id,
-            form_id: id,
-            user_id: auth.user_id,
-            building_id: None, // could be extracted from user context if needed
-            unit_id: None,     // could be extracted from user context if needed
-            data: submit_data,
-            ip_address: ip_address.clone(),
-            user_agent: user_agent.clone(),
-        })
+    let confirmation_message = form.form.confirmation_message.clone();
+
+    let out = repo
+        .submit(
+            &mut **rls.conn(),
+            FormSubmissionParams {
+                org_id,
+                form_id: id,
+                user_id,
+                building_id: None, // could be extracted from user context if needed
+                unit_id: None,     // could be extracted from user context if needed
+                data: submit_data,
+                ip_address: ip_address.clone(),
+                user_agent: user_agent.clone(),
+            },
+        )
         .await
+        .map(|submission| {
+            (
+                StatusCode::CREATED,
+                Json(SubmitFormResponse {
+                    id: submission.id,
+                    message: "Form submitted successfully".to_string(),
+                    confirmation_message,
+                }),
+            )
+        })
         .map_err(|e| {
             tracing::error!("Failed to submit form: {:?}", e);
             (
@@ -1591,16 +1712,9 @@ async fn submit_form(
                     "Failed to submit form",
                 )),
             )
-        })?;
-
-    Ok((
-        StatusCode::CREATED,
-        Json(SubmitFormResponse {
-            id: submission.id,
-            message: "Form submitted successfully".to_string(),
-            confirmation_message: form.form.confirmation_message,
-        }),
-    ))
+        });
+    rls.release().await;
+    out
 }
 
 /// List submissions for a form (Story 54.4).
@@ -1622,11 +1736,12 @@ async fn submit_form(
 )]
 async fn list_submissions(
     State(state): State<AppState>,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Query(query): Query<ListSubmissionsQuery>,
 ) -> Result<Json<SubmissionListResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -1636,6 +1751,7 @@ async fn list_submissions(
         ));
     }
 
+    let org_id = rls.tenant_id();
     let repo = &state.form_repo;
 
     let sub_query = SubmissionListQuery {
@@ -1650,9 +1766,17 @@ async fn list_submissions(
         per_page: query.per_page,
     };
 
-    let (submissions, total) = repo
-        .list_submissions(tenant.tenant_id, sub_query)
+    let out = repo
+        .list_submissions(rls.conn(), org_id, sub_query)
         .await
+        .map(|(submissions, total)| {
+            Json(SubmissionListResponse {
+                submissions,
+                total,
+                page: query.page.unwrap_or(1),
+                per_page: query.per_page.unwrap_or(20),
+            })
+        })
         .map_err(|e| {
             tracing::error!("Failed to list submissions: {:?}", e);
             (
@@ -1662,14 +1786,9 @@ async fn list_submissions(
                     "Failed to list submissions",
                 )),
             )
-        })?;
-
-    Ok(Json(SubmissionListResponse {
-        submissions,
-        total,
-        page: query.page.unwrap_or(1),
-        per_page: query.per_page.unwrap_or(20),
-    }))
+        });
+    rls.release().await;
+    out
 }
 
 /// Get submission details.
@@ -1691,14 +1810,16 @@ async fn list_submissions(
 )]
 async fn get_submission(
     State(state): State<AppState>,
-    auth: AuthUser,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path((_id, submission_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<SubmissionDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let is_manager = rls.role().is_manager();
     let repo = &state.form_repo;
 
-    let submission = repo
-        .get_submission(tenant.tenant_id, submission_id)
+    let out = repo
+        .get_submission(&mut **rls.conn(), org_id, submission_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get submission: {:?}", e);
@@ -1709,26 +1830,31 @@ async fn get_submission(
                     "Failed to get submission",
                 )),
             )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Submission not found")),
-            )
-        })?;
-
-    // Non-managers can only view their own submissions
-    if !tenant.role.is_manager() && submission.submission.submitted_by != auth.user_id {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "You can only view your own submissions",
-            )),
-        ));
-    }
-
-    Ok(Json(SubmissionDetailResponse { submission }))
+        })
+        .and_then(|opt| {
+            opt.ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Submission not found")),
+                )
+            })
+        })
+        .and_then(|submission| {
+            // Non-managers can only view their own submissions
+            if !is_manager && submission.submission.submitted_by != user_id {
+                Err((
+                    StatusCode::FORBIDDEN,
+                    Json(ErrorResponse::new(
+                        "FORBIDDEN",
+                        "You can only view your own submissions",
+                    )),
+                ))
+            } else {
+                Ok(Json(SubmissionDetailResponse { submission }))
+            }
+        });
+    rls.release().await;
+    out
 }
 
 /// Review a submission (approve/reject).
@@ -1752,12 +1878,12 @@ async fn get_submission(
 )]
 async fn review_submission(
     State(state): State<AppState>,
-    auth: AuthUser,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path((_id, submission_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<ReviewSubmissionRequest>,
 ) -> Result<Json<SubmissionDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    if !rls.role().is_manager() {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -1769,6 +1895,7 @@ async fn review_submission(
 
     // Validate status
     if req.status != "approved" && req.status != "rejected" {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1778,6 +1905,8 @@ async fn review_submission(
         ));
     }
 
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let repo = &state.form_repo;
 
     let review_data = ReviewSubmission {
@@ -1785,19 +1914,25 @@ async fn review_submission(
         review_notes: req.review_notes,
     };
 
-    repo.review_submission(tenant.tenant_id, submission_id, auth.user_id, review_data)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to review submission: {:?}", e);
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Submission not found")),
-            )
-        })?;
+    repo.review_submission(
+        &mut **rls.conn(),
+        org_id,
+        submission_id,
+        user_id,
+        review_data,
+    )
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to review submission: {:?}", e);
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Submission not found")),
+        )
+    })?;
 
     // Get updated submission
-    let submission = repo
-        .get_submission(tenant.tenant_id, submission_id)
+    let out = repo
+        .get_submission(&mut **rls.conn(), org_id, submission_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get submission: {:?}", e);
@@ -1808,15 +1943,18 @@ async fn review_submission(
                     "Failed to get submission",
                 )),
             )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Submission not found")),
-            )
-        })?;
-
-    Ok(Json(SubmissionDetailResponse { submission }))
+        })
+        .and_then(|opt| {
+            opt.ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Submission not found")),
+                )
+            })
+        })
+        .map(|submission| Json(SubmissionDetailResponse { submission }));
+    rls.release().await;
+    out
 }
 
 /// Record form download (Story 54.2).
@@ -1834,14 +1972,15 @@ async fn review_submission(
 )]
 async fn record_download(
     State(state): State<AppState>,
-    auth: AuthUser,
-    tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
     let repo = &state.form_repo;
 
     // Verify form exists
-    let form = repo.get(tenant.tenant_id, id).await.map_err(|e| {
+    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
         tracing::error!("Failed to get form: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -1850,14 +1989,17 @@ async fn record_download(
     })?;
 
     if form.is_none() {
+        rls.release().await;
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
         ));
     }
 
-    repo.record_download(id, auth.user_id, None, None)
+    let out = repo
+        .record_download(&mut **rls.conn(), id, user_id, None, None)
         .await
+        .map(|_| StatusCode::OK)
         .map_err(|e| {
             tracing::error!("Failed to record download: {:?}", e);
             (
@@ -1867,7 +2009,7 @@ async fn record_download(
                     "Failed to record download",
                 )),
             )
-        })?;
-
-    Ok(StatusCode::OK)
+        });
+    rls.release().await;
+    out
 }
