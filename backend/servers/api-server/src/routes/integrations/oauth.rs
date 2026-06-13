@@ -722,10 +722,7 @@ mod tests {
         let json = r#"{"code":"xyz","redirect_uri":"https://example.com/cb"}"#;
         let req: AirbnbTokenExchangeRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.code, "xyz");
-        assert_eq!(
-            req.redirect_uri.as_deref(),
-            Some("https://example.com/cb")
-        );
+        assert_eq!(req.redirect_uri.as_deref(), Some("https://example.com/cb"));
     }
 
     /// AirbnbTokenExchangeResponse — verify serialization shape expected by
