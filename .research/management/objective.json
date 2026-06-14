@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-12T02:13:56Z",
-  "last_action": "repick",
-  "reason": "no open action-list item carries a gap-N or pm-<role> epic prefix; all claimable work is feat-/test-/verify-/bug- (per-item epics). finish-first has no valid target this cycle -> NONE; normal multi-epic claim path used.",
+  "selected_at": "2026-06-14T10:16:37Z",
+  "last_action": "reset-none",
+  "reason": "picker emitted feat-* prefix incompatible with dispatcher-self-test T21 (only gap-N/pm-<role>/NONE allowed); action-list has no gap-/pm- epics. Reset to NONE; this run claimed 1 task from the general pool. Surfaced as a finding.",
   "stats_at_selection": {
-    "open": 22,
-    "claimable": 22
+    "open": 1,
+    "claimable": 1
   }
 }
