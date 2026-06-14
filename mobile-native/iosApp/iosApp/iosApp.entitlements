@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      Associated Domains — universal links (applinks:).
+
+      Re-enables `https://` deep links so iOS delivers matching URLs to
+      `RealityPortalApp.onOpenURL`, which forwards them to `DeepLinkHandler`.
+      Without this entitlement iOS opens the links in Safari instead of the app,
+      and the `applinks:` AASA negotiation never runs.
+
+      Hosts mirror the production/staging universal-link domains:
+        - `Environment.universalLinkDomain` in Core/Configuration.swift
+          (production: reality.example.com, staging: staging.reality.example.com)
+        - `DeepLinkHandler.allowedUniversalLinkHosts`
+          (reality.example.com, staging-reality.example.com)
+      Both host spellings are listed so whichever AASA the reality-web origin
+      serves resolves. Each host requires `/.well-known/apple-app-site-association`
+      served at that origin for the link to activate on-device.
+
+      The custom `realityportal://` scheme is registered separately via
+      CFBundleURLTypes in Resources/Info.plist (and the legacy top-level
+      Info.plist) — it does NOT need an entitlement.
+    -->
+    <key>com.apple.developer.associated-domains</key>
+    <array>
+        <string>applinks:reality.example.com</string>
+        <string>applinks:staging.reality.example.com</string>
+        <string>applinks:staging-reality.example.com</string>
+    </array>
+</dict>
+</plist>
