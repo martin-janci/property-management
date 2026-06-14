@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-14T18:41:35Z",
+  "generated": "2026-06-14T19:11:30Z",
   "assignments": [
     {
       "task_id": "test-oauth-authorization-server-integration-v2",
@@ -380,11 +380,11 @@
     {
       "task_id": "fix-1332-test-job-prod-regressions",
       "branch": "auto-impl/fix-1332-test-job-prod-regressions",
-      "status": "in-progress",
+      "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-06-14T14:33:46Z",
-      "last_updated": "2026-06-14T18:41:35Z",
-      "status_changed_at": "2026-06-14T18:41:35Z",
+      "last_updated": "2026-06-14T19:11:30Z",
+      "status_changed_at": "2026-06-14T19:11:30Z",
       "pr_number": 1379,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1379",
       "merged_at": null,
@@ -398,7 +398,7 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null,
-      "implementer_summary": "[orphan-recovered] fixes dev-wide backend test job #1332; reviewer round1 verdict=changes (1/3 fixed, form_rls 42501 grant + doc cross-tenant test remain); respawned rust-backend implementer fix-round 1/3 (in-flight).",
+      "implementer_summary": "[orphan-recovered] fix-round 1/3 COMPLETE: pushed 3 commits (HEAD 2e9c2ca) — GRANT SELECT users for RLS test role + form_status::text cast (FormRepository::get/list/list_available_forms) + cross-tenant org-scope 404 guard in doc download/preview handlers. Both #1332 target tests pass locally (form_rls_repo_tests, document_download_preview_tests 8/8); check/clippy/fmt clean. Awaiting CI re-review.",
       "reviewer_summary": null
     }
   ]
