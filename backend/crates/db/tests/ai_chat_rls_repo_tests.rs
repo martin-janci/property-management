@@ -252,6 +252,11 @@ async fn ai_chat_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     for stmt in [
         format!("REVOKE ALL ON ai_chat_sessions FROM \"{role}\""),
         format!("REVOKE ALL ON organizations FROM \"{role}\""),
+        // DROP OWNED severs every remaining privilege this role holds in the
+        // test database — the explicit REVOKEs above miss the RLS helper-function
+        // EXECUTE grants, so DROP ROLE failed with "objects depend on it" and
+        // leaked the cluster-global role (#1332 / PAP-134).
+        format!("DROP OWNED BY \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
