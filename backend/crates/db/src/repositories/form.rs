@@ -195,7 +195,7 @@ impl FormRepository {
             FROM forms f
             WHERE f.organization_id = $1
                 AND f.deleted_at IS NULL
-                AND ($2::text IS NULL OR f.status = $2)
+                AND ($2::text IS NULL OR f.status::text = $2)
                 AND ($3::text IS NULL OR f.category = $3)
                 AND ($4::uuid IS NULL OR f.building_id = $4)
                 AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
@@ -221,7 +221,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.title ASC LIMIT $6 OFFSET $7
@@ -235,7 +235,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.title DESC LIMIT $6 OFFSET $7
@@ -249,7 +249,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.status ASC LIMIT $6 OFFSET $7
@@ -263,7 +263,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.status DESC LIMIT $6 OFFSET $7
@@ -277,7 +277,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.published_at ASC LIMIT $6 OFFSET $7
@@ -291,7 +291,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.published_at DESC LIMIT $6 OFFSET $7
@@ -305,7 +305,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.category ASC LIMIT $6 OFFSET $7
@@ -319,7 +319,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.category DESC LIMIT $6 OFFSET $7
@@ -334,7 +334,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.created_at DESC LIMIT $6 OFFSET $7
@@ -349,7 +349,7 @@ impl FormRepository {
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.created_at ASC LIMIT $6 OFFSET $7
