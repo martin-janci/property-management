@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-14T10:16:37Z",
-  "last_action": "reset-none",
-  "reason": "picker emitted feat-* prefix incompatible with dispatcher-self-test T21 (only gap-N/pm-<role>/NONE allowed); action-list has no gap-/pm- epics. Reset to NONE; this run claimed 1 task from the general pool. Surfaced as a finding.",
+  "selected_at": "2026-06-14T16:19:14Z",
+  "last_action": "repick",
+  "reason": "targets exhausted: closest-to-done candidates (feat-airbnb-oauth-and-sync-*, feat-announcement-viewing-acknowled-apistatus-stub-*) verified already-implemented on dev (airbnb route/crate via PR #1177; announcement ack routes via Story 6.2) — gap-scan 2026-06-12 false-positives, dropped/non-actionable. No valid gap-N/pm-role epic with claimable real work this run.",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1
