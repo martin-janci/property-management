@@ -1,64 +1,126 @@
 {
   "date": "2026-06-14",
-  "signals": [
-    {
-      "id": "code-review-reality-web-share-comparison-404",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 3,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "evidence": [
-        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:38 — fetch(`/api/listings/${id}`) hits a Next.js route that does not exist; only src/app/api/health/route.ts is defined. Every shared comparison URL silently 404s and renders t('loadError') instead of the listings."
-      ],
-      "expert": "frontend"
-    },
-    {
-      "id": "code-review-reality-web-listing-page-ssr-crash",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 3,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "evidence": [
-        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:71-79 — getListing returns response.json() cast to ListingDetail|null with no runtime validation; page body at 100-127 builds JSON-LD by dereffing listing.photos.map / listing.address.* unguarded. Sibling metadata.ts:17-36 documents this exact failure mode and defends generateMetadata against it; the page body does not."
-      ],
-      "expert": "frontend"
-    },
-    {
-      "id": "code-review-reality-web-realtor-mgmt-untranslated",
-      "type": "code-review-finding",
-      "source": "rotating-expert-review",
-      "segment": "reality-web",
-      "score_delta": 3,
-      "confidence": "high",
-      "candidate_vector": "bug",
-      "evidence": [
-        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:569,593,605,617,628,640-643 — hardcoded English labels (Invite Realtor, Email *, Full Name *, Job Title, Personal Message, Cancel, Send Invitation). Component already imports useTranslations('agency') and calls t('inviteError') — the literals were missed. Reality Portal ships sk/cs/de/en; non-EN visitors see English chrome on the entire agency/realtor flow."
-      ],
-      "expert": "frontend"
-    }
-  ],
+  "signals": [],
   "auto_fix_actions": [],
   "goal_checks": [
-    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-06-14.md && head -1 briefs/2026-06-14.md | grep -q '^# 2026-06-14$'", "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G2", "passed": true,  "command": "jq compare prior state.json vs staged",                                 "observed": "true",   "expected": "true"   },
-    { "goal": "G3", "passed": true,  "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json",        "observed": "true",   "expected": "true"   },
-    { "goal": "G4", "passed": true,  "command": "no non-cumulative re-emit of any prior seen_signal with score_delta!=0", "observed": "true",   "expected": "true"   },
-    { "goal": "G5", "passed": true,  "command": "no score >8; no decay-eligible open item this run (no item updated_at <= 2026-05-31)", "observed": "true", "expected": "true" },
-    { "goal": "G6", "passed": true,  "command": "every new plans/<slug>.md has matching brief annotation 'adversarial pass:'", "observed": "true", "expected": "true" },
-    { "goal": "G7", "passed": true,  "command": "2 new plans, each has 4 metadata + 11 headings + capability tick + Mode + files exist", "observed": "true", "expected": "true" },
-    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",          "observed": "0",      "expected": "0"      },
-    { "goal": "G9", "passed": true,  "command": "secret / private-hostname scan on staged diff (with baseline exclusions)", "observed": "0 matches", "expected": "0 matches" },
-    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md",                                "observed": "identical", "expected": "identical" },
-    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' list matches state.json cursor stalls",        "observed": "none",   "expected": "none"   },
-    { "goal": "G12", "passed": true, "command": "every prior-run plan slug exists in either plans/ or plans/_archive/",   "observed": "true",   "expected": "true"   },
-    { "goal": "G13", "passed": true, "command": "git ls-files plans/_archive/ count >= git ls-tree HEAD count",            "observed": "6 >= 6", "expected": "ge"     },
-    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",                      "observed": "identical", "expected": "identical" },
-    { "goal": "G15", "passed": true, "command": "auto_fix_actions: 0 PRs, 0 issues, 0 comments; kill switch unset; idempotency vacuous", "observed": "0/0/0", "expected": "<=1/<=1/<=1" },
-    { "goal": "G16", "passed": true, "command": "Phase 1.6 skipped this run (heavy skill deferred for buffer-low refill focus) — gate is a no-op", "observed": "skipped", "expected": "no-op when Phase 1.6 didn't run" },
-    { "goal": "G17", "passed": true, "command": "scan staged diff for literal Telegram bot-token value (URL or bare form)", "observed": "0",      "expected": "0"      }
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 brief",
+      "observed": "exists+matches",
+      "expected": "exists+matches"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay",
+      "observed": "cap=true decay=true",
+      "expected": "both true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count <=2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no non-research paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret patterns",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures recorded",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans not silently deleted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows",
+      "observed": "7 >= 7",
+      "expected": "now >= head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps+idempotency",
+      "observed": "cap=true idem=true",
+      "expected": "both true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "phase 1.6 skipped (pm_cursor unchanged)",
+      "observed": "pm_now=3 pm_head=3",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
   ]
 }
