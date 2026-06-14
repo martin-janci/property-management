@@ -725,11 +725,11 @@
     {
       "id": "feat-folder-organization-mobile-implementation-frontend",
       "title": null,
-      "action": "mobile implementation pending (7a-2-folder-organization Folder Organization)",
+      "action": "[DROPPED: verified already implemented on dev \u2014 no-op] mobile implementation pending (7a-2-folder-organization Folder Organization)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": null,
-      "status": "in-progress",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
       "depends_on": []
@@ -845,11 +845,11 @@
     {
       "id": "feat-announcement-viewing-acknowled-apistatus-stub-until-web-backend",
       "title": null,
-      "action": "apiStatus stub until web PRs land (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "action": "[DROPPED: verified already implemented on dev \u2014 no-op] apiStatus stub until web PRs land (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "in-progress",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
       "depends_on": []
@@ -881,11 +881,11 @@
     {
       "id": "feat-api-client-integration-for-cor-feature-integration-incomplete-infra-frontend",
       "title": null,
-      "action": "feature integration incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features)",
+      "action": "[DROPPED: verified already implemented on dev \u2014 no-op] feature integration incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "in-progress",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
       "depends_on": []

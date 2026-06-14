@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-14T22:20:24Z",
+  "archived_at": "2026-06-14T22:33:38Z",
   "assignments": [
     {
       "task_id": "bug-announcer-stale-message",
@@ -767,6 +767,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "feat-announcement-viewing-acknowled-apistatus-stub-until-web-backend",
+      "branch": "auto-impl/feat-announcement-viewing-acknowled-apis",
+      "status": "failed",
+      "claimed_at": "2026-06-14T22:15:41Z",
+      "last_updated": "2026-06-14T22:33:38Z",
+      "status_changed_at": "2026-06-14T22:33:38Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web note=obsolete: Story 6.2 view+ack already landed on dev (#1190); apiStatus already complete",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend",
       "branch": "auto-impl/feat-announcement-viewing-acknowled-web-",
       "status": "failed",
@@ -813,6 +835,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "feat-api-client-integration-for-cor-feature-integration-incomplete-infra-frontend",
+      "branch": "auto-impl/feat-api-client-integration-for-cor-feat",
+      "status": "failed",
+      "claimed_at": "2026-06-14T22:15:41Z",
+      "last_updated": "2026-06-14T22:33:38Z",
+      "status_changed_at": "2026-06-14T22:33:38Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web note=already integrated on dev (announcements.tsx+faults.tsx wired); stale gap-scan twin of dropped item",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "feat-booking-oauth-token-exchange-route-backend",
@@ -975,6 +1019,28 @@
       "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-06-10T20:26:16Z"
+    },
+    {
+      "task_id": "feat-folder-organization-mobile-implementation-frontend",
+      "branch": "auto-impl/feat-folder-organization-mobile-implemen",
+      "status": "failed",
+      "claimed_at": "2026-06-14T22:15:41Z",
+      "last_updated": "2026-06-14T22:33:38Z",
+      "status_changed_at": "2026-06-14T22:33:38Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=react-native note=mobile folder-org 7a-2 already implemented+merged on dev (#1019/#1022/#1101/#1175)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "feat-mobile-build-config-scripts-icons",
