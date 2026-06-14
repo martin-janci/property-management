@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-14T19:11:30Z",
+  "generated": "2026-06-14T22:21:19Z",
   "assignments": [
     {
       "task_id": "test-oauth-authorization-server-integration-v2",
@@ -54,7 +54,7 @@
       "branch": "auto-impl/feat-airbnb-oauth-token-exchange-route-b",
       "status": "review",
       "claimed_at": "2026-06-12T04:12:45Z",
-      "last_updated": "2026-06-14T18:41:35Z",
+      "last_updated": "2026-06-14T22:21:19Z",
       "status_changed_at": "2026-06-13T08:20:58Z",
       "pr_number": 1318,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1318",
@@ -66,7 +66,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": 0,
+      "rebase_attempts": 1,
       "reclaim_attempts": 0,
       "fix_rounds": 2,
       "merge_attempted_at": null
@@ -74,10 +74,10 @@
     {
       "task_id": "feat-airbnb-realtime-webhook-handler-backend",
       "branch": "auto-impl/feat-airbnb-realtime-webhook-handler-bac",
-      "status": "review",
+      "status": "in-progress",
       "claimed_at": "2026-06-12T04:12:45Z",
-      "last_updated": "2026-06-14T18:41:35Z",
-      "status_changed_at": "2026-06-13T08:20:58Z",
+      "last_updated": "2026-06-14T22:21:19Z",
+      "status_changed_at": "2026-06-14T22:21:19Z",
       "pr_number": 1319,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1319",
       "merged_at": null,
@@ -90,32 +90,8 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 2,
+      "fix_rounds": 3,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "fix-1332-test-job-prod-regressions",
-      "branch": "auto-impl/fix-1332-test-job-prod-regressions",
-      "status": "review",
-      "specialist": "rust-backend",
-      "claimed_at": "2026-06-14T14:33:46Z",
-      "last_updated": "2026-06-14T22:15:41Z",
-      "status_changed_at": "2026-06-14T19:11:30Z",
-      "pr_number": 1379,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/1379",
-      "merged_at": null,
-      "last_reviewed_oid": "2e9c2ca263ae5783e3af949c0dfcb48df6893284",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "fix_rounds": 1,
-      "reclaim_attempts": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null,
-      "implementer_summary": "[orphan-recovered] fix-round 1/3 COMPLETE: pushed 3 commits (HEAD 2e9c2ca) \u2014 GRANT SELECT users for RLS test role + form_status::text cast (FormRepository::get/list/list_available_forms) + cross-tenant org-scope 404 guard in doc download/preview handlers. Both #1332 target tests pass locally (form_rls_repo_tests, document_download_preview_tests 8/8); check/clippy/fmt clean. Awaiting CI re-review.",
-      "reviewer_summary": "verdict=approve note=3-regressions-fixed-correctly-all-ci-green-stale-prose-nit-only"
     },
     {
       "task_id": "feat-announcement-viewing-acknowled-apistatus-stub-until-web-backend",
