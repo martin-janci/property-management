@@ -120,6 +120,10 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
              get_current_org_not_deleted() TO \"{role}\""
         ),
         format!("GRANT SELECT ON organizations TO \"{role}\""),
+        // `FormRepository::list` LEFT JOINs `users` to surface `created_by_name`,
+        // so the NOSUPERUSER RLS role needs SELECT on `users` or the join trips
+        // Postgres 42501 (permission denied on `users`).
+        format!("GRANT SELECT ON users TO \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
             .execute(&pool)
@@ -228,6 +232,7 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             "REVOKE ALL ON forms, form_fields, form_submissions, form_downloads FROM \"{role}\""
         ),
         format!("REVOKE ALL ON organizations FROM \"{role}\""),
+        format!("REVOKE ALL ON users FROM \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
