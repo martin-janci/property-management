@@ -1,1 +1,11 @@
-{"schema_version":1,"epic_prefix":"NONE","selected_at":"2026-06-15T04:22:03Z","last_action":"repick","reason":"picker emitted feat-* prefix which violates T21 (only gap-N/pm-<role>/NONE); reverted to NONE -> general claim pool this run. Picker/T21 conflict needs upstream fix.","stats_at_selection":{"open":0,"claimable":0}}
+{
+  "schema_version": 1,
+  "epic_prefix": "NONE",
+  "selected_at": "2026-06-15T16:18:22Z",
+  "last_action": "repick",
+  "reason": "picker selected feat- epic (invalid T21 shape); reset to NONE — finish-first fell back to unfiltered pool",
+  "stats_at_selection": {
+    "open": 0,
+    "claimable": 0
+  }
+}
