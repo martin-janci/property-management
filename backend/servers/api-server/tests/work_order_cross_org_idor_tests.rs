@@ -432,7 +432,13 @@ async fn seed_equipment(pool: &PgPool, org_id: Uuid, building_id: Uuid) -> Uuid 
     .expect("seed equipment")
 }
 
-async fn seed_completed_work_order(pool: &PgPool, org_id: Uuid, building_id: Uuid, equipment_id: Uuid, created_by: Uuid) -> Uuid {
+async fn seed_completed_work_order(
+    pool: &PgPool,
+    org_id: Uuid,
+    building_id: Uuid,
+    equipment_id: Uuid,
+    created_by: Uuid,
+) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO work_orders
@@ -480,10 +486,13 @@ async fn equipment_service_history_cross_org_is_rejected(pool: PgPool) {
 
     let response = app
         .execute(
-            app.get(&format!("/api/v1/work-orders/equipment/{}/service-history", equipment_a))
-                .bearer(&b_token)
-                .header("X-Tenant-ID", &org_b.to_string())
-                .build(),
+            app.get(&format!(
+                "/api/v1/work-orders/equipment/{}/service-history",
+                equipment_a
+            ))
+            .bearer(&b_token)
+            .header("X-Tenant-ID", &org_b.to_string())
+            .build(),
         )
         .await;
 
@@ -518,10 +527,13 @@ async fn building_service_history_cross_org_is_rejected(pool: PgPool) {
 
     let response = app
         .execute(
-            app.get(&format!("/api/v1/work-orders/buildings/{}/service-history", building_a))
-                .bearer(&b_token)
-                .header("X-Tenant-ID", &org_b.to_string())
-                .build(),
+            app.get(&format!(
+                "/api/v1/work-orders/buildings/{}/service-history",
+                building_a
+            ))
+            .bearer(&b_token)
+            .header("X-Tenant-ID", &org_b.to_string())
+            .build(),
         )
         .await;
 
@@ -553,10 +565,13 @@ async fn equipment_service_history_same_org_succeeds(pool: PgPool) {
 
     let response = app
         .execute(
-            app.get(&format!("/api/v1/work-orders/equipment/{}/service-history", equipment_a))
-                .bearer(&token)
-                .header("X-Tenant-ID", &org_a.to_string())
-                .build(),
+            app.get(&format!(
+                "/api/v1/work-orders/equipment/{}/service-history",
+                equipment_a
+            ))
+            .bearer(&token)
+            .header("X-Tenant-ID", &org_a.to_string())
+            .build(),
         )
         .await;
 
