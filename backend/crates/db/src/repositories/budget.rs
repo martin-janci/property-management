@@ -36,7 +36,7 @@ use crate::models::{
     UpdateCapitalPlan, UpdateFinancialForecast, UpdateReserveFund, YearlyCapitalSummary,
 };
 use rust_decimal::Decimal;
-use sqlx::{Executor, PgPool, Postgres};
+use sqlx::{Connection, Executor, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for budget and financial planning operations.
@@ -1310,6 +1310,15 @@ impl BudgetRepository {
     ///
     /// Reads the current balance and inserts the transaction on the same
     /// connection so RLS policies are enforced for both queries.
+    ///
+    /// Atomicity (#1371): the balance read-modify-write runs inside an explicit
+    /// transaction that locks the fund row with `SELECT ... FOR UPDATE`. Without
+    /// the lock two concurrent callers both read the same `current_balance` and
+    /// write conflicting `balance_after` ledger values — a lost-update race that
+    /// silently corrupts the running balance. `begin()` on the caller-supplied
+    /// `&mut PgConnection` yields a `Transaction` that holds the row lock until
+    /// commit while preserving RLS (request context is connection-scoped, so it
+    /// survives the in-connection transaction).
     pub async fn record_reserve_transaction(
         &self,
         conn: &mut sqlx::PgConnection,
@@ -1317,19 +1326,34 @@ impl BudgetRepository {
         user_id: Uuid,
         data: RecordReserveTransaction,
     ) -> Result<ReserveFundTransaction, sqlx::Error> {
-        let fund: ReserveFund = sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1")
-            .bind(reserve_fund_id)
-            .fetch_one(&mut *conn)
+        let mut tx = conn.begin().await?;
+
+        // Lock the fund row for the duration of the transaction. A concurrent
+        // writer on the same fund blocks here until this transaction commits,
+        // so it observes the updated balance instead of a stale snapshot.
+        let fund: ReserveFund =
+            sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1 FOR UPDATE")
+                .bind(reserve_fund_id)
+                .fetch_one(&mut *tx)
+                .await?;
+
+        // INSERT fires `trg_update_reserve_fund_balance` (migration 00057), which
+        // writes `reserve_funds.current_balance = NEW.balance_after`. Because the
+        // fund row is locked above, a concurrent writer cannot interleave between
+        // our read and that trigger-driven write, so the running balance is
+        // updated serially instead of being clobbered with a stale value.
+        let txn = self
+            .record_reserve_transaction_rls(
+                &mut *tx,
+                reserve_fund_id,
+                user_id,
+                fund.current_balance,
+                data,
+            )
             .await?;
 
-        self.record_reserve_transaction_rls(
-            conn,
-            reserve_fund_id,
-            user_id,
-            fund.current_balance,
-            data,
-        )
-        .await
+        tx.commit().await?;
+        Ok(txn)
     }
 
     /// Generate a reserve fund projection under the caller's RLS context.
