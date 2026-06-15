@@ -31,10 +31,11 @@ data class NearMeCoordinate(val latitude: Double, val longitude: Double)
  * - Otherwise request the permission; on grant, fetch; on denial, report `null` so the caller can
  *   revert the toggle (graceful degradation — the search simply has no location centre).
  */
-class NearMeLocationRequester internal constructor(
-    private val request: (onResolved: (NearMeCoordinate?) -> Unit) -> Unit,
-) {
-    /** Begin acquiring the device coordinate; [onResolved] receives null when unavailable/denied. */
+class NearMeLocationRequester
+internal constructor(private val request: (onResolved: (NearMeCoordinate?) -> Unit) -> Unit) {
+    /**
+     * Begin acquiring the device coordinate; [onResolved] receives null when unavailable/denied.
+     */
     fun acquire(onResolved: (NearMeCoordinate?) -> Unit) = request(onResolved)
 }
 
@@ -81,9 +82,7 @@ private fun fetchLastLocation(context: Context, onResolved: (NearMeCoordinate?) 
         client
             .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
             .addOnSuccessListener { location ->
-                onResolved(
-                    location?.let { NearMeCoordinate(it.latitude, it.longitude) }
-                )
+                onResolved(location?.let { NearMeCoordinate(it.latitude, it.longitude) })
             }
             .addOnFailureListener { onResolved(null) }
     } catch (_: SecurityException) {

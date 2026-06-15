@@ -816,12 +816,7 @@ private fun FilterSheet(
                                     selected = draftRadiusKm == km,
                                     onClick = { draftRadiusKm = km },
                                     label = {
-                                        Text(
-                                            stringResource(
-                                                R.string.radius_km_format,
-                                                km.toInt(),
-                                            )
-                                        )
+                                        Text(stringResource(R.string.radius_km_format, km.toInt()))
                                     },
                                 )
                             }

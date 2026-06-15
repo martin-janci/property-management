@@ -157,10 +157,7 @@ class SearchStateTest {
     @Test
     fun activeFilterCount_nearMeNotCountedUntilLocationResolved() {
         // Radius chosen but no coordinate yet → not an active filter, badge stays at 0.
-        assertEquals(
-            0,
-            SearchState.activeFilterCount(null, null, null, "", "", radiusKm = 10.0),
-        )
+        assertEquals(0, SearchState.activeFilterCount(null, null, null, "", "", radiusKm = 10.0))
     }
 
     // ── shouldLoadNextPage (AC-4 infinite scroll) ────────────────────────
