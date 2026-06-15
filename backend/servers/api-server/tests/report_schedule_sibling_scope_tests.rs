@@ -572,7 +572,12 @@ async fn pause_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
     seed_membership(&pool, org_b, attacker_id, "manager").await;
 
     let session = app.session(access_token.to_string(), org_b);
-    let req = session.put(&format!("/api/v1/reports/schedules/{}/pause", schedule_in_a)).build();
+    let req = session
+        .put(&format!(
+            "/api/v1/reports/schedules/{}/pause",
+            schedule_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -643,7 +648,12 @@ async fn resume_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
     seed_membership(&pool, org_b, attacker_id, "manager").await;
 
     let session = app.session(access_token.to_string(), org_b);
-    let req = session.put(&format!("/api/v1/reports/schedules/{}/resume", schedule_in_a)).build();
+    let req = session
+        .put(&format!(
+            "/api/v1/reports/schedules/{}/resume",
+            schedule_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -702,7 +712,12 @@ async fn list_executions_cross_tenant_authenticated_returns_404(pool: PgPool) {
     seed_membership(&pool, org_b, attacker_id, "manager").await;
 
     let session = app.session(access_token.to_string(), org_b);
-    let req = session.get(&format!("/api/v1/reports/schedules/{}/executions", schedule_in_a)).build();
+    let req = session
+        .get(&format!(
+            "/api/v1/reports/schedules/{}/executions",
+            schedule_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -750,7 +765,9 @@ async fn get_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
     seed_membership(&pool, org_b, attacker_id, "Resident").await;
 
     let session = app.session(access_token.to_string(), org_b);
-    let req = session.get(&format!("/api/v1/reports/executions/{}", execution_in_a)).build();
+    let req = session
+        .get(&format!("/api/v1/reports/executions/{}", execution_in_a))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -797,7 +814,12 @@ async fn get_execution_download_url_cross_tenant_authenticated_returns_404(pool:
     seed_membership(&pool, org_b, attacker_id, "Resident").await;
 
     let session = app.session(access_token.to_string(), org_b);
-    let req = session.get(&format!("/api/v1/reports/executions/{}/download", execution_in_a)).build();
+    let req = session
+        .get(&format!(
+            "/api/v1/reports/executions/{}/download",
+            execution_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -846,7 +868,12 @@ async fn retry_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
     seed_membership(&pool, org_b, attacker_id, "manager").await;
 
     let session = app.session(access_token.to_string(), org_b);
-    let req = session.post(&format!("/api/v1/reports/executions/{}/retry", execution_in_a)).build();
+    let req = session
+        .post(&format!(
+            "/api/v1/reports/executions/{}/retry",
+            execution_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
