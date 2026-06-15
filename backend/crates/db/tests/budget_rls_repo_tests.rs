@@ -43,8 +43,10 @@
 //! the way the production owner role experiences it. Mirrors
 //! `reserve_funds_rls_repo_tests.rs` (the sibling PAP-67 precedent).
 
-use db::models::{BudgetQuery, CreateBudget};
+use chrono::Utc;
+use db::models::{BudgetQuery, CreateBudget, RecordReserveTransaction};
 use db::repositories::BudgetRepository;
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -144,6 +146,62 @@ async fn seed_budget_item(pool: &PgPool, budget_id: Uuid, category_id: Uuid) -> 
     .fetch_one(pool)
     .await
     .expect("seed budget item")
+}
+
+async fn seed_reserve_fund(
+    pool: &PgPool,
+    org_id: Uuid,
+    user_id: Uuid,
+    current_balance: Decimal,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO reserve_funds (
+            organization_id, name, current_balance, annual_contribution, created_by
+        )
+        VALUES ($1, 'Atomicity Fund', $2, 0, $3)
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(current_balance)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed reserve fund")
+}
+
+async fn install_reserve_txn_insert_sleep_trigger(pool: &PgPool) {
+    sqlx::query(
+        r#"
+        CREATE OR REPLACE FUNCTION test_sleep_before_reserve_txn_insert()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            PERFORM pg_sleep(0.20);
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+        "#,
+    )
+    .execute(pool)
+    .await
+    .expect("create test sleep fn");
+
+    sqlx::query("DROP TRIGGER IF EXISTS trg_test_sleep_before_reserve_txn_insert ON reserve_fund_transactions")
+        .execute(pool)
+        .await
+        .expect("drop old test trigger");
+
+    sqlx::query(
+        r#"
+        CREATE TRIGGER trg_test_sleep_before_reserve_txn_insert
+        BEFORE INSERT ON reserve_fund_transactions
+        FOR EACH ROW EXECUTE FUNCTION test_sleep_before_reserve_txn_insert()
+        "#,
+    )
+    .execute(pool)
+    .await
+    .expect("create test trigger");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -350,4 +408,106 @@ async fn budget_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             .await
             .ok();
     }
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn record_reserve_transaction_serializes_concurrent_updates(pool: PgPool) {
+    let repo = BudgetRepository::new(pool.clone());
+
+    set_ctx(&pool, None, None, true).await;
+    let org_id = seed_org(&pool, "atomicity-org").await;
+    let user_id = seed_user(&pool, "atomicity@budget.test").await;
+    let reserve_fund_id = seed_reserve_fund(&pool, org_id, user_id, Decimal::new(10_000, 2)).await;
+
+    install_reserve_txn_insert_sleep_trigger(&pool).await;
+
+    let mut conn_a = pool.acquire().await.expect("acquire conn_a");
+    let mut conn_b = pool.acquire().await.expect("acquire conn_b");
+    for conn in [&mut conn_a, &mut conn_b] {
+        sqlx::query("SELECT set_request_context($1, $2, $3)")
+            .bind(org_id)
+            .bind(user_id)
+            .bind(false)
+            .execute(&mut **conn)
+            .await
+            .expect("set request context");
+    }
+
+    let tx_date = Utc::now().date_naive();
+    let txn_a = RecordReserveTransaction {
+        transaction_type: "contribution".to_string(),
+        amount: Decimal::new(1_000, 2),
+        description: Some("A".to_string()),
+        reference_type: None,
+        reference_id: None,
+        transaction_date: tx_date,
+    };
+    let txn_b = RecordReserveTransaction {
+        transaction_type: "contribution".to_string(),
+        amount: Decimal::new(1_000, 2),
+        description: Some("B".to_string()),
+        reference_type: None,
+        reference_id: None,
+        transaction_date: tx_date,
+    };
+
+    let repo_a = repo.clone();
+    let repo_b = repo.clone();
+    let (res_a, res_b) = tokio::join!(
+        async {
+            repo_a
+                .record_reserve_transaction(&mut conn_a, reserve_fund_id, user_id, txn_a)
+                .await
+        },
+        async {
+            repo_b
+                .record_reserve_transaction(&mut conn_b, reserve_fund_id, user_id, txn_b)
+                .await
+        }
+    );
+
+    let tx_a = res_a.expect("first reserve transaction");
+    let tx_b = res_b.expect("second reserve transaction");
+
+    let mut balances = vec![tx_a.balance_after, tx_b.balance_after];
+    balances.sort();
+    assert_eq!(
+        balances,
+        vec![Decimal::new(11_000, 2), Decimal::new(12_000, 2)],
+        "concurrent reserve transactions must advance the running balance without lost updates"
+    );
+
+    let final_balance: Decimal =
+        sqlx::query_scalar("SELECT current_balance FROM reserve_funds WHERE id = $1")
+            .bind(reserve_fund_id)
+            .fetch_one(&pool)
+            .await
+            .expect("fetch final reserve balance");
+    assert_eq!(
+        final_balance,
+        Decimal::new(12_000, 2),
+        "fund current_balance must reflect both concurrent contributions"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn budget_summary_empty_budget_coalesces_to_zero(pool: PgPool) {
+    let repo = BudgetRepository::new(pool.clone());
+
+    set_ctx(&pool, None, None, true).await;
+    let org_id = seed_org(&pool, "summary-zero-org").await;
+    let user_id = seed_user(&pool, "summary-zero@budget.test").await;
+    let budget_id = seed_active_budget(&pool, org_id, "Empty Budget", 2040, user_id).await;
+
+    let summary = repo
+        .get_budget_summary_rls(&pool, budget_id)
+        .await
+        .expect("empty budget summary");
+
+    assert_eq!(summary.total_budgeted, Decimal::ZERO);
+    assert_eq!(summary.total_actual, Decimal::ZERO);
+    assert_eq!(summary.total_variance, Decimal::ZERO);
+    assert_eq!(summary.variance_percent, Decimal::ZERO);
+    assert_eq!(summary.items_over_budget, 0);
+    assert_eq!(summary.items_under_budget, 0);
 }

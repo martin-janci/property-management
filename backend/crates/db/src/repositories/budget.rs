@@ -888,33 +888,40 @@ impl BudgetRepository {
 
     /// Record a reserve fund transaction with RLS context.
     ///
-    /// Note: This method requires the reserve fund to be fetched first to calculate balance.
-    /// For full RLS support, fetch the fund using find_reserve_fund_by_id_rls first.
+    /// This uses an UPDATE ... RETURNING CTE so the fund balance increment and
+    /// transaction insert happen as one statement against the same locked row.
+    /// Concurrent calls therefore serialize on the reserve-fund row and each
+    /// transaction observes the latest balance_after value.
     pub async fn record_reserve_transaction_rls<'e, E>(
         &self,
         executor: E,
         reserve_fund_id: Uuid,
         user_id: Uuid,
-        current_balance: Decimal,
         data: RecordReserveTransaction,
     ) -> Result<ReserveFundTransaction, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let balance_after = match data.transaction_type.as_str() {
-            "contribution" | "interest" => current_balance + data.amount,
-            "withdrawal" => current_balance - data.amount,
-            "adjustment" => current_balance + data.amount,
-            _ => current_balance + data.amount,
-        };
-
         sqlx::query_as(
             r#"
+            WITH updated_fund AS (
+                UPDATE reserve_funds
+                SET current_balance = CASE
+                        WHEN $2 IN ('contribution', 'interest', 'adjustment') THEN current_balance + $3
+                        WHEN $2 = 'withdrawal' THEN current_balance - $3
+                        ELSE current_balance + $3
+                    END,
+                    updated_at = NOW()
+                WHERE id = $1
+                RETURNING current_balance
+            )
             INSERT INTO reserve_fund_transactions (
                 reserve_fund_id, transaction_type, amount, description,
                 reference_type, reference_id, balance_after, transaction_date, recorded_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            SELECT
+                $1, $2, $3, $4, $5, $6, uf.current_balance, $7, $8
+            FROM updated_fund uf
             RETURNING *
             "#,
         )
@@ -924,7 +931,6 @@ impl BudgetRepository {
         .bind(&data.description)
         .bind(&data.reference_type)
         .bind(data.reference_id)
-        .bind(balance_after)
         .bind(data.transaction_date)
         .bind(user_id)
         .fetch_one(executor)
@@ -1178,8 +1184,13 @@ impl BudgetRepository {
                 COALESCE(SUM(budgeted_amount), 0) as total_budgeted,
                 COALESCE(SUM(actual_amount), 0) as total_actual,
                 COALESCE(SUM(variance_amount), 0) as total_variance,
-                CASE WHEN SUM(budgeted_amount) = 0 THEN 0
-                     ELSE ROUND((SUM(actual_amount) - SUM(budgeted_amount)) / SUM(budgeted_amount) * 100, 2)
+                CASE WHEN COALESCE(SUM(budgeted_amount), 0) = 0 THEN 0
+                     ELSE ROUND(
+                        (
+                            COALESCE(SUM(actual_amount), 0) - COALESCE(SUM(budgeted_amount), 0)
+                        ) / COALESCE(SUM(budgeted_amount), 0) * 100,
+                        2
+                     )
                 END as variance_percent,
                 COUNT(*) FILTER (WHERE variance_amount > 0) as items_over_budget,
                 COUNT(*) FILTER (WHERE variance_amount < 0) as items_under_budget
@@ -1317,19 +1328,8 @@ impl BudgetRepository {
         user_id: Uuid,
         data: RecordReserveTransaction,
     ) -> Result<ReserveFundTransaction, sqlx::Error> {
-        let fund: ReserveFund = sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1")
-            .bind(reserve_fund_id)
-            .fetch_one(&mut *conn)
-            .await?;
-
-        self.record_reserve_transaction_rls(
-            conn,
-            reserve_fund_id,
-            user_id,
-            fund.current_balance,
-            data,
-        )
-        .await
+        self.record_reserve_transaction_rls(conn, reserve_fund_id, user_id, data)
+            .await
     }
 
     /// Generate a reserve fund projection under the caller's RLS context.
