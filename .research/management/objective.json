@@ -1,11 +1,1 @@
-{
-  "schema_version": 1,
-  "epic_prefix": "NONE",
-  "selected_at": "2026-06-14T16:19:14Z",
-  "last_action": "repick",
-  "reason": "targets exhausted: closest-to-done candidates (feat-airbnb-oauth-and-sync-*, feat-announcement-viewing-acknowled-apistatus-stub-*) verified already-implemented on dev (airbnb route/crate via PR #1177; announcement ack routes via Story 6.2) — gap-scan 2026-06-12 false-positives, dropped/non-actionable. No valid gap-N/pm-role epic with claimable real work this run.",
-  "stats_at_selection": {
-    "open": 1,
-    "claimable": 1
-  }
-}
+{"schema_version":1,"epic_prefix":"NONE","selected_at":"2026-06-15T04:22:03Z","last_action":"repick","reason":"picker emitted feat-* prefix which violates T21 (only gap-N/pm-<role>/NONE); reverted to NONE -> general claim pool this run. Picker/T21 conflict needs upstream fix.","stats_at_selection":{"open":0,"claimable":0}}
