@@ -52,15 +52,15 @@
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
       "branch": "auto-impl/feat-airbnb-oauth-token-exchange-route-b",
-      "status": "review",
+      "status": "quarantined",
       "claimed_at": "2026-06-12T04:12:45Z",
-      "last_updated": "2026-06-15T00:23:36Z",
-      "status_changed_at": "2026-06-13T08:20:58Z",
+      "last_updated": "2026-06-15T00:31:30Z",
+      "status_changed_at": "2026-06-15T00:31:30Z",
       "pr_number": 1318,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1318",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": " [dispatcher 2026-06-13: Phase 5.7 respawn round 3 — fix reviewer-noted per-PR issue; rebase onto dev (PAP-76 base fix #1337)] [dispatcher 2026-06-15: Phase 5.5 ci-fail (backend test job = inherited #1332 per prior review, NOT this PR) → spawned CI-fix rebase onto current dev where #1332 is resolved; rebase_attempts=2, fix_rounds held at 2]",
+      "implementer_summary": " [dispatcher 2026-06-13: Phase 5.7 respawn round 3 — fix reviewer-noted per-PR issue; rebase onto dev (PAP-76 base fix #1337)] [dispatcher 2026-06-15: Phase 5.5 ci-fail (backend test job = inherited #1332 per prior review, NOT this PR) → spawned CI-fix rebase onto current dev where #1332 is resolved; rebase_attempts=2, fix_rounds held at 2] [dispatcher 2026-06-15: CI-fix BLOCKED — followup=blocked rebase-conflict(unrelated-histories); quarantined as structurally unmergeable]",
       "reviewer_summary": "verdict=approve note=test-only-serde-tests-clean-json-keys-ok-CI-test-failure-inherited-from-dev(#1332)",
       "last_reviewed_oid": "a33b5a7b26d49af243caeeec1cf3ef0451384b70",
       "scope_drift": null,
@@ -69,7 +69,9 @@
       "rebase_attempts": 2,
       "reclaim_attempts": 0,
       "fix_rounds": 2,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": "2026-06-15T00:31:30Z",
+      "quarantine_reason": "structural: branch has UNRELATED HISTORIES with origin/dev (no common ancestor, separate root commits) — cannot rebase (replays 637 commits, conflicts tree-wide incl. .research/**) or merge cleanly. CI test failure is pre-existing dev-suite breakage, NOT this PR (its 6 serde tests pass locally: 8 passed/0 failed). Human action: recreate branch off current dev (cherry-pick oauth.rs serde tests) or close+reclaim under fresh id. fix_rounds=2 held."
     },
     {
       "task_id": "feat-airbnb-realtime-webhook-handler-backend",
