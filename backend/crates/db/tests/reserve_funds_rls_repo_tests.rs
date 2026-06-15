@@ -357,7 +357,7 @@ async fn reserve_fund_child_table_idor_blocked(pool: PgPool) {
         // list_contribution_schedules routes through ensure_fund_in_org which
         // returns RowNotFound for a fund invisible under org-A's context.
         let list_result = repo
-            .list_contribution_schedules(&mut *conn, org_a, fund_b, false)
+            .list_contribution_schedules(&mut conn, org_a, fund_b, false)
             .await;
         let idor_blocked = match &list_result {
             Ok(rows) => rows.is_empty(),
@@ -371,7 +371,7 @@ async fn reserve_fund_child_table_idor_blocked(pool: PgPool) {
         // INSERT into org-B's fund from org-A context must fail.
         let insert_result = repo
             .create_contribution_schedule(
-                &mut *conn,
+                &mut conn,
                 org_a,
                 fund_b,
                 CreateContributionSchedule {
