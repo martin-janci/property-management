@@ -1,10 +1,17 @@
 package three.two.bit.ppt.reality.listing
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+
 /**
  * Pure search-screen state helpers shared across platforms.
  *
  * These functions hold the non-UI logic the Reality home/search screen needs so it can be unit
  * tested without a Compose (or SwiftUI) runtime and reused by the iOS target later:
+ * - [debouncedQueryFlow] — the AC-2 search-as-you-type debounce pipeline applied to the raw
+ *   free-text query stream (drop the initial emission, debounce, de-duplicate settled text).
  * - [buildSearchRequest] — assembles a [ListingSearchRequest] from the screen's filter inputs.
  * - [activeFilterCount] — the badge count shown on the "Filtre" chip.
  * - [shouldLoadNextPage] — the infinite-scroll trigger (AC-4): given the currently loaded count,
@@ -44,6 +51,24 @@ object SearchState {
      * `radiusOptions` list so both platforms present the same choices.
      */
     val RADIUS_OPTIONS_KM: List<Double> = listOf(1.0, 3.0, 5.0, 10.0, 20.0, 50.0)
+
+    /**
+     * Debounced search-as-you-type pipeline (AC-2).
+     *
+     * Given the raw stream of free-text query values emitted as the user types ([source]),
+     * returns the stream of queries that should actually trigger a network search:
+     * - `drop(1)` skips the initial/current value so the screen's own first load owns it (the
+     *   `LaunchedEffect(Unit) { performSearch() }` on mount) and a search isn't double-fired.
+     * - `debounce([SEARCH_DEBOUNCE_MS])` collapses rapid keystrokes into a single emission once
+     *   the user pauses for the debounce window — mirroring the iOS `SearchView` 300 ms
+     *   `Task.sleep`.
+     * - `distinctUntilChanged()` avoids re-firing when the text settles back on the same value.
+     *
+     * Extracted from `SearchScreen.kt` so the AC-2 timing behaviour is unit-testable with
+     * `kotlinx-coroutines-test` virtual time instead of only living in a Compose `LaunchedEffect`.
+     */
+    fun debouncedQueryFlow(source: Flow<String>): Flow<String> =
+        source.drop(1).debounce(SEARCH_DEBOUNCE_MS).distinctUntilChanged()
 
     /** Build the search request payload from the raw screen inputs. */
     fun buildSearchRequest(
