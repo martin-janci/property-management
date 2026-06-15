@@ -44,5 +44,11 @@
             </array>
         </dict>
     </array>
+    <key>API_BASE_URL</key>
+    <string>$(API_BASE_URL)</string>
+    <key>ENVIRONMENT</key>
+    <string>$(ENVIRONMENT)</string>
+    <key>ENABLE_LOGGING</key>
+    <string>$(ENABLE_LOGGING)</string>
 </dict>
 </plist>
