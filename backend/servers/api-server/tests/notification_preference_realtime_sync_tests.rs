@@ -906,7 +906,7 @@ async fn preference_update_publishes_realtime_event(pool: PgPool) {
 /// correct channel with the correct payload (Story 1376).
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn preference_update_publishes_realtime_event_in_memory(pool: PgPool) {
-    use integrations::{PubSubService, InMemoryBroker};
+    use integrations::{InMemoryBroker, PubSubService};
     use std::sync::Arc;
     use tokio::time::{timeout, Duration};
 
@@ -926,8 +926,7 @@ async fn preference_update_publishes_realtime_event_in_memory(pool: PgPool) {
         let tenant_cache = Arc::new(api_core::middleware::TenantResolutionCache::new(
             300, 30, 10_000,
         ));
-        let tenant_rate_limiters =
-            Arc::new(api_core::middleware::TenantRateLimiterSet::new());
+        let tenant_rate_limiters = Arc::new(api_core::middleware::TenantRateLimiterSet::new());
         let state = AppState::new(
             pool.clone(),
             email_service,
