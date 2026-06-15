@@ -77,7 +77,11 @@ async fn submit_form_same_org_succeeds(pool: PgPool) {
         )
         .await;
 
-    assert_eq!(response.status, StatusCode::CREATED, "same-org submit must succeed");
+    assert_eq!(
+        response.status,
+        StatusCode::CREATED,
+        "same-org submit must succeed"
+    );
     assert_eq!(
         submission_count(&pool, form_id).await,
         1,

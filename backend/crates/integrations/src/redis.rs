@@ -839,7 +839,8 @@ impl PubSubService {
 
                 // Spawn a task to forward messages
                 let span_channel = full_channel.clone();
-                tokio::spawn(async move {
+                tokio::spawn(
+                    async move {
                         let mut pubsub_stream = pubsub.into_on_message();
 
                         while let Some(msg) =
