@@ -190,7 +190,10 @@ async fn token_exchange_rejects_unauthenticated(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "te-unauth").await;
     let resp = app
-        .execute(anon_post(&token_exchange_uri(org_id), json!({"code": "abc123"})))
+        .execute(anon_post(
+            &token_exchange_uri(org_id),
+            json!({"code": "abc123"}),
+        ))
         .await;
     assert!(
         is_protected(resp.status),
@@ -209,7 +212,11 @@ async fn token_exchange_rejects_empty_code(pool: PgPool) {
     seed_membership(&pool, org_id, user_id).await;
     let token = mint_token(user_id, org_id);
     let resp = app
-        .execute(authed_post(&token_exchange_uri(org_id), &token, json!({"code": ""})))
+        .execute(authed_post(
+            &token_exchange_uri(org_id),
+            &token,
+            json!({"code": ""}),
+        ))
         .await;
     assert_eq!(
         resp.status,
@@ -266,7 +273,11 @@ async fn token_exchange_returns_503_when_not_configured(pool: PgPool) {
     seed_membership(&pool, org_id, user_id).await;
     let token = mint_token(user_id, org_id);
     let resp = app
-        .execute(authed_post(&token_exchange_uri(org_id), &token, json!({"code": "abc123"})))
+        .execute(authed_post(
+            &token_exchange_uri(org_id),
+            &token,
+            json!({"code": "abc123"}),
+        ))
         .await;
     assert_eq!(
         resp.status,
@@ -352,7 +363,10 @@ async fn secure_booking_connect_requires_auth(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "secure-anon").await;
     let resp = app
-        .execute(anon_post(&token_exchange_uri(org_id), json!({"code": "abc123"})))
+        .execute(anon_post(
+            &token_exchange_uri(org_id),
+            json!({"code": "abc123"}),
+        ))
         .await;
     assert!(
         is_protected(resp.status),
