@@ -103,7 +103,10 @@ async fn seed_org(pool: &PgPool, tag: &str) -> Uuid {
         "#,
     )
     .bind(format!("Booking CSRF Test Org {tag}"))
-    .bind(format!("booking-csrf-test-{tag}-{}", Uuid::new_v4().simple()))
+    .bind(format!(
+        "booking-csrf-test-{tag}-{}",
+        Uuid::new_v4().simple()
+    ))
     .bind(format!("{tag}@booking-csrf.test"))
     .fetch_one(pool)
     .await
@@ -199,7 +202,10 @@ async fn booking_token_exchange_rejects_unauthenticated(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "bk-unauth").await;
     let resp = app
-        .execute(anon_post(&booking_exchange_uri(org_id), json!({"code": "abc123"})))
+        .execute(anon_post(
+            &booking_exchange_uri(org_id),
+            json!({"code": "abc123"}),
+        ))
         .await;
     assert!(
         is_protected(resp.status),
@@ -219,7 +225,11 @@ async fn booking_token_exchange_rejects_empty_code(pool: PgPool) {
     let token = mint_token(user_id, org_id);
 
     let resp = app
-        .execute(authed_post(&booking_exchange_uri(org_id), &token, json!({"code": ""})))
+        .execute(authed_post(
+            &booking_exchange_uri(org_id),
+            &token,
+            json!({"code": ""}),
+        ))
         .await;
 
     assert_eq!(
@@ -275,7 +285,11 @@ async fn booking_token_exchange_returns_503_when_not_configured(pool: PgPool) {
     let token = mint_token(user_id, org_id);
 
     let resp = app
-        .execute(authed_post(&booking_exchange_uri(org_id), &token, json!({"code": "abc123"})))
+        .execute(authed_post(
+            &booking_exchange_uri(org_id),
+            &token,
+            json!({"code": "abc123"}),
+        ))
         .await;
 
     assert_eq!(
@@ -302,7 +316,10 @@ async fn airbnb_callback_rejects_missing_state(pool: PgPool) {
     let token = mint_token(user_id, org_id);
 
     let resp = app
-        .execute(authed_get(&airbnb_callback_uri(org_id, "auth-code", ""), &token))
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", ""),
+            &token,
+        ))
         .await;
 
     assert_eq!(
@@ -331,7 +348,10 @@ async fn airbnb_callback_rejects_malformed_state(pool: PgPool) {
 
     // No colon → a single segment → fails the `{org}:{nonce}` format check.
     let resp = app
-        .execute(authed_get(&airbnb_callback_uri(org_id, "auth-code", "not-a-valid-state"), &token))
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", "not-a-valid-state"),
+            &token,
+        ))
         .await;
 
     assert_eq!(
@@ -362,7 +382,10 @@ async fn airbnb_callback_rejects_org_mismatch_state(pool: PgPool) {
     let other_org = Uuid::new_v4();
     let forged_state = format!("{other_org}:{}", Uuid::new_v4());
     let resp = app
-        .execute(authed_get(&airbnb_callback_uri(org_id, "auth-code", &forged_state), &token))
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", &forged_state),
+            &token,
+        ))
         .await;
 
     assert_eq!(
@@ -394,7 +417,10 @@ async fn airbnb_callback_valid_state_passes_csrf_gate(pool: PgPool) {
 
     let valid_state = format!("{org_id}:{}", Uuid::new_v4());
     let resp = app
-        .execute(authed_get(&airbnb_callback_uri(org_id, "auth-code", &valid_state), &token))
+        .execute(authed_get(
+            &airbnb_callback_uri(org_id, "auth-code", &valid_state),
+            &token,
+        ))
         .await;
 
     assert_eq!(
@@ -428,7 +454,10 @@ async fn airbnb_callback_idor_rejects_non_member(pool: PgPool) {
     // the request reaches `verify_org_access`, which must reject the non-member.
     let state = format!("{org_a}:{}", Uuid::new_v4());
     let resp = app
-        .execute(authed_get(&airbnb_callback_uri(org_a, "auth-code", &state), &token_b))
+        .execute(authed_get(
+            &airbnb_callback_uri(org_a, "auth-code", &state),
+            &token_b,
+        ))
         .await;
 
     assert_eq!(
@@ -452,7 +481,10 @@ async fn oauth_routes_are_mounted(pool: PgPool) {
     let org_id = Uuid::new_v4();
 
     let booking = app
-        .execute(anon_post(&booking_exchange_uri(org_id), json!({"code": "x"})))
+        .execute(anon_post(
+            &booking_exchange_uri(org_id),
+            json!({"code": "x"}),
+        ))
         .await;
     assert_ne!(
         booking.status,
