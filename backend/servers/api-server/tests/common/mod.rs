@@ -221,7 +221,7 @@ impl TestApp {
     }
 
     /// Create an authenticated session for the given token and org (Story 1370).
-    pub fn session(&self, token: String, org_id: Uuid) -> AuthenticatedSession {
+    pub fn session(&self, token: String, org_id: Uuid) -> AuthenticatedSession<'_> {
         AuthenticatedSession::new(self, token, org_id)
     }
 }
