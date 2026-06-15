@@ -1131,4 +1131,179 @@ mod tests {
             );
         }
     }
+
+    // ========================================================================
+    // Presigned-URL minting / expiry coverage (#1377)
+    //
+    // SigV4 presigning is computed entirely client-side by the AWS SDK — no
+    // network call is made when we `.presigned(...)`. That lets us mint a real
+    // signed URL with a fixed (fake) credential and assert its shape + expiry
+    // deterministically in CI without any live S3 / MinIO. These tests guard
+    // the two minting entry points the document download/preview handlers call:
+    // `generate_download_url` (attachment) and `generate_preview_url` (inline).
+    // ========================================================================
+
+    /// Build a StorageService backed by a presigner-capable S3 client using a
+    /// static fake credential. Path-style + a dummy endpoint keep the SDK from
+    /// resolving any real region/endpoint. No I/O is performed by presigning.
+    async fn presigning_service(ttl: i64) -> StorageService {
+        let config = StorageConfig::new("test-bucket", "us-east-1", "AKIATEST", "secretkey")
+            .with_endpoint("http://s3.local:9000")
+            .with_download_ttl(ttl);
+        StorageService::with_s3_client(config)
+            .await
+            .expect("with_s3_client should build offline (no network for presign)")
+    }
+
+    /// Parse the `X-Amz-Expires` query parameter (seconds) out of a presigned
+    /// URL. Returns `None` if absent.
+    fn amz_expires_secs(url: &str) -> Option<i64> {
+        url.split(['?', '&'])
+            .find_map(|kv| kv.strip_prefix("X-Amz-Expires="))
+            .and_then(|v| v.parse::<i64>().ok())
+    }
+
+    #[tokio::test]
+    async fn test_generate_download_url_mints_signed_attachment_url() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        let before = Utc::now();
+        let presigned = service
+            .generate_download_url(
+                "org/2024/report.pdf",
+                "report.pdf",
+                "application/pdf",
+                Some(900),
+            )
+            .await
+            .expect("download URL should mint");
+
+        // SigV4 query params prove the URL is actually signed (P0-05 regression:
+        // an unsigned placeholder URL would lack these and be rejected by S3).
+        assert!(
+            presigned.url.contains("X-Amz-Signature="),
+            "minted URL must carry a SigV4 signature, got {}",
+            presigned.url
+        );
+        assert!(
+            presigned.url.contains("X-Amz-Credential="),
+            "minted URL must carry the SigV4 credential scope, got {}",
+            presigned.url
+        );
+        assert!(
+            presigned.url.contains("report.pdf"),
+            "minted URL must reference the object key, got {}",
+            presigned.url
+        );
+
+        // Expiry: expires_at must reflect the requested 900s TTL (allow a small
+        // window for clock advance during the call).
+        let delta = (presigned.expires_at - before).num_seconds();
+        assert!(
+            (895..=905).contains(&delta),
+            "expires_at should be ~900s in the future, was {delta}s"
+        );
+        // The signed URL itself must encode the same TTL.
+        assert_eq!(
+            amz_expires_secs(&presigned.url),
+            Some(900),
+            "X-Amz-Expires must match the requested TTL, got {}",
+            presigned.url
+        );
+    }
+
+    #[tokio::test]
+    async fn test_generate_download_url_defaults_to_15_minute_expiry() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        let before = Utc::now();
+        // `None` TTL → DEFAULT_DOWNLOAD_EXPIRATION_SECS (15 min).
+        let presigned = service
+            .generate_download_url("org/k.pdf", "k.pdf", "application/pdf", None)
+            .await
+            .expect("download URL should mint");
+
+        let delta = (presigned.expires_at - before).num_seconds();
+        assert!(
+            (DEFAULT_DOWNLOAD_EXPIRATION_SECS - 5..=DEFAULT_DOWNLOAD_EXPIRATION_SECS + 5)
+                .contains(&delta),
+            "default download expiry should be {DEFAULT_DOWNLOAD_EXPIRATION_SECS}s, was {delta}s"
+        );
+        assert_eq!(
+            amz_expires_secs(&presigned.url),
+            Some(DEFAULT_DOWNLOAD_EXPIRATION_SECS),
+            "X-Amz-Expires must encode the 15-minute default"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_generate_preview_url_mints_inline_url_with_default_one_hour() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        let before = Utc::now();
+        // `None` TTL → 1-hour preview default (longer than download).
+        let presigned = service
+            .generate_preview_url("org/img.png", "image/png", None)
+            .await
+            .expect("preview URL should mint");
+
+        assert!(
+            presigned.url.contains("X-Amz-Signature="),
+            "minted preview URL must be SigV4-signed, got {}",
+            presigned.url
+        );
+        // Inline disposition is the whole point of preview vs download. The SDK
+        // percent-encodes the `response-content-disposition` query value, so
+        // match the key and the (encoded or raw) `inline` token loosely.
+        assert!(
+            presigned.url.contains("response-content-disposition="),
+            "preview URL must set a response-content-disposition, got {}",
+            presigned.url
+        );
+        assert!(
+            presigned.url.contains("inline"),
+            "preview URL disposition must be inline, got {}",
+            presigned.url
+        );
+
+        let delta = (presigned.expires_at - before).num_seconds();
+        assert!(
+            (3595..=3605).contains(&delta),
+            "default preview expiry should be 3600s, was {delta}s"
+        );
+        assert_eq!(
+            amz_expires_secs(&presigned.url),
+            Some(3600),
+            "X-Amz-Expires must encode the 1-hour preview default"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_generate_preview_url_honours_explicit_ttl() {
+        let service = presigning_service(DEFAULT_DOWNLOAD_EXPIRATION_SECS).await;
+        let presigned = service
+            .generate_preview_url("org/img.png", "image/png", Some(120))
+            .await
+            .expect("preview URL should mint");
+        assert_eq!(
+            amz_expires_secs(&presigned.url),
+            Some(120),
+            "explicit preview TTL must be honoured in the signed URL"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_minting_without_s3_client_errors_cleanly() {
+        // The download/preview handlers gate on storage being configured; this
+        // pins the no-client failure mode so a missing S3 client surfaces as a
+        // typed StorageError rather than a panic.
+        let service = StorageService::new(StorageConfig::new(
+            "b", "us-east-1", "AKIATEST", "secretkey",
+        ));
+        let err = service
+            .generate_download_url("k", "k.pdf", "application/pdf", Some(300))
+            .await
+            .expect_err("minting without an S3 client must error");
+        assert!(
+            matches!(err, StorageError::Configuration(_)),
+            "expected Configuration error, got {err:?}"
+        );
+    }
 }
