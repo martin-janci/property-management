@@ -980,7 +980,10 @@ mod tests {
         let value: serde_json::Value = serde_json::to_value(&resp).unwrap();
         assert_eq!(value["success"], serde_json::json!(true));
         assert_eq!(value["connection_id"], serde_json::json!(id.to_string()));
-        assert_eq!(value["message"], serde_json::json!("Airbnb connected successfully"));
+        assert_eq!(
+            value["message"],
+            serde_json::json!("Airbnb connected successfully")
+        );
         assert_eq!(value["listings_count"], serde_json::json!(3));
     }
 
