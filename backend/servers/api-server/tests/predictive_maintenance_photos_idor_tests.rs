@@ -32,7 +32,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{TestApp, TestConfig, seed_membership};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -167,19 +167,7 @@ async fn seed_photo(pool: &PgPool, log_id: Uuid) -> Uuid {
 
 /// Make `user_id` an active member of `org_id` — required by the
 /// `RlsConnection` membership check.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'manager', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
+
 
 fn photos_uri(log_id: Uuid) -> String {
     format!("/api/v1/predictive-maintenance/maintenance-logs/{log_id}/photos")
@@ -200,7 +188,7 @@ async fn list_photos_same_org_succeeds(pool: PgPool) {
     let equipment = seed_equipment(&pool, org_a, building).await;
     let log_id = seed_maintenance_log(&pool, org_a, equipment).await;
     let photo_id = seed_photo(&pool, log_id).await;
-    seed_membership(&pool, org_a, user).await;
+    seed_membership(&pool, org_a, user, "manager").await;
 
     let token = access_token(user, org_a);
     let req = app
@@ -243,7 +231,7 @@ async fn list_photos_cross_org_is_not_found(pool: PgPool) {
 
     // Org B's own valid tenant context targeting Org A's maintenance log —
     // the org-scoped lookup must come up empty (404), not leak.
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
     let token = access_token(user_b, org_b);
     let req = app
         .get(&photos_uri(log_id))
@@ -279,7 +267,7 @@ async fn add_photo_cross_org_does_not_insert(pool: PgPool) {
     let log_id = seed_maintenance_log(&pool, org_a, equipment).await;
     let _ = user_a;
 
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
     let token = access_token(user_b, org_b);
     let req = app
         .post(&photos_uri(log_id))

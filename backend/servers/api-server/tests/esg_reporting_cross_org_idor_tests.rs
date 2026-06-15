@@ -33,7 +33,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{RequestBuilder, TestApp, TestConfig};
+use common::{RequestBuilder, TestApp, TestConfig, seed_membership};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -69,19 +69,7 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 }
 
 /// Make `user_id` an active member of `org_id`.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
+
 
 /// Seed an ESG metric in `org_id` created by `created_by`, return its id.
 async fn seed_metric(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
@@ -150,8 +138,8 @@ async fn seed_two_org_fixture(pool: &PgPool, tag: &str) -> (Uuid, Uuid, Uuid, Uu
     let org_b = seed_org(pool, &format!("{tag}-b")).await;
     let user_a = seed_user(pool, &format!("{tag}-a@esg-idor.test")).await;
     let user_b = seed_user(pool, &format!("{tag}-b@esg-idor.test")).await;
-    seed_membership(pool, org_a, user_a).await;
-    seed_membership(pool, org_b, user_b).await;
+    seed_membership(pool, org_a, user_a, "org_admin").await;
+    seed_membership(pool, org_b, user_b, "org_admin").await;
     let metric_a = seed_metric(pool, org_a, user_a).await;
     let report_a = seed_report(pool, org_a, user_a).await;
     (org_a, org_b, user_a, user_b, metric_a, report_a)
@@ -417,7 +405,7 @@ async fn get_metric_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "own-a").await;
     let user_a = seed_user(&pool, "own-a@esg-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let metric_a = seed_metric(&pool, org_a, user_a).await;
 
     let token_a = mint_token(user_a, "own-a@esg-idor.test");

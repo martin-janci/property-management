@@ -58,7 +58,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{TestApp, TestConfig, seed_membership};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -94,19 +94,7 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 }
 
 /// Make `user_id` an active member of `org_id`.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
+
 
 async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
@@ -322,8 +310,8 @@ async fn get_rfq_from_other_org_is_rejected(pool: PgPool) {
     let org_b = seed_org(&pool, "rfq-b").await;
     let user_a = seed_user(&pool, "rfq-a@mvi-idor.test").await;
     let user_b = seed_user(&pool, "rfq-b@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let rfq_a = seed_rfq(&pool, org_a, user_a).await;
 
     let token_b = mint_token(user_b, "rfq-b@mvi-idor.test", Some(org_b));
@@ -338,7 +326,7 @@ async fn get_rfq_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "rfq-own-a").await;
     let user_a = seed_user(&pool, "rfq-own-a@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let rfq_a = seed_rfq(&pool, org_a, user_a).await;
 
     let token_a = mint_token(user_a, "rfq-own-a@mvi-idor.test", Some(org_a));
@@ -364,8 +352,8 @@ async fn get_vote_from_other_org_is_rejected(pool: PgPool) {
     let org_b = seed_org(&pool, "vote-b").await;
     let user_a = seed_user(&pool, "vote-a@mvi-idor.test").await;
     let user_b = seed_user(&pool, "vote-b@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "VoteA").await;
     let vote_a = seed_vote(&pool, org_a, building_a, user_a).await;
 
@@ -392,7 +380,7 @@ async fn get_vote_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "vote-own-a").await;
     let user_a = seed_user(&pool, "vote-own-a@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "VoteOwnA").await;
     let vote_a = seed_vote(&pool, org_a, building_a, user_a).await;
 
@@ -427,7 +415,7 @@ async fn list_portfolio_properties_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "pf-a").await;
     let org_b = seed_org(&pool, "pf-b").await;
     let user_b = seed_user(&pool, "pf-b@mvi-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let portfolio_a = seed_portfolio(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "pf-b@mvi-idor.test", Some(org_b));
@@ -442,7 +430,7 @@ async fn list_portfolio_properties_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "pf-own-a").await;
     let user_a = seed_user(&pool, "pf-own-a@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let portfolio_a = seed_portfolio(&pool, org_a).await;
 
     let token_a = mint_token(user_a, "pf-own-a@mvi-idor.test", Some(org_a));

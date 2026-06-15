@@ -56,7 +56,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser};
+use common::{create_authenticated_user, TestApp, TestUser, seed_membership};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -80,23 +80,7 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
 /// Insert an `organization_members` row so `verify_org_access` sees the user
 /// as a member of the org. Role is irrelevant for work-order access (only
 /// membership is checked), so any valid role string works.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members
-            (id, organization_id, user_id, role_type, status, created_at)
-        VALUES ($1, $2, $3, $4, 'active', NOW())
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .bind(role)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
+
 
 async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

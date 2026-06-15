@@ -295,25 +295,25 @@ async fn get_execution_download_url_returns_presigned_payload(pool: PgPool) {
     );
 }
 
-/// Retry-on-expired-URL contract (the core of Coverage 81-2).
+/// Re-presign-on-demand contract (the core of Coverage 81-2).
 ///
-/// Presigned download URLs are short-lived (the handler stamps
-/// `expires_at = now + 1h`). When a client's previously-issued URL has
-/// expired, the recovery path is to simply **re-request** the download
-/// endpoint, which must mint a *fresh* presigned payload with a new,
-/// still-in-the-future `expires_at` — every time, for the same execution.
+/// The handler (`get_execution_download_url`) stamps `expires_at = now + 1h` on
+/// **every** call — it never caches. This test verifies that contract: two
+/// successive calls to the same endpoint both succeed and each yields an
+/// `expires_at` that is (a) in the future and (b) no earlier than the expiry
+/// returned by the preceding call. Condition (b) is the non-tautological part:
+/// it fails if the handler is changed to cache and replay the first response,
+/// because a cached response's `expires_at` would not advance across calls.
 ///
-/// This test proves that re-presign loop end-to-end: it resolves the download
-/// endpoint twice for the same completed execution and asserts that
+/// # Scope boundary
 ///
-///   1. both calls succeed (200) and return a non-empty URL, and
-///   2. each response carries an `expires_at` strictly in the future relative
-///      to the moment the request was made — i.e. the second call did not hand
-///      back a stale/expired window but genuinely re-presigned.
-///
-/// A regression that cached a one-shot URL, or stopped refreshing `expires_at`
-/// on subsequent calls, would leave clients permanently stuck on an expired
-/// link — this test fails loudly if that happens.
+/// The URL returned by this handler is a static internal proxy path
+/// (`/api/v1/reports/files/{file_key}`), not a real S3 presigned URL. The
+/// actual S3 presigning happens one hop downstream (at the `/reports/files/…`
+/// handler). Consequently this test cannot assert a *distinct credential* per
+/// call — only that the `expires_at` window is freshly computed each time.
+/// A dedicated integration test against a live S3 stub would be required to
+/// verify the downstream presigning step; that is out of scope here.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -331,7 +331,7 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
     let token = authed_member(&app, &pool, org, "Manager").await;
     let uri = format!("/api/v1/reports/executions/{}/download", exec);
 
-    // --- First presign: simulates the URL a client originally received. ---
+    // --- First call: initial presign. ---
     let before_first = chrono::Utc::now();
     let first = app.execute(auth_req(Method::GET, &uri, org, &token)).await;
     assert_eq!(

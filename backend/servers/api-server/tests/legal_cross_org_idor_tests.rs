@@ -34,7 +34,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{RequestBuilder, TestApp, TestConfig};
+use common::{RequestBuilder, TestApp, TestConfig, seed_membership};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -129,19 +129,7 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
 
 /// Make `user_id` an active member of `org_id` — required by the
 /// `RlsConnection` membership check since the PAP-80 conversion.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'manager', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
+
 
 // ---------------------------------------------------------------------------
 // Test 1: same-org read succeeds (proves real org context is wired)
@@ -156,7 +144,7 @@ async fn get_document_same_org_succeeds(pool: PgPool) {
     let org_a = seed_org(&pool, "same-a").await;
     let doc_id = seed_document(&pool, org_a, user).await;
 
-    seed_membership(&pool, org_a, user).await;
+    seed_membership(&pool, org_a, user, "manager").await;
     let token = access_token(user, Some(org_a));
     let req = app
         .get(&format!("/api/v1/legal/documents/{doc_id}"))
@@ -192,7 +180,7 @@ async fn get_document_cross_org_is_not_found(pool: PgPool) {
 
     // Org B's own valid tenant context targeting Org A's document — the
     // org-scoped query must come up empty (404), not leak.
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
     let token = access_token(user_b, Some(org_b));
     let req = app
         .get(&format!("/api/v1/legal/documents/{doc_id}"))
@@ -225,7 +213,7 @@ async fn update_document_cross_org_does_not_mutate(pool: PgPool) {
     let org_b = seed_org(&pool, "u-b").await;
     let doc_id = seed_document(&pool, org_a, user_a).await;
 
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
     let token = access_token(user_b, Some(org_b));
     let req = RequestBuilder::new(Method::PATCH, &format!("/api/v1/legal/documents/{doc_id}"))
         .bearer(&token)
@@ -269,7 +257,7 @@ async fn delete_document_cross_org_does_not_delete(pool: PgPool) {
     let org_b = seed_org(&pool, "d-b").await;
     let doc_id = seed_document(&pool, org_a, user_a).await;
 
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
     let token = access_token(user_b, Some(org_b));
     let req = app
         .delete(&format!("/api/v1/legal/documents/{doc_id}"))

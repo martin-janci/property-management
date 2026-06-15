@@ -32,7 +32,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{TestApp, TestConfig, seed_membership};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -68,19 +68,7 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 }
 
 /// Make `user_id` an active member of `org_id`.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
+
 
 async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
@@ -160,7 +148,7 @@ async fn get_meter_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "get-a").await;
     let org_b = seed_org(&pool, "get-b").await;
     let user_b = seed_user(&pool, "get-b@meter-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "get-a").await;
     let meter_a = seed_meter(&pool, org_a, building_a, "GET-1").await;
 
@@ -186,7 +174,7 @@ async fn list_meters_for_other_orgs_building_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "lst-a").await;
     let org_b = seed_org(&pool, "lst-b").await;
     let user_b = seed_user(&pool, "lst-b@meter-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "lst-a").await;
     let _meter_a = seed_meter(&pool, org_a, building_a, "LST-1").await;
 
@@ -208,7 +196,7 @@ async fn register_meter_for_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "reg-a").await;
     let org_b = seed_org(&pool, "reg-b").await;
     let user_b = seed_user(&pool, "reg-b@meter-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "reg-a").await;
 
     let token_b = mint_token(user_b, "reg-b@meter-idor.test");
@@ -254,7 +242,7 @@ async fn get_meter_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "own-a").await;
     let user_a = seed_user(&pool, "own-a@meter-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "own-a").await;
     let meter_a = seed_meter(&pool, org_a, building_a, "OWN-1").await;
 
@@ -283,7 +271,7 @@ async fn get_unit_epc_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "epc-a").await;
     let org_b = seed_org(&pool, "epc-b").await;
     let user_b = seed_user(&pool, "epc-b@meter-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "epc-a").await;
     let unit_a = sqlx::query_scalar::<_, Uuid>(
         r#"
@@ -322,7 +310,7 @@ async fn get_benchmark_dashboard_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "bm-a").await;
     let org_b = seed_org(&pool, "bm-b").await;
     let user_b = seed_user(&pool, "bm-b@meter-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "bm-a").await;
 
     let token_b = mint_token(user_b, "bm-b@meter-idor.test");
