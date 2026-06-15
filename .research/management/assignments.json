@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-15T12:38:00Z",
+  "generated": "2026-06-15T14:25:04Z",
   "assignments": [
     {
       "task_id": "test-oauth-authorization-server-integration-v2",
@@ -100,7 +100,7 @@
       "branch": "auto-impl/pm-qa-document-download-preview-tests",
       "status": "review",
       "claimed_at": "2026-06-15T08:25:53Z",
-      "last_updated": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T10:36:00Z",
       "pr_number": 1394,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1394",
@@ -115,7 +115,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-15T14:25:04Z"
     },
     {
       "task_id": "pm-qa-realtime-pref-sync-ci-coverage",
@@ -144,7 +144,7 @@
       "branch": "auto-impl/feat-home-and-search-screens-debounced-s",
       "status": "review",
       "claimed_at": "2026-06-15T08:25:53Z",
-      "last_updated": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T10:36:00Z",
       "pr_number": 1392,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1392",
@@ -159,14 +159,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-15T14:25:04Z"
     },
     {
       "task_id": "feat-home-and-search-screens-filtersheet-location-features-mobile",
       "branch": "auto-impl/feat-home-and-search-screens-filtersheet",
       "status": "review",
       "claimed_at": "2026-06-15T08:25:53Z",
-      "last_updated": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T12:19:02Z",
       "pr_number": 1391,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1391",
@@ -181,14 +181,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-15T14:25:04Z"
     },
     {
       "task_id": "pm-qa-record-payment-atomicity-test",
       "branch": "auto-impl/pm-qa-record-payment-atomicity-test",
       "status": "review",
       "claimed_at": "2026-06-15T10:11:06Z",
-      "last_updated": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T10:32:30Z",
       "pr_number": 1398,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1398",
@@ -203,14 +203,14 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-15T14:25:04Z"
     },
     {
       "task_id": "pm-qa-service-history-cross-org-idor",
       "branch": "auto-impl/pm-qa-service-history-cross-org-idor",
       "status": "review",
       "claimed_at": "2026-06-15T10:11:06Z",
-      "last_updated": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T12:19:02Z",
       "pr_number": 1399,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1399",
@@ -225,7 +225,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-15T14:25:04Z"
     },
     {
       "task_id": "pm-qa-triage-followup-issues-2026-06-14",
@@ -256,7 +256,7 @@
       "branch": "auto-impl/pm-qa-vote-partial-cmp-nan-fuzz",
       "status": "in-progress",
       "claimed_at": "2026-06-15T12:19:02Z",
-      "last_updated": "2026-06-15T12:19:02Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T12:19:02Z",
       "pr_number": null,
       "pr_url": null,
@@ -278,29 +278,29 @@
       "branch": "auto-impl/pm-qa-cron-validator-drift-test",
       "status": "review",
       "claimed_at": "2026-06-15T12:19:02Z",
-      "last_updated": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T12:36:00Z",
       "pr_number": 1400,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1400",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=1400 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=qa test-only; pins cron-validator drift (#1368) to block #616 reintro; vitest+biome+tsc green; drift flag is owner-area glob/layout mismatch, no prod code touched",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=test-only #616 cron-drift guard; scope_drift adjudicated benign (ppt-web colocated-test glob mismatch, no prod code); CI green",
+      "last_reviewed_oid": "2c0795eb729ae579d9241af2e74d407c650ce2b7",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-15T14:25:04Z"
     },
     {
       "task_id": "pm-qa-record-reserve-transaction-atomicity",
       "branch": "auto-impl/pm-qa-record-reserve-transaction-atomic",
       "status": "in-progress",
       "claimed_at": "2026-06-15T12:19:02Z",
-      "last_updated": "2026-06-15T12:19:02Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T12:19:02Z",
       "pr_number": null,
       "pr_url": null,
@@ -322,15 +322,15 @@
       "branch": "auto-impl/feat-navigation-and-routing-navigation-s",
       "status": "review",
       "claimed_at": "2026-06-15T12:19:02Z",
-      "last_updated": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T12:36:00Z",
       "pr_number": 1402,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1402",
       "merged_at": null,
       "specialist": "kotlin-mp",
       "implementer_summary": "pr=1402 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=added shared TAB_NAV_OPTIONS contract + NavigationStatePreservationTest proving AC-4; Gradle offline so verify static, CI mobile-native.yml is the gate",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=changes note=spotless-lint-red-on-new-test-file-run-spotlessApply",
+      "last_reviewed_oid": "26df2d2f11ffcfedf05f90b0841be9aeb252ba40",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -366,22 +366,22 @@
       "branch": "auto-impl/verify-home-and-search-screens-corelocat",
       "status": "review",
       "claimed_at": "2026-06-15T12:19:02Z",
-      "last_updated": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T14:25:04Z",
       "status_changed_at": "2026-06-15T12:36:00Z",
       "pr_number": 1401,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1401",
       "merged_at": null,
       "specialist": "ios-swiftui",
       "implementer_summary": "pr=1401 status=done specialist=ios-swiftui scope_drift=false code_reuse_warn=none note=CoreLocation Near Me path confirmed (audit) + added SearchViewCoreLocationTests; iOS/KMP compile not runnable in sandbox, CI is the gate",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=test+docs-only CoreLocation verification; CI build-ios green (macOS gate); scope/reuse clean",
+      "last_reviewed_oid": "e6c227274997d005de69cb7143004eaa6091d7c4",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-15T14:25:04Z"
     }
   ]
 }
