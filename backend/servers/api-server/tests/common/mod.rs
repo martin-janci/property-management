@@ -306,7 +306,8 @@ impl RequestBuilder {
 
     /// Set the tenant scope via the `X-Tenant-ID` header (Story 1370).
     pub fn tenant(mut self, org_id: Uuid) -> Self {
-        self.headers.push(("X-Tenant-ID".to_string(), org_id.to_string()));
+        self.headers
+            .push(("X-Tenant-ID".to_string(), org_id.to_string()));
         self
     }
 
