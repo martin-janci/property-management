@@ -312,10 +312,9 @@ async fn reserve_fund_child_table_idor_blocked(pool: PgPool) {
 
     // Seed a contribution schedule for org-B's fund as superuser (RLS-exempt).
     sqlx::query(
-        "INSERT INTO fund_contribution_schedules          (fund_id, name, amount, frequency, start_date, created_by)          VALUES ($1, 'B Schedule', 500, 'monthly', '2025-01-01', $2)",
+        "INSERT INTO fund_contribution_schedules (fund_id, name, amount, frequency, start_date) VALUES ($1, 'B Schedule', 500, 'monthly', '2025-01-01')",
     )
     .bind(fund_b)
-    .bind(user_b)
     .execute(&pool)
     .await
     .expect("seed contribution schedule for org-B fund");
