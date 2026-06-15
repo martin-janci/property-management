@@ -475,18 +475,22 @@ async fn create_form(
     for f in req.fields {
         // Validate validation_rules JSON if present
         let validation_rules = match f.validation_rules {
-            Some(v) => Some(serde_json::from_value(v).map_err(|e| {
-                (
-                    StatusCode::BAD_REQUEST,
-                    Json(ErrorResponse::new(
-                        "INVALID_VALIDATION_RULES",
-                        format!(
-                            "Invalid validation rules JSON for field '{}': {}",
-                            f.field_key, e
-                        ),
-                    )),
-                )
-            })?),
+            Some(v) => match serde_json::from_value(v) {
+                Ok(vr) => Some(vr),
+                Err(e) => {
+                    rls.release().await;
+                    return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse::new(
+                            "INVALID_VALIDATION_RULES",
+                            format!(
+                                "Invalid validation rules JSON for field '{}': {}",
+                                f.field_key, e
+                            ),
+                        )),
+                    ));
+                }
+            },
             None => None,
         };
 
@@ -1678,6 +1682,14 @@ async fn submit_form(
         ));
     }
 
+    // Validate signature image before building submit_data to allow rls.release() on error.
+    if let Some(ref sig) = req.signature_data {
+        if let Err(e) = validate_signature_image(&sig.signature_image) {
+            rls.release().await;
+            return Err(e);
+        }
+    }
+
     let submit_data = SubmitForm {
         data: req.data,
         attachments: req.attachments.map(|atts| {
@@ -1691,19 +1703,12 @@ async fn submit_form(
                 })
                 .collect()
         }),
-        signature_data: match req.signature_data {
-            Some(s) => {
-                // Validate signature image before processing
-                validate_signature_image(&s.signature_image)?;
-                Some(db::models::SignatureData {
-                    signature_image: s.signature_image,
-                    signed_at: chrono::Utc::now(),
-                    ip_address: ip_address.clone(),
-                    user_agent: user_agent.clone(),
-                })
-            }
-            None => None,
-        },
+        signature_data: req.signature_data.map(|s| db::models::SignatureData {
+            signature_image: s.signature_image,
+            signed_at: chrono::Utc::now(),
+            ip_address: ip_address.clone(),
+            user_agent: user_agent.clone(),
+        }),
     };
 
     let confirmation_message = form.form.confirmation_message.clone();
