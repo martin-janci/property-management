@@ -857,6 +857,210 @@ fn constant_time_compare(a: &str, b: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hmac::{Hmac, KeyInit, Mac};
+    use sha2::Sha256;
+
+    type HmacSha256 = Hmac<Sha256>;
+
+    /// Helper: compute a valid HMAC-SHA256 hex signature for `body` under `secret`.
+    fn make_signature(body: &str, secret: &str) -> String {
+        let mut mac =
+            HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts any key length");
+        mac.update(body.as_bytes());
+        hex::encode(mac.finalize().into_bytes())
+    }
+
+    // ---- verify_webhook_signature ----
+
+    #[test]
+    fn test_verify_signature_correct() {
+        let body = r#"{"event_type":"reservation_created","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let secret = "s3cr3t_k3y";
+        let sig = make_signature(body, secret);
+        assert!(AirbnbClient::verify_webhook_signature(&sig, body, secret));
+    }
+
+    #[test]
+    fn test_verify_signature_wrong_secret() {
+        let body =
+            r#"{"event_type":"listing_updated","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let correct_sig = make_signature(body, "correct");
+        assert!(!AirbnbClient::verify_webhook_signature(
+            &correct_sig,
+            body,
+            "wrong_secret"
+        ));
+    }
+
+    #[test]
+    fn test_verify_signature_tampered_body() {
+        let body = r#"{"event_type":"reservation_updated","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let secret = "webhook_secret";
+        let sig = make_signature(body, secret);
+        // Tamper with the body after computing signature.
+        let tampered = body.replace("reservation_updated", "reservation_created");
+        assert!(!AirbnbClient::verify_webhook_signature(
+            &sig, &tampered, secret
+        ));
+    }
+
+    #[test]
+    fn test_verify_signature_empty_body() {
+        // An empty body still has a valid HMAC; the helper must not panic.
+        let secret = "s";
+        let sig = make_signature("", secret);
+        assert!(AirbnbClient::verify_webhook_signature(&sig, "", secret));
+    }
+
+    #[test]
+    fn test_verify_signature_wrong_length_rejected() {
+        // A signature that is shorter than the 64-hex-char HMAC-SHA256 output
+        // must never match even if it is a prefix of the correct signature.
+        let body =
+            r#"{"event_type":"review_received","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let secret = "secret";
+        let full_sig = make_signature(body, secret);
+        let truncated = &full_sig[..32]; // half the HMAC hex length
+        assert!(!AirbnbClient::verify_webhook_signature(
+            truncated, body, secret
+        ));
+    }
+
+    #[test]
+    fn test_verify_signature_all_zeros_rejected() {
+        let body =
+            r#"{"event_type":"message_received","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let secret = "real_secret";
+        let all_zeros = "0".repeat(64);
+        assert!(!AirbnbClient::verify_webhook_signature(
+            &all_zeros, body, secret
+        ));
+    }
+
+    // ---- parse_webhook_event — all six event types ----
+
+    fn parse(body: &str) -> AirbnbWebhookEvent {
+        AirbnbClient::parse_webhook_event(body).expect("valid event JSON")
+    }
+
+    #[test]
+    fn test_parse_reservation_created() {
+        let ev = parse(
+            r#"{"event_type":"reservation_created","timestamp":"2026-06-01T12:00:00Z",
+               "event_id":"evt_1","listing_id":"L1","confirmation_code":"HABC123",
+               "payload":{}}"#,
+        );
+        assert_eq!(ev.event_type, AirbnbWebhookEventType::ReservationCreated);
+        assert_eq!(ev.event_id.as_deref(), Some("evt_1"));
+        assert_eq!(ev.listing_id.as_deref(), Some("L1"));
+        assert_eq!(ev.confirmation_code.as_deref(), Some("HABC123"));
+    }
+
+    #[test]
+    fn test_parse_reservation_updated() {
+        let ev = parse(
+            r#"{"event_type":"reservation_updated","timestamp":"2026-06-01T12:00:00Z","payload":{}}"#,
+        );
+        assert_eq!(ev.event_type, AirbnbWebhookEventType::ReservationUpdated);
+        assert!(ev.event_id.is_none());
+        assert!(ev.listing_id.is_none());
+    }
+
+    #[test]
+    fn test_parse_reservation_cancelled() {
+        let ev = parse(
+            r#"{"event_type":"reservation_cancelled","timestamp":"2026-06-01T12:00:00Z",
+               "confirmation_code":"HXYZ789","payload":{}}"#,
+        );
+        assert_eq!(ev.event_type, AirbnbWebhookEventType::ReservationCancelled);
+        assert_eq!(ev.confirmation_code.as_deref(), Some("HXYZ789"));
+    }
+
+    #[test]
+    fn test_parse_listing_updated() {
+        let ev = parse(
+            r#"{"event_type":"listing_updated","timestamp":"2026-06-01T12:00:00Z",
+               "listing_id":"listing_99","payload":{}}"#,
+        );
+        assert_eq!(ev.event_type, AirbnbWebhookEventType::ListingUpdated);
+        assert_eq!(ev.listing_id.as_deref(), Some("listing_99"));
+    }
+
+    #[test]
+    fn test_parse_message_received() {
+        let ev = parse(
+            r#"{"event_type":"message_received","timestamp":"2026-06-01T12:00:00Z","payload":{}}"#,
+        );
+        assert_eq!(ev.event_type, AirbnbWebhookEventType::MessageReceived);
+    }
+
+    #[test]
+    fn test_parse_review_received() {
+        let ev = parse(
+            r#"{"event_type":"review_received","timestamp":"2026-06-01T12:00:00Z","payload":{}}"#,
+        );
+        assert_eq!(ev.event_type, AirbnbWebhookEventType::ReviewReceived);
+    }
+
+    #[test]
+    fn test_parse_unknown_event_type_is_error() {
+        // An unrecognised event_type variant must fail to parse so the handler
+        // can reject it with 400 rather than silently discarding it.
+        let result = AirbnbClient::parse_webhook_event(
+            r#"{"event_type":"availability_updated","timestamp":"2026-06-01T12:00:00Z","payload":{}}"#,
+        );
+        assert!(
+            result.is_err(),
+            "expected parse error for unknown event type, got {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_parse_invalid_json() {
+        assert!(AirbnbClient::parse_webhook_event("not json at all").is_err());
+    }
+
+    // ---- AirbnbWebhookEventType serde round-trip ----
+
+    #[test]
+    fn test_event_type_serde_snake_case() {
+        let cases = [
+            (
+                AirbnbWebhookEventType::ReservationCreated,
+                "\"reservation_created\"",
+            ),
+            (
+                AirbnbWebhookEventType::ReservationUpdated,
+                "\"reservation_updated\"",
+            ),
+            (
+                AirbnbWebhookEventType::ReservationCancelled,
+                "\"reservation_cancelled\"",
+            ),
+            (
+                AirbnbWebhookEventType::ListingUpdated,
+                "\"listing_updated\"",
+            ),
+            (
+                AirbnbWebhookEventType::MessageReceived,
+                "\"message_received\"",
+            ),
+            (
+                AirbnbWebhookEventType::ReviewReceived,
+                "\"review_received\"",
+            ),
+        ];
+        for (variant, wire) in cases {
+            let serialised = serde_json::to_string(&variant).expect("serialise");
+            assert_eq!(serialised, wire, "unexpected wire name for {variant:?}");
+            let deserialised: AirbnbWebhookEventType =
+                serde_json::from_str(wire).expect("deserialise");
+            assert_eq!(deserialised, variant);
+        }
+    }
+
+    // ---- Pre-existing tests (preserved) ----
 
     #[test]
     fn test_generate_auth_url() {
