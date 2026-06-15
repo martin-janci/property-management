@@ -1066,18 +1066,23 @@ async fn get_equipment_service_history(
     let uid = rls.user_id();
     let out: Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> = async {
         // Resolve the owning org before touching RLS — 404 on unknown id, 403 for cross-org.
-        let org_id: Option<Uuid> = sqlx::query_scalar(
-            "SELECT organization_id FROM equipment WHERE id = $1",
-        )
-        .bind(equipment_id)
-        .fetch_optional(&state.db)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = ?e, "Failed to look up equipment org");
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Database error")))
-        })?;
+        let org_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT organization_id FROM equipment WHERE id = $1")
+                .bind(equipment_id)
+                .fetch_optional(&state.db)
+                .await
+                .map_err(|e| {
+                    tracing::error!(error = ?e, "Failed to look up equipment org");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                    )
+                })?;
         let org_id = org_id.ok_or_else(|| {
-            (StatusCode::NOT_FOUND, Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")))
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")),
+            )
         })?;
         verify_org_access(&state, uid, org_id).await?;
         state
@@ -1092,7 +1097,13 @@ async fn get_equipment_service_history(
             .map(Json)
             .map_err(|e| {
                 tracing::error!("Failed to get service history: {:?}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Failed to get service history")))
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DB_ERROR",
+                        "Failed to get service history",
+                    )),
+                )
             })
     }
     .await;
@@ -1109,18 +1120,23 @@ async fn get_building_service_history(
     let uid = rls.user_id();
     let out: Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> = async {
         // Resolve the owning org before touching RLS — 404 on unknown id, 403 for cross-org.
-        let org_id: Option<Uuid> = sqlx::query_scalar(
-            "SELECT organization_id FROM buildings WHERE id = $1",
-        )
-        .bind(building_id)
-        .fetch_optional(&state.db)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = ?e, "Failed to look up building org");
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Database error")))
-        })?;
+        let org_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT organization_id FROM buildings WHERE id = $1")
+                .bind(building_id)
+                .fetch_optional(&state.db)
+                .await
+                .map_err(|e| {
+                    tracing::error!(error = ?e, "Failed to look up building org");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                    )
+                })?;
         let org_id = org_id.ok_or_else(|| {
-            (StatusCode::NOT_FOUND, Json(ErrorResponse::new("NOT_FOUND", "Building not found")))
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+            )
         })?;
         verify_org_access(&state, uid, org_id).await?;
         state
@@ -1135,7 +1151,13 @@ async fn get_building_service_history(
             .map(Json)
             .map_err(|e| {
                 tracing::error!("Failed to get building service history: {:?}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse::new("DB_ERROR", "Failed to get building service history")))
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DB_ERROR",
+                        "Failed to get building service history",
+                    )),
+                )
             })
     }
     .await;

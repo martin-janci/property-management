@@ -35,7 +35,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{seed_membership, TestApp, TestConfig};
+use common::{TestApp, TestConfig, seed_membership};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)

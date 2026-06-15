@@ -9,13 +9,13 @@ use redis::{
     aio::ConnectionManager, AsyncCommands, Client as RedisClientInner, RedisError, RedisResult,
 };
 use serde::{de::DeserializeOwned, Serialize};
-use thiserror::Error;
-use tokio::sync::broadcast;
-use tracing::Instrument;
-use uuid::Uuid;
 use std::collections::HashMap;
 use std::sync::Arc;
+use thiserror::Error;
+use tokio::sync::broadcast;
 use tokio::sync::Mutex;
+use tracing::Instrument;
+use uuid::Uuid;
 
 // ============================================================================
 // Configuration
@@ -669,7 +669,6 @@ pub mod channels {
 
 /// Redis pub/sub service (Story 103.4).
 #[derive(Clone)]
-
 // ============================================================================
 // In-Memory Pub/Sub (for CI/testing)
 // ============================================================================
@@ -823,13 +822,13 @@ impl PubSubService {
                 let (tx, rx) = broadcast::channel::<PubSubMessage>(100);
 
                 // Create a new client for subscription (pub/sub requires dedicated connection)
-                let client = RedisClientInner::open(url.as_str())
-                    .map_err(|e| CacheError::Connection(format!("Failed to create client: {}", e)))?;
+                let client = RedisClientInner::open(url.as_str()).map_err(|e| {
+                    CacheError::Connection(format!("Failed to create client: {}", e))
+                })?;
 
-                let mut pubsub = client
-                    .get_async_pubsub()
-                    .await
-                    .map_err(|e| CacheError::Connection(format!("Failed to get connection: {}", e)))?;
+                let mut pubsub = client.get_async_pubsub().await.map_err(|e| {
+                    CacheError::Connection(format!("Failed to get connection: {}", e))
+                })?;
 
                 pubsub
                     .subscribe(&full_channel)
@@ -840,14 +839,16 @@ impl PubSubService {
 
                 // Spawn a task to forward messages
                 let span_channel = full_channel.clone();
-                tokio::spawn(
-                    async move {
+                tokio::spawn(async move {
                         let mut pubsub_stream = pubsub.into_on_message();
 
-                        while let Some(msg) = futures_lite::StreamExt::next(&mut pubsub_stream).await {
+                        while let Some(msg) =
+                            futures_lite::StreamExt::next(&mut pubsub_stream).await
+                        {
                             let payload: Result<String, RedisError> = msg.get_payload();
                             if let Ok(payload) = payload {
-                                if let Ok(message) = serde_json::from_str::<PubSubMessage>(&payload) {
+                                if let Ok(message) = serde_json::from_str::<PubSubMessage>(&payload)
+                                {
                                     // Filter out messages from same instance
                                     if message.source_instance.as_ref() != Some(&instance_id) {
                                         let _ = tx.send(message);

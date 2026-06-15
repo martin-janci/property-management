@@ -163,13 +163,6 @@ fn tenant_req(method: Method, uri: &str, org_id: Uuid) -> Request<Body> {
         .unwrap()
 }
 
-", access_token))
-        .header("X-Tenant-ID", caller_org_id.to_string())
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::empty())
-        .unwrap()
-}
-
 /// Look up a user id by email — `create_authenticated_user` registers via
 /// `POST /api/v1/auth/register` so we read back the id to attach a membership.
 async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
