@@ -13,6 +13,9 @@ use thiserror::Error;
 use tokio::sync::broadcast;
 use tracing::Instrument;
 use uuid::Uuid;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 // ============================================================================
 // Configuration
@@ -666,17 +669,79 @@ pub mod channels {
 
 /// Redis pub/sub service (Story 103.4).
 #[derive(Clone)]
+
+// ============================================================================
+// In-Memory Pub/Sub (for CI/testing)
+// ============================================================================
+
+/// In-memory message broker for testing without a real Redis.
+pub struct InMemoryBroker {
+    senders: Mutex<HashMap<String, broadcast::Sender<PubSubMessage>>>,
+}
+
+impl InMemoryBroker {
+    /// Create a new in-memory broker.
+    pub fn new() -> Self {
+        Self {
+            senders: Mutex::new(HashMap::new()),
+        }
+    }
+
+    /// Get or create a sender for the given channel.
+    async fn get_sender(&self, channel: &str) -> broadcast::Sender<PubSubMessage> {
+        let mut senders = self.senders.lock().await;
+        if let Some(sender) = senders.get(channel) {
+            sender.clone()
+        } else {
+            let (tx, _) = broadcast::channel(100);
+            senders.insert(channel.to_string(), tx.clone());
+            tx
+        }
+    }
+}
+
+impl Default for InMemoryBroker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Clone)]
+enum PubSubBackend {
+    Redis(RedisClient),
+    InMemory(Arc<InMemoryBroker>),
+}
+
 pub struct PubSubService {
-    client: RedisClient,
+    inner: PubSubBackend,
     instance_id: String,
 }
 
 impl PubSubService {
-    /// Create a new pub/sub service.
+    /// Create a new pub/sub service using Redis.
     pub fn new(client: RedisClient) -> Self {
         let instance_id = Uuid::new_v4().to_string();
         Self {
-            client,
+            inner: PubSubBackend::Redis(client),
+            instance_id,
+        }
+    }
+
+    /// Create an in-memory pub/sub service (Story 1376).
+    pub fn in_memory() -> Self {
+        let instance_id = Uuid::new_v4().to_string();
+        Self {
+            inner: PubSubBackend::InMemory(Arc::new(InMemoryBroker::new())),
+            instance_id,
+        }
+    }
+
+    /// Create with an explicit in-memory broker (Story 1376).
+    /// Use this to share a broker between multiple service instances (e.g. publisher and observer).
+    pub fn with_broker(broker: Arc<InMemoryBroker>) -> Self {
+        let instance_id = Uuid::new_v4().to_string();
+        Self {
+            inner: PubSubBackend::InMemory(broker),
             instance_id,
         }
     }
@@ -684,7 +749,7 @@ impl PubSubService {
     /// Create with a custom instance ID.
     pub fn with_instance_id(client: RedisClient, instance_id: impl Into<String>) -> Self {
         Self {
-            client,
+            inner: PubSubBackend::Redis(client),
             instance_id: instance_id.into(),
         }
     }
@@ -702,11 +767,19 @@ impl PubSubService {
             ..message
         };
 
-        let serialized = serde_json::to_string(&message_with_source)
-            .map_err(|e| CacheError::Serialization(e.to_string()))?;
+        match &self.inner {
+            PubSubBackend::Redis(client) => {
+                let serialized = serde_json::to_string(&message_with_source)
+                    .map_err(|e| CacheError::Serialization(e.to_string()))?;
 
-        let mut conn = self.client.connection_manager.clone();
-        let _: () = conn.publish(&full_channel, &serialized).await?;
+                let mut conn = client.connection_manager.clone();
+                let _: () = conn.publish(&full_channel, &serialized).await?;
+            }
+            PubSubBackend::InMemory(broker) => {
+                let tx = broker.get_sender(channel).await;
+                let _ = tx.send(message_with_source.clone());
+            }
+        }
 
         tracing::debug!(
             channel = %full_channel,
@@ -741,52 +814,73 @@ impl PubSubService {
     ) -> Result<broadcast::Receiver<PubSubMessage>, CacheError> {
         let full_channel = self.build_channel(channel);
         let instance_id = self.instance_id.clone();
-        let url = self.client.config.url.clone();
 
-        // Create a broadcast channel for distributing messages
-        let (tx, rx) = broadcast::channel::<PubSubMessage>(100);
+        match &self.inner {
+            PubSubBackend::Redis(client) => {
+                let url = client.config.url.clone();
 
-        // Create a new client for subscription (pub/sub requires dedicated connection)
-        let client = RedisClientInner::open(url.as_str())
-            .map_err(|e| CacheError::Connection(format!("Failed to create client: {}", e)))?;
+                // Create a broadcast channel for distributing messages
+                let (tx, rx) = broadcast::channel::<PubSubMessage>(100);
 
-        let mut pubsub = client
-            .get_async_pubsub()
-            .await
-            .map_err(|e| CacheError::Connection(format!("Failed to get connection: {}", e)))?;
+                // Create a new client for subscription (pub/sub requires dedicated connection)
+                let client = RedisClientInner::open(url.as_str())
+                    .map_err(|e| CacheError::Connection(format!("Failed to create client: {}", e)))?;
 
-        pubsub
-            .subscribe(&full_channel)
-            .await
-            .map_err(|e| CacheError::PubSub(format!("Subscribe failed: {}", e)))?;
+                let mut pubsub = client
+                    .get_async_pubsub()
+                    .await
+                    .map_err(|e| CacheError::Connection(format!("Failed to get connection: {}", e)))?;
 
-        tracing::info!(channel = %full_channel, "Subscribed to channel");
+                pubsub
+                    .subscribe(&full_channel)
+                    .await
+                    .map_err(|e| CacheError::PubSub(format!("Subscribe failed: {}", e)))?;
 
-        // Spawn a task to forward messages
-        let span_channel = full_channel.clone();
-        tokio::spawn(
-            async move {
-                let mut pubsub_stream = pubsub.into_on_message();
+                tracing::info!(channel = %full_channel, "Subscribed to channel");
 
-                while let Some(msg) = futures_lite::StreamExt::next(&mut pubsub_stream).await {
-                    let payload: Result<String, RedisError> = msg.get_payload();
-                    if let Ok(payload) = payload {
-                        if let Ok(message) = serde_json::from_str::<PubSubMessage>(&payload) {
-                            // Filter out messages from same instance
-                            if message.source_instance.as_ref() != Some(&instance_id) {
-                                let _ = tx.send(message);
+                // Spawn a task to forward messages
+                let span_channel = full_channel.clone();
+                tokio::spawn(
+                    async move {
+                        let mut pubsub_stream = pubsub.into_on_message();
+
+                        while let Some(msg) = futures_lite::StreamExt::next(&mut pubsub_stream).await {
+                            let payload: Result<String, RedisError> = msg.get_payload();
+                            if let Ok(payload) = payload {
+                                if let Ok(message) = serde_json::from_str::<PubSubMessage>(&payload) {
+                                    // Filter out messages from same instance
+                                    if message.source_instance.as_ref() != Some(&instance_id) {
+                                        let _ = tx.send(message);
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
-            .instrument(tracing::info_span!(
-                "bg.redis_pubsub",
-                channel = %span_channel,
-            )),
-        );
+                    .instrument(tracing::info_span!(
+                        "bg.redis_pubsub",
+                        channel = %span_channel,
+                    )),
+                );
 
-        Ok(rx)
+                Ok(rx)
+            }
+            PubSubBackend::InMemory(broker) => {
+                let tx = broker.get_sender(channel).await;
+                let mut rx = tx.subscribe();
+                let (filtered_tx, filtered_rx) = broadcast::channel(100);
+
+                tokio::spawn(async move {
+                    while let Ok(message) = rx.recv().await {
+                        // Filter out messages from same instance
+                        if message.source_instance.as_ref() != Some(&instance_id) {
+                            let _ = filtered_tx.send(message);
+                        }
+                    }
+                });
+
+                Ok(filtered_rx)
+            }
+        }
     }
 
     /// Broadcast cache invalidation (Story 103.4).

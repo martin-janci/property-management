@@ -754,3 +754,91 @@ async fn preference_update_publishes_realtime_event(pool: PgPool) {
         "S4: a different user's channel must not receive this preference.updated event"
     );
 }
+
+// ============================================================================
+// S12 — (CI Coverage) preference update publishes realtime event via in-memory
+// ============================================================================
+
+/// CI-runnable version of S4: exercises the publish leg using an in-memory
+/// broker instead of a real Redis. Proves the event is published to the
+/// correct channel with the correct payload (Story 1376).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn preference_update_publishes_realtime_event_in_memory(pool: PgPool) {
+    use integrations::{PubSubService, InMemoryBroker};
+    use std::sync::Arc;
+    use tokio::time::{timeout, Duration};
+
+    // Shared in-memory broker for publisher and observer.
+    let broker = Arc::new(InMemoryBroker::new());
+
+    // Build a TestApp with the in-memory pubsub service.
+    let app = {
+        use api_server::services::{EmailService, JwtService};
+        use api_server::state::AppState;
+
+        let config = common::TestConfig::default();
+        let _ = TestApp::new(pool.clone()).await;
+
+        let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
+        let jwt_service = JwtService::new(&config.jwt_secret).unwrap();
+        let tenant_cache = Arc::new(api_core::middleware::TenantResolutionCache::new(
+            300, 30, 10_000,
+        ));
+        let tenant_rate_limiters =
+            Arc::new(api_core::middleware::TenantRateLimiterSet::new());
+        let state = AppState::new(
+            pool.clone(),
+            email_service,
+            jwt_service,
+            tenant_cache,
+            tenant_rate_limiters,
+        )
+        .with_pubsub(PubSubService::with_broker(broker.clone()));
+
+        let router =
+            api_server::create_router(state).layer(axum::extract::connect_info::MockConnectInfo(
+                std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
+            ));
+        TestApp {
+            router,
+            pool: pool.clone(),
+            config,
+        }
+    };
+
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s12").await;
+
+    // Resolve user id.
+    let user_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = ")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("lookup user id");
+
+    // Independent observer using the SAME broker but a DIFFERENT instance_id
+    // (PubSubService::with_broker generates a new instance_id).
+    let observer = PubSubService::with_broker(broker.clone());
+    let mut rx = observer
+        .subscribe(&format!("notifications:{user_id}"))
+        .await
+        .expect("subscribe");
+
+    // Disable the email channel.
+    let session = app.session(access_token, org);
+    let req = session
+        .patch("/api/v1/users/me/notification-preferences/email")
+        .json(json!({ "enabled": false, "confirmDisableAll": false }))
+        .build();
+    app.execute(req).await.assert_status(StatusCode::OK);
+
+    // The observer must receive the event.
+    let received = timeout(Duration::from_secs(1), rx.recv())
+        .await
+        .expect("preference.updated must arrive")
+        .expect("message should be present");
+
+    assert_eq!(received.event_type, "preference.updated");
+    assert_eq!(received.payload["channel"], json!("email"));
+    assert_eq!(received.payload["enabled"], json!(false));
+}
