@@ -248,3 +248,73 @@ async fn recipients_only_update_preserves_cron_and_time(pool: PgPool) {
         body
     );
 }
+
+// ---------------------------------------------------------------------------
+// Test 3 — validator drift guard: known-valid expressions round-trip unchanged
+// ---------------------------------------------------------------------------
+
+/// Guard against `validate_cron_expression` drift (GH #1368).
+///
+/// Seeds a schedule with each expression from the canonical valid set, then
+/// uses a recipients-only PUT (which triggers the SELECT projection) to read
+/// it back and confirms read == write.  The test fails if:
+///
+/// - the validator rejects an expression it previously accepted (PUT → 400), or
+/// - the SELECT projection drops / transforms `cron_expression` (read ≠ write).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn cron_validator_round_trip_stable(pool: PgPool) {
+    // Canonical set taken from the validate_cron_expression unit tests in
+    // reports.rs.  If the validator is tightened so that any of these become
+    // invalid, the recipients-only PUT will 400 and this test fails — surfacing
+    // the drift before it hits production.
+    let expressions = [
+        "* * * * *",
+        "0 8 * * 1",
+        "0,30 9-17 1-31 1-12 0-7",
+        "*/5 * * * *",
+        "59 23 31 12 7",
+    ];
+
+    let app = TestApp::new(pool.clone()).await;
+    let manager = TestUser::new();
+    let (access_token, _) = create_authenticated_user(&app, &manager).await;
+
+    for expr in expressions {
+        let org = seed_org(&pool, &format!("cron-drift-{}", expr.replace(' ', "-"))).await;
+        let schedule = seed_schedule_hhmm(&pool, org).await;
+
+        sqlx::query("UPDATE report_schedules SET cron_expression = $1 WHERE id = $2")
+            .bind(expr)
+            .bind(schedule)
+            .execute(&pool)
+            .await
+            .expect("seed cron_expression for drift guard");
+
+        let manager_user_id = user_id_for(&pool, &manager.email).await;
+        seed_membership(&pool, org, manager_user_id, "manager").await;
+
+        let response = app
+            .execute(put_schedule_req(
+                schedule,
+                &access_token,
+                org,
+                serde_json::json!({ "recipients": ["drift-guard@cron.test"] }),
+            ))
+            .await;
+
+        assert_eq!(
+            response.status,
+            StatusCode::OK,
+            "#1368 drift guard: PUT with cron_expression={expr:?} must succeed (validator may have drifted), body={}",
+            response.text()
+        );
+
+        let body: serde_json::Value = response.json_value();
+        assert_eq!(
+            body.get("cron_expression").and_then(|c| c.as_str()),
+            Some(expr),
+            "#1368 drift guard: read != write for cron_expression={expr:?} — SELECT projection may have drifted, body={}",
+            body
+        );
+    }
+}
