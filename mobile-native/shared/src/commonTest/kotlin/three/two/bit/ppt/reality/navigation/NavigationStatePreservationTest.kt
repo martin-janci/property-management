@@ -22,11 +22,11 @@ import kotlin.test.assertTrue
  *
  * The Compose `navigate { ... }` lambda itself needs the Android `NavController` (and therefore an
  * instrumented test) to exercise, but the *correctness of state preservation* lives entirely in
- * which option flags are set. By pinning those flags in framework-free [DeepLinkRouter.TabNavOptions]
- * the graph consumes, this JVM unit test proves the contract without ADB:
- *
- * - `saveState`/`restoreState` true ⇒ a tab the user drilled into is restored when re-selected
- *   (the AC-4 requirement).
+ * which option flags are set. By pinning those flags in framework-free
+ * [DeepLinkRouter.TabNavOptions] the graph consumes, this JVM unit test proves the contract without
+ * ADB:
+ * - `saveState`/`restoreState` true ⇒ a tab the user drilled into is restored when re-selected (the
+ *   AC-4 requirement).
  * - `popUpTo(home)` ⇒ each tab is a single saved sub-stack rooted at the start destination, so the
  *   back stack can't grow unbounded as the user hops tabs.
  * - `launchSingleTop` ⇒ re-tapping the current tab doesn't push a duplicate copy.
