@@ -429,6 +429,301 @@ pub mod ota_xml {
         }
     }
 
+    /// A single availability instruction parsed from an inbound
+    /// `OTA_HotelAvailNotifRQ` document.
+    ///
+    /// This is the inbound counterpart to [`build_avail_notif_rq`]: it reads a
+    /// channel-manager / partner push and reconstructs the typed
+    /// [`AvailStatusMessage`] values so the application can apply them. The
+    /// `hotel_code` is read from the enclosing `<AvailStatusMessages>` element.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct ParsedAvailNotif {
+        /// Hotel code from the `<AvailStatusMessages HotelCode="...">` wrapper.
+        pub hotel_code: String,
+        /// The availability instructions in document order.
+        pub messages: Vec<AvailStatusMessage>,
+    }
+
+    /// A single rate instruction parsed from an inbound
+    /// `OTA_HotelRateAmountNotifRQ` document.
+    ///
+    /// Inbound counterpart to [`build_rate_amount_notif_rq`].
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct ParsedRateAmount {
+        /// Room type / inventory code (`InvTypeCode`).
+        pub room_type_code: String,
+        /// Rate plan code (`RatePlanCode`); `None` when the tag omits it.
+        pub rate_plan_code: Option<String>,
+        /// Effective start date (`Start`).
+        pub start_date: NaiveDate,
+        /// Effective end date (`End`).
+        pub end_date: NaiveDate,
+        /// Amount after tax (`AmountAfterTax`).
+        pub amount: Decimal,
+        /// ISO-4217 currency code (`CurrencyCode`).
+        pub currency: String,
+    }
+
+    /// A `<RateAmountMessage>` list parsed from an inbound
+    /// `OTA_HotelRateAmountNotifRQ` document.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct ParsedRateNotif {
+        /// Hotel code from the `<RateAmountMessages HotelCode="...">` wrapper.
+        pub hotel_code: String,
+        /// The rate instructions in document order.
+        pub rates: Vec<ParsedRateAmount>,
+    }
+
+    /// Parse an inbound `OTA_HotelAvailNotifRQ` document into typed
+    /// [`AvailStatusMessage`] values.
+    ///
+    /// This is the streaming, namespace-aware inverse of
+    /// [`build_avail_notif_rq`]. Each `<AvailStatusMessage>` contributes one
+    /// [`AvailStatusMessage`]:
+    /// - `BookingLimit` attribute → `booking_limit` (defaults to `0`).
+    /// - `<StatusApplicationControl>` → `start_date`/`end_date`/`room_type_code`/
+    ///   `rate_plan_code`. A missing/blank `RatePlanCode` parses to `None`.
+    /// - `<RestrictionStatus Status="...">` → `status` (defaults to `"Open"`).
+    /// - `<LengthsOfStay MinStay=".." MaxStay="..">` → `los_restrictions`
+    ///   (only present when at least one of the bounds is given).
+    ///
+    /// Returns [`BookingError::InvalidMessage`] when a `Start`/`End` date is
+    /// present but not a valid `YYYY-MM-DD` value.
+    pub fn parse_avail_notif_rq(xml: &str) -> Result<ParsedAvailNotif, BookingError> {
+        let mut reader = Reader::from_str(xml);
+        reader.config_mut().trim_text(true);
+
+        let mut hotel_code = String::new();
+        let mut messages = Vec::new();
+
+        // Fields accumulated for the message currently being built.
+        let mut cur: Option<PartialAvail> = None;
+
+        loop {
+            match reader.read_event() {
+                Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
+                    let name = e.name().into_inner().to_vec();
+                    match local_name(&name) {
+                        "AvailStatusMessages" => {
+                            if let Some(v) = attr_value(e, "HotelCode") {
+                                hotel_code = v;
+                            }
+                        }
+                        "AvailStatusMessage" => {
+                            cur = Some(PartialAvail {
+                                booking_limit: attr_value(e, "BookingLimit")
+                                    .and_then(|s| s.parse().ok())
+                                    .unwrap_or(0),
+                                ..PartialAvail::default()
+                            });
+                        }
+                        "StatusApplicationControl" => {
+                            if let Some(c) = cur.as_mut() {
+                                c.start_date = Some(parse_ota_date(e, "Start")?);
+                                c.end_date = Some(parse_ota_date(e, "End")?);
+                                c.room_type_code = attr_value(e, "InvTypeCode").unwrap_or_default();
+                                c.rate_plan_code =
+                                    attr_value(e, "RatePlanCode").filter(|s| !s.is_empty());
+                            }
+                        }
+                        "RestrictionStatus" => {
+                            if let Some(c) = cur.as_mut() {
+                                if let Some(s) = attr_value(e, "Status") {
+                                    c.status = s;
+                                }
+                            }
+                        }
+                        "LengthsOfStay" => {
+                            if let Some(c) = cur.as_mut() {
+                                let min = attr_value(e, "MinStay").and_then(|s| s.parse().ok());
+                                let max = attr_value(e, "MaxStay").and_then(|s| s.parse().ok());
+                                if min.is_some() || max.is_some() {
+                                    c.los = Some(super::LosRestrictions {
+                                        min_los: min,
+                                        max_los: max,
+                                    });
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                Ok(Event::End(ref e)) => {
+                    let name = e.name().into_inner().to_vec();
+                    if local_name(&name) == "AvailStatusMessage" {
+                        if let Some(c) = cur.take() {
+                            messages.push(c.into_message());
+                        }
+                    }
+                }
+                Ok(Event::Eof) => break,
+                Err(e) => return Err(BookingError::Xml(e.to_string())),
+                _ => {}
+            }
+        }
+
+        Ok(ParsedAvailNotif {
+            hotel_code,
+            messages,
+        })
+    }
+
+    /// Parse an inbound `OTA_HotelRateAmountNotifRQ` document into typed
+    /// [`ParsedRateAmount`] values.
+    ///
+    /// Streaming, namespace-aware inverse of [`build_rate_amount_notif_rq`].
+    /// Each `<RateAmountMessage>` contributes one [`ParsedRateAmount`] built
+    /// from its `<StatusApplicationControl>` (dates + codes) and the first
+    /// `<BaseByGuestAmt>` (`AmountAfterTax` + `CurrencyCode`).
+    ///
+    /// Returns [`BookingError::InvalidMessage`] when a `Start`/`End` date is
+    /// malformed, or when `AmountAfterTax` is present but not a valid decimal.
+    pub fn parse_rate_amount_notif_rq(xml: &str) -> Result<ParsedRateNotif, BookingError> {
+        let mut reader = Reader::from_str(xml);
+        reader.config_mut().trim_text(true);
+
+        let mut hotel_code = String::new();
+        let mut rates = Vec::new();
+        let mut cur: Option<PartialRate> = None;
+
+        loop {
+            match reader.read_event() {
+                Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
+                    let name = e.name().into_inner().to_vec();
+                    match local_name(&name) {
+                        "RateAmountMessages" => {
+                            if let Some(v) = attr_value(e, "HotelCode") {
+                                hotel_code = v;
+                            }
+                        }
+                        "RateAmountMessage" => {
+                            cur = Some(PartialRate::default());
+                        }
+                        "StatusApplicationControl" => {
+                            if let Some(c) = cur.as_mut() {
+                                c.start_date = Some(parse_ota_date(e, "Start")?);
+                                c.end_date = Some(parse_ota_date(e, "End")?);
+                                c.room_type_code = attr_value(e, "InvTypeCode").unwrap_or_default();
+                                c.rate_plan_code =
+                                    attr_value(e, "RatePlanCode").filter(|s| !s.is_empty());
+                            }
+                        }
+                        "BaseByGuestAmt" => {
+                            if let Some(c) = cur.as_mut() {
+                                // Only the first BaseByGuestAmt seeds the amount.
+                                if c.amount.is_none() {
+                                    if let Some(raw) = attr_value(e, "AmountAfterTax")
+                                        .or_else(|| attr_value(e, "AmountBeforeTax"))
+                                    {
+                                        let amt = raw.parse::<Decimal>().map_err(|_| {
+                                            BookingError::InvalidMessage(format!(
+                                                "invalid rate amount: {raw}"
+                                            ))
+                                        })?;
+                                        c.amount = Some(amt);
+                                    }
+                                    if let Some(cc) = attr_value(e, "CurrencyCode") {
+                                        c.currency = cc;
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                Ok(Event::End(ref e)) => {
+                    let name = e.name().into_inner().to_vec();
+                    if local_name(&name) == "RateAmountMessage" {
+                        if let Some(c) = cur.take() {
+                            rates.push(c.into_rate());
+                        }
+                    }
+                }
+                Ok(Event::Eof) => break,
+                Err(e) => return Err(BookingError::Xml(e.to_string())),
+                _ => {}
+            }
+        }
+
+        Ok(ParsedRateNotif { hotel_code, rates })
+    }
+
+    /// Read an OTA date attribute (`YYYY-MM-DD`) from a start/empty tag.
+    ///
+    /// A missing attribute yields the Unix epoch (`1970-01-01`) so partial
+    /// documents still parse; a *present but malformed* value is a hard error.
+    fn parse_ota_date(
+        e: &quick_xml::events::BytesStart<'_>,
+        attr: &str,
+    ) -> Result<NaiveDate, BookingError> {
+        match attr_value(e, attr) {
+            Some(s) => NaiveDate::parse_from_str(&s, "%Y-%m-%d").map_err(|_| {
+                BookingError::InvalidMessage(format!("invalid OTA date in {attr}: {s}"))
+            }),
+            None => Ok(NaiveDate::from_ymd_opt(1970, 1, 1).expect("epoch is a valid date")),
+        }
+    }
+
+    /// Mutable accumulator for one `<AvailStatusMessage>` while streaming.
+    #[derive(Default)]
+    struct PartialAvail {
+        booking_limit: i32,
+        room_type_code: String,
+        rate_plan_code: Option<String>,
+        start_date: Option<NaiveDate>,
+        end_date: Option<NaiveDate>,
+        status: String,
+        los: Option<super::LosRestrictions>,
+    }
+
+    impl PartialAvail {
+        fn into_message(self) -> AvailStatusMessage {
+            let epoch = NaiveDate::from_ymd_opt(1970, 1, 1).expect("epoch is a valid date");
+            AvailStatusMessage {
+                room_type_code: self.room_type_code,
+                rate_plan_code: self.rate_plan_code,
+                start_date: self.start_date.unwrap_or(epoch),
+                end_date: self.end_date.unwrap_or(epoch),
+                booking_limit: self.booking_limit,
+                status: if self.status.is_empty() {
+                    "Open".to_string()
+                } else {
+                    self.status
+                },
+                los_restrictions: self.los,
+            }
+        }
+    }
+
+    /// Mutable accumulator for one `<RateAmountMessage>` while streaming.
+    #[derive(Default)]
+    struct PartialRate {
+        room_type_code: String,
+        rate_plan_code: Option<String>,
+        start_date: Option<NaiveDate>,
+        end_date: Option<NaiveDate>,
+        amount: Option<Decimal>,
+        currency: String,
+    }
+
+    impl PartialRate {
+        fn into_rate(self) -> ParsedRateAmount {
+            let epoch = NaiveDate::from_ymd_opt(1970, 1, 1).expect("epoch is a valid date");
+            ParsedRateAmount {
+                room_type_code: self.room_type_code,
+                rate_plan_code: self.rate_plan_code,
+                start_date: self.start_date.unwrap_or(epoch),
+                end_date: self.end_date.unwrap_or(epoch),
+                amount: self.amount.unwrap_or(Decimal::ZERO),
+                currency: if self.currency.is_empty() {
+                    "EUR".to_string()
+                } else {
+                    self.currency
+                },
+            }
+        }
+    }
+
     // ------------------------------------------------------------------
     // Internal utilities
     // ------------------------------------------------------------------
@@ -752,6 +1047,232 @@ pub mod ota_xml {
             let xml = r#"<HotelReservationFoo ResStatus="Cancel"></HotelReservationFoo>"#;
             let notifs = parse_res_notif_rq_raw(xml).unwrap();
             assert_eq!(notifs.len(), 0, "must not match the longer element name");
+        }
+
+        // ----------------------------------------------------------------
+        // Inbound OTA_HotelAvailNotifRQ parsing
+        // ----------------------------------------------------------------
+
+        const SAMPLE_AVAIL_RQ: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <AvailStatusMessages HotelCode="H-12345">
+    <AvailStatusMessage BookingLimit="3" BookingLimitMessageType="SetLimit">
+      <StatusApplicationControl Start="2025-06-01" End="2025-06-05" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <RestrictionStatus Status="Open" Restriction="Master"/>
+    </AvailStatusMessage>
+    <AvailStatusMessage BookingLimit="0" BookingLimitMessageType="SetLimit">
+      <StatusApplicationControl Start="2025-07-01" End="2025-07-07" InvTypeCode="SGL"/>
+      <RestrictionStatus Status="Close" Restriction="Master"/>
+      <LengthsOfStay MinMaxMessageType="SetMinLOS" MinStay="2" MaxStay="14"/>
+    </AvailStatusMessage>
+  </AvailStatusMessages>
+</OTA_HotelAvailNotifRQ>"#;
+
+        #[test]
+        fn test_parse_avail_notif_rq_two_messages() {
+            let parsed = parse_avail_notif_rq(SAMPLE_AVAIL_RQ).unwrap();
+            assert_eq!(parsed.hotel_code, "H-12345");
+            assert_eq!(parsed.messages.len(), 2);
+
+            let first = &parsed.messages[0];
+            assert_eq!(first.room_type_code, "DBL");
+            assert_eq!(first.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(
+                first.start_date,
+                NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
+            );
+            assert_eq!(first.end_date, NaiveDate::from_ymd_opt(2025, 6, 5).unwrap());
+            assert_eq!(first.booking_limit, 3);
+            assert_eq!(first.status, "Open");
+            assert!(first.los_restrictions.is_none());
+
+            let second = &parsed.messages[1];
+            assert_eq!(second.room_type_code, "SGL");
+            // No RatePlanCode on the second message -> None.
+            assert_eq!(second.rate_plan_code, None);
+            assert_eq!(second.status, "Close");
+            assert_eq!(second.booking_limit, 0);
+            let los = second.los_restrictions.as_ref().expect("LOS present");
+            assert_eq!(los.min_los, Some(2));
+            assert_eq!(los.max_los, Some(14));
+        }
+
+        #[test]
+        fn test_avail_round_trip() {
+            // Build with the generator, parse with the new parser, expect the
+            // same logical content back.
+            let msgs = vec![
+                AvailStatusMessage {
+                    room_type_code: "DBL".to_string(),
+                    rate_plan_code: Some("STD".to_string()),
+                    start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                    end_date: NaiveDate::from_ymd_opt(2025, 6, 10).unwrap(),
+                    booking_limit: 5,
+                    status: "Open".to_string(),
+                    los_restrictions: None,
+                },
+                AvailStatusMessage {
+                    room_type_code: "SUITE".to_string(),
+                    // Use an explicit rate plan: build_avail_notif_rq defaults a
+                    // `None` rate_plan_code to "STD" on the wire, so only an
+                    // explicit code can round-trip losslessly. (The lossy-None
+                    // case is asserted separately below.)
+                    rate_plan_code: Some("NONREF".to_string()),
+                    start_date: NaiveDate::from_ymd_opt(2025, 8, 1).unwrap(),
+                    end_date: NaiveDate::from_ymd_opt(2025, 8, 3).unwrap(),
+                    booking_limit: 0,
+                    status: "Close".to_string(),
+                    los_restrictions: Some(LosRestrictions {
+                        min_los: Some(3),
+                        max_los: None,
+                    }),
+                },
+            ];
+            let xml = build_avail_notif_rq("H-RT", &msgs).unwrap();
+            let parsed = parse_avail_notif_rq(&xml).unwrap();
+            assert_eq!(parsed.hotel_code, "H-RT");
+            assert_eq!(parsed.messages, msgs, "round-trip must preserve messages");
+        }
+
+        #[test]
+        fn test_avail_none_rate_plan_defaults_to_std_on_wire() {
+            // Documents the generator's lossy default: a `None` rate_plan_code
+            // is serialized as RatePlanCode="STD", so it parses back as
+            // Some("STD") rather than None.
+            let msgs = vec![AvailStatusMessage {
+                room_type_code: "DBL".to_string(),
+                rate_plan_code: None,
+                start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                end_date: NaiveDate::from_ymd_opt(2025, 6, 2).unwrap(),
+                booking_limit: 1,
+                status: "Open".to_string(),
+                los_restrictions: None,
+            }];
+            let xml = build_avail_notif_rq("H-DEF", &msgs).unwrap();
+            let parsed = parse_avail_notif_rq(&xml).unwrap();
+            assert_eq!(parsed.messages[0].rate_plan_code.as_deref(), Some("STD"));
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_malformed_date_errors() {
+            let xml = r#"<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="H1">
+    <AvailStatusMessage BookingLimit="1">
+      <StatusApplicationControl Start="not-a-date" End="2025-06-05" InvTypeCode="DBL"/>
+      <RestrictionStatus Status="Open"/>
+    </AvailStatusMessage>
+  </AvailStatusMessages>
+</OTA_HotelAvailNotifRQ>"#;
+            let err = parse_avail_notif_rq(xml).unwrap_err();
+            assert!(
+                matches!(err, BookingError::InvalidMessage(_)),
+                "malformed Start date must be InvalidMessage, got {err:?}"
+            );
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_empty_is_ok() {
+            let xml = r#"<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="H-EMPTY"/>
+</OTA_HotelAvailNotifRQ>"#;
+            let parsed = parse_avail_notif_rq(xml).unwrap();
+            assert_eq!(parsed.hotel_code, "H-EMPTY");
+            assert!(parsed.messages.is_empty());
+        }
+
+        // ----------------------------------------------------------------
+        // Inbound OTA_HotelRateAmountNotifRQ parsing
+        // ----------------------------------------------------------------
+
+        const SAMPLE_RATE_RQ: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <RateAmountMessages HotelCode="H-999">
+    <RateAmountMessage>
+      <StatusApplicationControl Start="2025-08-01" End="2025-08-31" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <Rates>
+        <Rate>
+          <BaseByGuestAmts>
+            <BaseByGuestAmt AmountAfterTax="120.50" CurrencyCode="EUR"/>
+          </BaseByGuestAmts>
+        </Rate>
+      </Rates>
+    </RateAmountMessage>
+    <RateAmountMessage>
+      <StatusApplicationControl Start="2025-09-01" End="2025-09-30" InvTypeCode="SGL" RatePlanCode="NONREF"/>
+      <Rates>
+        <Rate>
+          <BaseByGuestAmts>
+            <BaseByGuestAmt AmountAfterTax="89.00" CurrencyCode="USD"/>
+          </BaseByGuestAmts>
+        </Rate>
+      </Rates>
+    </RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+
+        #[test]
+        fn test_parse_rate_amount_notif_rq_two_messages() {
+            let parsed = parse_rate_amount_notif_rq(SAMPLE_RATE_RQ).unwrap();
+            assert_eq!(parsed.hotel_code, "H-999");
+            assert_eq!(parsed.rates.len(), 2);
+
+            let first = &parsed.rates[0];
+            assert_eq!(first.room_type_code, "DBL");
+            assert_eq!(first.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(
+                first.start_date,
+                NaiveDate::from_ymd_opt(2025, 8, 1).unwrap()
+            );
+            assert_eq!(
+                first.end_date,
+                NaiveDate::from_ymd_opt(2025, 8, 31).unwrap()
+            );
+            assert_eq!(first.amount, "120.50".parse::<Decimal>().unwrap());
+            assert_eq!(first.currency, "EUR");
+
+            let second = &parsed.rates[1];
+            assert_eq!(second.room_type_code, "SGL");
+            assert_eq!(second.amount, "89.00".parse::<Decimal>().unwrap());
+            assert_eq!(second.currency, "USD");
+        }
+
+        #[test]
+        fn test_rate_round_trip() {
+            let d1 = NaiveDate::from_ymd_opt(2025, 8, 1).unwrap();
+            let d2 = NaiveDate::from_ymd_opt(2025, 8, 31).unwrap();
+            let rate: Decimal = "199.99".parse().unwrap();
+            let updates = vec![(d1, d2, "DBL", "STD", &rate, "EUR")];
+            let xml = build_rate_amount_notif_rq("H-RT2", &updates).unwrap();
+
+            let parsed = parse_rate_amount_notif_rq(&xml).unwrap();
+            assert_eq!(parsed.hotel_code, "H-RT2");
+            assert_eq!(parsed.rates.len(), 1);
+            let r = &parsed.rates[0];
+            assert_eq!(r.room_type_code, "DBL");
+            assert_eq!(r.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(r.start_date, d1);
+            assert_eq!(r.end_date, d2);
+            assert_eq!(r.amount, rate);
+            assert_eq!(r.currency, "EUR");
+        }
+
+        #[test]
+        fn test_parse_rate_amount_notif_rq_bad_amount_errors() {
+            let xml = r#"<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="H1">
+    <RateAmountMessage>
+      <StatusApplicationControl Start="2025-08-01" End="2025-08-02" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <Rates><Rate><BaseByGuestAmts>
+        <BaseByGuestAmt AmountAfterTax="not-a-number" CurrencyCode="EUR"/>
+      </BaseByGuestAmts></Rate></Rates>
+    </RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+            let err = parse_rate_amount_notif_rq(xml).unwrap_err();
+            assert!(
+                matches!(err, BookingError::InvalidMessage(_)),
+                "bad amount must be InvalidMessage, got {err:?}"
+            );
         }
     }
 }
@@ -1433,7 +1954,7 @@ pub struct OtaHotelAvailNotifRQ {
 }
 
 /// Availability status message.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AvailStatusMessage {
     /// Room type code.
     pub room_type_code: String,
@@ -1452,7 +1973,7 @@ pub struct AvailStatusMessage {
 }
 
 /// Length of stay restrictions.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LosRestrictions {
     /// Minimum stay.
     pub min_los: Option<i32>,

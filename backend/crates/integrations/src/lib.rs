@@ -47,6 +47,10 @@ pub use airbnb::{
 };
 
 // Story 83.2: Booking.com Integration
+pub use booking::ota_xml::{
+    parse_avail_notif_rq, parse_rate_amount_notif_rq, ParsedAvailNotif, ParsedRateAmount,
+    ParsedRateNotif,
+};
 pub use booking::{
     map_reservation_status as map_booking_status, AvailStatusMessage, AvailabilityUpdate,
     BookingAddress, BookingClient, BookingContact, BookingCredentials, BookingError, BookingGuest,
