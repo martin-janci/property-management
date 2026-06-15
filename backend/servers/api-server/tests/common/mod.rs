@@ -232,13 +232,13 @@ impl TestApp {
 /// token and the `X-Tenant-ID` header, preventing "forgotten header" bugs in
 /// RLS-aware integration tests.
 pub struct AuthenticatedSession<'a> {
-    app: 'a TestApp,
+    app: &'a TestApp,
     token: String,
     org_id: Uuid,
 }
 
 impl<'a> AuthenticatedSession<'a> {
-    pub fn new(app: 'a TestApp, token: String, org_id: Uuid) -> Self {
+    pub fn new(app: &'a TestApp, token: String, org_id: Uuid) -> Self {
         Self { app, token, org_id }
     }
 
@@ -308,6 +308,11 @@ impl RequestBuilder {
     pub fn header(mut self, name: &str, value: &str) -> Self {
         self.headers.push((name.to_string(), value.to_string()));
         self
+    }
+
+    /// Add X-Tenant-ID header.
+    pub fn tenant(self, org_id: Uuid) -> Self {
+        self.header("X-Tenant-ID", &org_id.to_string())
     }
 
     /// Build the request.
