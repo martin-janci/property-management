@@ -54,13 +54,15 @@ fn select_winner(option_results: &[OptionResult]) -> Option<Uuid> {
         .max_by(|a, b| {
             a.weighted_count
                 .partial_cmp(&b.weighted_count)
-                .unwrap_or_else(|| match (a.weighted_count.is_nan(), b.weighted_count.is_nan()) {
-                    // Treat NaN as the smallest value so a real number always wins.
-                    (true, false) => std::cmp::Ordering::Less,
-                    (false, true) => std::cmp::Ordering::Greater,
-                    // NaN vs NaN (or any other unorderable pair): keep stable.
-                    _ => std::cmp::Ordering::Equal,
-                })
+                .unwrap_or_else(
+                    || match (a.weighted_count.is_nan(), b.weighted_count.is_nan()) {
+                        // Treat NaN as the smallest value so a real number always wins.
+                        (true, false) => std::cmp::Ordering::Less,
+                        (false, true) => std::cmp::Ordering::Greater,
+                        // NaN vs NaN (or any other unorderable pair): keep stable.
+                        _ => std::cmp::Ordering::Equal,
+                    },
+                )
         })
         .map(|r| r.option_id)
 }

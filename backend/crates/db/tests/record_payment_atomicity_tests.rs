@@ -188,7 +188,11 @@ async fn sequential_payments_accumulate_and_mark_paid(pool: PgPool) {
         .expect("query ok")
         .expect("action exists");
 
-    assert_eq!(payments_count(&pool, action_id).await, 2, "both rows persisted");
+    assert_eq!(
+        payments_count(&pool, action_id).await,
+        2,
+        "both rows persisted"
+    );
     assert_eq!(
         action.paid_amount,
         Some(Decimal::new(10000, 2)),
@@ -257,7 +261,10 @@ async fn concurrent_payments_accumulate_without_lost_update(pool: PgPool) {
 
     // 2. Ledger ground truth equals the intended total.
     let ledger = payments_sum(&pool, action_id).await;
-    assert_eq!(ledger, expected_total, "fine_payments ledger == {expected_total}");
+    assert_eq!(
+        ledger, expected_total,
+        "fine_payments ledger == {expected_total}"
+    );
 
     // 3. The crux: the denormalised aggregate must equal the ledger. A lost
     //    update from the non-transactional read-modify-write shows up here as
