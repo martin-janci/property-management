@@ -40,6 +40,20 @@
 //! | S10 | no | A disable→enable round-trip on the same channel converges back to enabled (the *update transition* restoring state, distinct from S6's redundant enable of an already-on channel). |
 //! | S11 | no | Disabling the last enabled channel **with** `confirmDisableAll:true` returns 200 and surfaces the `allDisabledWarning` — the confirmed disable-all path the 409 in S3 guards, proving the update succeeds and the warning rides the response. |
 //!
+//! Coverage 8a-3 (publish contract, CI-executable) — the publish/delivery leg
+//! is the actual point of the #480–#487 / 8a-3 cluster, but the only test that
+//! asserted an event was published (S4) is `#[ignore]`d and Redis-gated, so it
+//! never ran in CI: a regression that silently dropped the `if let Some(pubsub)`
+//! publish (or changed the channel name / `{channel, enabled}` payload shape)
+//! would pass every CI-executed test (issue #1376). S12–S13 close that gap by
+//! installing a `PreferenceEventRecorder` (via `TestApp::with_recording_pubsub`)
+//! that captures what the handler would publish — no live Redis required:
+//!
+//! | Case | Requires Redis | Asserts |
+//! |------|----------------|---------|
+//! | S12 | no | A successful PATCH records **exactly one** `preference.updated` event on `notifications:{user_id}` with payload `{channel, enabled}` echoing the patched channel and new state — the publish contract S4 proves over real Redis, now assertable in CI. |
+//! | S13 | no | A 409-rejected unconfirmed disable-all records **nothing** — the publish point sits after the disable-all guard, so a rejected change never emits a spurious `preference.updated` (the CI-executable mirror of S3's intent at the publish layer). |
+//!
 //! The no-Redis cases run in CI (the default `AppState` has `pubsub_service =
 //! None`). The Redis case mirrors the `#[ignore]` style of the fanout test in
 //! `ws_integration_tests.rs` — run locally with:
@@ -433,10 +447,17 @@ async fn fresh_user_has_all_channels_enabled_by_default(pool: PgPool) {
         );
     }
     // All channels enabled ⇒ no all-disabled warning on the create-leg snapshot.
+    // The key MUST be present (emitted as explicit JSON null) — `is_some()`
+    // distinguishes an emitted-but-null key from an absent one, which a bare
+    // `== json!(null)` cannot (serde_json missing-index also yields Null).
+    // (issue #1376, secondary finding.)
+    let warning = body
+        .get("allDisabledWarning")
+        .expect("S8: allDisabledWarning key must be present (emitted as null), not absent");
     assert_eq!(
-        body["allDisabledWarning"],
-        json!(null),
-        "S8: a fresh user with all channels enabled must carry no all-disabled warning"
+        warning,
+        &json!(null),
+        "S8: a fresh user with all channels enabled must carry a null all-disabled warning"
     );
 }
 
@@ -612,6 +633,127 @@ async fn confirmed_disable_all_succeeds_with_warning(pool: PgPool) {
     assert!(
         all_disabled,
         "S11: after a confirmed disable-all every channel must be persisted as disabled"
+    );
+}
+
+// ============================================================================
+// S12 — publish contract (CI): a PATCH records exactly one preference.updated
+// ============================================================================
+
+/// The CI-executable mirror of S4 (issue #1376). Instead of a live Redis, the
+/// app is built with a `PreferenceEventRecorder` that captures every event the
+/// handler would publish. A successful PATCH must record **exactly one**
+/// `preference.updated` event, on `notifications:{user_id}`, with the
+/// `{channel, enabled}` payload echoing the patched channel and its new state —
+/// proving the publish leg fires with the right channel, event type, and
+/// payload shape. A regression that drops the publish or changes the channel
+/// name / payload would now fail in CI rather than silently passing.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn patch_publishes_preference_updated_event(pool: PgPool) {
+    let (app, recorder) = TestApp::with_recording_pubsub(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s12").await;
+
+    // Resolve the user's id so we can assert the target channel name.
+    let user_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("lookup user id");
+
+    // Disable email — push + in_app stay enabled, so this is not a disable-all.
+    let req = app
+        .patch("/api/v1/users/me/notification-preferences/email")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .json(json!({ "enabled": false, "confirmDisableAll": false }))
+        .build();
+    app.execute(req).await.assert_status(StatusCode::OK);
+
+    let events = recorder.drain();
+    assert_eq!(
+        events.len(),
+        1,
+        "S12: a successful PATCH must record exactly one preference.updated event (got {})",
+        events.len()
+    );
+    let event = &events[0];
+    assert_eq!(
+        event.channel,
+        format!("notifications:{user_id}"),
+        "S12: the event must target the user's notifications channel"
+    );
+    assert_eq!(
+        event.event_type, "preference.updated",
+        "S12: the event type must be preference.updated"
+    );
+    assert_eq!(
+        event.payload["channel"],
+        json!("email"),
+        "S12: payload.channel must echo the patched channel"
+    );
+    assert_eq!(
+        event.payload["enabled"],
+        json!(false),
+        "S12: payload.enabled must echo the new state"
+    );
+}
+
+// ============================================================================
+// S13 — publish contract (CI): a 409-rejected disable-all records nothing
+// ============================================================================
+
+/// The CI-executable mirror of S3's intent at the publish layer (issue #1376).
+/// The publish point sits *after* the "would disable all" guard, so an
+/// unconfirmed last-channel disable that is rejected with 409 must never reach
+/// the recorder: zero `preference.updated` events. This proves a rejected
+/// change can never emit a spurious realtime event — assertable in CI without
+/// Redis.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn rejected_disable_all_records_no_event(pool: PgPool) {
+    let (app, recorder) = TestApp::with_recording_pubsub(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s13").await;
+
+    // Disable email + push (each a legitimate publish) so in_app is the only
+    // enabled channel.
+    for channel in ["email", "push"] {
+        let req = app
+            .patch(&format!(
+                "/api/v1/users/me/notification-preferences/{channel}"
+            ))
+            .bearer(&access_token)
+            .header("X-Tenant-ID", &org.to_string())
+            .json(json!({ "enabled": false, "confirmDisableAll": false }))
+            .build();
+        app.execute(req).await.assert_status(StatusCode::OK);
+    }
+
+    // Drain the two legitimate publishes so the next assertion isolates the
+    // rejected attempt.
+    let pre = recorder.drain();
+    assert_eq!(
+        pre.len(),
+        2,
+        "S13: the two successful disables must each record one event (got {})",
+        pre.len()
+    );
+
+    // Disabling the last enabled channel without confirmation must 409 — and
+    // must NOT record any event.
+    let req = app
+        .patch("/api/v1/users/me/notification-preferences/in_app")
+        .bearer(&access_token)
+        .header("X-Tenant-ID", &org.to_string())
+        .json(json!({ "enabled": false, "confirmDisableAll": false }))
+        .build();
+    app.execute(req).await.assert_status(StatusCode::CONFLICT);
+
+    let post = recorder.drain();
+    assert!(
+        post.is_empty(),
+        "S13: a 409-rejected disable-all must record no preference.updated event (got {})",
+        post.len()
     );
 }
 
