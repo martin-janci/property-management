@@ -563,7 +563,13 @@ async fn apply_template(
         .apply_threshold_template(rls.conn(), template_id, req.sensor_id)
         .await
         .map(|threshold| (StatusCode::CREATED, Json(serde_json::json!(threshold))))
-        .map_err(|e| insert_child_error("Failed to apply template", "Template or sensor not found", e));
+        .map_err(|e| {
+            insert_child_error(
+                "Failed to apply template",
+                "Template or sensor not found",
+                e,
+            )
+        });
     rls.release().await;
     out
 }

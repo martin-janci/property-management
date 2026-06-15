@@ -396,9 +396,7 @@ async fn reserve_fund_child_table_idor_blocked(pool: PgPool) {
     // Cleanup.
     set_ctx(&pool, None, None, true).await;
     for stmt in [
-        format!(
-            "REVOKE ALL ON reserve_funds, fund_contribution_schedules FROM \"{role}\""
-        ),
+        format!("REVOKE ALL ON reserve_funds, fund_contribution_schedules FROM \"{role}\""),
         format!("REVOKE ALL ON organizations FROM \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
