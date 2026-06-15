@@ -1295,7 +1295,10 @@ mod tests {
         // pins the no-client failure mode so a missing S3 client surfaces as a
         // typed StorageError rather than a panic.
         let service = StorageService::new(StorageConfig::new(
-            "b", "us-east-1", "AKIATEST", "secretkey",
+            "b",
+            "us-east-1",
+            "AKIATEST",
+            "secretkey",
         ));
         let err = service
             .generate_download_url("k", "k.pdf", "application/pdf", Some(300))
