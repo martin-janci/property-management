@@ -749,20 +749,24 @@ async fn update_form(
     let repo = &state.form_repo;
 
     // Check if form exists and is editable
-    let existing = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
-        tracing::error!("Failed to get form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
-        )
-    })?;
-
-    let existing = existing.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-        )
-    })?;
+    let existing = match repo.get(&mut **rls.conn(), org_id, id).await {
+        Ok(Some(existing)) => existing,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get form: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
+            ));
+        }
+    };
 
     if existing.status != form_status::DRAFT {
         rls.release().await;
@@ -898,16 +902,20 @@ async fn publish_form(
     let repo = &state.form_repo;
 
     // Check that form has at least one field
-    let fields = repo.get_fields(&mut **rls.conn(), id).await.map_err(|e| {
-        tracing::error!("Failed to get form fields: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "INTERNAL_ERROR",
-                "Failed to get form fields",
-            )),
-        )
-    })?;
+    let fields = match repo.get_fields(&mut **rls.conn(), id).await {
+        Ok(fields) => fields,
+        Err(e) => {
+            tracing::error!("Failed to get form fields: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to get form fields",
+                )),
+            ));
+        }
+    };
 
     if fields.is_empty() {
         rls.release().await;
@@ -1073,20 +1081,23 @@ async fn list_fields(
     let repo = &state.form_repo;
 
     // Verify form exists and user has access
-    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
-        tracing::error!("Failed to get form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
-        )
-    })?;
-
-    if form.is_none() {
-        rls.release().await;
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-        ));
+    match repo.get(&mut **rls.conn(), org_id, id).await {
+        Ok(Some(_)) => {}
+        Ok(None) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get form: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
+            ));
+        }
     }
 
     let out = repo
@@ -1141,20 +1152,24 @@ async fn add_field(
     let repo = &state.form_repo;
 
     // Verify form exists and is editable
-    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
-        tracing::error!("Failed to get form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
-        )
-    })?;
-
-    let form = form.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-        )
-    })?;
+    let form = match repo.get(&mut **rls.conn(), org_id, id).await {
+        Ok(Some(form)) => form,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get form: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
+            ));
+        }
+    };
 
     if form.status != form_status::DRAFT {
         rls.release().await;
@@ -1258,20 +1273,24 @@ async fn update_field(
     let repo = &state.form_repo;
 
     // Verify form exists and is editable
-    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
-        tracing::error!("Failed to get form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
-        )
-    })?;
-
-    let form = form.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-        )
-    })?;
+    let form = match repo.get(&mut **rls.conn(), org_id, id).await {
+        Ok(Some(form)) => form,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get form: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
+            ));
+        }
+    };
 
     if form.status != form_status::DRAFT {
         rls.release().await;
@@ -1365,20 +1384,24 @@ async fn delete_field(
     let repo = &state.form_repo;
 
     // Verify form exists and is editable
-    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
-        tracing::error!("Failed to get form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
-        )
-    })?;
-
-    let form = form.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-        )
-    })?;
+    let form = match repo.get(&mut **rls.conn(), org_id, id).await {
+        Ok(Some(form)) => form,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get form: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
+            ));
+        }
+    };
 
     if form.status != form_status::DRAFT {
         rls.release().await;
@@ -1446,20 +1469,24 @@ async fn reorder_fields(
     let repo = &state.form_repo;
 
     // Verify form exists and is editable
-    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
-        tracing::error!("Failed to get form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
-        )
-    })?;
-
-    let form = form.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-        )
-    })?;
+    let form = match repo.get(&mut **rls.conn(), org_id, id).await {
+        Ok(Some(form)) => form,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get form: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
+            ));
+        }
+    };
 
     if form.status != form_status::DRAFT {
         rls.release().await;
@@ -1542,22 +1569,24 @@ async fn submit_form(
     let repo = &state.form_repo;
 
     // Get form details
-    let form = repo
-        .get_with_details(rls.conn(), org_id, id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get form: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    let form = match repo.get_with_details(rls.conn(), org_id, id).await {
+        Ok(Some(form)) => form,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get form: {:?}", e);
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
+            ));
+        }
+    };
 
     // Verify form is published
     if form.form.status != form_status::PUBLISHED {
@@ -1573,19 +1602,20 @@ async fn submit_form(
 
     // Check if user already submitted and multiple submissions not allowed
     if !form.form.allow_multiple_submissions {
-        let has_submitted = repo
-            .has_user_submitted(&mut **rls.conn(), id, user_id)
-            .await
-            .map_err(|e| {
+        let has_submitted = match repo.has_user_submitted(&mut **rls.conn(), id, user_id).await {
+            Ok(has_submitted) => has_submitted,
+            Err(e) => {
                 tracing::error!("Failed to check submission: {:?}", e);
-                (
+                rls.release().await;
+                return Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ErrorResponse::new(
                         "INTERNAL_ERROR",
                         "Failed to check submission",
                     )),
-                )
-            })?;
+                ));
+            }
+        };
 
         if has_submitted {
             rls.release().await;
@@ -1914,21 +1944,23 @@ async fn review_submission(
         review_notes: req.review_notes,
     };
 
-    repo.review_submission(
-        &mut **rls.conn(),
-        org_id,
-        submission_id,
-        user_id,
-        review_data,
-    )
-    .await
-    .map_err(|e| {
+    if let Err(e) = repo
+        .review_submission(
+            &mut **rls.conn(),
+            org_id,
+            submission_id,
+            user_id,
+            review_data,
+        )
+        .await
+    {
         tracing::error!("Failed to review submission: {:?}", e);
-        (
+        rls.release().await;
+        return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Submission not found")),
-        )
-    })?;
+        ));
+    }
 
     // Get updated submission
     let out = repo
@@ -1979,36 +2011,32 @@ async fn record_download(
     let user_id = rls.user_id();
     let repo = &state.form_repo;
 
-    // Verify form exists
-    let form = repo.get(&mut **rls.conn(), org_id, id).await.map_err(|e| {
-        tracing::error!("Failed to get form: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get form")),
-        )
-    })?;
-
-    if form.is_none() {
-        rls.release().await;
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
-        ));
-    }
-
     let out = repo
-        .record_download(&mut **rls.conn(), id, user_id, None, None)
+        .record_download(&mut **rls.conn(), org_id, id, user_id, None, None)
         .await
-        .map(|_| StatusCode::OK)
+        .and_then(|inserted| {
+            if inserted {
+                Ok(StatusCode::OK)
+            } else {
+                Err(sqlx::Error::RowNotFound)
+            }
+        })
         .map_err(|e| {
-            tracing::error!("Failed to record download: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "INTERNAL_ERROR",
-                    "Failed to record download",
-                )),
-            )
+            if matches!(e, sqlx::Error::RowNotFound) {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Form not found")),
+                )
+            } else {
+                tracing::error!("Failed to record download: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to record download",
+                    )),
+                )
+            }
         });
     rls.release().await;
     out

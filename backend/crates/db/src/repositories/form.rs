@@ -1034,28 +1034,35 @@ impl FormRepository {
     pub async fn record_download<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         form_id: Uuid,
         user_id: Uuid,
         ip_address: Option<String>,
         user_agent: Option<String>,
-    ) -> Result<(), sqlx::Error>
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query(
+        let inserted = sqlx::query_scalar::<_, Uuid>(
             r#"
             INSERT INTO form_downloads (form_id, downloaded_by, ip_address, user_agent)
-            VALUES ($1, $2, $3::inet, $4)
+            SELECT f.id, $3, $4::inet, $5
+            FROM forms f
+            WHERE f.id = $1
+              AND f.organization_id = $2
+              AND f.deleted_at IS NULL
+            RETURNING form_id
             "#,
         )
         .bind(form_id)
+        .bind(org_id)
         .bind(user_id)
         .bind(&ip_address)
         .bind(&user_agent)
-        .execute(executor)
+        .fetch_optional(executor)
         .await?;
 
-        Ok(())
+        Ok(inserted.is_some())
     }
 
     /// Gets download count for a form.
