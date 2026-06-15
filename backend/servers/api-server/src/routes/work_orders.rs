@@ -1052,17 +1052,41 @@ async fn list_executions(
 // These two endpoints are keyed by `equipment_id` / `building_id`, neither of
 // which carries an `organization_id` the handler can authorize against without
 // a cross-resource lookup. With the PAP-179 conversion they now run on the
-// caller's `RlsConnection`, so under `FORCE` RLS the `work_orders` join is
-// scoped to the caller's org by the row-security policy — closing the #821 P2
-// cross-tenant gap at the database layer (a foreign org's equipment/building id
-// yields an empty history rather than another tenant's service records).
-
 async fn get_equipment_service_history(
     State(state): State<AppState>,
     mut rls: RlsConnection,
     Path(equipment_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> {
+    let uid = rls.user_id();
+
+    // Resolve the owning org from the equipment row (404 if not found) and
+    // gate the caller against it. `FORCE` RLS at the DB layer closes this gap
+    // in production, but an explicit check is required so test pools (which
+    // connect as superuser and bypass RLS) also enforce org isolation (#1372).
+    let org_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT organization_id FROM equipment WHERE id = $1",
+    )
+    .bind(equipment_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to look up equipment org: {:?}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", "Database error")),
+        )
+    })?;
+
+    let org_id = org_id.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")),
+        )
+    })?;
+
+    verify_org_access(&state, uid, org_id).await?;
+
     let out = state
         .work_order_repo
         .get_service_history(
@@ -1093,6 +1117,33 @@ async fn get_building_service_history(
     Path(building_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> {
+    let uid = rls.user_id();
+
+    // Resolve the owning org from the building row (404 if not found) and
+    // gate the caller — same rationale as get_equipment_service_history (#1372).
+    let org_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT organization_id FROM buildings WHERE id = $1",
+    )
+    .bind(building_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to look up building org: {:?}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", "Database error")),
+        )
+    })?;
+
+    let org_id = org_id.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+        )
+    })?;
+
+    verify_org_access(&state, uid, org_id).await?;
+
     let out = state
         .work_order_repo
         .get_building_service_history(
