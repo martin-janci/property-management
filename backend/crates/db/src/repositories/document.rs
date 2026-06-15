@@ -745,9 +745,10 @@ impl DocumentRepository {
         let limit = query.limit.unwrap_or(50).min(100);
         let offset = query.offset.unwrap_or(0);
 
-        let building_ids_json = serde_json::to_value(user_building_ids).unwrap();
-        let unit_ids_json = serde_json::to_value(user_unit_ids).unwrap();
-        let roles_json = serde_json::to_value(user_roles).unwrap();
+        // `?|` is `jsonb ?| text[]` — right operand must be text[], not jsonb.
+        let building_ids: Vec<String> = user_building_ids.iter().map(Uuid::to_string).collect();
+        let unit_ids: Vec<String> = user_unit_ids.iter().map(Uuid::to_string).collect();
+        let roles: Vec<String> = user_roles.to_vec();
 
         sqlx::query_as::<_, DocumentSummary>(
             r#"
@@ -762,11 +763,11 @@ impl DocumentRepository {
                 -- Organization-wide access
                 OR access_scope = 'organization'
                 -- Building-based access
-                OR (access_scope = 'building' AND access_target_ids ?| $3)
+                OR (access_scope = 'building' AND access_target_ids ?| $3::text[])
                 -- Unit-based access
-                OR (access_scope = 'unit' AND access_target_ids ?| $4)
+                OR (access_scope = 'unit' AND access_target_ids ?| $4::text[])
                 -- Role-based access
-                OR (access_scope = 'role' AND access_roles ?| $5)
+                OR (access_scope = 'role' AND access_roles ?| $5::text[])
                 -- Specific user access
                 OR (access_scope = 'users' AND access_target_ids ? $2::text)
               )
@@ -779,9 +780,9 @@ impl DocumentRepository {
         )
         .bind(org_id)
         .bind(user_id)
-        .bind(&building_ids_json)
-        .bind(&unit_ids_json)
-        .bind(&roles_json)
+        .bind(&building_ids)
+        .bind(&unit_ids)
+        .bind(&roles)
         .bind(query.folder_id)
         .bind(&query.category)
         .bind(&query.search)
@@ -978,9 +979,10 @@ impl DocumentRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let building_ids_json = serde_json::to_value(user_building_ids).unwrap();
-        let unit_ids_json = serde_json::to_value(user_unit_ids).unwrap();
-        let roles_json = serde_json::to_value(user_roles).unwrap();
+        // `?|` is `jsonb ?| text[]` — right operand must be text[], not jsonb.
+        let building_ids: Vec<String> = user_building_ids.iter().map(Uuid::to_string).collect();
+        let unit_ids: Vec<String> = user_unit_ids.iter().map(Uuid::to_string).collect();
+        let roles: Vec<String> = user_roles.to_vec();
 
         let row = sqlx::query(
             r#"
@@ -991,9 +993,9 @@ impl DocumentRepository {
                   AND (
                     created_by = $2
                     OR access_scope = 'organization'
-                    OR (access_scope = 'building' AND access_target_ids ?| $3)
-                    OR (access_scope = 'unit' AND access_target_ids ?| $4)
-                    OR (access_scope = 'role' AND access_roles ?| $5)
+                    OR (access_scope = 'building' AND access_target_ids ?| $3::text[])
+                    OR (access_scope = 'unit' AND access_target_ids ?| $4::text[])
+                    OR (access_scope = 'role' AND access_roles ?| $5::text[])
                     OR (access_scope = 'users' AND access_target_ids ? $2::text)
                   )
             ) as has_access
@@ -1001,9 +1003,9 @@ impl DocumentRepository {
         )
         .bind(document_id)
         .bind(user_id)
-        .bind(&building_ids_json)
-        .bind(&unit_ids_json)
-        .bind(&roles_json)
+        .bind(&building_ids)
+        .bind(&unit_ids)
+        .bind(&roles)
         .fetch_one(executor)
         .await?;
 
