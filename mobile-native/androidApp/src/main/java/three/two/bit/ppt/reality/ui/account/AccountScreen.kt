@@ -37,6 +37,8 @@ import three.two.bit.ppt.reality.account.ProfileStats
 import three.two.bit.ppt.reality.account.ProfileStatsLoader
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.AuthState
+import three.two.bit.ppt.reality.auth.GuardDecision
+import three.two.bit.ppt.reality.auth.authGuardDecision
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.auth.SsoUserInfo
 import three.two.bit.ppt.reality.favorites.FavoritesRepository
@@ -119,17 +121,17 @@ fun AccountScreen(
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        when (val state = authState) {
-            is AuthState.Unauthenticated,
-            is AuthState.Error -> {
+        when (authGuardDecision(authState)) {
+            GuardDecision.NOT_SIGNED_IN -> {
                 NotSignedInContent(onSignInClick = onSignInClick)
             }
-            is AuthState.Loading -> {
+            GuardDecision.LOADING -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
-            is AuthState.Authenticated -> {
+            GuardDecision.CONTENT -> {
+                val state = authState as AuthState.Authenticated
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 100.dp),
