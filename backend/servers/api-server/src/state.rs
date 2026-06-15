@@ -632,6 +632,13 @@ impl AppState {
     /// Set Redis client and derived services (Epic 103).
     ///
     /// Call this after creating the AppState if Redis is available.
+
+    /// Set a custom pub/sub service (Story 1376).
+    pub fn with_pubsub(mut self, pubsub_service: PubSubService) -> Self {
+        self.pubsub_service = Some(pubsub_service);
+        self
+    }
+
     pub fn with_redis(mut self, redis_client: RedisClient) -> Self {
         let session_store = SessionStore::new(redis_client.clone());
         let pubsub_service = PubSubService::new(redis_client.clone());
