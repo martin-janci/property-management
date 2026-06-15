@@ -212,6 +212,10 @@
     <string name="filter_any">Dowolna</string>
     <string name="filter_rooms">Pokoje</string>
     <string name="filter_price_range_eur">Zakres cenowy (EUR)</string>
+    <string name="filter_near_me">W pobliżu</string>
+    <string name="filter_radius">Promień</string>
+    <string name="radius_km_format">%1$d km</string>
+    <string name="locating">Ustalanie lokalizacji…</string>
     <string name="filter_min">Min</string>
     <string name="filter_max">Max</string>
     <string name="filter_apply">Zastosuj</string>

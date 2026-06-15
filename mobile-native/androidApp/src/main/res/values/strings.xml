@@ -314,6 +314,10 @@
     <string name="filter_any">Any</string>
     <string name="filter_rooms">Rooms</string>
     <string name="filter_price_range_eur">Price Range (EUR)</string>
+    <string name="filter_near_me">Near me</string>
+    <string name="filter_radius">Radius</string>
+    <string name="radius_km_format">%1$d km</string>
+    <string name="locating">Finding your location…</string>
     <string name="filter_min">Min</string>
     <string name="filter_max">Max</string>
     <string name="filter_apply">Apply</string>
