@@ -1,9 +1,9 @@
 {
-  "generated": "2026-06-12T10:20:18Z",
+  "generated": "2026-06-15T00:00:00Z",
   "items": [
     {
       "id": "refactor-churn-hotspot-mobile-announcements-test",
-      "action": "Churn hotspot: AnnouncementsScreen.test.ts \u2014 4 PRs this run, instability proxy",
+      "action": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "open",
@@ -249,7 +249,7 @@
     },
     {
       "id": "feat-airbnb-oauth-token-exchange-route",
-      "action": "Coverage 83-1: add the Airbnb OAuth token-exchange route and /integrations/airbnb/* API routes (models already exist). Backend api-server; include tests. Note: external integration \u2014 keep secrets in config.",
+      "action": "Coverage 83-1: add the Airbnb OAuth token-exchange route and /integrations/airbnb/* API routes (models already exist). Backend api-server; include tests. Note: external integration — keep secrets in config.",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "done",
@@ -481,7 +481,7 @@
     },
     {
       "id": "feat-mobile-push-fcm-apns-integration",
-      "action": "Coverage 8a-3: implement React Native mobile OS push integration (FCM for Android / APNs for iOS) \u2014 register device token, persist to backend, handle foreground/background notification delivery for the notification-preference pipeline. Mobile (frontend/apps/mobile).",
+      "action": "Coverage 8a-3: implement React Native mobile OS push integration (FCM for Android / APNs for iOS) — register device token, persist to backend, handle foreground/background notification delivery for the notification-preference pipeline. Mobile (frontend/apps/mobile).",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "done",
@@ -499,7 +499,7 @@
     },
     {
       "id": "feat-airbnb-realtime-webhook-handler",
-      "action": "Coverage 83-1: implement the Airbnb realtime webhook handler (inbound reservation/availability change events) \u2014 signature verification, idempotent event processing, and persistence. Backend api-server; pairs with the OAuth token-exchange route work.",
+      "action": "Coverage 83-1: implement the Airbnb realtime webhook handler (inbound reservation/availability change events) — signature verification, idempotent event processing, and persistence. Backend api-server; pairs with the OAuth token-exchange route work.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "done",
@@ -517,7 +517,7 @@
     },
     {
       "id": "feat-booking-rate-availability-push",
-      "action": "[GC-DROP: dup of archived FAILED assignment (pr=None); id+stem collide w/ terminal archive -> unclaimable; re-plan upstream under fresh id] Coverage 83-2: implement Booking.com rate & availability push (AC-5) end-to-end \u2014 build the OTA rate/availability message and push to the partner endpoint with retry/error handling. Backend api-server; pairs with the OTA XML parsing work.",
+      "action": "[GC-DROP: dup of archived FAILED assignment (pr=None); id+stem collide w/ terminal archive -> unclaimable; re-plan upstream under fresh id] Coverage 83-2: implement Booking.com rate & availability push (AC-5) end-to-end — build the OTA rate/availability message and push to the partner endpoint with retry/error handling. Backend api-server; pairs with the OTA XML parsing work.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "dropped",
@@ -528,7 +528,7 @@
     },
     {
       "id": "verify-reality-mobile-search-ac-coverage",
-      "action": "Coverage 82-3: verify reality-mobile (KMP) home/search ACs \u2014 debounced search (AC-2), infinite scroll (AC-4), CoreLocation integration, and FilterSheet \u2014 against the shipped screens; add coverage where evidence is missing and record findings. mobile-native.",
+      "action": "Coverage 82-3: verify reality-mobile (KMP) home/search ACs — debounced search (AC-2), infinite scroll (AC-4), CoreLocation integration, and FilterSheet — against the shipped screens; add coverage where evidence is missing and record findings. mobile-native.",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "done",
@@ -647,7 +647,7 @@
     },
     {
       "id": "feat-airbnb-oauth-token-exchange-route-backend",
-      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code \u2192 access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
+      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -658,7 +658,7 @@
     },
     {
       "id": "feat-airbnb-realtime-webhook-handler-backend",
-      "action": "Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) \u2014 signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.",
+      "action": "Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) — signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -680,7 +680,7 @@
     },
     {
       "id": "feat-web-announcements-faults-api-hooks-wiring",
-      "action": "Coverage 79-1: complete the api-client integration \u2014 wire AnnouncementsPage and FaultsPage in ppt-web to the generated TanStack Query API hooks (replace any remaining stubbed/static data), and verify loading/error states. Frontend ppt-web; include component tests for the wired data path.",
+      "action": "Coverage 79-1: complete the api-client integration — wire AnnouncementsPage and FaultsPage in ppt-web to the generated TanStack Query API hooks (replace any remaining stubbed/static data), and verify loading/error states. Frontend ppt-web; include component tests for the wired data path.",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "status": "open",
@@ -691,7 +691,7 @@
     },
     {
       "id": "verify-dispute-filing-flow-ac-coverage-promote",
-      "action": "[VERIFY-DONE/CANNOT-PROMOTE: AC-1/2/3/5 met+covered; AC-4 draft-saving (useDraftStorage) unimplemented -> story stays partial. Needs NEW impl task for AC-4 draft auto-save (upstream/planner). 2026-06-12] Coverage 80-2: verify the dispute-filing flow against the story ACs (UI is shipped but story Status pending, checklist unchecked); add any missing integration/e2e coverage and promote the story ready-for-dev \u2192 done. Frontend ppt-web + api-server as needed.",
+      "action": "[VERIFY-DONE/CANNOT-PROMOTE: AC-1/2/3/5 met+covered; AC-4 draft-saving (useDraftStorage) unimplemented -> story stays partial. Needs NEW impl task for AC-4 draft auto-save (upstream/planner). 2026-06-12] Coverage 80-2: verify the dispute-filing flow against the story ACs (UI is shipped but story Status pending, checklist unchecked); add any missing integration/e2e coverage and promote the story ready-for-dev → done. Frontend ppt-web + api-server as needed.",
       "owner_role": "pm-frontend",
       "priority": "low",
       "status": "dropped",
@@ -713,7 +713,7 @@
     },
     {
       "id": "test-esignature-email-send-status-tracking-backend",
-      "action": "[GC: already shipped on dev (esignature_email_status_tracking_tests.rs commit 93959db); coverage 84-2 gap stale; implementer no-op 2026-06-12] Coverage 84-2: add backend tests for the e-signature email-send + status-tracking path (request sent \u2192 delivered/opened/signed transitions), complementing the webhook idempotency guard work. Additive backend tests, no schema change. Backend api-server.",
+      "action": "[GC: already shipped on dev (esignature_email_status_tracking_tests.rs commit 93959db); coverage 84-2 gap stale; implementer no-op 2026-06-12] Coverage 84-2: add backend tests for the e-signature email-send + status-tracking path (request sent → delivered/opened/signed transitions), complementing the webhook idempotency guard work. Additive backend tests, no schema change. Backend api-server.",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "done",
@@ -725,7 +725,7 @@
     {
       "id": "feat-folder-organization-mobile-implementation-frontend",
       "title": null,
-      "action": "[DROPPED: verified already implemented on dev \u2014 no-op] mobile implementation pending (7a-2-folder-organization Folder Organization)",
+      "action": "[DROPPED: verified already implemented on dev — no-op] mobile implementation pending (7a-2-folder-organization Folder Organization)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": null,
@@ -741,10 +741,12 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "in-progress",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "closed_by": "PR #1383 (gap-85-2 per-env app icons)",
+      "closed_at": "2026-06-15T02:24Z"
     },
     {
       "id": "feat-build-configuration-by-environ-app-icons-generated-all-mobile",
@@ -753,10 +755,12 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "closed_by": "PR #1383 (gap-85-2 per-env app icons)",
+      "closed_at": "2026-06-15T02:24Z"
     },
     {
       "id": "feat-build-configuration-by-environ-build-scripts-created-mobile",
@@ -789,10 +793,12 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "closed_by": "PR #1383 (gap-85-2 per-env app icons)",
+      "closed_at": "2026-06-15T02:24Z"
     },
     {
       "id": "feat-environment-variable-setup-env-setup-documentation-mobile",
@@ -833,7 +839,7 @@
     {
       "id": "feat-announcement-comments-discussi-comments-web-ui-draft-backend",
       "title": null,
-      "action": "[DROPPED 2026-06-14: already implemented on dev \u2014 implementer verified no-op, empty diff; stale gap-scan item] comments web UI in draft PRs #474/#475/#479 \u2014 not yet merged (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "action": "[DROPPED 2026-06-14: already implemented on dev — implementer verified no-op, empty diff; stale gap-scan item] comments web UI in draft PRs #474/#475/#479 — not yet merged (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
@@ -845,7 +851,7 @@
     {
       "id": "feat-announcement-viewing-acknowled-apistatus-stub-until-web-backend",
       "title": null,
-      "action": "[DROPPED: verified already implemented on dev \u2014 no-op] apiStatus stub until web PRs land (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "action": "[DROPPED: verified already implemented on dev — no-op] apiStatus stub until web PRs land (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
@@ -857,7 +863,7 @@
     {
       "id": "feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend",
       "title": null,
-      "action": "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) \u2014 not yet merged (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "action": "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
@@ -869,7 +875,7 @@
     {
       "id": "feat-api-client-integration-for-cor-announcementspage-faultspage-wired-api-frontend",
       "title": null,
-      "action": "[DROPPED 2026-06-14: already implemented on dev \u2014 implementer verified no-op, empty diff; stale gap-scan item] AnnouncementsPage/FaultsPage not fully wired to API hooks (79-1-api-client-integration API Client Integration for Core Features)",
+      "action": "[DROPPED 2026-06-14: already implemented on dev — implementer verified no-op, empty diff; stale gap-scan item] AnnouncementsPage/FaultsPage not fully wired to API hooks (79-1-api-client-integration API Client Integration for Core Features)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
@@ -881,7 +887,7 @@
     {
       "id": "feat-api-client-integration-for-cor-feature-integration-incomplete-infra-frontend",
       "title": null,
-      "action": "[DROPPED: verified already implemented on dev \u2014 no-op] feature integration incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features)",
+      "action": "[DROPPED: verified already implemented on dev — no-op] feature integration incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
@@ -905,7 +911,7 @@
     {
       "id": "feat-e-signature-email-integration-e-signature-email-send-tracking-backend",
       "title": null,
-      "action": "[DROPPED 2026-06-14: already implemented on dev \u2014 implementer verified no-op, empty diff; stale gap-scan item] e-signature email-send + status-tracking polish; webhook idempotency guard (terminal-state) still missing (84-2-esignature-email E-Signature Email Integration)",
+      "action": "[DROPPED 2026-06-14: already implemented on dev — implementer verified no-op, empty diff; stale gap-scan item] e-signature email-send + status-tracking polish; webhook idempotency guard (terminal-state) still missing (84-2-esignature-email E-Signature Email Integration)",
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": null,
@@ -941,7 +947,7 @@
     {
       "id": "fix-report-schedule-editing-cron-edits-round-trip-through-frontend",
       "title": null,
-      "action": "cron edits round-trip through the overloaded `time` field \u2014 no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616) (81-1-report-schedule-editing Report Schedule Editing)",
+      "action": "cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616) (81-1-report-schedule-editing Report Schedule Editing)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": null,
@@ -1060,7 +1066,7 @@
     },
     {
       "id": "bug-ios-searchview-uncompilable",
-      "action": "iOS SearchView.swift does not compile \u2014 performSearch/scheduleSearch undefined, resultsGrid corrupted",
+      "action": "iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted",
       "owner_role": "pm-frontend",
       "priority": "high",
       "status": "open",
@@ -1068,6 +1074,186 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "pm-qa-document-download-preview-tests",
+      "action": "Add presigned-URL minting/expiry/access-gate allow-path tests for document download/preview (#1377)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-realtime-pref-sync-ci-coverage",
+      "action": "Add CI-executable coverage for realtime preference-sync publish leg (#1376)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-service-history-cross-org-idor",
+      "action": "Add cross-org IDOR test coverage to service-history endpoints (#1372)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-booking-oauth-csrf-coverage",
+      "action": "Add Booking.com OAuth handler / CSRF / secure-credential-replacement coverage (#1362, #1374)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-tenant-aware-rls-helper",
+      "action": "Introduce canonical tenant-aware request helper for RLS tests (#1370)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-canonical-seed-membership-helper",
+      "action": "Migrate duplicated seed_membership in IDOR tests to canonical helper (#1373)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-pre-push-fmt-clippy-gate",
+      "action": "Add pre-push cargo fmt + clippy gate (#1375) — prevents unformatted re-lands",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-devops",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-cron-validator-drift-test",
+      "action": "Add silent-regression test for cron validator to prevent #616 reintroduction (#1368)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-vote-partial-cmp-nan-fuzz",
+      "action": "Add NaN-weight fuzz test for /votes/{id}/results to guard partial_cmp().unwrap() panic (Phase 1.5 finding)",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-rls-write-download-coverage",
+      "action": "Extend forms RLS write/download path coverage + tighten release() discipline (#1369)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-triage-followup-issues-2026-06-14",
+      "action": "Triage the 18 follow-up issues #1360-#1377 from 2026-06-14 post-merge review — assign owners or close",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-close-issue-1332-if-ci-green",
+      "action": "Close issue #1332 if dev CI now green after PR #1379 unblock",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-devops",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-stale-draft-pr-decision",
+      "action": "Decide on stale draft PRs #1316 (1.8d) and #1197 (5.9d) — promote, rebase or close",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-record-payment-atomicity-test",
+      "action": "Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-pay scenario",
+      "owner_role": "pm-qa",
+      "priority": "high",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-allowed-pet-types-enum-decode-audit",
+      "action": "Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-ios-searchview-pagination-stale-guard",
+      "action": "Add iOS UI test for SearchView stale-response guard preserving pagination (#1365)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-dispute-draft-autosave-coverage",
+      "action": "Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
+    },
+    {
+      "id": "pm-qa-record-reserve-transaction-atomicity",
+      "action": "Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1371)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "rust-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15"
     }
   ]
 }
