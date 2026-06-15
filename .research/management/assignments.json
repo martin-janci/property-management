@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-15T16:18:22Z",
+  "generated": "2026-06-15T20:21:59Z",
   "assignments": [
     {
       "task_id": "test-oauth-authorization-server-integration-v2",
@@ -93,7 +93,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 1,
-      "merge_attempted_at": "2026-06-15T12:28:00Z"
+      "merge_attempted_at": "2026-06-15T12:28:00Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-qa-document-download-preview-tests",
@@ -115,7 +117,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": "2026-06-15T14:25:04Z"
+      "merge_attempted_at": "2026-06-15T14:25:04Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-qa-realtime-pref-sync-ci-coverage",
@@ -137,14 +141,16 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-15T12:28:00Z"
+      "merge_attempted_at": "2026-06-15T12:28:00Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "feat-home-and-search-screens-debounced-search-evidenced-mobile",
       "branch": "auto-impl/feat-home-and-search-screens-debounced-s",
       "status": "review",
       "claimed_at": "2026-06-15T08:25:53Z",
-      "last_updated": "2026-06-15T16:18:22Z",
+      "last_updated": "2026-06-15T20:21:59Z",
       "status_changed_at": "2026-06-15T10:36:00Z",
       "pr_number": 1392,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1392",
@@ -159,7 +165,9 @@
       "rebase_attempts": 1,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": "2026-06-15T16:18:22Z"
+      "merge_attempted_at": "2026-06-15T16:18:22Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "feat-home-and-search-screens-filtersheet-location-features-mobile",
@@ -181,7 +189,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": "2026-06-15T14:25:04Z"
+      "merge_attempted_at": "2026-06-15T14:25:04Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-qa-record-payment-atomicity-test",
@@ -203,7 +213,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-15T14:25:04Z"
+      "merge_attempted_at": "2026-06-15T14:25:04Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-qa-service-history-cross-org-idor",
@@ -225,7 +237,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-15T14:25:04Z"
+      "merge_attempted_at": "2026-06-15T14:25:04Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-qa-triage-followup-issues-2026-06-14",
@@ -254,12 +268,12 @@
     {
       "task_id": "pm-qa-vote-partial-cmp-nan-fuzz",
       "branch": "auto-impl/pm-qa-vote-partial-cmp-nan-fuzz",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-15T12:19:02Z",
-      "last_updated": "2026-06-15T16:18:22Z",
-      "status_changed_at": "2026-06-15T16:18:22Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-15T20:21:59Z",
+      "status_changed_at": "2026-06-15T20:21:59Z",
+      "pr_number": 1417,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1417",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
@@ -271,7 +285,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-qa-cron-validator-drift-test",
@@ -293,17 +309,19 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-15T14:25:04Z"
+      "merge_attempted_at": "2026-06-15T14:25:04Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-qa-record-reserve-transaction-atomicity",
       "branch": "auto-impl/pm-qa-record-reserve-transaction-atomic",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-15T12:19:02Z",
-      "last_updated": "2026-06-15T16:18:22Z",
-      "status_changed_at": "2026-06-15T16:18:22Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-06-15T20:21:59Z",
+      "status_changed_at": "2026-06-15T20:21:59Z",
+      "pr_number": 1416,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1416",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
@@ -315,18 +333,20 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "feat-navigation-and-routing-navigation-state-preservation-mobile",
       "branch": "auto-impl/feat-navigation-and-routing-navigation-s",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-06-15T12:19:02Z",
-      "last_updated": "2026-06-15T16:18:22Z",
-      "status_changed_at": "2026-06-15T12:36:00Z",
+      "last_updated": "2026-06-15T20:21:59Z",
+      "status_changed_at": "2026-06-15T20:21:59Z",
       "pr_number": 1402,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1402",
-      "merged_at": null,
+      "merged_at": "2026-06-15T18:19:00Z",
       "specialist": "kotlin-mp",
       "implementer_summary": "pr=1402 status=done specialist=kotlin-mp scope_drift=false code_reuse_warn=none note=added shared TAB_NAV_OPTIONS contract + NavigationStatePreservationTest proving AC-4; Gradle offline so verify static, CI mobile-native.yml is the gate",
       "reviewer_summary": "verdict=changes note=spotless-lint-red-on-new-test-file-run-spotlessApply",
@@ -337,7 +357,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "feat-web-announcements-faults-api-hooks-wiring",
@@ -359,7 +381,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "verify-home-and-search-screens-corelocation-integration-confirmed-mobile",
@@ -381,15 +405,17 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-06-15T14:25:04Z"
+      "merge_attempted_at": "2026-06-15T14:25:04Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "feat-announcement-comments-discussion-web-ui-frontend",
       "branch": "auto-impl/feat-announcement-comments-discussion-web-ui-frontend",
       "status": "in-progress",
       "claimed_at": "2026-06-15T16:18:22Z",
-      "last_updated": "2026-06-15T16:18:22Z",
-      "status_changed_at": "2026-06-15T16:18:22Z",
+      "last_updated": "2026-06-15T20:21:59Z",
+      "status_changed_at": "2026-06-15T20:21:59Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -401,17 +427,19 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "feat-booking-integration-ota-xml-parsing-backend",
       "branch": "auto-impl/feat-booking-integration-ota-xml-parsing-backend",
       "status": "in-progress",
       "claimed_at": "2026-06-15T16:18:22Z",
-      "last_updated": "2026-06-15T16:18:22Z",
-      "status_changed_at": "2026-06-15T16:18:22Z",
+      "last_updated": "2026-06-15T20:21:59Z",
+      "status_changed_at": "2026-06-15T20:21:59Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -423,17 +451,19 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "feat-document-download-preview-mobile-slice",
       "branch": "auto-impl/feat-document-download-preview-mobile-slice",
       "status": "in-progress",
       "claimed_at": "2026-06-15T16:18:22Z",
-      "last_updated": "2026-06-15T16:18:22Z",
-      "status_changed_at": "2026-06-15T16:18:22Z",
+      "last_updated": "2026-06-15T20:21:59Z",
+      "status_changed_at": "2026-06-15T20:21:59Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -445,17 +475,19 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "feat-esignature-email-webhook-idempotency-guard-backend",
       "branch": "auto-impl/feat-esignature-email-webhook-idempotency-guard-backend",
       "status": "in-progress",
       "claimed_at": "2026-06-15T16:18:22Z",
-      "last_updated": "2026-06-15T16:18:22Z",
-      "status_changed_at": "2026-06-15T16:18:22Z",
+      "last_updated": "2026-06-15T20:21:59Z",
+      "status_changed_at": "2026-06-15T20:21:59Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -467,9 +499,35 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "feat-booking-integration-rate-availability-push-backend",
+      "branch": "auto-impl/feat-booking-integration-rate-availabili",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-06-15T20:21:59Z",
+      "last_updated": "2026-06-15T20:21:59Z",
+      "status_changed_at": "2026-06-15T20:21:59Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
