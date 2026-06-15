@@ -55,13 +55,12 @@ object SearchState {
     /**
      * Debounced search-as-you-type pipeline (AC-2).
      *
-     * Given the raw stream of free-text query values emitted as the user types ([source]),
-     * returns the stream of queries that should actually trigger a network search:
+     * Given the raw stream of free-text query values emitted as the user types ([source]), returns
+     * the stream of queries that should actually trigger a network search:
      * - `drop(1)` skips the initial/current value so the screen's own first load owns it (the
      *   `LaunchedEffect(Unit) { performSearch() }` on mount) and a search isn't double-fired.
-     * - `debounce([SEARCH_DEBOUNCE_MS])` collapses rapid keystrokes into a single emission once
-     *   the user pauses for the debounce window — mirroring the iOS `SearchView` 300 ms
-     *   `Task.sleep`.
+     * - `debounce([SEARCH_DEBOUNCE_MS])` collapses rapid keystrokes into a single emission once the
+     *   user pauses for the debounce window — mirroring the iOS `SearchView` 300 ms `Task.sleep`.
      * - `distinctUntilChanged()` avoids re-firing when the text settles back on the same value.
      *
      * Extracted from `SearchScreen.kt` so the AC-2 timing behaviour is unit-testable with
