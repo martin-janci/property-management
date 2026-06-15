@@ -1602,7 +1602,10 @@ async fn submit_form(
 
     // Check if user already submitted and multiple submissions not allowed
     if !form.form.allow_multiple_submissions {
-        let has_submitted = match repo.has_user_submitted(&mut **rls.conn(), id, user_id).await {
+        let has_submitted = match repo
+            .has_user_submitted(&mut **rls.conn(), id, user_id)
+            .await
+        {
             Ok(has_submitted) => has_submitted,
             Err(e) => {
                 tracing::error!("Failed to check submission: {:?}", e);
