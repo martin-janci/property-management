@@ -951,7 +951,7 @@ async fn preference_update_publishes_realtime_event_in_memory(pool: PgPool) {
     let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s12").await;
 
     // Resolve user id.
-    let user_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = ")
+    let user_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
         .bind(&user.email)
         .fetch_one(&app.pool)
         .await
