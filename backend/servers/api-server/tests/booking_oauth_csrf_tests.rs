@@ -481,7 +481,10 @@ async fn oauth_routes_are_mounted(pool: PgPool) {
     let org_id = Uuid::new_v4();
 
     let booking = app
-        .execute(anon_post(&booking_exchange_uri(org_id), json!({"code": "x"})))
+        .execute(anon_post(
+            &booking_exchange_uri(org_id),
+            json!({"code": "x"}),
+        ))
         .await;
     assert_ne!(
         booking.status,
