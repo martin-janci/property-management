@@ -1317,19 +1317,25 @@ impl BudgetRepository {
         user_id: Uuid,
         data: RecordReserveTransaction,
     ) -> Result<ReserveFundTransaction, sqlx::Error> {
-        let fund: ReserveFund = sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1")
+        use sqlx::Connection;
+        let mut tx = conn.begin().await?;
+
+        let fund: ReserveFund = sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1 FOR UPDATE")
             .bind(reserve_fund_id)
-            .fetch_one(&mut *conn)
+            .fetch_one(&mut *tx)
             .await?;
 
-        self.record_reserve_transaction_rls(
-            conn,
+        let res = self.record_reserve_transaction_rls(
+            &mut *tx,
             reserve_fund_id,
             user_id,
             fund.current_balance,
             data,
         )
-        .await
+        .await?;
+
+        tx.commit().await?;
+        Ok(res)
     }
 
     /// Generate a reserve fund projection under the caller's RLS context.
