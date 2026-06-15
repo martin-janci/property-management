@@ -268,15 +268,30 @@ pub async fn update_preference(
 
     // Story 8A.3 — publish realtime sync event so connected WebSocket clients
     // can update their cached preference state without polling.
+    //
+    // Channel, event type and payload are computed once here (after the
+    // disable-all guard, so a rejected update never reaches this point) and
+    // shared by the real Redis publish and the test recorder, guaranteeing the
+    // recorder captures exactly what would go on the wire (issue #1376).
+    let ws_channel = format!("notifications:{user_id}");
+    let event_payload = serde_json::json!({
+        "channel": channel.as_str(),
+        "enabled": req.enabled,
+    });
+
+    // Issue #1376: capture the publish for CI assertions when a recorder is
+    // installed (test-only; `None` in production). Independent of whether a
+    // live `pubsub_service` is configured, so CI — which has no Redis — can
+    // still prove the publish contract.
+    if let Some(ref recorder) = state.pref_event_recorder {
+        recorder.record(&ws_channel, "preference.updated", event_payload.clone());
+    }
+
     if let Some(ref pubsub) = state.pubsub_service {
-        let ws_channel = format!("notifications:{user_id}");
         let msg = integrations::PubSubMessage::new(
             &ws_channel,
             "preference.updated",
-            serde_json::json!({
-                "channel": channel.as_str(),
-                "enabled": req.enabled,
-            }),
+            event_payload.clone(),
         );
         if let Err(e) = pubsub.publish(&ws_channel, msg).await {
             // Non-fatal: DB update already succeeded; WS sync is best-effort.

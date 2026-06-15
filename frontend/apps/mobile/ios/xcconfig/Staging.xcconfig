@@ -1,0 +1,27 @@
+// Staging.xcconfig
+// Epic 85 - Story 85.2: Build Configuration by Environment (iOS)
+//
+// Per-environment iOS build settings for the Property Management app
+// (three.two.bit.ppt.management). Selected at `expo prebuild` time by the
+// `withIosBuildConfig` config plugin (plugins/withIosBuildConfig.ts) based on
+// APP_ENV=staging and copied into the generated `ios/` project as
+// `PPTEnv.xcconfig`, then wired as the baseConfigurationReference of every
+// build configuration.
+//
+// Keep this file in sync with `.env.staging` when the staging API host
+// changes. Runtime config remains owned by `.env.staging` -> app.config.ts;
+// these values configure the native build layer consistently with it.
+
+PPT_APP_ENV = staging
+
+PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.management
+
+PPT_BUILD_DISPLAY_NAME = PPT Management (Staging)
+
+// Mirrors API_BASE_URL in .env.staging. `$()` keeps `//` from being parsed as
+// a comment inside the URL.
+PPT_API_BASE_URL = https:/$()/staging-api.ppt.example.com
+
+// Staging permits arbitrary loads for internal endpoints without signed TLS,
+// mirroring app.config.ts (debugMode is true for staging).
+PPT_ALLOWS_ARBITRARY_LOADS = YES

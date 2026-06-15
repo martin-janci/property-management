@@ -3546,6 +3546,220 @@
       "created_at": "2026-06-13",
       "updated_at": "2026-06-13",
       "plan": null
+    },
+    {
+      "id": "code-review-reality-web-share-comparison-404",
+      "title": "Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review reality-web 2026-06-14"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:38 — fetch(`/api/listings/${id}`) — no such Next.js API route exists",
+        "Only frontend/apps/reality-web/src/app/api/health/route.ts is defined under app/api/",
+        "Story 51.3 \"Share Comparison\" silently shows t(\"loadError\") instead of the shared listings"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
+      ],
+      "created_at": "2026-06-14",
+      "updated_at": "2026-06-14",
+      "plan": "plans/code-review-reality-web-share-comparison-404.md"
+    },
+    {
+      "id": "code-review-reality-web-listing-page-ssr-crash",
+      "title": "Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review reality-web 2026-06-14"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:71-79 — getListing returns response.json() cast to ListingDetail|null with zero runtime validation",
+        "page.tsx:100-127 — JSON-LD build calls listing.photos.map((p)=>p.url), listing.address.street/city/etc unguarded",
+        "Sibling metadata.ts:17-36 documents the malformed-200 risk and defends generateMetadata; the page body does not"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts"
+      ],
+      "created_at": "2026-06-14",
+      "updated_at": "2026-06-14",
+      "plan": "plans/code-review-reality-web-listing-page-ssr-crash.md"
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-untranslated",
+      "title": "Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review reality-web 2026-06-14"
+      ],
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:569 — <h2 id=\"invite-modal-title\">Invite Realtor</h2>",
+        "RealtorManagement.tsx:593,605,617,628 — labels Email/Full Name/Job Title/Personal Message hardcoded English",
+        "RealtorManagement.tsx:640-643 — button literals Cancel / Sending... / Send Invitation hardcoded",
+        "Component already imports useTranslations(\"agency\") and calls t(\"inviteError\") — pattern is set, the literals were missed",
+        "Reality Portal ships sk/cs/de/en; non-EN visitors see English chrome on the entire agency/realtor flow"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
+      ],
+      "created_at": "2026-06-14",
+      "updated_at": "2026-06-15",
+      "plan": "plans/code-review-reality-web-realtor-mgmt-untranslated.md"
+    },
+    {
+      "id": "triage-issue-1380",
+      "title": "Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconfigured",
+      "vector": "triage",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "issue #1380"
+      ],
+      "evidence": [
+        "Issue #1380 created 2026-06-14T16:27:59Z by martin-janci with no labels — dispatcher meta-issue: claimable buffer is systematically stale (gap-scan 2026-06-12) so high-priority action-list items describe already-implemented work, and Tier-2 escalation endpoint returns HTTP 400 (payload schema drift). Self-reported by the dispatcher run. Triage row only — vector=triage so won't promote."
+      ],
+      "files": [
+        ".research/management/action-list.json",
+        ".research/management/coverage.json"
+      ],
+      "created_at": "2026-06-15",
+      "updated_at": "2026-06-15",
+      "plan": null
+    },
+    {
+      "id": "refactor-closed-not-merged-pr-1378",
+      "title": "PR #1378 closed without merge — DROP-OWNED-BY teardown theory for #1332 was wrong root cause, superseded by #1379",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "done",
+      "sources": [
+        "PR #1378",
+        "PR #1379"
+      ],
+      "evidence": [
+        "PR #1378 'fix(db tests): DROP OWNED BY before DROP ROLE in RLS test teardown' closed 2026-06-14T14:34:57Z without merging. The DROP-OWNED-BY theory turned out to be the wrong root cause of the dev-wide #1332 backend test job red. The actual fix landed in #1379: status::text AS status casts across form.rs queries (sqlx ColumnDecode mismatch on form_status ENUM into Rust String), COALESCE defaults on registry.rs NOT NULL boolean columns, and a defense-in-depth cross-tenant org guard on documents/core.rs get_download_url/get_preview_url. Tracking row only — already resolved by #1379, status=done."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/form.rs",
+        "backend/crates/db/src/repositories/registry.rs",
+        "backend/servers/api-server/src/routes/documents/core.rs"
+      ],
+      "created_at": "2026-06-15",
+      "updated_at": "2026-06-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+      "title": "Churn hotspot: 124 lines in frontend/apps/mobile/app.config.icon.test.ts (PR #1383 gap-85-2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1383"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/app.config.icon.test.ts — 124 lines added in PR #1383 (gap-85-2 app icon variants regression test). NEW file co-added with the source change to app.config.ts in the same commit — healthy co-evolution, not instability. Tracked for visibility; expect no follow-up unless test churns again next run."
+      ],
+      "files": [
+        "frontend/apps/mobile/app.config.icon.test.ts"
+      ],
+      "created_at": "2026-06-15",
+      "updated_at": "2026-06-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-ts",
+      "title": "Churn hotspot: 94 lines in frontend/apps/mobile/app.config.ts (PR #1383 gap-85-2)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1383"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/app.config.ts — +93/-1 lines in PR #1383: per-environment launcher icon resolution via APP_ENV (development/staging/production), with a fallback to the un-badged production asset when a badged variant PNG is absent. Intentional config-shape change paired with regression test."
+      ],
+      "files": [
+        "frontend/apps/mobile/app.config.ts"
+      ],
+      "created_at": "2026-06-15",
+      "updated_at": "2026-06-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-form-rs",
+      "title": "Churn hotspot: 53 lines in backend/crates/db/src/repositories/form.rs (PR #1379 #1332 unblock)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1379",
+        "issue #1332"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/form.rs — +30/-23 lines in PR #1379: status::text AS status cast added across get/list/list_available_forms queries (9 SQL bodies) to fix the sqlx ColumnDecode mismatch decoding form_status ENUM into the Rust String model. Unblocked the dev-wide #1332 backend test job. Pattern is the same convention used in document.rs (category::text AS category)."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/form.rs"
+      ],
+      "created_at": "2026-06-15",
+      "updated_at": "2026-06-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-vote-partial-cmp-panic",
+      "title": "vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id}/results",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review api-core 2026-06-15"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/vote.rs:1765 — calculate_question_result() sorts options by weighted_count using partial_cmp(&b.weighted_count).unwrap(). weighted_count is f64 accumulated from response.vote_weight via try_into().unwrap_or(1.0); if a vote_weight is NaN/Inf, partial_cmp returns None and .unwrap() panics. Reachable from VoteRepository::calculate_results → /votes/{id}/results. Fix: use total_cmp or unwrap_or(Ordering::Equal). Severity: medium (panic is a 500 to the caller, but NaN-weight ingress requires a serde edge case)."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/vote.rs"
+      ],
+      "created_at": "2026-06-15",
+      "updated_at": "2026-06-15",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-osrng-expect",
+      "title": "crypto.rs:127 SysRng.try_fill_bytes(...).expect() panics if OS CSPRNG errors during integration-credential encrypt",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review api-core 2026-06-15"
+      ],
+      "evidence": [
+        "backend/crates/integrations/src/crypto.rs:127 — SysRng.try_fill_bytes(...).expect('OS rng failed') panics on every encrypt() call if the OS CSPRNG read errors. Hot path for stored-secret encryption (integration credentials, webhook secrets). Vanishingly rare on Linux but a hard panic crashes the worker; bubble the error as CryptoError::EncryptionFailed instead. Severity: low."
+      ],
+      "files": [
+        "backend/crates/integrations/src/crypto.rs"
+      ],
+      "created_at": "2026-06-15",
+      "updated_at": "2026-06-15",
+      "plan": null
     }
   ]
 }

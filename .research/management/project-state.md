@@ -1,46 +1,54 @@
 # PPT Project State
 
-_Generated: 2026-06-06 — daily PM rotation (Scrum Master + pm-backend; lightweight in-routine refresh). Coverage `scan_kind=upkeep`; coverage_cursor idx 8 → 9 (rotating-epic re-check)._ 
+_Generated: 2026-06-15 — daily PM rotation (Scrum Master + pm-qa; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 3 → 4 (pm-devops next), coverage_cursor idx 10 → 11 (epic-85 → epic-8a)._
 
 ## Executive summary
 
-- **26 PRs merged this window (#1107–#1135; gap on #1126/#1134 still open).** The batch was overwhelmingly the dispatcher's auto-impl pipeline landing churn-reduction refactors (oauth.rs services+routes #1132/#1133, App.tsx route extraction #1108/#1131, module-splits #1109/#1110/#1114, evidence-uploader+esignature+auth-refresh test stabilization #1116/#1119/#1113) and gap stories (gap-82-3 KMP search #1125, gap-82-4 KMP listing-detail favorites #1121, gap-82-2 reality-mobile nav-state #1124, gap-85-2 mobile build scripts #1112, story 6-2 announcement-ack coverage #1122, dx-push-fanout-blpop-drain #1115). Issue #1137 (PKCE test became a tautology after #1132 DRY refactor) is the only new follow-up surfaced.
-- **Backlog churn: 25 items resolved → done (PR-body verbatim matches), 6 new items added (4 code-review findings from mobile-native-kmp segment + 2 cumulative churn-hotspot rows). Open queue: 44 → 25.** No decay this run (all open items <14d old).
-- **Code-review slice — `mobile-native-kmp` segment (oldest unreviewed + churn-aligned):** three findings. (1) `SearchScreen.kt` stale-response race — overlapping filter/debounce/onSelect launches can clobber a newer page-1 with an older slower response. (2) `DeepLinkRouter.queryParam` skips URL-decoding while `MainActivity.handleDeepLink` calls Android `Uri.getQueryParameter` (which DOES decode) — SSO tokens diverge per platform. (3) `MainActivity` reimplements deep-link dispatch instead of routing through the shared `DeepLinkRouter` — drift trap for future targets.
-- **Open PRs (24 total, 6 draft):** no stalled PRs (oldest is ~1 day old; the queue is young — all post-2026-05-30). Active drafts: #1136 (oauth integration test helper consolidation), #1140 (#755 Epic 8A RLS GUC fix), #1139 (#1014 dispatcher action-list.json size bound), #1138 (story 79-1 api-client integration), #1126 (gap-82-5 reality mobile inquiries + account), #1123 (gap-82-1 reality iOS XcodeGen).
-- **PR #1118 anomaly (noted, not actioned):** the `refactor-mediation-duplicated-spinner` squash on `dev` shows 3,132 files changed / 898K insertions; the legitimate refactor is one Spinner component extract. Confirmed via per-commit numstat and excluded from churn detection this run. Worth a manual audit of the squash to confirm it didn't accidentally re-import vendored files; tag for next dispatcher pass.
+- **Dev CI unblocked.** PR #1379 (martin-janci, merged 2026-06-14T22:19Z) ended a 3-day red streak on the dev-wide backend `test` job by fixing 3 production regressions: `status::text AS status` casts across 9 form repo queries, COALESCE on NOT NULL booleans in registry, and a cross-tenant defense-in-depth guard on `documents/core.rs` download/preview. The forms RLS test got a `GRANT SELECT ON users` to its RLS role. **Issue #1332 should be closeable once green is observed on a fresh main build.**
+- **Per-env mobile icons shipped (#1383, gap-85-2).** `app.config.ts` (+93) plus a new `app.config.icon.test.ts` (+124) and assets README give Property Management mobile DEV/STG visual differentiation. Coverage row `85-2-build-configuration` refreshed; remaining gaps: iOS xcconfig/schemes, multi-size icon generation, build scripts.
+- **Follow-up issue flood: 18 new issues #1360-#1377 from yesterday's post-merge review,** all labeled `follow-up` + `from-merged-review`. Concentrated themes: missing test coverage (RLS write/download, IDOR cross-org, OAuth/CSRF, realtime sync publish leg, document presigned URL minting), atomicity bugs (record_payment, record_reserve_transaction), front-end races (dispute draft autosave, iOS SearchView pagination), and test-discipline tooling (canonical seed_membership helper, tenant-aware RLS request helper, pre-push fmt/clippy gate). Plus dispatcher meta-issue #1380 (stale gap-scan buffer + Tier-2 escalation endpoint misconfigured).
+- **Stale drafts to decide:** #1316 (verify-document-folder-organization-backend-promote, 1.8d) and #1197 (test-oauth-authorization-server-integration, 5.9d) — promote, rebase, or close. **Phase 1.5 code-review:** `vote.rs:1765` partial_cmp().unwrap() panic on NaN weighted votes (medium, reachable from `/votes/{id}/results`) — fuzz test already tracked.
 
 ## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
-| Epic | Tracked status | Real status (from coverage upkeep) |
+Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth"** · epics_done=1/5 (8A only)
+
+| Epic | Tracked status | Real status (from coverage + activity) |
 |---|---|---|
-| 6 — Announcements & Communication | in-progress | 6-1/6-2/6-5/6-6 done; 6-3/6-4 web UI partial |
-| 7A — Basic Document Management | in-progress | 7a-3/7a-5 done; 7a-2 folder web tested, mobile slice open; 7a-1/7a-4 partial |
-| 8A — Basic Notification Preferences | done | 8a-1/8a-2 done; 8a-3 WS leg confirmed; mobile-push leg open → partial; #755 RLS GUC mismatch in flight via draft PR #1140 |
-| 10A — OAuth Provider | in-progress | services+routes oauth.rs deduped this window (#1132/#1133); #1137 (PKCE test tautology) is the only carry-over |
-| 10B — Platform Admin | ready-for-dev (STALE) | 10b-1..10b-7 all done in coverage; sprint-status.yaml still needs sync |
-| 79 — Frontend Integration | in-progress | 79-1 api-client coverage in flight (draft #1138); 79-2 auth-refresh churn refactored this window (#1113) |
-| 81 — Reports | in-progress | 81-1/81-2 partial; cron_expression column (#616) still gates promotion |
-| 82 — SwiftUI Reality Portal | in-progress | 82-2/82-3/82-4 landed this window (#1124/#1125/#1121); 82-1 iOS XcodeGen in draft #1123; 82-5 inquiries+account in draft #1126 |
-| 84 — Advanced Features | in-progress | 84-1/84-3/84-4/84-5 done; 84-2 e-signature webhook tests stabilized (#1119) |
-| 85 — Mobile Build Pipeline | in-progress | 85-2 DEV/STG icon variants shipped (#1112) |
+| 6 — Announcements & Communication | in-progress | 1/6 stories complete (6-6); 6-1 in review |
+| 7A — Basic Document Management | in-progress | 0/5 stories complete; #1316 draft for 7a-2 verify, stale |
+| 8A — Basic Notification Preferences | **done** | 3/3 stories complete; backend realtime sync confirmed PR #472 |
+| 10A — OAuth Provider Foundation | in-progress | 0/3 stories complete; #1197 OAuth test integration draft stale |
+| 10B — Platform Administration | in-progress | 5/7 stories complete (coverage 2026-05-29) |
+| 85 — Mobile Build Pipeline | in-progress | gap-85-2 DEV/STG icons shipped #1383 — partial → partial (icons gap closed) |
 
-## What's next (top actions)
+## Shipped since last run (cursor #1359)
 
-1. **[high] Land draft #1140 (Epic 8A notification RLS GUC fix, #755 findings #4 & #5)** — owner: pm-security/pm-backend — closes the RLS GUC mismatch on `notification_preferences` + `critical_notifications`.
-2. **[high] Land draft #1136 (oauth_integration_tests churn consolidation) + fix #1137 tautology** — owner: pm-backend — keep the OAuth slice converged after #1132/#1133 dedup.
-3. **[high] Promote `bug-schema-drift-runtime-sql-issue-1008`** (score 3, vector bug, confidence high) — owner: pm-backend — generate `.sqlx` offline metadata and audit hand-written query strings in voting/messaging/notification paths.
-4. **[medium] Triage the 3 new code-review findings on mobile-native-kmp** (search stale-response race, deep-link URL-decoding mismatch, MainActivity bypass of shared router) — owner: pm-frontend (KMP lead).
-5. **[medium] Bound action-list.json size (#1014 / draft #1139)** — owner: pm-devops — prevent MCP-push corruption from large JSON.
-6. **[low] Audit the PR #1118 squash anomaly** — owner: pm-scrum-master — confirm the 3,132-file squash didn't accidentally re-import third-party content into `dev`.
+- **#1379** — `fix: unblock dev-wide backend test job (#1332) — 3 production regressions` (form.rs status::text casts, registry COALESCE, documents/core.rs cross-tenant guard, forms RLS GRANT SELECT)
+- **#1383** — `feat: per-environment app icon variants (DEV/STG badges) (mobile)` (gap-85-2)
+- **#1382, #1384** — research/dispatcher state PRs (`.research/management/` only)
+
+## What's next (top 5 actions)
+
+1. **[high] Triage 18 follow-up issues #1360-#1377** — pm-scrum-master; assign owner or close as won't-fix. Backlog grows faster than burn-down without this.
+2. **[high] Close issue #1332 if dev CI now green** after PR #1379 unblock — pm-scrum-master + pm-devops.
+3. **[high] Add regression test for record_payment non-atomic check-then-insert (#1361)** — pm-qa + pm-backend; concurrent double-pay vector.
+4. **[high] Add NaN-weight fuzz test for /votes/{id}/results** (Phase 1.5 finding) — pm-qa + pm-backend.
+5. **[medium] Decide on stale draft PRs #1316 (1.8d) and #1197 (5.9d)** — promote, rebase or close. pm-scrum-master.
 
 ## Blockers
 
-- **Epic 81 — Reports promotion:** `cron_expression` column still missing (#616 / backlog `bug-report-schedule-update-no-sql`); 81-1/81-2 stay partial.
-- **OAuth production readiness (Epic 10A):** refresh-token revocation bypass (#481, high) and JWT-in-WS-logs (#480, high) remain open; gate any external OAuth exposure.
-- **Mobile coverage lag:** reality mobile inquiries (#1126) + iOS XcodeGen (#1123) still in draft; gap-82 set not yet fully landed.
+- **#1380 dispatcher meta-issue** — stale gap-scan buffer feeds no-op claims; Tier-2 escalation endpoint misconfigured. Owner: pm-devops (or dispatcher owner).
+- **18 follow-up issues #1360-#1377 lack owner** — opened by post-merge bot; no human triage yet. Owner: pm-scrum-master.
 
-## Role focus today
+## Role focus today: **pm-qa**
 
-- **Role focus today:** Scrum Master + pm-backend.
-- **pm-backend read:** the backend surface saw three behavior-preserving refactors land in OAuth (services/oauth.rs DRY consolidation #1132, routes/oauth.rs churn reduction #1133, announcements.rs per-surface module split #1110, platform_admin.rs by-concern split #1109, ai.rs module split #1114, main.rs router/middleware extraction #1120) and one new runtime/Redis dx fix (push-fanout BLPOP drain #1115). The DRY refactor in #1132 introduced a tautological PKCE test (#1137) — the only behaviour-relevant regression in the batch. Schema drift (`bug-schema-drift-runtime-sql-issue-1008`, score 3) is now the top-ranked backend item; promoting it to a plan would close the gap between hand-written `sqlx::query` strings and the live schema in voting/messaging/notification paths. Draft #1140 (Epic 8A RLS GUC mismatch) is the next-most-important backend ship — both `notification_preferences` and `critical_notifications` repos run against `app.current_user_id` while policies expect `request.user_id`, and there's no FORCE RLS.
+- pm-qa (rotation idx 3, last 2026-05-25, ~21d stale): 5 new next_actions appended to `action-list.json`; 5 new risks appended to `risks.json`; 3 new decisions in `decisions.md`. Full role JSON in `.research/management/roles/pm-qa.md`.
+- pm-scrum-master (always-on): produced the delivery synthesis above; headline = dev CI unblocked + follow-up issue flood + mobile icons shipped.
+
+## Coverage upkeep
+
+- **epic-85 (rotation idx 10) refreshed** in `coverage.json`:
+  - `85-1-environment-variables`: added `app.config.ts present via PR #1383` to evidence; removed `app.config.ts for Expo not present` from gaps. Status stays `partial`.
+  - `85-2-build-configuration`: added per-env DEV/STG icon evidence from PR #1383; removed `app icon variants with DEV/STG badges not created` from gaps; confidence upgraded `medium → high`. Status stays `partial` (iOS xcconfig, multi-size icons, build scripts still open).
+- Next epic to refresh: **epic-8a** (coverage_cursor idx 11).

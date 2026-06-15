@@ -207,15 +207,10 @@ describe('formatRelativeDate', () => {
   });
 
   it('returns an absolute month-day label beyond a week', () => {
-    // The absolute label is produced by `toLocaleDateString('en-US', …)`,
-    // whose exact text depends on the runtime ICU build. Compare against the
-    // same formatter rather than a hard-coded string so the test cannot drift
-    // with the environment's locale data.
+    // The absolute label is produced by `toLocaleDateString('en-US', …)`.
+    // Assert against the known output for this date to ensure the formatter
+    // logic hasn't changed.
     const old = '2026-05-01T12:00:00Z';
-    const expected = new Date(old).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-    expect(formatRelativeDate(old, now)).toBe(expected);
+    expect(formatRelativeDate(old, now)).toBe('May 1');
   });
 });

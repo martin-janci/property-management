@@ -79,6 +79,95 @@ impl AirbnbAppConfig {
     }
 }
 
+/// Booking.com OAuth integration configuration loaded once at startup
+/// (Coverage 83-2). Mirrors [`AirbnbAppConfig`]; secrets are never accepted
+/// from a request body and a missing secret fails closed (503).
+#[derive(Debug, Clone, Default)]
+pub struct BookingOAuthAppConfig {
+    /// `BOOKING_CLIENT_ID` — required for any Booking.com OAuth flow.
+    pub client_id: String,
+    /// `BOOKING_CLIENT_SECRET` — required for token exchange.
+    pub client_secret: String,
+    /// `BOOKING_REDIRECT_URI` — the registered OAuth callback URI.
+    pub redirect_uri: String,
+}
+
+impl BookingOAuthAppConfig {
+    /// Load from the standard env vars. Empty strings are preserved so the
+    /// handler can emit `NOT_CONFIGURED` for missing values.
+    pub fn from_env() -> Self {
+        Self {
+            client_id: std::env::var("BOOKING_CLIENT_ID").unwrap_or_default(),
+            client_secret: std::env::var("BOOKING_CLIENT_SECRET").unwrap_or_default(),
+            redirect_uri: std::env::var("BOOKING_REDIRECT_URI").unwrap_or_default(),
+        }
+    }
+}
+
+/// A single realtime preference-sync event captured by a
+/// [`PreferenceEventRecorder`] (issue #1376).
+///
+/// Mirrors the `(channel, PubSubMessage)` pair the notification-preference
+/// handler hands to `PubSubService::publish` — minus the Redis round-trip — so
+/// the publish *contract* (target channel, event type, `{channel, enabled}`
+/// payload) can be asserted in CI without a live Redis daemon.
+#[derive(Clone, Debug)]
+pub struct RecordedPreferenceEvent {
+    /// The pub/sub channel the event would be published on, e.g.
+    /// `notifications:{user_id}`.
+    pub channel: String,
+    /// The event type, e.g. `preference.updated`.
+    pub event_type: String,
+    /// The event payload, e.g. `{ "channel": "email", "enabled": false }`.
+    pub payload: serde_json::Value,
+}
+
+/// Test-only sink that captures realtime preference-sync events the
+/// notification-preference handler would publish (issue #1376).
+///
+/// The production realtime leg (`PubSubService::publish`) requires a live Redis
+/// daemon, which CI does not provide — so the only previously-existing
+/// publish-asserting test (S4) was `#[ignore]`d and never ran in CI, leaving
+/// the actual point of the 8a-3 cluster (the publish/delivery contract) with
+/// zero CI coverage.
+///
+/// This recorder is always compiled (a tiny `Arc<Mutex<Vec<_>>>`), defaults to
+/// absent on the production `AppState`, and is installed only by tests via
+/// [`AppState::with_pref_event_recorder`]. When present, the handler records
+/// every event it would publish — *independently* of whether `pubsub_service`
+/// is configured — giving CI a deterministic, non-flaky proof of the publish
+/// contract while the real-Redis S4 test stays as the integration backstop.
+#[derive(Clone, Default)]
+pub struct PreferenceEventRecorder {
+    events: std::sync::Arc<std::sync::Mutex<Vec<RecordedPreferenceEvent>>>,
+}
+
+impl PreferenceEventRecorder {
+    /// Create an empty recorder.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Record one event the handler would have published.
+    pub fn record(&self, channel: &str, event_type: &str, payload: serde_json::Value) {
+        if let Ok(mut events) = self.events.lock() {
+            events.push(RecordedPreferenceEvent {
+                channel: channel.to_string(),
+                event_type: event_type.to_string(),
+                payload,
+            });
+        }
+    }
+
+    /// Drain and return all captured events, leaving the recorder empty.
+    pub fn drain(&self) -> Vec<RecordedPreferenceEvent> {
+        match self.events.lock() {
+            Ok(mut events) => std::mem::take(&mut *events),
+            Err(_) => Vec::new(),
+        }
+    }
+}
+
 /// Application state shared across all handlers.
 #[derive(Clone)]
 pub struct AppState {
@@ -234,6 +323,12 @@ pub struct AppState {
     pub redis_client: Option<RedisClient>,
     pub session_store: Option<SessionStore>,
     pub pubsub_service: Option<PubSubService>,
+    /// Test-only sink for realtime preference-sync events (issue #1376).
+    ///
+    /// `None` in production. Installed by tests via
+    /// [`AppState::with_pref_event_recorder`] so the `preference.updated`
+    /// publish contract can be asserted in CI without a live Redis daemon.
+    pub pref_event_recorder: Option<PreferenceEventRecorder>,
     // Epic 103: S3 Storage Service
     pub storage_service: Option<StorageService>,
     /// Phase 1: Host-resolution cache shared with `host_tenant_middleware`.
@@ -249,6 +344,9 @@ pub struct AppState {
     /// Eliminates per-request `std::env::var` reads in Airbnb handlers and
     /// surfaces misconfiguration at boot rather than at runtime.
     pub airbnb_config: AirbnbAppConfig,
+    /// Booking.com OAuth integration configuration loaded once at startup
+    /// (Coverage 83-2). Handlers fail closed when `client_id.is_empty()`.
+    pub booking_config: BookingOAuthAppConfig,
 }
 
 impl AppState {
@@ -515,6 +613,8 @@ impl AppState {
             redis_client: None,
             session_store: None,
             pubsub_service: None,
+            // Issue #1376: test-only preference-sync recorder (None in prod).
+            pref_event_recorder: None,
             // Epic 103: S3 Storage Service
             storage_service: None,
             // Phase 1: shared host-resolution cache
@@ -524,6 +624,8 @@ impl AppState {
             // Issue #711: Airbnb integration env vars cached at startup so
             // handlers never call `std::env::var` per request.
             airbnb_config: AirbnbAppConfig::from_env(),
+            // Coverage 83-2: Booking.com OAuth env vars cached at startup.
+            booking_config: BookingOAuthAppConfig::from_env(),
         }
     }
 
@@ -538,6 +640,19 @@ impl AppState {
         self.session_store = Some(session_store);
         self.pubsub_service = Some(pubsub_service);
         self
+    }
+
+    /// Install a [`PreferenceEventRecorder`] and return the recorder handle
+    /// (issue #1376).
+    ///
+    /// Test-only: lets a CI test capture the `preference.updated` events the
+    /// notification-preference handler would publish, without a live Redis.
+    /// The returned handle shares the same backing store as the one stored on
+    /// the state, so the test can `drain()` it after issuing a PATCH.
+    pub fn with_pref_event_recorder(mut self) -> (Self, PreferenceEventRecorder) {
+        let recorder = PreferenceEventRecorder::new();
+        self.pref_event_recorder = Some(recorder.clone());
+        (self, recorder)
     }
 
     /// Set S3 storage service (Epic 103).
