@@ -71,6 +71,22 @@ fn write_error(
     }
 }
 
+/// Map an INSERT error on a child table to `404` when the parent is not
+/// visible in the caller's RLS context (`42501` — RLS WITH CHECK rejected)
+/// or does not exist (`23503` — FK violation); anything else is `500`.
+fn insert_child_error(
+    msg: &'static str,
+    not_found_msg: &'static str,
+    e: sqlx::Error,
+) -> (StatusCode, Json<ErrorResponse>) {
+    if let sqlx::Error::Database(ref db_err) = e {
+        if matches!(db_err.code().as_deref(), Some("42501") | Some("23503")) {
+            return not_found(not_found_msg);
+        }
+    }
+    db_error(msg, e)
+}
+
 // ============================================================================
 // Response Types
 // ============================================================================
@@ -265,7 +281,7 @@ async fn add_reading(
         .create_reading(rls.conn(), req)
         .await
         .map(|reading| (StatusCode::CREATED, Json(serde_json::json!(reading))))
-        .map_err(|e| db_error("Failed to add reading", e));
+        .map_err(|e| insert_child_error("Failed to add reading", "Sensor not found", e));
     rls.release().await;
     out
 }
@@ -286,7 +302,7 @@ async fn add_batch_readings(
                 Json(serde_json::json!({ "inserted": count })),
             )
         })
-        .map_err(|e| db_error("Failed to add batch readings", e));
+        .map_err(|e| insert_child_error("Failed to add batch readings", "Sensor not found", e));
     rls.release().await;
     out
 }
@@ -347,7 +363,7 @@ async fn create_threshold(
         .create_threshold(&mut **rls.conn(), req)
         .await
         .map(|threshold| (StatusCode::CREATED, Json(serde_json::json!(threshold))))
-        .map_err(|e| db_error("Failed to create threshold", e));
+        .map_err(|e| insert_child_error("Failed to create threshold", "Sensor not found", e));
     rls.release().await;
     out
 }
@@ -481,7 +497,7 @@ async fn create_correlation(
         .create_correlation(&mut **rls.conn(), req)
         .await
         .map(|correlation| (StatusCode::CREATED, Json(serde_json::json!(correlation))))
-        .map_err(|e| db_error("Failed to create correlation", e));
+        .map_err(|e| insert_child_error("Failed to create correlation", "Sensor not found", e));
     rls.release().await;
     out
 }
@@ -547,7 +563,13 @@ async fn apply_template(
         .apply_threshold_template(rls.conn(), template_id, req.sensor_id)
         .await
         .map(|threshold| (StatusCode::CREATED, Json(serde_json::json!(threshold))))
-        .map_err(|e| write_error("Failed to apply template", "Template not found", e));
+        .map_err(|e| {
+            insert_child_error(
+                "Failed to apply template",
+                "Template or sensor not found",
+                e,
+            )
+        });
     rls.release().await;
     out
 }
