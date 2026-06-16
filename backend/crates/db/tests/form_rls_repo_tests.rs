@@ -138,6 +138,11 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
         // so the NOSUPERUSER RLS role needs SELECT on `users` or the join trips
         // Postgres 42501 (permission denied on `users`).
         format!("GRANT SELECT ON users TO \"{role}\""),
+        // `get_submission` / `list_submissions` LEFT JOIN `units` (for the
+        // `un.designation` unit label) and `buildings` (for `building_name`),
+        // so the role needs SELECT on both or those joins trip 42501.
+        format!("GRANT SELECT ON units TO \"{role}\""),
+        format!("GRANT SELECT ON buildings TO \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
             .execute(&pool)
