@@ -83,12 +83,8 @@ export function resolveAppEnv(env: NodeJS.ProcessEnv = process.env): AppEnvironm
  *
  * @param projectRoot  app root (where the `ios/xcconfig/` templates live)
  * @param appEnv       resolved environment
- * @param env          process env (for the API_BASE_URL CI override)
  */
-export function buildXcconfigContents(
-  projectRoot: string,
-  appEnv: AppEnvironment
-): string {
+export function buildXcconfigContents(projectRoot: string, appEnv: AppEnvironment): string {
   const templatePath = path.join(projectRoot, 'ios', 'xcconfig', TEMPLATE_BY_ENV[appEnv]);
   const template = fs.readFileSync(templatePath, 'utf8');
 

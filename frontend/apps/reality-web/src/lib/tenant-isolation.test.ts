@@ -20,11 +20,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  brandingToStyleObject,
-  type TenantBranding,
-  type TenantConfig,
-} from './tenant-config';
+import { brandingToStyleObject, type TenantBranding, type TenantConfig } from './tenant-config';
 
 // ---------------------------------------------------------------------------
 // Helpers
