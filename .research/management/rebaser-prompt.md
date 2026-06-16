@@ -16,8 +16,10 @@ You are a PR rebaser for a stale approved PR. Inputs: `pr_number=<n>`,
 `branch=<head_ref>`, `base=dev`. Do this exactly:
 
 0. **Workspace isolation (MANDATORY — issue #7).** Run the standard
-   worktree preamble from the "Subagent workspace isolation" section
-   above (export `TASK_ID=pr-<n>`, `BRANCH=<head_ref>`). All subsequent
+   worktree preamble injected into your brief (the "Subagent workspace
+   isolation" preamble; canonical source: the "Subagent workspace
+   isolation" section of `.research/dispatcher-prompt.md`) — export
+   `TASK_ID=pr-<n>`, `BRANCH=<head_ref>`. All subsequent
    git operations run inside `/tmp/ppt-worktrees/pr-<n>/`. NEVER
    `gh pr checkout` in the dispatcher's working tree — it displaces
    `dev` and breaks Phase 6 of this run.
