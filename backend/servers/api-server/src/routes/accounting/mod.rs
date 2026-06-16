@@ -17,12 +17,12 @@ pub fn router() -> Router<AppState> {
                     get(invoices::list_invoices).post(invoices::create_invoice),
                 )
                 .route(
-                    "/:id",
+                    "/{id}",
                     get(invoices::get_invoice)
                         .patch(invoices::update_invoice)
                         .delete(invoices::delete_invoice),
                 )
-                .route("/:id/items", get(invoices::list_invoice_items)),
+                .route("/{id}/items", get(invoices::list_invoice_items)),
         )
         .nest(
             "/contacts",
@@ -35,16 +35,16 @@ pub fn router() -> Router<AppState> {
                     "/",
                     get(statements::list_statements).post(statements::upload_statement),
                 )
-                .route("/:id/lines", get(statements::list_statement_lines)),
+                .route("/{id}/lines", get(statements::list_statement_lines)),
         )
         .nest(
             "/lines",
-            Router::new().route("/:id/matches", get(matches::list_matches)),
+            Router::new().route("/{id}/matches", get(matches::list_matches)),
         )
         .nest(
             "/matches",
             Router::new()
-                .route("/:id/confirm", post(matches::confirm_match))
-                .route("/:id/reject", post(matches::reject_match)),
+                .route("/{id}/confirm", post(matches::confirm_match))
+                .route("/{id}/reject", post(matches::reject_match)),
         )
 }
