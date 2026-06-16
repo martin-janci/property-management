@@ -1,0 +1,30 @@
+// Production.xcconfig
+// Epic 85 - Story 85.2: Build Configuration by Environment (iOS)
+//
+// Per-environment iOS build settings for the Property Management app
+// (three.two.bit.ppt.management). Selected at `expo prebuild` time by the
+// `withIosBuildConfig` config plugin (plugins/withIosBuildConfig.ts) based on
+// APP_ENV=production and copied into the generated `ios/` project as
+// `PPTEnv.xcconfig`, then wired as the baseConfigurationReference of every
+// build configuration.
+//
+// PRODUCTION API URL
+// ------------------
+// CI overrides API_BASE_URL via EAS project secret before building (see
+// eas.json / app.config.ts placeholder guard). The xcconfig keeps the
+// __SET_BY_CI__ sentinel so a misconfigured native build is greppable; it is
+// NOT the runtime source of truth (that is .env.production -> app.config.ts).
+
+PPT_APP_ENV = production
+
+PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.management
+
+PPT_BUILD_DISPLAY_NAME = PPT Management
+
+// Sentinel — CI must override the real host via EAS secret before shipping.
+// (app.config.ts refuses to build production with a placeholder URL.)
+PPT_API_BASE_URL = __SET_BY_CI__
+
+// Production enforces HTTPS — no arbitrary cleartext loads
+// (mirrors app.config.ts NSAllowsArbitraryLoads=false for release builds).
+PPT_ALLOWS_ARBITRARY_LOADS = NO

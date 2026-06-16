@@ -1148,66 +1148,87 @@ impl RealityPortalRepository {
         .await
     }
 
-    /// Update import job.
+    /// Update import job. Scoped to the owning `user_id` so a portal user
+    /// cannot mutate another user's job by id (IDOR, PAP-142).
     pub async fn update_import_job(
         &self,
         id: Uuid,
+        user_id: Uuid,
         data: UpdateImportJob,
     ) -> Result<PortalImportJob, SqlxError> {
         sqlx::query_as::<_, PortalImportJob>(
             r#"
             UPDATE portal_import_jobs SET
-                source_url = COALESCE($2, source_url),
-                source_filename = COALESCE($3, source_filename)
-            WHERE id = $1
+                source_url = COALESCE($3, source_url),
+                source_filename = COALESCE($4, source_filename)
+            WHERE id = $1 AND user_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(user_id)
         .bind(&data.source_url)
         .bind(&data.source_filename)
         .fetch_one(&self.pool)
         .await
     }
 
-    /// Start import job.
-    pub async fn start_import_job(&self, id: Uuid) -> Result<PortalImportJob, SqlxError> {
+    /// Start import job. Scoped to the owning `user_id` (IDOR, PAP-142).
+    pub async fn start_import_job(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<PortalImportJob, SqlxError> {
         sqlx::query_as::<_, PortalImportJob>(
             r#"
             UPDATE portal_import_jobs SET
                 status = 'processing',
                 started_at = NOW()
-            WHERE id = $1 AND status = 'pending'
+            WHERE id = $1 AND user_id = $2 AND status = 'pending'
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(user_id)
         .fetch_one(&self.pool)
         .await
     }
 
-    /// Cancel import job.
-    pub async fn cancel_import_job(&self, id: Uuid) -> Result<PortalImportJob, SqlxError> {
+    /// Cancel import job. Scoped to the owning `user_id` (IDOR, PAP-142).
+    pub async fn cancel_import_job(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<PortalImportJob, SqlxError> {
         sqlx::query_as::<_, PortalImportJob>(
             r#"
             UPDATE portal_import_jobs SET
                 status = 'cancelled',
                 completed_at = NOW()
-            WHERE id = $1 AND status IN ('pending', 'processing')
+            WHERE id = $1 AND user_id = $2 AND status IN ('pending', 'processing')
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(user_id)
         .fetch_one(&self.pool)
         .await
     }
 
-    /// Get import job status.
-    pub async fn get_import_job(&self, id: Uuid) -> Result<Option<PortalImportJob>, SqlxError> {
-        sqlx::query_as::<_, PortalImportJob>("SELECT * FROM portal_import_jobs WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+    /// Get import job status. Scoped to the owning `user_id` so a portal user
+    /// cannot read another user's job by id (IDOR, PAP-142).
+    pub async fn get_import_job(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<Option<PortalImportJob>, SqlxError> {
+        sqlx::query_as::<_, PortalImportJob>(
+            "SELECT * FROM portal_import_jobs WHERE id = $1 AND user_id = $2",
+        )
+        .bind(id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Update import job progress.
@@ -1275,39 +1296,44 @@ impl RealityPortalRepository {
         .await
     }
 
-    /// Get feed subscription by ID.
+    /// Get feed subscription by ID. Scoped to the owning `agency_id` so an
+    /// agency cannot read another agency's feed by id (IDOR, PAP-142).
     pub async fn get_feed_subscription(
         &self,
         id: Uuid,
+        agency_id: Uuid,
     ) -> Result<Option<RealityFeedSubscription>, SqlxError> {
         sqlx::query_as::<_, RealityFeedSubscription>(
-            "SELECT * FROM feed_subscriptions WHERE id = $1",
+            "SELECT * FROM feed_subscriptions WHERE id = $1 AND agency_id = $2",
         )
         .bind(id)
+        .bind(agency_id)
         .fetch_optional(&self.pool)
         .await
     }
 
-    /// Update feed subscription.
+    /// Update feed subscription. Scoped to the owning `agency_id` (IDOR, PAP-142).
     pub async fn update_feed_subscription(
         &self,
         id: Uuid,
+        agency_id: Uuid,
         data: UpdateFeedSubscription,
     ) -> Result<RealityFeedSubscription, SqlxError> {
         sqlx::query_as::<_, RealityFeedSubscription>(
             r#"
             UPDATE feed_subscriptions SET
-                name = COALESCE($2, name),
-                feed_url = COALESCE($3, feed_url),
-                feed_type = COALESCE($4, feed_type),
-                sync_interval = COALESCE($5, sync_interval),
-                is_active = COALESCE($6, is_active),
+                name = COALESCE($3, name),
+                feed_url = COALESCE($4, feed_url),
+                feed_type = COALESCE($5, feed_type),
+                sync_interval = COALESCE($6, sync_interval),
+                is_active = COALESCE($7, is_active),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND agency_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(agency_id)
         .bind(&data.name)
         .bind(&data.feed_url)
         .bind(&data.feed_type)
@@ -1317,18 +1343,23 @@ impl RealityPortalRepository {
         .await
     }
 
-    /// Trigger immediate feed sync.
-    pub async fn trigger_feed_sync(&self, id: Uuid) -> Result<RealityFeedSubscription, SqlxError> {
+    /// Trigger immediate feed sync. Scoped to the owning `agency_id` (IDOR, PAP-142).
+    pub async fn trigger_feed_sync(
+        &self,
+        id: Uuid,
+        agency_id: Uuid,
+    ) -> Result<RealityFeedSubscription, SqlxError> {
         // Mark as syncing and update last sync time
         sqlx::query_as::<_, RealityFeedSubscription>(
             r#"
             UPDATE feed_subscriptions SET
                 last_sync_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND agency_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(agency_id)
         .fetch_one(&self.pool)
         .await
     }

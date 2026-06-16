@@ -912,6 +912,28 @@ impl IntegrationRepository {
         .await
     }
 
+    /// Find an e-signature workflow by its external provider envelope ID.
+    ///
+    /// Used by webhook handlers to resolve the owning organization (and the
+    /// originating user) from the unguessable, provider-signed envelope id
+    /// before binding RLS context for a status update. `LIMIT 1` keeps the
+    /// read total even if the (provider-unique) envelope id is ever duplicated.
+    pub async fn find_esignature_workflow_by_external_id<'e, E>(
+        &self,
+        executor: E,
+        external_envelope_id: &str,
+    ) -> Result<Option<ESignatureWorkflow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, ESignatureWorkflow>(
+            "SELECT * FROM esignature_workflows WHERE external_envelope_id = $1 LIMIT 1",
+        )
+        .bind(external_envelope_id)
+        .fetch_optional(executor)
+        .await
+    }
+
     /// Update e-signature workflow status by external envelope ID.
     ///
     /// Used by webhook handlers to update workflow status based on external

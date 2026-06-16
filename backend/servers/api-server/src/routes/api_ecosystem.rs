@@ -49,11 +49,79 @@ use db::models::{
     UpdateConnector, UpdateEnhancedWebhookSubscription, UpdateMarketplaceIntegration,
     UpdateOrganizationIntegration, UpdatePreBuiltIntegrationConnection,
 };
+use db::RlsPool;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::state::AppState;
+
+/// Acquire a connection for this router's global-catalog and developer-portal
+/// tables (PAP-150 / PAP-167).
+///
+/// These tables — `marketplace_integrations`, `connectors`, `connector_actions`,
+/// `api_documentation`, `api_code_samples`, `developer_accounts`,
+/// `developer_api_keys`, `developer_sandboxes` — have RLS *enabled* but are NOT
+/// under `FORCE ROW LEVEL SECURITY` (migration `00102`), so the app role stays
+/// owner-exempt: the catalog is public-read / super-admin-write and the
+/// developer-portal rows are user-scoped, with authorization enforced in the
+/// handlers (platform-admin gate / `user_id` owner check). They are therefore
+/// not org-scoped and don't go through the [`RlsConnection`] extractor (which
+/// the org-scoped handlers in this file use).
+///
+/// [`RlsPool::acquire_public`] keeps handler DB access off the raw `state.db`
+/// pool — so the RLS-enforcement CI gate stays green — while clearing any stale
+/// RLS context left on the pooled connection by a previous request before we
+/// reuse it. That is strictly safer than the bare pool it replaces.
+///
+/// As of PAP-171 (migration `00180`) these tables are under `FORCE ROW LEVEL
+/// SECURITY`, so the owner role is no longer exempt. `catalog_conn` is now used
+/// ONLY by the **public read** handlers (catalog list/get with no caller
+/// identity), whose policies are `USING (TRUE)` / `USING (is_published)` and so
+/// still resolve correctly with no RLS context. Authenticated writes and
+/// developer-portal handlers use [`rls_conn`] instead so the user / super-admin
+/// policy backstop is actually exercised.
+async fn catalog_conn(
+    state: &AppState,
+) -> Result<db::PublicConnection, (StatusCode, Json<ErrorResponse>)> {
+    RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+}
+
+/// Acquire an RLS-scoped connection carrying the caller's user + super-admin
+/// context for the FORCE-RLS catalog-write and developer-portal handlers
+/// (PAP-171, migration `00180`).
+///
+/// The catalog tables' write policies are `USING (is_super_admin())` and the
+/// developer-portal tables' policies are `USING (user_id = app.current_user_id
+/// OR is_super_admin())`. Under `FORCE ROW LEVEL SECURITY` the owner role is no
+/// longer exempt, so those policies now require the connection to carry the
+/// caller's identity. This helper sets it: platform admins
+/// ([`AuthUser::is_platform_admin`]) map to the super-admin RLS bypass — the
+/// same boundary the in-handler `is_platform_admin()` gate enforces — and every
+/// other caller is scoped to their own `user_id`. The developer-portal policies
+/// key on `user_id`, not org, so the tenant slot is filled with
+/// `auth.tenant_id` when present and a nil sentinel otherwise (developers need
+/// not belong to an org).
+///
+/// Callers should `release().await` the returned guard before returning so RLS
+/// context is cleared eagerly; the guard's `Drop` is a best-effort fallback on
+/// error paths (mirrors the `RlsConnection` discipline the org handlers use).
+async fn rls_conn(
+    state: &AppState,
+    auth: &AuthUser,
+) -> Result<db::RlsGuard, (StatusCode, Json<ErrorResponse>)> {
+    RlsPool::new(state.db.clone())
+        .acquire_with_rls(
+            auth.tenant_id.unwrap_or_else(Uuid::nil),
+            auth.user_id,
+            auth.is_platform_admin(),
+        )
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))
+}
 
 /// Create API ecosystem router.
 pub fn router() -> Router<AppState> {
@@ -295,9 +363,10 @@ async fn list_marketplace_integrations(
     State(state): State<AppState>,
     Query(query): Query<MarketplaceIntegrationQuery>,
 ) -> Result<Json<Vec<MarketplaceIntegrationSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let integrations = state
         .api_ecosystem_repo
-        .list_marketplace_integrations(&state.db, &query)
+        .list_marketplace_integrations(&mut **conn, &query)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -331,12 +400,15 @@ async fn create_marketplace_integration(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let integration = state
         .api_ecosystem_repo
-        .create_marketplace_integration(&state.db, &request)
+        .create_marketplace_integration(&mut **conn, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(integration))
 }
 
@@ -355,9 +427,10 @@ async fn get_marketplace_integration(
     State(state): State<AppState>,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let integration = state
         .api_ecosystem_repo
-        .get_marketplace_integration(&state.db, path.id)
+        .get_marketplace_integration(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Integration", path.id))?;
@@ -392,13 +465,16 @@ async fn update_marketplace_integration(
             )),
         ));
     }
+
+    let mut conn = rls_conn(&state, &auth).await?;
     let integration = state
         .api_ecosystem_repo
-        .update_marketplace_integration(&state.db, path.id, &request)
+        .update_marketplace_integration(&mut **conn, path.id, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Integration", path.id))?;
 
+    conn.release().await;
     Ok(Json(integration))
 }
 
@@ -427,12 +503,15 @@ async fn delete_marketplace_integration(
             )),
         ));
     }
+
+    let mut conn = rls_conn(&state, &auth).await?;
     let deleted = state
         .api_ecosystem_repo
-        .delete_marketplace_integration(&state.db, path.id)
+        .delete_marketplace_integration(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     if deleted {
         Ok(StatusCode::NO_CONTENT)
     } else {
@@ -452,9 +531,10 @@ async fn delete_marketplace_integration(
 async fn list_integration_categories(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<IntegrationCategoryCount>>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let categories = state
         .api_ecosystem_repo
-        .get_integration_category_counts(&state.db)
+        .get_integration_category_counts(&mut **conn)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -492,11 +572,12 @@ async fn list_integration_ratings(
     Path(path): Path<IntegrationIdPath>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<IntegrationRatingWithUser>>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let limit = query.limit.clamp(1, 100);
     let offset = query.offset.max(0);
     let ratings = state
         .api_ecosystem_repo
-        .list_integration_ratings(&state.db, path.id, limit, offset)
+        .list_integration_ratings(&mut **conn, path.id, limit, offset)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -701,9 +782,10 @@ async fn sync_integration(
 async fn list_connectors(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Connector>>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let connectors = state
         .api_ecosystem_repo
-        .list_all_connectors(&state.db)
+        .list_all_connectors(&mut **conn)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -727,12 +809,15 @@ async fn create_connector(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let connector = state
         .api_ecosystem_repo
-        .create_connector(&state.db, &request)
+        .create_connector(&mut **conn, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(connector))
 }
 
@@ -741,9 +826,10 @@ async fn get_connector(
     State(state): State<AppState>,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let connector = state
         .api_ecosystem_repo
-        .get_connector(&state.db, path.id)
+        .get_connector(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Connector", path.id))?;
@@ -768,13 +854,16 @@ async fn update_connector(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let connector = state
         .api_ecosystem_repo
-        .update_connector(&state.db, path.id, &request)
+        .update_connector(&mut **conn, path.id, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Connector", path.id))?;
 
+    conn.release().await;
     Ok(Json(connector))
 }
 
@@ -794,12 +883,15 @@ async fn delete_connector(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let deleted = state
         .api_ecosystem_repo
-        .delete_connector(&state.db, path.id)
+        .delete_connector(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     if deleted {
         Ok(StatusCode::NO_CONTENT)
     } else {
@@ -812,9 +904,10 @@ async fn list_connector_actions(
     State(state): State<AppState>,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<Vec<ConnectorAction>>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let actions = state
         .api_ecosystem_repo
-        .list_connector_actions(&state.db, path.id)
+        .list_connector_actions(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -824,16 +917,32 @@ async fn list_connector_actions(
 /// Create connector action.
 async fn create_connector_action(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(_path): Path<IntegrationIdPath>,
     Json(request): Json<CreateConnectorAction>,
 ) -> Result<Json<ConnectorAction>, (StatusCode, Json<ErrorResponse>)> {
+    // Connector actions are part of the global catalog (super-admin write). The
+    // PAP-171 FORCE-RLS backstop denies non-admins, but gate explicitly so the
+    // caller gets a clean 403 rather than an opaque RLS denial. (This sibling of
+    // `create_connector` was previously missing the gate — see PAP-171.)
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+
+    let mut conn = rls_conn(&state, &auth).await?;
     let action = state
         .api_ecosystem_repo
-        .create_connector_action(&state.db, &request)
+        .create_connector_action(&mut **conn, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(action))
 }
 
@@ -1373,28 +1482,32 @@ async fn register_developer(
     auth: AuthUser,
     Json(request): Json<CreateDeveloperRegistration>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = rls_conn(&state, &auth).await?;
     let registration = state
         .api_ecosystem_repo
-        .register_developer(&state.db, auth.user_id, &request)
+        .register_developer(&mut **conn, auth.user_id, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(registration))
 }
 
 /// Get developer registration.
 async fn get_developer_registration(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = rls_conn(&state, &auth).await?;
     let registration = state
         .api_ecosystem_repo
-        .get_developer_registration(&state.db, path.id)
+        .get_developer_registration(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Developer", path.id))?;
 
+    conn.release().await;
     Ok(Json(registration))
 }
 
@@ -1414,13 +1527,16 @@ async fn review_developer_registration(
             )),
         ));
     }
+
+    let mut conn = rls_conn(&state, &auth).await?;
     let registration = state
         .api_ecosystem_repo
-        .review_developer_registration(&state.db, path.id, auth.user_id, &request)
+        .review_developer_registration(&mut **conn, path.id, auth.user_id, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Developer", path.id))?;
 
+    conn.release().await;
     Ok(Json(registration))
 }
 
@@ -1431,10 +1547,11 @@ async fn list_developer_api_keys(
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<Vec<DeveloperApiKeyDisplay>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
+    let mut conn = rls_conn(&state, &auth).await?;
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(&state.db, path.id)
+            .get_developer_registration(&mut **conn, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1451,7 +1568,7 @@ async fn list_developer_api_keys(
 
     let keys = state
         .api_ecosystem_repo
-        .list_developer_api_keys(&state.db, path.id)
+        .list_developer_api_keys(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1472,6 +1589,7 @@ async fn list_developer_api_keys(
         })
         .collect();
 
+    conn.release().await;
     Ok(Json(display_keys))
 }
 
@@ -1483,10 +1601,11 @@ async fn create_developer_api_key(
     Json(request): Json<CreateDeveloperApiKey>,
 ) -> Result<Json<CreateDeveloperApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Verify the caller owns this developer account or is platform admin
+    let mut conn = rls_conn(&state, &auth).await?;
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(&state.db, path.id)
+            .get_developer_registration(&mut **conn, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1517,7 +1636,7 @@ async fn create_developer_api_key(
 
     let api_key = state
         .api_ecosystem_repo
-        .create_developer_api_key(&state.db, path.id, &request, &key_prefix, &key_hash)
+        .create_developer_api_key(&mut **conn, path.id, &request, &key_prefix, &key_hash)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1532,6 +1651,7 @@ async fn create_developer_api_key(
         expires_at: api_key.expires_at,
     };
 
+    conn.release().await;
     Ok(Json(response))
 }
 
@@ -1550,12 +1670,14 @@ async fn revoke_developer_api_key(
     auth: AuthUser,
     Path(path): Path<DeveloperKeyPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = rls_conn(&state, &auth).await?;
     let revoked = state
         .api_ecosystem_repo
-        .revoke_api_key(&state.db, path.key_id, auth.user_id)
+        .revoke_api_key(&mut **conn, path.key_id, auth.user_id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     if revoked {
         Ok(StatusCode::NO_CONTENT)
     } else {
@@ -1569,10 +1691,16 @@ async fn rotate_developer_api_key(
     auth: AuthUser,
     Path(path): Path<DeveloperKeyPath>,
 ) -> Result<Json<CreateDeveloperApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // `developer_api_keys` is FORCE-RLS (PAP-171, migration 00180); the rotate
+    // below is multi-statement (revoke old + insert new in one transaction) and
+    // runs on this dedicated RLS-scoped connection carrying the caller's user
+    // context, so the owner policy backstops the `auth.user_id` scoping below.
+    let mut conn = rls_conn(&state, &auth).await?;
+
     // Fetch existing key to determine sandbox status for the new key prefix
     let existing_keys = state
         .api_ecosystem_repo
-        .list_developer_api_keys(&state.db, path.id)
+        .list_developer_api_keys(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
     let old_key = existing_keys
@@ -1588,14 +1716,6 @@ async fn rotate_developer_api_key(
     );
     let key_prefix = key.chars().take(8).collect::<String>();
     let key_hash = format!("sha256:{}", sha256_simple(&key));
-
-    // The rotate is multi-statement (revoke old + insert new in one
-    // transaction), so it needs a dedicated connection from the pool.
-    let mut conn = state
-        .db
-        .acquire()
-        .await
-        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     let api_key = state
         .api_ecosystem_repo
@@ -1614,6 +1734,7 @@ async fn rotate_developer_api_key(
         expires_at: api_key.expires_at,
     };
 
+    conn.release().await;
     Ok(Json(response))
 }
 
@@ -1624,10 +1745,11 @@ async fn get_developer_usage_stats(
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<DeveloperUsageStats>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
+    let mut conn = rls_conn(&state, &auth).await?;
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(&state.db, path.id)
+            .get_developer_registration(&mut **conn, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1644,10 +1766,11 @@ async fn get_developer_usage_stats(
 
     let stats = state
         .api_ecosystem_repo
-        .get_developer_usage_stats(&state.db, path.id)
+        .get_developer_usage_stats(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(stats))
 }
 
@@ -1659,10 +1782,11 @@ async fn create_sandbox_environment(
     Json(request): Json<CreateSandboxConfig>,
 ) -> Result<Json<SandboxConfig>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
+    let mut conn = rls_conn(&state, &auth).await?;
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(&state.db, path.id)
+            .get_developer_registration(&mut **conn, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1683,10 +1807,11 @@ async fn create_sandbox_environment(
 
     let sandbox = state
         .api_ecosystem_repo
-        .create_sandbox_environment(&state.db, path.id, &request, expires_at)
+        .create_sandbox_environment(&mut **conn, path.id, &request, expires_at)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(sandbox))
 }
 
@@ -1697,10 +1822,11 @@ async fn get_sandbox_environment(
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<SandboxConfig>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
+    let mut conn = rls_conn(&state, &auth).await?;
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(&state.db, path.id)
+            .get_developer_registration(&mut **conn, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1717,11 +1843,12 @@ async fn get_sandbox_environment(
 
     let sandbox = state
         .api_ecosystem_repo
-        .get_sandbox_environment(&state.db, path.id)
+        .get_sandbox_environment(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| error_response("NOT_FOUND", "Sandbox environment not found"))?;
 
+    conn.release().await;
     Ok(Json(sandbox))
 }
 
@@ -1733,10 +1860,11 @@ async fn test_sandbox_request(
     Json(request): Json<SandboxTestRequestPayload>,
 ) -> Result<Json<SandboxTestResponsePayload>, (StatusCode, Json<ErrorResponse>)> {
     // Verify ownership or admin access
+    let mut conn = rls_conn(&state, &auth).await?;
     if !auth.is_platform_admin() {
         let dev_account = state
             .api_ecosystem_repo
-            .get_developer_registration(&state.db, path.id)
+            .get_developer_registration(&mut **conn, path.id)
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
@@ -1754,7 +1882,7 @@ async fn test_sandbox_request(
     // Verify sandbox exists
     let _sandbox = state
         .api_ecosystem_repo
-        .get_sandbox_environment(&state.db, path.id)
+        .get_sandbox_environment(&mut **conn, path.id)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| error_response("NOT_FOUND", "Sandbox environment not found"))?;
@@ -1822,6 +1950,7 @@ async fn test_sandbox_request(
         duration_ms,
     };
 
+    conn.release().await;
     Ok(Json(response))
 }
 
@@ -1829,10 +1958,11 @@ async fn test_sandbox_request(
 async fn list_api_documentation(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<ApiDocumentation>>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     // Public endpoint - list only published docs
     let docs = state
         .api_ecosystem_repo
-        .list_api_documentation(&state.db, true)
+        .list_api_documentation(&mut **conn, true)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1855,12 +1985,15 @@ async fn create_api_documentation(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let doc = state
         .api_ecosystem_repo
-        .create_api_documentation(&state.db, &request)
+        .create_api_documentation(&mut **conn, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(doc))
 }
 
@@ -1869,9 +2002,10 @@ async fn get_api_documentation(
     State(state): State<AppState>,
     Path(path): Path<DocSlugPath>,
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let doc = state
         .api_ecosystem_repo
-        .get_api_documentation(&state.db, &path.slug)
+        .get_api_documentation(&mut **conn, &path.slug)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Documentation", &path.slug))?;
@@ -1896,13 +2030,16 @@ async fn update_api_documentation(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let doc = state
         .api_ecosystem_repo
-        .update_api_documentation(&state.db, &path.slug, &request)
+        .update_api_documentation(&mut **conn, &path.slug, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
         .ok_or_else(|| not_found("Documentation", &path.slug))?;
 
+    conn.release().await;
     Ok(Json(doc))
 }
 
@@ -1922,12 +2059,15 @@ async fn delete_api_documentation(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let deleted = state
         .api_ecosystem_repo
-        .delete_api_documentation(&state.db, &path.slug)
+        .delete_api_documentation(&mut **conn, &path.slug)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     if deleted {
         Ok(StatusCode::NO_CONTENT)
     } else {
@@ -1940,10 +2080,11 @@ async fn list_code_samples(
     State(state): State<AppState>,
     Path(path): Path<DocSlugPath>,
 ) -> Result<Json<Vec<ApiCodeSample>>, (StatusCode, Json<ErrorResponse>)> {
+    let mut conn = catalog_conn(&state).await?;
     let endpoint_path = format!("/api/v1/{}", path.slug);
     let samples = state
         .api_ecosystem_repo
-        .list_code_samples(&state.db, &endpoint_path)
+        .list_code_samples(&mut **conn, &endpoint_path)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1967,12 +2108,15 @@ async fn create_code_sample(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let sample = state
         .api_ecosystem_repo
-        .create_code_sample(&state.db, &request)
+        .create_code_sample(&mut **conn, &request)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(sample))
 }
 
@@ -1991,12 +2135,15 @@ async fn get_developer_portal_stats(
         ));
     }
 
+    let mut conn = rls_conn(&state, &auth).await?;
+
     let stats = state
         .api_ecosystem_repo
-        .get_developer_portal_stats(&state.db)
+        .get_developer_portal_stats(&mut **conn)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
+    conn.release().await;
     Ok(Json(stats))
 }
 

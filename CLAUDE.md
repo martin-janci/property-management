@@ -145,145 +145,18 @@ Conventional Commits:
 - `fix(api-server): correct tenant context extraction`
 - `docs(reality-web): add i18n documentation`
 
-## Epic & Story Development Workflow
+## Epic / Story / Release / Versioning Workflow
 
-**IMPORTANT: Follow this workflow when implementing epics and stories.**
+Full procedures (epic & story delivery, release `dev`->`main`, hotfix, versioning bumps)
+live in **[`docs/git-workflow.md`](docs/git-workflow.md)** -- read it on demand. Quick recap:
 
-### Before Starting an Epic
-
-```bash
-# Create feature branch from dev (the default integration branch)
-git checkout dev
-git pull origin dev
-git checkout -b feature/epic-{N}-{description}
-```
-
-**Example:** `git checkout -b feature/epic-1-user-authentication`
-
-> Do **not** branch from `main`. `main` only moves forward during releases.
-
-### After Completing Each Story
-
-```bash
-# Stage and commit with story reference
-git add .
-git commit -m "feat(epic-{N}): story {N}.{M} - {description}"
-```
-
-**Examples:**
-- `feat(epic-1): story 1.1 - user registration with email verification`
-- `feat(epic-1): story 1.2 - email/password login`
-- `feat(epic-4): story 4.3 - fault triage by manager`
-
-### After All Stories in Epic Complete
-
-1. **Run BMAD Code Review Workflow:**
-   ```bash
-   # Invoke the code-review workflow
-   /bmad:bmm:workflows:code-review
-   ```
-
-2. **Address Review Findings** - Fix any issues identified
-
-3. **Create Pull Request against `dev`:**
-   ```bash
-   git push -u origin feature/epic-{N}-{description}
-   gh pr create --base dev --title "Epic {N}: {Title}" --body "..."
-   ```
-
-### Release Workflow (`dev` → `main`)
-
-Releases are the only path from `dev` to `main`.
-
-```bash
-# 1. Make sure dev is green and up to date
-git checkout dev
-git pull origin dev
-
-# 2. Bump version (writes VERSION + syncs package.json / gradle.properties)
-./scripts/bump-version.sh minor   # or major / patch
-
-# 3. Open the release PR
-git push origin dev
-gh pr create --base main --head dev \
-  --title "Release v$(cat VERSION)" \
-  --body "Release notes…"
-
-# 4. After merge to main, tag the release
-git checkout main && git pull origin main
-git tag -a "v$(cat VERSION)" -m "Release v$(cat VERSION)"
-git push origin "v$(cat VERSION)"
-```
-
-### Hotfix Workflow (`main` → `hotfix/*` → `main` + `dev`)
-
-```bash
-# 1. Branch from main (the released code)
-git checkout main
-git pull origin main
-git checkout -b hotfix/{short-description}
-
-# 2. Fix + commit + push
-git commit -am "fix({scope}): {description}"
-git push -u origin hotfix/{short-description}
-
-# 3. PR into main (release the hotfix)
-gh pr create --base main --title "Hotfix: {description}" --body "..."
-
-# 4. After merge, fast-forward the fix into dev too
-git checkout dev
-git pull origin dev
-git merge --no-ff origin/main
-git push origin dev
-```
-
-### Workflow Summary
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  1. Branch from dev: feature/epic-{N}-{description}         │
-├─────────────────────────────────────────────────────────────┤
-│  2. Implement Story {N}.1 → Commit                          │
-│  3. Implement Story {N}.2 → Commit                          │
-│  4. Implement Story {N}.{M} → Commit                        │
-│     ... repeat for all stories ...                          │
-├─────────────────────────────────────────────────────────────┤
-│  5. Run /bmad:bmm:workflows:code-review                     │
-│  6. Fix issues → Commit fixes                               │
-├─────────────────────────────────────────────────────────────┤
-│  7. Push branch and open PR against `dev`                   │
-│  8. Merge into `dev` after approval                         │
-├─────────────────────────────────────────────────────────────┤
-│  9. At release time: PR `dev` → `main`, tag, publish        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Versioning
-
-Single source of truth: `VERSION` file (semantic versioning X.Y.Z)
-
-```bash
-# Patch auto-bumps via CI after merge to `main` (.github/workflows/version-bump.yml).
-# Manual bumps (run before opening the release PR):
-./scripts/bump-version.sh patch   # 0.1.0 -> 0.1.1
-./scripts/bump-version.sh minor   # 0.1.x -> 0.2.0
-./scripts/bump-version.sh major   # 0.x.y -> 1.0.0
-
-# Sync VERSION into all sub-projects without bumping (re-run after manual VERSION edit):
-./scripts/update-version.sh
-
-# Install git hooks (one-time setup)
-./scripts/install-hooks.sh
-```
-
-`update-version.sh` propagates the `VERSION` file into:
-
-- `backend/Cargo.toml` (`workspace.package.version`)
-- `frontend/package.json` + every `frontend/apps/*/package.json` and `frontend/packages/*/package.json`
-- `mobile-native/gradle.properties` (`versionName` + `versionCode`)
-- `docs/api/typespec/main.tsp` (API service version)
-
-`bump-version.sh` calls `update-version.sh` automatically after writing the new `VERSION`.
+- **Epics/stories:** branch `feature/epic-{N}-...` from `dev`; commit per story as
+  `feat(epic-{N}): story {N}.{M} - ...`; PR into `dev`.
+- **Release:** only path `dev`->`main`. `./scripts/bump-version.sh {patch|minor|major}`,
+  open the release PR, tag `v$(cat VERSION)` after merge.
+- **Hotfix:** branch `hotfix/...` from `main`, PR into `main`, then merge `main` back into `dev`.
+- **Versioning:** single source of truth is the `VERSION` file; `update-version.sh`
+  propagates it into Cargo/npm/gradle/typespec. Patch auto-bumps on merge to `main`.
 
 ## Quick Start
 
@@ -370,10 +243,28 @@ Local pre-flight before pushing: `cargo fmt && cargo clippy && cargo test` in `b
 
 The repo is developed with multiple `git worktree`s checked out under `.claude/worktrees/<name>/`. Use the `ppt-deploy` skill to spin up matching `*.dev.ppt.rlt.sk` / `*.dev.rlt.sk` environments per worktree, and the `ppt-dev-stack` skill (or root `justfile`) to bring up a local stack inside one. Don't commit the `.claude/worktrees/` paths themselves — only the code changes inside them.
 
+## Agent Efficiency (token discipline)
+
+Tokens are direct margin. When working in this repo:
+
+- **Locate before grepping.** Read [`docs/repo-map.md`](docs/repo-map.md) to find where a
+  feature lives. A domain noun maps to `routes/<noun>.rs` + `repositories/<noun>.rs` — go
+  straight there instead of grepping 84 routes / 101 repos.
+- **Read slices, not whole files.** Use `offset`/`limit` (or `rtk read`) for large files;
+  don't pull a 90 KB route file to see one handler.
+- **Fan out for conclusions, not dumps.** For broad "where/which/does-it-exist" sweeps, use an
+  Explore/Agent subagent that returns the answer, not raw file contents, into your context.
+- **Use RTK.** Dev commands (`grep`, `git`, `gh`, `find`, `cargo`, `pnpm`) route through `rtk`
+  for 60–90 % savings — let the hook rewrite them; don't bypass it.
+- **Protect the prompt cache.** Avoid sub-300 s scheduled waits/polls that bust the 5-min
+  Anthropic prompt cache; prefer being re-woken on completion over tight polling.
+
 ## Documentation Index
 
 | File | Description |
 |------|-------------|
+| `docs/git-workflow.md` | Epic/story, release, hotfix & versioning procedures |
+| `docs/repo-map.md` | Where-things-live index (crates, apps, routes, hot files) — read before grepping the tree |
 | `docs/CLAUDE.md` | Use cases, PRD/Epic/Story conventions |
 | `docs/spec1.0.md` | Original system specification |
 | `docs/use-cases.md` | 508 use cases catalog |

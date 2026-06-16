@@ -3,6 +3,15 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Coarse location for the Search "Near Me" radius filter (epic-82 story 82.3 FilterSheet).
+         Coarse precision is sufficient for a city-scale radius search and is the lighter-weight
+         permission; we never request ACCESS_FINE_LOCATION. The feature degrades gracefully when
+         the permission is denied (the toggle simply has no effect). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+
     <application
         android:name=".RealityPortalApplication"
         android:allowBackup="false"

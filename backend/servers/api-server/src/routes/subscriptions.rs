@@ -407,10 +407,16 @@ async fn list_public_plans(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<SubscriptionPlan>>, (StatusCode, Json<ErrorResponse>)> {
     // No tenant principal here: subscription_plans is not FORCE-bound and
-    // carries a public read policy, so the plain pool is the right executor.
+    // carries a public read policy. PAP-150: take a sanctioned public
+    // connection (clears any stale RLS context from a prior request) instead
+    // of touching the raw pool directly.
+    let mut conn = db::RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(db_error)?;
     let plans = state
         .subscription_repo
-        .list_public_plans(&state.db)
+        .list_public_plans(&mut **conn)
         .await
         .map_err(db_error)?;
 

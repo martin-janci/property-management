@@ -71,6 +71,13 @@ targets:
           - "**/.DS_Store"
     info:
       path: iosApp/Resources/Info.plist
+    # Associated-domains entitlement — enables universal links (applinks:) so
+    # iOS delivers matching https:// URLs to onOpenURL -> DeepLinkHandler.
+    # XcodeGen wires this as CODE_SIGN_ENTITLEMENTS for every configuration.
+    # The custom realityportal:// scheme is registered via CFBundleURLTypes in
+    # the Info.plist and does not need an entitlement.
+    entitlements:
+      path: iosApp/iosApp.entitlements
     # Per-config xcconfig also applied at the target level so PRODUCT_BUNDLE_*,
     # API_BASE_URL, ENVIRONMENT, ENABLE_LOGGING resolve into Info.plist.
     configFiles:

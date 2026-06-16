@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-10T12:31:29Z",
-  "last_action": "reset",
-  "reason": "target test-esignature-email-status-tracking-backend not claimable this run (WIP at cap, free_slots=0); reset to NONE to keep T21 green (issue #1238 finding 1)",
+  "selected_at": "2026-06-15T16:18:22Z",
+  "last_action": "reset-invalid-target",
+  "reason": "picker chose feat- epic already quarantined (PR#1318); invalid per self-test schema; reset to NONE",
   "stats_at_selection": {
     "open": 0,
     "claimable": 0

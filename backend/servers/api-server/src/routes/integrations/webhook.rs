@@ -40,6 +40,7 @@ use db::models::{
     CreateWebhookSubscription, TestWebhookRequest, TestWebhookResponse, UpdateWebhookSubscription,
     WebhookDeliveryLog, WebhookDeliveryQuery, WebhookStatistics, WebhookSubscription,
 };
+use db::RlsPool;
 use hmac::{Hmac, KeyInit, Mac};
 use integrations::booking::ota_xml;
 use integrations::{AirbnbClient, AirbnbWebhookEventType};
@@ -892,19 +893,71 @@ pub async fn esignature_webhook(
         };
 
         if let Some(status) = new_status {
-            // PAP-105 (PAP-80): inbound provider webhook — no request
-            // principal, so no RLS context to bind. esignature_workflows is
-            // not FORCE-RLS and the write is scoped by the provider-signed
-            // envelope id, so the pool is the executor here.
-            if let Err(e) = state
-                .integration_repo
-                .update_esignature_workflow_by_external_id(&state.db, envelope_id, status)
-                .await
-            {
+            // PAP-170 (PAP-150 P5): inbound provider webhook — no request
+            // principal. Resolve the owning org from the provider-signed
+            // envelope id, then apply the status update under that tenant's RLS
+            // context (defense in depth — the write is confined to the resolved
+            // org instead of running on the raw pool).
+            let rls_pool = RlsPool::new(state.db.clone());
+
+            // Bootstrap read on a context-cleared connection: esignature_workflows
+            // is keyed by the unguessable, provider-signed envelope id.
+            let workflow = match rls_pool.acquire_public().await {
+                Ok(mut lookup) => state
+                    .integration_repo
+                    .find_esignature_workflow_by_external_id(&mut **lookup.conn(), envelope_id)
+                    .await
+                    .unwrap_or_else(|e| {
+                        tracing::warn!(
+                            error = %e,
+                            envelope_id = %envelope_id,
+                            "Failed to resolve workflow org from webhook envelope id"
+                        );
+                        None
+                    }),
+                Err(e) => {
+                    tracing::warn!(
+                        error = %e,
+                        "Failed to acquire connection for e-signature webhook"
+                    );
+                    None
+                }
+            };
+
+            if let Some(wf) = workflow {
+                match rls_pool
+                    .acquire_with_rls(wf.organization_id, wf.created_by, false)
+                    .await
+                {
+                    Ok(mut guard) => {
+                        if let Err(e) = state
+                            .integration_repo
+                            .update_esignature_workflow_by_external_id(
+                                &mut **guard.conn(),
+                                envelope_id,
+                                status,
+                            )
+                            .await
+                        {
+                            tracing::warn!(
+                                error = %e,
+                                envelope_id = %envelope_id,
+                                "Failed to update workflow status from webhook"
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            error = %e,
+                            envelope_id = %envelope_id,
+                            "Failed to bind RLS context for e-signature webhook update"
+                        );
+                    }
+                }
+            } else {
                 tracing::warn!(
-                    error = %e,
                     envelope_id = %envelope_id,
-                    "Failed to update workflow status from webhook"
+                    "E-signature webhook: no workflow matches envelope id, ignoring"
                 );
             }
         }
@@ -1135,17 +1188,16 @@ pub async fn handle_airbnb_webhook(
     // event_id-absent path that could still double-enqueue SYNC_EXTERNAL.
     let dedup_key = airbnb_dedup_key(&event);
     let event_type_label = format!("{:?}", event.event_type);
-    let insert = sqlx::query(
-        "INSERT INTO airbnb_webhook_events (event_id, event_type) \
-         VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING",
-    )
-    .bind(&dedup_key)
-    .bind(&event_type_label)
-    .execute(&state.db)
-    .await;
+    // PAP-170 (PAP-150): the dedup-ledger insert now lives in the repository
+    // layer (`airbnb_webhook_events` is a global, tenant-less table) instead of
+    // a raw `state.db` pool access here. `Ok(false)` ⇒ already seen ⇒ suppress.
+    let recorded = state
+        .rental_repo
+        .record_airbnb_webhook_event(&dedup_key, &event_type_label)
+        .await;
 
-    match insert {
-        Ok(result) if result.rows_affected() == 0 => {
+    match recorded {
+        Ok(false) => {
             tracing::info!(
                 dedup_key = %dedup_key,
                 event_type = %event_type_label,
@@ -1153,7 +1205,7 @@ pub async fn handle_airbnb_webhook(
             );
             return Ok(StatusCode::OK);
         }
-        Ok(_) => {
+        Ok(true) => {
             tracing::debug!(
                 dedup_key = %dedup_key,
                 event_type = %event_type_label,
@@ -1261,23 +1313,45 @@ pub async fn handle_airbnb_webhook(
                                     "Cancelled via Airbnb webhook".to_string(),
                                 ),
                             };
-                            if let Err(e) = state
+                            // PAP-141: key the status mutation to the booking's
+                            // own organization (`update_booking_status_for_org`)
+                            // rather than the bare id, so a forged/replayed
+                            // webhook can never flip a booking the lookup did
+                            // not legitimately resolve. `booking` was just found
+                            // by (`platform`, `external_id`), so its
+                            // `organization_id` is the authoritative owner.
+                            match state
                                 .rental_repo
-                                .update_booking_status(booking.id, cancel_data)
+                                .update_booking_status_for_org(
+                                    booking.organization_id,
+                                    booking.id,
+                                    cancel_data,
+                                )
                                 .await
                             {
-                                tracing::error!(
-                                    error = %e,
-                                    booking_id = %booking.id,
-                                    confirmation_code = %code,
-                                    "Airbnb webhook: failed to cancel booking"
-                                );
-                            } else {
-                                tracing::info!(
-                                    booking_id = %booking.id,
-                                    confirmation_code = %code,
-                                    "Airbnb webhook: booking cancelled"
-                                );
+                                Ok(Some(_)) => {
+                                    tracing::info!(
+                                        booking_id = %booking.id,
+                                        confirmation_code = %code,
+                                        "Airbnb webhook: booking cancelled"
+                                    );
+                                }
+                                Ok(None) => {
+                                    tracing::warn!(
+                                        booking_id = %booking.id,
+                                        org_id = %booking.organization_id,
+                                        confirmation_code = %code,
+                                        "Airbnb webhook: booking not cancelled (org mismatch on status update)"
+                                    );
+                                }
+                                Err(e) => {
+                                    tracing::error!(
+                                        error = %e,
+                                        booking_id = %booking.id,
+                                        confirmation_code = %code,
+                                        "Airbnb webhook: failed to cancel booking"
+                                    );
+                                }
                             }
                         }
                     }
