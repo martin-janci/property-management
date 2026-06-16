@@ -103,3 +103,49 @@ async fn registry_rules_decode_allowed_pet_types_enum_array(pool: PgPool) {
 
     assert_eq!(updated_rules.allowed_pet_types, Some(vec!["bird".into()]));
 }
+
+/// #1406: the upsert INSERT branch must COALESCE NULL booleans to the column
+/// schema defaults. `pets_allowed` / `pets_require_approval` /
+/// `vehicles_require_approval` are `NOT NULL` (migration 00067) but the request
+/// type carries `Option<bool>`; PR #1379 wrapped the INSERT binds in
+/// `COALESCE($n, <default>)`. Without it, a first upsert (INSERT, no existing
+/// row) with `None` booleans binds SQL NULL and fails with `23502 not-null
+/// violation`. This test creates rules with all three booleans `None` and
+/// asserts the row is created with the schema defaults (TRUE / TRUE / FALSE).
+#[sqlx::test]
+async fn registry_rules_insert_branch_coalesces_null_booleans_to_defaults(pool: PgPool) {
+    let org = seed_org(&pool, "rules_defaults").await;
+    let building = seed_building(&pool, org, "rules_defaults").await;
+    let repo = RegistryRepository::new(pool.clone());
+
+    // First upsert for this (org, building) → INSERT branch, all booleans None.
+    let rules = repo
+        .upsert_registry_rules(
+            org,
+            building,
+            UpdateRegistryRules {
+                pets_allowed: None,
+                pets_require_approval: None,
+                max_pets_per_unit: None,
+                allowed_pet_types: None,
+                banned_pet_breeds: None,
+                max_pet_weight: None,
+                vehicles_require_approval: None,
+                max_vehicles_per_unit: None,
+                notes: None,
+            },
+        )
+        .await
+        .expect("INSERT-branch upsert must COALESCE NULL booleans to defaults (no 23502)");
+
+    // Schema defaults from 00067_create_building_registries.sql.
+    assert!(rules.pets_allowed, "pets_allowed default is TRUE");
+    assert!(
+        rules.pets_require_approval,
+        "pets_require_approval default is TRUE"
+    );
+    assert!(
+        !rules.vehicles_require_approval,
+        "vehicles_require_approval default is FALSE"
+    );
+}
