@@ -57,8 +57,8 @@ final class DeepLinkHandler {
     /// hosts so a stray `https://attacker.example/listing/1` from a
     /// share-sheet or paste never reaches the router.
     static let allowedUniversalLinkHosts: Set<String> = [
-        "reality.example.com",        // production (placeholder until AASA wired)
-        "staging-reality.example.com" // staging (placeholder until AASA wired)
+        "reality.example.com",         // production (placeholder until AASA wired)
+        "staging.reality.example.com"  // staging — matches Environment.staging.universalLinkDomain
     ]
 
     /// Parse any incoming URL into a ``ParseResult``.

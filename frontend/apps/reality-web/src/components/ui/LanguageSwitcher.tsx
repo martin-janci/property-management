@@ -39,6 +39,7 @@ export function LanguageSwitcher() {
   // Keyboard navigation while the menu is open. Listening on the document
   // because the listbox itself doesn't take focus (the trigger keeps it,
   // per APG listbox-with-aria-activedescendant pattern).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: choose captures stable router/pathname refs from next-intl; listing it would cause spurious re-subscriptions
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
@@ -80,9 +81,6 @@ export function LanguageSwitcher() {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-    // choose isn't in deps because the underlying functions (router,
-    // pathname) are referentially-stable from next-intl across renders.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const choose = (next: Locale) => {
