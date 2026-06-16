@@ -2773,6 +2773,95 @@ mod tests {
         assert_eq!(server.hits(), 2, "should exhaust exactly max_attempts");
     }
 
+    #[tokio::test]
+    async fn test_push_429_without_retry_after_returns_rate_limited_zero() {
+        // Naked 429 with no Retry-After header must also surface as
+        // RateLimited(0), not Api("HTTP 429: …").
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(429, "<too-many/>"),
+            MockResponse::status(429, "<too-many/>"),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 2,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: 2,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }];
+
+        let result = client.push_availability("H1", &updates).await;
+        assert_eq!(server.hits(), 2, "should exhaust max_attempts on persistent 429");
+        match result {
+            Err(BookingError::RateLimited(secs)) => {
+                assert_eq!(secs, 0, "no Retry-After header → RateLimited(0)");
+            }
+            other => panic!("expected RateLimited(0), got: {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_push_429_retry_after_secs_propagated_to_error() {
+        // Retry-After: 5 must propagate into RateLimited(5).
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(429, "<too-many/>").with_header("Retry-After", "5"),
+            MockResponse::status(429, "<too-many/>").with_header("Retry-After", "5"),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        // max_delay_ms = 0 clamps the Retry-After sleep to 0 so the test
+        // stays fast; the important assertion is the error value, not the timing.
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 2,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: 2,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }];
+
+        let result = client.push_availability("H1", &updates).await;
+        assert_eq!(server.hits(), 2, "should exhaust max_attempts");
+        match result {
+            Err(BookingError::RateLimited(secs)) => {
+                assert_eq!(secs, 5, "Retry-After: 5 → RateLimited(5)");
+            }
+            other => panic!("expected RateLimited(5), got: {other:?}"),
+        }
+    }
+
     #[test]
     fn test_map_reservation_status() {
         // Commit -> Confirmed
