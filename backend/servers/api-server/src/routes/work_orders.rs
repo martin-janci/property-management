@@ -1060,14 +1060,13 @@ async fn get_equipment_service_history(
 ) -> Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
 
-    // Resolve the owning org from the equipment row (404 if not found) and
-    // gate the caller against it. `FORCE` RLS at the DB layer closes this gap
-    // in production, but an explicit check is required so test pools (which
-    // connect as superuser and bypass RLS) also enforce org isolation (#1372).
+    // Resolve the owning org on the caller's RLS connection — unknown id
+    // and foreign-org id both resolve to empty -> 404 (BIT-56).
+    // verify_org_access is retained as defense-in-depth.
     let org_id: Option<Uuid> =
         sqlx::query_scalar("SELECT organization_id FROM equipment WHERE id = $1")
             .bind(equipment_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **rls.conn())
             .await
             .map_err(|e| {
                 tracing::error!("Failed to look up equipment org: {:?}", e);
@@ -1118,12 +1117,13 @@ async fn get_building_service_history(
 ) -> Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
 
-    // Resolve the owning org from the building row (404 if not found) and
-    // gate the caller — same rationale as get_equipment_service_history (#1372).
+    // Resolve the owning org on the caller's RLS connection — unknown id
+    // and foreign-org id both resolve to empty -> 404 (BIT-56).
+    // verify_org_access is retained as defense-in-depth.
     let org_id: Option<Uuid> =
         sqlx::query_scalar("SELECT organization_id FROM buildings WHERE id = $1")
             .bind(building_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **rls.conn())
             .await
             .map_err(|e| {
                 tracing::error!("Failed to look up building org: {:?}", e);
