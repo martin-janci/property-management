@@ -23,9 +23,7 @@ use uuid::Uuid;
 /// block, and iCal feed — all with non-NULL enum values seeded as SQL literals.
 ///
 /// Returns `(org_id, unit_id, booking_id, guest_id, block_id, feed_id, feed_token)`.
-async fn seed(
-    pool: &PgPool,
-) -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, String) {
+async fn seed(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, String) {
     sqlx::query("SELECT set_request_context($1, $2, $3)")
         .bind(Option::<Uuid>::None)
         .bind(Option::<Uuid>::None)
@@ -153,15 +151,7 @@ async fn seed(
     .await
     .expect("seed ical feed");
 
-    (
-        org_id,
-        unit_id,
-        booking_id,
-        guest_id,
-        block_id,
-        feed_id,
-        feed_token,
-    )
+    (org_id, unit_id, booking_id, guest_id, block_id, feed_id, feed_token)
 }
 
 // ============================================================================
@@ -267,10 +257,9 @@ async fn register_guest_returning_decodes_status(pool: PgPool) {
     let (_org, _unit, _booking, guest_id, _block, _feed, _token) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());
 
-    let registered = repo
-        .register_guest(guest_id)
-        .await
-        .expect("register_guest RETURNING must decode the guest_registration_status enum (BIT-118)");
+    let registered = repo.register_guest(guest_id).await.expect(
+        "register_guest RETURNING must decode the guest_registration_status enum (BIT-118)",
+    );
     assert_eq!(registered.status, "registered");
 }
 
@@ -313,8 +302,8 @@ async fn create_calendar_block_returning_decodes_source_platform(pool: PgPool) {
 
     // create_calendar_block sets source_platform = NULL; we verify the RETURNING
     // path succeeds (no 42804 panic when the column value is NULL).
-    use db::models::rental::CreateCalendarBlock;
     use chrono::NaiveDate;
+    use db::models::rental::CreateCalendarBlock;
     let block = repo
         .create_calendar_block(
             org_id,
@@ -361,9 +350,7 @@ async fn seeded_calendar_block_source_platform_decodes_via_raw_query(pool: PgPoo
     .bind(block_id)
     .fetch_one(&pool)
     .await
-    .expect(
-        "source_platform::text cast must decode into CalendarBlock.source_platform (BIT-118)",
-    );
+    .expect("source_platform::text cast must decode into CalendarBlock.source_platform (BIT-118)");
     assert_eq!(block.source_platform.as_deref(), Some("airbnb"));
 }
 
@@ -405,9 +392,7 @@ async fn get_ical_feeds_for_unit_in_org_decodes_import_platform(pool: PgPool) {
     let feeds = repo
         .get_ical_feeds_for_unit_in_org(org_id, unit_id)
         .await
-        .expect(
-            "get_ical_feeds_for_unit_in_org must decode the rental_platform enum (BIT-118)",
-        );
+        .expect("get_ical_feeds_for_unit_in_org must decode the rental_platform enum (BIT-118)");
     assert_eq!(feeds.len(), 1);
     assert_eq!(feeds[0].import_platform.as_deref(), Some("airbnb"));
 }
