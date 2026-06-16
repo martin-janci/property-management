@@ -2,8 +2,8 @@
   "schema_version": 1,
   "epic_prefix": "NONE",
   "selected_at": "2026-06-15T16:18:22Z",
-  "last_action": "repick",
-  "reason": "picker selected feat- epic (invalid T21 shape); reset to NONE — finish-first fell back to unfiltered pool",
+  "last_action": "reset-invalid-target",
+  "reason": "picker chose feat- epic already quarantined (PR#1318); invalid per self-test schema; reset to NONE",
   "stats_at_selection": {
     "open": 0,
     "claimable": 0

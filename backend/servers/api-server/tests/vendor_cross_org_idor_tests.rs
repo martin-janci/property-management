@@ -334,15 +334,9 @@ async fn get_vendor_for_own_org_succeeds(pool: PgPool) {
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_a = mint_token(user_a, "own-a@vendor-idor.test");
+    let session_a = app.session(token_a, org_a);
     let uri = format!("/api/v1/vendors/{vendor_a}");
-    let resp = app
-        .execute(
-            app.get(&uri)
-                .bearer(&token_a)
-                .header("X-Tenant-ID", &org_a.to_string())
-                .build(),
-        )
-        .await;
+    let resp = app.execute(session_a.get(&uri).build()).await;
 
     assert_eq!(
         resp.status,
