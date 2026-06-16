@@ -2385,7 +2385,7 @@ impl RentalRepository {
                 external_property_id, is_active
             )
             VALUES ($1, $2, 'airbnb', $3, $4, $5, $3, $4, $6, true)
-            ON CONFLICT (unit_id, platform) DO UPDATE SET
+            ON CONFLICT (unit_id, platform) WHERE unit_id <> '00000000-0000-0000-0000-000000000000' DO UPDATE SET
                 organization_id          = $1,
                 access_token             = $3,
                 refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
@@ -2473,7 +2473,7 @@ impl RentalRepository {
                 external_property_id, is_active
             )
             VALUES ($1, $2, 'booking', $3, $4, $5, $3, $4, $6, true)
-            ON CONFLICT (unit_id, platform) DO UPDATE SET
+            ON CONFLICT (unit_id, platform) WHERE unit_id <> '00000000-0000-0000-0000-000000000000' DO UPDATE SET
                 organization_id          = $1,
                 access_token             = $3,
                 refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
