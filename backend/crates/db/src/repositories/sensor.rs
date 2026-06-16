@@ -23,24 +23,18 @@ use crate::models::{
     SensorTypeCount, UpdateSensor, UpdateSensorThreshold,
 };
 use chrono::{DateTime, Utc};
-use sqlx::{Executor, PgConnection, PgPool, Postgres};
+use sqlx::{Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 /// Repository for IoT sensor operations.
 ///
 /// Stateless: every method receives an RLS-context-bearing executor. The repo
 /// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SensorRepository;
 
 impl SensorRepository {
-    /// Create a new repository instance.
-    ///
-    /// The pool argument is retained for construction-site compatibility with
-    /// the other repositories on `AppState`; this repo deliberately does not
-    /// store it (see module docs — all queries run on a context-set connection
-    /// supplied by the handler's `RlsConnection`).
-    pub fn new(_pool: PgPool) -> Self {
+    pub fn new() -> Self {
         Self
     }
 

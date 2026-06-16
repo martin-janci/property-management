@@ -221,7 +221,7 @@ impl TestApp {
     }
 
     /// Create an authenticated session for the given token and org (Story 1370).
-    pub fn session(&self, token: String, org_id: Uuid) -> AuthenticatedSession {
+    pub fn session(&self, token: String, org_id: Uuid) -> AuthenticatedSession<'_> {
         AuthenticatedSession::new(self, token, org_id)
     }
 }
@@ -232,13 +232,13 @@ impl TestApp {
 /// token and the `X-Tenant-ID` header, preventing "forgotten header" bugs in
 /// RLS-aware integration tests.
 pub struct AuthenticatedSession<'a> {
-    app: 'a TestApp,
+    app: &'a TestApp,
     token: String,
     org_id: Uuid,
 }
 
 impl<'a> AuthenticatedSession<'a> {
-    pub fn new(app: 'a TestApp, token: String, org_id: Uuid) -> Self {
+    pub fn new(app: &'a TestApp, token: String, org_id: Uuid) -> Self {
         Self { app, token, org_id }
     }
 
@@ -301,6 +301,13 @@ impl RequestBuilder {
     /// Set authorization bearer token.
     pub fn bearer(mut self, token: &str) -> Self {
         self.auth_token = Some(token.to_string());
+        self
+    }
+
+    /// Set the tenant scope via the `X-Tenant-ID` header (Story 1370).
+    pub fn tenant(mut self, org_id: Uuid) -> Self {
+        self.headers
+            .push(("X-Tenant-ID".to_string(), org_id.to_string()));
         self
     }
 
