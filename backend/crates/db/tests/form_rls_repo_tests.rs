@@ -242,7 +242,7 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
                     building_id: None,
                     unit_id: None,
                     data: SubmitForm {
-                        data: json!({}),
+                        data: json!({ "q1": "answer" }),
                         attachments: None,
                         signature_data: None,
                     },
