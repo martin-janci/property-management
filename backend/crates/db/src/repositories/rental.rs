@@ -2304,36 +2304,75 @@ impl RentalRepository {
             }
         };
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
-            r#"
-            INSERT INTO rental_platform_connections (
-                organization_id, unit_id, platform,
-                access_token, refresh_token, token_expires_at,
-                encrypted_token, encrypted_refresh_token,
-                external_property_id, is_active
+        // For nil-unit_id org-level connections use the partial unique index
+        // (organization_id, platform) WHERE unit_id = nil (migration 00182) as
+        // the conflict target so each org has its own row rather than sharing
+        // one cross-tenant nil-placeholder row (GH #1405 cross-tenant hazard).
+        let conn = if effective_unit_id == Uuid::nil() {
+            sqlx::query_as::<_, RentalPlatformConnection>(
+                r#"
+                INSERT INTO rental_platform_connections (
+                    organization_id, unit_id, platform,
+                    access_token, refresh_token, token_expires_at,
+                    encrypted_token, encrypted_refresh_token,
+                    external_property_id, is_active
+                )
+                VALUES ($1, $2, 'airbnb', $3, $4, $5, $3, $4, $6, true)
+                ON CONFLICT (organization_id, platform)
+                    WHERE unit_id = '00000000-0000-0000-0000-000000000000'
+                DO UPDATE SET
+                    access_token             = $3,
+                    refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
+                    encrypted_token          = $3,
+                    encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
+                    token_expires_at         = $5,
+                    external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
+                    is_active                = true,
+                    sync_error               = NULL,
+                    updated_at               = NOW()
+                RETURNING *
+                "#,
             )
-            VALUES ($1, $2, 'airbnb', $3, $4, $5, $3, $4, $6, true)
-            ON CONFLICT (unit_id, platform) DO UPDATE SET
-                access_token             = $3,
-                refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
-                encrypted_token          = $3,
-                encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
-                token_expires_at         = $5,
-                external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
-                is_active                = true,
-                sync_error               = NULL,
-                updated_at               = NOW()
-            RETURNING *
-            "#,
-        )
-        .bind(org_id)
-        .bind(effective_unit_id)
-        .bind(access_token)
-        .bind(refresh_token)
-        .bind(expires_at)
-        .bind(external_account_id)
-        .fetch_one(&self.pool)
-        .await?;
+            .bind(org_id)
+            .bind(effective_unit_id)
+            .bind(access_token)
+            .bind(refresh_token)
+            .bind(expires_at)
+            .bind(external_account_id)
+            .fetch_one(&self.pool)
+            .await?
+        } else {
+            sqlx::query_as::<_, RentalPlatformConnection>(
+                r#"
+                INSERT INTO rental_platform_connections (
+                    organization_id, unit_id, platform,
+                    access_token, refresh_token, token_expires_at,
+                    encrypted_token, encrypted_refresh_token,
+                    external_property_id, is_active
+                )
+                VALUES ($1, $2, 'airbnb', $3, $4, $5, $3, $4, $6, true)
+                ON CONFLICT (unit_id, platform) DO UPDATE SET
+                    access_token             = $3,
+                    refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
+                    encrypted_token          = $3,
+                    encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
+                    token_expires_at         = $5,
+                    external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
+                    is_active                = true,
+                    sync_error               = NULL,
+                    updated_at               = NOW()
+                RETURNING *
+                "#,
+            )
+            .bind(org_id)
+            .bind(effective_unit_id)
+            .bind(access_token)
+            .bind(refresh_token)
+            .bind(expires_at)
+            .bind(external_account_id)
+            .fetch_one(&self.pool)
+            .await?
+        };
 
         Ok(conn)
     }
@@ -2359,36 +2398,73 @@ impl RentalRepository {
             }
         };
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
-            r#"
-            INSERT INTO rental_platform_connections (
-                organization_id, unit_id, platform,
-                access_token, refresh_token, token_expires_at,
-                encrypted_token, encrypted_refresh_token,
-                external_property_id, is_active
+        // Same nil-unit_id branch strategy as upsert_airbnb_connection; see that
+        // function for the GH #1405 cross-tenant rationale.
+        let conn = if effective_unit_id == Uuid::nil() {
+            sqlx::query_as::<_, RentalPlatformConnection>(
+                r#"
+                INSERT INTO rental_platform_connections (
+                    organization_id, unit_id, platform,
+                    access_token, refresh_token, token_expires_at,
+                    encrypted_token, encrypted_refresh_token,
+                    external_property_id, is_active
+                )
+                VALUES ($1, $2, 'booking', $3, $4, $5, $3, $4, $6, true)
+                ON CONFLICT (organization_id, platform)
+                    WHERE unit_id = '00000000-0000-0000-0000-000000000000'
+                DO UPDATE SET
+                    access_token             = $3,
+                    refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
+                    encrypted_token          = $3,
+                    encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
+                    token_expires_at         = $5,
+                    external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
+                    is_active                = true,
+                    sync_error               = NULL,
+                    updated_at               = NOW()
+                RETURNING *
+                "#,
             )
-            VALUES ($1, $2, 'booking', $3, $4, $5, $3, $4, $6, true)
-            ON CONFLICT (unit_id, platform) DO UPDATE SET
-                access_token             = $3,
-                refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
-                encrypted_token          = $3,
-                encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
-                token_expires_at         = $5,
-                external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
-                is_active                = true,
-                sync_error               = NULL,
-                updated_at               = NOW()
-            RETURNING *
-            "#,
-        )
-        .bind(org_id)
-        .bind(effective_unit_id)
-        .bind(access_token)
-        .bind(refresh_token)
-        .bind(expires_at)
-        .bind(external_property_id)
-        .fetch_one(&self.pool)
-        .await?;
+            .bind(org_id)
+            .bind(effective_unit_id)
+            .bind(access_token)
+            .bind(refresh_token)
+            .bind(expires_at)
+            .bind(external_property_id)
+            .fetch_one(&self.pool)
+            .await?
+        } else {
+            sqlx::query_as::<_, RentalPlatformConnection>(
+                r#"
+                INSERT INTO rental_platform_connections (
+                    organization_id, unit_id, platform,
+                    access_token, refresh_token, token_expires_at,
+                    encrypted_token, encrypted_refresh_token,
+                    external_property_id, is_active
+                )
+                VALUES ($1, $2, 'booking', $3, $4, $5, $3, $4, $6, true)
+                ON CONFLICT (unit_id, platform) DO UPDATE SET
+                    access_token             = $3,
+                    refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
+                    encrypted_token          = $3,
+                    encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
+                    token_expires_at         = $5,
+                    external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
+                    is_active                = true,
+                    sync_error               = NULL,
+                    updated_at               = NOW()
+                RETURNING *
+                "#,
+            )
+            .bind(org_id)
+            .bind(effective_unit_id)
+            .bind(access_token)
+            .bind(refresh_token)
+            .bind(expires_at)
+            .bind(external_property_id)
+            .fetch_one(&self.pool)
+            .await?
+        };
 
         Ok(conn)
     }
