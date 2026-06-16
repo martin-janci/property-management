@@ -1052,6 +1052,22 @@ async fn list_executions(
 // These two endpoints are keyed by `equipment_id` / `building_id`, neither of
 // which carries an `organization_id` the handler can authorize against without
 // a cross-resource lookup. With the PAP-179 conversion they now run on the
+// caller's `RlsConnection`, so under `FORCE` RLS the `work_orders` join is
+// scoped to the caller's org by the row-security policy — closing the #821 P2
+// cross-tenant gap at the database layer (a foreign org's equipment/building id
+// yields an empty history rather than another tenant's service records).
+//
+// BIT-56: the org-gate pre-lookup also runs on the caller's `RlsConnection`
+// (not the raw pool). `equipment` and `buildings` are tenant-isolation RLS
+// tables, so the lookup is scoped to the caller's org: an unknown id AND a
+// foreign-org id both resolve to empty -> 404. This deliberately supersedes
+// #1372's 404-vs-403 split: returning 403 for a foreign-org id is a
+// cross-tenant existence oracle (it confirms the resource exists in another
+// tenant), so 404 for both is the more secure contract. `verify_org_access`
+// is retained as defense-in-depth — under correct RLS the resolved org is
+// always the caller's own, so it is a belt-and-suspenders guard against RLS
+// being misconfigured or disabled.
+
 async fn get_equipment_service_history(
     State(state): State<AppState>,
     mut rls: RlsConnection,
@@ -1059,52 +1075,50 @@ async fn get_equipment_service_history(
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
-
-    // Resolve the owning org on the caller's RLS connection — unknown id
-    // and foreign-org id both resolve to empty -> 404 (BIT-56).
-    // verify_org_access is retained as defense-in-depth.
-    let org_id: Option<Uuid> =
-        sqlx::query_scalar("SELECT organization_id FROM equipment WHERE id = $1")
-            .bind(equipment_id)
-            .fetch_optional(&mut **rls.conn())
+    let out: Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> = async {
+        // Resolve the owning org on the caller's RLS connection — unknown id
+        // and foreign-org id both resolve to empty -> 404 (see BIT-56 note above).
+        let org_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT organization_id FROM equipment WHERE id = $1")
+                .bind(equipment_id)
+                .fetch_optional(&mut **rls.conn())
+                .await
+                .map_err(|e| {
+                    tracing::error!(error = ?e, "Failed to look up equipment org");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                    )
+                })?;
+        let org_id = org_id.ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")),
+            )
+        })?;
+        verify_org_access(&state, uid, org_id).await?;
+        state
+            .work_order_repo
+            .get_service_history(
+                &mut **rls.conn(),
+                equipment_id,
+                query.limit.unwrap_or(50),
+                query.offset.unwrap_or(0),
+            )
             .await
+            .map(Json)
             .map_err(|e| {
-                tracing::error!("Failed to look up equipment org: {:?}", e);
+                tracing::error!("Failed to get service history: {:?}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                    Json(ErrorResponse::new(
+                        "DB_ERROR",
+                        "Failed to get service history",
+                    )),
                 )
-            })?;
-
-    let org_id = org_id.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")),
-        )
-    })?;
-
-    verify_org_access(&state, uid, org_id).await?;
-
-    let out = state
-        .work_order_repo
-        .get_service_history(
-            &mut **rls.conn(),
-            equipment_id,
-            query.limit.unwrap_or(50),
-            query.offset.unwrap_or(0),
-        )
-        .await
-        .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to get service history: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DB_ERROR",
-                    "Failed to get service history",
-                )),
-            )
-        });
+            })
+    }
+    .await;
     rls.release().await;
     out
 }
@@ -1116,52 +1130,50 @@ async fn get_building_service_history(
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
-
-    // Resolve the owning org on the caller's RLS connection — unknown id
-    // and foreign-org id both resolve to empty -> 404 (BIT-56).
-    // verify_org_access is retained as defense-in-depth.
-    let org_id: Option<Uuid> =
-        sqlx::query_scalar("SELECT organization_id FROM buildings WHERE id = $1")
-            .bind(building_id)
-            .fetch_optional(&mut **rls.conn())
+    let out: Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> = async {
+        // Resolve the owning org on the caller's RLS connection — unknown id
+        // and foreign-org id both resolve to empty -> 404 (see BIT-56 note above).
+        let org_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT organization_id FROM buildings WHERE id = $1")
+                .bind(building_id)
+                .fetch_optional(&mut **rls.conn())
+                .await
+                .map_err(|e| {
+                    tracing::error!(error = ?e, "Failed to look up building org");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                    )
+                })?;
+        let org_id = org_id.ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
+            )
+        })?;
+        verify_org_access(&state, uid, org_id).await?;
+        state
+            .work_order_repo
+            .get_building_service_history(
+                &mut **rls.conn(),
+                building_id,
+                query.limit.unwrap_or(50),
+                query.offset.unwrap_or(0),
+            )
             .await
+            .map(Json)
             .map_err(|e| {
-                tracing::error!("Failed to look up building org: {:?}", e);
+                tracing::error!("Failed to get building service history: {:?}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                    Json(ErrorResponse::new(
+                        "DB_ERROR",
+                        "Failed to get building service history",
+                    )),
                 )
-            })?;
-
-    let org_id = org_id.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Building not found")),
-        )
-    })?;
-
-    verify_org_access(&state, uid, org_id).await?;
-
-    let out = state
-        .work_order_repo
-        .get_building_service_history(
-            &mut **rls.conn(),
-            building_id,
-            query.limit.unwrap_or(50),
-            query.offset.unwrap_or(0),
-        )
-        .await
-        .map(Json)
-        .map_err(|e| {
-            tracing::error!("Failed to get service history: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DB_ERROR",
-                    "Failed to get service history",
-                )),
-            )
-        });
+            })
+    }
+    .await;
     rls.release().await;
     out
 }

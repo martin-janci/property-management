@@ -82,3 +82,6 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-15, pm-qa):** Pre-push fmt/clippy gate (#1375) — local hook only, CI status check, or both? Owner: pm-tech-lead.
 - **NEW (2026-06-15, pm-qa):** Triage protocol for the 18 follow-up issues #1360-#1377 — bulk-assign by theme to per-role queues, or per-issue triage? Owner: pm-scrum-master.
 - **NEW (2026-06-15, pm-qa):** Promotion-gate policy — should each high-severity coverage gap (atomicity, IDOR, RLS) block its source epic's done-promotion until a failing-on-main test exists? Owner: pm-tech-lead + pm-qa.
+- **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
+- **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
+- **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.

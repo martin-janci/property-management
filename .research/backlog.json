@@ -1082,19 +1082,20 @@
       "title": "Screen-map drift: PR #922 modified ppt-web App.tsx (dev-review rounds 1-5 fixes) without a docs/screens/ppt update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #922"
       ],
       "evidence": [
-        "PR #922 (fix: address dev-review rounds 1-5 findings, #788) modified frontend/apps/ppt-web/src/App.tsx without a docs/screens/ppt/*.md update — drift signal on ppt product"
+        "PR #922 (fix: address dev-review rounds 1-5 findings, #788) modified frontend/apps/ppt-web/src/App.tsx without a docs/screens/ppt/*.md update — drift signal on ppt product",
+        "decayed: no new signals in 14 days (score 2 → 1)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx"
       ],
       "created_at": "2026-06-01",
-      "updated_at": "2026-06-01",
+      "updated_at": "2026-06-16",
       "plan": null
     },
     {
@@ -2338,20 +2339,21 @@
       "title": "Stabilize oauth_integration_tests churn — heavy edits across 3 OAuth fix PRs",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #930",
         "PR #933"
       ],
       "evidence": [
-        "churn-hotspot this run: backend/servers/api-server/tests/oauth_integration_tests.rs — touched by PR #930 (audit OAuth client mutations) and PR #933 (introspect/revoke hardening)"
+        "churn-hotspot this run: backend/servers/api-server/tests/oauth_integration_tests.rs — touched by PR #930 (audit OAuth client mutations) and PR #933 (introspect/revoke hardening)",
+        "decayed: no new signals in 14 days (score 1 → 0)"
       ],
       "files": [
         "backend/servers/api-server/tests/oauth_integration_tests.rs"
       ],
       "created_at": "2026-06-02",
-      "updated_at": "2026-06-02",
+      "updated_at": "2026-06-16",
       "plan": null
     },
     {
@@ -3495,16 +3497,18 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "local git numstat since 2026-06-12"
+        "local git numstat since 2026-06-12",
+        "local git numstat since 2026-06-15"
       ],
       "evidence": [
-        "Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched in 2 PRs since 2026-06-12 (PAP-76 RLS + PAP-159 registry enum)"
+        "Churn hotspot: backend/servers/api-server/src/routes/forms.rs touched in 2 PRs since 2026-06-12 (PAP-76 RLS + PAP-159 registry enum)",
+        "334 lines this run (PR #1397 hardened org-scoped submit/download; explicit cross-tenant 403 + RLS-release discipline). Re-emit (already in seen_signals; score_delta=0; cumulative)."
       ],
       "files": [
         "backend/servers/api-server/src/routes/forms.rs"
       ],
       "created_at": "2026-06-13",
-      "updated_at": "2026-06-13",
+      "updated_at": "2026-06-16",
       "plan": null
     },
     {
@@ -3727,18 +3731,20 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "code-review api-core 2026-06-15"
+        "code-review api-core 2026-06-15",
+        "PR #1417"
       ],
       "evidence": [
-        "backend/crates/db/src/repositories/vote.rs:1765 — calculate_question_result() sorts options by weighted_count using partial_cmp(&b.weighted_count).unwrap(). weighted_count is f64 accumulated from response.vote_weight via try_into().unwrap_or(1.0); if a vote_weight is NaN/Inf, partial_cmp returns None and .unwrap() panics. Reachable from VoteRepository::calculate_results → /votes/{id}/results. Fix: use total_cmp or unwrap_or(Ordering::Equal). Severity: medium (panic is a 500 to the caller, but NaN-weight ingress requires a serde edge case)."
+        "backend/crates/db/src/repositories/vote.rs:1765 — calculate_question_result() sorts options by weighted_count using partial_cmp(&b.weighted_count).unwrap(). weighted_count is f64 accumulated from response.vote_weight via try_into().unwrap_or(1.0); if a vote_weight is NaN/Inf, partial_cmp returns None and .unwrap() panics. Reachable from VoteRepository::calculate_results → /votes/{id}/results. Fix: use total_cmp or unwrap_or(Ordering::Equal). Severity: medium (panic is a 500 to the caller, but NaN-weight ingress requires a serde edge case).",
+        "resolved: PR #1417 merged 2026-06-16 — \"pm-qa-vote-partial-cmp-nan-fuzz: NaN-weight fuzz guard for vote winner selection\". Verified evidence-gone: `partial_cmp().unwrap()` removed from backend/crates/db/src/repositories/vote.rs (grep 0 hits); new pure helper `select_winner()` introduced (line 51) and called at line 1796 with 5,000-iter NaN fuzz test."
       ],
       "files": [
         "backend/crates/db/src/repositories/vote.rs"
       ],
       "created_at": "2026-06-15",
-      "updated_at": "2026-06-15",
+      "updated_at": "2026-06-16",
       "plan": null
     },
     {
@@ -3759,6 +3765,185 @@
       ],
       "created_at": "2026-06-15",
       "updated_at": "2026-06-15",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+      "title": "booking_oauth_csrf_tests.rs hotspot — 484-line NEW test file (PR #1393 #1424 OAuth CSRF coverage)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-06-15 (commit 67c24bd..origin/dev)"
+      ],
+      "evidence": [
+        "484 lines (new test file from PR #1393 — Booking.com OAuth handler/CSRF + secure-credential-replacement coverage, then merged via #1424)"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs"
+      ],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+      "title": "booking_oauth_routes_tests.rs hotspot — 381-line NEW test file (PR #1393 OAuth routes coverage)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "local git numstat since 2026-06-15"
+      ],
+      "evidence": [
+        "381 lines (new test file from PR #1393 — booking OAuth routes coverage)"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/booking_oauth_routes_tests.rs"
+      ],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "title": "forms.rs repeated-churn — runs_seen=2 (#1337 explicit_auto_deref + #1397 org-scope hardening)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history.runs_seen 1→2 with new churn this run"
+      ],
+      "evidence": [
+        "forms.rs runs_seen=2: 2026-06-13 (PR #1337 explicit_auto_deref clippy fix, 2 lines) + 2026-06-16 (PR #1397 org-scope hardening, 334 lines). Instability proxy."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/forms.rs"
+      ],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1425",
+      "title": "PR #1425 (GH #1377 document presigned-URL tests) closed unmerged — superseded by merged #1394",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1425"
+      ],
+      "evidence": [
+        "PR #1425 (\"GH #1377\" — document presigned-URL tests) closed unmerged 2026-06-15T21:04:50Z; functionally superseded by merged #1394 same day."
+      ],
+      "files": [],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1418-ppt",
+      "title": "PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file fix",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1418"
+      ],
+      "evidence": [
+        "PR #1418 touched frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx (under routes/**) without updating docs/screens/ppt/*.md. HEURISTIC CAVEAT — the file is a test fix for #1349/#1350 (beforeEach import), not a route surface change; review-candidate, not promotable."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx"
+      ],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-fake-submit",
+      "title": "ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:158 — handleSubmit() executes `// Simulate API call` followed by `await new Promise((resolve) => setTimeout(resolve, 1500))` and then shows a success Alert. No API call is ever made. Screen is wired into App.tsx:126 as the user-facing fault-report flow, so submissions appear to succeed but never reach the backend (verified: lines 157-159)."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx"
+      ],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
+      "plan": "plans/code-review-mobile-rn-report-fault-fake-submit.md"
+    },
+    {
+      "id": "code-review-mobile-rn-screens-mock-data",
+      "title": "Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcoded MOCK_* arrays — no API wiring",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+      ],
+      "evidence": [
+        "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx",
+        "frontend/apps/mobile/src/screens/leases/LeasesScreen.tsx",
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
+      ],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-init-unhandled",
+      "title": "useDeepLinkRouting.ts:27-36 — initialize() re-runs on onNavigate identity change + void promise with no .catch → duplicate nav / unhandled rejection",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review of mobile-rn segment (2026-06-16)"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts:27-36 — useEffect depends on onNavigate alone; if callback identity changes, deepLinkManager.initialize() re-runs and can re-emit cold-start initial URL (duplicate nav). `void deepLinkManager.initialize()` has no .catch → unhandled promise rejection on init failure. Verified: line 34 = `void deepLinkManager.initialize();`, line 36 = `}, [onNavigate]);`."
+      ],
+      "files": [
+        "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts"
+      ],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "dx-stalled-review-pr-1179",
+      "title": "PR #1179 (docs(epics) catalog backfill for 37 mounted-but-undocumented backend modules) — stalled at 7d, no reviewDecision",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1179"
+      ],
+      "evidence": [
+        "PR #1179 (docs(epics): catalog backfill for 37 mounted-but-undocumented backend modules — PAP-…) open 7 days (created 2026-06-09), last updated 175h ago, no reviewDecision (process-level — docs PR)."
+      ],
+      "files": [],
+      "created_at": "2026-06-16",
+      "updated_at": "2026-06-16",
       "plan": null
     }
   ]
