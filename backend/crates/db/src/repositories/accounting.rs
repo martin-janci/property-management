@@ -51,16 +51,15 @@ impl AccountingRepository {
     // --- Invoices ---
 
     /// List invoices with RLS.
-    pub async fn list_invoices_rls<'e, E>(
-        &self,
-        executor: E,
-    ) -> Result<Vec<Invoice>, sqlx::Error>
+    pub async fn list_invoices_rls<'e, E>(&self, executor: E) -> Result<Vec<Invoice>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, Invoice>("SELECT * FROM invoice ORDER BY issue_date DESC, created_at DESC")
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, Invoice>(
+            "SELECT * FROM invoice ORDER BY issue_date DESC, created_at DESC",
+        )
+        .fetch_all(executor)
+        .await
     }
 
     /// Find an invoice by ID with RLS.
@@ -87,10 +86,12 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, InvoiceItem>("SELECT * FROM invoice_item WHERE invoice_id = $1 ORDER BY id ASC")
-            .bind(invoice_id)
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, InvoiceItem>(
+            "SELECT * FROM invoice_item WHERE invoice_id = $1 ORDER BY id ASC",
+        )
+        .bind(invoice_id)
+        .fetch_all(executor)
+        .await
     }
 
     /// Create an invoice and its items.

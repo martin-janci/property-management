@@ -407,7 +407,7 @@ function BookingDetailPageRoute() {
     );
   }
 
-  const booking: BookingWithGuests = { ...mapReservationToBooking(data.data), guests: [] };
+  const booking: BookingWithGuests = { ...mapReservationToBooking(data.data!), guests: [] };
 
   return (
     <BookingDetailPage
