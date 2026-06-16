@@ -1651,28 +1651,6 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "feat-swiftui-project-setup-no-epic-82-commits-git-mobile",
-      "branch": "auto-impl/feat-swiftui-project-setup-no-epic-82-co",
-      "status": "failed",
-      "claimed_at": "2026-06-16T08:29:32Z",
-      "last_updated": "2026-06-16T22:11:25Z",
-      "status_changed_at": "2026-06-16T22:11:25Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": " [sandbox-failure-after-reclaim: no branch after 1 reclaim]",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": true,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "feat-web-announcements-faults-api-hooks-wiring",
       "branch": "auto-impl/feat-web-announcements-faults-api-hooks-w",
       "status": "failed",
