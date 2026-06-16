@@ -170,7 +170,7 @@ describe('getTenantConfig — per-host fetch isolation', () => {
     };
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
-      const hostHeader = (init?.headers as Record<string, string>)?.['Host'] ?? '';
+      const hostHeader = (init?.headers as Record<string, string>)?.Host ?? '';
       const config = responses[hostHeader];
       if (!config) {
         return new Response(null, { status: 404 });
@@ -205,7 +205,7 @@ describe('getTenantConfig — per-host fetch isolation', () => {
     expect(fetchSpy).toHaveBeenCalled();
     const callArgs = fetchSpy.mock.calls[0];
     const headers = callArgs[1]?.headers as Record<string, string>;
-    expect(headers?.['Host']).toBe('agency-a.test');
+    expect(headers?.Host).toBe('agency-a.test');
 
     // Verify the returned config is for agency-a.
     expect(configA.branding.primary_color).toBe('#aa0000');
