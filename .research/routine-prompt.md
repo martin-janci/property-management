@@ -220,8 +220,14 @@ Phase 1): **load a projection that keeps full content for non-terminal rows
 
 ```bash
 # In-context analysis copy — full open/ready/deferred rows; terminal rows keep
-# every rendered + dedup field (id,title,vector,score,status,updated_at,plan,
-# sources,files,created_at,confidence) and drop only their heavy evidence array.
+# every field EXCEPT evidence (which is replaced by a stub). The jq is an
+# additive override (`. + {evidence: …}`), NOT a `{field: …}` whitelist, so it
+# preserves *all* non-evidence fields — including ones absent from the list
+# below, e.g. the `resolution` field carried only by `closed` rows. The field
+# names enumerated here are illustrative (the rendered + dedup columns); do NOT
+# rewrite this into a `{id, title, …}` projection, or you would silently drop
+# any unlisted field: id,title,vector,score,status,updated_at,plan,
+# sources,files,created_at,confidence (+ resolution and any future field).
 jq '{version, items: [.items[]
       | if (.status=="open" or .status=="ready" or .status=="deferred") then .
         else (. + {evidence: ["<archived — read full row from backlog.json on demand>"]}) end]}' \
@@ -229,11 +235,18 @@ jq '{version, items: [.items[]
 ```
 
 This is **read-only for analysis** — it is provably sufficient for every Phase 2
-operation: the `backlog.md` render uses only the 7 sort/display fields, signal
-dedup uses `id`/`title`/`sources`, and decay + the resolution check touch only
-non-terminal rows (whose `evidence` is preserved in full). Terminal-row evidence
-is needed only on the rare done→reopen path — read that one row from the
-canonical file on demand.
+operation, including **both** byte-identity-gated renders: the `backlog.md`
+render (G10) uses only the 7 sort/display fields, and the `IDEAS_TRIAGE.md`
+render (G14, filtered to `vector == "triage"`) uses only Score/Title/Source/
+Updated/Status — `Source` maps to the preserved `sources` field, with no
+`evidence` column. Signal dedup uses `id`/`title`/`sources`, and decay + the
+resolution check touch only non-terminal rows (whose `evidence` is preserved in
+full). Terminal-row evidence is needed only on the rare done→reopen path — read
+that one row from the canonical file on demand. (Note: many triage rows are
+terminal `done`, exactly the rows whose `evidence` this projection elides — so
+if you ever add an `evidence`/elided-field column to *either* render, this
+sufficiency argument no longer holds and G10/G14 would break; widen the
+projection first.)
 
 **Never write the projection back.** Apply every mutation (append/update/decay/
 cap, status flips) as a targeted `jq`/`Edit` op against the canonical

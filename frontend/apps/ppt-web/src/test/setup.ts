@@ -37,6 +37,36 @@ i18n.use(initReactI18next).init({
   },
 });
 
+// jsdom under vitest 4 exposes `window.sessionStorage` but not
+// `window.localStorage`, so token-storage helpers in `@ppt/shared`
+// (exercised by `shared-auth.test.ts`) read/write a missing API and fall
+// back to their no-op SSR path. Provide a minimal in-memory localStorage
+// shim when the environment lacks one.
+if (typeof window !== 'undefined' && !window.localStorage) {
+  const store = new Map<string, string>();
+  const localStorageShim: Storage = {
+    getItem: (key: string) => (store.has(key) ? (store.get(key) as string) : null),
+    setItem: (key: string, value: string) => {
+      store.set(key, String(value));
+    },
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+    key: (index: number) => Array.from(store.keys())[index] ?? null,
+    get length() {
+      return store.size;
+    },
+  };
+  Object.defineProperty(window, 'localStorage', {
+    value: localStorageShim,
+    configurable: true,
+    writable: true,
+  });
+}
+
 // Cleanup after each test to prevent memory leaks.
 // TEST-203: also clear localStorage/sessionStorage so token-storage tests
 // (`shared-auth.test.ts`) can't leak state into the next test.
