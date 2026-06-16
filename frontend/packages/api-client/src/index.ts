@@ -65,3 +65,4 @@ export function createApiClient(config: ApiConfig) {
     },
   };
 }
+export { AuthUser } from './auth';
