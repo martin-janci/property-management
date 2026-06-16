@@ -66,7 +66,7 @@ mod tests {
 
         let mut conn = pool.acquire().await.unwrap();
         let invoice = repo
-            .create_invoice_rls(&mut *conn, create_data)
+            .create_invoice_rls(&mut conn, create_data)
             .await
             .unwrap();
 

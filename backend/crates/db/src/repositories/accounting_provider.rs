@@ -11,7 +11,7 @@ use uuid::Uuid;
 /// Repository for external accounting provider integration operations.
 #[derive(Clone)]
 pub struct AccountingProviderRepository {
-    pool: DbPool,
+    pub pool: DbPool,
 }
 
 impl AccountingProviderRepository {
