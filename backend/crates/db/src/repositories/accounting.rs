@@ -1,8 +1,8 @@
 //! Repository for native accounting MVP (PAP-206).
 
 use crate::models::accounting::{
-    BankStatement, BankStatementLine, Contact, CreateInvoice, Invoice, InvoiceItem,
-    InvoiceStatus, PaymentMatch, UpdateInvoice,
+    BankStatement, BankStatementLine, Contact, CreateInvoice, Invoice, InvoiceItem, InvoiceStatus,
+    PaymentMatch, UpdateInvoice,
 };
 use crate::DbPool;
 use rust_decimal::Decimal;
@@ -39,10 +39,7 @@ impl AccountingRepository {
     }
 
     /// List all contacts for the current tenant.
-    pub async fn list_contacts_rls<'e, E>(
-        &self,
-        executor: E,
-    ) -> Result<Vec<Contact>, sqlx::Error>
+    pub async fn list_contacts_rls<'e, E>(&self, executor: E) -> Result<Vec<Contact>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
