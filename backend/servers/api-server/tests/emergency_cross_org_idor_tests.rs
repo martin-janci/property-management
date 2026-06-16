@@ -33,7 +33,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -66,22 +66,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-/// Make `user_id` an active member of `org_id` with the given role.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role_type: &str) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, $3, 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .bind(role_type)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 /// Seed an emergency protocol in `org_id` and return its id.
