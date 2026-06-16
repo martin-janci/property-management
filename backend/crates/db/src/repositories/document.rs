@@ -676,7 +676,7 @@ impl DocumentRepository {
             WHERE organization_id = $1
               AND deleted_at IS NULL
               AND ($2::uuid IS NULL OR folder_id = $2)
-              AND ($3::text IS NULL OR category = $3)
+              AND ($3::text IS NULL OR category = $3::document_category)
               AND ($4::uuid IS NULL OR created_by = $4)
               AND ($5::text IS NULL OR title ILIKE '%' || $5 || '%')
             ORDER BY created_at DESC
@@ -711,7 +711,7 @@ impl DocumentRepository {
             WHERE organization_id = $1
               AND deleted_at IS NULL
               AND ($2::uuid IS NULL OR folder_id = $2)
-              AND ($3::text IS NULL OR category = $3)
+              AND ($3::text IS NULL OR category = $3::document_category)
               AND ($4::uuid IS NULL OR created_by = $4)
               AND ($5::text IS NULL OR title ILIKE '%' || $5 || '%')
             "#,
@@ -772,7 +772,7 @@ impl DocumentRepository {
                 OR (access_scope = 'users' AND access_target_ids ? $2::text)
               )
               AND ($6::uuid IS NULL OR folder_id = $6)
-              AND ($7::text IS NULL OR category = $7)
+              AND ($7::text IS NULL OR category = $7::document_category)
               AND ($8::text IS NULL OR title ILIKE '%' || $8 || '%')
             ORDER BY created_at DESC
             LIMIT $9 OFFSET $10
@@ -824,7 +824,7 @@ impl DocumentRepository {
                 OR (access_scope = 'role' AND access_roles ? $3)
               )
               AND ($4::uuid IS NULL OR folder_id = $4)
-              AND ($5::text IS NULL OR category = $5)
+              AND ($5::text IS NULL OR category = $5::document_category)
               AND ($6::text IS NULL OR title ILIKE '%' || $6 || '%')
             ORDER BY created_at DESC
             LIMIT $7 OFFSET $8
@@ -866,7 +866,7 @@ impl DocumentRepository {
                 OR (access_scope = 'role' AND access_roles ? $3)
               )
               AND ($4::uuid IS NULL OR folder_id = $4)
-              AND ($5::text IS NULL OR category = $5)
+              AND ($5::text IS NULL OR category = $5::document_category)
               AND ($6::text IS NULL OR title ILIKE '%' || $6 || '%')
             "#,
         )
@@ -2356,7 +2356,7 @@ impl DocumentRepository {
               AND d.deleted_at IS NULL
               AND d.search_vector @@ to_tsquery('english', $2)
               AND ($3::uuid IS NULL OR d.folder_id = $3)
-              AND ($4::text IS NULL OR d.category = $4)
+              AND ($4::text IS NULL OR d.category = $4::document_category)
             ORDER BY rank DESC, d.created_at DESC
             LIMIT $5 OFFSET $7
             "#,
@@ -2380,7 +2380,7 @@ impl DocumentRepository {
               AND d.deleted_at IS NULL
               AND d.search_vector @@ to_tsquery('english', $2)
               AND ($3::uuid IS NULL OR d.folder_id = $3)
-              AND ($4::text IS NULL OR d.category = $4)
+              AND ($4::text IS NULL OR d.category = $4::document_category)
             "#,
         )
         .bind(request.organization_id)
