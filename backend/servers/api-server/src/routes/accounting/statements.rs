@@ -30,10 +30,7 @@ pub async fn upload_statement(
         let name = field.name().unwrap_or_default().to_string();
         if name == "file" {
             filename = field.file_name().unwrap_or_default().to_string();
-            let bytes = field
-                .bytes()
-                .await
-                .map_err(|_| StatusCode::BAD_REQUEST)?;
+            let bytes = field.bytes().await.map_err(|_| StatusCode::BAD_REQUEST)?;
 
             if bytes.len() > MAX_UPLOAD_SIZE {
                 return Err(StatusCode::PAYLOAD_TOO_LARGE);

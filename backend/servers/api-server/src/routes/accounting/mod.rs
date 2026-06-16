@@ -12,7 +12,10 @@ pub fn router() -> Router<AppState> {
         .nest(
             "/invoices",
             Router::new()
-                .route("/", get(invoices::list_invoices).post(invoices::create_invoice))
+                .route(
+                    "/",
+                    get(invoices::list_invoices).post(invoices::create_invoice),
+                )
                 .route(
                     "/{id}",
                     get(invoices::get_invoice)

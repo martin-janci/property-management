@@ -64,7 +64,9 @@ impl AccountingService {
 
             let booking_date = NaiveDate::parse_from_str(&record.date, "%Y-%m-%d")
                 .or_else(|_| NaiveDate::parse_from_str(&record.date, "%d.%m.%Y")) // Support common CZ format
-                .map_err(|e| AppError::BadRequest(format!("Invalid date format {}: {}", record.date, e)))?;
+                .map_err(|e| {
+                    AppError::BadRequest(format!("Invalid date format {}: {}", record.date, e))
+                })?;
 
             let line = BankStatementLine {
                 id: Uuid::new_v4(),
@@ -86,7 +88,8 @@ impl AccountingService {
         }
 
         // Trigger matcher
-        self.run_payment_matcher(&mut *executor, tenant_id, statement.id).await?;
+        self.run_payment_matcher(&mut *executor, tenant_id, statement.id)
+            .await?;
 
         Ok(statement)
     }
@@ -127,7 +130,8 @@ impl AccountingService {
                 let mut confidence = Decimal::ZERO;
 
                 // 1. Variable Symbol match (highest weight)
-                if let (Some(l_vs), Some(i_vs)) = (&line.variable_symbol, &invoice.variable_symbol) {
+                if let (Some(l_vs), Some(i_vs)) = (&line.variable_symbol, &invoice.variable_symbol)
+                {
                     if l_vs == i_vs && !l_vs.is_empty() {
                         confidence += Decimal::from_str("0.8").unwrap();
                     }

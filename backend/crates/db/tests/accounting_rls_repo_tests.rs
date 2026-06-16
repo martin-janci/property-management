@@ -135,12 +135,10 @@ async fn accounting_contact_force_rls_blocks_cross_tenant_read(pool: PgPool) {
 
     // Cleanup
     set_ctx(&pool, None, None, true).await;
-    sqlx::query(sqlx::AssertSqlSafe(format!(
-        "DROP OWNED BY \"{role}\""
-    )))
-    .execute(&pool)
-    .await
-    .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "DROP ROLE IF EXISTS \"{role}\""
     )))
@@ -279,12 +277,10 @@ async fn accounting_invoice_force_rls_blocks_cross_tenant_read(pool: PgPool) {
 
     // Cleanup
     set_ctx(&pool, None, None, true).await;
-    sqlx::query(sqlx::AssertSqlSafe(format!(
-        "DROP OWNED BY \"{role}\""
-    )))
-    .execute(&pool)
-    .await
-    .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "DROP ROLE IF EXISTS \"{role}\""
     )))
@@ -360,12 +356,10 @@ async fn accounting_bank_statement_force_rls_blocks_cross_tenant_read(pool: PgPo
     }
 
     set_ctx(&pool, None, None, true).await;
-    sqlx::query(sqlx::AssertSqlSafe(format!(
-        "DROP OWNED BY \"{role}\""
-    )))
-    .execute(&pool)
-    .await
-    .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "DROP ROLE IF EXISTS \"{role}\""
     )))
@@ -381,13 +375,14 @@ async fn accounting_payment_match_force_rls_blocks_cross_tenant_read(pool: PgPoo
     let org_b = seed_org(&pool, "org-b-match").await;
 
     // Org A setup
-    let contact_a =
-        sqlx::query_scalar::<_, Uuid>("INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id")
-            .bind(org_a)
-            .bind("C-A")
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let contact_a = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(org_a)
+    .bind("C-A")
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     let inv_a = sqlx::query_scalar::<_, Uuid>("INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date, currency) VALUES ($1, $2, 'I-A', NOW(), NOW(), 'CZK') RETURNING id").bind(org_a).bind(contact_a).fetch_one(&pool).await.unwrap();
     let stmt_a = sqlx::query_scalar::<_, Uuid>("INSERT INTO bank_statement (tenant_id, source_filename, account_iban) VALUES ($1, $2, $3) RETURNING id").bind(org_a).bind("S-A").bind("I-A").fetch_one(&pool).await.unwrap();
     let line_a = sqlx::query_scalar::<_, Uuid>("INSERT INTO bank_statement_line (statement_id, tenant_id, booking_date, amount, currency) VALUES ($1, $2, NOW(), 100, 'CZK') RETURNING id").bind(stmt_a).bind(org_a).fetch_one(&pool).await.unwrap();
@@ -448,12 +443,10 @@ async fn accounting_payment_match_force_rls_blocks_cross_tenant_read(pool: PgPoo
     }
 
     set_ctx(&pool, None, None, true).await;
-    sqlx::query(sqlx::AssertSqlSafe(format!(
-        "DROP OWNED BY \"{role}\""
-    )))
-    .execute(&pool)
-    .await
-    .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "DROP ROLE IF EXISTS \"{role}\""
     )))
@@ -469,24 +462,26 @@ async fn accounting_invoice_item_force_rls_blocks_cross_tenant_read(pool: PgPool
     let org_b = seed_org(&pool, "org-b-item").await;
 
     // Org A
-    let contact_a =
-        sqlx::query_scalar::<_, Uuid>("INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id")
-            .bind(org_a)
-            .bind("C-A")
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let contact_a = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(org_a)
+    .bind("C-A")
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     let inv_a = sqlx::query_scalar::<_, Uuid>("INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date, currency) VALUES ($1, $2, 'I-A', NOW(), NOW(), 'CZK') RETURNING id").bind(org_a).bind(contact_a).fetch_one(&pool).await.unwrap();
     let _item_a = sqlx::query_scalar::<_, Uuid>("INSERT INTO invoice_item (invoice_id, tenant_id, description) VALUES ($1, $2, 'Item A') RETURNING id").bind(inv_a).bind(org_a).fetch_one(&pool).await.unwrap();
 
     // Org B
-    let contact_b =
-        sqlx::query_scalar::<_, Uuid>("INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id")
-            .bind(org_b)
-            .bind("C-B")
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let contact_b = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(org_b)
+    .bind("C-B")
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     let inv_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date, currency) VALUES ($1, $2, 'I-B', NOW(), NOW(), 'CZK') RETURNING id").bind(org_b).bind(contact_b).fetch_one(&pool).await.unwrap();
     let _item_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO invoice_item (invoice_id, tenant_id, description) VALUES ($1, $2, 'Item B') RETURNING id").bind(inv_b).bind(org_b).fetch_one(&pool).await.unwrap();
 
@@ -547,12 +542,10 @@ async fn accounting_invoice_item_force_rls_blocks_cross_tenant_read(pool: PgPool
 
     // Cleanup
     set_ctx(&pool, None, None, true).await;
-    sqlx::query(sqlx::AssertSqlSafe(format!(
-        "DROP OWNED BY \"{role}\""
-    )))
-    .execute(&pool)
-    .await
-    .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "DROP ROLE IF EXISTS \"{role}\""
     )))
@@ -625,12 +618,10 @@ async fn accounting_bank_statement_line_force_rls_blocks_cross_tenant_read(pool:
     }
 
     set_ctx(&pool, None, None, true).await;
-    sqlx::query(sqlx::AssertSqlSafe(format!(
-        "DROP OWNED BY \"{role}\""
-    )))
-    .execute(&pool)
-    .await
-    .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "DROP ROLE IF EXISTS \"{role}\""
     )))
@@ -645,12 +636,14 @@ async fn accounting_invoice_force_rls_blocks_cross_tenant_write(pool: PgPool) {
     let org_a = seed_org(&pool, "org-a-write").await;
     let org_b = seed_org(&pool, "org-b-write").await;
 
-    let contact_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id")
-        .bind(org_b)
-        .bind("C-B")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let contact_b = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(org_b)
+    .bind("C-B")
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     let inv_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date, currency) VALUES ($1, $2, 'I-B', NOW(), NOW(), 'CZK') RETURNING id").bind(org_b).bind(contact_b).fetch_one(&pool).await.unwrap();
 
     let role = format!("accounting_rls_write_test_{}", Uuid::new_v4().simple());
@@ -699,7 +692,10 @@ async fn accounting_invoice_force_rls_blocks_cross_tenant_write(pool: PgPool) {
             .bind(contact_b)
             .execute(&mut *conn)
             .await;
-        assert!(res.is_err(), "Cross-tenant INSERT must fail due to RLS WITH CHECK");
+        assert!(
+            res.is_err(),
+            "Cross-tenant INSERT must fail due to RLS WITH CHECK"
+        );
 
         // 2. Cross-tenant UPDATE affects 0 rows
         let res = sqlx::query("UPDATE invoice SET number = 'HACKED' WHERE id = $1")
@@ -707,7 +703,11 @@ async fn accounting_invoice_force_rls_blocks_cross_tenant_write(pool: PgPool) {
             .execute(&mut *conn)
             .await
             .unwrap();
-        assert_eq!(res.rows_affected(), 0, "Cross-tenant UPDATE must affect 0 rows");
+        assert_eq!(
+            res.rows_affected(),
+            0,
+            "Cross-tenant UPDATE must affect 0 rows"
+        );
 
         // 3. Cross-tenant DELETE affects 0 rows
         let res = sqlx::query("DELETE FROM invoice WHERE id = $1")
@@ -715,19 +715,35 @@ async fn accounting_invoice_force_rls_blocks_cross_tenant_write(pool: PgPool) {
             .execute(&mut *conn)
             .await
             .unwrap();
-        assert_eq!(res.rows_affected(), 0, "Cross-tenant DELETE must affect 0 rows");
+        assert_eq!(
+            res.rows_affected(),
+            0,
+            "Cross-tenant DELETE must affect 0 rows"
+        );
 
         sqlx::query("RESET ROLE").execute(&mut *conn).await.unwrap();
     }
 
     // Verify row B is still there and unchanged
     set_ctx(&pool, None, None, true).await;
-    let inv_b_after: Invoice = sqlx::query_as("SELECT * FROM invoice WHERE id = $1").bind(inv_b).fetch_one(&pool).await.unwrap();
+    let inv_b_after: Invoice = sqlx::query_as("SELECT * FROM invoice WHERE id = $1")
+        .bind(inv_b)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
     assert_eq!(inv_b_after.number, "I-B");
 
     // Cleanup
-    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\""))).execute(&pool).await.ok();
-    sqlx::query(sqlx::AssertSqlSafe(format!("DROP ROLE IF EXISTS \"{role}\""))).execute(&pool).await.ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "DROP ROLE IF EXISTS \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .ok();
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -737,14 +753,26 @@ async fn accounting_confirm_match_cross_tenant_denied(pool: PgPool) {
     let org_b = seed_org(&pool, "org-b-match-fail").await;
 
     // Org B setup
-    let contact_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id").bind(org_b).bind("C-B").fetch_one(&pool).await.unwrap();
+    let contact_b = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO contact (tenant_id, name) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(org_b)
+    .bind("C-B")
+    .fetch_one(&pool)
+    .await
+    .unwrap();
     let inv_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date, currency) VALUES ($1, $2, 'I-B', NOW(), NOW(), 'CZK') RETURNING id").bind(org_b).bind(contact_b).fetch_one(&pool).await.unwrap();
     let stmt_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO bank_statement (tenant_id, source_filename, account_iban) VALUES ($1, $2, $3) RETURNING id").bind(org_b).bind("S-B").bind("I-B").fetch_one(&pool).await.unwrap();
     let line_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO bank_statement_line (statement_id, tenant_id, booking_date, amount, currency) VALUES ($1, $2, NOW(), 100, 'CZK') RETURNING id").bind(stmt_b).bind(org_b).fetch_one(&pool).await.unwrap();
     let match_b = sqlx::query_scalar::<_, Uuid>("INSERT INTO payment_match (tenant_id, statement_line_id, invoice_id, confidence, state) VALUES ($1, $2, $3, 1.0, 'suggested') RETURNING id").bind(org_b).bind(line_b).bind(inv_b).fetch_one(&pool).await.unwrap();
 
     let role = format!("accounting_rls_match_test_{}", Uuid::new_v4().simple());
-    sqlx::query(sqlx::AssertSqlSafe(format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"))).execute(&pool).await.unwrap();
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"
+    )))
+    .execute(&pool)
+    .await
+    .unwrap();
     sqlx::query(sqlx::AssertSqlSafe(format!("GRANT SELECT, UPDATE, INSERT ON payment_match, bank_statement_line, invoice, organizations TO \"{role}\""))).execute(&pool).await.unwrap();
     sqlx::query(sqlx::AssertSqlSafe(format!("GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin(), get_current_org_not_deleted() TO \"{role}\""))).execute(&pool).await.unwrap();
 
@@ -764,7 +792,10 @@ async fn accounting_confirm_match_cross_tenant_denied(pool: PgPool) {
             .unwrap();
 
         // Try to find match_b (should fail/be None)
-        let m_b = repo.find_payment_match_rls(&mut *conn, match_b).await.unwrap();
+        let m_b = repo
+            .find_payment_match_rls(&mut *conn, match_b)
+            .await
+            .unwrap();
         assert!(m_b.is_none(), "Org A must not see Org B's payment match");
 
         // Try to update match_b directly via SQL
@@ -779,6 +810,14 @@ async fn accounting_confirm_match_cross_tenant_denied(pool: PgPool) {
     }
 
     // Cleanup
-    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\""))).execute(&pool).await.ok();
-    sqlx::query(sqlx::AssertSqlSafe(format!("DROP ROLE IF EXISTS \"{role}\""))).execute(&pool).await.ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "DROP ROLE IF EXISTS \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .ok();
 }

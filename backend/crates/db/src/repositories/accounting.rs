@@ -234,11 +234,7 @@ impl AccountingRepository {
     }
 
     /// Delete an invoice and its items (items deleted by FK cascade).
-    pub async fn delete_invoice_rls<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<(), sqlx::Error>
+    pub async fn delete_invoice_rls<'e, E>(&self, executor: E, id: Uuid) -> Result<(), sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -290,10 +286,12 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, BankStatementLine>("SELECT * FROM bank_statement_line WHERE statement_id = $1")
-            .bind(statement_id)
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, BankStatementLine>(
+            "SELECT * FROM bank_statement_line WHERE statement_id = $1",
+        )
+        .bind(statement_id)
+        .fetch_all(executor)
+        .await
     }
 
     // --- Payment Matches ---
@@ -395,10 +393,12 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, BankStatementLine>("SELECT * FROM bank_statement_line WHERE statement_id = $1 ORDER BY booking_date DESC")
-            .bind(statement_id)
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, BankStatementLine>(
+            "SELECT * FROM bank_statement_line WHERE statement_id = $1 ORDER BY booking_date DESC",
+        )
+        .bind(statement_id)
+        .fetch_all(executor)
+        .await
     }
 
     /// Update the match state of a bank statement line.
@@ -428,10 +428,12 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, PaymentMatch>("SELECT * FROM payment_match WHERE statement_line_id = $1")
-            .bind(line_id)
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, PaymentMatch>(
+            "SELECT * FROM payment_match WHERE statement_line_id = $1",
+        )
+        .bind(line_id)
+        .fetch_all(executor)
+        .await
     }
 
     /// Create or update a payment match (upsert).
