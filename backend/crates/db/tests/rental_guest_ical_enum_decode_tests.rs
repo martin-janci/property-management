@@ -151,7 +151,9 @@ async fn seed(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, String) {
     .await
     .expect("seed ical feed");
 
-    (org_id, unit_id, booking_id, guest_id, block_id, feed_id, feed_token)
+    (
+        org_id, unit_id, booking_id, guest_id, block_id, feed_id, feed_token,
+    )
 }
 
 // ============================================================================
@@ -415,9 +417,7 @@ async fn update_ical_feed_for_org_returning_decodes_import_platform(pool: PgPool
             },
         )
         .await
-        .expect(
-            "update_ical_feed_for_org RETURNING must decode the rental_platform enum (BIT-118)",
-        )
+        .expect("update_ical_feed_for_org RETURNING must decode the rental_platform enum (BIT-118)")
         .expect("row matched");
     assert_eq!(updated.feed_name, "Airbnb iCal Updated");
     assert_eq!(updated.import_platform.as_deref(), Some("airbnb"));
@@ -438,9 +438,7 @@ async fn update_ical_feed_returning_decodes_import_platform(pool: PgPool) {
             },
         )
         .await
-        .expect(
-            "update_ical_feed RETURNING must decode the rental_platform enum (BIT-118)",
-        );
+        .expect("update_ical_feed RETURNING must decode the rental_platform enum (BIT-118)");
     assert_eq!(updated.feed_name, "Airbnb iCal Renamed");
     assert_eq!(updated.import_platform.as_deref(), Some("airbnb"));
 }
