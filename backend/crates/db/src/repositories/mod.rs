@@ -22,6 +22,7 @@ pub mod health_monitoring;
 pub mod help;
 pub mod accounting_provider;
 pub mod accounting;
+pub mod accounting_test;
 pub mod membership;
 pub mod messaging;
 pub mod meter;
