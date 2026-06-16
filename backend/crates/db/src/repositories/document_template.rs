@@ -20,6 +20,10 @@ impl DocumentTemplateRepository {
     }
 
     /// Create a new template.
+    ///
+    /// `template_type` is a Postgres enum (`document_template_type`) but the
+    /// model decodes it as `String`, so every query that returns it must cast
+    /// it to text — `SELECT *` / `RETURNING *` fail to decode (PAP-133).
     pub async fn create(&self, data: CreateTemplate) -> Result<DocumentTemplate, SqlxError> {
         let placeholders = serde_json::to_value(&data.placeholders).unwrap();
 
@@ -30,7 +34,9 @@ impl DocumentTemplateRepository {
                 content, placeholders, created_by
             )
             VALUES ($1, $2, $3, $4::document_template_type, $5, $6, $7)
-            RETURNING *
+            RETURNING id, organization_id, name, description,
+                template_type::text AS template_type, content, placeholders,
+                usage_count, created_by, created_at, updated_at, deleted_at
             "#,
         )
         .bind(data.organization_id)
@@ -44,35 +50,57 @@ impl DocumentTemplateRepository {
         .await
     }
 
-    /// Find template by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<DocumentTemplate>, SqlxError> {
+    /// Find template by ID, scoped to the owning organization.
+    ///
+    /// Cross-tenant safety (PAP-63): this repository runs on the raw (non-RLS)
+    /// pool, so the `document_templates` RLS policies never engage — app-layer
+    /// scoping is the only tenant boundary. The `organization_id = $2`
+    /// predicate ensures a caller in org B cannot read a template owned by
+    /// org A by guessing its UUID.
+    pub async fn find_by_id(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<DocumentTemplate>, SqlxError> {
         sqlx::query_as::<_, DocumentTemplate>(
             r#"
-            SELECT * FROM document_templates
-            WHERE id = $1 AND deleted_at IS NULL
+            SELECT id, organization_id, name, description,
+                template_type::text AS template_type, content, placeholders,
+                usage_count, created_by, created_at, updated_at, deleted_at
+            FROM document_templates
+            WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await
     }
 
-    /// Find template by ID with details.
+    /// Find template by ID with details, scoped to the owning organization.
+    ///
+    /// See [`find_by_id`](Self::find_by_id) for the cross-tenant rationale
+    /// behind the `organization_id = $2` predicate (PAP-63).
     pub async fn find_by_id_with_details(
         &self,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<TemplateWithDetails>, SqlxError> {
         let row = sqlx::query(
             r#"
             SELECT
-                t.*,
+                t.id, t.organization_id, t.name, t.description,
+                t.template_type::text AS template_type, t.content,
+                t.placeholders, t.usage_count, t.created_by, t.created_at,
+                t.updated_at, t.deleted_at,
                 u.name as created_by_name
             FROM document_templates t
             JOIN users u ON u.id = t.created_by
-            WHERE t.id = $1 AND t.deleted_at IS NULL
+            WHERE t.id = $1 AND t.organization_id = $2 AND t.deleted_at IS NULL
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .fetch_optional(&self.pool)
         .await?;
 
@@ -107,7 +135,8 @@ impl DocumentTemplateRepository {
         sqlx::query_as::<_, TemplateSummary>(
             r#"
             SELECT
-                id, name, description, template_type, usage_count,
+                id, name, description,
+                template_type::text AS template_type, usage_count,
                 jsonb_array_length(placeholders) as placeholder_count,
                 created_at
             FROM document_templates
@@ -149,10 +178,16 @@ impl DocumentTemplateRepository {
         Ok(row.get("count"))
     }
 
-    /// Update a template.
+    /// Update a template, scoped to the owning organization.
+    ///
+    /// Cross-tenant safety (PAP-63): the `organization_id = $2` predicate is
+    /// defense-in-depth on top of the handler's read gate — a mutation can
+    /// never touch a row owned by another tenant even if a caller forgets to
+    /// pre-check ownership.
     pub async fn update(
         &self,
         id: Uuid,
+        org_id: Uuid,
         data: UpdateTemplate,
     ) -> Result<DocumentTemplate, SqlxError> {
         let placeholders = data.placeholders.map(|p| serde_json::to_value(p).unwrap());
@@ -161,17 +196,20 @@ impl DocumentTemplateRepository {
             r#"
             UPDATE document_templates
             SET
-                name = COALESCE($2, name),
-                description = COALESCE($3, description),
-                template_type = COALESCE($4::document_template_type, template_type),
-                content = COALESCE($5, content),
-                placeholders = COALESCE($6, placeholders),
+                name = COALESCE($3, name),
+                description = COALESCE($4, description),
+                template_type = COALESCE($5::document_template_type, template_type),
+                content = COALESCE($6, content),
+                placeholders = COALESCE($7, placeholders),
                 updated_at = NOW()
-            WHERE id = $1 AND deleted_at IS NULL
-            RETURNING *
+            WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+            RETURNING id, organization_id, name, description,
+                template_type::text AS template_type, content, placeholders,
+                usage_count, created_by, created_at, updated_at, deleted_at
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .bind(&data.name)
         .bind(&data.description)
         .bind(&data.template_type)
@@ -181,16 +219,21 @@ impl DocumentTemplateRepository {
         .await
     }
 
-    /// Delete a template (soft delete).
-    pub async fn delete(&self, id: Uuid) -> Result<(), SqlxError> {
+    /// Delete a template (soft delete), scoped to the owning organization.
+    ///
+    /// Cross-tenant safety (PAP-63): the `organization_id = $2` predicate
+    /// prevents a caller in org B from soft-deleting org A's template by
+    /// guessing its UUID.
+    pub async fn delete(&self, id: Uuid, org_id: Uuid) -> Result<(), SqlxError> {
         sqlx::query(
             r#"
             UPDATE document_templates
             SET deleted_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .execute(&self.pool)
         .await?;
         Ok(())
@@ -223,16 +266,20 @@ impl DocumentTemplateRepository {
         Ok(row.get("exists"))
     }
 
-    /// Increment usage count for a template.
-    pub async fn increment_usage(&self, id: Uuid) -> Result<(), SqlxError> {
+    /// Increment usage count for a template, scoped to the owning organization.
+    ///
+    /// Cross-tenant safety (PAP-63): the `organization_id = $2` predicate keeps
+    /// the counter mutation within the caller's tenant.
+    pub async fn increment_usage(&self, id: Uuid, org_id: Uuid) -> Result<(), SqlxError> {
         sqlx::query(
             r#"
             UPDATE document_templates
             SET usage_count = usage_count + 1
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .execute(&self.pool)
         .await?;
         Ok(())

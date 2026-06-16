@@ -173,6 +173,56 @@ async fn load_rfq_for_org(
     Ok(rfq)
 }
 
+/// Resolve the caller's service-provider profile id, or 403 if they don't have
+/// one. Provider-owned resources (invitations, quotes, verifications) are gated
+/// on this id so a provider can only act on its own rows.
+async fn current_provider_id(
+    state: &AppState,
+    user_id: Uuid,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    let provider = state
+        .marketplace_repo
+        .find_profile_by_user_id(user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "NOT_PROVIDER",
+                    "You must have a provider profile to perform this action",
+                )),
+            )
+        })?;
+
+    Ok(provider.id)
+}
+
+/// Gate platform-moderation endpoints (verification review, badge award/revoke,
+/// verification queues) on the platform-admin role. These operate on cross-org
+/// provider trust data and were previously callable by any authenticated user
+/// (PAP-140), letting an org member approve verifications or revoke badges
+/// platform-wide.
+fn require_platform_admin(user: &AuthUser) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if user.is_platform_admin() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform administrator role required",
+            )),
+        ))
+    }
+}
+
 /// Create marketplace router with all sub-routes.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -1189,12 +1239,16 @@ async fn list_my_invitations(
 /// Mark an invitation as viewed.
 async fn mark_invitation_viewed(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RfqInvitation>, (StatusCode, Json<ErrorResponse>)> {
+    // Only the invited provider may act on the invitation — key the update on
+    // the caller's verified provider id (PAP-140).
+    let provider_id = current_provider_id(&state, user.user_id).await?;
+
     let invitation = state
         .marketplace_repo
-        .mark_invitation_viewed(id)
+        .mark_invitation_viewed(id, provider_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to mark invitation viewed");
@@ -1224,13 +1278,17 @@ pub struct DeclineInvitationRequest {
 
 async fn decline_invitation(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<DeclineInvitationRequest>,
 ) -> Result<Json<RfqInvitation>, (StatusCode, Json<ErrorResponse>)> {
+    // Only the invited provider may decline — key on the caller's verified
+    // provider id (PAP-140; previously had zero ownership check).
+    let provider_id = current_provider_id(&state, user.user_id).await?;
+
     let invitation = state
         .marketplace_repo
-        .decline_invitation(id, data.reason)
+        .decline_invitation(id, provider_id, data.reason)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to decline invitation");
@@ -1309,9 +1367,12 @@ async fn submit_verification(
 /// List verifications.
 async fn list_verifications(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ListVerificationsQuery>,
 ) -> Result<Json<Vec<ProviderVerification>>, (StatusCode, Json<ErrorResponse>)> {
+    // Cross-provider verification listing is a platform-moderation view (PAP-140).
+    require_platform_admin(&user)?;
+
     let verification_query: VerificationQuery = (&query).into();
 
     let verifications = state
@@ -1335,9 +1396,11 @@ async fn list_verifications(
 /// Get verification queue for admin review.
 async fn get_verification_queue(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<VerificationQueueItem>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&user)?;
+
     let queue = state
         .marketplace_repo
         .get_verification_queue(query.limit.unwrap_or(20), query.offset.unwrap_or(0))
@@ -1356,9 +1419,11 @@ async fn get_verification_queue(
 /// Get expiring verifications.
 async fn get_expiring_verifications(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Query(query): Query<ExpiringQuery>,
 ) -> Result<Json<Vec<ExpiringVerification>>, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&user)?;
+
     let days = query.days.unwrap_or(30);
 
     let expiring = state
@@ -1379,7 +1444,7 @@ async fn get_expiring_verifications(
 /// Get a specific verification.
 async fn get_verification(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ProviderVerification>, (StatusCode, Json<ErrorResponse>)> {
     let verification = state
@@ -1403,6 +1468,22 @@ async fn get_verification(
             )
         })?;
 
+    // Verification documents carry sensitive data (document numbers, URLs). Only
+    // the owning provider or a platform admin (reviewer) may read one by id;
+    // anyone else gets 404 so the row's existence isn't disclosed (PAP-140).
+    if !user.is_platform_admin() {
+        let provider_id = current_provider_id(&state, user.user_id).await?;
+        if provider_id != verification.provider_id {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Verification {} not found", id),
+                )),
+            ));
+        }
+    }
+
     Ok(Json(verification))
 }
 
@@ -1413,6 +1494,10 @@ async fn review_verification(
     Path(id): Path<Uuid>,
     Json(data): Json<ReviewVerificationRequest>,
 ) -> Result<Json<ProviderVerification>, (StatusCode, Json<ErrorResponse>)> {
+    // Approving/rejecting a verification and awarding badges is platform
+    // moderation, not an org-scoped action (PAP-140).
+    require_platform_admin(&user)?;
+
     let verification = state
         .marketplace_repo
         .review_verification(
@@ -1498,6 +1583,9 @@ async fn award_badge(
     Path(id): Path<Uuid>,
     Json(data): Json<AwardBadgeRequest>,
 ) -> Result<(StatusCode, Json<ProviderBadge>), (StatusCode, Json<ErrorResponse>)> {
+    // Badges are global provider-trust markers — platform moderation only (PAP-140).
+    require_platform_admin(&user)?;
+
     let badge = state
         .marketplace_repo
         .award_badge(
@@ -1534,6 +1622,8 @@ async fn revoke_badge(
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_platform_admin(&user)?;
+
     let revoked = state.marketplace_repo.revoke_badge(id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to revoke badge");
         (
@@ -1565,6 +1655,11 @@ async fn create_review(
     Path(provider_id): Path<Uuid>,
     Json(payload): Json<CreateReviewRequest>,
 ) -> Result<(StatusCode, Json<ProviderReview>), (StatusCode, Json<ErrorResponse>)> {
+    // The review is stamped with `organization_id` from the body; verify the
+    // caller actually belongs to that org so they can't post a review under
+    // another tenant's name (PAP-140).
+    verify_org_access(&state, user.user_id, payload.organization_id).await?;
+
     let review = state
         .marketplace_repo
         .create_review(

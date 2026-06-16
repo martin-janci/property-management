@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "epic_prefix": "NONE",
-  "selected_at": "2026-06-08T04:11:28Z",
-  "last_action": "empty",
-  "reason": "Buffer fully drained: claimable=0 (open=0 after dedup). The single open action-list item (refactor-churn-hotspot-mobile-announcements-test) is already the active review row #1165; the only ready backlog.json item (security-llm-doc-idor) is already MERGED in the archive (stale backlog status). So finish-first has no representable target -> NONE/empty (pick-target-epic --update KEEP). Tier-2 upstream kick fired successfully (HTTP 200, type=routine_fire, session_017RH7f8VSuiLaRo43vjZkgJ) to ask the research routine to replenish ready/plan-backed backlog items. Coverage Tier-1 refill still skipped (coverage.json snapshot 2026-05-29 stale). STRUCTURAL ENV BLOCKS this run: (1) gh CLI unavailable -> Phase 0.5 lock skipped (skipped-gh-unavailable), all GitHub I/O via MCP. (2) Bot token identity == PR author (martin-janci) -> cannot self-approve/review PRs; the Phase5 review->Phase5.5 merge pipeline is human-gated. PR #1165 (verdict=changes) is NOT respawned: its only defect is a PR-body disclosure inaccuracy (body claims test-only/scope_drift=false but AnnouncementsScreen.tsx WAS refactored +56/-30, 4 helpers extracted applyReadState/buildAnnouncements/countUnread/formatRelativeDate); code is behaviour-preserving + CI-green. Respawn would non-converge (merge still human-only) and would fail anyway (ppt-implement needs gh). Operator: code sound, correct PR-body disclosure then merge #1165 manually. (3) MCP push_files cannot carry the 302KB assignments-archive.json as a literal param -> archive-sweep of merged #1160 deferred; it is CARRIED in active (T19 shows 1 known terminal-in-active, not corruption; no data loss).",
+  "selected_at": "2026-06-15T16:18:22Z",
+  "last_action": "reset-invalid-target",
+  "reason": "picker chose feat- epic already quarantined (PR#1318); invalid per self-test schema; reset to NONE",
   "stats_at_selection": {
     "open": 0,
     "claimable": 0

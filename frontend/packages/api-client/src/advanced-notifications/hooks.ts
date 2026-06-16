@@ -1,5 +1,9 @@
 /**
  * Advanced Notifications Hooks (Epic 40)
+ *
+ * Auth is handled via the global token provider (set by AuthContext) so callers
+ * do not need to pass baseUrl or accessToken — consistent with the rest of the
+ * hooks layer (see #486).
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -37,36 +41,23 @@ export const GROUPING_PREFERENCES_KEY = ['notification-preferences', 'grouping']
 export const ADVANCED_PREFERENCES_KEY = ['notification-preferences', 'advanced'] as const;
 
 // ============================================================================
-// Common Options
-// ============================================================================
-
-interface UseAdvancedNotificationsOptions {
-  baseUrl: string;
-  accessToken: string;
-}
-
-// ============================================================================
 // Story 40.1: Category Preferences Hooks
 // ============================================================================
 
 /**
  * Hook to fetch category-based notification preferences.
  */
-export function useCategoryPreferences({ baseUrl, accessToken }: UseAdvancedNotificationsOptions) {
+export function useCategoryPreferences() {
   return useQuery({
     queryKey: CATEGORY_PREFERENCES_KEY,
-    queryFn: () => getCategoryPreferences(baseUrl, accessToken),
-    enabled: !!accessToken,
+    queryFn: () => getCategoryPreferences(),
   });
 }
 
 /**
- * Hook to update a category preference with optimistic updates.
+ * Hook to update a category preference with optimistic updates and error rollback.
  */
-export function useUpdateCategoryPreference({
-  baseUrl,
-  accessToken,
-}: UseAdvancedNotificationsOptions) {
+export function useUpdateCategoryPreference() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -76,7 +67,7 @@ export function useUpdateCategoryPreference({
     }: {
       category: NotificationCategory;
       request: UpdateCategoryPreferenceRequest;
-    }) => updateCategoryPreference(baseUrl, accessToken, category, request),
+    }) => updateCategoryPreference(category, request),
 
     onMutate: async ({ category, request }) => {
       await queryClient.cancelQueries({ queryKey: CATEGORY_PREFERENCES_KEY });
@@ -121,23 +112,21 @@ export function useUpdateCategoryPreference({
 /**
  * Hook to fetch quiet hours configuration.
  */
-export function useQuietHours({ baseUrl, accessToken }: UseAdvancedNotificationsOptions) {
+export function useQuietHours() {
   return useQuery({
     queryKey: QUIET_HOURS_KEY,
-    queryFn: () => getQuietHours(baseUrl, accessToken),
-    enabled: !!accessToken,
+    queryFn: () => getQuietHours(),
   });
 }
 
 /**
- * Hook to update quiet hours with optimistic updates.
+ * Hook to update quiet hours with optimistic updates and error rollback.
  */
-export function useUpdateQuietHours({ baseUrl, accessToken }: UseAdvancedNotificationsOptions) {
+export function useUpdateQuietHours() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: UpdateQuietHoursRequest) =>
-      updateQuietHours(baseUrl, accessToken, request),
+    mutationFn: (request: UpdateQuietHoursRequest) => updateQuietHours(request),
 
     onMutate: async (request) => {
       await queryClient.cancelQueries({ queryKey: QUIET_HOURS_KEY });
@@ -176,26 +165,21 @@ export function useUpdateQuietHours({ baseUrl, accessToken }: UseAdvancedNotific
 /**
  * Hook to fetch digest configuration.
  */
-export function useDigestPreferences({ baseUrl, accessToken }: UseAdvancedNotificationsOptions) {
+export function useDigestPreferences() {
   return useQuery({
     queryKey: DIGEST_PREFERENCES_KEY,
-    queryFn: () => getDigestPreferences(baseUrl, accessToken),
-    enabled: !!accessToken,
+    queryFn: () => getDigestPreferences(),
   });
 }
 
 /**
- * Hook to update digest preferences with optimistic updates.
+ * Hook to update digest preferences with optimistic updates and error rollback.
  */
-export function useUpdateDigestPreferences({
-  baseUrl,
-  accessToken,
-}: UseAdvancedNotificationsOptions) {
+export function useUpdateDigestPreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: UpdateDigestRequest) =>
-      updateDigestPreferences(baseUrl, accessToken, request),
+    mutationFn: (request: UpdateDigestRequest) => updateDigestPreferences(request),
 
     onMutate: async (request) => {
       await queryClient.cancelQueries({ queryKey: DIGEST_PREFERENCES_KEY });
@@ -234,26 +218,21 @@ export function useUpdateDigestPreferences({
 /**
  * Hook to fetch notification grouping configuration.
  */
-export function useGroupingPreferences({ baseUrl, accessToken }: UseAdvancedNotificationsOptions) {
+export function useGroupingPreferences() {
   return useQuery({
     queryKey: GROUPING_PREFERENCES_KEY,
-    queryFn: () => getGroupingPreferences(baseUrl, accessToken),
-    enabled: !!accessToken,
+    queryFn: () => getGroupingPreferences(),
   });
 }
 
 /**
- * Hook to update grouping preferences with optimistic updates.
+ * Hook to update grouping preferences with optimistic updates and error rollback.
  */
-export function useUpdateGroupingPreferences({
-  baseUrl,
-  accessToken,
-}: UseAdvancedNotificationsOptions) {
+export function useUpdateGroupingPreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: UpdateGroupingRequest) =>
-      updateGroupingPreferences(baseUrl, accessToken, request),
+    mutationFn: (request: UpdateGroupingRequest) => updateGroupingPreferences(request),
 
     onMutate: async (request) => {
       await queryClient.cancelQueries({ queryKey: GROUPING_PREFERENCES_KEY });
@@ -292,11 +271,10 @@ export function useUpdateGroupingPreferences({
 /**
  * Hook to fetch all advanced notification preferences at once.
  */
-export function useAdvancedPreferences({ baseUrl, accessToken }: UseAdvancedNotificationsOptions) {
+export function useAdvancedPreferences() {
   return useQuery({
     queryKey: ADVANCED_PREFERENCES_KEY,
-    queryFn: () => getAdvancedPreferences(baseUrl, accessToken),
-    enabled: !!accessToken,
+    queryFn: () => getAdvancedPreferences(),
   });
 }
 

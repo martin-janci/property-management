@@ -153,11 +153,12 @@ pub async fn create_import_job(
 )]
 pub async fn get_import_job(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
         .reality_portal_repo
-        .get_import_job(id)
+        .get_import_job(id, principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -190,12 +191,13 @@ pub async fn get_import_job(
 )]
 pub async fn update_import_job(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePortalImportJob>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
         .reality_portal_repo
-        .update_import_job(id, data)
+        .update_import_job(id, principal.user_id, data)
         .await
         .map_err(|e| match e {
             SqlxError::RowNotFound => (
@@ -226,17 +228,22 @@ pub async fn update_import_job(
 )]
 pub async fn start_import_job(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
         .reality_portal_repo
-        .start_import_job(id)
+        .start_import_job(id, principal.user_id)
         .await
-        .map_err(|e| {
-            (
+        .map_err(|e| match e {
+            SqlxError::RowNotFound => (
+                axum::http::StatusCode::NOT_FOUND,
+                "Import job not found".to_string(),
+            ),
+            other => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to start import job: {}", e),
-            )
+                format!("Failed to start import job: {}", other),
+            ),
         })?;
 
     Ok(Json(ImportJobResponse { job }))
@@ -256,17 +263,22 @@ pub async fn start_import_job(
 )]
 pub async fn cancel_import_job(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
         .reality_portal_repo
-        .cancel_import_job(id)
+        .cancel_import_job(id, principal.user_id)
         .await
-        .map_err(|e| {
-            (
+        .map_err(|e| match e {
+            SqlxError::RowNotFound => (
+                axum::http::StatusCode::NOT_FOUND,
+                "Import job not found".to_string(),
+            ),
+            other => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to cancel import job: {}", e),
-            )
+                format!("Failed to cancel import job: {}", other),
+            ),
         })?;
 
     Ok(Json(ImportJobResponse { job }))
@@ -346,11 +358,12 @@ pub async fn create_feed(
 )]
 pub async fn get_feed(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
     let feed = state
         .reality_portal_repo
-        .get_feed_subscription(id)
+        .get_feed_subscription(id, principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -383,12 +396,13 @@ pub async fn get_feed(
 )]
 pub async fn update_feed(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateFeedSubscription>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
     let feed = state
         .reality_portal_repo
-        .update_feed_subscription(id, data)
+        .update_feed_subscription(id, principal.user_id, data)
         .await
         .map_err(|e| match e {
             SqlxError::RowNotFound => (
@@ -418,17 +432,22 @@ pub async fn update_feed(
 )]
 pub async fn sync_feed(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
     let feed = state
         .reality_portal_repo
-        .trigger_feed_sync(id)
+        .trigger_feed_sync(id, principal.user_id)
         .await
-        .map_err(|e| {
-            (
+        .map_err(|e| match e {
+            SqlxError::RowNotFound => (
+                axum::http::StatusCode::NOT_FOUND,
+                "Feed not found".to_string(),
+            ),
+            other => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to trigger feed sync: {}", e),
-            )
+                format!("Failed to trigger feed sync: {}", other),
+            ),
         })?;
 
     Ok(Json(FeedResponse { feed }))

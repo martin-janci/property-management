@@ -305,6 +305,7 @@ impl EddRepository {
     pub async fn review_aml_assessment(
         &self,
         id: Uuid,
+        org_id: Uuid,
         reviewer_id: Uuid,
         decision: AmlAssessmentStatus,
         notes: Option<&str>,
@@ -317,7 +318,7 @@ impl EddRepository {
                 assessed_at = NOW(),
                 assessor_notes = COALESCE($4, assessor_notes),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $5
             RETURNING *
             "#,
         )
@@ -325,6 +326,7 @@ impl EddRepository {
         .bind(decision)
         .bind(reviewer_id)
         .bind(notes)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await?;
 
@@ -726,6 +728,7 @@ impl EddRepository {
     pub async fn verify_edd_document(
         &self,
         id: Uuid,
+        edd_id: Uuid,
         verified_by: Uuid,
         status: DocumentVerificationStatus,
         rejection_reason: Option<&str>,
@@ -737,7 +740,7 @@ impl EddRepository {
                 verified_by = $3,
                 verified_at = NOW(),
                 rejection_reason = $4
-            WHERE id = $1
+            WHERE id = $1 AND edd_id = $5
             RETURNING *
             "#,
         )
@@ -745,6 +748,7 @@ impl EddRepository {
         .bind(status)
         .bind(verified_by)
         .bind(rejection_reason)
+        .bind(edd_id)
         .fetch_one(&self.pool)
         .await?;
 

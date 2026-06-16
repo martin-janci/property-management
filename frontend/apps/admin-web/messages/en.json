@@ -163,6 +163,17 @@
         "secretRegeneratedTitle": "Secret regenerated"
       }
     },
+    "oauthConsent": {
+      "title": "Authorize application",
+      "lead": "{{app}} is requesting access to your account.",
+      "approve": "Approve",
+      "deny": "Deny",
+      "loading": "Validating request…",
+      "redirectNotice": "You will be redirected to {{uri}}",
+      "invalidRequest": "This authorization request is invalid or incomplete.",
+      "loadError": "Could not validate the authorization request: {{message}}",
+      "submitError": "Could not complete authorization: {{message}}"
+    },
     "onboarding": {
       "title": "Onboarding Tours",
       "subtitle": "Preview and manage step-by-step onboarding tours for platform users.",

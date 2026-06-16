@@ -564,7 +564,7 @@ pub async fn disable_mfa(
             "SELECT id, code_hash FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
         )
         .bind(user_id)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **rls.conn())
         .await
         .unwrap_or_default();
 
@@ -600,6 +600,9 @@ pub async fn disable_mfa(
     }
 
     // Disable MFA and invalidate all recovery codes atomically.
+    // mfa_recovery_codes is user-scoped (no org_id, no FORCE RLS) — raw pool transaction
+    // is equivalent to RLS here; WHERE user_id = $1 from the JWT subject provides the
+    // required isolation (P4 sanctioned, same rationale as confirm_mfa above).
     let mut tx = state.db.begin().await.map_err(|e| {
         tracing::error!(error = %e, "Failed to begin disable transaction");
         (
@@ -1001,11 +1004,25 @@ pub async fn verify_recovery_code(
         )
     })?;
 
+    // Acquire a connection for the user-scoped MFA tables (user_2fa,
+    // mfa_recovery_codes have no org_id and no FORCE RLS). acquire_public clears
+    // any stale RLS context left by a previous request on the pooled connection.
+    let mut conn = db::RlsPool::new(state.db.clone())
+        .acquire_public()
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "recovery/verify: pool acquire failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to connect")),
+            )
+        })?;
+
     // Verify MFA is enabled for this user.
     let enrolled: Option<bool> =
         sqlx::query_scalar("SELECT enabled FROM user_2fa WHERE user_id = $1")
             .bind(user_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **conn)
             .await
             .map_err(|e| {
                 tracing::error!(error = %e, "recovery/verify: fetch enrollment failed");
@@ -1033,7 +1050,7 @@ pub async fn verify_recovery_code(
         "SELECT id, code_hash FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
     )
     .bind(user_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **conn)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "recovery/verify: fetch codes failed");
@@ -1129,7 +1146,7 @@ pub async fn verify_recovery_code(
         "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL",
     )
     .bind(matched_id)
-    .execute(&state.db)
+    .execute(&mut **conn)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "recovery/verify: mark used failed");
@@ -1158,7 +1175,7 @@ pub async fn verify_recovery_code(
         "SELECT COUNT(*) FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
     )
     .bind(user_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **conn)
     .await
     .unwrap_or(0);
 

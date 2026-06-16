@@ -79,19 +79,19 @@ development_status:
   10b-6-user-onboarding-tour: done  # coverage.json 2026-05-27: onboarding.rs routes mounted at /api/v1/onboarding; OnboardingRepository (needs_onboarding/get_tours_for_user/start_tour/complete_step/complete_tour/skip_tour/reset_tour); handlers fully implemented since cf533ae4; cargo check -p api-server exit 0 (frontend component still pending — backend story complete)
   10b-7-contextual-help-documentation: ready-for-dev
   # Epic 80: Dispute Resolution (verified 2026-05-25)
-  80-2-dispute-filing-flow: partial  # EvidenceUploader.tsx + useDraftStorage.ts missing; AC-2, AC-4 not met
+  80-2-dispute-filing-flow: partial  # Re-verified 2026-06-08 (verify-dispute-filing-flow-ac-coverage): AC-1/AC-2/AC-3/AC-5 MET + tested — FileDisputePage.tsx (type radio-cards, subject/description validation, char counter, submit contract) + EvidenceUploader.tsx (AC-2, was wrongly flagged missing) + FileDisputePageRoute.tsx orchestration (create→sequential evidence upload→toast→navigate). Happy/partial-fail/filtered/create-fail/non-Error error paths covered (FileDisputePage.test.tsx + FileDisputePageRoute.test.tsx, 22 tests, vitest exit 0). STILL BLOCKED on AC-4 (draft auto-save / useDraftStorage.ts not implemented) + redesign 5-step wizard in-progress — stays partial, NOT promoted.
 
   # Epic 80: Dispute Resolution (verified 2026-05-25)
   80-1-disputes-api-integration: done
   80-2-dispute-filing-flow: partial
   80-3-mediation-resolution: partial
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────
 # TEST-HARDENING BATCH — post-merge follow-ups (issues #480-#487)
 # Slotted: 2026-05-25 | Priority: medium
 # Rule: dependent stories MUST NOT be promoted to `done` until each follow-up
 #       issue in this batch is either CLOSED or explicitly DEFERRED.
-# ─────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────
 test_hardening_batch:
   batch_id: thb-2026-05-25
   slotted_at: 2026-05-25

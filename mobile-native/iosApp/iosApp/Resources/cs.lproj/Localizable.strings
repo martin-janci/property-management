@@ -114,7 +114,7 @@
 /* Errors */
 "error_generic" = "Vyskytla se chyba. Zkuste to znovu.";
 "error_network" = "Chyba sítě. Zkontrolujte připojení.";
-"error_server" = "Chyba serveru. Zkuste to později.";
+"error_server" = "Chyba serveru. Zkuste to później.";
 "error_not_found" = "Nenalezeno";
 "error_unauthorized" = "Nemáte oprávnění k této akci.";
 
@@ -273,6 +273,7 @@
 "loading_listing" = "Načítá se nabídka...";
 "failed_to_load_listing" = "Nepodařilo se načíst nabídku";
 "view_on_map" = "Zobrazit na mapě";
+"get_directions" = "Získat trasu";
 "contact_via_inquiry" = "Kontaktovat přes dotaz";
 "send_inquiry" = "Odeslat dotaz";
 "property" = "Nemovitost";

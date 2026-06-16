@@ -11,14 +11,21 @@ import {
   toUiAnnouncement,
 } from './AnnouncementsScreen';
 
-// Regression for PR #918 (High #3 + Critical #1): the screen moved off the
-// manager-only `/api/v1/announcements` endpoint (403 for residents) to the
-// RLS-scoped `/api/v1/announcements/published`, whose `AnnouncementSummary`
-// rows have NO `content`/`author`/`category`. The mapper must tolerate the
-// lightweight summary shape and the list extractor must read `announcements`
-// (the legacy `items` key no longer exists on this response).
+// Context for future maintainers (kept terse; the assertions, not the prose,
+// are the contract):
+//
+// - The screen reads the RLS-scoped `GET /api/v1/announcements/published`
+//   endpoint, whose `AnnouncementSummary` rows are lightweight: no
+//   `content` body, no per-user read flag, no author/category. The list is
+//   carried under the `announcements` key (NOT the legacy `items` key).
+// - The pinned sticky band and the main feed are both derived client-side
+//   from that single published list. Read state is overlaid from a
+//   client-side `Set<id>`.
 
-const summary: ApiAnnouncementSummary = {
+// --- Test fixtures -------------------------------------------------------
+
+/** A representative published-summary row (pinned, no content body). */
+const SUMMARY: ApiAnnouncementSummary = {
   id: 'a-1',
   title: 'Lift maintenance Friday',
   status: 'published',
@@ -29,52 +36,11 @@ const summary: ApiAnnouncementSummary = {
   acknowledgment_required: false,
 };
 
-describe('toUiAnnouncement (PR #918 published-summary mapping)', () => {
-  it('maps a summary row without a content body', () => {
-    const ui = toUiAnnouncement(summary);
-    expect(ui).toMatchObject({
-      id: 'a-1',
-      title: 'Lift maintenance Friday',
-      createdAt: '2026-05-20T08:00:00Z', // from published_at
-      isPinned: true,
-    });
-    // The summary carries no content body; the UI shape must not expose one.
-    expect((ui as unknown as Record<string, unknown>).content).toBeUndefined();
-  });
-
-  it('falls back to a synthetic createdAt when published_at is null', () => {
-    const ui = toUiAnnouncement({ ...summary, published_at: null });
-    expect(typeof ui.createdAt).toBe('string');
-    expect(ui.createdAt.length).toBeGreaterThan(0);
-  });
-});
-
-describe('extractItems (PR #918 reads `announcements`, not `items`)', () => {
-  it('returns the announcements array from the published-list response', () => {
-    expect(extractItems({ announcements: [summary], count: 1 })).toEqual([summary]);
-  });
-
-  it('returns [] for undefined / empty responses', () => {
-    expect(extractItems(undefined)).toEqual([]);
-    expect(extractItems({})).toEqual([]);
-  });
-
-  it('ignores a stray legacy `items` key (no longer part of the contract)', () => {
-    // `items` is not in the response type; cast to confirm it is NOT read.
-    const legacy = { items: [summary] } as unknown as Parameters<typeof extractItems>[0];
-    expect(extractItems(legacy)).toEqual([]);
-  });
-});
-
-// Regression for PR #943 (#767 dev-review tail): the screen dropped the
-// dedicated `?pinned=true` query and now derives the sticky pinned band
-// client-side from the single published list, and partitions the main feed
-// from that same list. These behaviours used to be inlined in the component
-// body (untested); PR #943 shipped without pinning them. The two helpers
-// below pin the client-side derivation so it cannot silently regress.
-
-const ui = (over: Partial<Announcement> & Pick<Announcement, 'id'>): Announcement => ({
-  title: over.title ?? over.id,
+/** Build a UI `Announcement` with sensible defaults; override per test. */
+const makeAnnouncement = (
+  over: Partial<Announcement> & Pick<Announcement, 'id'>
+): Announcement => ({
+  title: over.id,
   createdAt: '2026-05-01T00:00:00Z',
   author: 'Building Management',
   isRead: false,
@@ -84,37 +50,75 @@ const ui = (over: Partial<Announcement> & Pick<Announcement, 'id'>): Announcemen
   ...over,
 });
 
-describe('derivePinnedItems (PR #943 client-side pinned band)', () => {
-  it('keeps only pinned rows', () => {
+// --- Mapping: summary row -> UI announcement -----------------------------
+
+describe('toUiAnnouncement', () => {
+  it('maps a lightweight summary row (no content body) to the UI shape', () => {
+    expect(toUiAnnouncement(SUMMARY)).toMatchObject({
+      id: 'a-1',
+      title: 'Lift maintenance Friday',
+      createdAt: '2026-05-20T08:00:00Z', // from published_at
+      isPinned: true,
+    });
+  });
+
+  it('does not invent a content body the summary never carried', () => {
+    expect(toUiAnnouncement(SUMMARY)).not.toHaveProperty('content');
+  });
+
+  it('falls back to a non-empty createdAt when published_at is null', () => {
+    const ui = toUiAnnouncement({ ...SUMMARY, published_at: null });
+    expect(typeof ui.createdAt).toBe('string');
+    expect(ui.createdAt.length).toBeGreaterThan(0);
+  });
+});
+
+// --- List extraction -----------------------------------------------------
+
+describe('extractItems', () => {
+  it('returns the `announcements` array from the published-list response', () => {
+    expect(extractItems({ announcements: [SUMMARY], count: 1 })).toEqual([SUMMARY]);
+  });
+
+  it('returns [] for undefined or empty responses', () => {
+    expect(extractItems(undefined)).toEqual([]);
+    expect(extractItems({})).toEqual([]);
+  });
+
+  it('ignores a stray legacy `items` key (not part of the contract)', () => {
+    const legacy = { items: [SUMMARY] } as unknown as Parameters<typeof extractItems>[0];
+    expect(extractItems(legacy)).toEqual([]);
+  });
+});
+
+// --- Client-side pinned band ---------------------------------------------
+
+describe('derivePinnedItems', () => {
+  it('keeps only pinned rows, in order', () => {
     const items = [
-      ui({ id: 'a', isPinned: true }),
-      ui({ id: 'b', isPinned: false }),
-      ui({ id: 'c', isPinned: true }),
+      makeAnnouncement({ id: 'a', isPinned: true }),
+      makeAnnouncement({ id: 'b', isPinned: false }),
+      makeAnnouncement({ id: 'c', isPinned: true }),
     ];
     expect(derivePinnedItems(items).map((a) => a.id)).toEqual(['a', 'c']);
   });
 
   it('returns [] when nothing is pinned', () => {
-    expect(derivePinnedItems([ui({ id: 'a' }), ui({ id: 'b' })])).toEqual([]);
+    const items = [makeAnnouncement({ id: 'a' }), makeAnnouncement({ id: 'b' })];
+    expect(derivePinnedItems(items)).toEqual([]);
   });
 });
 
-describe('filterMainList (PR #943 main feed partitioning)', () => {
+// --- Main feed partitioning ----------------------------------------------
+
+describe('filterMainList', () => {
   const items = [
-    ui({ id: 'pin', isPinned: true, createdAt: '2026-05-05T00:00:00Z' }),
-    ui({
-      id: 'old',
-      title: 'Lift maintenance',
-      createdAt: '2026-05-01T00:00:00Z',
-    }),
-    ui({
-      id: 'new',
-      title: 'Garden event',
-      createdAt: '2026-05-03T00:00:00Z',
-    }),
+    makeAnnouncement({ id: 'pin', isPinned: true, createdAt: '2026-05-05T00:00:00Z' }),
+    makeAnnouncement({ id: 'old', title: 'Lift maintenance', createdAt: '2026-05-01T00:00:00Z' }),
+    makeAnnouncement({ id: 'new', title: 'Garden event', createdAt: '2026-05-03T00:00:00Z' }),
   ];
 
-  it('excludes pinned items from the main feed', () => {
+  it('excludes pinned items (they live in the sticky band)', () => {
     expect(filterMainList(items, '').map((a) => a.id)).not.toContain('pin');
   });
 
@@ -122,44 +126,40 @@ describe('filterMainList (PR #943 main feed partitioning)', () => {
     expect(filterMainList(items, '').map((a) => a.id)).toEqual(['new', 'old']);
   });
 
-  it('matches the search query against the TITLE only (no content body since #943)', () => {
+  it('matches the search query against the title, case-insensitively', () => {
     expect(filterMainList(items, 'garden').map((a) => a.id)).toEqual(['new']);
-    // Case-insensitive.
     expect(filterMainList(items, 'LIFT').map((a) => a.id)).toEqual(['old']);
-    // A term that matched the old `content` body must NOT match now.
+  });
+
+  it('does not match terms absent from any title (no content-body search)', () => {
     expect(filterMainList(items, 'no-such-title')).toEqual([]);
   });
 });
 
-// Pure helpers extracted from the component body during the churn-hotspot
-// refactor. These used to live inline (untested); pinning them here prevents
-// silent regression of read-state overlay, unread counting, and the feed's
-// relative-date label.
+// --- Client-side read overlay --------------------------------------------
 
-describe('applyReadState (client-side read overlay)', () => {
-  const base = ui({ id: 'a', isRead: false });
+describe('applyReadState', () => {
+  const unread = makeAnnouncement({ id: 'a', isRead: false });
 
-  it('marks an unread row read when its id is in the set', () => {
-    const out = applyReadState(base, new Set(['a']));
+  it('marks an unread row read when its id is in the set (without mutating)', () => {
+    const out = applyReadState(unread, new Set(['a']));
     expect(out.isRead).toBe(true);
-    expect(out).not.toBe(base); // new object — does not mutate input
+    expect(out).not.toBe(unread);
   });
 
   it('returns the same reference when the id is absent', () => {
-    const out = applyReadState(base, new Set(['other']));
-    expect(out).toBe(base);
+    expect(applyReadState(unread, new Set(['other']))).toBe(unread);
   });
 
-  it('returns the same reference when already read', () => {
-    const read = ui({ id: 'a', isRead: true });
+  it('returns the same reference when the row is already read', () => {
+    const read = makeAnnouncement({ id: 'a', isRead: true });
     expect(applyReadState(read, new Set(['a']))).toBe(read);
   });
 });
 
-describe('buildAnnouncements (response → read-aware UI list)', () => {
+describe('buildAnnouncements', () => {
   it('maps the published list and overlays read state', () => {
-    const resp = { announcements: [summary] }; // summary.id === 'a-1'
-    const out = buildAnnouncements(resp, new Set(['a-1']));
+    const out = buildAnnouncements({ announcements: [SUMMARY] }, new Set(['a-1']));
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({ id: 'a-1', isRead: true, isPinned: true });
   });
@@ -169,7 +169,7 @@ describe('buildAnnouncements (response → read-aware UI list)', () => {
   });
 
   it('leaves rows unread when their id is not in the set', () => {
-    const out = buildAnnouncements({ announcements: [summary] }, new Set());
+    const out = buildAnnouncements({ announcements: [SUMMARY] }, new Set());
     expect(out[0].isRead).toBe(false);
   });
 });
@@ -177,9 +177,9 @@ describe('buildAnnouncements (response → read-aware UI list)', () => {
 describe('countUnread', () => {
   it('counts rows whose isRead is false', () => {
     const items = [
-      ui({ id: 'a', isRead: false }),
-      ui({ id: 'b', isRead: true }),
-      ui({ id: 'c', isRead: false }),
+      makeAnnouncement({ id: 'a', isRead: false }),
+      makeAnnouncement({ id: 'b', isRead: true }),
+      makeAnnouncement({ id: 'c', isRead: false }),
     ];
     expect(countUnread(items)).toBe(2);
   });
@@ -189,7 +189,9 @@ describe('countUnread', () => {
   });
 });
 
-describe('formatRelativeDate (feed card label)', () => {
+// --- Feed-card relative date label ---------------------------------------
+
+describe('formatRelativeDate', () => {
   const now = new Date('2026-05-20T12:00:00Z');
 
   it('returns "Just now" under one hour', () => {
@@ -205,7 +207,10 @@ describe('formatRelativeDate (feed card label)', () => {
   });
 
   it('returns an absolute month-day label beyond a week', () => {
-    // 2026-05-01 is >7d before now → absolute "May 1" style label.
-    expect(formatRelativeDate('2026-05-01T12:00:00Z', now)).toBe('May 1');
+    // The absolute label is produced by `toLocaleDateString('en-US', …)`.
+    // Assert against the known output for this date to ensure the formatter
+    // logic hasn't changed.
+    const old = '2026-05-01T12:00:00Z';
+    expect(formatRelativeDate(old, now)).toBe('May 1');
   });
 });

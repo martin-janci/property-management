@@ -2,6 +2,33 @@
 //!
 //! Provides CRUD operations for workflow templates, including
 //! search, import, and rating functionality.
+//!
+//! # RLS Integration (PAP-104 / PAP-80 / PAP-67)
+//!
+//! This repository previously held a raw `PgPool` and ran every query on it,
+//! so a query could never set `app.current_org_id`. Migration `00179` (PAP-62)
+//! put `FORCE ROW LEVEL SECURITY` + the canonical `get_current_org_id()` policy
+//! on `workflows` and `workflow_actions`, which `import_template` writes to.
+//! Under `FORCE` the api-server's owner connection is no longer exempt, so a
+//! write issued on a connection WITHOUT RLS context set fails the policy
+//! `WITH CHECK` (deny-all). To match the `work_order.rs` / `ai_chat.rs` /
+//! `vendor.rs` precedent the repo now holds **no pool**: every method takes an
+//! **executor whose connection already has RLS context set** — in handlers this
+//! comes from the `RlsConnection` extractor via `&mut **rls.conn()`. There is no
+//! way to issue a query that bypasses RLS.
+//!
+//! Single-statement methods take a generic `E: Executor`. Multi-statement
+//! methods that must run on the SAME RLS-scoped connection
+//! (`find_with_details`, `import_template`, `rate_template`,
+//! `seed_builtin_templates`) take a `&mut PgConnection` and reborrow.
+//!
+//! > **Scaffold note (PAP-104):** the `workflow_template*` tables this repo's
+//! > marketplace methods target are **not created by any migration** and the
+//! > repository is **not constructed by any server** (the `/api/v1/ai/workflows`
+//! > template handlers serve `get_builtin_templates()` instead). The conversion
+//! > is retained so the repo is RLS-safe if/when the marketplace ships; see the
+//! > PAP-104 issue thread for the dead-scaffold disposition question raised to
+//! > the CTO.
 
 use crate::models::{
     template_scope, CreateTemplateAction, CreateTemplateVariable, CreateWorkflowTemplate,
@@ -9,26 +36,37 @@ use crate::models::{
     WorkflowTemplate, WorkflowTemplateAction, WorkflowTemplateRating, WorkflowTemplateSummary,
     WorkflowTemplateVariable, WorkflowTemplateWithDetails,
 };
-use sqlx::PgPool;
+use sqlx::{Connection, Executor, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for workflow template operations.
+///
+/// Deliberately a zero-sized type: it holds no pool so it cannot issue an
+/// un-scoped (deny-all under `FORCE`) query. All queries run on a context-set
+/// connection supplied by the handler's `RlsConnection`.
 #[derive(Clone)]
-pub struct WorkflowTemplateRepository {
-    pool: PgPool,
-}
+pub struct WorkflowTemplateRepository;
 
 impl WorkflowTemplateRepository {
     /// Create a new repository instance.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     /// Create a new workflow template.
-    pub async fn create(
+    pub async fn create<'e, E>(
         &self,
+        executor: E,
         data: CreateWorkflowTemplate,
-    ) -> Result<WorkflowTemplate, sqlx::Error> {
+    ) -> Result<WorkflowTemplate, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO workflow_templates
@@ -52,28 +90,39 @@ impl WorkflowTemplateRepository {
         .bind(data.tags.unwrap_or_default())
         .bind(&data.icon)
         .bind(data.created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get template by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<WorkflowTemplate>, sqlx::Error> {
+    pub async fn find_by_id<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<WorkflowTemplate>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM workflow_templates WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// Get template with full details (actions and variables).
+    ///
+    /// Takes a `&mut PgConnection` so the three reads (template + actions +
+    /// variables) run on the SAME RLS-scoped connection.
     pub async fn find_with_details(
         &self,
+        executor: &mut sqlx::PgConnection,
         id: Uuid,
     ) -> Result<Option<WorkflowTemplateWithDetails>, sqlx::Error> {
-        let template = self.find_by_id(id).await?;
+        let template = self.find_by_id(&mut *executor, id).await?;
         match template {
             Some(t) => {
-                let actions = self.list_actions(id).await?;
-                let variables = self.list_variables(id).await?;
+                let actions = self.list_actions(&mut *executor, id).await?;
+                let variables = self.list_variables(&mut *executor, id).await?;
                 Ok(Some(WorkflowTemplateWithDetails {
                     template: t,
                     actions,
@@ -85,11 +134,15 @@ impl WorkflowTemplateRepository {
     }
 
     /// Search templates with filters.
-    pub async fn search(
+    pub async fn search<'e, E>(
         &self,
+        executor: E,
         org_id: Option<Uuid>,
         query: TemplateSearchQuery,
-    ) -> Result<Vec<WorkflowTemplateSummary>, sqlx::Error> {
+    ) -> Result<Vec<WorkflowTemplateSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -138,17 +191,22 @@ impl WorkflowTemplateRepository {
         .bind(&query.scope)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// List templates by category.
-    pub async fn list_by_category(
+    pub async fn list_by_category<'e, E>(
         &self,
+        executor: E,
         category: &str,
         org_id: Option<Uuid>,
-    ) -> Result<Vec<WorkflowTemplateSummary>, sqlx::Error> {
+    ) -> Result<Vec<WorkflowTemplateSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         self.search(
+            executor,
             org_id,
             TemplateSearchQuery {
                 category: Some(category.to_string()),
@@ -159,11 +217,16 @@ impl WorkflowTemplateRepository {
     }
 
     /// List featured templates.
-    pub async fn list_featured(
+    pub async fn list_featured<'e, E>(
         &self,
+        executor: E,
         org_id: Option<Uuid>,
-    ) -> Result<Vec<WorkflowTemplateSummary>, sqlx::Error> {
+    ) -> Result<Vec<WorkflowTemplateSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         self.search(
+            executor,
             org_id,
             TemplateSearchQuery {
                 featured: Some(true),
@@ -175,11 +238,15 @@ impl WorkflowTemplateRepository {
     }
 
     /// Update a template.
-    pub async fn update(
+    pub async fn update<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         data: UpdateWorkflowTemplate,
-    ) -> Result<WorkflowTemplate, sqlx::Error> {
+    ) -> Result<WorkflowTemplate, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE workflow_templates SET
@@ -207,15 +274,18 @@ impl WorkflowTemplateRepository {
         .bind(&data.icon)
         .bind(data.featured)
         .bind(data.active)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Delete a template.
-    pub async fn delete(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM workflow_templates WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -223,10 +293,14 @@ impl WorkflowTemplateRepository {
     // --- Actions ---
 
     /// Add an action to a template.
-    pub async fn add_action(
+    pub async fn add_action<'e, E>(
         &self,
+        executor: E,
         data: CreateTemplateAction,
-    ) -> Result<WorkflowTemplateAction, sqlx::Error> {
+    ) -> Result<WorkflowTemplateAction, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO workflow_template_actions
@@ -244,28 +318,35 @@ impl WorkflowTemplateRepository {
         .bind(data.on_failure.unwrap_or_else(|| "stop".to_string()))
         .bind(data.retry_count.unwrap_or(3))
         .bind(data.retry_delay_seconds.unwrap_or(60))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List actions for a template.
-    pub async fn list_actions(
+    pub async fn list_actions<'e, E>(
         &self,
+        executor: E,
         template_id: Uuid,
-    ) -> Result<Vec<WorkflowTemplateAction>, sqlx::Error> {
+    ) -> Result<Vec<WorkflowTemplateAction>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM workflow_template_actions WHERE template_id = $1 ORDER BY action_order",
         )
         .bind(template_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Delete an action.
-    pub async fn delete_action(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_action<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM workflow_template_actions WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -273,10 +354,14 @@ impl WorkflowTemplateRepository {
     // --- Variables ---
 
     /// Add a variable to a template.
-    pub async fn add_variable(
+    pub async fn add_variable<'e, E>(
         &self,
+        executor: E,
         data: CreateTemplateVariable,
-    ) -> Result<WorkflowTemplateVariable, sqlx::Error> {
+    ) -> Result<WorkflowTemplateVariable, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO workflow_template_variables
@@ -295,28 +380,35 @@ impl WorkflowTemplateRepository {
         .bind(data.required.unwrap_or(false))
         .bind(data.options.map(sqlx::types::Json))
         .bind(&data.validation_pattern)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List variables for a template.
-    pub async fn list_variables(
+    pub async fn list_variables<'e, E>(
         &self,
+        executor: E,
         template_id: Uuid,
-    ) -> Result<Vec<WorkflowTemplateVariable>, sqlx::Error> {
+    ) -> Result<Vec<WorkflowTemplateVariable>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM workflow_template_variables WHERE template_id = $1 ORDER BY name",
         )
         .bind(template_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Delete a variable.
-    pub async fn delete_variable(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_variable<'e, E>(&self, executor: E, id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM workflow_template_variables WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -325,23 +417,30 @@ impl WorkflowTemplateRepository {
 
     /// Import a template as a new workflow.
     /// Returns the new workflow ID.
-    /// Uses a database transaction to ensure atomicity.
+    ///
+    /// Takes a `&mut PgConnection` so the template read, the workflow + action
+    /// inserts (into the `FORCE`-RLS `workflows` / `workflow_actions` tables),
+    /// and the use-count bump all run on the SAME RLS-scoped connection inside
+    /// one transaction. `org_id` and `user_id` must originate from the verified
+    /// request principal, never from client input.
     pub async fn import_template(
         &self,
+        executor: &mut sqlx::PgConnection,
         org_id: Uuid,
         user_id: Uuid,
         request: ImportTemplateRequest,
     ) -> Result<Uuid, sqlx::Error> {
-        // Get the template with details (outside transaction for read)
+        // Get the template with details (same RLS-scoped connection).
         let template_details = self
-            .find_with_details(request.template_id)
+            .find_with_details(&mut *executor, request.template_id)
             .await?
-            .ok_or_else(|| sqlx::Error::RowNotFound)?;
+            .ok_or(sqlx::Error::RowNotFound)?;
 
         let template = &template_details.template;
 
-        // Start transaction for all write operations
-        let mut tx = self.pool.begin().await?;
+        // Start transaction for all write operations (on the context-set conn,
+        // so the org/user GUCs stay in scope for every policy check).
+        let mut tx = executor.begin().await?;
 
         // Create the workflow
         let workflow_name = request.name.unwrap_or_else(|| template.name.clone());
@@ -411,8 +510,13 @@ impl WorkflowTemplateRepository {
     // --- Ratings ---
 
     /// Rate a template.
+    ///
+    /// Takes a `&mut PgConnection` so the rating upsert and the average-rating
+    /// recompute run on the SAME RLS-scoped connection. `org_id` and `user_id`
+    /// must originate from the verified request principal.
     pub async fn rate_template(
         &self,
+        executor: &mut sqlx::PgConnection,
         template_id: Uuid,
         org_id: Uuid,
         user_id: Uuid,
@@ -435,7 +539,7 @@ impl WorkflowTemplateRepository {
         .bind(user_id)
         .bind(request.rating.clamp(1, 5))
         .bind(&request.review)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *executor)
         .await?;
 
         // Update average rating
@@ -451,19 +555,23 @@ impl WorkflowTemplateRepository {
             "#,
         )
         .bind(template_id)
-        .execute(&self.pool)
+        .execute(&mut *executor)
         .await?;
 
         Ok(rating)
     }
 
     /// Get ratings for a template.
-    pub async fn list_ratings(
+    pub async fn list_ratings<'e, E>(
         &self,
+        executor: E,
         template_id: Uuid,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<WorkflowTemplateRating>, sqlx::Error> {
+    ) -> Result<Vec<WorkflowTemplateRating>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM workflow_template_ratings
@@ -475,12 +583,18 @@ impl WorkflowTemplateRepository {
         .bind(template_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Seed built-in templates.
-    pub async fn seed_builtin_templates(&self) -> Result<usize, sqlx::Error> {
+    ///
+    /// Takes a `&mut PgConnection` so the existence check, template insert, and
+    /// per-action inserts all run on the SAME RLS-scoped connection.
+    pub async fn seed_builtin_templates(
+        &self,
+        executor: &mut sqlx::PgConnection,
+    ) -> Result<usize, sqlx::Error> {
         let templates = crate::models::get_builtin_templates();
         let mut count = 0;
 
@@ -490,7 +604,7 @@ impl WorkflowTemplateRepository {
                 "SELECT id FROM workflow_templates WHERE name = $1 AND scope = 'global'",
             )
             .bind(&template_data.name)
-            .fetch_optional(&self.pool)
+            .fetch_optional(&mut *executor)
             .await?;
 
             if existing.is_some() {
@@ -498,12 +612,12 @@ impl WorkflowTemplateRepository {
             }
 
             // Create template
-            let template = self.create(template_data).await?;
+            let template = self.create(&mut *executor, template_data).await?;
 
             // Add actions
             for mut action in actions {
                 action.template_id = template.id;
-                self.add_action(action).await?;
+                self.add_action(&mut *executor, action).await?;
             }
 
             count += 1;

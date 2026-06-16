@@ -8,7 +8,7 @@ export { BuildingMetricsCard } from './BuildingMetricsCard';
 export type { CronPickerProps } from './CronPicker';
 // Story 81.1 - Report Schedule Editing
 export { CronPicker } from './CronPicker';
-export { EditScheduleModal } from './EditScheduleModal';
+export { EditScheduleModal, scheduleToInitialCron } from './EditScheduleModal';
 // Story 81.2 - Report Execution History
 export { ExecutionHistory } from './ExecutionHistory';
 // Story 53.1 - Report Builder

@@ -58,6 +58,17 @@ export function AnnouncementList({
 
   const totalPages = Math.ceil(total / pageSize);
 
+  // Reflect pinned ordering in the list (Story 6.4): pinned items float to the
+  // top. The backend already returns `ORDER BY pinned DESC, …`, but a stable
+  // client-side pass keeps the order correct between an optimistic pin/unpin
+  // toggle and the list refetch, and is robust to any caller that hands us an
+  // un-sorted page. `Array.prototype.sort` is stable (ES2019+), so rows that
+  // share a pinned state keep their server-provided order.
+  const orderedAnnouncements =
+    announcements.length > 1
+      ? [...announcements].sort((a, b) => Number(b.pinned) - Number(a.pinned))
+      : announcements;
+
   const handleStatusChange = (value: string) => {
     setStatusFilter(value as AnnouncementStatus | '');
     onStatusFilter(value ? (value as AnnouncementStatus) : undefined);
@@ -148,7 +159,7 @@ export function AnnouncementList({
         </div>
       ) : (
         <div className="grid gap-4">
-          {announcements.map((announcement) => (
+          {orderedAnnouncements.map((announcement) => (
             <AnnouncementCard
               key={announcement.id}
               announcement={announcement}

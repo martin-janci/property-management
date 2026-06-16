@@ -212,6 +212,10 @@
     <string name="filter_any">Bármely</string>
     <string name="filter_rooms">Szobák</string>
     <string name="filter_price_range_eur">Ártartomány (EUR)</string>
+    <string name="filter_near_me">A közelemben</string>
+    <string name="filter_radius">Sugár</string>
+    <string name="radius_km_format">%1$d km</string>
+    <string name="locating">Helymeghatározás…</string>
     <string name="filter_min">Min</string>
     <string name="filter_max">Max</string>
     <string name="filter_apply">Alkalmaz</string>

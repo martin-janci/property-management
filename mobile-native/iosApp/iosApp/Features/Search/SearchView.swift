@@ -29,6 +29,14 @@ struct SearchView: View {
     /// Cancellable token for the in-flight debounce task.
     @State private var debounceTask: Task<Void, Never>?
 
+    /// Monotonic sequence for the stale-response guard. Each fresh (page-1)
+    /// `performSearch()` increments this and captures the value before the
+    /// `await`; if a newer search started meanwhile, the older response is
+    /// dropped so an out-of-order completion can't clobber newer results.
+    /// Mirrors the Android `SearchScreen.kt` searchGeneration guard, scoped to
+    /// the SwiftUI side (see plan: Android-side race is a separate backlog item).
+    @State private var requestSeq = 0
+
     /// Drives the location-denied alert; set by .onChange(of: locationManager.locationError).
     @State private var showLocationDeniedAlert = false
 
@@ -266,12 +274,73 @@ struct SearchView: View {
     private var resultsGrid: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-            filters: searchFilters,
+                ForEach(Array(results.enumerated()), id: \.element.id) { index, listing in
+                    SearchResultCard(listing: listing) {
+                        coordinator.navigate(to: .listingDetail(id: listing.id))
+                    }
+                    .onAppear {
+                        // AC-4: infinite scroll. When the last loaded cell appears,
+                        // fetch the next page. `loadMoreResults()` self-guards on
+                        // currentPage/totalPages so trailing onAppears are no-ops.
+                        if index == results.count - 1 {
+                            Task { await loadMoreResults() }
+                        }
+                    }
+                }
+                if isLoadingMore {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                }
+            }
+            .padding(.vertical, 8)
+        }
+    }
+
+    // MARK: - Search
+
+    /// Debounce free-text query changes before hitting the network (AC-2).
+    ///
+    /// Cancels any in-flight debounce token and starts a fresh `debounceNs`
+    /// (350 ms) sleep; only after the sleep survives cancellation does the
+    /// actual search fire. Mirrors the Android `SearchScreen.kt`
+    /// `.debounce(SEARCH_DEBOUNCE_MS)` collector so three quick keystrokes
+    /// coalesce into a single repository call.
+    private func scheduleSearch(for _: String) {
+        debounceTask?.cancel()
+        debounceTask = Task {
+            try? await Task.sleep(nanoseconds: debounceNs)
+            if Task.isCancelled { return }
+            await performSearch()
+        }
+    }
+
+    /// Run a fresh (page-1) search against the KMP `ListingRepository` and
+    /// replace the current result set. Mirrors the Android `SearchScreen.kt`
+    /// `performSearch()` contract (request assembly + success/failure fold)
+    /// plus a SwiftUI-side stale-response guard (`requestSeq`).
+    private func performSearch() async {
+        isLoading = true
+        currentPage = 1
+
+        // Stale-response guard: capture the sequence for this search before the
+        // await; if a newer search bumps `requestSeq` while we're suspended,
+        // discard this (older) response on resume.
+        requestSeq += 1
+        let seq = requestSeq
+
+        let request = ListingSearchRequest(
+            query: searchText.isEmpty ? nil : searchText,
+            filters: buildKMPFilters(),
             sort: sortOption.kmpSortOption,
             page: Int32(currentPage),
             pageSize: 20
         )
         let result = await listingRepository.searchListings(request: request)
+
+        // Drop responses superseded by a newer search.
+        guard seq == requestSeq else { return }
+
         if let response = result.getOrNull() {
             results = response.listings.map { KMPBridge.toListingPreview($0) }
             totalPages = Int(response.totalPages)
@@ -283,6 +352,8 @@ struct SearchView: View {
             }
             #endif
             results = []
+            totalPages = 1
+            totalCount = 0
         }
         isLoading = false
     }
@@ -294,7 +365,7 @@ struct SearchView: View {
         currentPage += 1
         let request = ListingSearchRequest(
             query: searchText.isEmpty ? nil : searchText,
-            filters: searchFilters,
+            filters: buildKMPFilters(),
             sort: sortOption.kmpSortOption,
             page: Int32(currentPage),
             pageSize: 20

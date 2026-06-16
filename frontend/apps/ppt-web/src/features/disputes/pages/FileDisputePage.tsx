@@ -12,9 +12,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { DraftSavedIndicator } from '../components/DraftSavedIndicator';
 import { EvidenceUploader, type PendingEvidence } from '../components/EvidenceUploader';
+import { useDraftStorage } from '../hooks/useDraftStorage';
+
+/** localStorage key for the in-progress dispute-filing draft (AC-4). */
+export const DISPUTE_DRAFT_KEY = 'ppt-dispute-filing-draft';
 
 // ============================================
 // Validation schema
@@ -106,7 +112,17 @@ export function FileDisputePage({
   isSubmitting = false,
   onSubmit,
 }: FileDisputePageProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
+  // AC-4: draft auto-save. Restore any previously-typed draft synchronously so
+  // it can seed the form's default values, and persist edits (debounced) so an
+  // accidental tab close / navigation doesn't lose a long dispute description.
+  // Evidence files are intentionally NOT persisted (File objects aren't
+  // serialisable and re-attaching them is the user's call on restore).
+  const { restored, savedAt, save, clear } =
+    useDraftStorage<Partial<DisputeFormValues>>(DISPUTE_DRAFT_KEY);
+
   const {
     register,
     control,
@@ -116,11 +132,11 @@ export function FileDisputePage({
   } = useForm<DisputeFormValues>({
     resolver: zodResolver(disputeSchema),
     defaultValues: {
-      type: undefined,
-      subject: '',
-      description: '',
-      unitId: '',
-      respondentId: '',
+      type: restored?.type ?? undefined,
+      subject: restored?.subject ?? '',
+      description: restored?.description ?? '',
+      unitId: restored?.unitId ?? '',
+      respondentId: restored?.respondentId ?? '',
     },
   });
 
@@ -128,10 +144,28 @@ export function FileDisputePage({
   // serialisable by zod; they are passed alongside the validated values).
   const [evidence, setEvidence] = React.useState<PendingEvidence[]>([]);
 
-  const descriptionLength = watch('description')?.length ?? 0;
+  // Persist the draft on every change (debounced inside the hook). Skip while a
+  // submit is in flight so we don't re-save a form that's about to be cleared.
+  const watchedValues = watch();
+  React.useEffect(() => {
+    if (isSubmitting) return;
+    save(watchedValues);
+  }, [watchedValues, isSubmitting, save]);
 
-  const handleFormSubmit = handleSubmit((values) => {
-    onSubmit({ values, evidence });
+  const descriptionLength = watchedValues.description?.length ?? 0;
+
+  const handleFormSubmit = handleSubmit(async (values) => {
+    try {
+      await onSubmit({ values, evidence });
+    } catch {
+      // The route wrapper already surfaces the error toast. Swallow here so a
+      // failed filing keeps the auto-saved draft (we deliberately skip clear())
+      // and react-hook-form doesn't bubble an unhandled rejection.
+      return;
+    }
+    // Clear the persisted draft only once the submit handler resolves without
+    // throwing — a failed filing keeps the draft so the user can retry.
+    clear();
   });
 
   return (
@@ -145,11 +179,21 @@ export function FileDisputePage({
         >
           ← Back to Disputes
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">File a Dispute</h1>
-        <p className="text-gray-500 mt-1">
-          Submit a formal dispute. All fields marked <span className="text-red-500">*</span> are
-          required.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">File a Dispute</h1>
+            <p className="text-gray-500 mt-1">
+              Submit a formal dispute. All fields marked <span className="text-red-500">*</span> are
+              required.
+            </p>
+          </div>
+          <DraftSavedIndicator savedAt={savedAt} className="mt-1 shrink-0" />
+        </div>
+        {restored && (
+          <p className="mt-3 text-sm text-gray-500" role="status">
+            {t('disputes.draftRestored', 'Restored your saved draft.')}
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleFormSubmit} noValidate className="space-y-8">

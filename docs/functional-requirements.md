@@ -6,6 +6,25 @@ This document decomposes all 508 use cases into concrete system functions with d
 
 ---
 
+## FR Taxonomy — Reconciliation (two numbering schemes)
+
+This project uses **two distinct FR numbering schemes**. They are complementary,
+not contradictory — pick the right one for the task:
+
+| Scheme | Where | Granularity | Source of truth for |
+|--------|-------|-------------|---------------------|
+| **FR-XX.Y** (this document) | `docs/functional-requirements.md` | 51 categories → **256 sub-FRs** decomposing **508 UCs** | Product spec: inputs / outputs / business rules / acceptance detail |
+| **FR1–FR101** | `_bmad-output/epics.md` (capability areas CA-01…CA-15) | **101 capability-level FRs** | Epic / story **delivery tracking** |
+
+The 101 epic FRs are a coarse capability rollup; each maps to one or more
+`FR-XX.Y` entries here (e.g. epic FR37–44 "Voting" ⊇ the `FR-04.*` voting
+functions). For **delivery status** of the 101 FRs against the codebase, see
+[`docs/EPIC_STORY_STATUS.md`](./EPIC_STORY_STATUS.md) §5–§6. **This document**
+remains the source of truth for the fine-grained 256-sub-FR / 508-UC acceptance
+detail.
+
+---
+
 ## Document Conventions
 
 - **FR-XX.Y**: Functional Requirement ID (maps to UC-XX.Y)

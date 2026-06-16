@@ -95,7 +95,16 @@ export interface ReportSchedule {
   frequency: ScheduleFrequency;
   day_of_week?: number; // 0-6 for weekly
   day_of_month?: number; // 1-31 for monthly
-  time: string; // HH:mm format
+  time: string; // HH:mm format (legacy; prefer cron_expression for new code)
+  /**
+   * 5-field UNIX cron expression (gap-81-1 / issue #616).
+   *
+   * Source of truth for the schedule when present — the dedicated
+   * `cron_expression` column lets edits round-trip losslessly instead of
+   * being reconstructed from the overloaded `time`/`frequency` fields.
+   * Optional for back-compat with legacy rows that predate the column.
+   */
+  cron_expression?: string;
   timezone: string;
   format: ReportFormat;
   recipients: string[];

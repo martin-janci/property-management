@@ -4,11 +4,25 @@
 //! - Story 134.2: Maintenance History Tracking
 //! - Story 134.3: Failure Prediction Engine
 //! - Story 134.4: Predictive Maintenance Dashboard
+//!
+//! # RLS (PAP-80)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` on the
+//! predictive-maintenance tables, so every query MUST run on a connection that
+//! has `app.current_org_id` set or it collapses to deny-all. Each handler
+//! therefore acquires an [`RlsConnection`] (which validates tenant membership
+//! and sets the org/user GUCs on a dedicated connection) and passes
+//! `&mut **rls.conn()` to the repository. The authoritative organization is
+//! `rls.tenant_id()` — the tenant the caller was validated against — so the SQL
+//! org filter and the RLS context can never disagree. Cross-tenant access is
+//! blocked by RLS: a by-id read of another org's row returns no row (`404`), and
+//! a write targeting another org fails the policy's `WITH CHECK`. `rls.release()`
+//! clears the context before the connection returns to the pool.
 
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -16,7 +30,7 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use api_core::extractors::AuthUser;
+use api_core::extractors::RlsConnection;
 
 use crate::state::AppState;
 
@@ -70,12 +84,9 @@ pub fn router() -> Router<AppState> {
         .route("/equipment/by-health", get(get_equipment_by_health))
 }
 
-// Helper to get org_id from AuthUser
-fn get_org_id(auth: &AuthUser) -> Result<Uuid, (StatusCode, String)> {
-    auth.tenant_id.ok_or((
-        StatusCode::BAD_REQUEST,
-        "No organization context".to_string(),
-    ))
+/// Build an internal-error response from a repository error.
+fn db_error(e: impl std::fmt::Display) -> Response {
+    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
 }
 
 // ============================================================================
@@ -85,153 +96,142 @@ fn get_org_id(auth: &AuthUser) -> Result<Uuid, (StatusCode, String)> {
 /// Create new equipment.
 async fn create_equipment(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<CreateEquipment>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .create_equipment(org_id, auth.user_id, req)
+        .create_equipment(&mut **rls.conn(), org_id, user_id, req)
         .await
     {
         Ok(equipment) => (StatusCode::CREATED, Json(equipment)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// List equipment with filters.
 async fn list_equipment(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<EquipmentQuery>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .list_equipment(org_id, query)
+        .list_equipment(&mut **rls.conn(), org_id, query)
         .await
     {
         Ok(equipment) => Json(equipment).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Get equipment by ID.
 async fn get_equipment(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .get_equipment(id, org_id)
+        .get_equipment(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(equipment)) => Json(equipment).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Update equipment.
 async fn update_equipment(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipment>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .update_equipment(id, org_id, auth.user_id, req)
+        .update_equipment(&mut **rls.conn(), id, org_id, user_id, req)
         .await
     {
         Ok(Some(equipment)) => Json(equipment).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Delete equipment.
 async fn delete_equipment(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .delete_equipment(id, org_id)
+        .delete_equipment(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
         Ok(false) => StatusCode::NOT_FOUND.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Add document to equipment.
 async fn add_equipment_document(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateEquipmentDocument>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .add_equipment_document(id, org_id, auth.user_id, req)
+        .add_equipment_document(&mut **rls.conn(), id, org_id, user_id, req)
         .await
     {
         Ok(doc) => (StatusCode::CREATED, Json(doc)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// List equipment documents.
 async fn list_equipment_documents(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .list_equipment_documents(id, org_id)
+        .list_equipment_documents(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(docs) => Json(docs).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 // ============================================================================
@@ -241,67 +241,62 @@ async fn list_equipment_documents(
 /// Create maintenance log.
 async fn create_maintenance_log(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<CreateMaintenanceLog>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .create_maintenance_log(org_id, auth.user_id, req)
+        .create_maintenance_log(&mut **rls.conn(), org_id, user_id, req)
         .await
     {
         Ok(log) => (StatusCode::CREATED, Json(log)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Get maintenance log by ID.
 async fn get_maintenance_log(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .get_maintenance_log(id, org_id)
+        .get_maintenance_log(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(log)) => Json(log).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Update maintenance log.
 async fn update_maintenance_log(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenanceLog>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .update_maintenance_log(id, org_id, req)
+        .update_maintenance_log(&mut **rls.conn(), id, org_id, req)
         .await
     {
         Ok(Some(log)) => Json(log).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// List maintenance logs for equipment.
@@ -313,26 +308,24 @@ struct PaginationQuery {
 
 async fn list_equipment_maintenance_logs(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(equipment_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
+) -> Response {
+    let org_id = rls.tenant_id();
     let limit = query.limit.unwrap_or(50);
     let offset = query.offset.unwrap_or(0);
 
-    match s
+    let resp = match s
         .predictive_maintenance_repo
-        .list_maintenance_logs(equipment_id, org_id, limit, offset)
+        .list_maintenance_logs(&mut **rls.conn(), equipment_id, org_id, limit, offset)
         .await
     {
         Ok(logs) => Json(logs).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Add photo to maintenance log.
@@ -347,31 +340,37 @@ struct AddPhotoRequest {
 
 async fn add_maintenance_photo(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(log_id): Path<Uuid>,
     Json(req): Json<AddPhotoRequest>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
+) -> Response {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
 
     // Only allow attaching photos to a maintenance log the caller's org owns.
+    // Under RLS a foreign-org log_id is invisible and surfaces as 404.
     match s
         .predictive_maintenance_repo
-        .get_maintenance_log(log_id, org_id)
+        .get_maintenance_log(&mut **rls.conn(), log_id, org_id)
         .await
     {
         Ok(Some(_)) => {}
-        Ok(None) => return StatusCode::NOT_FOUND.into_response(),
-        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Ok(None) => {
+            rls.release().await;
+            return StatusCode::NOT_FOUND.into_response();
+        }
+        Err(e) => {
+            rls.release().await;
+            return db_error(e);
+        }
     }
 
-    match s
+    let resp = match s
         .predictive_maintenance_repo
         .add_maintenance_photo(
+            &mut **rls.conn(),
             log_id,
-            auth.user_id,
+            user_id,
             &req.file_path,
             req.file_size,
             req.mime_type.as_deref(),
@@ -381,42 +380,49 @@ async fn add_maintenance_photo(
         .await
     {
         Ok(photo) => (StatusCode::CREATED, Json(photo)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// List photos for maintenance log.
 async fn list_maintenance_photos(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(log_id): Path<Uuid>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
+) -> Response {
+    let org_id = rls.tenant_id();
 
     // Confirm the parent maintenance log belongs to the caller's org before
     // returning any photos. A foreign-org log_id surfaces as 404, never a
     // cross-tenant read (IDOR #848).
     match s
         .predictive_maintenance_repo
-        .get_maintenance_log(log_id, org_id)
+        .get_maintenance_log(&mut **rls.conn(), log_id, org_id)
         .await
     {
         Ok(Some(_)) => {}
-        Ok(None) => return StatusCode::NOT_FOUND.into_response(),
-        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+        Ok(None) => {
+            rls.release().await;
+            return StatusCode::NOT_FOUND.into_response();
+        }
+        Err(e) => {
+            rls.release().await;
+            return db_error(e);
+        }
     }
 
-    match s
+    let resp = match s
         .predictive_maintenance_repo
-        .list_maintenance_photos(log_id, org_id)
+        .list_maintenance_photos(&mut **rls.conn(), log_id, org_id)
         .await
     {
         Ok(photos) => Json(photos).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 // ============================================================================
@@ -426,13 +432,10 @@ async fn list_maintenance_photos(
 /// Run prediction for equipment.
 async fn run_prediction(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<RunPredictionRequest>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
+) -> Response {
+    let org_id = rls.tenant_id();
 
     // Run prediction for specified equipment or all
     let equipment_ids = if let Some(ids) = req.equipment_ids {
@@ -445,12 +448,13 @@ async fn run_prediction(
         };
         match s
             .predictive_maintenance_repo
-            .list_equipment(org_id, query)
+            .list_equipment(&mut **rls.conn(), org_id, query)
             .await
         {
             Ok(equipment) => equipment.into_iter().map(|e| e.id).collect(),
             Err(e) => {
-                return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response();
+                rls.release().await;
+                return db_error(e);
             }
         }
     };
@@ -460,7 +464,7 @@ async fn run_prediction(
     for equipment_id in equipment_ids {
         match s
             .predictive_maintenance_repo
-            .run_prediction(equipment_id, org_id)
+            .run_prediction(rls.conn(), equipment_id, org_id)
             .await
         {
             Ok(result) => results.push(result),
@@ -470,16 +474,17 @@ async fn run_prediction(
         }
     }
 
+    rls.release().await;
     Json(results).into_response()
 }
 
 /// Run batch predictions.
 async fn run_batch_predictions(
     State(s): State<AppState>,
-    auth: AuthUser,
+    rls: RlsConnection,
     Json(req): Json<RunPredictionRequest>,
-) -> impl IntoResponse {
-    run_prediction(State(s), auth, Json(req)).await
+) -> Response {
+    run_prediction(State(s), rls, Json(req)).await
 }
 
 /// Get prediction history for equipment.
@@ -490,25 +495,23 @@ struct PredictionHistoryQuery {
 
 async fn get_equipment_predictions(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(equipment_id): Path<Uuid>,
     Query(query): Query<PredictionHistoryQuery>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
+) -> Response {
+    let org_id = rls.tenant_id();
     let limit = query.limit.unwrap_or(20);
 
-    match s
+    let resp = match s
         .predictive_maintenance_repo
-        .get_prediction_history(equipment_id, org_id, limit)
+        .get_prediction_history(&mut **rls.conn(), equipment_id, org_id, limit)
         .await
     {
         Ok(predictions) => Json(predictions).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 // ============================================================================
@@ -526,20 +529,17 @@ struct AlertQuery {
 
 async fn list_alerts(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<AlertQuery>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
+) -> Response {
+    let org_id = rls.tenant_id();
     let limit = query.limit.unwrap_or(50);
     let offset = query.offset.unwrap_or(0);
 
-    match s
+    let resp = match s
         .predictive_maintenance_repo
         .list_alerts(
+            &mut **rls.conn(),
             org_id,
             query.status.as_deref(),
             query.severity.as_deref(),
@@ -549,76 +549,80 @@ async fn list_alerts(
         .await
     {
         Ok(alerts) => Json(alerts).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Acknowledge alert.
 async fn acknowledge_alert(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(_req): Json<AcknowledgeAlertRequest>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .acknowledge_alert(id, org_id, auth.user_id)
+        .acknowledge_alert(&mut **rls.conn(), id, org_id, user_id)
         .await
     {
         Ok(Some(alert)) => Json(alert).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Resolve alert.
 async fn resolve_alert(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveAlertRequest>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .resolve_alert(id, org_id, auth.user_id, req.maintenance_log_id)
+        .resolve_alert(
+            &mut **rls.conn(),
+            id,
+            org_id,
+            user_id,
+            req.maintenance_log_id,
+        )
         .await
     {
         Ok(Some(alert)) => Json(alert).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Dismiss alert.
 async fn dismiss_alert(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .dismiss_alert(id, org_id)
+        .dismiss_alert(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(alert)) => Json(alert).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 // ============================================================================
@@ -626,41 +630,37 @@ async fn dismiss_alert(
 // ============================================================================
 
 /// List health thresholds.
-async fn list_health_thresholds(State(s): State<AppState>, auth: AuthUser) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+async fn list_health_thresholds(State(s): State<AppState>, mut rls: RlsConnection) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .list_health_thresholds(org_id)
+        .list_health_thresholds(&mut **rls.conn(), org_id)
         .await
     {
         Ok(thresholds) => Json(thresholds).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Set health threshold.
 async fn set_health_threshold(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<SetHealthThreshold>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .set_health_threshold(org_id, req)
+        .set_health_threshold(&mut **rls.conn(), org_id, req)
         .await
     {
         Ok(threshold) => Json(threshold).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 // ============================================================================
@@ -676,22 +676,20 @@ struct DashboardQuery {
 /// Get maintenance dashboard.
 async fn get_dashboard(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<DashboardQuery>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
-    match s
+) -> Response {
+    let org_id = rls.tenant_id();
+    let resp = match s
         .predictive_maintenance_repo
-        .get_dashboard(org_id, query.building_id)
+        .get_dashboard(rls.conn(), org_id, query.building_id)
         .await
     {
         Ok(dashboard) => Json(dashboard).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }
 
 /// Get equipment sorted by health score.
@@ -703,22 +701,20 @@ struct ByHealthQuery {
 
 async fn get_equipment_by_health(
     State(s): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ByHealthQuery>,
-) -> impl IntoResponse {
-    let org_id = match get_org_id(&auth) {
-        Ok(id) => id,
-        Err(e) => return e.into_response(),
-    };
-
+) -> Response {
+    let org_id = rls.tenant_id();
     let limit = query.limit.unwrap_or(20);
 
-    match s
+    let resp = match s
         .predictive_maintenance_repo
-        .get_equipment_by_health(org_id, query.building_id, limit)
+        .get_equipment_by_health(&mut **rls.conn(), org_id, query.building_id, limit)
         .await
     {
         Ok(equipment) => Json(equipment).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
+        Err(e) => db_error(e),
+    };
+    rls.release().await;
+    resp
 }

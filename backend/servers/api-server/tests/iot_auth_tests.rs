@@ -45,7 +45,7 @@ async fn iot_endpoints_require_auth(pool: PgPool) {
     let base = "/api/v1/iot/sensors";
 
     let cases: Vec<(Method, String, Option<&str>)> = vec![
-        (Method::POST, format!("{base}"), Some(r#"{"name":"x"}"#)),
+        (Method::POST, base.to_string(), Some(r#"{"name":"x"}"#)),
         (Method::GET, format!("{base}/{sid}"), None),
         (Method::PUT, format!("{base}/{sid}"), Some(r#"{}"#)),
         (Method::DELETE, format!("{base}/{sid}"), None),

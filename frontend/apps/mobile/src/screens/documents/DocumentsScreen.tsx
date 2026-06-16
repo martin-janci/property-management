@@ -108,8 +108,10 @@ interface FolderCrumb {
  * Walk the nested folder tree to the folder identified by `path` (a list of
  * folder ids from root downward) and return its direct subfolders. An empty
  * path returns the root-level folders.
+ *
+ * Exported for unit-testing (feat-mobile-document-folder-organization).
  */
-function subfoldersAtPath(
+export function subfoldersAtPath(
   tree: ApiFolderTreeNode[],
   path: ReadonlyArray<FolderCrumb>
 ): ApiFolderTreeNode[] {
@@ -122,8 +124,12 @@ function subfoldersAtPath(
   return level;
 }
 
-/** Map a folder tree node to the screen's unified `Document` row shape. */
-function folderNodeToDocument(node: ApiFolderTreeNode): Document {
+/**
+ * Map a folder tree node to the screen's unified `Document` row shape.
+ *
+ * Exported for unit-testing (feat-mobile-document-folder-organization).
+ */
+export function folderNodeToDocument(node: ApiFolderTreeNode): Document {
   return {
     id: node.id,
     name: node.name,

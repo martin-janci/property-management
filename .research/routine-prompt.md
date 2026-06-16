@@ -201,7 +201,7 @@ If **G8, G9, or G17 fails, abort before commit.** All other failures are recorde
 
 - `.research/state.json` — what you've already seen (cursors + `seen_signals`
   + `hotspot_history` + `auto_fix_history`)
-- `.research/backlog.json` — **canonical** ranked vectors (don't duplicate; regenerate `backlog.md` from this)
+- `.research/backlog.json` — **canonical** ranked vectors (don't duplicate; regenerate `backlog.md` from this). **Do not `Read` the whole file into context** — it carries heavy `evidence`/`sources` arrays on terminal rows (~140 KB, dominated by the ~110 `done`/`dropped` rows). Pull a projection instead (see *Reading `backlog.json` — token discipline* below); the full file stays canonical on disk and is mutated in place.
 - `.research/plans/` — plans the implementation agent may have picked up
 - GitHub (via `gh` CLI in bash): merged PRs since `last_pr_seen`, open and
   recently-closed PRs, issues since `last_issue_seen`, commit log since
@@ -209,6 +209,50 @@ If **G8, G9, or G17 fails, abort before commit.** All other failures are recorde
 - Code (via `Read` / `Grep`): file diffs in the top-3 churn hotspots since
   the last run
 - Env: `ROUTINE_AUTOFIX_DISABLED` (Phase 5 kill switch — set to `1` to skip Phase 5 entirely)
+
+### Reading `backlog.json` — token discipline
+
+`backlog.json` is ~140 KB (~35k tokens) read whole, but the bulk is `evidence`
+arrays on terminal rows (`done`/`dropped`/`closed`) — data Phase 2 never reads
+back. Mirror the dispatcher's active-only read discipline (`dispatcher-prompt.md`
+Phase 1): **load a projection that keeps full content for non-terminal rows
+(`open`/`ready`/`deferred`) and elides only the `evidence` of terminal rows.**
+
+```bash
+# In-context analysis copy — full open/ready/deferred rows; terminal rows keep
+# every field EXCEPT evidence (which is replaced by a stub). The jq is an
+# additive override (`. + {evidence: …}`), NOT a `{field: …}` whitelist, so it
+# preserves *all* non-evidence fields — including ones absent from the list
+# below, e.g. the `resolution` field carried only by `closed` rows. The field
+# names enumerated here are illustrative (the rendered + dedup columns); do NOT
+# rewrite this into a `{id, title, …}` projection, or you would silently drop
+# any unlisted field: id,title,vector,score,status,updated_at,plan,
+# sources,files,created_at,confidence (+ resolution and any future field).
+jq '{version, items: [.items[]
+      | if (.status=="open" or .status=="ready" or .status=="deferred") then .
+        else (. + {evidence: ["<archived — read full row from backlog.json on demand>"]}) end]}' \
+  .research/backlog.json > /tmp/backlog.view.json   # ~96 KB vs ~146 KB
+```
+
+This is **read-only for analysis** — it is provably sufficient for every Phase 2
+operation, including **both** byte-identity-gated renders: the `backlog.md`
+render (G10) uses only the 7 sort/display fields, and the `IDEAS_TRIAGE.md`
+render (G14, filtered to `vector == "triage"`) uses only Score/Title/Source/
+Updated/Status — `Source` maps to the preserved `sources` field, with no
+`evidence` column. Signal dedup uses `id`/`title`/`sources`, and decay + the
+resolution check touch only non-terminal rows (whose `evidence` is preserved in
+full). Terminal-row evidence is needed only on the rare done→reopen path — read
+that one row from the canonical file on demand. (Note: many triage rows are
+terminal `done`, exactly the rows whose `evidence` this projection elides — so
+if you ever add an `evidence`/elided-field column to *either* render, this
+sufficiency argument no longer holds and G10/G14 would break; widen the
+projection first.)
+
+**Never write the projection back.** Apply every mutation (append/update/decay/
+cap, status flips) as a targeted `jq`/`Edit` op against the canonical
+`.research/backlog.json` so terminal-row evidence is never lost. G10 still diffs
+`backlog.md` byte-for-byte against a fresh regeneration, so a dropped render
+field surfaces immediately.
 
 ## Outputs you write
 

@@ -2,8 +2,32 @@
 //!
 //! Covers: integration statistics, calendar connections + sync + events,
 //! accounting exports + settings, e-signature workflows, and video meetings.
+//!
+//! UNMOUNTED (PAP-122): `router()` is not merged into the integrations
+//! router — `calendar_connections`, `calendar_events`, `accounting_exports`,
+//! `accounting_export_settings`, `esignature_workflows`,
+//! `esignature_recipients`, `video_conference_connections`, and
+//! `video_meetings` exist in no migration, so every handler fails at runtime
+//! with undefined-table errors. Remount after the Epic-61 migrations land
+//! (incl. FORCE-RLS policies per migration 00179 conventions).
+//!
+//! # RLS routing (PAP-105 / PAP-80)
+//!
+//! `IntegrationRepository` holds no pool: every handler acquires an
+//! [`RlsConnection`] (JWT + org-membership validation + org/user GUCs bound to
+//! the pooled connection) and passes `&mut **rls.conn()` to the repository.
+//! Of the tables this surface touches only `webhook_subscriptions` (read by
+//! `get_integration_statistics`) is FORCE-RLS today, but routing everything
+//! through the context-set connection means no query can run un-scoped. The
+//! `{org_id}` path segment is still membership-checked via `verify_org_access`
+//! for the non-FORCE tables; the stats handler additionally requires the path
+//! org to equal `rls.tenant_id()` so the SQL filter and the RLS policy can
+//! never disagree. Every path calls `rls.release().await` before returning,
+//! and slow external I/O (calendar provider fetch, webhook test POST) runs
+//! AFTER release so pool connections are not pinned on network calls.
 
-use api_core::{AuthUser, TenantExtractor};
+use api_core::extractors::RlsConnection;
+use api_core::TenantExtractor;
 use axum::{
     body::Body,
     extract::{Path, Query, State},
@@ -270,26 +294,40 @@ pub fn router() -> Router<AppState> {
 )]
 pub async fn get_integration_stats(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
 ) -> Result<Json<IntegrationStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify user belongs to this organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // PAP-105 (PAP-80): the webhook sub-queries hit FORCE-RLS
+    // `webhook_subscriptions`, so the stats org must be the org the RLS
+    // context is bound to — a mismatching path org would silently read as
+    // zero. Membership in the tenant is validated by the extractor.
+    if path.org_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You are not a member of this organization",
+            )),
+        ));
+    }
 
-    let stats = state
+    let result = state
         .integration_repo
-        .get_integration_statistics(path.org_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get integration statistics");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get integration statistics",
-                )),
-            )
-        })?;
+        .get_integration_statistics(rls.conn(), path.org_id)
+        .await;
+    rls.release().await;
+
+    let stats = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get integration statistics");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get integration statistics",
+            )),
+        )
+    })?;
 
     Ok(Json(stats))
 }
@@ -312,27 +350,32 @@ pub async fn get_integration_stats(
 )]
 pub async fn list_calendar_connections(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Query(query): Query<CalendarQuery>,
 ) -> Result<Json<Vec<CalendarConnection>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify user belongs to this organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let connections = state
+    let result = state
         .integration_repo
-        .list_calendar_connections(path.org_id, query.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list calendar connections");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to list calendar connections",
-                )),
-            )
-        })?;
+        .list_calendar_connections(&mut **rls.conn(), path.org_id, query.user_id)
+        .await;
+    rls.release().await;
+
+    let connections = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list calendar connections");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to list calendar connections",
+            )),
+        )
+    })?;
 
     Ok(Json(connections))
 }
@@ -353,27 +396,33 @@ pub async fn list_calendar_connections(
 )]
 pub async fn create_calendar_connection(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Json(data): Json<CreateCalendarConnection>,
 ) -> Result<(StatusCode, Json<CalendarConnection>), (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
     // Verify user has access to the organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, user_id, path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let connection = state
+    let result = state
         .integration_repo
-        .create_calendar_connection(path.org_id, auth.user_id, data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create calendar connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create calendar connection",
-                )),
-            )
-        })?;
+        .create_calendar_connection(&mut **rls.conn(), path.org_id, user_id, data)
+        .await;
+    rls.release().await;
+
+    let connection = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to create calendar connection");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to create calendar connection",
+            )),
+        )
+    })?;
 
     Ok((StatusCode::CREATED, Json(connection)))
 }
@@ -395,29 +444,31 @@ pub async fn create_calendar_connection(
 )]
 pub async fn get_calendar_connection(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<CalendarConnection>, (StatusCode, Json<ErrorResponse>)> {
     // First get the connection to check organization access
-    let connection = state
+    let result = state
         .integration_repo
-        .get_calendar_connection(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get calendar connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get calendar connection",
-                )),
-            )
-        })?;
+        .get_calendar_connection(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let connection = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get calendar connection");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get calendar connection",
+            )),
+        )
+    })?;
 
     match connection {
         Some(c) => {
             // Verify user has access to the organization that owns this resource
-            verify_org_access(&state, auth.user_id, c.organization_id).await?;
+            verify_org_access(&state, rls.user_id(), c.organization_id).await?;
             Ok(Json(c))
         }
         None => Err((
@@ -448,49 +499,59 @@ pub async fn get_calendar_connection(
 )]
 pub async fn update_calendar_connection(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
     Json(data): Json<UpdateCalendarConnection>,
 ) -> Result<Json<CalendarConnection>, (StatusCode, Json<ErrorResponse>)> {
     // First get the connection to check organization access
-    let existing = state
+    let existing = match state
         .integration_repo
-        .get_calendar_connection(path.id)
+        .get_calendar_connection(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get calendar connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(c)) => c,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new(
                     "NOT_FOUND",
                     "Calendar connection not found",
                 )),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            tracing::error!(error = %e, "Failed to get calendar connection");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            ));
+        }
+    };
 
     // Verify user has access to the organization that owns this resource
-    verify_org_access(&state, auth.user_id, existing.organization_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), existing.organization_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let connection = state
+    let result = state
         .integration_repo
-        .update_calendar_connection(path.id, data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to update calendar connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to update calendar connection",
-                )),
-            )
-        })?;
+        .update_calendar_connection(&mut **rls.conn(), path.id, data)
+        .await;
+    rls.release().await;
+
+    let connection = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to update calendar connection");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to update calendar connection",
+            )),
+        )
+    })?;
 
     Ok(Json(connection))
 }
@@ -512,48 +573,58 @@ pub async fn update_calendar_connection(
 )]
 pub async fn delete_calendar_connection(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     // First get the connection to check organization access
-    let existing = state
+    let existing = match state
         .integration_repo
-        .get_calendar_connection(path.id)
+        .get_calendar_connection(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get calendar connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(c)) => c,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new(
                     "NOT_FOUND",
                     "Calendar connection not found",
                 )),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            tracing::error!(error = %e, "Failed to get calendar connection");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            ));
+        }
+    };
 
     // Verify user has access to the organization that owns this resource
-    verify_org_access(&state, auth.user_id, existing.organization_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), existing.organization_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let deleted = state
+    let result = state
         .integration_repo
-        .delete_calendar_connection(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to delete calendar connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to delete calendar connection",
-                )),
-            )
-        })?;
+        .delete_calendar_connection(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let deleted = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to delete calendar connection");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to delete calendar connection",
+            )),
+        )
+    })?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -586,15 +657,23 @@ pub async fn delete_calendar_connection(
 )]
 pub async fn sync_calendar(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
     Json(data): Json<SyncCalendarRequest>,
 ) -> Result<Json<CalendarSyncResult>, (StatusCode, Json<ErrorResponse>)> {
     // Get the calendar connection
-    let connection = state
+    let result = state
         .integration_repo
-        .get_calendar_connection(path.id)
-        .await
+        .get_calendar_connection(&mut **rls.conn(), path.id)
+        .await;
+    // PAP-105 (PAP-80): release before the (slow) external calendar fetch so
+    // we don't pin a pool connection on network I/O. The post-fetch writes
+    // below run on the pool — calendar_events / calendar_connections are not
+    // FORCE-RLS, and org scoping was already enforced by the connection
+    // lookup + membership check here.
+    rls.release().await;
+
+    let connection = result
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to get calendar connection");
             (
@@ -616,7 +695,7 @@ pub async fn sync_calendar(
         })?;
 
     // Verify user has access to the organization that owns this connection
-    verify_org_access(&state, auth.user_id, connection.organization_id).await?;
+    verify_org_access(&state, rls.user_id(), connection.organization_id).await?;
 
     // Check if we have valid tokens
     let access_token = match &connection.access_token {
@@ -708,14 +787,19 @@ pub async fn sync_calendar(
     let sync_result = sync_result.map_err(|e| {
         tracing::error!(error = %e, provider = %connection.provider, "Calendar sync failed");
 
-        // Update sync status to error in the background (fire and forget)
+        // Update sync status to error in the background (fire and forget).
+        // PAP-105 (PAP-80): non-request-context background write to
+        // calendar_connections (not FORCE-RLS); org scoping was already
+        // enforced by the handler's connection lookup above, so the cloned
+        // pool is the executor here.
         let repo = state.integration_repo.clone();
+        let db = state.db.clone();
         let connection_id = path.id;
         let error_msg = e.to_string();
         tokio::spawn(
             async move {
                 let _ = repo
-                    .update_sync_status(connection_id, "error", Some(&error_msg))
+                    .update_sync_status(&db, connection_id, "error", Some(&error_msg))
                     .await;
             }
             .instrument(tracing::info_span!(
@@ -732,6 +816,26 @@ pub async fn sync_calendar(
             )),
         )
     })?;
+
+    // PAP-150: acquire one short-lived org-context connection for the
+    // post-fetch writes below. calendar_events / calendar_connections are not
+    // FORCE-RLS and org scoping was already enforced by the connection lookup
+    // + membership check above, but the RLS gate forbids handler-side raw
+    // `state.db`. The request-scoped RlsConnection was released before the
+    // provider round-trip, so take a fresh guard scoped to the connection's org.
+    let mut sync_guard = db::RlsPool::new(state.db.clone())
+        .acquire_with_rls(connection.organization_id, rls.user_id(), false)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to acquire db connection for calendar sync writes");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Calendar sync failed. Please try again later.",
+                )),
+            )
+        })?;
 
     // Process synced events and store them in the database
     let mut events_created = 0;
@@ -754,10 +858,14 @@ pub async fn sync_calendar(
             attendees: Some(serde_json::to_value(&event.attendees).unwrap_or_default()),
         };
 
-        // Use upsert to handle duplicates - if event with same source_id exists, skip
+        // Use upsert to handle duplicates - if event with same source_id exists, skip.
+        // PAP-105 (PAP-80) / PAP-150: post-fetch write to calendar_events (not
+        // FORCE-RLS); the request RLS connection was released before the
+        // provider round-trip, so this runs on a fresh org-context guard
+        // (org scoping was enforced by the lookup + membership check above).
         match state
             .integration_repo
-            .upsert_calendar_event(create_data)
+            .upsert_calendar_event(&mut **sync_guard.conn(), create_data)
             .await
         {
             Ok(created) => {
@@ -776,11 +884,12 @@ pub async fn sync_calendar(
     // This is a simplified implementation - in production you'd match by external_event_id
     let events_updated = sync_result.events_updated.len() as i32;
 
-    // Update sync status
+    // Update sync status (org-context write to non-FORCE calendar_connections, see above)
     let _ = state
         .integration_repo
-        .update_sync_status(path.id, "active", None)
+        .update_sync_status(&mut **sync_guard.conn(), path.id, "active", None)
         .await;
+    sync_guard.release().await;
 
     Ok(Json(CalendarSyncResult {
         events_created,
@@ -805,23 +914,26 @@ pub async fn sync_calendar(
 )]
 pub async fn list_calendar_events(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
     Query(query): Query<CalendarEventsQuery>,
 ) -> Result<Json<Vec<CalendarEvent>>, (StatusCode, Json<ErrorResponse>)> {
-    let events = state
+    let result = state
         .integration_repo
-        .list_calendar_events(path.id, query.from, query.to)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list calendar events");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to list calendar events",
-                )),
-            )
-        })?;
+        .list_calendar_events(&mut **rls.conn(), path.id, query.from, query.to)
+        .await;
+    rls.release().await;
+
+    let events = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list calendar events");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to list calendar events",
+            )),
+        )
+    })?;
 
     Ok(Json(events))
 }
@@ -842,23 +954,26 @@ pub async fn list_calendar_events(
 )]
 pub async fn create_calendar_event(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(_path): Path<ResourceIdPath>,
     Json(data): Json<CreateCalendarEvent>,
 ) -> Result<(StatusCode, Json<CalendarEvent>), (StatusCode, Json<ErrorResponse>)> {
-    let event = state
+    let result = state
         .integration_repo
-        .create_calendar_event(data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create calendar event");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create calendar event",
-                )),
-            )
-        })?;
+        .create_calendar_event(&mut **rls.conn(), data)
+        .await;
+    rls.release().await;
+
+    let event = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to create calendar event");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to create calendar event",
+            )),
+        )
+    })?;
 
     Ok((StatusCode::CREATED, Json(event)))
 }
@@ -881,27 +996,37 @@ pub async fn create_calendar_event(
 )]
 pub async fn list_accounting_exports(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Query(query): Query<AccountingExportQuery>,
 ) -> Result<Json<Vec<AccountingExport>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify user belongs to this organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let exports = state
+    let result = state
         .integration_repo
-        .list_accounting_exports(path.org_id, query.system_type.as_deref(), query.limit)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list accounting exports");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to list accounting exports",
-                )),
-            )
-        })?;
+        .list_accounting_exports(
+            &mut **rls.conn(),
+            path.org_id,
+            query.system_type.as_deref(),
+            query.limit,
+        )
+        .await;
+    rls.release().await;
+
+    let exports = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list accounting exports");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to list accounting exports",
+            )),
+        )
+    })?;
 
     Ok(Json(exports))
 }
@@ -922,27 +1047,33 @@ pub async fn list_accounting_exports(
 )]
 pub async fn create_accounting_export(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Json(data): Json<CreateAccountingExport>,
 ) -> Result<(StatusCode, Json<AccountingExport>), (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
     // Verify user has access to the organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, user_id, path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let export = state
+    let result = state
         .integration_repo
-        .create_accounting_export(path.org_id, auth.user_id, data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create accounting export");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create accounting export",
-                )),
-            )
-        })?;
+        .create_accounting_export(&mut **rls.conn(), path.org_id, user_id, data)
+        .await;
+    rls.release().await;
+
+    let export = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to create accounting export");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to create accounting export",
+            )),
+        )
+    })?;
 
     Ok((StatusCode::CREATED, Json(export)))
 }
@@ -964,28 +1095,30 @@ pub async fn create_accounting_export(
 )]
 pub async fn get_accounting_export(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<AccountingExport>, (StatusCode, Json<ErrorResponse>)> {
-    let export = state
+    let result = state
         .integration_repo
-        .get_accounting_export(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get accounting export");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get accounting export",
-                )),
-            )
-        })?;
+        .get_accounting_export(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let export = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get accounting export");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get accounting export",
+            )),
+        )
+    })?;
 
     match export {
         Some(e) => {
             // Verify user has access to the organization that owns this resource
-            verify_org_access(&state, auth.user_id, e.organization_id).await?;
+            verify_org_access(&state, rls.user_id(), e.organization_id).await?;
             Ok(Json(e))
         }
         None => Err((
@@ -1013,24 +1146,26 @@ pub async fn get_accounting_export(
 )]
 pub async fn download_accounting_export(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
-    // Get the export record
-    let export = state
+    // Get the export record (the only DB read; release before file generation)
+    let result = state
         .integration_repo
-        .get_accounting_export(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get accounting export");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get accounting export",
-                )),
-            )
-        })?;
+        .get_accounting_export(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let export = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get accounting export");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get accounting export",
+            )),
+        )
+    })?;
 
     let export = match export {
         Some(e) => e,
@@ -1046,7 +1181,7 @@ pub async fn download_accounting_export(
     };
 
     // Verify user has access to the organization that owns this export
-    verify_org_access(&state, auth.user_id, export.organization_id).await?;
+    verify_org_access(&state, rls.user_id(), export.organization_id).await?;
 
     // Check if export is completed
     if export.status != "completed" {
@@ -1177,22 +1312,25 @@ pub async fn download_accounting_export(
 )]
 pub async fn get_accounting_settings(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<AccountingSystemPath>,
 ) -> Result<Json<AccountingExportSettings>, (StatusCode, Json<ErrorResponse>)> {
-    let settings = state
+    let result = state
         .integration_repo
-        .get_accounting_export_settings(path.org_id, &path.system)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get accounting settings");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get accounting settings",
-                )),
-            )
-        })?;
+        .get_accounting_export_settings(rls.conn(), path.org_id, &path.system)
+        .await;
+    rls.release().await;
+
+    let settings = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get accounting settings");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get accounting settings",
+            )),
+        )
+    })?;
 
     Ok(Json(settings))
 }
@@ -1212,23 +1350,26 @@ pub async fn get_accounting_settings(
 )]
 pub async fn update_accounting_settings(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<AccountingSystemPath>,
     Json(data): Json<UpdateAccountingExportSettings>,
 ) -> Result<Json<AccountingExportSettings>, (StatusCode, Json<ErrorResponse>)> {
-    let settings = state
+    let result = state
         .integration_repo
-        .update_accounting_export_settings(path.org_id, &path.system, data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to update accounting settings");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to update accounting settings",
-                )),
-            )
-        })?;
+        .update_accounting_export_settings(&mut **rls.conn(), path.org_id, &path.system, data)
+        .await;
+    rls.release().await;
+
+    let settings = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to update accounting settings");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to update accounting settings",
+            )),
+        )
+    })?;
 
     Ok(Json(settings))
 }
@@ -1251,27 +1392,37 @@ pub async fn update_accounting_settings(
 )]
 pub async fn list_esignature_workflows(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Query(query): Query<ESignatureQuery>,
 ) -> Result<Json<Vec<ESignatureWorkflow>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify user belongs to this organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let workflows = state
+    let result = state
         .integration_repo
-        .list_esignature_workflows(path.org_id, query.status.as_deref(), query.limit)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list e-signature workflows");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to list e-signature workflows",
-                )),
-            )
-        })?;
+        .list_esignature_workflows(
+            &mut **rls.conn(),
+            path.org_id,
+            query.status.as_deref(),
+            query.limit,
+        )
+        .await;
+    rls.release().await;
+
+    let workflows = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list e-signature workflows");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to list e-signature workflows",
+            )),
+        )
+    })?;
 
     Ok(Json(workflows))
 }
@@ -1292,28 +1443,34 @@ pub async fn list_esignature_workflows(
 )]
 pub async fn create_esignature_workflow(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Json(data): Json<CreateESignatureWorkflow>,
 ) -> Result<(StatusCode, Json<ESignatureWorkflowWithRecipients>), (StatusCode, Json<ErrorResponse>)>
 {
+    let user_id = rls.user_id();
     // Verify user has access to the organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, user_id, path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let workflow = state
+    let result = state
         .integration_repo
-        .create_esignature_workflow(path.org_id, auth.user_id, data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create e-signature workflow");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create e-signature workflow",
-                )),
-            )
-        })?;
+        .create_esignature_workflow(&mut **rls.conn(), path.org_id, user_id, data)
+        .await;
+    rls.release().await;
+
+    let workflow = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to create e-signature workflow");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to create e-signature workflow",
+            )),
+        )
+    })?;
 
     // Wrap workflow with empty recipients list (no recipients added yet)
     let result = ESignatureWorkflowWithRecipients {
@@ -1341,28 +1498,30 @@ pub async fn create_esignature_workflow(
 )]
 pub async fn get_esignature_workflow(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<ESignatureWorkflowWithRecipients>, (StatusCode, Json<ErrorResponse>)> {
-    let workflow = state
+    let result = state
         .integration_repo
-        .get_esignature_workflow_with_recipients(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get e-signature workflow");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get e-signature workflow",
-                )),
-            )
-        })?;
+        .get_esignature_workflow_with_recipients(rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let workflow = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get e-signature workflow");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get e-signature workflow",
+            )),
+        )
+    })?;
 
     match workflow {
         Some(w) => {
             // Verify user has access to the organization that owns this resource
-            verify_org_access(&state, auth.user_id, w.workflow.organization_id).await?;
+            verify_org_access(&state, rls.user_id(), w.workflow.organization_id).await?;
             Ok(Json(w))
         }
         None => Err((
@@ -1390,22 +1549,25 @@ pub async fn get_esignature_workflow(
 )]
 pub async fn send_esignature_workflow(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<ESignatureWorkflow>, (StatusCode, Json<ErrorResponse>)> {
-    let workflow = state
+    let result = state
         .integration_repo
-        .update_esignature_workflow_status(path.id, "sent")
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to send e-signature workflow");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to send e-signature workflow",
-                )),
-            )
-        })?;
+        .update_esignature_workflow_status(&mut **rls.conn(), path.id, "sent")
+        .await;
+    rls.release().await;
+
+    let workflow = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to send e-signature workflow");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to send e-signature workflow",
+            )),
+        )
+    })?;
 
     Ok(Json(workflow))
 }
@@ -1425,22 +1587,25 @@ pub async fn send_esignature_workflow(
 )]
 pub async fn void_esignature_workflow(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<ESignatureWorkflow>, (StatusCode, Json<ErrorResponse>)> {
-    let workflow = state
+    let result = state
         .integration_repo
-        .update_esignature_workflow_status(path.id, "voided")
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to void e-signature workflow");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to void e-signature workflow",
-                )),
-            )
-        })?;
+        .update_esignature_workflow_status(&mut **rls.conn(), path.id, "voided")
+        .await;
+    rls.release().await;
+
+    let workflow = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to void e-signature workflow");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to void e-signature workflow",
+            )),
+        )
+    })?;
 
     Ok(Json(workflow))
 }
@@ -1623,27 +1788,32 @@ pub async fn send_esignature_reminder(
 )]
 pub async fn list_video_connections(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Query(query): Query<CalendarQuery>,
 ) -> Result<Json<Vec<VideoConferenceConnection>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify user belongs to this organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let connections = state
+    let result = state
         .integration_repo
-        .list_video_conference_connections(path.org_id, query.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list video connections");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to list video connections",
-                )),
-            )
-        })?;
+        .list_video_conference_connections(&mut **rls.conn(), path.org_id, query.user_id)
+        .await;
+    rls.release().await;
+
+    let connections = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list video connections");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to list video connections",
+            )),
+        )
+    })?;
 
     Ok(Json(connections))
 }
@@ -1664,27 +1834,33 @@ pub async fn list_video_connections(
 )]
 pub async fn create_video_connection(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Json(data): Json<CreateVideoConferenceConnection>,
 ) -> Result<(StatusCode, Json<VideoConferenceConnection>), (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
     // Verify user has access to the organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, user_id, path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let connection = state
+    let result = state
         .integration_repo
-        .create_video_conference_connection(path.org_id, auth.user_id, data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create video connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create video connection",
-                )),
-            )
-        })?;
+        .create_video_conference_connection(&mut **rls.conn(), path.org_id, user_id, data)
+        .await;
+    rls.release().await;
+
+    let connection = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to create video connection");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to create video connection",
+            )),
+        )
+    })?;
 
     Ok((StatusCode::CREATED, Json(connection)))
 }
@@ -1704,22 +1880,25 @@ pub async fn create_video_connection(
 )]
 pub async fn delete_video_connection(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let deleted = state
+    let result = state
         .integration_repo
-        .delete_video_conference_connection(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to delete video connection");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to delete video connection",
-                )),
-            )
-        })?;
+        .delete_video_conference_connection(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let deleted = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to delete video connection");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to delete video connection",
+            )),
+        )
+    })?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -1750,32 +1929,38 @@ pub async fn delete_video_connection(
 )]
 pub async fn list_video_meetings(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Query(query): Query<VideoMeetingQuery>,
 ) -> Result<Json<Vec<VideoMeeting>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify user belongs to this organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let meetings = state
+    let result = state
         .integration_repo
         .list_video_meetings(
+            &mut **rls.conn(),
             path.org_id,
             query.from,
             query.status.as_deref(),
             query.limit,
         )
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list video meetings");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to list video meetings",
-                )),
-            )
-        })?;
+        .await;
+    rls.release().await;
+
+    let meetings = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list video meetings");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to list video meetings",
+            )),
+        )
+    })?;
 
     Ok(Json(meetings))
 }
@@ -1796,27 +1981,33 @@ pub async fn list_video_meetings(
 )]
 pub async fn create_video_meeting(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<OrgIdPath>,
     Json(data): Json<CreateVideoMeeting>,
 ) -> Result<(StatusCode, Json<VideoMeeting>), (StatusCode, Json<ErrorResponse>)> {
+    let user_id = rls.user_id();
     // Verify user has access to the organization
-    verify_org_access(&state, auth.user_id, path.org_id).await?;
+    if let Err(e) = verify_org_access(&state, user_id, path.org_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let meeting = state
+    let result = state
         .integration_repo
-        .create_video_meeting(path.org_id, auth.user_id, data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create video meeting");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to create video meeting",
-                )),
-            )
-        })?;
+        .create_video_meeting(&mut **rls.conn(), path.org_id, user_id, data)
+        .await;
+    rls.release().await;
+
+    let meeting = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to create video meeting");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to create video meeting",
+            )),
+        )
+    })?;
 
     Ok((StatusCode::CREATED, Json(meeting)))
 }
@@ -1838,28 +2029,30 @@ pub async fn create_video_meeting(
 )]
 pub async fn get_video_meeting(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<VideoMeeting>, (StatusCode, Json<ErrorResponse>)> {
-    let meeting = state
+    let result = state
         .integration_repo
-        .get_video_meeting(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get video meeting");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to get video meeting",
-                )),
-            )
-        })?;
+        .get_video_meeting(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let meeting = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get video meeting");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to get video meeting",
+            )),
+        )
+    })?;
 
     match meeting {
         Some(m) => {
             // Verify user has access to the organization that owns this resource
-            verify_org_access(&state, auth.user_id, m.organization_id).await?;
+            verify_org_access(&state, rls.user_id(), m.organization_id).await?;
             Ok(Json(m))
         }
         None => Err((
@@ -1887,46 +2080,56 @@ pub async fn get_video_meeting(
 )]
 pub async fn update_video_meeting(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
     Json(data): Json<UpdateVideoMeeting>,
 ) -> Result<Json<VideoMeeting>, (StatusCode, Json<ErrorResponse>)> {
     // First get the meeting to check organization access
-    let existing = state
+    let existing = match state
         .integration_repo
-        .get_video_meeting(path.id)
+        .get_video_meeting(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get video meeting");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(m)) => m,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Video meeting not found")),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            tracing::error!(error = %e, "Failed to get video meeting");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            ));
+        }
+    };
 
     // Verify user has access to the organization that owns this resource
-    verify_org_access(&state, auth.user_id, existing.organization_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), existing.organization_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let meeting = state
+    let result = state
         .integration_repo
-        .update_video_meeting(path.id, data)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to update video meeting");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to update video meeting",
-                )),
-            )
-        })?;
+        .update_video_meeting(&mut **rls.conn(), path.id, data)
+        .await;
+    rls.release().await;
+
+    let meeting = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to update video meeting");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to update video meeting",
+            )),
+        )
+    })?;
 
     Ok(Json(meeting))
 }
@@ -1948,45 +2151,55 @@ pub async fn update_video_meeting(
 )]
 pub async fn delete_video_meeting(
     State(state): State<AppState>,
-    auth: AuthUser,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     // First get the meeting to check organization access
-    let existing = state
+    let existing = match state
         .integration_repo
-        .get_video_meeting(path.id)
+        .get_video_meeting(&mut **rls.conn(), path.id)
         .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get video meeting");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(m)) => m,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Video meeting not found")),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            tracing::error!(error = %e, "Failed to get video meeting");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            ));
+        }
+    };
 
     // Verify user has access to the organization that owns this resource
-    verify_org_access(&state, auth.user_id, existing.organization_id).await?;
+    if let Err(e) = verify_org_access(&state, rls.user_id(), existing.organization_id).await {
+        rls.release().await;
+        return Err(e);
+    }
 
-    let deleted = state
+    let result = state
         .integration_repo
-        .delete_video_meeting(path.id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to delete video meeting");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to delete video meeting",
-                )),
-            )
-        })?;
+        .delete_video_meeting(&mut **rls.conn(), path.id)
+        .await;
+    rls.release().await;
+
+    let deleted = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to delete video meeting");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to delete video meeting",
+            )),
+        )
+    })?;
 
     if deleted {
         Ok(StatusCode::NO_CONTENT)
@@ -2013,28 +2226,32 @@ pub async fn delete_video_meeting(
 )]
 pub async fn start_video_meeting(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(path): Path<ResourceIdPath>,
 ) -> Result<Json<VideoMeeting>, (StatusCode, Json<ErrorResponse>)> {
-    let meeting = state
+    let result = state
         .integration_repo
         .update_video_meeting(
+            &mut **rls.conn(),
             path.id,
             UpdateVideoMeeting {
                 status: Some("started".to_string()),
                 ..Default::default()
             },
         )
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to start video meeting");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to start video meeting",
-                )),
-            )
-        })?;
+        .await;
+    rls.release().await;
+
+    let meeting = result.map_err(|e| {
+        tracing::error!(error = %e, "Failed to start video meeting");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to start video meeting",
+            )),
+        )
+    })?;
 
     Ok(Json(meeting))
 }

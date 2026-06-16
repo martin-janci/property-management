@@ -1,0 +1,182 @@
+{
+  "date": "2026-06-13",
+  "signals": [
+    {
+      "id": "stalled-review-pr-988",
+      "type": "stalled-review",
+      "source": "PR #988",
+      "score_delta": 1,
+      "evidence": "PR #988 open 10 days (created 2026-06-02, last update 2026-06-08); draft=false; reviewDecision absent. Epic: reusable Playwright E2E framework + sitemap FlowRunner across web apps; 86 files +5388 -1121.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "untriaged-issue-1331",
+      "type": "untriaged-issue",
+      "source": "issue #1331",
+      "score_delta": 1,
+      "evidence": "Issue #1331 (OPEN, no labels): Backend `test` job red/hanging on dev base (#1299, 4d41864) — 41-min hang then failure across every open backend PR; runner /tmp 100% suspected. Filed 2026-06-12T14:24Z.",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "dep-update-noise-pr-1333",
+      "type": "dep-update-noise",
+      "source": "PR #1333",
+      "score_delta": 0,
+      "evidence": "Dependabot npm-minor-patch group (19 updates) opened 2026-06-13T01:56Z. Log only.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-12",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/forms.rs touched in 2 unrelated fix PRs (#1334 PAP-76 RLS-context, #1337 PAP-159 enum decode) within ~24h. First-time hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-12",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs touched in 2 PRs (#1329 X-Tenant-ID follow-up, #1335 PAP-79 seed membership). First-time hotspot; instability around PAP-151 re-land surface.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-12",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/tests/form_rls_repo_tests.rs touched in 2 PRs (#1334 PAP-76 RLS, #1337 PAP-159 enum decode). First-time hotspot; cross-PR coupling on form repo path.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 brief",
+      "observed": "# 2026-06-13",
+      "expected": "# 2026-06-13"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursor compare",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay",
+      "observed": "cap=true; triage-issue-779 decayed 1->0 dropped",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "vacuous: 0 new plans",
+      "observed": "0 new plans",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "vacuous: 0 new plans",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief Phases-failed parse",
+      "observed": "none reported",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan-slug continuity",
+      "observed": "all prior slugs present",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count monotone",
+      "observed": "archive count unchanged",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix cap+idempotency",
+      "observed": "0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts + cursors",
+      "observed": "Phase 1.6 deferred (no-op); coverage_cursor=10 in [0,13)",
+      "expected": "ge"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram secret scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

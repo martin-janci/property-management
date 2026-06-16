@@ -21,6 +21,7 @@ import { LoginPage } from './pages/LoginPage';
 import MembershipsPage from './pages/MembershipsPage';
 import MobileConfigPage from './pages/MobileConfigPage';
 import OAuthClientsPage from './pages/OAuthClientsPage';
+import OAuthConsentPage from './pages/OAuthConsentPage';
 import OnboardingToursPage from './pages/OnboardingToursPage';
 import PlatformHealthPage from './pages/PlatformHealthPage';
 import PlatformPage from './pages/platform';
@@ -56,6 +57,10 @@ export function App() {
             <ImpersonationWrapper />
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              {/* OAuth 2.0 consent screen — standalone (no admin chrome). Auth
+                  is enforced inside the page (Bearer token required), but no
+                  capability gate: it is a per-user authorization decision. */}
+              <Route path="/oauth/authorize" element={<OAuthConsentPage />} />
               <Route
                 element={
                   <ProtectedRoute>

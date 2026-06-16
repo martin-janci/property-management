@@ -7,6 +7,8 @@
  * - Story 40.3: Digest preferences
  * - Story 40.4: Smart notification grouping
  *
+ * Auth is injected via the global token provider — no props required.
+ *
  * @module features/settings/notifications/advanced
  */
 
@@ -30,31 +32,23 @@ import {
   QuietHoursConfig,
 } from './components';
 
-interface AdvancedNotificationSettingsPageProps {
-  baseUrl: string;
-  accessToken: string;
-}
-
 type ActiveTab = 'categories' | 'schedule' | 'grouping';
 
-export function AdvancedNotificationSettingsPage({
-  baseUrl,
-  accessToken,
-}: AdvancedNotificationSettingsPageProps) {
+export function AdvancedNotificationSettingsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('categories');
   const [updateError, setUpdateError] = useState<string | null>(null);
 
   // Data hooks
-  const categoryQuery = useCategoryPreferences({ baseUrl, accessToken });
-  const quietHoursQuery = useQuietHours({ baseUrl, accessToken });
-  const digestQuery = useDigestPreferences({ baseUrl, accessToken });
-  const groupingQuery = useGroupingPreferences({ baseUrl, accessToken });
+  const categoryQuery = useCategoryPreferences();
+  const quietHoursQuery = useQuietHours();
+  const digestQuery = useDigestPreferences();
+  const groupingQuery = useGroupingPreferences();
 
   // Mutation hooks
-  const updateCategory = useUpdateCategoryPreference({ baseUrl, accessToken });
-  const updateQuietHours = useUpdateQuietHours({ baseUrl, accessToken });
-  const updateDigest = useUpdateDigestPreferences({ baseUrl, accessToken });
-  const updateGrouping = useUpdateGroupingPreferences({ baseUrl, accessToken });
+  const updateCategory = useUpdateCategoryPreference();
+  const updateQuietHours = useUpdateQuietHours();
+  const updateDigest = useUpdateDigestPreferences();
+  const updateGrouping = useUpdateGroupingPreferences();
 
   const isLoading =
     categoryQuery.isLoading ||

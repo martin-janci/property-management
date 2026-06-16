@@ -1,12 +1,36 @@
 # Story 79-2 Promotion Plan: Authentication Flow → partial → done
 
 _Generated: 2026-05-28 | Owner: pm-scrum-master_
+_Promoted: 2026-06-08 | task: verify-authentication-flow-promote (pm-frontend)_
+
+## Status: DONE ✅ (promoted 2026-06-08)
+
+Story 79-2 was promoted **partial → done** on 2026-06-08 by the
+`verify-authentication-flow-promote` task. The login / refresh / logout /
+route-guard flow was reviewed against the ACs below; every scenario is now
+covered by ppt-web vitest:
+
+- `gap-79-2-auth-callback-e2e` was **already satisfied on `dev`** by
+  `frontend/apps/ppt-web/src/pages/AuthCallbackPage.test.tsx` (7 scenarios:
+  happy-path token storage → /dashboard, return-url redirect, refresh
+  rotation, state-mismatch, missing params, provider error, exchange-failure
+  rollback).
+- The two remaining ppt-web vitest gaps were closed by
+  `frontend/apps/ppt-web/src/contexts/AuthContext.login-refresh.test.tsx`:
+  (1) direct email/password `login()` persists tokens + unlocks a guarded
+  route; (2) a revoked refresh token produces a **clean logout, not an error
+  loop** (AC scenario 4), plus concurrent-refresh coalescing.
+- Cookie `Path=/api` (AC scenario 5) is a backend (Rust) assertion already
+  covered by PR #642's inline tests — out of scope for ppt-web vitest.
+
+`coverage.json` entry `79-2-authentication-flow` is now `status: done`.
 
 ## Summary
 
-Story 79-2 (Authentication Flow Implementation) is currently **partial**. PR #642 resolved the
-last security blocker (cookie Path regression, issue #617). The only remaining gate before
-promotion to **done** is the `gap-79-2-auth-callback-e2e` verification task.
+Story 79-2 (Authentication Flow Implementation) was **partial**. PR #642 resolved the
+last security blocker (cookie Path regression, issue #617). The remaining gate before
+promotion to **done** was the `gap-79-2-auth-callback-e2e` verification task — now met
+(see Status above).
 
 ---
 
@@ -56,10 +80,10 @@ An end-to-end integration test covering the ppt-web OAuth callback flow:
 
 Story 79-2 may be promoted **partial → done** when all of the following are true:
 
-- [ ] `gap-79-2-auth-callback-e2e` test suite is merged to `dev`.
-- [ ] All 4+ test scenarios above pass in CI (Vitest / Playwright, whichever applies).
-- [ ] No new open security issues tagged `auth` or `cookie` block the story.
-- [ ] `coverage.json` entry for `79-2-authentication-flow` is updated to `status: done`.
+- [x] `gap-79-2-auth-callback-e2e` test suite is merged to `dev` (AuthCallbackPage.test.tsx).
+- [x] All 4+ test scenarios above pass in CI (Vitest — 22/22 affected auth tests green).
+- [x] No new open security issues tagged `auth` or `cookie` block the story (#617 closed by #642).
+- [x] `coverage.json` entry for `79-2-authentication-flow` is updated to `status: done`.
 
 ### Timeline
 
