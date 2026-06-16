@@ -692,10 +692,11 @@
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-16",
-      "depends_on": []
+      "depends_on": [],
+      "dev_reconciled": "fixed-by-PR#1435-commit-5cedea3 #1437-closed 2026-06-16T22:45:15Z"
     },
     {
       "id": "pm-devops-dev-push-compile-gate",
