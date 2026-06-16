@@ -56,7 +56,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser};
+use common::{create_authenticated_user, seed_membership, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -75,27 +75,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed org")
-}
-
-/// Insert an `organization_members` row so `verify_org_access` sees the user
-/// as a member of the org. Role is irrelevant for work-order access (only
-/// membership is checked), so any valid role string works.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members
-            (id, organization_id, user_id, role_type, status, created_at)
-        VALUES ($1, $2, $3, $4, 'active', NOW())
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .bind(role)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
@@ -461,8 +440,13 @@ async fn seed_completed_work_order(
 // ---------------------------------------------------------------------------
 
 /// An attacker in Org B requests service history for equipment owned by Org A.
-/// The handler resolves the equipment's org and calls verify_org_access; the
-/// attacker is not an Org A member, so the request is rejected with 403.
+/// BIT-56 moved the org-gate lookup onto the caller's `RlsConnection`. In
+/// PRODUCTION (app role) the tenant-isolation policy hides the foreign-org row,
+/// so the id resolves to empty and the handler returns 404 (no cross-tenant
+/// existence oracle). Under THIS test's `#[sqlx::test]` superuser pool, `FORCE`
+/// RLS does not bind (see module note), so the row is still visible and the
+/// retained `verify_org_access` defense-in-depth gate rejects with 403. The
+/// test therefore asserts 403 — the floor guaranteed even if RLS were disabled.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn equipment_service_history_cross_org_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -499,14 +483,16 @@ async fn equipment_service_history_cross_org_is_rejected(pool: PgPool) {
     assert_eq!(
         response.status,
         StatusCode::FORBIDDEN,
-        "#1372: cross-org equipment service history must be rejected (403), got {} body={}",
+        "BIT-56: cross-org equipment service history rejected by verify_org_access (403) under the superuser test pool; prod returns 404 via RLS-scoped lookup. got {} body={}",
         response.status,
         response.text()
     );
 }
 
 /// An attacker in Org B requests service history for a building owned by Org A.
-/// Same pattern as equipment — 403 before any repo call.
+/// Same pattern as equipment (BIT-56): prod returns 404 via the RLS-scoped
+/// lookup; this superuser test pool bypasses RLS, so `verify_org_access` is the
+/// gate that fires and the assertion is 403.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn building_service_history_cross_org_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -540,7 +526,7 @@ async fn building_service_history_cross_org_is_rejected(pool: PgPool) {
     assert_eq!(
         response.status,
         StatusCode::FORBIDDEN,
-        "#1372: cross-org building service history must be rejected (403), got {} body={}",
+        "BIT-56: cross-org building service history rejected by verify_org_access (403) under the superuser test pool; prod returns 404 via RLS-scoped lookup. got {} body={}",
         response.status,
         response.text()
     );
