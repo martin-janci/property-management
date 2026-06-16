@@ -932,12 +932,39 @@ pub async fn connect_booking(
         }
     }
 
+    // BIT-99: encrypt the Supply-XML basic-auth credentials before storage,
+    // mirroring the mandatory Airbnb token encryption (Issue #765). Booking.com
+    // reuses access_token/refresh_token for (username, password); if
+    // INTEGRATION_ENCRYPTION_KEY is unset we fail closed rather than persisting
+    // plaintext credentials.
+    let crypto = IntegrationCrypto::try_from_env();
+    let stored_username = encrypt_required(crypto.as_ref(), &request.username).map_err(|e| {
+        tracing::error!(error = %e, "Refusing to store Booking.com username without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration credential encryption is not configured",
+            )),
+        )
+    })?;
+    let stored_password = encrypt_required(crypto.as_ref(), &request.password).map_err(|e| {
+        tracing::error!(error = %e, "Refusing to store Booking.com password without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration credential encryption is not configured",
+            )),
+        )
+    })?;
+
     let _connection = rental_repo
         .create_or_update_booking_connection(
             path.org_id,
             &request.hotel_id,
-            &request.username,
-            &request.password,
+            &stored_username,
+            &stored_password,
         )
         .await
         .map_err(|e| {
@@ -1026,8 +1053,17 @@ pub async fn sync_booking(
         )
     })?;
 
-    let username = connection.access_token.clone().unwrap_or_default();
-    let password = connection.refresh_token.clone().unwrap_or_default();
+    // BIT-99: credentials are stored encrypted; decrypt for OTA API use.
+    // decrypt_if_available tolerates legacy plaintext rows (no "enc:" prefix).
+    let crypto = IntegrationCrypto::try_from_env();
+    let username = integrations::decrypt_if_available(
+        crypto.as_ref(),
+        &connection.access_token.clone().unwrap_or_default(),
+    );
+    let password = integrations::decrypt_if_available(
+        crypto.as_ref(),
+        &connection.refresh_token.clone().unwrap_or_default(),
+    );
 
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
@@ -1337,8 +1373,17 @@ pub async fn push_booking_availability(
         )
     })?;
 
-    let username = connection.access_token.clone().unwrap_or_default();
-    let password = connection.refresh_token.clone().unwrap_or_default();
+    // BIT-99: credentials are stored encrypted; decrypt for OTA API use.
+    // decrypt_if_available tolerates legacy plaintext rows (no "enc:" prefix).
+    let crypto = IntegrationCrypto::try_from_env();
+    let username = integrations::decrypt_if_available(
+        crypto.as_ref(),
+        &connection.access_token.clone().unwrap_or_default(),
+    );
+    let password = integrations::decrypt_if_available(
+        crypto.as_ref(),
+        &connection.refresh_token.clone().unwrap_or_default(),
+    );
 
     let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
@@ -1476,8 +1521,17 @@ pub async fn push_booking_rates(
         )
     })?;
 
-    let username = connection.access_token.clone().unwrap_or_default();
-    let password = connection.refresh_token.clone().unwrap_or_default();
+    // BIT-99: credentials are stored encrypted; decrypt for OTA API use.
+    // decrypt_if_available tolerates legacy plaintext rows (no "enc:" prefix).
+    let crypto = IntegrationCrypto::try_from_env();
+    let username = integrations::decrypt_if_available(
+        crypto.as_ref(),
+        &connection.access_token.clone().unwrap_or_default(),
+    );
+    let password = integrations::decrypt_if_available(
+        crypto.as_ref(),
+        &connection.refresh_token.clone().unwrap_or_default(),
+    );
 
     let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
