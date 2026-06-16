@@ -304,12 +304,19 @@ async fn add_evidence(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationEvidence>,
 ) -> ApiResult<Json<db::models::violations::ViolationEvidence>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .add_evidence(violation_id, req, user.user_id)
+        .add_evidence(violation_id, org_id, req, user.user_id)
         .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => not_found_error("Violation not found"),
+            _ => internal_error(&format!("Failed to add evidence: {}", e)),
+        })
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to add evidence: {}", e)))
 }
 
 async fn list_evidence(
@@ -595,12 +602,19 @@ async fn add_comment(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationComment>,
 ) -> ApiResult<Json<db::models::violations::ViolationComment>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .add_comment(violation_id, req, user.user_id)
+        .add_comment(violation_id, org_id, req, user.user_id)
         .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => not_found_error("Violation not found"),
+            _ => internal_error(&format!("Failed to add comment: {}", e)),
+        })
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to add comment: {}", e)))
 }
 
 #[derive(Debug, Deserialize)]
