@@ -297,6 +297,7 @@ export function useDocumentVersions(documentId: string) {
       documentsApiListVersions({
         headers: {
           Authorization: `Bearer ${getToken() ?? ''}`,
+          'X-Tenant-ID': '',
         },
         path: {
           id: documentId,

@@ -12,7 +12,7 @@
  */
 
 import { useLocale } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { type Locale, localeFlags, localeNames, locales } from '../../i18n';
 import { usePathname, useRouter } from '../../i18n/routing';
 

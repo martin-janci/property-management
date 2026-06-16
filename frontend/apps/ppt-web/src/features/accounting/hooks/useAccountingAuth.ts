@@ -17,6 +17,6 @@ export function useAccountingAuth() {
     headers: {
       Authorization: `Bearer ${token}`,
       'X-Tenant-ID': tenantId,
-    } as unknown as { Authorization: string },
+    },
   };
 }
