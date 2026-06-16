@@ -15,6 +15,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:a11y": "vitest run src/**/*.a11y.test.tsx",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -39,9 +41,11 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@axe-core/react": "^4.10.0",
     "@playwright/test": "^1.61.0",
     "@ppt/dev-panel": "workspace:*",
+    "@ppt/e2e": "workspace:*",
     "@ppt/vite-plugin-worktree": "workspace:*",
     "@tailwindcss/postcss": "^4.3.1",
     "@testing-library/jest-dom": "^6.6.3",

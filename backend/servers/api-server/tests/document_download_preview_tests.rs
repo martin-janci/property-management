@@ -556,3 +556,198 @@ async fn test_preview_accessible_document_reaches_presigner(pool: PgPool) {
 
     cleanup_test_user(&pool, &user.email).await;
 }
+
+// ============================================================================
+// T9 / T10 — Access-gate building & unit scope (non-manager): a building- or
+//      unit-scoped document must be downloadable/previewable by a caller who is
+//      a member of the targeted building/unit (gate passes → 503), and denied
+//      (404) to a same-org tenant who is not a member.
+//
+//      Regression guard for GH #1413: before the fix the in-memory gate handled
+//      only creator/org/role/users, so a building/unit resident saw the doc in
+//      their list but got a 404 on /download and /preview.
+// ============================================================================
+
+/// Seed a building + unit in `org_id` and make `user_id` a current resident of
+/// that unit. Returns `(building_id, unit_id)`.
+async fn seed_unit_with_resident(pool: &PgPool, org_id: Uuid, user_id: Uuid) -> (Uuid, Uuid) {
+    let building_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO buildings (organization_id, street, city, postal_code) \
+         VALUES ($1, 'Test St 1', 'Bratislava', '81101') RETURNING id",
+    )
+    .bind(org_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed building");
+
+    let unit_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO units (building_id, designation) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(building_id)
+    .bind(format!("U-{}", &Uuid::new_v4().to_string()[..6]))
+    .fetch_one(pool)
+    .await
+    .expect("seed unit");
+
+    sqlx::query(
+        "INSERT INTO unit_residents (unit_id, user_id, resident_type) \
+         VALUES ($1, $2, 'tenant')",
+    )
+    .bind(unit_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("seed unit_resident");
+
+    (building_id, unit_id)
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_download_building_scoped_allows_member_denies_outsider(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Manager creator seeds a building-scoped doc.
+    let creator = TestUser::new();
+    cleanup_test_user(&pool, &creator.email).await;
+    let (_ctok, _) = create_authenticated_user(&app, &creator).await;
+    let creator_id = user_id_for(&pool, &creator.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    seed_membership(&pool, org_id, creator_id, "org_admin").await;
+
+    // Member: a tenant who resides in a unit of the targeted building.
+    let member = TestUser::new();
+    cleanup_test_user(&pool, &member.email).await;
+    let (member_token, _) = create_authenticated_user(&app, &member).await;
+    let member_id = user_id_for(&pool, &member.email).await;
+    seed_membership(&pool, org_id, member_id, "tenant").await;
+    let (building_id, _unit_id) = seed_unit_with_resident(&pool, org_id, member_id).await;
+
+    // Outsider: a same-org tenant with no residency in the building.
+    let outsider = TestUser::new();
+    cleanup_test_user(&pool, &outsider.email).await;
+    let (outsider_token, _) = create_authenticated_user(&app, &outsider).await;
+    let outsider_id = user_id_for(&pool, &outsider.email).await;
+    seed_membership(&pool, org_id, outsider_id, "tenant").await;
+
+    let doc_id = seed_document(
+        &pool,
+        org_id,
+        creator_id,
+        "Building handbook",
+        "application/pdf",
+        "building.pdf",
+        "building",
+        serde_json::json!([building_id.to_string()]),
+    )
+    .await;
+
+    // Member clears the gate → reaches presigner → 503.
+    let member_resp = app
+        .execute(get_request(
+            &format!("/api/v1/documents/{doc_id}/download"),
+            &member_token,
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        member_resp.status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "building-scoped doc must clear the gate for a building member (503), got {} body {}",
+        member_resp.status,
+        member_resp.text()
+    );
+
+    // Outsider is denied → 404.
+    let outsider_resp = app
+        .execute(get_request(
+            &format!("/api/v1/documents/{doc_id}/download"),
+            &outsider_token,
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        outsider_resp.status,
+        StatusCode::NOT_FOUND,
+        "building-scoped doc must be denied (404) to a non-member tenant, got {} body {}",
+        outsider_resp.status,
+        outsider_resp.text()
+    );
+
+    cleanup_test_user(&pool, &creator.email).await;
+    cleanup_test_user(&pool, &member.email).await;
+    cleanup_test_user(&pool, &outsider.email).await;
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_preview_unit_scoped_allows_member_denies_outsider(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let creator = TestUser::new();
+    cleanup_test_user(&pool, &creator.email).await;
+    let (_ctok, _) = create_authenticated_user(&app, &creator).await;
+    let creator_id = user_id_for(&pool, &creator.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    seed_membership(&pool, org_id, creator_id, "org_admin").await;
+
+    // Member: resident of the targeted unit.
+    let member = TestUser::new();
+    cleanup_test_user(&pool, &member.email).await;
+    let (member_token, _) = create_authenticated_user(&app, &member).await;
+    let member_id = user_id_for(&pool, &member.email).await;
+    seed_membership(&pool, org_id, member_id, "tenant").await;
+    let (_building_id, unit_id) = seed_unit_with_resident(&pool, org_id, member_id).await;
+
+    // Outsider: same-org tenant, resident of a *different* unit.
+    let outsider = TestUser::new();
+    cleanup_test_user(&pool, &outsider.email).await;
+    let (outsider_token, _) = create_authenticated_user(&app, &outsider).await;
+    let outsider_id = user_id_for(&pool, &outsider.email).await;
+    seed_membership(&pool, org_id, outsider_id, "tenant").await;
+    seed_unit_with_resident(&pool, org_id, outsider_id).await;
+
+    let doc_id = seed_document(
+        &pool,
+        org_id,
+        creator_id,
+        "Unit notice",
+        "image/png",
+        "unit.png",
+        "unit",
+        serde_json::json!([unit_id.to_string()]),
+    )
+    .await;
+
+    let member_resp = app
+        .execute(get_request(
+            &format!("/api/v1/documents/{doc_id}/preview"),
+            &member_token,
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        member_resp.status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "unit-scoped doc must clear the gate for the unit resident (503), got {} body {}",
+        member_resp.status,
+        member_resp.text()
+    );
+
+    let outsider_resp = app
+        .execute(get_request(
+            &format!("/api/v1/documents/{doc_id}/preview"),
+            &outsider_token,
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        outsider_resp.status,
+        StatusCode::NOT_FOUND,
+        "unit-scoped doc must be denied (404) to a resident of a different unit, got {} body {}",
+        outsider_resp.status,
+        outsider_resp.text()
+    );
+
+    cleanup_test_user(&pool, &creator.email).await;
+    cleanup_test_user(&pool, &member.email).await;
+    cleanup_test_user(&pool, &outsider.email).await;
+}
