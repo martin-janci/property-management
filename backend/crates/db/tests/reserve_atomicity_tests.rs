@@ -1,7 +1,7 @@
 use db::models::reserve_funds::{
     CreateReserveFund, FundTransactionType, FundType, RecordFundTransaction,
 };
-use db::models::{RecordReserveTransaction, ReserveFund as BudgetReserveFund};
+use db::models::RecordReserveTransaction;
 use db::repositories::{BudgetRepository, ReserveFundRepository};
 use rust_decimal_macros::dec;
 use sqlx::PgPool;
@@ -47,6 +47,9 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .expect("seed user")
 }
 
+// PoolConnection<Postgres> requires explicit deref to satisfy Executor trait bounds;
+// auto-deref does not work here due to lifetime constraints in sqlx's impl.
+#[allow(clippy::explicit_auto_deref)]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
     let repo = BudgetRepository::new(pool.clone());
@@ -95,7 +98,7 @@ async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
 
     // Verify fund balance was updated (via trigger or manual update)
     let updated_fund = repo
-        .find_reserve_fund_by_id_rls(&mut *conn, fund.id)
+        .find_reserve_fund_by_id_rls(&mut *conn, org_id, fund.id)
         .await
         .expect("find fund")
         .expect("fund exists");
@@ -103,6 +106,9 @@ async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
     assert_eq!(updated_fund.current_balance, dec!(500.0));
 }
 
+// PoolConnection<Postgres> requires explicit deref to satisfy Executor trait bounds;
+// auto-deref does not work here due to lifetime constraints in sqlx's impl.
+#[allow(clippy::explicit_auto_deref)]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
     let repo = ReserveFundRepository::new();
