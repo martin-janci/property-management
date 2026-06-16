@@ -8,6 +8,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './i18n'; // Initialize i18n
+
 // MSW is intentionally NOT imported at the top — it's loaded via dynamic import only
 // when bootstrap detects mode === 'mock' AND DEV. Keeps the production bundle MSW-free.
 

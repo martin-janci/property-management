@@ -6,14 +6,6 @@
 # Paths relative to backend/. Baselined files WARN instead of failing
 # --strict; raw-pool access in any file NOT listed here fails CI. When a file
 # is cleaned up, REMOVE its line (the script warns on stale entries).
-
-# work_orders.rs: the service-history org-gate pre-lookups
-# (`SELECT organization_id FROM equipment|buildings WHERE id = $1` on
-# `&state.db`) added by #1372/#1430 to distinguish 404 (unknown id) from 403
-# (cross-org) before authorizing via verify_org_access(). They merged to dev
-# while the trunk was non-compiling (#1426), so the RLS step never ran to flag
-# them. Authorization is enforced by verify_org_access and the data query runs
-# on the caller's RlsConnection, so this is a defense-in-depth style violation,
-# not a cross-tenant data path. Baselined to unblock the trunk (BIT-55);
-# proper RlsConnection conversion tracked as a follow-up.
-servers/api-server/src/routes/work_orders.rs
+#
+# (Empty: work_orders.rs service-history org-gate lookups were converted to the
+# caller's RlsConnection in BIT-56, so they are no longer raw-pool offenders.)
