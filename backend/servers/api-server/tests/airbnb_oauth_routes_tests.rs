@@ -609,3 +609,61 @@ async fn listings_with_token_refresh_wrapper_invoked_on_expired_token(pool: PgPo
         resp.text()
     );
 }
+
+// ===========================================================================
+// Manager-role gate — BIT-85
+// ===========================================================================
+
+/// A non-manager org member (role = "tenant" in JWT) must be rejected with 403
+/// when calling the Airbnb token-exchange endpoint.
+/// Binding an org-wide OTA integration is a manager-level action.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_token_exchange_rejects_non_manager_member(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "mgr-gate-a").await;
+    let user_id = seed_user(&pool, "non-manager-a@airbnb-routes.test").await;
+    seed_membership(&pool, org_id, user_id).await;
+
+    // Mint a token with a non-manager role. Membership is valid but
+    // verify_manager_role must still reject with 403.
+    let now = chrono::Utc::now();
+    #[derive(serde::Serialize)]
+    struct Claims {
+        sub: Uuid,
+        exp: i64,
+        iat: i64,
+        token_type: String,
+        tenant_id: Option<Uuid>,
+        role: Option<String>,
+        email: String,
+        name: String,
+    }
+    let claims = Claims {
+        sub: user_id,
+        iat: now.timestamp(),
+        exp: (now + Duration::hours(1)).timestamp(),
+        token_type: "access".to_string(),
+        tenant_id: Some(org_id),
+        role: Some("tenant".to_string()),
+        email: "non-manager-a@airbnb-routes.test".to_string(),
+        name: "Non-Manager Test".to_string(),
+    };
+    let non_manager_token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
+    )
+    .expect("mint non-manager token");
+
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
+    let resp = app
+        .execute(authed_post(&uri, &non_manager_token, json!({"code": "valid-code"})))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "non-manager member must be rejected with 403 on airbnb token exchange; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
