@@ -60,49 +60,6 @@ pub mod agency;
 // Epic 18: Short-Term Rental Integration
 pub mod rental;
 
-pub use ai_chat::{
-    message_role, AiChatMessage, AiChatSession, AiResponse, AiSource, AiTrainingFeedback,
-    ChatSessionSummary, CreateChatSession, ProvideFeedback, SendChatMessage,
-};
-pub use equipment::{
-    equipment_status, maintenance_status, maintenance_type, CreateEquipment, CreateMaintenance,
-    Equipment, EquipmentMaintenance, EquipmentQuery, EquipmentWithSummary, MaintenancePrediction,
-    UpdateEquipment, UpdateMaintenance,
-};
-pub use sensor::{
-    sensor_status, sensor_type, AggregatedReading, AlertQuery, BatchSensorReadings, CreateSensor,
-    CreateSensorAlert, CreateSensorFaultCorrelation, CreateSensorReading, CreateSensorThreshold,
-    ReadingQuery, Sensor, SensorAlert, SensorDashboard, SensorFaultCorrelation, SensorQuery,
-    SensorReading, SensorSummary, SensorThreshold, SensorThresholdTemplate, SensorTypeCount,
-    SingleReading, UpdateSensor, UpdateSensorThreshold,
-};
-pub use sentiment::{
-    alert_type, BuildingSentiment, CreateSentimentAlert, SentimentAlert, SentimentDashboard,
-    SentimentThresholds, SentimentTrend, SentimentTrendQuery, UpdateSentimentThresholds,
-    UpsertSentimentTrend,
-};
-pub use workflow::{
-    action_type, execution_status, on_failure, step_status, trigger_type, CreateWorkflow,
-    CreateWorkflowAction, ExecutionQuery, TriggerWorkflow, UpdateWorkflow, Workflow,
-    WorkflowAction, WorkflowExecution, WorkflowExecutionStep, WorkflowQuery, WorkflowSchedule,
-    WorkflowSummary, WorkflowWithDetails,
-};
-pub use workflow_templates::{
-    get_builtin_templates, template_category, template_scope, CreateTemplateAction,
-    CreateTemplateVariable, CreateWorkflowTemplate, ImportTemplateRequest, RateTemplateRequest,
-    TemplateSearchQuery, UpdateWorkflowTemplate, WorkflowTemplate, WorkflowTemplateAction,
-    WorkflowTemplateRating, WorkflowTemplateSummary, WorkflowTemplateVariable,
-    WorkflowTemplateWithDetails,
-};
-
-// Note: `AgencyBranding` from `agency_branding` is intentionally NOT re-exported here
-// because `agency::AgencyBranding` already occupies that name at this scope. The new
-// per-tenant branding type is consumed via the module path: `crate::models::agency_branding::AgencyBranding`.
-pub use agency_branding::UpdateOrganizationBranding;
-pub use agency_domain::{
-    AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
-};
-
 pub use accounting::{
     BankStatement, BankStatementLine, Contact, CreateInvoice as CreateNativeInvoice,
     CreateInvoiceItem as CreateNativeInvoiceItem, Invoice as NativeInvoice,
@@ -115,7 +72,23 @@ pub use accounting_provider::{
     AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
     AccountingProviderSyncCursor,
 };
-
+pub use agency::{
+    agency_status, import_source, import_status, inquiry_assignment, listing_visibility,
+    member_role, AcceptInvitation, Agency, AgencyBranding, AgencyInvitation, AgencyListing,
+    AgencyListingSummary, AgencyListingsResponse, AgencyMember, AgencyMemberWithUser,
+    AgencyMemberWithUserRow, AgencyMembersResponse, AgencyProfile, AgencySummary, CreateAgency,
+    CreateAgencyListing, CreateImportJob, FieldMapping, ImportConfig, ImportError, ImportPreview,
+    ImportResult, InviteMember, ListingCollaborator, ListingEditHistory, ListingImportJob,
+    UpdateAgency, UpdateListingVisibility, UpdateMemberRole,
+};
+pub use agency_branding::UpdateOrganizationBranding;
+pub use agency_domain::{
+    AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
+};
+pub use ai_chat::{
+    message_role, AiChatMessage, AiChatSession, AiResponse, AiSource, AiTrainingFeedback,
+    ChatSessionSummary, CreateChatSession, ProvideFeedback, SendChatMessage,
+};
 pub use announcement::{
     announcement_status, target_type, AcknowledgeAnnouncement, AcknowledgmentStats, Announcement,
     AnnouncementAttachment, AnnouncementComment, AnnouncementListQuery, AnnouncementRead,
@@ -124,12 +97,103 @@ pub use announcement::{
     DeleteComment, MarkAnnouncementRead, PinAnnouncement, PublishAnnouncement, UpdateAnnouncement,
     UserAcknowledgmentStatus,
 };
+
+// Note: `AgencyBranding` from `agency_branding` is intentionally NOT re-exported here
+// because `agency::AgencyBranding` already occupies that name at this scope. The new
+// per-tenant branding type is consumed via the module path: `crate::models::agency_branding::AgencyBranding`.
+pub use api_ecosystem::{
+    api_doc_category, code_sample_language, connector_auth_type, connector_status,
+    developer_status, ecosystem_webhook_event, installation_status, integration_category,
+    marketplace_integration_status, webhook_auth_type, ApiCodeSample, ApiDocumentation,
+    ApiEcosystemDashboard, ApiEcosystemStatistics, Connector, ConnectorAction,
+    ConnectorExecutionLog, ConnectorExecutionQuery, CreateApiCodeSample, CreateApiDocumentation,
+    CreateConnector, CreateConnectorAction, CreateDeveloperApiKey, CreateDeveloperApiKeyResponse,
+    CreateDeveloperRegistration, CreateEnhancedWebhookSubscription, CreateIntegrationRating,
+    CreateMarketplaceIntegration, CreatePreBuiltIntegrationConnection, CreateSandboxConfig,
+    DeveloperApiKey, DeveloperApiKeyDisplay, DeveloperPortalStatistics, DeveloperRegistration,
+    DeveloperUsageStats, EndpointUsageStats, EnhancedWebhookDeliveryLog, EnhancedWebhookStatistics,
+    EnhancedWebhookSubscription, GoogleCalendarConfig, HubSpotConfig, InstallIntegration,
+    IntegrationActivityLog, IntegrationCategoryCount, IntegrationRating, IntegrationRatingWithUser,
+    MarketplaceIntegration, MarketplaceIntegrationQuery, MarketplaceIntegrationSummary,
+    OrganizationIntegration, OutlookCalendarConfig, PreBuiltIntegrationConnection,
+    PreBuiltIntegrationSyncResult, PreBuiltIntegrationType, QuickBooksConfig,
+    ReviewDeveloperRegistration, SalesforceConfig, SandboxConfig, SandboxTestRequestPayload,
+    SandboxTestResponsePayload, SlackConfig, SyncPreBuiltIntegrationRequest, TeamsConfig,
+    UpdateApiDocumentation, UpdateConnector, UpdateEnhancedWebhookSubscription,
+    UpdateMarketplaceIntegration, UpdateOrganizationIntegration,
+    UpdatePreBuiltIntegrationConnection, WebhookRetryPolicyConfig, XeroConfig,
+};
+
 pub use audit_log::{
     ActionCount, AuditAction, AuditLog, AuditLogQuery, AuditLogSummary, CreateAuditLog,
+};
+pub use auth_policy::AuthPolicy;
+
+pub use automation::{
+    AutomationAction, AutomationLogSummary, AutomationRuleWithStats, CallWebhookConfig,
+    ConditionTriggerConfig, CreateAutomationRule, CreateRuleFromTemplate, EventTriggerConfig,
+    GenerateReportConfig, ScheduleTriggerConfig, SendEmailConfig, SendNotificationConfig,
+    UpdateAutomationRule, WorkflowAutomationLog, WorkflowAutomationRule,
+    WorkflowAutomationTemplate,
+};
+pub use board_meetings::{
+    ActionItemQuery as BoardMeetingActionItemQuery,
+    ActionItemSummary as BoardMeetingActionItemSummary, AgendaItemStatus, AttendanceHistory,
+    AttendanceStatus, BoardMeeting, BoardMember, BoardMemberQuery, BoardMemberSummary, BoardRole,
+    CastVote as CastBoardVote, CreateActionItem as CreateBoardMeetingActionItem, CreateAgendaItem,
+    CreateBoardMeeting, CreateBoardMember, CreateMinutes, CreateMotion as CreateBoardMotion,
+    MeetingActionItem, MeetingAgendaItem, MeetingAttendance, MeetingDashboard, MeetingDetail,
+    MeetingDocument, MeetingMinutes, MeetingMotion, MeetingQuery, MeetingStatistics, MeetingStatus,
+    MeetingSummary, MeetingType, MeetingTypeCount, MotionDetail, MotionQuery, MotionStatus,
+    MotionStatusCount, MotionSummary, MotionVote, RecordAttendance,
+    UpdateActionItem as UpdateBoardMeetingActionItem, UpdateAgendaItem, UpdateBoardMeeting,
+    UpdateBoardMember, UpdateMinutes, UpdateMotion as UpdateBoardMotion, UploadMeetingDocument,
+    VoteChoice, VoteSummary as BoardMeetingVoteSummary,
+};
+pub use budget::{
+    budget_status, capital_plan_status, forecast_type, funding_source, priority,
+    reserve_transaction_type, variance_alert_type, AcknowledgeVarianceAlert, Budget, BudgetActual,
+    BudgetCategory, BudgetDashboard, BudgetItem, BudgetQuery, BudgetSummary, BudgetVarianceAlert,
+    CapitalPlan, CapitalPlanQuery, CategoryVariance, CreateBudget, CreateBudgetCategory,
+    CreateBudgetItem, CreateCapitalPlan, CreateFinancialForecast, CreateReserveFund,
+    FinancialForecast, ForecastQuery, RecordBudgetActual, RecordReserveTransaction, ReserveFund,
+    ReserveFundProjection, ReserveFundTransaction, UpdateBudget, UpdateBudgetCategory,
+    UpdateBudgetItem, UpdateCapitalPlan, UpdateFinancialForecast, UpdateReserveFund,
+    YearlyCapitalSummary,
 };
 pub use building::{
     building_status, Building, BuildingContact, BuildingStatistics, BuildingSummary,
     CreateBuilding, UpdateBuilding,
+};
+pub use building_certification::{
+    BuildingCertification, CertificationAuditLog, CertificationBenchmark, CertificationCost,
+    CertificationCredit, CertificationDashboard, CertificationDocument, CertificationFilters,
+    CertificationLevel, CertificationLevelCount, CertificationMilestone, CertificationProgram,
+    CertificationProgramCount, CertificationReminder, CertificationStatus,
+    CertificationWithCredits, CreateBuildingCertification, CreateCertificationBenchmark,
+    CreateCertificationCost, CreateCertificationCredit, CreateCertificationDocument,
+    CreateCertificationMilestone, CreateCertificationReminder, CreditCategoryType,
+    UpdateBuildingCertification, UpdateCertificationCredit, UpdateCertificationMilestone,
+};
+pub use community::{
+    CommunityComment, CommunityEvent, CommunityEventRsvp, CommunityEventWithRsvp, CommunityGroup,
+    CommunityGroupMember, CommunityGroupWithMembership, CommunityPost, CommunityPostWithAuthor,
+    CreateCommunityComment, CreateCommunityEvent, CreateCommunityGroup, CreateCommunityPost,
+    CreateMarketplaceInquiry, CreateMarketplaceItem, EventRsvpRequest, JoinGroupRequest,
+    MarketplaceInquiry, MarketplaceItem, MarketplaceItemWithSeller, PollOption,
+    UpdateCommunityEvent, UpdateCommunityGroup, UpdateCommunityPost, UpdateMarketplaceItem,
+};
+pub use compliance::{
+    AddComplianceNote, AmlAssessmentStatus, AmlRiskAssessment, AmlRiskLevel, ComplianceNote,
+    ContentOwnerInfo, ContentTypeCount, CountryRisk, CountryRiskRating, CreateAmlRiskAssessment,
+    CreateDsaTransparencyReport, CreateEddDocument, CreateEnhancedDueDiligence,
+    CreateModerationCase, DecideAppeal, DocumentVerificationStatus, DsaReportStatus,
+    DsaReportSummary, DsaTransparencyReport, DsaTransparencyReportResponse, EddDocument, EddStatus,
+    EnhancedDueDiligence, FileAppeal, ModeratedContentType, ModerationActionTemplate,
+    ModerationActionType, ModerationCase, ModerationCaseResponse, ModerationQueueQuery,
+    ModerationQueueStats, ModerationStatus, PriorityCount as AmlPriorityCount, ReportSource,
+    RiskFactor, SuspiciousActivity, TakeModerationAction, ViolationType, ViolationTypeCount,
+    AML_THRESHOLD_EUR_CENTS,
 };
 pub use critical_notification::{
     AcknowledgeCriticalNotificationResponse, CreateCriticalNotificationRequest,
@@ -140,6 +204,18 @@ pub use data_export::{
     CreateDataExportRequest, DataExportRequest, DataExportRequestResponse, DataExportStatus,
     DataExportStatusResponse, ExportCategories, ExportCategory, ExportFormat, UserDataExport,
 };
+pub use data_residency::{
+    AccessType, AccessTypeCount, AuditChange, AuditLogEntry as ResidencyAuditLogEntry,
+    AuditLogQuery as ResidencyAuditLogQuery, AuditLogResponse as ResidencyAuditLogResponse,
+    AvailableRegionsResponse, ComplianceImplication, ComplianceIssue, ComplianceStatus,
+    ComplianceVerificationResponse, ComplianceVerificationResult, ConfigureDataResidency,
+    CreateAuditLogEntry, CrossRegionAccessLog, CrossRegionStats, DataLocationSummary, DataRegion,
+    DataResidencyAuditLog, DataResidencyConfig, DataResidencyConfigResponse,
+    DataResidencyDashboard, DataRoutingRule, DataRoutingStatus, DataTypeCategory, DataTypeOverride,
+    ImplicationLevel, IssueSeverity, LogCrossRegionAccess, OutOfRegionData, RegionAccessSummary,
+    RegionInfo, ResidencyAuditEvent, ResidencyStatus, RoutingRuleSummary,
+    RunComplianceVerification,
+};
 pub use delegation::{
     delegation_scope, delegation_status, AcceptDelegation, CreateDelegation, DeclineDelegation,
     Delegation, DelegationAuditLog, DelegationSummary, DelegationWithUsers, RevokeDelegation,
@@ -147,6 +223,19 @@ pub use delegation::{
 };
 pub use device_push_token::{
     DevicePushToken, PushPlatform, PushTokenResponse, RegisterPushTokenRequest,
+};
+pub use disputes::{
+    action_status, activity_type, dispute_category, dispute_priority, dispute_state_machine,
+    dispute_status, escalation_severity, party_role, resolution_status, session_status,
+    session_type, ActionItem, AddEvidence, CategoryCount as DisputeCategoryCount,
+    CompleteActionItem, CreateActionItem, CreateEscalation, Dispute, DisputeActivity,
+    DisputeEvidence, DisputeParty, DisputePartyWithUser, DisputeQuery, DisputeResolution,
+    DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation, FileDispute, MediationCase,
+    MediationSession, MediationSessionWithAttendance, PartyActionsDashboard, PartySubmission,
+    PriorityCount as DisputePriorityCount, ProposeResolution, RecordSessionNotes, ResolutionTerm,
+    ResolutionVote, ResolutionWithVotes, ResolveDispute, ResolveEscalation, ScheduleSession,
+    SessionAttendance, StatusCount as DisputeStatusCount, SubmitResponse, UpdateDisputeStatus,
+    UpdateMediationNotes, VoteOnResolution,
 };
 pub use document::{
     access_scope, document_category, ocr_status, share_type, ClassificationFeedback,
@@ -164,232 +253,6 @@ pub use document_template::{
     GenerateDocumentResponse, TemplateListQuery, TemplatePlaceholder, TemplateSummary,
     TemplateWithDetails, UpdateTemplate,
 };
-pub use facility::{
-    booking_status, facility_type, ApproveBooking, AvailableSlot, BookingWithDetails,
-    CancelBooking, CreateFacility, CreateFacilityBooking, Facility, FacilityBooking,
-    FacilitySummary, RejectBooking, UpdateFacility, UpdateFacilityBooking,
-};
-pub use fault::{
-    fault_category, fault_priority, fault_status, timeline_action, AddFaultComment, AddWorkNote,
-    AiSuggestion, AssignFault, CategoryCount, ConfirmFault, CreateFault, CreateFaultAttachment,
-    CreateFaultTimelineEntry, Fault, FaultAttachment, FaultListQuery, FaultStatistics,
-    FaultSummary, FaultTimelineEntry, FaultTimelineEntryWithUser, FaultWithDetails, PriorityCount,
-    ReopenFault, ResolveFault, StatusCount, TriageFault, UpdateFault, UpdateFaultStatus,
-};
-pub use financial::{
-    ARReportEntry, ARReportTotals, AccountTransaction, AccountsReceivableReport, CreateFeeSchedule,
-    CreateFinancialAccount, CreateInvoice, CreateInvoiceItem, CreateTransaction, FeeFrequency,
-    FeeSchedule, FinancialAccount, FinancialAccountResponse, FinancialAccountType,
-    InitiatePaymentResponse, Invoice, InvoiceItem, InvoiceResponse, InvoiceStatus, LateFeeConfig,
-    ListInvoicesResponse, OnlinePaymentSession, Payment, PaymentAllocation, PaymentMethod,
-    PaymentResponse, PaymentStatus, RecordPayment, ReminderSchedule, TransactionCategory,
-    TransactionType, UnitCreditBalance, UnitFee,
-};
-pub use granular_notification::{
-    AddToGroupRequest, CategorySummary, CreateHeldNotification, DigestNotification,
-    EventNotificationPreference, EventPreferenceWithDetails, EventPreferencesResponse,
-    GenerateDigestRequest, GroupedNotification, GroupedNotificationsResponse, HeldNotification,
-    NotificationDigest, NotificationEventCategory, NotificationEventType, NotificationGroup,
-    NotificationGroupWithNotifications, NotificationSchedule, NotificationScheduleResponse,
-    RoleDefaultsListResponse, RoleNotificationDefaults, UpdateEventPreferenceRequest,
-    UpdateNotificationScheduleRequest, UpdateRoleDefaultsRequest,
-};
-pub use messaging::{
-    BlockWithUserInfo, BlockWithUserInfoRow, CreateBlock, CreateMessage, CreateThread, Message,
-    MessagePreview, MessageThread, MessageWithSender, MessageWithSenderRow, ParticipantInfo,
-    ThreadWithPreview, ThreadWithPreviewRow, UserBlock,
-};
-pub use meter::{
-    ConsumptionAggregate, ConsumptionComparison, ConsumptionDataPoint, ConsumptionHistoryResponse,
-    CreateSubmissionWindow, CreateUtilityBill, DistributeUtilityBill, DistributionMethod,
-    IngestSmartMeterReading, ListMetersResponse, ListReadingsResponse, Meter, MeterReading,
-    MeterResponse, MeterType, MissingReadingAlert, ReadingApprovalEntry, ReadingSource,
-    ReadingStatus, ReadingSubmissionWindow, ReadingValidationRule, RegisterMeter, ReplaceMeter,
-    SmartMeterProvider, SmartMeterReadingLog, SubmitReading, UnitDistributionOverride, UtilityBill,
-    UtilityBillDistribution, UtilityBillResponse, ValidateReading,
-};
-pub use notification_preference::{
-    DisableAllWarningResponse, NotificationChannel, NotificationPreference,
-    NotificationPreferenceResponse, NotificationPreferencesResponse,
-    UpdateNotificationPreferenceRequest,
-};
-pub use oauth::{
-    AuthorizeRequest, ConsentPageData, CreateAccessToken, CreateAuthorizationCode,
-    CreateOAuthClient, CreateRefreshToken as CreateOAuthRefreshToken, CreateUserOAuthGrant,
-    IntrospectionResponse, OAuthAccessToken, OAuthAuthorizationCode, OAuthClient,
-    OAuthClientSummary, OAuthError, OAuthRefreshToken, OAuthScope, RegisterClientRequest,
-    RegisterClientResponse, RevokeTokenRequest, ScopeDisplay, TokenRequest, TokenResponse,
-    UpdateOAuthClient, UserGrantWithClient, UserGrantWithClientRow, UserOAuthGrant,
-};
-pub use organization::{
-    CreateOrganization, Organization, OrganizationStatus, OrganizationSummary, UpdateOrganization,
-};
-pub use organization_member::{
-    CreateOrganizationMember, MembershipStatus, OrganizationMember, OrganizationMemberWithUser,
-    UpdateOrganizationMember, UserOrganizationMembership,
-};
-pub use password_reset::{CreatePasswordResetToken, PasswordResetToken};
-pub use person_month::{
-    person_month_source, BuildingPersonMonthSummary, BulkPersonMonthEntry, BulkUpsertPersonMonths,
-    CreatePersonMonth, MonthlyCount, PersonMonth, PersonMonthWithUnit, UpdatePersonMonth,
-    YearlyPersonMonthSummary,
-};
-pub use platform_admin::{
-    AdminOrganizationDetail, AdminOrganizationSummary, AnnouncementSeverity, CatalogPagination,
-    CategoryWithCount, CreateFeatureCategoryRequest, CreateFeatureFlagOverrideRequest,
-    CreateFeatureFlagRequest, CreateHelpArticleRequest, CreateMaintenanceRequest,
-    CreateSystemAnnouncementRequest, FeatureAccessState, FeatureCatalogItem, FeatureCatalogQuery,
-    FeatureCatalogResponse, FeatureCategory, FeatureCategorySummary, FeatureDescriptor,
-    FeatureDescriptorDisplay, FeatureFlag, FeatureFlagOverride, FeatureFlagScope, FeatureState,
-    FeatureUserTypeAccess, HelpArticle, HelpArticleRevision, MetricAlert, MetricThreshold,
-    MetricType, OnboardingStep, OnboardingTour, OrganizationDetailMetrics, OrganizationMetrics,
-    PlatformMetric, ReactivateOrganizationRequest, ScheduledMaintenance,
-    SetFeatureUserTypeAccessRequest, SetUserFeaturePreferenceRequest, StepPlacement,
-    SupportAccessLog, SupportAccessRequest, SupportAccessStatus, SuspendOrganizationRequest,
-    SystemAnnouncement, SystemAnnouncementAcknowledgment, UpdateFeatureCategoryRequest,
-    UpsertFeatureDescriptorRequest, UserFeaturePreference, UserOnboardingProgress,
-};
-pub use portal_password_reset::{CreatePortalPasswordResetToken, PortalPasswordResetToken};
-pub use refresh_token::{CreateRefreshToken, LoginAttempt, RateLimitStatus, RefreshToken};
-pub use role::{permissions, system_roles, CreateRole, PermissionDefinition, Role, UpdateRole};
-pub use signature_request::{
-    CancelSignatureRequestRequest, CancelSignatureRequestResponse, CreateSignatureRequest,
-    CreateSignatureRequestResponse, CreateSigner, ListSignatureRequestsResponse,
-    SendReminderRequest, SendReminderResponse, SignatureRequest, SignatureRequestResponse,
-    SignatureRequestStatus, SignatureRequestWithDocument, SignatureWebhookEvent, Signer,
-    SignerCounts, SignerStatus, WebhookResponse,
-};
-pub use two_factor_auth::{
-    CreateTwoFactorAuth, TwoFactorAuth, TwoFactorStatus, UpdateTwoFactorStatus,
-};
-pub use unit::{
-    occupancy_status, unit_status, unit_type, AssignUnitOwner, CreateUnit, Unit, UnitOwner,
-    UnitOwnerInfo, UnitSummary, UnitWithOwners, UpdateUnit,
-};
-pub use unit_resident::{
-    resident_type, CreateUnitResident, EndResidency, UnitResident, UnitResidentSummary,
-    UnitResidentWithUser, UpdateUnitResident,
-};
-pub use user::{
-    CreateUser, EmailVerificationToken, Locale, NeighborRow, NeighborView, PrincipalKind,
-    PrivacySettings, ProfileVisibility, UpdatePrivacySettings, UpdateUser, User, UserStatus,
-};
-
-pub use membership::{GrantMembership, UserInvite, UserMembership, UserMergeCollision};
-pub use vote::{
-    audit_action, question_type, quorum_type, vote_status, CancelVote, CastVote, CreateVote,
-    CreateVoteAuditLog, CreateVoteComment, CreateVoteQuestion, EligibleUnit, HideVoteComment,
-    OptionResult, ParticipationDetail, PublishVote, QuestionOption, QuestionResult, UpdateVote,
-    UpdateVoteQuestion, Vote, VoteAuditLog, VoteComment, VoteCommentWithUser, VoteEligibility,
-    VoteListQuery, VoteQuestion, VoteReceipt, VoteReportData, VoteResponse, VoteResults,
-    VoteSummary, VoteWithDetails,
-};
-
-// Epic 15: Property Listings & Multi-Portal Sync
-// Epic 105: Portal Syndication
-pub use listing::{
-    currency, listing_status, portal as listing_portal, property_type, syndication_job_type,
-    syndication_status, transaction_type, webhook_event_type, CreateListing, CreateListingFromUnit,
-    CreateListingPhoto, CreatePortalWebhookEvent, CreateSyndication, Listing, ListingListQuery,
-    ListingPhoto, ListingStatistics, ListingSummary, ListingSyndication, ListingWithDetails,
-    OrganizationSyndicationStats, PortalInquiryWebhook, PortalStats, PortalSyndicationStatus,
-    PortalViewWebhook, PortalWebhookEvent, PropertyTypeCount, PublishListingResponse,
-    ReorderPhotos, SyndicationDashboardQuery, SyndicationDashboardResponse,
-    SyndicationHealthStatus, SyndicationJobPayload, SyndicationResult, SyndicationStatusDashboard,
-    UpdateListing, UpdateListingStatus,
-};
-
-// Epic 16: Portal Search & Discovery
-pub use portal::{
-    alert_frequency, AddFavorite, CreatePortalUser, CreateSavedSearch, Favorite,
-    FavoriteWithListing, FavoriteWithListingRow, FavoritesResponse, MatchedListing, PortalSession,
-    PortalUser, PublicListingDetail, PublicListingQuery, PublicListingSearchResponse,
-    PublicListingSummary, SavedSearch, SavedSearchesResponse, SearchAlert, SearchCriteria,
-    SearchSuggestions, UpdatePortalUser, UpdateSavedSearch,
-};
-
-// Epic 17: Agency & Realtor Management
-pub use agency::{
-    agency_status, import_source, import_status, inquiry_assignment, listing_visibility,
-    member_role, AcceptInvitation, Agency, AgencyBranding, AgencyInvitation, AgencyListing,
-    AgencyListingSummary, AgencyListingsResponse, AgencyMember, AgencyMemberWithUser,
-    AgencyMemberWithUserRow, AgencyMembersResponse, AgencyProfile, AgencySummary, CreateAgency,
-    CreateAgencyListing, CreateImportJob, FieldMapping, ImportConfig, ImportError, ImportPreview,
-    ImportResult, InviteMember, ListingCollaborator, ListingEditHistory, ListingImportJob,
-    UpdateAgency, UpdateListingVisibility, UpdateMemberRole,
-};
-
-// Epic 18: Short-Term Rental Integration
-pub use rental::{
-    authority_code, block_reason, booking_status as rental_booking_status, guest_status,
-    rental_platform, report_status, report_type, BookingListQuery, BookingSummary,
-    BookingWithGuests, BookingsResponse, CalendarBlock, CalendarEvent, CheckInReminder,
-    ConnectionStatus, CreateBooking, CreateCalendarBlock, CreateGuest, CreateICalFeed,
-    CreatePlatformConnection, GenerateReport, GuestSummary, ICalFeed, ICalFeedSummary,
-    NationalityStats, OAuthCallback, PlatformConnectionDetail, PlatformConnectionSummary,
-    PlatformSyncStatus, RegisterGuest, RentalBooking, RentalGuest, RentalGuestReport,
-    RentalPlatformConnection, RentalStatistics, ReportPreview, ReportSummary, SubmitReport,
-    UnitAvailability, UpdateBooking, UpdateBookingStatus, UpdateGuest, UpdateICalFeed,
-    UpdatePlatformConnection,
-};
-
-// Epic 19: Lease Management & Tenant Screening
-pub mod lease;
-
-pub use lease::{
-    application_status, lease_status, screening_status, screening_type, termination_reason,
-    ApplicationListQuery, ApplicationSummary, CreateAmendment, CreateApplication, CreateLease,
-    CreateLeaseTemplate, CreateReminder, ExpirationOverview, InitiateScreening, Lease,
-    LeaseAmendment, LeaseListQuery, LeasePayment, LeaseReminder, LeaseStatistics, LeaseSummary,
-    LeaseTemplate, LeaseWithDetails, PaymentSummary, RecordPayment as RecordLeasePayment,
-    RenewLease, ReviewApplication, ScreeningConsent, ScreeningSummary, SubmitApplication,
-    TenantApplication, TenantScreening, TerminateLease, UpdateApplication, UpdateLease,
-    UpdateLeaseTemplate, UpdateScreeningResult,
-};
-
-// Epic 20: Maintenance Scheduling & Work Orders
-pub mod work_order;
-
-pub use work_order::{
-    schedule_execution_status, schedule_frequency, update_type, work_order_priority,
-    work_order_source, work_order_status, work_order_type, AddWorkOrderUpdate,
-    CreateMaintenanceSchedule, CreateWorkOrder, MaintenanceCostSummary, MaintenanceSchedule,
-    ScheduleExecution, ScheduleQuery, ServiceHistoryEntry, UpcomingSchedule,
-    UpdateMaintenanceSchedule, UpdateWorkOrder, WorkOrder, WorkOrderQuery, WorkOrderStatistics,
-    WorkOrderUpdate, WorkOrderWithDetails,
-};
-
-// Epic 21: Supplier & Vendor Management
-// Epic 78: Vendor Operations Portal
-pub mod vendor;
-
-pub use vendor::{
-    contract_status, contract_type, invoice_status, service_type, vendor_status, AcceptJobRequest,
-    AccessCodeResponse, ContractQuery, CreateVendor, CreateVendorContact, CreateVendorContract,
-    CreateVendorInvoice, CreateVendorRating, DeclineJobRequest, ExpiringContract,
-    GenerateAccessCode, InvoiceQuery, InvoiceSummary, MaterialItem, PropertyAccessInfo,
-    ProposeAlternativeTime, ServiceCount, SubmitWorkCompletion, UpdateVendor, UpdateVendorContract,
-    UpdateVendorInvoice, Vendor, VendorContact, VendorContract, VendorDashboardStats,
-    VendorEarningsSummary, VendorFeedback, VendorInvoice, VendorInvoiceWithTracking, VendorJob,
-    VendorJobQuery, VendorJobSummary, VendorProfile, VendorQuery, VendorRating, VendorStatistics,
-    VendorWithDetails, WorkCompletion,
-};
-
-// Epic 22: Insurance Management
-pub mod insurance;
-
-pub use insurance::{
-    claim_status, policy_status, policy_type, premium_frequency, reminder_type, AddClaimDocument,
-    AddPolicyDocument, ClaimStatusSummary, CreateInsuranceClaim, CreateInsurancePolicy,
-    CreateRenewalReminder, ExpiringPolicy, InsuranceClaim, InsuranceClaimDocument,
-    InsuranceClaimHistory, InsuranceClaimQuery, InsuranceClaimWithPolicy, InsurancePolicy,
-    InsurancePolicyDocument, InsurancePolicyQuery, InsuranceRenewalReminder, InsuranceStatistics,
-    PolicyTypeSummary, UpdateInsuranceClaim, UpdateInsurancePolicy, UpdateRenewalReminder,
-};
-
-// Epic 23: Emergency Management
-pub mod emergency;
-
 pub use emergency::{
     acknowledgment_status, contact_type, drill_status, drill_type, incident_status, incident_type,
     protocol_type, severity, AcknowledgeBroadcast, AddIncidentAttachment, BroadcastDeliveryStats,
@@ -402,57 +265,93 @@ pub use emergency::{
     IncidentTypeSummary, UpdateEmergencyContact, UpdateEmergencyDrill, UpdateEmergencyIncident,
     UpdateEmergencyProtocol,
 };
-
-// Epic 24: Budget & Financial Planning
-pub mod budget;
-
-pub use budget::{
-    budget_status, capital_plan_status, forecast_type, funding_source, priority,
-    reserve_transaction_type, variance_alert_type, AcknowledgeVarianceAlert, Budget, BudgetActual,
-    BudgetCategory, BudgetDashboard, BudgetItem, BudgetQuery, BudgetSummary, BudgetVarianceAlert,
-    CapitalPlan, CapitalPlanQuery, CategoryVariance, CreateBudget, CreateBudgetCategory,
-    CreateBudgetItem, CreateCapitalPlan, CreateFinancialForecast, CreateReserveFund,
-    FinancialForecast, ForecastQuery, RecordBudgetActual, RecordReserveTransaction, ReserveFund,
-    ReserveFundProjection, ReserveFundTransaction, UpdateBudget, UpdateBudgetCategory,
-    UpdateBudgetItem, UpdateCapitalPlan, UpdateFinancialForecast, UpdateReserveFund,
-    YearlyCapitalSummary,
+pub use energy::{
+    BenchmarkAlert, BenchmarkAlertSeverity, BenchmarkAlertsQuery, BenchmarkDashboard,
+    BenchmarkMetricType, BenchmarkQuery, BuildingBenchmark, CalculateBenchmark, CarbonDashboard,
+    CarbonEmission, CarbonExportRequest, CarbonTarget, CreateBenchmarkAlert, CreateCarbonEmission,
+    CreateCarbonTarget, CreateEnergyPerformanceCertificate, CreateSustainabilityScore,
+    EmissionSourceType, EnergyPerformanceCertificate, EnergyRating, EpcSummary, HeatingType,
+    InsulationRating, ListBenchmarkAlertsResponse, ListBenchmarksResponse, ListEmissionsResponse,
+    ListEpcsResponse, MonthlyEmission, RatingCount, SourceEmission, SustainabilityFilter,
+    SustainabilityScore, UpdateEnergyPerformanceCertificate, UpdateSustainabilityScore,
 };
-
-// Epic 25: Legal Document & Compliance
-pub mod legal;
-
-pub use legal::{
-    compliance_category, compliance_frequency, compliance_status, delivery_method, delivery_status,
-    document_type, notice_priority, notice_type, recipient_type, AcknowledgeNotice, ApplyTemplate,
-    ComplianceAuditTrail, ComplianceCategoryCount, ComplianceQuery, ComplianceRequirement,
-    ComplianceRequirementWithDetails, ComplianceStatistics, ComplianceTemplate,
-    ComplianceVerification, CreateAuditTrailEntry, CreateComplianceRequirement,
-    CreateComplianceTemplate, CreateComplianceVerification, CreateLegalDocument,
-    CreateLegalDocumentVersion, CreateLegalNotice, LegalDocument, LegalDocumentQuery,
-    LegalDocumentSummary, LegalDocumentVersion, LegalNotice, LegalNoticeQuery,
-    LegalNoticeRecipient, NoticeAcknowledgmentStats, NoticeRecipientInput, NoticeStatistics,
-    NoticeTypeCount, NoticeWithRecipients, UpcomingVerification, UpdateComplianceRequirement,
-    UpdateComplianceTemplate, UpdateLegalDocument, UpdateLegalNotice,
+pub use enhanced_tenant_screening::{
+    AiResultWithFactors, AiRiskCategory, AiRiskScoringModel, CompleteScreeningData,
+    CreateAiRiskScoringModel, CreateScreeningBackgroundResult, CreateScreeningCreditResult,
+    CreateScreeningEvictionResult, CreateScreeningProviderConfig, CreateScreeningQueueItem,
+    CreateScreeningReport, CreateScreeningRiskFactor, InitiateScreeningRequest,
+    ProviderIntegrationStatus, RiskCategoryDistribution, RiskFactorCategory, RiskFactorImpact,
+    RunAiScoringRequest, ScreeningAiResult, ScreeningBackgroundResult, ScreeningCreditResult,
+    ScreeningEvictionResult, ScreeningProviderConfig, ScreeningProviderType, ScreeningReport,
+    ScreeningRequestQueueItem, ScreeningRiskFactor, ScreeningStatistics,
+    ScreeningSummary as EnhancedScreeningSummary, UpdateAiRiskScoringModel,
+    UpdateScreeningProviderConfig,
 };
-
-// Epic 26: Platform Subscription & Billing
-pub mod subscription;
-
-pub use subscription::{
-    billing_cycle, coupon_duration, discount_type, line_item_type, metric_type,
-    payment_method_type, subscription_invoice_status, subscription_status,
-    CancelSubscriptionRequest, ChangePlanRequest, CouponRedemption, CreateOrganizationSubscription,
-    CreateSubscriptionCoupon, CreateSubscriptionEvent, CreateSubscriptionPaymentMethod,
-    CreateSubscriptionPlan, CreateUsageRecord, InvoiceLineItem, InvoiceQueryParams,
-    InvoiceWithDetails, OrganizationSubscription, PlanSubscriptionCount, RedeemCouponRequest,
-    SubscriptionCoupon, SubscriptionEvent, SubscriptionInvoice, SubscriptionPaymentMethod,
-    SubscriptionPlan, SubscriptionStatistics, SubscriptionWithPlan, UpdateOrganizationSubscription,
-    UpdateSubscriptionCoupon, UpdateSubscriptionPlan, UsageRecord, UsageSummary,
+pub use equipment::{
+    equipment_status, maintenance_status, maintenance_type, CreateEquipment, CreateMaintenance,
+    Equipment, EquipmentMaintenance, EquipmentQuery, EquipmentWithSummary, MaintenancePrediction,
+    UpdateEquipment, UpdateMaintenance,
 };
-
-// Epic 30: Government Portal Integration
-pub mod government_portal;
-
+pub use esg_reporting::{
+    CalculateCarbonFootprintRequest, CarbonFootprint, CarbonFootprintQuery, CarbonFootprintSummary,
+    CreateCarbonFootprint, CreateEsgBenchmark, CreateEsgConfiguration, CreateEsgImportJob,
+    CreateEsgMetric, CreateEsgReport, CreateEsgTarget, CreateEuTaxonomyAssessment,
+    EnergySourceType, EsgBenchmark, EsgBenchmarkCategory, EsgBenchmarkComparison,
+    EsgComplianceFramework, EsgConfiguration, EsgDashboardMetrics, EsgDataEntryMethod,
+    EsgEmissionScope, EsgImportJob, EsgMetric, EsgMetricCategory, EsgMetricsQuery, EsgReport,
+    EsgReportStatus, EsgStatistics, EsgSummaryScores, EsgTarget, EuTaxonomyAssessment,
+    GenerateEsgReportRequest, UpdateEsgConfiguration, UpdateEsgMetric, UpdateEsgReport,
+    UpdateEsgTarget, UpdateEuTaxonomyAssessment,
+};
+pub use facility::{
+    booking_status, facility_type, ApproveBooking, AvailableSlot, BookingWithDetails,
+    CancelBooking, CreateFacility, CreateFacilityBooking, Facility, FacilityBooking,
+    FacilitySummary, RejectBooking, UpdateFacility, UpdateFacilityBooking,
+};
+pub use fault::{
+    fault_category, fault_priority, fault_status, timeline_action, AddFaultComment, AddWorkNote,
+    AiSuggestion, AssignFault, CategoryCount, ConfirmFault, CreateFault, CreateFaultAttachment,
+    CreateFaultTimelineEntry, Fault, FaultAttachment, FaultListQuery, FaultStatistics,
+    FaultSummary, FaultTimelineEntry, FaultTimelineEntryWithUser, FaultWithDetails, PriorityCount,
+    ReopenFault, ResolveFault, StatusCount, TriageFault, UpdateFault, UpdateFaultStatus,
+};
+pub use feature_analytics::{
+    CreateFeaturePackage, FeatureAccessState as FeatureAccessState109,
+    FeatureDescriptor as FeatureDescriptor109, FeatureDescriptorSummary, FeatureEventType,
+    FeaturePackage, FeaturePackageFeature, FeaturePackageItem, FeaturePackageWithFeatures,
+    FeatureStatsByUserType, FeatureStatsQuery, FeatureUsageEvent, FeatureUsageStats,
+    LogFeatureEvent, OrganizationFeaturePackage, ResolvedFeature, ResolvedFeaturesQuery,
+    SetFeaturePreference, SetUserTypeAccess, SubscribeToPackage, UpdateFeaturePackage,
+    UpgradeOptionsResponse, UpsertFeatureDescriptor,
+    UserFeaturePreference as UserFeaturePreference109, UserTypeFeatureAccess,
+};
+pub use feature_package::{
+    package_source, BatchAddFeatures, CreateFeaturePackage as CreateFeaturePackage108,
+    CreateFeaturePackageItem, CreateOrganizationPackage, FeatureComparisonRow,
+    FeaturePackage as FeaturePackage108, FeaturePackageItem as FeaturePackageItem108,
+    FeaturePackageItemWithDetails, FeaturePackageQuery, FeaturePackageSummary,
+    FeaturePackageWithFeatures as FeaturePackageWithFeatures108, OrganizationPackage,
+    OrganizationPackageWithDetails, PackageComparison, PackageType, PublicPackage,
+    UpdateFeaturePackage as UpdateFeaturePackage108, UpdateOrganizationPackage,
+};
+pub use financial::{
+    ARReportEntry, ARReportTotals, AccountTransaction, AccountsReceivableReport, CreateFeeSchedule,
+    CreateFinancialAccount, CreateInvoice, CreateInvoiceItem, CreateTransaction, FeeFrequency,
+    FeeSchedule, FinancialAccount, FinancialAccountResponse, FinancialAccountType,
+    InitiatePaymentResponse, Invoice, InvoiceItem, InvoiceResponse, InvoiceStatus, LateFeeConfig,
+    ListInvoicesResponse, OnlinePaymentSession, Payment, PaymentAllocation, PaymentMethod,
+    PaymentResponse, PaymentStatus, RecordPayment, ReminderSchedule, TransactionCategory,
+    TransactionType, UnitCreditBalance, UnitFee,
+};
+pub use form::{
+    field_type, form_status, submission_status, target_type as form_target_type,
+    ConditionalDisplay, CreateForm, CreateFormField, CreateFormResponse,
+    ExportFormat as FormExportFormat, ExportSubmissionsRequest, FieldOption, Form, FormAttachment,
+    FormDownload, FormField, FormListQuery, FormListResponse, FormStatistics, FormSubmission,
+    FormSubmissionParams, FormSubmissionSummary, FormSubmissionWithDetails, FormSummary,
+    FormWithDetails, ReviewSubmission, SignatureData, SubmissionListQuery, SubmissionListResponse,
+    SubmitForm, SubmitFormResponse, UpdateForm, UpdateFormField, ValidationRules,
+};
 pub use government_portal::{
     AddSubmissionAttachment, CreatePortalConnection, CreateRegulatorySubmission,
     CreateSubmissionAudit, CreateSubmissionSchedule, GovernmentPortalConnection,
@@ -462,51 +361,36 @@ pub use government_portal::{
     UpdatePortalConnection, UpdateRegulatorySubmission, UpdateSubmissionSchedule, ValidationError,
     ValidationResult, ValidationWarning,
 };
-
-// Epics 31-34: Reality Portal Professional
-pub mod reality_portal;
-
-pub use reality_portal::{
-    AgencyMemberWithUser as RealityAgencyMemberWithUser, AgencySummary as RealityAgencySummary,
-    AssignRealtorListing, CreateAgencyInvitation, CreateCrmConnection, CreateFeedSubscription,
-    CreateImportJob as CreatePortalImportJob, CreateListingInquiry, CreatePortalSavedSearch,
-    CreateRealityAgency, CreateRealtorProfile, CrmConnection, FeedSubscription, ImportJobProgress,
-    InquiryMessage, InquiryWithListing, ListingAnalytics, ListingAnalyticsSummary, ListingInquiry,
-    ListingPriceHistory, PortalFavorite, PortalFavoriteWithListing, PortalImportJob,
-    PortalImportJobWithStats, PortalSavedSearch, PriceChangeAlert, PublicRealtorProfile,
-    RealityAgency, RealityAgencyInvitation, RealityAgencyMember, RealityFeedSubscription,
-    RealtorListing, RealtorProfile, ScheduleViewing, SearchAlertQueueEntry, SendInquiryMessage,
-    UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
-    UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite, UpdatePortalSavedSearch,
-    UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing, ViewingSchedule,
+pub use granular_notification::{
+    AddToGroupRequest, CategorySummary, CreateHeldNotification, DigestNotification,
+    EventNotificationPreference, EventPreferenceWithDetails, EventPreferencesResponse,
+    GenerateDigestRequest, GroupedNotification, GroupedNotificationsResponse, HeldNotification,
+    NotificationDigest, NotificationEventCategory, NotificationEventType, NotificationGroup,
+    NotificationGroupWithNotifications, NotificationSchedule, NotificationScheduleResponse,
+    RoleDefaultsListResponse, RoleNotificationDefaults, UpdateEventPreferenceRequest,
+    UpdateNotificationScheduleRequest, UpdateRoleDefaultsRequest,
 };
-
-// Epic 37: Community & Social Features
-pub mod community;
-
-pub use community::{
-    CommunityComment, CommunityEvent, CommunityEventRsvp, CommunityEventWithRsvp, CommunityGroup,
-    CommunityGroupMember, CommunityGroupWithMembership, CommunityPost, CommunityPostWithAuthor,
-    CreateCommunityComment, CreateCommunityEvent, CreateCommunityGroup, CreateCommunityPost,
-    CreateMarketplaceInquiry, CreateMarketplaceItem, EventRsvpRequest, JoinGroupRequest,
-    MarketplaceInquiry, MarketplaceItem, MarketplaceItemWithSeller, PollOption,
-    UpdateCommunityEvent, UpdateCommunityGroup, UpdateCommunityPost, UpdateMarketplaceItem,
+pub use infrastructure::{
+    job_type, queue, AcknowledgeAlert, AlertSeverity, AlertStatus, BackgroundJob,
+    BackgroundJobExecution, BackgroundJobQuery, BackgroundJobQueueStats, BackgroundJobStatus,
+    BackgroundJobTypeStats, CreateBackgroundJob, CreateFeatureFlag as CreateInfraFeatureFlag,
+    CreateHealthAlertRule, CreateSpan, CreateTrace, DependencyHealth, EvaluateFeatureFlag,
+    FeatureFlag as InfraFeatureFlag, FeatureFlagAuditAction, FeatureFlagAuditLog,
+    FeatureFlagEvaluation, FeatureFlagOverride as InfraFeatureFlagOverride,
+    FeatureFlagOverrideType, FeatureFlagValueType, HealthAlert, HealthAlertRule, HealthCheckConfig,
+    HealthCheckResult, HealthCheckType, HealthStatus, InfrastructureDashboard,
+    PaginatedResponse as InfrastructurePaginatedResponse, PrometheusMetric, ResolveAlert,
+    RetryBackgroundJob, Span, SpanKind, SpanStatus, SystemHealth, SystemMetrics, Trace, TraceQuery,
+    TraceWithSpans, UpdateFeatureFlag as UpdateInfraFeatureFlag, UpdateHealthAlertRule,
 };
-
-// Epic 38: Workflow Automation
-pub mod automation;
-
-// Epic 54: Forms Management
-pub mod form;
-
-// Epic 58: Package & Visitor Management
-pub mod package_visitor;
-
-// Epic 61: External Integrations Suite
-pub mod integration;
-
-// Epic 64: Advanced AI & LLM Capabilities
-pub mod llm_document;
+pub use insurance::{
+    claim_status, policy_status, policy_type, premium_frequency, reminder_type, AddClaimDocument,
+    AddPolicyDocument, ClaimStatusSummary, CreateInsuranceClaim, CreateInsurancePolicy,
+    CreateRenewalReminder, ExpiringPolicy, InsuranceClaim, InsuranceClaimDocument,
+    InsuranceClaimHistory, InsuranceClaimQuery, InsuranceClaimWithPolicy, InsurancePolicy,
+    InsurancePolicyDocument, InsurancePolicyQuery, InsuranceRenewalReminder, InsuranceStatistics,
+    PolicyTypeSummary, UpdateInsuranceClaim, UpdateInsurancePolicy, UpdateRenewalReminder,
+};
 
 pub use integration::{
     accounting_system, calendar_provider, calendar_sync_status,
@@ -524,83 +408,72 @@ pub use integration::{
     VideoConferenceConnection, VideoMeeting, WebhookDeliveryLog, WebhookDeliveryQuery,
     WebhookRetryPolicy, WebhookStatistics, WebhookSubscription,
 };
-
-pub use automation::{
-    AutomationAction, AutomationLogSummary, AutomationRuleWithStats, CallWebhookConfig,
-    ConditionTriggerConfig, CreateAutomationRule, CreateRuleFromTemplate, EventTriggerConfig,
-    GenerateReportConfig, ScheduleTriggerConfig, SendEmailConfig, SendNotificationConfig,
-    UpdateAutomationRule, WorkflowAutomationLog, WorkflowAutomationRule,
-    WorkflowAutomationTemplate,
+pub use investor_portal::{
+    CapitalCall, CreateCapitalCall, CreateDashboardMetrics, CreateDistribution,
+    CreateInvestmentPortfolio, CreateInvestorPortfolioProperty, CreateInvestorProfile,
+    CreateInvestorReport, CreateRoiCalculation, DistributionType, InvestmentPortfolio,
+    InvestmentStatus, InvestorDashboardMetrics, InvestorDistribution, InvestorPortalDashboard,
+    InvestorPortfolioProperty, InvestorPortfolioSummary, InvestorProfile, InvestorReport,
+    InvestorReportType, InvestorSummary, InvestorType, PortfolioWithDetails, RoiCalculation,
+    RoiCalculationQuery, RoiPeriod, RoiSummary, UpdateCapitalCall, UpdateDistribution,
+    UpdateInvestmentPortfolio, UpdateInvestorPortfolioProperty, UpdateInvestorProfile,
 };
 
-// Epic 54: Forms Management
-pub use form::{
-    field_type, form_status, submission_status, target_type as form_target_type,
-    ConditionalDisplay, CreateForm, CreateFormField, CreateFormResponse,
-    ExportFormat as FormExportFormat, ExportSubmissionsRequest, FieldOption, Form, FormAttachment,
-    FormDownload, FormField, FormListQuery, FormListResponse, FormStatistics, FormSubmission,
-    FormSubmissionParams, FormSubmissionSummary, FormSubmissionWithDetails, FormSummary,
-    FormWithDetails, ReviewSubmission, SignatureData, SubmissionListQuery, SubmissionListResponse,
-    SubmitForm, SubmitFormResponse, UpdateForm, UpdateFormField, ValidationRules,
+// Epic 15: Property Listings & Multi-Portal Sync
+// Epic 105: Portal Syndication
+pub use lease::{
+    application_status, lease_status, screening_status, screening_type, termination_reason,
+    ApplicationListQuery, ApplicationSummary, CreateAmendment, CreateApplication, CreateLease,
+    CreateLeaseTemplate, CreateReminder, ExpirationOverview, InitiateScreening, Lease,
+    LeaseAmendment, LeaseListQuery, LeasePayment, LeaseReminder, LeaseStatistics, LeaseSummary,
+    LeaseTemplate, LeaseWithDetails, PaymentSummary, RecordPayment as RecordLeasePayment,
+    RenewLease, ReviewApplication, ScreeningConsent, ScreeningSummary, SubmitApplication,
+    TenantApplication, TenantScreening, TerminateLease, UpdateApplication, UpdateLease,
+    UpdateLeaseTemplate, UpdateScreeningResult,
 };
 
-// Epic 55: Advanced Reporting & Analytics
-pub mod reports;
-
-pub use reports::{
-    CategoryTrend, ConsumptionAnomaly, ConsumptionReportData, ConsumptionSummary, DateRange,
-    FaultTrends, MonthlyAverage, MonthlyConsumption, MonthlyPersonCount, OccupancyReportData,
-    OccupancySummary, OccupancyTrends, ReportMonthlyCount, UnitConsumption, UnitOccupancy,
-    UtilityTypeConsumption, VoteParticipationDetail, VotingParticipationSummary, YearComparison,
+// Epic 16: Portal Search & Discovery
+pub use lease_abstraction::{
+    document_status as lease_document_status, import_status as lease_import_status,
+    review_status as extraction_review_status, ApproveExtraction, CreateExtractionCorrection,
+    CreateLeaseDocument, CreateLeaseExtraction, ExtractedField, ExtractionCorrection,
+    ExtractionSummary, ExtractionWithFields, ImportExtractionRequest,
+    ImportResult as LeaseImportResult, ImportValidationResult, LeaseDocument, LeaseDocumentQuery,
+    LeaseDocumentSummary, LeaseExtraction, LeaseImport, ProcessDocumentRequest, ProcessingStatus,
+    RejectExtraction, ValidationIssue as ExtractionValidationIssue,
 };
 
-// Epic 81: Report Schedule Management & Execution History
-pub mod report_schedule;
-
-pub use report_schedule::{
-    report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
-    ExecutionHistoryResponse, ReportExecution, ReportSchedule,
+// Epic 17: Agency & Realtor Management
+pub use legal::{
+    compliance_category, compliance_frequency, compliance_status, delivery_method, delivery_status,
+    document_type, notice_priority, notice_type, recipient_type, AcknowledgeNotice, ApplyTemplate,
+    ComplianceAuditTrail, ComplianceCategoryCount, ComplianceQuery, ComplianceRequirement,
+    ComplianceRequirementWithDetails, ComplianceStatistics, ComplianceTemplate,
+    ComplianceVerification, CreateAuditTrailEntry, CreateComplianceRequirement,
+    CreateComplianceTemplate, CreateComplianceVerification, CreateLegalDocument,
+    CreateLegalDocumentVersion, CreateLegalNotice, LegalDocument, LegalDocumentQuery,
+    LegalDocumentSummary, LegalDocumentVersion, LegalNotice, LegalNoticeQuery,
+    LegalNoticeRecipient, NoticeAcknowledgmentStats, NoticeRecipientInput, NoticeStatistics,
+    NoticeTypeCount, NoticeWithRecipients, UpcomingVerification, UpdateComplianceRequirement,
+    UpdateComplianceTemplate, UpdateLegalDocument, UpdateLegalNotice,
 };
 
-// Epic 58: Package & Visitor Management
-pub use package_visitor::{
-    package_carrier, package_status, visitor_purpose, visitor_status, AccessCodeVerification,
-    BuildingPackageSettings, BuildingVisitorSettings, CheckInVisitor, CheckOutVisitor,
-    CreatePackage, CreateVisitor, Package, PackageQuery, PackageStatistics, PackageSummary,
-    PackageWithDetails, PickupPackage, ReceivePackage, UpdateBuildingPackageSettings,
-    UpdateBuildingVisitorSettings, UpdatePackage, UpdateVisitor, VerifyAccessCode, Visitor,
-    VisitorQuery, VisitorStatistics, VisitorSummary, VisitorWithDetails,
+// Epic 18: Short-Term Rental Integration
+pub use listing::{
+    currency, listing_status, portal as listing_portal, property_type, syndication_job_type,
+    syndication_status, transaction_type, webhook_event_type, CreateListing, CreateListingFromUnit,
+    CreateListingPhoto, CreatePortalWebhookEvent, CreateSyndication, Listing, ListingListQuery,
+    ListingPhoto, ListingStatistics, ListingSummary, ListingSyndication, ListingWithDetails,
+    OrganizationSyndicationStats, PortalInquiryWebhook, PortalStats, PortalSyndicationStatus,
+    PortalViewWebhook, PortalWebhookEvent, PropertyTypeCount, PublishListingResponse,
+    ReorderPhotos, SyndicationDashboardQuery, SyndicationDashboardResponse,
+    SyndicationHealthStatus, SyndicationJobPayload, SyndicationResult, SyndicationStatusDashboard,
+    UpdateListing, UpdateListingStatus,
 };
 
-// Epic 59: News & Media Management
-pub mod news_article;
+// Epic 19: Lease Management & Tenant Screening
+pub mod lease;
 
-// Epic 65: Energy & Sustainability Tracking
-pub mod energy;
-
-pub use news_article::{
-    article_status, reaction_type, ArchiveArticle, ArticleComment, ArticleListQuery, ArticleMedia,
-    ArticleReaction, ArticleStatistics, ArticleSummary, ArticleView, ArticleWithDetails,
-    ArticleWithDetailsRow, CommentWithAuthor as ArticleCommentWithAuthor,
-    CommentWithAuthorRow as ArticleCommentWithAuthorRow, CreateArticle, CreateArticleComment,
-    CreateArticleMedia, ModerateComment, NewsArticle, PinArticle, PublishArticle, ReactionCounts,
-    ToggleReaction, UpdateArticle, UpdateArticleComment,
-};
-
-// Epic 65: Energy & Sustainability Tracking
-pub use energy::{
-    BenchmarkAlert, BenchmarkAlertSeverity, BenchmarkAlertsQuery, BenchmarkDashboard,
-    BenchmarkMetricType, BenchmarkQuery, BuildingBenchmark, CalculateBenchmark, CarbonDashboard,
-    CarbonEmission, CarbonExportRequest, CarbonTarget, CreateBenchmarkAlert, CreateCarbonEmission,
-    CreateCarbonTarget, CreateEnergyPerformanceCertificate, CreateSustainabilityScore,
-    EmissionSourceType, EnergyPerformanceCertificate, EnergyRating, EpcSummary, HeatingType,
-    InsulationRating, ListBenchmarkAlertsResponse, ListBenchmarksResponse, ListEmissionsResponse,
-    ListEpcsResponse, MonthlyEmission, RatingCount, SourceEmission, SustainabilityFilter,
-    SustainabilityScore, UpdateEnergyPerformanceCertificate, UpdateSustainabilityScore,
-};
-
-// Epic 64: Advanced AI & LLM Capabilities
-// Epic 93: Voice Assistant OAuth Completion
 pub use llm_document::{
     enhancement_status, enhancement_type, generation_status, llm_provider, supported_language,
     voice_intent, voice_platform, AiEscalationConfig, AiUsageQuery, AiUsageStatistics,
@@ -622,90 +495,27 @@ pub use llm_document::{
     WebhookVerificationResult,
 };
 
-// UC-12: Utility Outages
-pub mod outage;
+// Epic 20: Maintenance Scheduling & Work Orders
+pub mod work_order;
 
-// Epic 132: Dynamic Rent Pricing & Market Analytics
-pub mod market_pricing;
-
-// Epic 72: Regional Legal Compliance (SK/CZ)
-pub mod regional_compliance;
-
-pub use regional_compliance::{
-    slovak_accounts, ConfigureCzechSvj, ConfigureSlovakAccounting, ConfigureSlovakGdpr,
-    ConfigureSlovakVoting, ConsentCategoryStatus, CzechDecisionType, CzechOrgType, CzechSvjConfig,
-    CzechSvjUsneseni, CzechVoteValidation, DpoContact, ExportSlovakAccounting, GdprConsentCategory,
-    GdprConsentStatus, Jurisdiction, PohodaExport, PohodaHeader, PohodaInvoiceExport,
-    PohodaInvoiceItemExport, PohodaPaymentExport, ProcessingPurpose, QuestionMinutes,
-    RecordGdprConsent, RegionalComplianceStatus, SetJurisdiction, SlovakAccountingConfig,
-    SlovakAccountingExport, SlovakAccountingFormat, SlovakDecisionType, SlovakGdprConfig,
-    SlovakGdprConsent, SlovakVoteMinutes, SlovakVoteValidation, SlovakVotingConfig,
-    ValidateCzechVote, ValidateSlovakVote, VoteParticipantMinutes,
+pub use market_pricing::{
+    pricing_recommendation_status, pricing_source, AcceptPricingRecommendation, AddCmaProperty,
+    CmaAnalysisSummary, CmaPropertyComparison, CmaSummary, CmaWithProperties,
+    ComparativeMarketAnalysis, CreateComparativeMarketAnalysis, CreateMarketDataPoint,
+    CreateMarketRegion, ExportPricingDataRequest, GenerateStatisticsRequest, MarketComparable,
+    MarketDataPoint, MarketDataQuery, MarketRegion, MarketRegionSummary, MarketStatistics,
+    MarketStatisticsSummary, MarketTrendPoint, PortfolioPricingSummary,
+    PriceRange as MarketPriceRange, PricingDashboard, PricingDashboardQuery,
+    PricingFactor as MarketPricingFactor, PricingHistoryEntry, PricingRecommendation,
+    PricingRecommendationSummary, PricingRecommendationWithDetails, RecordPriceChange,
+    RejectPricingRecommendation, RequestPricingRecommendation, UnitPricingHistory,
+    UnitRecommendationSummary, UpdateComparativeMarketAnalysis, UpdateMarketRegion,
+    VacancyTrendPoint, YieldRange,
 };
 
-// Epic 76: Move-in/Move-out Workflow
-pub mod move_workflow;
-
-pub use move_workflow::{
-    assignee_type, deduction_status, item_condition, key_type, task_status, workflow_status,
-    workflow_type, CompleteInspection, CompleteTimelineTask, CreateDepositDeduction,
-    CreateInspection, CreateInspectionItem, CreateInspectionPhoto, CreateInspectionTemplate,
-    CreateKeyHandoff, CreateMoveWorkflow, CreateTimelineFromTemplate, CreateTimelineTask,
-    DepositDeduction, DepositSummary, DisputeDeduction, Inspection, InspectionItem,
-    InspectionItemWithPhotos, InspectionPhoto, InspectionQuery, InspectionSummary,
-    InspectionTemplate, InspectionTemplateSummary, InspectionWithDetails, ItemTemplate, KeyHandoff,
-    MoveTimelineTask, MoveWorkflow, MoveWorkflowStatistics, MoveWorkflowSummary,
-    MoveWorkflowWithDetails, ResolveDeduction, RoomTemplate, TimelineOverview,
-    TimelineTaskTemplate, UpdateInspectionItem, UpdateInspectionTemplate, UpdateMoveWorkflow,
-    UpdateTimelineTask, WorkflowQuery as MoveWorkflowQuery,
-};
-
-// Epic 57: Building Registry (pet/vehicle/parking)
-pub mod registry;
-
-pub use registry::{
-    pet_size, pet_type, registry_status, vehicle_type, BuildingRegistryRules, CreateParkingSpot,
-    CreatePetRegistration, CreateVehicleRegistration, ParkingSpot, ParkingSpotQuery,
-    ParkingSpotWithDetails, PetRegistration, PetRegistrationQuery, PetRegistrationSummary,
-    PetRegistrationWithDetails, RegistryStatistics, ReviewRegistration, UpdateParkingSpot,
-    UpdatePetRegistration, UpdateRegistryRules, UpdateVehicleRegistration, VehicleRegistration,
-    VehicleRegistrationQuery, VehicleRegistrationSummary, VehicleRegistrationWithDetails,
-};
-
-// Epic 66: Platform Migration & Data Import
-pub mod migration;
-
-pub use migration::{
-    ApproveImportRequest, ApproveImportResponse, ColumnMappingStatus,
-    CreateImportJob as CreateMigrationImportJob, CreateImportTemplate, CreateMigrationExport,
-    DuplicateRecord, ExportCategoriesResponse, ExportCategoryInfo, ExportColumnDefinition,
-    ExportDataCategory, ExportFileEntry, ExportPrivacyOptions, ExportSchemaMetadata, FieldDataType,
-    FieldDifference, FieldValidation, ImportCategoriesResponse, ImportCategoryInfo, ImportDataType,
-    ImportFieldMapping, ImportJob, ImportJobFilter, ImportJobHistory, ImportJobStatus,
-    ImportJobStatusResponse, ImportOptions, ImportPreviewResult, ImportRowError, ImportTemplate,
-    ImportTemplateListResponse, ImportTemplateSummary, MigrationExport, MigrationExportResponse,
-    MigrationExportStatus, MigrationExportStatusResponse, MigrationPagination, RecordTypeCounts,
-    TemplateFormat, UpdateImportTemplate, ValidationIssue, ValidationSeverity,
-};
-
-// Epic 67: Advanced Compliance (AML/DSA)
-pub mod compliance;
-
-pub use compliance::{
-    AddComplianceNote, AmlAssessmentStatus, AmlRiskAssessment, AmlRiskLevel, ComplianceNote,
-    ContentOwnerInfo, ContentTypeCount, CountryRisk, CountryRiskRating, CreateAmlRiskAssessment,
-    CreateDsaTransparencyReport, CreateEddDocument, CreateEnhancedDueDiligence,
-    CreateModerationCase, DecideAppeal, DocumentVerificationStatus, DsaReportStatus,
-    DsaReportSummary, DsaTransparencyReport, DsaTransparencyReportResponse, EddDocument, EddStatus,
-    EnhancedDueDiligence, FileAppeal, ModeratedContentType, ModerationActionTemplate,
-    ModerationActionType, ModerationCase, ModerationCaseResponse, ModerationQueueQuery,
-    ModerationQueueStats, ModerationStatus, PriorityCount as AmlPriorityCount, ReportSource,
-    RiskFactor, SuspiciousActivity, TakeModerationAction, ViolationType, ViolationTypeCount,
-    AML_THRESHOLD_EUR_CENTS,
-};
-
-// Epic 68: Service Provider Marketplace
-pub mod marketplace;
+// Epic 21: Supplier & Vendor Management
+// Epic 78: Vendor Operations Portal
+pub mod vendor;
 
 pub use marketplace::{
     badge_type, pricing_type, profile_status, quote_status, review_status, rfq_status,
@@ -722,49 +532,127 @@ pub use marketplace::{
     UpdateServiceProviderProfile, VerificationQuery, VerificationQueueItem,
 };
 
-// Epic 69: Public API & Developer Ecosystem
-pub mod public_api;
+// Epic 22: Insurance Management
+pub mod insurance;
 
-pub use public_api::{
-    api_key_scope, api_key_status, rate_limit_tier, sdk_language,
-    webhook_delivery_status as public_api_webhook_delivery_status,
-    webhook_event_type as public_api_webhook_event_type, ApiChangelog, ApiEndpointDoc, ApiKey,
-    ApiKeyDisplay, ApiKeyQuery, ApiKeyUsageStats, ApiRequestLog, ApiRequestLogQuery, CreateApiKey,
-    CreateApiKeyResponse, CreateDeveloperAccount, CreateRateLimitConfig, CreateWebhookResponse,
-    CreateWebhookSubscription as CreatePublicApiWebhookSubscription, DeveloperAccount,
-    DeveloperPortalStats, DeveloperUsageSummary, EndpointUsage, PaginatedResponse, RateLimitConfig,
-    RateLimitHeaders, RateLimitStatus as PublicApiRateLimitStatus, RateLimitWindow,
-    RotateApiKeyResponse, RotateWebhookSecretResponse, SandboxEnvironment, SandboxTestRequest,
-    SandboxTestResponse, SdkDownloadInfo, SdkLanguageInfo, SdkVersion,
-    TestWebhookRequest as PublicApiTestWebhookRequest,
-    TestWebhookResponse as PublicApiTestWebhookResponse, TierUsage, UpdateApiKey,
-    UpdateDeveloperAccount, UpdateRateLimitConfig,
-    UpdateWebhookSubscription as UpdatePublicApiWebhookSubscription,
-    WebhookDelivery as PublicApiWebhookDelivery,
-    WebhookDeliveryQuery as PublicApiWebhookDeliveryQuery,
-    WebhookSubscription as PublicApiWebhookSubscription,
-    WebhookSubscriptionQuery as PublicApiWebhookSubscriptionQuery,
+pub use membership::{GrantMembership, UserInvite, UserMembership, UserMergeCollision};
+
+// Epic 23: Emergency Management
+pub mod emergency;
+
+pub use messaging::{
+    BlockWithUserInfo, BlockWithUserInfoRow, CreateBlock, CreateMessage, CreateThread, Message,
+    MessagePreview, MessageThread, MessageWithSender, MessageWithSenderRow, ParticipantInfo,
+    ThreadWithPreview, ThreadWithPreviewRow, UserBlock,
 };
 
-// Epic 71: Cross-Cutting Infrastructure
-pub mod infrastructure;
+// Epic 24: Budget & Financial Planning
+pub mod budget;
 
-pub use infrastructure::{
-    job_type, queue, AcknowledgeAlert, AlertSeverity, AlertStatus, BackgroundJob,
-    BackgroundJobExecution, BackgroundJobQuery, BackgroundJobQueueStats, BackgroundJobStatus,
-    BackgroundJobTypeStats, CreateBackgroundJob, CreateFeatureFlag as CreateInfraFeatureFlag,
-    CreateHealthAlertRule, CreateSpan, CreateTrace, DependencyHealth, EvaluateFeatureFlag,
-    FeatureFlag as InfraFeatureFlag, FeatureFlagAuditAction, FeatureFlagAuditLog,
-    FeatureFlagEvaluation, FeatureFlagOverride as InfraFeatureFlagOverride,
-    FeatureFlagOverrideType, FeatureFlagValueType, HealthAlert, HealthAlertRule, HealthCheckConfig,
-    HealthCheckResult, HealthCheckType, HealthStatus, InfrastructureDashboard,
-    PaginatedResponse as InfrastructurePaginatedResponse, PrometheusMetric, ResolveAlert,
-    RetryBackgroundJob, Span, SpanKind, SpanStatus, SystemHealth, SystemMetrics, Trace, TraceQuery,
-    TraceWithSpans, UpdateFeatureFlag as UpdateInfraFeatureFlag, UpdateHealthAlertRule,
+pub use meter::{
+    ConsumptionAggregate, ConsumptionComparison, ConsumptionDataPoint, ConsumptionHistoryResponse,
+    CreateSubmissionWindow, CreateUtilityBill, DistributeUtilityBill, DistributionMethod,
+    IngestSmartMeterReading, ListMetersResponse, ListReadingsResponse, Meter, MeterReading,
+    MeterResponse, MeterType, MissingReadingAlert, ReadingApprovalEntry, ReadingSource,
+    ReadingStatus, ReadingSubmissionWindow, ReadingValidationRule, RegisterMeter, ReplaceMeter,
+    SmartMeterProvider, SmartMeterReadingLog, SubmitReading, UnitDistributionOverride, UtilityBill,
+    UtilityBillDistribution, UtilityBillResponse, ValidateReading,
 };
 
-// Epic 73: Infrastructure & Operations
-pub mod operations;
+// Epic 25: Legal Document & Compliance
+pub mod legal;
+
+pub use migration::{
+    ApproveImportRequest, ApproveImportResponse, ColumnMappingStatus,
+    CreateImportJob as CreateMigrationImportJob, CreateImportTemplate, CreateMigrationExport,
+    DuplicateRecord, ExportCategoriesResponse, ExportCategoryInfo, ExportColumnDefinition,
+    ExportDataCategory, ExportFileEntry, ExportPrivacyOptions, ExportSchemaMetadata, FieldDataType,
+    FieldDifference, FieldValidation, ImportCategoriesResponse, ImportCategoryInfo, ImportDataType,
+    ImportFieldMapping, ImportJob, ImportJobFilter, ImportJobHistory, ImportJobStatus,
+    ImportJobStatusResponse, ImportOptions, ImportPreviewResult, ImportRowError, ImportTemplate,
+    ImportTemplateListResponse, ImportTemplateSummary, MigrationExport, MigrationExportResponse,
+    MigrationExportStatus, MigrationExportStatusResponse, MigrationPagination, RecordTypeCounts,
+    TemplateFormat, UpdateImportTemplate, ValidationIssue, ValidationSeverity,
+};
+
+// Epic 26: Platform Subscription & Billing
+pub mod subscription;
+
+pub use move_workflow::{
+    assignee_type, deduction_status, item_condition, key_type, task_status, workflow_status,
+    workflow_type, CompleteInspection, CompleteTimelineTask, CreateDepositDeduction,
+    CreateInspection, CreateInspectionItem, CreateInspectionPhoto, CreateInspectionTemplate,
+    CreateKeyHandoff, CreateMoveWorkflow, CreateTimelineFromTemplate, CreateTimelineTask,
+    DepositDeduction, DepositSummary, DisputeDeduction, Inspection, InspectionItem,
+    InspectionItemWithPhotos, InspectionPhoto, InspectionQuery, InspectionSummary,
+    InspectionTemplate, InspectionTemplateSummary, InspectionWithDetails, ItemTemplate, KeyHandoff,
+    MoveTimelineTask, MoveWorkflow, MoveWorkflowStatistics, MoveWorkflowSummary,
+    MoveWorkflowWithDetails, ResolveDeduction, RoomTemplate, TimelineOverview,
+    TimelineTaskTemplate, UpdateInspectionItem, UpdateInspectionTemplate, UpdateMoveWorkflow,
+    UpdateTimelineTask, WorkflowQuery as MoveWorkflowQuery,
+};
+
+// Epic 30: Government Portal Integration
+pub mod government_portal;
+
+pub use multi_currency::{
+    ConversionStatus, CountryCode, CreateCrossBorderLease, CreateCurrencyConfig,
+    CreateExchangeRate, CreateMultiCurrencyTransaction, CreatePropertyCurrencyConfig,
+    CreateReportConfig, CrossBorderComplianceRequirement, CrossBorderComplianceStatus,
+    CrossBorderLease, CrossBorderLeaseQuery, CurrencyBreakdown, CurrencyConversionAudit,
+    CurrencyDistribution, CurrencyExposureAnalysis, CurrencySummary, ExchangeRate,
+    ExchangeRateFetchLog, ExchangeRateQuery, ExchangeRateSource, ExchangeRateSummary,
+    GenerateReportRequest, MultiCurrencyDashboard, MultiCurrencyReportConfig,
+    MultiCurrencyReportSnapshot, MultiCurrencyStatistics, MultiCurrencyTransaction,
+    OrganizationCurrencyConfig, OverrideExchangeRate, PropertyBreakdown, PropertyCurrencyConfig,
+    SupportedCurrency, TransactionQuery as MultiCurrencyTransactionQuery, UpdateCrossBorderLease,
+    UpdateCurrencyConfig, UpdatePropertyCurrencyConfig, UpdateReportConfig, UpdateTransactionRate,
+};
+
+// Epics 31-34: Reality Portal Professional
+pub mod reality_portal;
+
+pub use news_article::{
+    article_status, reaction_type, ArchiveArticle, ArticleComment, ArticleListQuery, ArticleMedia,
+    ArticleReaction, ArticleStatistics, ArticleSummary, ArticleView, ArticleWithDetails,
+    ArticleWithDetailsRow, CommentWithAuthor as ArticleCommentWithAuthor,
+    CommentWithAuthorRow as ArticleCommentWithAuthorRow, CreateArticle, CreateArticleComment,
+    CreateArticleMedia, ModerateComment, NewsArticle, PinArticle, PublishArticle, ReactionCounts,
+    ToggleReaction, UpdateArticle, UpdateArticleComment,
+};
+
+// Epic 37: Community & Social Features
+pub mod community;
+
+pub use notification_preference::{
+    DisableAllWarningResponse, NotificationChannel, NotificationPreference,
+    NotificationPreferenceResponse, NotificationPreferencesResponse,
+    UpdateNotificationPreferenceRequest,
+};
+
+// Epic 38: Workflow Automation
+pub mod automation;
+
+// Epic 54: Forms Management
+pub mod form;
+
+// Epic 58: Package & Visitor Management
+pub mod package_visitor;
+
+// Epic 61: External Integrations Suite
+pub mod integration;
+
+// Epic 64: Advanced AI & LLM Capabilities
+pub mod llm_document;
+
+pub use oauth::{
+    AuthorizeRequest, ConsentPageData, CreateAccessToken, CreateAuthorizationCode,
+    CreateOAuthClient, CreateRefreshToken as CreateOAuthRefreshToken, CreateUserOAuthGrant,
+    IntrospectionResponse, OAuthAccessToken, OAuthAuthorizationCode, OAuthClient,
+    OAuthClientSummary, OAuthError, OAuthRefreshToken, OAuthScope, RegisterClientRequest,
+    RegisterClientResponse, RevokeTokenRequest, ScopeDisplay, TokenRequest, TokenResponse,
+    UpdateOAuthClient, UserGrantWithClient, UserGrantWithClientRow, UserOAuthGrant,
+};
 
 pub use operations::{
     Backup, BackupQuery, BackupStatus, BackupType, CloudServiceType, CostAlert, CostAlertQuery,
@@ -781,9 +669,30 @@ pub use operations::{
     UpdateMigrationProgress,
 };
 
-// Epic 74: Owner Investment Analytics
-pub mod owner_analytics;
+// Epic 54: Forms Management
+pub use organization::{
+    CreateOrganization, Organization, OrganizationStatus, OrganizationSummary, UpdateOrganization,
+};
 
+// Epic 55: Advanced Reporting & Analytics
+pub mod reports;
+
+pub use organization_member::{
+    CreateOrganizationMember, MembershipStatus, OrganizationMember, OrganizationMemberWithUser,
+    UpdateOrganizationMember, UserOrganizationMembership,
+};
+
+// Epic 81: Report Schedule Management & Execution History
+pub mod report_schedule;
+
+pub use outage::{
+    outage_commodity, outage_severity, outage_status, CancelOutage, CommodityCount, CreateOutage,
+    CreateOutageNotification, MarkOutageRead, Outage, OutageDashboard, OutageListQuery,
+    OutageNotification, OutageStatistics, OutageSummary, OutageWithDetails, ResolveOutage,
+    StartOutage, UpdateOutage,
+};
+
+// Epic 58: Package & Visitor Management
 pub use owner_analytics::{
     AddComparableProperty, CalculateROIRequest, CashFlowBreakdown, CashFlowExpenses,
     CashFlowIncome, ComparableProperty as OwnerAnalyticsComparableProperty, ComparisonMetrics,
@@ -796,104 +705,108 @@ pub use owner_analytics::{
     ValueTrendAnalysis,
 };
 
-// Epic 77: Dispute Resolution
-pub mod disputes;
+// Epic 59: News & Media Management
+pub mod news_article;
 
-// Epic 108: Feature Packages & Bundles
-pub mod feature_package;
+// Epic 65: Energy & Sustainability Tracking
+pub mod energy;
 
-// Epic 109: User Type Feature Experience
-pub mod feature_analytics;
-
-pub use disputes::{
-    action_status, activity_type, dispute_category, dispute_priority, dispute_state_machine,
-    dispute_status, escalation_severity, party_role, resolution_status, session_status,
-    session_type, ActionItem, AddEvidence, CategoryCount as DisputeCategoryCount,
-    CompleteActionItem, CreateActionItem, CreateEscalation, Dispute, DisputeActivity,
-    DisputeEvidence, DisputeParty, DisputePartyWithUser, DisputeQuery, DisputeResolution,
-    DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation, FileDispute, MediationCase,
-    MediationSession, MediationSessionWithAttendance, PartyActionsDashboard, PartySubmission,
-    PriorityCount as DisputePriorityCount, ProposeResolution, RecordSessionNotes, ResolutionTerm,
-    ResolutionVote, ResolutionWithVotes, ResolveDispute, ResolveEscalation, ScheduleSession,
-    SessionAttendance, StatusCount as DisputeStatusCount, SubmitResponse, UpdateDisputeStatus,
-    UpdateMediationNotes, VoteOnResolution,
+pub use package_visitor::{
+    package_carrier, package_status, visitor_purpose, visitor_status, AccessCodeVerification,
+    BuildingPackageSettings, BuildingVisitorSettings, CheckInVisitor, CheckOutVisitor,
+    CreatePackage, CreateVisitor, Package, PackageQuery, PackageStatistics, PackageSummary,
+    PackageWithDetails, PickupPackage, ReceivePackage, UpdateBuildingPackageSettings,
+    UpdateBuildingVisitorSettings, UpdatePackage, UpdateVisitor, VerifyAccessCode, Visitor,
+    VisitorQuery, VisitorStatistics, VisitorSummary, VisitorWithDetails,
 };
 
-// Epic 108: Feature Packages & Bundles
-pub use feature_package::{
-    package_source, BatchAddFeatures, CreateFeaturePackage as CreateFeaturePackage108,
-    CreateFeaturePackageItem, CreateOrganizationPackage, FeatureComparisonRow,
-    FeaturePackage as FeaturePackage108, FeaturePackageItem as FeaturePackageItem108,
-    FeaturePackageItemWithDetails, FeaturePackageQuery, FeaturePackageSummary,
-    FeaturePackageWithFeatures as FeaturePackageWithFeatures108, OrganizationPackage,
-    OrganizationPackageWithDetails, PackageComparison, PackageType, PublicPackage,
-    UpdateFeaturePackage as UpdateFeaturePackage108, UpdateOrganizationPackage,
-};
+// Epic 65: Energy & Sustainability Tracking
+pub use password_reset::{CreatePasswordResetToken, PasswordResetToken};
 
-// Epic 109: User Type Feature Experience
-pub use feature_analytics::{
-    CreateFeaturePackage, FeatureAccessState as FeatureAccessState109,
-    FeatureDescriptor as FeatureDescriptor109, FeatureDescriptorSummary, FeatureEventType,
-    FeaturePackage, FeaturePackageFeature, FeaturePackageItem, FeaturePackageWithFeatures,
-    FeatureStatsByUserType, FeatureStatsQuery, FeatureUsageEvent, FeatureUsageStats,
-    LogFeatureEvent, OrganizationFeaturePackage, ResolvedFeature, ResolvedFeaturesQuery,
-    SetFeaturePreference, SetUserTypeAccess, SubscribeToPackage, UpdateFeaturePackage,
-    UpgradeOptionsResponse, UpsertFeatureDescriptor,
-    UserFeaturePreference as UserFeaturePreference109, UserTypeFeatureAccess,
+// Epic 64: Advanced AI & LLM Capabilities
+// Epic 93: Voice Assistant OAuth Completion
+pub use person_month::{
+    person_month_source, BuildingPersonMonthSummary, BulkPersonMonthEntry, BulkUpsertPersonMonths,
+    CreatePersonMonth, MonthlyCount, PersonMonth, PersonMonthWithUnit, UpdatePersonMonth,
+    YearlyPersonMonthSummary,
 };
 
 // UC-12: Utility Outages
-pub use outage::{
-    outage_commodity, outage_severity, outage_status, CancelOutage, CommodityCount, CreateOutage,
-    CreateOutageNotification, MarkOutageRead, Outage, OutageDashboard, OutageListQuery,
-    OutageNotification, OutageStatistics, OutageSummary, OutageWithDetails, ResolveOutage,
-    StartOutage, UpdateOutage,
-};
+pub mod outage;
 
 // Epic 132: Dynamic Rent Pricing & Market Analytics
-pub use market_pricing::{
-    pricing_recommendation_status, pricing_source, AcceptPricingRecommendation, AddCmaProperty,
-    CmaAnalysisSummary, CmaPropertyComparison, CmaSummary, CmaWithProperties,
-    ComparativeMarketAnalysis, CreateComparativeMarketAnalysis, CreateMarketDataPoint,
-    CreateMarketRegion, ExportPricingDataRequest, GenerateStatisticsRequest, MarketComparable,
-    MarketDataPoint, MarketDataQuery, MarketRegion, MarketRegionSummary, MarketStatistics,
-    MarketStatisticsSummary, MarketTrendPoint, PortfolioPricingSummary,
-    PriceRange as MarketPriceRange, PricingDashboard, PricingDashboardQuery,
-    PricingFactor as MarketPricingFactor, PricingHistoryEntry, PricingRecommendation,
-    PricingRecommendationSummary, PricingRecommendationWithDetails, RecordPriceChange,
-    RejectPricingRecommendation, RequestPricingRecommendation, UnitPricingHistory,
-    UnitRecommendationSummary, UpdateComparativeMarketAnalysis, UpdateMarketRegion,
-    VacancyTrendPoint, YieldRange,
+pub mod market_pricing;
+
+// Epic 72: Regional Legal Compliance (SK/CZ)
+pub mod regional_compliance;
+
+pub use platform_admin::{
+    AdminOrganizationDetail, AdminOrganizationSummary, AnnouncementSeverity, CatalogPagination,
+    CategoryWithCount, CreateFeatureCategoryRequest, CreateFeatureFlagOverrideRequest,
+    CreateFeatureFlagRequest, CreateHelpArticleRequest, CreateMaintenanceRequest,
+    CreateSystemAnnouncementRequest, FeatureAccessState, FeatureCatalogItem, FeatureCatalogQuery,
+    FeatureCatalogResponse, FeatureCategory, FeatureCategorySummary, FeatureDescriptor,
+    FeatureDescriptorDisplay, FeatureFlag, FeatureFlagOverride, FeatureFlagScope, FeatureState,
+    FeatureUserTypeAccess, HelpArticle, HelpArticleRevision, MetricAlert, MetricThreshold,
+    MetricType, OnboardingStep, OnboardingTour, OrganizationDetailMetrics, OrganizationMetrics,
+    PlatformMetric, ReactivateOrganizationRequest, ScheduledMaintenance,
+    SetFeatureUserTypeAccessRequest, SetUserFeaturePreferenceRequest, StepPlacement,
+    SupportAccessLog, SupportAccessRequest, SupportAccessStatus, SuspendOrganizationRequest,
+    SystemAnnouncement, SystemAnnouncementAcknowledgment, UpdateFeatureCategoryRequest,
+    UpsertFeatureDescriptorRequest, UserFeaturePreference, UserOnboardingProgress,
 };
 
-// Epic 137: Smart Building Certification
-pub mod building_certification;
+// Epic 76: Move-in/Move-out Workflow
+pub mod move_workflow;
 
-pub use building_certification::{
-    BuildingCertification, CertificationAuditLog, CertificationBenchmark, CertificationCost,
-    CertificationCredit, CertificationDashboard, CertificationDocument, CertificationFilters,
-    CertificationLevel, CertificationLevelCount, CertificationMilestone, CertificationProgram,
-    CertificationProgramCount, CertificationReminder, CertificationStatus,
-    CertificationWithCredits, CreateBuildingCertification, CreateCertificationBenchmark,
-    CreateCertificationCost, CreateCertificationCredit, CreateCertificationDocument,
-    CreateCertificationMilestone, CreateCertificationReminder, CreditCategoryType,
-    UpdateBuildingCertification, UpdateCertificationCredit, UpdateCertificationMilestone,
+pub use portal::{
+    alert_frequency, AddFavorite, CreatePortalUser, CreateSavedSearch, Favorite,
+    FavoriteWithListing, FavoriteWithListingRow, FavoritesResponse, MatchedListing, PortalSession,
+    PortalUser, PublicListingDetail, PublicListingQuery, PublicListingSearchResponse,
+    PublicListingSummary, SavedSearch, SavedSearchesResponse, SearchAlert, SearchCriteria,
+    SearchSuggestions, UpdatePortalUser, UpdateSavedSearch,
 };
 
-// Epic 133: AI Lease Abstraction & Document Intelligence
-pub mod lease_abstraction;
-pub use lease_abstraction::{
-    document_status as lease_document_status, import_status as lease_import_status,
-    review_status as extraction_review_status, ApproveExtraction, CreateExtractionCorrection,
-    CreateLeaseDocument, CreateLeaseExtraction, ExtractedField, ExtractionCorrection,
-    ExtractionSummary, ExtractionWithFields, ImportExtractionRequest,
-    ImportResult as LeaseImportResult, ImportValidationResult, LeaseDocument, LeaseDocumentQuery,
-    LeaseDocumentSummary, LeaseExtraction, LeaseImport, ProcessDocumentRequest, ProcessingStatus,
-    RejectExtraction, ValidationIssue as ExtractionValidationIssue,
+// Epic 57: Building Registry (pet/vehicle/parking)
+pub mod registry;
+
+pub use portal_password_reset::{CreatePortalPasswordResetToken, PortalPasswordResetToken};
+
+// Epic 66: Platform Migration & Data Import
+pub mod migration;
+
+pub use portfolio_analytics::{
+    AcknowledgeAlert as AcknowledgePortfolioAlert, AggregationPeriod, AlertStats,
+    BenchmarkCategory, BenchmarkPerformance, ComparisonScope, CreateAlertRule,
+    CreatePortfolioBenchmark, CreatePropertyComparison, CreatePropertyMetrics,
+    PortfolioAggregatedMetrics, PortfolioAlert, PortfolioAlertRule, PortfolioAnalyticsDashboard,
+    PortfolioAnalyticsQuery, PortfolioBenchmark, PortfolioPropertyComparison,
+    PortfolioSummary as PortfolioAnalyticsSummary, PortfolioTrend, PropertyPerformanceMetrics,
+    PropertyRanking, RecordTrend, ResolveAlert as ResolvePortfolioAlert, TrendAnalysis,
+    TrendDataPoint, UpdateAlertRule, UpdatePortfolioBenchmark,
 };
 
-// Epic 134: Predictive Maintenance & Equipment Intelligence
-pub mod predictive_maintenance;
+// Epic 67: Advanced Compliance (AML/DSA)
+pub mod compliance;
+
+pub use portfolio_performance::{
+    BenchmarkComparison, BenchmarkComparisonSummary, BenchmarkSource, CalculateMetricsRequest,
+    CashFlowTrendPoint, CreateBenchmarkComparison, CreateMarketBenchmark, CreatePerformanceAlert,
+    CreatePerformancePortfolio, CreatePortfolioProperty,
+    CreatePropertyTransaction as CreatePortfolioPropertyTransaction,
+    DashboardQuery as PerformanceDashboardQuery, DashboardSummary, ExportPortfolioReport,
+    ExportPortfolioReportResponse, FinancialMetrics, FinancingType, MarketBenchmark,
+    MetricComparison, MetricPeriod, MetricsSummary, PerformanceAlert, PerformancePortfolio,
+    PortfolioAnalyticsDashboard144, PortfolioMetricsSummary,
+    PortfolioProperty as PerformancePortfolioProperty, PortfolioTransactionType, PropertyCashFlow,
+    PropertyPerformanceCard, PropertyTransaction, TransactionQuery as PortfolioTransactionQuery,
+    UpdateMarketBenchmark, UpdatePerformancePortfolio,
+    UpdatePortfolioProperty as UpdatePerformancePortfolioProperty, UpdatePropertyTransaction,
+    UpsertPropertyCashFlow, ValueTrendPoint,
+};
+
+// Epic 68: Service Provider Marketplace
+pub mod marketplace;
 
 pub use predictive_maintenance::{
     AcknowledgeAlertRequest, AlertSeverity as PredictiveAlertSeverity,
@@ -909,53 +822,8 @@ pub use predictive_maintenance::{
     UpdateEquipment as UpdatePredictiveEquipment, UpdateMaintenanceLog,
 };
 
-// Epic 140: Multi-Property Portfolio Analytics
-pub mod portfolio_analytics;
-
-pub use portfolio_analytics::{
-    AcknowledgeAlert as AcknowledgePortfolioAlert, AggregationPeriod, AlertStats,
-    BenchmarkCategory, BenchmarkPerformance, ComparisonScope, CreateAlertRule,
-    CreatePortfolioBenchmark, CreatePropertyComparison, CreatePropertyMetrics,
-    PortfolioAggregatedMetrics, PortfolioAlert, PortfolioAlertRule, PortfolioAnalyticsDashboard,
-    PortfolioAnalyticsQuery, PortfolioBenchmark, PortfolioPropertyComparison,
-    PortfolioSummary as PortfolioAnalyticsSummary, PortfolioTrend, PropertyPerformanceMetrics,
-    PropertyRanking, RecordTrend, ResolveAlert as ResolvePortfolioAlert, TrendAnalysis,
-    TrendDataPoint, UpdateAlertRule, UpdatePortfolioBenchmark,
-};
-
-// Epic 135: Enhanced Tenant Screening with AI Risk Scoring
-pub mod enhanced_tenant_screening;
-
-pub use enhanced_tenant_screening::{
-    AiResultWithFactors, AiRiskCategory, AiRiskScoringModel, CompleteScreeningData,
-    CreateAiRiskScoringModel, CreateScreeningBackgroundResult, CreateScreeningCreditResult,
-    CreateScreeningEvictionResult, CreateScreeningProviderConfig, CreateScreeningQueueItem,
-    CreateScreeningReport, CreateScreeningRiskFactor, InitiateScreeningRequest,
-    ProviderIntegrationStatus, RiskCategoryDistribution, RiskFactorCategory, RiskFactorImpact,
-    RunAiScoringRequest, ScreeningAiResult, ScreeningBackgroundResult, ScreeningCreditResult,
-    ScreeningEvictionResult, ScreeningProviderConfig, ScreeningProviderType, ScreeningReport,
-    ScreeningRequestQueueItem, ScreeningRiskFactor, ScreeningStatistics,
-    ScreeningSummary as EnhancedScreeningSummary, UpdateAiRiskScoringModel,
-    UpdateScreeningProviderConfig,
-};
-
-// Epic 136: ESG Reporting Dashboard
-pub mod esg_reporting;
-
-pub use esg_reporting::{
-    CalculateCarbonFootprintRequest, CarbonFootprint, CarbonFootprintQuery, CarbonFootprintSummary,
-    CreateCarbonFootprint, CreateEsgBenchmark, CreateEsgConfiguration, CreateEsgImportJob,
-    CreateEsgMetric, CreateEsgReport, CreateEsgTarget, CreateEuTaxonomyAssessment,
-    EnergySourceType, EsgBenchmark, EsgBenchmarkCategory, EsgBenchmarkComparison,
-    EsgComplianceFramework, EsgConfiguration, EsgDashboardMetrics, EsgDataEntryMethod,
-    EsgEmissionScope, EsgImportJob, EsgMetric, EsgMetricCategory, EsgMetricsQuery, EsgReport,
-    EsgReportStatus, EsgStatistics, EsgSummaryScores, EsgTarget, EuTaxonomyAssessment,
-    GenerateEsgReportRequest, UpdateEsgConfiguration, UpdateEsgMetric, UpdateEsgReport,
-    UpdateEsgTarget, UpdateEuTaxonomyAssessment,
-};
-
-// Epic 138: Automated Property Valuation Model
-pub mod property_valuation;
+// Epic 69: Public API & Developer Ecosystem
+pub mod public_api;
 
 pub use property_valuation::{
     AdjustmentType,
@@ -999,22 +867,114 @@ pub use property_valuation::{
     ValueHistoryPoint,
 };
 
-// Epic 139: Investor Portal & ROI Reporting
-pub mod investor_portal;
+// Epic 71: Cross-Cutting Infrastructure
+pub mod infrastructure;
 
-pub use investor_portal::{
-    CapitalCall, CreateCapitalCall, CreateDashboardMetrics, CreateDistribution,
-    CreateInvestmentPortfolio, CreateInvestorPortfolioProperty, CreateInvestorProfile,
-    CreateInvestorReport, CreateRoiCalculation, DistributionType, InvestmentPortfolio,
-    InvestmentStatus, InvestorDashboardMetrics, InvestorDistribution, InvestorPortalDashboard,
-    InvestorPortfolioProperty, InvestorPortfolioSummary, InvestorProfile, InvestorReport,
-    InvestorReportType, InvestorSummary, InvestorType, PortfolioWithDetails, RoiCalculation,
-    RoiCalculationQuery, RoiPeriod, RoiSummary, UpdateCapitalCall, UpdateDistribution,
-    UpdateInvestmentPortfolio, UpdateInvestorPortfolioProperty, UpdateInvestorProfile,
+pub use public_api::{
+    api_key_scope, api_key_status, rate_limit_tier, sdk_language,
+    webhook_delivery_status as public_api_webhook_delivery_status,
+    webhook_event_type as public_api_webhook_event_type, ApiChangelog, ApiEndpointDoc, ApiKey,
+    ApiKeyDisplay, ApiKeyQuery, ApiKeyUsageStats, ApiRequestLog, ApiRequestLogQuery, CreateApiKey,
+    CreateApiKeyResponse, CreateDeveloperAccount, CreateRateLimitConfig, CreateWebhookResponse,
+    CreateWebhookSubscription as CreatePublicApiWebhookSubscription, DeveloperAccount,
+    DeveloperPortalStats, DeveloperUsageSummary, EndpointUsage, PaginatedResponse, RateLimitConfig,
+    RateLimitHeaders, RateLimitStatus as PublicApiRateLimitStatus, RateLimitWindow,
+    RotateApiKeyResponse, RotateWebhookSecretResponse, SandboxEnvironment, SandboxTestRequest,
+    SandboxTestResponse, SdkDownloadInfo, SdkLanguageInfo, SdkVersion,
+    TestWebhookRequest as PublicApiTestWebhookRequest,
+    TestWebhookResponse as PublicApiTestWebhookResponse, TierUsage, UpdateApiKey,
+    UpdateDeveloperAccount, UpdateRateLimitConfig,
+    UpdateWebhookSubscription as UpdatePublicApiWebhookSubscription,
+    WebhookDelivery as PublicApiWebhookDelivery,
+    WebhookDeliveryQuery as PublicApiWebhookDeliveryQuery,
+    WebhookSubscription as PublicApiWebhookSubscription,
+    WebhookSubscriptionQuery as PublicApiWebhookSubscriptionQuery,
 };
 
-// Epic 141: Reserve Fund Management
-pub mod reserve_funds;
+// Epic 73: Infrastructure & Operations
+pub mod operations;
+
+pub use reality_portal::{
+    AgencyMemberWithUser as RealityAgencyMemberWithUser, AgencySummary as RealityAgencySummary,
+    AssignRealtorListing, CreateAgencyInvitation, CreateCrmConnection, CreateFeedSubscription,
+    CreateImportJob as CreatePortalImportJob, CreateListingInquiry, CreatePortalSavedSearch,
+    CreateRealityAgency, CreateRealtorProfile, CrmConnection, FeedSubscription, ImportJobProgress,
+    InquiryMessage, InquiryWithListing, ListingAnalytics, ListingAnalyticsSummary, ListingInquiry,
+    ListingPriceHistory, PortalFavorite, PortalFavoriteWithListing, PortalImportJob,
+    PortalImportJobWithStats, PortalSavedSearch, PriceChangeAlert, PublicRealtorProfile,
+    RealityAgency, RealityAgencyInvitation, RealityAgencyMember, RealityFeedSubscription,
+    RealtorListing, RealtorProfile, ScheduleViewing, SearchAlertQueueEntry, SendInquiryMessage,
+    UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
+    UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite, UpdatePortalSavedSearch,
+    UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing, ViewingSchedule,
+};
+
+// Epic 74: Owner Investment Analytics
+pub mod owner_analytics;
+
+pub use refresh_token::{CreateRefreshToken, LoginAttempt, RateLimitStatus, RefreshToken};
+
+// Epic 77: Dispute Resolution
+pub mod disputes;
+
+// Epic 108: Feature Packages & Bundles
+pub mod feature_package;
+
+// Epic 109: User Type Feature Experience
+pub mod feature_analytics;
+
+pub use regional_compliance::{
+    slovak_accounts, ConfigureCzechSvj, ConfigureSlovakAccounting, ConfigureSlovakGdpr,
+    ConfigureSlovakVoting, ConsentCategoryStatus, CzechDecisionType, CzechOrgType, CzechSvjConfig,
+    CzechSvjUsneseni, CzechVoteValidation, DpoContact, ExportSlovakAccounting, GdprConsentCategory,
+    GdprConsentStatus, Jurisdiction, PohodaExport, PohodaHeader, PohodaInvoiceExport,
+    PohodaInvoiceItemExport, PohodaPaymentExport, ProcessingPurpose, QuestionMinutes,
+    RecordGdprConsent, RegionalComplianceStatus, SetJurisdiction, SlovakAccountingConfig,
+    SlovakAccountingExport, SlovakAccountingFormat, SlovakDecisionType, SlovakGdprConfig,
+    SlovakGdprConsent, SlovakVoteMinutes, SlovakVoteValidation, SlovakVotingConfig,
+    ValidateCzechVote, ValidateSlovakVote, VoteParticipantMinutes,
+};
+
+// Epic 108: Feature Packages & Bundles
+pub use registry::{
+    pet_size, pet_type, registry_status, vehicle_type, BuildingRegistryRules, CreateParkingSpot,
+    CreatePetRegistration, CreateVehicleRegistration, ParkingSpot, ParkingSpotQuery,
+    ParkingSpotWithDetails, PetRegistration, PetRegistrationQuery, PetRegistrationSummary,
+    PetRegistrationWithDetails, RegistryStatistics, ReviewRegistration, UpdateParkingSpot,
+    UpdatePetRegistration, UpdateRegistryRules, UpdateVehicleRegistration, VehicleRegistration,
+    VehicleRegistrationQuery, VehicleRegistrationSummary, VehicleRegistrationWithDetails,
+};
+
+// Epic 109: User Type Feature Experience
+pub use rental::{
+    authority_code, block_reason, booking_status as rental_booking_status, guest_status,
+    rental_platform, report_status, report_type, BookingListQuery, BookingSummary,
+    BookingWithGuests, BookingsResponse, CalendarBlock, CalendarEvent, CheckInReminder,
+    ConnectionStatus, CreateBooking, CreateCalendarBlock, CreateGuest, CreateICalFeed,
+    CreatePlatformConnection, GenerateReport, GuestSummary, ICalFeed, ICalFeedSummary,
+    NationalityStats, OAuthCallback, PlatformConnectionDetail, PlatformConnectionSummary,
+    PlatformSyncStatus, RegisterGuest, RentalBooking, RentalGuest, RentalGuestReport,
+    RentalPlatformConnection, RentalStatistics, ReportPreview, ReportSummary, SubmitReport,
+    UnitAvailability, UpdateBooking, UpdateBookingStatus, UpdateGuest, UpdateICalFeed,
+    UpdatePlatformConnection,
+};
+
+// UC-12: Utility Outages
+pub use report_schedule::{
+    report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
+    ExecutionHistoryResponse, ReportExecution, ReportSchedule,
+};
+
+// Epic 132: Dynamic Rent Pricing & Market Analytics
+pub use reports::{
+    CategoryTrend, ConsumptionAnomaly, ConsumptionReportData, ConsumptionSummary, DateRange,
+    FaultTrends, MonthlyAverage, MonthlyConsumption, MonthlyPersonCount, OccupancyReportData,
+    OccupancySummary, OccupancyTrends, ReportMonthlyCount, UnitConsumption, UnitOccupancy,
+    UtilityTypeConsumption, VoteParticipationDetail, VotingParticipationSummary, YearComparison,
+};
+
+// Epic 137: Smart Building Certification
+pub mod building_certification;
 
 pub use reserve_funds::{
     AcknowledgeFundAlert, ComponentReplacementSchedule, ContributionFrequency,
@@ -1027,8 +987,107 @@ pub use reserve_funds::{
     UpdateContributionSchedule, UpdateFundComponent, UpdateReserveFund as UpdateReserveFund141,
 };
 
+// Epic 133: AI Lease Abstraction & Document Intelligence
+pub mod lease_abstraction;
+pub use role::{permissions, system_roles, CreateRole, PermissionDefinition, Role, UpdateRole};
+
+// Epic 134: Predictive Maintenance & Equipment Intelligence
+pub mod predictive_maintenance;
+
+pub use sensor::{
+    sensor_status, sensor_type, AggregatedReading, AlertQuery, BatchSensorReadings, CreateSensor,
+    CreateSensorAlert, CreateSensorFaultCorrelation, CreateSensorReading, CreateSensorThreshold,
+    ReadingQuery, Sensor, SensorAlert, SensorDashboard, SensorFaultCorrelation, SensorQuery,
+    SensorReading, SensorSummary, SensorThreshold, SensorThresholdTemplate, SensorTypeCount,
+    SingleReading, UpdateSensor, UpdateSensorThreshold,
+};
+
+// Epic 140: Multi-Property Portfolio Analytics
+pub mod portfolio_analytics;
+
+pub use sentiment::{
+    alert_type, BuildingSentiment, CreateSentimentAlert, SentimentAlert, SentimentDashboard,
+    SentimentThresholds, SentimentTrend, SentimentTrendQuery, UpdateSentimentThresholds,
+    UpsertSentimentTrend,
+};
+
+// Epic 135: Enhanced Tenant Screening with AI Risk Scoring
+pub mod enhanced_tenant_screening;
+
+pub use signature_request::{
+    CancelSignatureRequestRequest, CancelSignatureRequestResponse, CreateSignatureRequest,
+    CreateSignatureRequestResponse, CreateSigner, ListSignatureRequestsResponse,
+    SendReminderRequest, SendReminderResponse, SignatureRequest, SignatureRequestResponse,
+    SignatureRequestStatus, SignatureRequestWithDocument, SignatureWebhookEvent, Signer,
+    SignerCounts, SignerStatus, WebhookResponse,
+};
+
+// Epic 136: ESG Reporting Dashboard
+pub mod esg_reporting;
+
+pub use subscription::{
+    billing_cycle, coupon_duration, discount_type, line_item_type, metric_type,
+    payment_method_type, subscription_invoice_status, subscription_status,
+    CancelSubscriptionRequest, ChangePlanRequest, CouponRedemption, CreateOrganizationSubscription,
+    CreateSubscriptionCoupon, CreateSubscriptionEvent, CreateSubscriptionPaymentMethod,
+    CreateSubscriptionPlan, CreateUsageRecord, InvoiceLineItem, InvoiceQueryParams,
+    InvoiceWithDetails, OrganizationSubscription, PlanSubscriptionCount, RedeemCouponRequest,
+    SubscriptionCoupon, SubscriptionEvent, SubscriptionInvoice, SubscriptionPaymentMethod,
+    SubscriptionPlan, SubscriptionStatistics, SubscriptionWithPlan, UpdateOrganizationSubscription,
+    UpdateSubscriptionCoupon, UpdateSubscriptionPlan, UsageRecord, UsageSummary,
+};
+
+// Epic 138: Automated Property Valuation Model
+pub mod property_valuation;
+
+pub use tenant_feature_flag::{TenantFeatureFlag, UpsertTenantFeatureFlag};
+
+// Epic 139: Investor Portal & ROI Reporting
+pub mod investor_portal;
+
+pub use two_factor_auth::{
+    CreateTwoFactorAuth, TwoFactorAuth, TwoFactorStatus, UpdateTwoFactorStatus,
+};
+
+// Epic 141: Reserve Fund Management
+pub mod reserve_funds;
+
+pub use unit::{
+    occupancy_status, unit_status, unit_type, AssignUnitOwner, CreateUnit, Unit, UnitOwner,
+    UnitOwnerInfo, UnitSummary, UnitWithOwners, UpdateUnit,
+};
+
 // Epic 142: Violation Tracking & Enforcement
 pub mod violations;
+pub use unit_resident::{
+    resident_type, CreateUnitResident, EndResidency, UnitResident, UnitResidentSummary,
+    UnitResidentWithUser, UpdateUnitResident,
+};
+
+// Epic 143: Board Meeting Management
+pub mod board_meetings;
+
+// Epic 144: Portfolio Performance Analytics
+pub mod portfolio_performance;
+pub use user::{
+    CreateUser, EmailVerificationToken, Locale, NeighborRow, NeighborView, PrincipalKind,
+    PrivacySettings, ProfileVisibility, UpdatePrivacySettings, UpdateUser, User, UserStatus,
+};
+pub use vendor::{
+    contract_status, contract_type, invoice_status, service_type, vendor_status, AcceptJobRequest,
+    AccessCodeResponse, ContractQuery, CreateVendor, CreateVendorContact, CreateVendorContract,
+    CreateVendorInvoice, CreateVendorRating, DeclineJobRequest, ExpiringContract,
+    GenerateAccessCode, InvoiceQuery, InvoiceSummary, MaterialItem, PropertyAccessInfo,
+    ProposeAlternativeTime, ServiceCount, SubmitWorkCompletion, UpdateVendor, UpdateVendorContract,
+    UpdateVendorInvoice, Vendor, VendorContact, VendorContract, VendorDashboardStats,
+    VendorEarningsSummary, VendorFeedback, VendorInvoice, VendorInvoiceWithTracking, VendorJob,
+    VendorJobQuery, VendorJobSummary, VendorProfile, VendorQuery, VendorRating, VendorStatistics,
+    VendorWithDetails, WorkCompletion,
+};
+
+// Epic 145: Multi-Currency & Cross-Border Support
+pub mod multi_currency;
+
 pub use violations::{
     AppealQuery, AppealStatus, CategoryCount as ViolationCategoryCount, CommunityRule,
     CreateCommunityRule, CreateEnforcementAction, CreateViolation, CreateViolationAppeal,
@@ -1041,105 +1100,46 @@ pub use violations::{
     ViolationSummary, ViolatorHistory,
 };
 
-// Epic 143: Board Meeting Management
-pub mod board_meetings;
-
-// Epic 144: Portfolio Performance Analytics
-pub mod portfolio_performance;
-pub use board_meetings::{
-    ActionItemQuery as BoardMeetingActionItemQuery,
-    ActionItemSummary as BoardMeetingActionItemSummary, AgendaItemStatus, AttendanceHistory,
-    AttendanceStatus, BoardMeeting, BoardMember, BoardMemberQuery, BoardMemberSummary, BoardRole,
-    CastVote as CastBoardVote, CreateActionItem as CreateBoardMeetingActionItem, CreateAgendaItem,
-    CreateBoardMeeting, CreateBoardMember, CreateMinutes, CreateMotion as CreateBoardMotion,
-    MeetingActionItem, MeetingAgendaItem, MeetingAttendance, MeetingDashboard, MeetingDetail,
-    MeetingDocument, MeetingMinutes, MeetingMotion, MeetingQuery, MeetingStatistics, MeetingStatus,
-    MeetingSummary, MeetingType, MeetingTypeCount, MotionDetail, MotionQuery, MotionStatus,
-    MotionStatusCount, MotionSummary, MotionVote, RecordAttendance,
-    UpdateActionItem as UpdateBoardMeetingActionItem, UpdateAgendaItem, UpdateBoardMeeting,
-    UpdateBoardMember, UpdateMinutes, UpdateMotion as UpdateBoardMotion, UploadMeetingDocument,
-    VoteChoice, VoteSummary as BoardMeetingVoteSummary,
-};
-pub use portfolio_performance::{
-    BenchmarkComparison, BenchmarkComparisonSummary, BenchmarkSource, CalculateMetricsRequest,
-    CashFlowTrendPoint, CreateBenchmarkComparison, CreateMarketBenchmark, CreatePerformanceAlert,
-    CreatePerformancePortfolio, CreatePortfolioProperty,
-    CreatePropertyTransaction as CreatePortfolioPropertyTransaction,
-    DashboardQuery as PerformanceDashboardQuery, DashboardSummary, ExportPortfolioReport,
-    ExportPortfolioReportResponse, FinancialMetrics, FinancingType, MarketBenchmark,
-    MetricComparison, MetricPeriod, MetricsSummary, PerformanceAlert, PerformancePortfolio,
-    PortfolioAnalyticsDashboard144, PortfolioMetricsSummary,
-    PortfolioProperty as PerformancePortfolioProperty, PortfolioTransactionType, PropertyCashFlow,
-    PropertyPerformanceCard, PropertyTransaction, TransactionQuery as PortfolioTransactionQuery,
-    UpdateMarketBenchmark, UpdatePerformancePortfolio,
-    UpdatePortfolioProperty as UpdatePerformancePortfolioProperty, UpdatePropertyTransaction,
-    UpsertPropertyCashFlow, ValueTrendPoint,
-};
-
-// Epic 145: Multi-Currency & Cross-Border Support
-pub mod multi_currency;
-
-pub use multi_currency::{
-    ConversionStatus, CountryCode, CreateCrossBorderLease, CreateCurrencyConfig,
-    CreateExchangeRate, CreateMultiCurrencyTransaction, CreatePropertyCurrencyConfig,
-    CreateReportConfig, CrossBorderComplianceRequirement, CrossBorderComplianceStatus,
-    CrossBorderLease, CrossBorderLeaseQuery, CurrencyBreakdown, CurrencyConversionAudit,
-    CurrencyDistribution, CurrencyExposureAnalysis, CurrencySummary, ExchangeRate,
-    ExchangeRateFetchLog, ExchangeRateQuery, ExchangeRateSource, ExchangeRateSummary,
-    GenerateReportRequest, MultiCurrencyDashboard, MultiCurrencyReportConfig,
-    MultiCurrencyReportSnapshot, MultiCurrencyStatistics, MultiCurrencyTransaction,
-    OrganizationCurrencyConfig, OverrideExchangeRate, PropertyBreakdown, PropertyCurrencyConfig,
-    SupportedCurrency, TransactionQuery as MultiCurrencyTransactionQuery, UpdateCrossBorderLease,
-    UpdateCurrencyConfig, UpdatePropertyCurrencyConfig, UpdateReportConfig, UpdateTransactionRate,
-};
-
 // Epic 146: Enhanced Data Residency Controls
 pub mod data_residency;
-pub use data_residency::{
-    AccessType, AccessTypeCount, AuditChange, AuditLogEntry as ResidencyAuditLogEntry,
-    AuditLogQuery as ResidencyAuditLogQuery, AuditLogResponse as ResidencyAuditLogResponse,
-    AvailableRegionsResponse, ComplianceImplication, ComplianceIssue, ComplianceStatus,
-    ComplianceVerificationResponse, ComplianceVerificationResult, ConfigureDataResidency,
-    CreateAuditLogEntry, CrossRegionAccessLog, CrossRegionStats, DataLocationSummary, DataRegion,
-    DataResidencyAuditLog, DataResidencyConfig, DataResidencyConfigResponse,
-    DataResidencyDashboard, DataRoutingRule, DataRoutingStatus, DataTypeCategory, DataTypeOverride,
-    ImplicationLevel, IssueSeverity, LogCrossRegionAccess, OutOfRegionData, RegionAccessSummary,
-    RegionInfo, ResidencyAuditEvent, ResidencyStatus, RoutingRuleSummary,
-    RunComplianceVerification,
+pub use vote::{
+    audit_action, question_type, quorum_type, vote_status, CancelVote, CastVote, CreateVote,
+    CreateVoteAuditLog, CreateVoteComment, CreateVoteQuestion, EligibleUnit, HideVoteComment,
+    OptionResult, ParticipationDetail, PublishVote, QuestionOption, QuestionResult, UpdateVote,
+    UpdateVoteQuestion, Vote, VoteAuditLog, VoteComment, VoteCommentWithUser, VoteEligibility,
+    VoteListQuery, VoteQuestion, VoteReceipt, VoteReportData, VoteResponse, VoteResults,
+    VoteSummary, VoteWithDetails,
 };
 
 // Epic 150: API Ecosystem Expansion
 pub mod api_ecosystem;
 
-pub use api_ecosystem::{
-    api_doc_category, code_sample_language, connector_auth_type, connector_status,
-    developer_status, ecosystem_webhook_event, installation_status, integration_category,
-    marketplace_integration_status, webhook_auth_type, ApiCodeSample, ApiDocumentation,
-    ApiEcosystemDashboard, ApiEcosystemStatistics, Connector, ConnectorAction,
-    ConnectorExecutionLog, ConnectorExecutionQuery, CreateApiCodeSample, CreateApiDocumentation,
-    CreateConnector, CreateConnectorAction, CreateDeveloperApiKey, CreateDeveloperApiKeyResponse,
-    CreateDeveloperRegistration, CreateEnhancedWebhookSubscription, CreateIntegrationRating,
-    CreateMarketplaceIntegration, CreatePreBuiltIntegrationConnection, CreateSandboxConfig,
-    DeveloperApiKey, DeveloperApiKeyDisplay, DeveloperPortalStatistics, DeveloperRegistration,
-    DeveloperUsageStats, EndpointUsageStats, EnhancedWebhookDeliveryLog, EnhancedWebhookStatistics,
-    EnhancedWebhookSubscription, GoogleCalendarConfig, HubSpotConfig, InstallIntegration,
-    IntegrationActivityLog, IntegrationCategoryCount, IntegrationRating, IntegrationRatingWithUser,
-    MarketplaceIntegration, MarketplaceIntegrationQuery, MarketplaceIntegrationSummary,
-    OrganizationIntegration, OutlookCalendarConfig, PreBuiltIntegrationConnection,
-    PreBuiltIntegrationSyncResult, PreBuiltIntegrationType, QuickBooksConfig,
-    ReviewDeveloperRegistration, SalesforceConfig, SandboxConfig, SandboxTestRequestPayload,
-    SandboxTestResponsePayload, SlackConfig, SyncPreBuiltIntegrationRequest, TeamsConfig,
-    UpdateApiDocumentation, UpdateConnector, UpdateEnhancedWebhookSubscription,
-    UpdateMarketplaceIntegration, UpdateOrganizationIntegration,
-    UpdatePreBuiltIntegrationConnection, WebhookRetryPolicyConfig, XeroConfig,
+pub use work_order::{
+    schedule_execution_status, schedule_frequency, update_type, work_order_priority,
+    work_order_source, work_order_status, work_order_type, AddWorkOrderUpdate,
+    CreateMaintenanceSchedule, CreateWorkOrder, MaintenanceCostSummary, MaintenanceSchedule,
+    ScheduleExecution, ScheduleQuery, ServiceHistoryEntry, UpcomingSchedule,
+    UpdateMaintenanceSchedule, UpdateWorkOrder, WorkOrder, WorkOrderQuery, WorkOrderStatistics,
+    WorkOrderUpdate, WorkOrderWithDetails,
 };
 
 // Phase 3: Hosting & Theming — per-tenant feature flags + kill switches.
 pub mod tenant_feature_flag;
 
-pub use tenant_feature_flag::{TenantFeatureFlag, UpsertTenantFeatureFlag};
+pub use workflow::{
+    action_type, execution_status, on_failure, step_status, trigger_type, CreateWorkflow,
+    CreateWorkflowAction, ExecutionQuery, TriggerWorkflow, UpdateWorkflow, Workflow,
+    WorkflowAction, WorkflowExecution, WorkflowExecutionStep, WorkflowQuery, WorkflowSchedule,
+    WorkflowSummary, WorkflowWithDetails,
+};
 
 // Phase 2 — Defense N2: per-org auth policy (defends leak #13).
 pub mod auth_policy;
 
-pub use auth_policy::AuthPolicy;
+pub use workflow_templates::{
+    get_builtin_templates, template_category, template_scope, CreateTemplateAction,
+    CreateTemplateVariable, CreateWorkflowTemplate, ImportTemplateRequest, RateTemplateRequest,
+    TemplateSearchQuery, UpdateWorkflowTemplate, WorkflowTemplate, WorkflowTemplateAction,
+    WorkflowTemplateRating, WorkflowTemplateSummary, WorkflowTemplateVariable,
+    WorkflowTemplateWithDetails,
+};
