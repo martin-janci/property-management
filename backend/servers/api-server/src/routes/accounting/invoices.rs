@@ -145,7 +145,7 @@ pub async fn create_invoice(
 
     let invoice = state
         .accounting_repo
-        .create_invoice_rls(&mut *tx, data)
+        .create_invoice_rls(&mut tx, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to create invoice: {}", e);

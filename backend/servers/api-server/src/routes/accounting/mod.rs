@@ -4,7 +4,7 @@ pub mod matches;
 pub mod statements;
 
 use crate::AppState;
-use axum::routing::{delete, get, post};
+use axum::routing::{get, post};
 use axum::Router;
 
 pub fn router() -> Router<AppState> {
