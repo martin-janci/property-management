@@ -20,6 +20,9 @@ pub mod financial;
 pub mod granular_notification;
 pub mod health_monitoring;
 pub mod help;
+pub mod accounting_provider;
+pub mod accounting;
+pub mod accounting_test;
 pub mod membership;
 pub mod messaging;
 pub mod meter;
@@ -65,6 +68,8 @@ pub mod agency;
 pub mod rental;
 
 pub use ai_chat::AiChatRepository;
+pub use accounting_provider::AccountingProviderRepository;
+pub use accounting::AccountingRepository;
 pub use equipment::EquipmentRepository;
 pub use sentiment::SentimentRepository;
 pub use workflow::{WorkflowRepository, MAX_RETRY_COUNT, MAX_RETRY_DELAY_SECONDS};

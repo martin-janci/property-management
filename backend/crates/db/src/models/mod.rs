@@ -13,6 +13,8 @@ pub mod document_template;
 pub mod facility;
 pub mod fault;
 pub mod financial;
+pub mod accounting;
+pub mod accounting_provider;
 
 pub mod device_push_token;
 pub mod granular_notification;
@@ -169,6 +171,16 @@ pub use financial::{
     ListInvoicesResponse, OnlinePaymentSession, Payment, PaymentAllocation, PaymentMethod,
     PaymentResponse, PaymentStatus, RecordPayment, ReminderSchedule, TransactionCategory,
     TransactionType, UnitCreditBalance, UnitFee,
+};
+pub use accounting::{
+    BankStatement, BankStatementLine, Contact, CreateInvoice as CreateAccountingInvoice, CreateInvoiceItem as CreateAccountingInvoiceItem, Invoice as AccountingInvoice,
+    InvoiceItem as AccountingInvoiceItem, InvoiceStatus as AccountingInvoiceStatus, PaymentMatch, PaymentMatchState, UpdateInvoice, UpdateInvoiceItem,
+    VatRate,
+};
+pub use accounting_provider::{
+    AccountingProviderAuthFlow, AccountingProviderConnection, AccountingProviderContact,
+    AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
+    AccountingProviderSyncCursor,
 };
 pub use granular_notification::{
     AddToGroupRequest, CategorySummary, CreateHeldNotification, DigestNotification,

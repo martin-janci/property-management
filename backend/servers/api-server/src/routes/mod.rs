@@ -23,6 +23,7 @@ pub mod documents;
 pub mod facilities;
 pub mod faults;
 pub mod financial;
+pub mod accounting;
 pub mod gdpr;
 pub mod granular_notifications;
 pub mod health;
