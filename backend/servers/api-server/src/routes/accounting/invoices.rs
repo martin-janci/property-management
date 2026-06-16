@@ -6,11 +6,89 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use common::TenantRole;
 use db::models::accounting::{CreateInvoice, Invoice, InvoiceItem, UpdateInvoice};
+use rust_decimal::Decimal;
 use sqlx::Connection;
 use uuid::Uuid;
 
 use crate::state::AppState;
+
+fn validate_create_invoice(data: &CreateInvoice) -> Result<(), StatusCode> {
+    if data.number.trim().is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    if data.number.len() > 50 {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    if data.due_date < data.issue_date {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    if let Some(ref vs) = data.variable_symbol {
+        if vs.len() > 20 {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    }
+    let valid_currencies = ["CZK", "EUR"];
+    if !valid_currencies.contains(&data.currency.as_str()) {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    for item in &data.items {
+        if item.description.trim().is_empty() {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+        if item.description.len() > 255 {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+        if item.qty < Decimal::ZERO {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+        if item.unit_price < Decimal::ZERO {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_update_invoice(data: &UpdateInvoice) -> Result<(), StatusCode> {
+    if let Some(ref number) = data.number {
+        if number.trim().is_empty() {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+        if number.len() > 50 {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    }
+    if let Some(ref vs_opt) = data.variable_symbol {
+        if let Some(ref vs) = vs_opt {
+            if vs.len() > 20 {
+                return Err(StatusCode::BAD_REQUEST);
+            }
+        }
+    }
+    if let Some(ref currency) = data.currency {
+        let valid_currencies = ["CZK", "EUR"];
+        if !valid_currencies.contains(&currency.as_str()) {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    }
+    if let Some(paid_amount) = data.paid_amount {
+        if paid_amount < Decimal::ZERO {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    }
+    // Note: due_date >= issue_date check is harder for partial updates without fetching current state,
+    // but we can check if both are provided in the update.
+    if let (Some(issue), Some(due)) = (data.issue_date, data.due_date) {
+        if due < issue {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    }
+
+    Ok(())
+}
 
 /// List all invoices for the current tenant.
 #[utoipa::path(
@@ -28,6 +106,11 @@ pub async fn list_invoices(
     State(state): State<AppState>,
     AuthUser { user_id: _user, .. }: AuthUser,
 ) -> Result<Json<Vec<Invoice>>, StatusCode> {
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let invoices = state
         .accounting_repo
         .list_invoices_rls(&mut **rls)
@@ -62,6 +145,11 @@ pub async fn get_invoice(
     State(state): State<AppState>,
     AuthUser { user_id: _user, .. }: AuthUser,
 ) -> Result<Json<Invoice>, StatusCode> {
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let invoice = state
         .accounting_repo
         .find_invoice_rls(&mut **rls, id)
@@ -96,6 +184,11 @@ pub async fn list_invoice_items(
     State(state): State<AppState>,
     AuthUser { user_id: _user, .. }: AuthUser,
 ) -> Result<Json<Vec<InvoiceItem>>, StatusCode> {
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let items = state
         .accounting_repo
         .find_invoice_items_rls(&mut **rls, id)
@@ -116,8 +209,9 @@ pub async fn list_invoice_items(
     request_body = CreateInvoice,
     responses(
         (status = 201, description = "Invoice created", body = Invoice),
+        (status = 400, description = "Bad request (validation)"),
         (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (no tenant)"),
+        (status = 403, description = "Forbidden (no tenant or role)"),
         (status = 500, description = "Internal server error")
     ),
     tag = "accounting"
@@ -134,14 +228,36 @@ pub async fn create_invoice(
 ) -> Result<(StatusCode, Json<Invoice>), StatusCode> {
     let tenant_id = tenant_id.ok_or(StatusCode::FORBIDDEN)?;
 
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     // Force tenant_id from session
     data.tenant_id = tenant_id;
+
+    // Semantic validation
+    validate_create_invoice(&data)?;
 
     // Use a transaction for multiple queries
     let mut tx = rls.begin().await.map_err(|e| {
         tracing::error!("Failed to start transaction: {}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
+
+    // Validate contact_id ownership
+    let contact = state
+        .accounting_repo
+        .find_contact_rls(&mut *tx, data.contact_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to find contact: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    if contact.is_none() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
 
     let invoice = state
         .accounting_repo
@@ -171,7 +287,9 @@ pub async fn create_invoice(
     request_body = UpdateInvoice,
     responses(
         (status = 200, description = "Invoice updated", body = Invoice),
+        (status = 400, description = "Bad request (validation)"),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden (role)"),
         (status = 404, description = "Invoice not found"),
         (status = 500, description = "Internal server error")
     ),
@@ -184,6 +302,29 @@ pub async fn update_invoice(
     AuthUser { user_id: _user, .. }: AuthUser,
     Json(data): Json<UpdateInvoice>,
 ) -> Result<Json<Invoice>, StatusCode> {
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    // Semantic validation
+    validate_update_invoice(&data)?;
+
+    if let Some(contact_id) = data.contact_id {
+        let contact = state
+            .accounting_repo
+            .find_contact_rls(&mut **rls, contact_id)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to find contact: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+
+        if contact.is_none() {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    }
+
     let invoice = state
         .accounting_repo
         .update_invoice_rls(&mut **rls, id, data)
@@ -207,6 +348,7 @@ pub async fn update_invoice(
     responses(
         (status = 204, description = "Invoice deleted"),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden (role)"),
         (status = 404, description = "Invoice not found"),
         (status = 500, description = "Internal server error")
     ),
@@ -218,6 +360,11 @@ pub async fn delete_invoice(
     State(state): State<AppState>,
     AuthUser { user_id: _user, .. }: AuthUser,
 ) -> Result<StatusCode, StatusCode> {
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     state
         .accounting_repo
         .delete_invoice_rls(&mut **rls, id)

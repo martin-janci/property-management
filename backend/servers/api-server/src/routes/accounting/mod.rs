@@ -1,5 +1,5 @@
 use crate::AppState;
-use axum::routing::{delete, get, post};
+use axum::routing::{get, post};
 use axum::Router;
 
 pub mod contacts;
