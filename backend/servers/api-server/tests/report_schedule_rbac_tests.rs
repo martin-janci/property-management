@@ -50,7 +50,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser};
+use common::{create_authenticated_user, seed_membership, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -71,29 +71,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .expect("seed org")
 }
 
-/// Insert a membership row so the user is a recognised tenant member.
-///
-/// Uses `organization_members` (the table queried by
-/// `OrganizationMemberRepository` via `ValidatedTenantExtractor`). The role
-/// string is normalized case-insensitively in `extractors/tenant.rs`, so
-/// `"manager"` and `"Resident"` both round-trip to the right `TenantRole`.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members
-            (id, organization_id, user_id, role_type, status, created_at)
-        VALUES ($1, $2, $3, $4, 'active', NOW())
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .bind(role)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
 
 /// Insert a `report_schedules` row in the given org and return its id.
 async fn seed_schedule(pool: &PgPool, org_id: Uuid) -> Uuid {

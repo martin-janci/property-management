@@ -50,7 +50,7 @@ use axum::{
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser};
+use common::{create_authenticated_user, seed_membership, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -71,27 +71,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .expect("seed org")
 }
 
-/// Insert `organization_members` row so `ValidatedTenantExtractor::is_member`
-/// returns true for the given (org, user) pair. Role string is stored
-/// lowercase so the DB-driven role parser maps it to `TenantRole::Manager`
-/// (see `backend/crates/api-core/src/extractors/tenant.rs`).
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members
-            (id, organization_id, user_id, role_type, status, created_at)
-        VALUES ($1, $2, $3, $4, 'active', NOW())
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .bind(role)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
 
 /// Seed a `report_schedules` row owned by `org_id`. Returns the schedule UUID.
 async fn seed_schedule(pool: &PgPool, org_id: Uuid) -> Uuid {

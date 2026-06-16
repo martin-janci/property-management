@@ -25,6 +25,10 @@
 //! which is exactly where the sibling `faults_cross_org_idor_tests.rs` asserts
 //! them. Each test exercises the real query path against a migrated database.
 
+#[allow(dead_code)]
+mod common;
+
+use common::seed_membership;
 use db::repositories::{FaultRepository, MembershipRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -106,22 +110,6 @@ async fn seed_fault_with_key(pool: &PgPool, org_id: Uuid, key: &str) -> Uuid {
     .expect("seed fault with idempotency key")
 }
 
-/// Grant a `user_memberships` row with the given role string.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
-    sqlx::query(
-        r#"
-        INSERT INTO user_memberships (user_id, organization_id, role)
-        VALUES ($1, $2, $3)
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(user_id)
-    .bind(org_id)
-    .bind(role)
-    .execute(pool)
-    .await
-    .expect("seed user_membership");
-}
 
 // ---------------------------------------------------------------------------
 // (#970.2) Idempotent offline create: find_by_idempotency_key_rls lookup.
