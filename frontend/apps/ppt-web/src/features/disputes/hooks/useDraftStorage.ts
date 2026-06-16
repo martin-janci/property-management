@@ -13,19 +13,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-/** Check if localStorage is available (private mode / SSR guard). */
-function isLocalStorageAvailable(): boolean {
-  try {
-    if (typeof window === 'undefined') return false;
-    const test = '__draft_storage_test__';
-    window.localStorage.setItem(test, test);
-    window.localStorage.removeItem(test);
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { isLocalStorageAvailable } from '../../../lib/storage';
 
 interface StoredDraft<T> {
   /** Persisted form values. */
@@ -90,6 +78,8 @@ export function useDraftStorage<T>(
   });
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRef = useRef<T | null>(null);
+  const flushRef = useRef<(values: T) => void>(() => undefined);
 
   const flush = useCallback(
     (values: T) => {
@@ -98,16 +88,19 @@ export function useDraftStorage<T>(
         const payload: StoredDraft<T> = { values, savedAt: Date.now() };
         window.localStorage.setItem(key, JSON.stringify(payload));
         setSavedAt(payload.savedAt);
+        pendingRef.current = null;
       } catch {
         // Quota exceeded or serialisation error — best-effort, swallow.
       }
     },
     [available, key]
   );
+  flushRef.current = flush;
 
   const save = useCallback(
     (values: T) => {
       if (!available) return;
+      pendingRef.current = values;
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => flush(values), debounceMs);
     },
@@ -119,6 +112,7 @@ export function useDraftStorage<T>(
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    pendingRef.current = null;
     setSavedAt(null);
     if (!available) return;
     try {
@@ -128,11 +122,17 @@ export function useDraftStorage<T>(
     }
   }, [available, key]);
 
-  // Flush any pending debounced save on unmount so a quick close-after-typing
-  // doesn't lose the last keystrokes.
+  // On unmount flush any pending debounced save so typing-then-closing doesn't
+  // lose the last keystrokes. Access flush via ref so this effect registers once.
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      if (pendingRef.current !== null) {
+        flushRef.current(pendingRef.current);
+      }
     };
   }, []);
 
