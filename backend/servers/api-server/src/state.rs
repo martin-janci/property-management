@@ -399,7 +399,7 @@ impl AppState {
         let equipment_repo = EquipmentRepository::new(db.clone());
         let workflow_repo = WorkflowRepository::new(db.clone());
         // Epic 14: IoT & Smart Building
-        let sensor_repo = SensorRepository::new(db.clone());
+        let sensor_repo = SensorRepository::new();
         // Epic 15: Property Listings & Multi-Portal Sync
         let listing_repo = ListingRepository::new(db.clone());
         // Epic 17: Agency & Realtor Management
@@ -476,7 +476,7 @@ impl AppState {
         // Epic 140: Multi-Property Portfolio Analytics
         let portfolio_analytics_repo = PortfolioAnalyticsRepository::new(db.clone());
         // Epic 141: Reserve Fund Management
-        let reserve_fund_repo = ReserveFundRepository::new(db.clone());
+        let reserve_fund_repo = ReserveFundRepository::new();
         // Epic 142: Violation Tracking & Enforcement
         let violation_repo = ViolationRepository::new(db.clone());
         // Epic 143: Board Meeting Management
@@ -627,6 +627,12 @@ impl AppState {
             // Coverage 83-2: Booking.com OAuth env vars cached at startup.
             booking_config: BookingOAuthAppConfig::from_env(),
         }
+    }
+
+    /// Set a custom pub/sub service (Story 1376).
+    pub fn with_pubsub(mut self, pubsub_service: PubSubService) -> Self {
+        self.pubsub_service = Some(pubsub_service);
+        self
     }
 
     /// Set Redis client and derived services (Epic 103).

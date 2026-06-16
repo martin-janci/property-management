@@ -219,6 +219,57 @@ impl TestApp {
     pub fn patch(&self, uri: &str) -> RequestBuilder {
         RequestBuilder::new(Method::PATCH, uri)
     }
+
+    /// Create an authenticated session for the given token and org (Story 1370).
+    pub fn session(&self, token: String, org_id: Uuid) -> AuthenticatedSession<'_> {
+        AuthenticatedSession::new(self, token, org_id)
+    }
+}
+
+/// A session authenticated for a specific user and tenant (Story 1370).
+///
+/// Use this to build requests that automatically include both the Bearer
+/// token and the `X-Tenant-ID` header, preventing "forgotten header" bugs in
+/// RLS-aware integration tests.
+pub struct AuthenticatedSession<'a> {
+    app: &'a TestApp,
+    token: String,
+    org_id: Uuid,
+}
+
+impl<'a> AuthenticatedSession<'a> {
+    pub fn new(app: &'a TestApp, token: String, org_id: Uuid) -> Self {
+        Self { app, token, org_id }
+    }
+
+    /// Create a GET request with session credentials.
+    pub fn get(&self, uri: &str) -> RequestBuilder {
+        self.app.get(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    /// Create a POST request with session credentials.
+    pub fn post(&self, uri: &str) -> RequestBuilder {
+        self.app.post(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    /// Create a PUT request with session credentials.
+    pub fn put(&self, uri: &str) -> RequestBuilder {
+        self.app.put(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    /// Create a PATCH request with session credentials.
+    pub fn patch(&self, uri: &str) -> RequestBuilder {
+        self.app.patch(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    /// Create a DELETE request with session credentials.
+    pub fn delete(&self, uri: &str) -> RequestBuilder {
+        self.app.delete(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    pub fn org_id(&self) -> Uuid {
+        self.org_id
+    }
 }
 
 /// Request builder for test requests.
@@ -250,6 +301,13 @@ impl RequestBuilder {
     /// Set authorization bearer token.
     pub fn bearer(mut self, token: &str) -> Self {
         self.auth_token = Some(token.to_string());
+        self
+    }
+
+    /// Set the tenant scope via the `X-Tenant-ID` header (Story 1370).
+    pub fn tenant(mut self, org_id: Uuid) -> Self {
+        self.headers
+            .push(("X-Tenant-ID".to_string(), org_id.to_string()));
         self
     }
 
@@ -485,7 +543,7 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
 // with these helpers.
 //
 // Historically every tenant-scoped test file re-declared its own near-identical
-// `seed_org` / `seed_membership` (~35 copies). These shared versions promote
+// `seed_org` / `seed_membership` (~22 copies). These shared versions promote
 // the canonical pattern so new tests import one helper instead of copying ~30
 // lines of seeding boilerplate. (See issue #1090.)
 // ----------------------------------------------------------------------------

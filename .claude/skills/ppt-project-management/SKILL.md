@@ -120,7 +120,7 @@ After the Scrum Master + role runs, read `.research/management/coverage.json`.
    - Count current `open` items (exclude `in-progress`/`done`/`failed`).
    - `slots_to_fill = max(0, 36 - open_count)`.
    - Take the top `slots_to_fill` ranked candidates whose `id` is NOT already in `action-list.json`. If fewer candidates exist than slots, take all (queue can underflow — that's fine; means the backlog is actually drained).
-   - Item schema (unchanged): `{id, action, owner_role, priority, dependency, status:"open", deadline:null, source:"gap-scan"}` where `id = "gap-<story-id>-<kebab-slug>"`.
+   - Item schema: `{id, action, owner_role, priority, dependency, depends_on, status:"open", deadline:null, source:"gap-scan"}` where `id = "gap-<story-id>-<kebab-slug>"`. Populate `depends_on` via the **`depends_on` normalization (T25 / issue #583)** rule in Step 4's `action-list.json` bullet — a non-empty/non-`"none"` `dependency` MUST have a matching non-empty `depends_on` (resolved id(s) or an `UNRESOLVED:` sentinel), else `depends_on: []`.
    - Do NOT drop existing items; only add. Items move out of `open` only when the dispatcher / implementer marks them `done` or `failed`, or when the rotating role agents (Step 4 of "Write artifacts") resolve them.
 5. **Update `project-state.md`** "What's next" to the top 5 from the roadmap (replacing the sprint-only view).
 6. **Buffer health line.** Add a single line at the end of `roadmap.md`: `Buffer: <open_count>/36 open · <candidates_remaining> candidates ranked but unqueued`. If `<open_count> < 18` (half-empty), prepend `⚠ Buffer below half — consider running scan to refresh coverage` to the line.
@@ -141,8 +141,13 @@ the Scrum Master in one run.)
   progress, shipped-since-last-run, what's next (top actions w/ owner), blockers, and
   "Role focus today: <roles run>". Append a one-line per-role summary for roles that ran.
 - `action-list.json` — merge: keep existing items (update `status` to `done` when a merged PR / closed issue resolved them). Add one item per role `next_action`, using this exact item schema:
-  `{"id":"<role>-<kebab-slug>", "action":"<next_actions[].action>", "owner_role":"<the role that returned it>", "priority":"<next_actions[].priority>", "dependency":"<next_actions[].dependency>", "status":"open", "deadline":null, "source":"pm-analysis <today>"}`.
+  `{"id":"<role>-<kebab-slug>", "action":"<next_actions[].action>", "owner_role":"<the role that returned it>", "priority":"<next_actions[].priority>", "dependency":"<next_actions[].dependency>", "depends_on":<see normalization rule>, "status":"open", "deadline":null, "source":"pm-analysis <today>"}`.
   Agents do not return `deadline` — default it to `null` (set a date only if one is explicit in the evidence). Set `.generated` = now.
+  - **`depends_on` normalization (T25 / issue #583).** Every emitted row MUST carry a `depends_on` array — `dependency` alone is decorative (the dispatcher's Phase 3 `claimable()` predicate blocks only on `depends_on`, never on the free-text `dependency`). Derive `depends_on` from the role-returned `dependency`:
+    - empty / `"none"` / null, **or a bare owner-role token** (e.g. `pm-backend`, `pm-qa`, `pm-tech-lead`, `rust-backend` — these express *who* does the work, already captured by `owner_role`, not a task-sequencing blocker) → `depends_on: []` and rewrite `dependency` to `"none"` (clear the misleading text).
+    - one or more concrete action-list `id`s → `depends_on: [<id>, …]`.
+    - otherwise unparseable prose → `depends_on: ["UNRESOLVED:<dependency text, truncated to ~60 chars>"]` (poisoned sentinel: keeps the row non-claimable and surfaces it for human follow-up).
+    Never leave a non-empty / non-`"none"` `dependency` paired with an empty `depends_on` — that silently makes the row claimable while its real blocker is unresolved (the gap-3 migration trap; `.research/dispatcher-self-test.sh` T25 hard-fails on it).
 - `action-list.md` — regenerate the table from `action-list.json`.
 - `risks.json` — merge role `risks`, dedupe by slug, using this exact item schema:
   `{"id":"<role>-<kebab-slug>", "risk":"<risks[].risk>", "probability":"<risks[].probability>", "impact":"<risks[].impact>", "mitigation":"<risks[].mitigation>", "owner_role":"<the role that returned it>", "trigger":null, "status":"open"}`.
