@@ -359,14 +359,13 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
         "#611: initial presign expires_at {first_expires} must be in the future"
     );
 
-    // --- Re-presign: the client's first URL has 'expired', so it re-requests
-    //     the same endpoint. This must yield a brand-new, still-valid window. ---
+    // --- Second call: re-presign (simulates client re-requesting after expiry). ---
     let before_second = chrono::Utc::now();
     let second = app.execute(auth_req(Method::GET, &uri, org, &token)).await;
     assert_eq!(
         second.status,
         StatusCode::OK,
-        "#611 regression: re-requesting an expired download must re-presign (200), got {} body={}",
+        "#611 regression: re-requesting download must re-presign (200), got {} body={}",
         second.status,
         second.text(),
     );
@@ -388,12 +387,19 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
         .expect("re-presign must carry a parseable expires_at");
     assert!(
         second_expires.with_timezone(&chrono::Utc) > before_second,
-        "#611 regression: re-presign expires_at {second_expires} must be a fresh future window, \
-         not a stale one — body={second_body}"
+        "#611 regression: re-presign expires_at {second_expires} must be a fresh future window — \
+         body={second_body}"
+    );
+    // Key non-tautological assertion: the second expiry must be no earlier than
+    // the first. A handler that caches and replays its first response would fail
+    // here because the replayed timestamp would not advance.
+    assert!(
+        second_expires >= first_expires,
+        "#611 regression: re-presign expires_at {second_expires} must be >= initial \
+         expires_at {first_expires} — a cached/stale response would fail this check"
     );
 
-    // The re-presign must point at the same logical file (same stored name),
-    // proving it is the *same* execution being re-presigned, not a different one.
+    // Re-presign must resolve the same execution's file.
     let second_name = second_body
         .get("fileName")
         .and_then(|v| v.as_str())
