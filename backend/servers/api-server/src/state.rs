@@ -9,7 +9,7 @@ use crate::services::{
 use api_core::TenantMembershipProvider;
 use db::{
     repositories::{
-        AccountingRepository, AgencyRepository, AiChatRepository, AnnouncementRepository,
+        AccountingProviderRepository, AccountingRepository, AgencyRepository, AiChatRepository, AnnouncementRepository,
         ApiEcosystemRepository, AuditLogRepository, AutomationRepository, BackgroundJobRepository,
         BoardMeetingRepository, BudgetRepository, BuildingCertificationRepository,
         BuildingRepository, CommunityRepository, ComplianceRepository,
