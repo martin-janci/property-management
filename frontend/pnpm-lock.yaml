@@ -62,6 +62,15 @@ importers:
         specifier: ^6.21.0
         version: 6.30.3(react-dom@19.2.0)(react@19.2.0)
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.10.2
+        version: 4.11.3(playwright-core@1.61.0)
+      '@playwright/test':
+        specifier: ^1.55.0
+        version: 1.61.0
+      '@ppt/e2e':
+        specifier: workspace:*
+        version: link:../../packages/e2e
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.9.1
@@ -271,6 +280,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.10.2
+        version: 4.11.3(playwright-core@1.61.0)
       '@axe-core/react':
         specifier: ^4.10.0
         version: 4.11.3
@@ -280,6 +292,9 @@ importers:
       '@ppt/dev-panel':
         specifier: workspace:*
         version: link:../../packages/dev-panel
+      '@ppt/e2e':
+        specifier: workspace:*
+        version: link:../../packages/e2e
       '@ppt/vite-plugin-worktree':
         specifier: workspace:*
         version: link:../../packages/vite-plugin-ppt-worktree
@@ -366,7 +381,7 @@ importers:
         version: 5.101.0(react@19.2.0)
       next:
         specifier: ^16.2.9
-        version: 16.2.9(react-dom@19.2.0)(react@19.2.0)
+        version: 16.2.9(@playwright/test@1.61.0)(react-dom@19.2.0)(react@19.2.0)
       next-intl:
         specifier: ^4.13.0
         version: 4.13.0(next@16.2.9)(react@19.2.0)(typescript@5.9.3)
@@ -377,9 +392,18 @@ importers:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.10.2
+        version: 4.11.3(playwright-core@1.61.0)
+      '@playwright/test':
+        specifier: ^1.55.0
+        version: 1.61.0
       '@ppt/dev-panel':
         specifier: workspace:*
         version: link:../../packages/dev-panel
+      '@ppt/e2e':
+        specifier: workspace:*
+        version: link:../../packages/e2e
       '@ppt/vite-plugin-worktree':
         specifier: workspace:*
         version: link:../../packages/vite-plugin-ppt-worktree
@@ -488,6 +512,24 @@ importers:
       vitest:
         specifier: ^4.1.9
         version: 4.1.9(jsdom@29.1.1)(vite@8.0.16)
+
+  packages/e2e:
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.10.2
+        version: 4.11.3(playwright-core@1.61.0)
+      '@playwright/test':
+        specifier: ^1.55.0
+        version: 1.61.0
+      '@ppt/sitemap':
+        specifier: workspace:*
+        version: link:../sitemap
+      '@types/node':
+        specifier: ^20.10.0
+        version: 20.19.40
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
 
   packages/reality-api-client:
     dependencies:
@@ -644,6 +686,15 @@ packages:
 
   /@asamuzakjp/nwsapi@2.3.9:
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
+    dev: true
+
+  /@axe-core/playwright@4.11.3(playwright-core@1.61.0):
+    resolution: {integrity: sha512-h/kfksv4F0cVIDlKpT4700OehdRgpvuVskuQ2nb7/JmtWUXpe9ftHAPtwyXGvVSsa6SJ64A9ER7Zrzc/sIvC4w==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
+    dependencies:
+      axe-core: 4.11.4
+      playwright-core: 1.61.0
     dev: true
 
   /@axe-core/react@4.11.3:
@@ -3726,7 +3777,6 @@ packages:
     hasBin: true
     dependencies:
       playwright: 1.61.0
-    dev: true
 
   /@react-native-async-storage/async-storage@3.1.1(react-native@0.86.0)(react@19.2.0):
     resolution: {integrity: sha512-z+PnLz1n6ECKhgoHZHkfc+dijXZEyZnNFSajbtE0NEbsJhmX8x9GlOeiMQIKX2E4DUqPSgfIh4FYBv1M49KgPQ==}
@@ -6480,7 +6530,6 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /fsevents@2.3.3:
@@ -8460,7 +8509,7 @@ packages:
       '@swc/core': 1.15.40
       icu-minify: 4.13.0
       negotiator: 1.0.0
-      next: 16.2.9(react-dom@19.2.0)(react@19.2.0)
+      next: 16.2.9(@playwright/test@1.61.0)(react-dom@19.2.0)(react@19.2.0)
       next-intl-swc-plugin-extractor: 4.13.0
       po-parser: 2.1.1
       react: 19.2.0
@@ -8470,7 +8519,7 @@ packages:
       - '@swc/helpers'
     dev: false
 
-  /next@16.2.9(react-dom@19.2.0)(react@19.2.0):
+  /next@16.2.9(@playwright/test@1.61.0)(react-dom@19.2.0)(react@19.2.0):
     resolution: {integrity: sha512-MEOJiq/UvuezAdqVSceHbqDgZt1kDw2tpGVOlsdIoJsQdbN2JY2hpVG4xnXGkbdJUOEWhnRfiu/O4Hpc9Juwww==}
     engines: {node: '>=20.9.0'}
     hasBin: true
@@ -8492,6 +8541,7 @@ packages:
         optional: true
     dependencies:
       '@next/env': 16.2.9
+      '@playwright/test': 1.61.0
       '@swc/helpers': 0.5.15
       baseline-browser-mapping: 2.10.37
       caniuse-lite: 1.0.30001799
@@ -8781,7 +8831,6 @@ packages:
     resolution: {integrity: sha512-caX7TrY3Ml6egyDX0WUcTHDxodl/b51y5wJOdCEA36QviK/s2g081hvmGs8eaE3DWb6NYZQ6BjO/QkNRPenoPA==}
     engines: {node: '>=18'}
     hasBin: true
-    dev: true
 
   /playwright@1.61.0:
     resolution: {integrity: sha512-Z+7BeeqQPRRzklHsVFP4KTGIyMxKUmfeRA4WisM6G3/XW6nwGeX6fX9qYaDa+CiUqpOkb2f6X3nar05R3kSuJQ==}
@@ -8791,7 +8840,6 @@ packages:
       playwright-core: 1.61.0
     optionalDependencies:
       fsevents: 2.3.2
-    dev: true
 
   /plist@3.1.1:
     resolution: {integrity: sha512-ZIfcLJC+7E7FBFnDxm9MPmt7D+DidyQ26lewieO75AdhA2ayMtsJSES0iWzqJQbcVRSrTufQoy0DR94xHue0oA==}
