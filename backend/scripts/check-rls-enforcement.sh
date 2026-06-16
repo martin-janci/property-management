@@ -69,6 +69,13 @@ VIOLATION_PATTERNS=(
     'self\.db\.acquire'
     'self\.db\.pool'
     '&self\.db[^_]'
+    # GH #1302/#1304: raw-pool transaction and clone evasions the patterns above
+    # missed. state.db.begin() opens a transaction with no RLS context; a bare
+    # state.db.clone() hands the raw pool to ad-hoc code. Constructor idiom
+    # (Repo::new(state.db.clone())) and struct-field init are allow-listed in
+    # is_sanctioned() — a *bare* raw-pool extraction is flagged.
+    'state\.db\.begin'
+    'self\.db\.begin'
 )
 
 # Directories to check (request-handling code that should use RLS).
