@@ -87,28 +87,14 @@ export function resolveAppEnv(env: NodeJS.ProcessEnv = process.env): AppEnvironm
  */
 export function buildXcconfigContents(
   projectRoot: string,
-  appEnv: AppEnvironment,
-  env: NodeJS.ProcessEnv = process.env
+  appEnv: AppEnvironment
 ): string {
   const templatePath = path.join(projectRoot, 'ios', 'xcconfig', TEMPLATE_BY_ENV[appEnv]);
   const template = fs.readFileSync(templatePath, 'utf8');
 
-  // CI override: app.config.ts prefers process.env.API_BASE_URL; mirror that
-  // here so a production EAS-secret host reaches the native build too. The URL
-  // `//` is escaped with `$()` so xcconfig does not treat it as a comment.
-  const ciApiBaseUrl = env.API_BASE_URL;
-  if (!ciApiBaseUrl) {
-    return template;
-  }
-
-  const escaped = ciApiBaseUrl.replace('//', '/$()/');
-  const lines = template.split('\n').map((line: string) => {
-    if (/^\s*PPT_API_BASE_URL\s*=/.test(line)) {
-      return `PPT_API_BASE_URL = ${escaped}`;
-    }
-    return line;
-  });
-  return lines.join('\n');
+  // Runtime API URL is owned by app.config.ts (`.env.<env>` -> ios.infoPlist).
+  // xcconfig no longer duplicates PPT_API_BASE_URL, so no CI override is needed here.
+  return template;
 }
 
 /**

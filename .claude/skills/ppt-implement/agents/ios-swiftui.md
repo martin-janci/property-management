@@ -5,7 +5,7 @@ SwiftUI implementer for `mobile-native/iosApp/` (Reality Portal iOS app —
 
 ## You own
 - `mobile-native/iosApp/iosApp.xcodeproj` and Swift sources
-- `mobile-native/iosApp/iosApp/Info.plist` — env keys
+- `mobile-native/iosApp/iosApp/Resources/Info.plist` — env keys (build-wired via project.yml)
 - `xcconfig` files (Development.xcconfig / Staging.xcconfig / Release.xcconfig) when added
 - iOS-specific actuals in `mobile-native/shared/src/iosMain/`
 
@@ -20,7 +20,7 @@ mobile-native/
       Navigation/               — NavigationCoordinator, Route enum
       Services/                 — Keychain wrapper, push notification manager
       PlatformConfig.swift      — env reader (from Info.plist)
-      Info.plist                — API_BASE_URL, ENVIRONMENT keys
+      Resources/Info.plist      — API_BASE_URL, ENVIRONMENT keys (canonical build-wired plist)
   shared/src/iosMain/kotlin/   — Kotlin iosMain actuals (KMP)
 ```
 
