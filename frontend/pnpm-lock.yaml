@@ -126,8 +126,8 @@ importers:
         specifier: ~56.0.18
         version: 56.0.18(expo@56.0.12)(react-native@0.86.0)
       expo-device:
-        specifier: ~55.0.16
-        version: 55.0.16(expo@56.0.12)
+        specifier: ~56.0.4
+        version: 56.0.4(expo@56.0.12)
       expo-document-picker:
         specifier: ~13.1.6
         version: 13.1.6(expo@56.0.12)
@@ -6093,8 +6093,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /expo-device@55.0.16(expo@56.0.12):
-    resolution: {integrity: sha512-o6eQjO2reoniXpos0FnPcrAVMYUfFPcIUdMRUUpKwQys7cmTJBjJLbOo+SuctVXUrsHUm6zyoKI7nX3C3lpqJw==}
+  /expo-device@56.0.4(expo@56.0.12):
+    resolution: {integrity: sha512-ucVcGPkvBrl2QHuy7XcYex2Y6BETvJ6TREutZrwLGUDnlvbpKS8KfQoNZOpvkyo5Nmm9RrasYQ0CrXmBHho2mg==}
     peerDependencies:
       expo: '*'
     dependencies:
