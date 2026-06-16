@@ -543,7 +543,7 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
 // with these helpers.
 //
 // Historically every tenant-scoped test file re-declared its own near-identical
-// `seed_org` / `seed_membership` (~35 copies). These shared versions promote
+// `seed_org` / `seed_membership` (~22 copies). These shared versions promote
 // the canonical pattern so new tests import one helper instead of copying ~30
 // lines of seeding boilerplate. (See issue #1090.)
 // ----------------------------------------------------------------------------
