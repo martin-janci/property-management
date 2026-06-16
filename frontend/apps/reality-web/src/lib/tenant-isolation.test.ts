@@ -22,7 +22,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   brandingToStyleObject,
-  sanitizeCssValue,
   type TenantBranding,
   type TenantConfig,
 } from './tenant-config';
@@ -169,7 +168,7 @@ describe('getTenantConfig — per-host fetch isolation', () => {
       'agency-b.test': makeTenantConfig('agency-b.test', '#0000bb', '#0011bb'),
     };
 
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
       const hostHeader = (init?.headers as Record<string, string>)?.Host ?? '';
       const config = responses[hostHeader];
       if (!config) {

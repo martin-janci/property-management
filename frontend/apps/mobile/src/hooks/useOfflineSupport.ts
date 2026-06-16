@@ -194,6 +194,17 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     }
   }, []);
 
+  // Get all queued actions
+  const getQueuedActions = useCallback(async (): Promise<QueuedAction[]> => {
+    try {
+      const queue = await AsyncStorage.getItem(QUEUE_KEY);
+      return queue ? JSON.parse(queue) : [];
+    } catch (error) {
+      console.error('Failed to get queued actions:', error);
+      return [];
+    }
+  }, []);
+
   // Add action to offline queue
   const addToQueue = useCallback(
     async (action: Omit<QueuedAction, 'id' | 'timestamp' | 'retries'>): Promise<void> => {
@@ -216,17 +227,6 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     },
     [getQueuedActions]
   );
-
-  // Get all queued actions
-  const getQueuedActions = useCallback(async (): Promise<QueuedAction[]> => {
-    try {
-      const queue = await AsyncStorage.getItem(QUEUE_KEY);
-      return queue ? JSON.parse(queue) : [];
-    } catch (error) {
-      console.error('Failed to get queued actions:', error);
-      return [];
-    }
-  }, []);
 
   // Execute a single queued action against the real backend.
   //
