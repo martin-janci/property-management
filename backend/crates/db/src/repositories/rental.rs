@@ -193,8 +193,23 @@ impl RentalRepository {
         unit_id: Uuid,
         platform: &str,
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
+        // `platform` is the `rental_platform` enum; the model decodes it as
+        // `String`, so a bare `SELECT *` panics with "mismatched types … not
+        // compatible with SQL type rental_platform". Cast the column to text on
+        // read and the bound text arg to the enum in the predicate.
         let conn = sqlx::query_as::<_, RentalPlatformConnection>(
-            r#"SELECT * FROM rental_platform_connections WHERE unit_id = $1 AND platform = $2"#,
+            r#"
+            SELECT
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
+            FROM rental_platform_connections
+            WHERE unit_id = $1 AND platform = $2::rental_platform
+            "#,
         )
         .bind(unit_id)
         .bind(platform)
@@ -456,7 +471,15 @@ impl RentalRepository {
     ) -> Result<Vec<RentalPlatformConnection>, SqlxError> {
         let connections = sqlx::query_as::<_, RentalPlatformConnection>(
             r#"
-            SELECT * FROM rental_platform_connections
+            SELECT
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
+            FROM rental_platform_connections
             WHERE is_active = true
                 AND sync_calendar = true
                 AND access_token IS NOT NULL
@@ -2187,7 +2210,15 @@ impl RentalRepository {
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
         let conn = sqlx::query_as::<_, RentalPlatformConnection>(
             r#"
-            SELECT * FROM rental_platform_connections
+            SELECT
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
+            FROM rental_platform_connections
             WHERE organization_id = $1 AND platform = 'airbnb'
             ORDER BY created_at DESC
             LIMIT 1
@@ -2219,7 +2250,15 @@ impl RentalRepository {
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
         let conn = sqlx::query_as::<_, RentalPlatformConnection>(
             r#"
-            SELECT * FROM rental_platform_connections
+            SELECT
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
+            FROM rental_platform_connections
             WHERE platform = 'airbnb' AND external_property_id = $1 AND is_active = true
             ORDER BY updated_at DESC
             LIMIT 1
@@ -2517,7 +2556,15 @@ impl RentalRepository {
 
         let connections = sqlx::query_as::<_, RentalPlatformConnection>(
             r#"
-            SELECT * FROM rental_platform_connections
+            SELECT
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
+            FROM rental_platform_connections
             WHERE platform = 'airbnb'
               AND is_active = true
               AND (encrypted_refresh_token IS NOT NULL OR refresh_token IS NOT NULL)
@@ -2560,7 +2607,15 @@ impl RentalRepository {
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
         let connection = sqlx::query_as::<_, RentalPlatformConnection>(
             r#"
-            SELECT * FROM rental_platform_connections
+            SELECT
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
+            FROM rental_platform_connections
             WHERE organization_id = $1 AND platform = 'booking'
             ORDER BY created_at DESC
             LIMIT 1
