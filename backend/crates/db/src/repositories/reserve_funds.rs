@@ -375,11 +375,18 @@ impl ReserveFundRepository {
         req: RecordFundTransaction,
         created_by: Uuid,
     ) -> Result<FundTransaction, sqlx::Error> {
-        // Get current balance — org-scoped so a foreign fund yields RowNotFound.
-        let fund = self
-            .get_fund(&mut *conn, org_id, fund_id)
-            .await?
-            .ok_or(sqlx::Error::RowNotFound)?;
+        use sqlx::Connection;
+        let mut tx = conn.begin().await?;
+
+        // Get current balance with lock — org-scoped so a foreign fund yields RowNotFound.
+        let fund = sqlx::query_as::<_, ReserveFund>(
+            "SELECT * FROM reserve_funds WHERE id = $1 AND organization_id = $2 FOR UPDATE",
+        )
+        .bind(fund_id)
+        .bind(org_id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(sqlx::Error::RowNotFound)?;
 
         // Calculate new balance
         let amount = req.amount;
@@ -423,7 +430,7 @@ impl ReserveFundRepository {
         .bind(req.transfer_to_fund_id)
         .bind(req.requires_approval.unwrap_or(false))
         .bind(created_by)
-        .fetch_one(&mut *conn)
+        .fetch_one(&mut *tx)
         .await?;
 
         // Update fund balance
@@ -432,9 +439,10 @@ impl ReserveFundRepository {
         )
         .bind(fund_id)
         .bind(new_balance)
-        .execute(&mut *conn)
+        .execute(&mut *tx)
         .await?;
 
+        tx.commit().await?;
         Ok(transaction)
     }
 
@@ -492,10 +500,13 @@ impl ReserveFundRepository {
         req: FundTransferRequest,
         created_by: Uuid,
     ) -> Result<(FundTransaction, FundTransaction), sqlx::Error> {
+        use sqlx::Connection;
+        let mut tx = conn.begin().await?;
+
         // Record withdrawal from source
         let withdrawal = self
             .record_transaction(
-                &mut *conn,
+                &mut tx,
                 org_id,
                 req.from_fund_id,
                 RecordFundTransaction {
@@ -514,7 +525,7 @@ impl ReserveFundRepository {
         // Record deposit to destination
         let deposit = self
             .record_transaction(
-                &mut *conn,
+                &mut tx,
                 org_id,
                 req.to_fund_id,
                 RecordFundTransaction {
@@ -530,6 +541,7 @@ impl ReserveFundRepository {
             )
             .await?;
 
+        tx.commit().await?;
         Ok((withdrawal, deposit))
     }
 

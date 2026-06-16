@@ -5,6 +5,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
 
 /**
  * Unit tests for [SearchState] — the pure logic behind the Reality mobile home/search screen.
@@ -13,6 +17,73 @@ import kotlin.test.assertTrue
  * infinite-scroll trigger and request/merge semantics so the Compose screen stays a thin shell.
  */
 class SearchStateTest {
+
+    // ── debouncedQueryFlow (AC-2 search-as-you-type debounce) ────────────
+    //
+    // runTest drives kotlinx-coroutines debounce on virtual time, so these assert the *timing*
+    // contract (collapse rapid keystrokes, emit once the user pauses, drop the initial value,
+    // de-duplicate settled text) deterministically and instantly.
+
+    @Test
+    fun debouncedQueryFlow_collapsesRapidKeystrokesIntoFinalValue() = runTest {
+        // Type "b","by","byt" in quick succession (each well within the debounce window), then
+        // pause. Only the final settled value should survive the debounce.
+        val typed = flow {
+            emit("") // initial/current value — dropped by drop(1)
+            emit("b")
+            delay(50)
+            emit("by")
+            delay(50)
+            emit("byt")
+            delay(SearchState.SEARCH_DEBOUNCE_MS + 50) // pause longer than the debounce window
+        }
+
+        val emitted = SearchState.debouncedQueryFlow(typed).toList()
+
+        assertEquals(listOf("byt"), emitted)
+    }
+
+    @Test
+    fun debouncedQueryFlow_emitsEachValueThatSettlesPastTheWindow() = runTest {
+        // Two distinct values, each followed by a pause exceeding the debounce window → both fire.
+        val typed = flow {
+            emit("")
+            emit("praha")
+            delay(SearchState.SEARCH_DEBOUNCE_MS + 50)
+            emit("brno")
+            delay(SearchState.SEARCH_DEBOUNCE_MS + 50)
+        }
+
+        assertEquals(listOf("praha", "brno"), SearchState.debouncedQueryFlow(typed).toList())
+    }
+
+    @Test
+    fun debouncedQueryFlow_dropsInitialEmissionSoFirstLoadIsNotDoubleFired() = runTest {
+        // Only the initial value is emitted (no user typing). drop(1) means nothing should fire —
+        // the screen's own mount-time first load owns that case.
+        val typed = flow {
+            emit("seed")
+            delay(SearchState.SEARCH_DEBOUNCE_MS + 50)
+        }
+
+        assertEquals(emptyList(), SearchState.debouncedQueryFlow(typed).toList())
+    }
+
+    @Test
+    fun debouncedQueryFlow_deduplicatesWhenTextSettlesBackToSameValue() = runTest {
+        // User types "byt", pauses (fires), edits to "byty" then deletes back to "byt", pauses.
+        // distinctUntilChanged means the second settle on the same "byt" must NOT re-fire.
+        val typed = flow {
+            emit("")
+            emit("byt")
+            delay(SearchState.SEARCH_DEBOUNCE_MS + 50)
+            emit("byty")
+            emit("byt")
+            delay(SearchState.SEARCH_DEBOUNCE_MS + 50)
+        }
+
+        assertEquals(listOf("byt"), SearchState.debouncedQueryFlow(typed).toList())
+    }
 
     // ── buildSearchRequest ───────────────────────────────────────────────
 
