@@ -1,5 +1,10 @@
 package three.two.bit.ppt.reality.listing
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+
 /**
  * Pure search-screen state helpers shared across platforms.
  *
@@ -7,8 +12,12 @@ package three.two.bit.ppt.reality.listing
  * tested without a Compose (or SwiftUI) runtime and reused by the iOS target later:
  * - [buildSearchRequest] — assembles a [ListingSearchRequest] from the screen's filter inputs.
  * - [activeFilterCount] — the badge count shown on the "Filtre" chip.
- * - [shouldLoadNextPage] — the infinite-scroll trigger (AC-4): given the currently loaded count,
- *   the reported total, and whether a load is in flight, decide whether to fetch the next page.
+ * - [shouldLoadNextPage] — the infinite-scroll trigger predicate (AC-4): given the currently loaded
+ *   count, the reported total, and whether a load is in flight, decide whether to fetch the next
+ *   page.
+ * - [nextPageTriggerFlow] — the AC-4 infinite-scroll pipeline applied to the stream of
+ *   last-visible-index values: de-duplicate the index, snapshot the pagination state, and emit the
+ *   page number to load when [shouldLoadNextPage] says so.
  * - [mergePage] — append-or-replace semantics for paginated results (page 1 replaces, later pages
  *   append).
  * - [shouldApplyResponse] — stale-response guard: given the request generation a response belongs
@@ -126,6 +135,57 @@ object SearchState {
         val last = lastVisibleIndex ?: return false
         return last >= loadedCount - PREFETCH_THRESHOLD
     }
+
+    /** Snapshot of the pagination state read when the scroll position changes. */
+    data class PageSnapshot(
+        val loadedCount: Int,
+        val total: Int,
+        val isLoading: Boolean,
+        /** Page currently loaded; the next page to fetch is [currentPage] + 1. */
+        val currentPage: Int,
+    )
+
+    /**
+     * Infinite-scroll pipeline (AC-4).
+     *
+     * Given the stream of last-visible-index values emitted as the user scrolls ([lastVisibleIndex],
+     * null when the list is empty), returns the stream of page numbers that should actually be
+     * fetched:
+     * - `distinctUntilChanged()` collapses repeated index reports for the same row so we only react
+     *   when the bottom-most visible item actually moves.
+     * - For each new index we take a fresh [PageSnapshot] (loaded count, total, in-flight flag,
+     *   current page) via [snapshot] and run the [shouldLoadNextPage] predicate; when it fires we map
+     *   to `currentPage + 1`, otherwise to null.
+     * - `filterNotNull()` drops the indices that don't warrant a fetch.
+     *
+     * Extracted from `SearchScreen.kt` so the AC-4 trigger timing/threshold behaviour is
+     * unit-testable with `kotlinx-coroutines-test` virtual time instead of only living in a Compose
+     * `LaunchedEffect` over `snapshotFlow`.
+     *
+     * @param lastVisibleIndex stream of the index of the last currently-visible item
+     * @param snapshot reads the live pagination state at the moment an index change is processed
+     * @return stream of page numbers to load (one emission per page boundary crossed)
+     */
+    fun nextPageTriggerFlow(
+        lastVisibleIndex: Flow<Int?>,
+        snapshot: () -> PageSnapshot,
+    ): Flow<Int> =
+        lastVisibleIndex.distinctUntilChanged().map { last ->
+            val s = snapshot()
+            if (
+                shouldLoadNextPage(
+                    lastVisibleIndex = last,
+                    loadedCount = s.loadedCount,
+                    total = s.total,
+                    isLoading = s.isLoading,
+                )
+            ) {
+                s.currentPage + 1
+            } else {
+                null
+            }
+        }
+            .filterNotNull()
 
     /** Merge a freshly-loaded page into the existing results (page 1 replaces, others append). */
     fun mergePage(
