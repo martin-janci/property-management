@@ -1,9 +1,11 @@
+use db::models::reserve_funds::{
+    CreateReserveFund, FundTransactionType, FundType, RecordFundTransaction,
+};
 use db::models::{RecordReserveTransaction, ReserveFund as BudgetReserveFund};
-use db::models::reserve_funds::{CreateReserveFund, FundType, RecordFundTransaction, FundTransactionType};
 use db::repositories::{BudgetRepository, ReserveFundRepository};
+use rust_decimal_macros::dec;
 use sqlx::PgPool;
 use uuid::Uuid;
-use rust_decimal_macros::dec;
 
 async fn set_ctx(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, is_super_admin: bool) {
     sqlx::query("SELECT set_request_context($1, $2, $3)")
@@ -55,19 +57,20 @@ async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
     let user_id = seed_user(&pool, "budget-atom@test.com").await;
 
     // Create a reserve fund
-    let fund = repo.create_reserve_fund_rls(
-        &pool,
-        org_id,
-        db::models::CreateReserveFund {
-            building_id: None,
-            name: Some("Atomicity Fund".to_string()),
-            target_balance: Some(dec!(10000.0)),
-            annual_contribution: dec!(1200.0),
-            notes: None,
-        },
-    )
-    .await
-    .expect("create reserve fund");
+    let fund = repo
+        .create_reserve_fund_rls(
+            &pool,
+            org_id,
+            db::models::CreateReserveFund {
+                building_id: None,
+                name: Some("Atomicity Fund".to_string()),
+                target_balance: Some(dec!(10000.0)),
+                annual_contribution: dec!(1200.0),
+                notes: None,
+            },
+        )
+        .await
+        .expect("create reserve fund");
 
     // --- Test transaction ---
     let mut conn = pool.acquire().await.expect("acquire");
@@ -113,22 +116,23 @@ async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("acquire");
     set_ctx(&pool, Some(org_id), Some(user_id), false).await;
 
-    let fund = repo.create_fund(
-        &mut *conn,
-        org_id,
-        CreateReserveFund {
-            building_id: None,
-            name: "RF Atomicity Fund".to_string(),
-            description: None,
-            fund_type: FundType::Reserve,
-            target_balance: Some(dec!(10000.0)),
-            minimum_balance: Some(dec!(1000.0)),
-            currency: Some("EUR".to_string()),
-        },
-        user_id,
-    )
-    .await
-    .expect("create reserve fund");
+    let fund = repo
+        .create_fund(
+            &mut *conn,
+            org_id,
+            CreateReserveFund {
+                building_id: None,
+                name: "RF Atomicity Fund".to_string(),
+                description: None,
+                fund_type: FundType::Reserve,
+                target_balance: Some(dec!(10000.0)),
+                minimum_balance: Some(dec!(1000.0)),
+                currency: Some("EUR".to_string()),
+            },
+            user_id,
+        )
+        .await
+        .expect("create reserve fund");
 
     // --- Test transaction ---
     let data = RecordFundTransaction {
