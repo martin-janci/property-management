@@ -57,18 +57,15 @@ async fn airbnb_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
         .expect("org B airbnb upsert");
 
     assert_ne!(
-        conn_a.id,
-        conn_b.id,
+        conn_a.id, conn_b.id,
         "each org must have its own connection row"
     );
     assert_eq!(
-        conn_a.organization_id,
-        org_a,
+        conn_a.organization_id, org_a,
         "org A connection must belong to org A"
     );
     assert_eq!(
-        conn_b.organization_id,
-        org_b,
+        conn_b.organization_id, org_b,
         "org B connection must not be rebound to org A"
     );
 
@@ -154,13 +151,11 @@ async fn booking_oauth_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
 
     assert_ne!(conn_a.id, conn_b.id, "each org must have its own row");
     assert_eq!(
-        conn_a.organization_id,
-        org_a,
+        conn_a.organization_id, org_a,
         "org A connection must belong to org A"
     );
     assert_eq!(
-        conn_b.organization_id,
-        org_b,
+        conn_b.organization_id, org_b,
         "org B connection must not be rebound to org A"
     );
 
@@ -193,8 +188,7 @@ async fn booking_oauth_upsert_idempotent_same_org(pool: PgPool) {
         .expect("second upsert");
 
     assert_eq!(
-        conn.organization_id,
-        org_a,
+        conn.organization_id, org_a,
         "organization_id must remain org_a after re-upsert"
     );
 

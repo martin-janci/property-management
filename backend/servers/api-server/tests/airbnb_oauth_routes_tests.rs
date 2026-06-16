@@ -657,7 +657,11 @@ async fn airbnb_token_exchange_rejects_non_manager_member(pool: PgPool) {
 
     let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
     let resp = app
-        .execute(authed_post(&uri, &non_manager_token, json!({"code": "valid-code"})))
+        .execute(authed_post(
+            &uri,
+            &non_manager_token,
+            json!({"code": "valid-code"}),
+        ))
         .await;
     assert_eq!(
         resp.status,
