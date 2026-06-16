@@ -538,6 +538,32 @@ async fn mark_invitation_viewed_for_other_provider_is_rejected(pool: PgPool) {
     assert_not_ok(resp.status, "mark_invitation_viewed cross-provider");
 }
 
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mark_invitation_viewed_is_idempotent(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "inv-idem-org").await;
+    let user_a = seed_user(&pool, "inv-idem-a@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "inv-idem-a").await;
+    let rfq = seed_rfq(&pool, org, user_a).await;
+    let invitation = seed_invitation(&pool, rfq, provider_a).await;
+
+    let token_a = mint_token(user_a, "inv-idem-a@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/invitations/{invitation}/view");
+
+    // First view — marks viewed_at
+    let resp1 = app.execute(app.post(&uri).bearer(&token_a).build()).await;
+    assert_eq!(resp1.status, StatusCode::OK, "first view must succeed: {}", resp1.text());
+
+    // Second view — already viewed, must still return 200 (idempotent)
+    let resp2 = app.execute(app.post(&uri).bearer(&token_a).build()).await;
+    assert_eq!(
+        resp2.status,
+        StatusCode::OK,
+        "repeat view by owner must be idempotent (GH #1301): {}",
+        resp2.text()
+    );
+}
+
 // ---------------------------------------------------------------------------
 // Marketplace — verification read (owner-or-platform-admin; PAP-140)
 //

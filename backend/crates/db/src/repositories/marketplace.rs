@@ -1070,8 +1070,8 @@ impl MarketplaceRepository {
     ) -> Result<Option<RfqInvitation>, SqlxError> {
         sqlx::query_as::<_, RfqInvitation>(
             r#"
-            UPDATE rfq_invitations SET viewed_at = NOW()
-            WHERE id = $1 AND provider_id = $2 AND viewed_at IS NULL
+            UPDATE rfq_invitations SET viewed_at = COALESCE(viewed_at, NOW())
+            WHERE id = $1 AND provider_id = $2
             RETURNING *
             "#,
         )
