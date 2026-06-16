@@ -184,7 +184,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .bind(data.unit_id)
             .bind(&data.platform)
@@ -220,7 +220,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(org_id)
             .fetch_optional(&self.pool)
@@ -240,7 +240,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(unit_id)
             .bind(platform)
             .fetch_optional(&self.pool)
@@ -271,7 +271,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.external_property_id)
             .bind(&data.external_listing_url)
@@ -312,7 +312,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.external_property_id)
             .bind(&data.external_listing_url)
@@ -514,7 +514,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let connections = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let connections = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .fetch_all(&self.pool)
             .await?;
 
@@ -546,7 +546,7 @@ impl RentalRepository {
             Self::BOOKING_COLUMNS
         );
 
-        let booking = sqlx::query_as::<_, RentalBooking>(&sql)
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .bind(data.unit_id)
             .bind(&data.platform)
@@ -591,7 +591,7 @@ impl RentalRepository {
     /// Find booking by ID.
     pub async fn find_booking_by_id(&self, id: Uuid) -> Result<Option<RentalBooking>, SqlxError> {
         let sql = format!("SELECT {} FROM rental_bookings WHERE id = $1", Self::BOOKING_COLUMNS);
-        let booking = sqlx::query_as::<_, RentalBooking>(&sql)
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .fetch_optional(&self.pool)
             .await?;
@@ -611,7 +611,7 @@ impl RentalRepository {
             "SELECT {} FROM rental_bookings WHERE id = $1 AND organization_id = $2",
             Self::BOOKING_COLUMNS
         );
-        let booking = sqlx::query_as::<_, RentalBooking>(&sql)
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(org_id)
             .fetch_optional(&self.pool)
@@ -634,7 +634,7 @@ impl RentalRepository {
             "SELECT {} FROM rental_bookings WHERE platform = $1::rental_platform AND external_booking_id = $2",
             Self::BOOKING_COLUMNS
         );
-        let booking = sqlx::query_as::<_, RentalBooking>(&sql)
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(sql))
             .bind(platform)
             .bind(external_id)
             .fetch_optional(&self.pool)
@@ -671,7 +671,7 @@ impl RentalRepository {
             Self::BOOKING_COLUMNS
         );
 
-        let booking = sqlx::query_as::<_, RentalBooking>(&sql)
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.guest_name)
             .bind(&data.guest_email)
@@ -740,7 +740,7 @@ impl RentalRepository {
             Self::BOOKING_COLUMNS
         );
 
-        let booking = sqlx::query_as::<_, RentalBooking>(&sql)
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.guest_name)
             .bind(&data.guest_email)
@@ -801,7 +801,7 @@ impl RentalRepository {
             Self::BOOKING_COLUMNS
         );
 
-        let booking = sqlx::query_as::<_, RentalBooking>(&sql)
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.status)
             .bind(&data.cancellation_reason)
@@ -1032,7 +1032,7 @@ impl RentalRepository {
             Self::CALENDAR_BLOCK_COLUMNS
         );
 
-        let block = sqlx::query_as::<_, CalendarBlock>(&sql)
+        let block = sqlx::query_as::<_, CalendarBlock>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .bind(data.unit_id)
             .bind(data.block_start)
@@ -1246,7 +1246,7 @@ impl RentalRepository {
             Self::GUEST_COLUMNS
         );
 
-        let guest = sqlx::query_as::<_, RentalGuest>(&sql)
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .bind(data.booking_id)
             .bind(&data.first_name)
@@ -1274,7 +1274,7 @@ impl RentalRepository {
     /// Find guest by ID.
     pub async fn find_guest_by_id(&self, id: Uuid) -> Result<Option<RentalGuest>, SqlxError> {
         let sql = format!("SELECT {} FROM rental_guests WHERE id = $1", Self::GUEST_COLUMNS);
-        let guest = sqlx::query_as::<_, RentalGuest>(&sql)
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .fetch_optional(&self.pool)
             .await?;
@@ -1294,7 +1294,7 @@ impl RentalRepository {
             "SELECT {} FROM rental_guests WHERE id = $1 AND organization_id = $2",
             Self::GUEST_COLUMNS
         );
-        let guest = sqlx::query_as::<_, RentalGuest>(&sql)
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(org_id)
             .fetch_optional(&self.pool)
@@ -1334,7 +1334,7 @@ impl RentalRepository {
             Self::GUEST_COLUMNS
         );
 
-        let guest = sqlx::query_as::<_, RentalGuest>(&sql)
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.first_name)
             .bind(&data.last_name)
@@ -1393,7 +1393,7 @@ impl RentalRepository {
             Self::GUEST_COLUMNS
         );
 
-        let guest = sqlx::query_as::<_, RentalGuest>(&sql)
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.first_name)
             .bind(&data.last_name)
@@ -1431,7 +1431,7 @@ impl RentalRepository {
             Self::GUEST_COLUMNS
         );
 
-        let guest = sqlx::query_as::<_, RentalGuest>(&sql)
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(guest_status::REGISTERED)
             .fetch_one(&self.pool)
@@ -1461,7 +1461,7 @@ impl RentalRepository {
             Self::GUEST_COLUMNS
         );
 
-        let guest = sqlx::query_as::<_, RentalGuest>(&sql)
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(guest_status::REGISTERED)
             .bind(org_id)
@@ -1480,7 +1480,7 @@ impl RentalRepository {
             "SELECT {} FROM rental_guests WHERE booking_id = $1 ORDER BY is_primary DESC, created_at",
             Self::GUEST_COLUMNS
         );
-        let guests = sqlx::query_as::<_, RentalGuest>(&sql)
+        let guests = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(sql))
             .bind(booking_id)
             .fetch_all(&self.pool)
             .await?;
@@ -1946,7 +1946,7 @@ impl RentalRepository {
             Self::ICAL_FEED_COLUMNS
         );
 
-        let feed = sqlx::query_as::<_, ICalFeed>(&sql)
+        let feed = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .bind(data.unit_id)
             .bind(&data.feed_name)
@@ -1968,7 +1968,7 @@ impl RentalRepository {
             "SELECT {} FROM rental_ical_feeds WHERE feed_token = $1 AND is_active = true",
             Self::ICAL_FEED_COLUMNS
         );
-        let feed = sqlx::query_as::<_, ICalFeed>(&sql)
+        let feed = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(sql))
             .bind(token)
             .fetch_optional(&self.pool)
             .await?;
@@ -1982,7 +1982,7 @@ impl RentalRepository {
             "SELECT {} FROM rental_ical_feeds WHERE unit_id = $1 ORDER BY feed_name",
             Self::ICAL_FEED_COLUMNS
         );
-        let feeds = sqlx::query_as::<_, ICalFeed>(&sql)
+        let feeds = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(sql))
             .bind(unit_id)
             .fetch_all(&self.pool)
             .await?;
@@ -2003,7 +2003,7 @@ impl RentalRepository {
             "SELECT {} FROM rental_ical_feeds WHERE unit_id = $1 AND organization_id = $2 ORDER BY feed_name",
             Self::ICAL_FEED_COLUMNS
         );
-        let feeds = sqlx::query_as::<_, ICalFeed>(&sql)
+        let feeds = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(sql))
             .bind(unit_id)
             .bind(org_id)
             .fetch_all(&self.pool)
@@ -2035,7 +2035,7 @@ impl RentalRepository {
             Self::ICAL_FEED_COLUMNS
         );
 
-        let feed = sqlx::query_as::<_, ICalFeed>(&sql)
+        let feed = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.feed_name)
             .bind(&data.import_url)
@@ -2085,7 +2085,7 @@ impl RentalRepository {
             Self::ICAL_FEED_COLUMNS
         );
 
-        let feed = sqlx::query_as::<_, ICalFeed>(&sql)
+        let feed = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&data.feed_name)
             .bind(&data.import_url)
@@ -2263,7 +2263,7 @@ impl RentalRepository {
             "#,
             Self::PLATFORM_CONNECTION_COLUMNS
         );
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .fetch_optional(&self.pool)
             .await?;
@@ -2297,7 +2297,7 @@ impl RentalRepository {
             "#,
             Self::PLATFORM_CONNECTION_COLUMNS
         );
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(listing_id)
             .fetch_optional(&self.pool)
             .await?;
@@ -2401,7 +2401,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .bind(effective_unit_id)
             .bind(access_token)
@@ -2459,7 +2459,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .bind(effective_unit_id)
             .bind(access_token)
@@ -2550,7 +2550,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(connection_id)
             .bind(encrypted_access)
             .bind(encrypted_refresh)
@@ -2611,7 +2611,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let connections = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let connections = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(threshold)
             .fetch_all(&self.pool)
             .await?;
@@ -2652,7 +2652,7 @@ impl RentalRepository {
             "#,
             Self::PLATFORM_CONNECTION_COLUMNS
         );
-        let connection = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let connection = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(org_id)
             .fetch_optional(&self.pool)
             .await?;
@@ -2694,7 +2694,7 @@ impl RentalRepository {
             Self::PLATFORM_CONNECTION_COLUMNS
         );
 
-        let connection = sqlx::query_as::<_, RentalPlatformConnection>(&sql)
+        let connection = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(unit_id)
             .bind(org_id)
