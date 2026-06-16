@@ -1,4 +1,5 @@
 name: Backend
+# PAP-250: retrigger after stuck queue slot
 
 on:
   push:
