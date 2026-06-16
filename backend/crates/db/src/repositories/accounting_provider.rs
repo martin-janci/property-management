@@ -11,13 +11,13 @@ use uuid::Uuid;
 /// Repository for external accounting provider integration operations.
 #[derive(Clone)]
 pub struct AccountingProviderRepository {
-    pool: DbPool,
+    _pool: DbPool,
 }
 
 impl AccountingProviderRepository {
     /// Create a new AccountingProviderRepository.
     pub fn new(pool: DbPool) -> Self {
-        Self { pool }
+        Self { _pool: pool }
     }
 
     // ========================================================================
