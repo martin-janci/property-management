@@ -75,7 +75,8 @@ export function AccountingInvoiceList({
                 <div className="flex flex-col">
                   <p className="text-sm font-medium text-blue-600 truncate">{invoice.number}</p>
                   <p className="text-xs text-gray-500">
-                    Due: {new Date(invoice.dueDate).toLocaleDateString('en-US', {
+                    Due:{' '}
+                    {new Date(invoice.dueDate).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
