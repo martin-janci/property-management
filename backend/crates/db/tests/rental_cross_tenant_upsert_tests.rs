@@ -24,7 +24,10 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
         "#,
     )
     .bind(format!("Cross-Tenant Test {slug}"))
-    .bind(format!("cross-tenant-test-{slug}-{}", Uuid::new_v4().simple()))
+    .bind(format!(
+        "cross-tenant-test-{slug}-{}",
+        Uuid::new_v4().simple()
+    ))
     .bind(format!("{slug}@cross-tenant.test"))
     .fetch_one(pool)
     .await
@@ -53,9 +56,21 @@ async fn airbnb_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
         .await
         .expect("org B airbnb upsert");
 
-    assert_ne!(conn_a.id, conn_b.id, "each org must have its own connection row");
-    assert_eq!(conn_a.organization_id, org_a, "org A connection must belong to org A");
-    assert_eq!(conn_b.organization_id, org_b, "org B connection must not be rebound to org A");
+    assert_ne!(
+        conn_a.id,
+        conn_b.id,
+        "each org must have its own connection row"
+    );
+    assert_eq!(
+        conn_a.organization_id,
+        org_a,
+        "org A connection must belong to org A"
+    );
+    assert_eq!(
+        conn_b.organization_id,
+        org_b,
+        "org B connection must not be rebound to org A"
+    );
 
     let raw_a = sqlx::query_scalar::<_, Option<String>>(
         "SELECT access_token FROM rental_platform_connections WHERE id = $1",
@@ -64,7 +79,11 @@ async fn airbnb_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
     .fetch_one(&pool)
     .await
     .expect("fetch conn_a token");
-    assert_eq!(raw_a.as_deref(), Some("token-a-v1"), "org A token must be untouched");
+    assert_eq!(
+        raw_a.as_deref(),
+        Some("token-a-v1"),
+        "org A token must be untouched"
+    );
 
     let raw_b = sqlx::query_scalar::<_, Option<String>>(
         "SELECT access_token FROM rental_platform_connections WHERE id = $1",
@@ -73,7 +92,11 @@ async fn airbnb_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
     .fetch_one(&pool)
     .await
     .expect("fetch conn_b token");
-    assert_eq!(raw_b.as_deref(), Some("token-b-v1"), "org B token must not bleed to org A");
+    assert_eq!(
+        raw_b.as_deref(),
+        Some("token-b-v1"),
+        "org B token must not bleed to org A"
+    );
 }
 
 /// When org B refreshes its token after both orgs are connected, org A's row
@@ -95,13 +118,18 @@ async fn airbnb_upsert_refresh_does_not_rebind_other_org(pool: PgPool) {
         .expect("org B refresh");
 
     let raw_a = sqlx::query_scalar::<_, Option<String>>(
-        "SELECT access_token FROM rental_platform_connections WHERE organization_id = $1 AND platform = 'airbnb'",
+        "SELECT access_token FROM rental_platform_connections \
+         WHERE organization_id = $1 AND platform = 'airbnb'",
     )
     .bind(org_a)
     .fetch_one(&pool)
     .await
     .expect("fetch org A token");
-    assert_eq!(raw_a.as_deref(), Some("token-a-orig"), "org A token must not be changed by org B refresh");
+    assert_eq!(
+        raw_a.as_deref(),
+        Some("token-a-orig"),
+        "org A token must not be changed by org B refresh"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -125,8 +153,16 @@ async fn booking_oauth_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
         .expect("org B booking upsert");
 
     assert_ne!(conn_a.id, conn_b.id, "each org must have its own row");
-    assert_eq!(conn_a.organization_id, org_a, "org A connection must belong to org A");
-    assert_eq!(conn_b.organization_id, org_b, "org B connection must not be rebound to org A");
+    assert_eq!(
+        conn_a.organization_id,
+        org_a,
+        "org A connection must belong to org A"
+    );
+    assert_eq!(
+        conn_b.organization_id,
+        org_b,
+        "org B connection must not be rebound to org A"
+    );
 
     let raw_a = sqlx::query_scalar::<_, Option<String>>(
         "SELECT access_token FROM rental_platform_connections WHERE id = $1",
@@ -135,7 +171,11 @@ async fn booking_oauth_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
     .fetch_one(&pool)
     .await
     .expect("fetch conn_a token");
-    assert_eq!(raw_a.as_deref(), Some("booking-token-a"), "org A booking token must be untouched");
+    assert_eq!(
+        raw_a.as_deref(),
+        Some("booking-token-a"),
+        "org A booking token must be untouched"
+    );
 }
 
 /// organization_id must be stable after an idempotent re-upsert by the same org.
@@ -152,7 +192,11 @@ async fn booking_oauth_upsert_idempotent_same_org(pool: PgPool) {
         .await
         .expect("second upsert");
 
-    assert_eq!(conn.organization_id, org_a, "organization_id must remain org_a after re-upsert");
+    assert_eq!(
+        conn.organization_id,
+        org_a,
+        "organization_id must remain org_a after re-upsert"
+    );
 
     let raw = sqlx::query_scalar::<_, Option<String>>(
         "SELECT access_token FROM rental_platform_connections WHERE id = $1",
@@ -161,5 +205,9 @@ async fn booking_oauth_upsert_idempotent_same_org(pool: PgPool) {
     .fetch_one(&pool)
     .await
     .expect("fetch updated token");
-    assert_eq!(raw.as_deref(), Some("tok-v2"), "token must be updated on re-upsert");
+    assert_eq!(
+        raw.as_deref(),
+        Some("tok-v2"),
+        "token must be updated on re-upsert"
+    );
 }
