@@ -126,8 +126,8 @@ async fn registry_rules_insert_branch_none_booleans_use_schema_defaults(pool: Pg
             org,
             building,
             UpdateRegistryRules {
-                pets_allowed: None,            // DEFAULT TRUE
-                pets_require_approval: None,   // DEFAULT TRUE
+                pets_allowed: None,          // DEFAULT TRUE
+                pets_require_approval: None, // DEFAULT TRUE
                 max_pets_per_unit: None,
                 allowed_pet_types: None,
                 banned_pet_breeds: None,
