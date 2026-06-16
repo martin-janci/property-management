@@ -864,11 +864,7 @@ mod tests {
     // ------------------------------------------------------------------
 
     /// Build a stored `DevicePushToken` row for selection tests.
-    fn stored_token(
-        token: &str,
-        platform: &str,
-        app_id: Option<&str>,
-    ) -> DevicePushToken {
+    fn stored_token(token: &str, platform: &str, app_id: Option<&str>) -> DevicePushToken {
         DevicePushToken {
             id: Uuid::new_v4(),
             user_id: Uuid::new_v4(),
@@ -887,8 +883,14 @@ mod tests {
 
     #[test]
     fn stored_token_maps_platform_string_to_enum() {
-        assert_eq!(stored_token("t", "fcm", None).push_platform(), PushPlatform::Fcm);
-        assert_eq!(stored_token("t", "apns", None).push_platform(), PushPlatform::Apns);
+        assert_eq!(
+            stored_token("t", "fcm", None).push_platform(),
+            PushPlatform::Fcm
+        );
+        assert_eq!(
+            stored_token("t", "apns", None).push_platform(),
+            PushPlatform::Apns
+        );
     }
 
     #[test]
@@ -925,7 +927,11 @@ mod tests {
             stored_token("real-token", "fcm", None),
         ];
         let targets = select_dispatch_targets(&tokens, &PushTargetFilter::default());
-        assert_eq!(targets.len(), 1, "only the non-blank token is a valid target");
+        assert_eq!(
+            targets.len(),
+            1,
+            "only the non-blank token is a valid target"
+        );
         assert_eq!(targets[0].token, "real-token");
     }
 
@@ -997,7 +1003,10 @@ mod tests {
         let token = stored_token("fcm-x", "fcm", None);
         let id = token.id;
         let targets = select_dispatch_targets(&[token], &PushTargetFilter::default());
-        assert_eq!(targets[0].token_id, id, "token_id must survive selection for receipts/eviction");
+        assert_eq!(
+            targets[0].token_id, id,
+            "token_id must survive selection for receipts/eviction"
+        );
     }
 
     #[test]
