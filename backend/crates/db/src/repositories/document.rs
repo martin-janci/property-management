@@ -676,7 +676,7 @@ impl DocumentRepository {
             WHERE organization_id = $1
               AND deleted_at IS NULL
               AND ($2::uuid IS NULL OR folder_id = $2)
-              AND ($3::text IS NULL OR category = $3)
+              AND ($3::text IS NULL OR category = $3::document_category)
               AND ($4::uuid IS NULL OR created_by = $4)
               AND ($5::text IS NULL OR title ILIKE '%' || $5 || '%')
             ORDER BY created_at DESC
@@ -711,7 +711,7 @@ impl DocumentRepository {
             WHERE organization_id = $1
               AND deleted_at IS NULL
               AND ($2::uuid IS NULL OR folder_id = $2)
-              AND ($3::text IS NULL OR category = $3)
+              AND ($3::text IS NULL OR category = $3::document_category)
               AND ($4::uuid IS NULL OR created_by = $4)
               AND ($5::text IS NULL OR title ILIKE '%' || $5 || '%')
             "#,
@@ -745,9 +745,10 @@ impl DocumentRepository {
         let limit = query.limit.unwrap_or(50).min(100);
         let offset = query.offset.unwrap_or(0);
 
-        let building_ids_json = serde_json::to_value(user_building_ids).unwrap();
-        let unit_ids_json = serde_json::to_value(user_unit_ids).unwrap();
-        let roles_json = serde_json::to_value(user_roles).unwrap();
+        // `?|` is `jsonb ?| text[]` — right operand must be text[], not jsonb.
+        let building_ids: Vec<String> = user_building_ids.iter().map(Uuid::to_string).collect();
+        let unit_ids: Vec<String> = user_unit_ids.iter().map(Uuid::to_string).collect();
+        let roles: Vec<String> = user_roles.to_vec();
 
         sqlx::query_as::<_, DocumentSummary>(
             r#"
@@ -762,16 +763,16 @@ impl DocumentRepository {
                 -- Organization-wide access
                 OR access_scope = 'organization'
                 -- Building-based access
-                OR (access_scope = 'building' AND access_target_ids ?| $3)
+                OR (access_scope = 'building' AND access_target_ids ?| $3::text[])
                 -- Unit-based access
-                OR (access_scope = 'unit' AND access_target_ids ?| $4)
+                OR (access_scope = 'unit' AND access_target_ids ?| $4::text[])
                 -- Role-based access
-                OR (access_scope = 'role' AND access_roles ?| $5)
+                OR (access_scope = 'role' AND access_roles ?| $5::text[])
                 -- Specific user access
                 OR (access_scope = 'users' AND access_target_ids ? $2::text)
               )
               AND ($6::uuid IS NULL OR folder_id = $6)
-              AND ($7::text IS NULL OR category = $7)
+              AND ($7::text IS NULL OR category = $7::document_category)
               AND ($8::text IS NULL OR title ILIKE '%' || $8 || '%')
             ORDER BY created_at DESC
             LIMIT $9 OFFSET $10
@@ -779,9 +780,9 @@ impl DocumentRepository {
         )
         .bind(org_id)
         .bind(user_id)
-        .bind(&building_ids_json)
-        .bind(&unit_ids_json)
-        .bind(&roles_json)
+        .bind(&building_ids)
+        .bind(&unit_ids)
+        .bind(&roles)
         .bind(query.folder_id)
         .bind(&query.category)
         .bind(&query.search)
@@ -823,7 +824,7 @@ impl DocumentRepository {
                 OR (access_scope = 'role' AND access_roles ? $3)
               )
               AND ($4::uuid IS NULL OR folder_id = $4)
-              AND ($5::text IS NULL OR category = $5)
+              AND ($5::text IS NULL OR category = $5::document_category)
               AND ($6::text IS NULL OR title ILIKE '%' || $6 || '%')
             ORDER BY created_at DESC
             LIMIT $7 OFFSET $8
@@ -865,7 +866,7 @@ impl DocumentRepository {
                 OR (access_scope = 'role' AND access_roles ? $3)
               )
               AND ($4::uuid IS NULL OR folder_id = $4)
-              AND ($5::text IS NULL OR category = $5)
+              AND ($5::text IS NULL OR category = $5::document_category)
               AND ($6::text IS NULL OR title ILIKE '%' || $6 || '%')
             "#,
         )
@@ -978,9 +979,10 @@ impl DocumentRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let building_ids_json = serde_json::to_value(user_building_ids).unwrap();
-        let unit_ids_json = serde_json::to_value(user_unit_ids).unwrap();
-        let roles_json = serde_json::to_value(user_roles).unwrap();
+        // `?|` is `jsonb ?| text[]` — right operand must be text[], not jsonb.
+        let building_ids: Vec<String> = user_building_ids.iter().map(Uuid::to_string).collect();
+        let unit_ids: Vec<String> = user_unit_ids.iter().map(Uuid::to_string).collect();
+        let roles: Vec<String> = user_roles.to_vec();
 
         let row = sqlx::query(
             r#"
@@ -991,9 +993,9 @@ impl DocumentRepository {
                   AND (
                     created_by = $2
                     OR access_scope = 'organization'
-                    OR (access_scope = 'building' AND access_target_ids ?| $3)
-                    OR (access_scope = 'unit' AND access_target_ids ?| $4)
-                    OR (access_scope = 'role' AND access_roles ?| $5)
+                    OR (access_scope = 'building' AND access_target_ids ?| $3::text[])
+                    OR (access_scope = 'unit' AND access_target_ids ?| $4::text[])
+                    OR (access_scope = 'role' AND access_roles ?| $5::text[])
                     OR (access_scope = 'users' AND access_target_ids ? $2::text)
                   )
             ) as has_access
@@ -1001,13 +1003,67 @@ impl DocumentRepository {
         )
         .bind(document_id)
         .bind(user_id)
-        .bind(&building_ids_json)
-        .bind(&unit_ids_json)
-        .bind(&roles_json)
+        .bind(&building_ids)
+        .bind(&unit_ids)
+        .bind(&roles)
         .fetch_one(executor)
         .await?;
 
         Ok(row.get("has_access"))
+    }
+
+    /// Resolve the caller's `building` and `unit` access-scope memberships.
+    ///
+    /// A user is a member of a unit (and, transitively, its building) when they
+    /// are an **active unit owner** (`unit_owners.status = 'active'` and not
+    /// expired) or a **current unit resident** (`unit_residents.end_date IS
+    /// NULL`). Returns `(building_ids, unit_ids)` — the inputs the in-memory
+    /// download/preview gate and `check_access_rls` need to resolve
+    /// `building`/`unit`-scoped documents.
+    ///
+    /// RLS-scoped: only memberships whose building belongs to the connection's
+    /// org are visible, mirroring `BuildingRepository::can_user_access_building`.
+    pub async fn user_scope_memberships_rls<'e, E>(
+        &self,
+        executor: E,
+        user_id: Uuid,
+    ) -> Result<(Vec<Uuid>, Vec<Uuid>), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let rows = sqlx::query(
+            r#"
+            SELECT DISTINCT u.id AS unit_id, u.building_id AS building_id
+            FROM units u
+            WHERE EXISTS (
+                SELECT 1 FROM unit_owners uo
+                WHERE uo.unit_id = u.id
+                  AND uo.user_id = $1
+                  AND uo.status = 'active'
+                  AND uo.valid_until IS NULL
+            )
+            OR EXISTS (
+                SELECT 1 FROM unit_residents ur
+                WHERE ur.unit_id = u.id
+                  AND ur.user_id = $1
+                  AND ur.end_date IS NULL
+            )
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(executor)
+        .await?;
+
+        let mut unit_ids = Vec::with_capacity(rows.len());
+        let mut building_ids = Vec::new();
+        for row in &rows {
+            unit_ids.push(row.get::<Uuid, _>("unit_id"));
+            let building_id: Uuid = row.get("building_id");
+            if !building_ids.contains(&building_id) {
+                building_ids.push(building_id);
+            }
+        }
+        Ok((building_ids, unit_ids))
     }
 
     // ========================================================================
@@ -2354,7 +2410,7 @@ impl DocumentRepository {
               AND d.deleted_at IS NULL
               AND d.search_vector @@ to_tsquery('english', $2)
               AND ($3::uuid IS NULL OR d.folder_id = $3)
-              AND ($4::text IS NULL OR d.category = $4)
+              AND ($4::text IS NULL OR d.category = $4::document_category)
             ORDER BY rank DESC, d.created_at DESC
             LIMIT $5 OFFSET $7
             "#,
@@ -2378,7 +2434,7 @@ impl DocumentRepository {
               AND d.deleted_at IS NULL
               AND d.search_vector @@ to_tsquery('english', $2)
               AND ($3::uuid IS NULL OR d.folder_id = $3)
-              AND ($4::text IS NULL OR d.category = $4)
+              AND ($4::text IS NULL OR d.category = $4::document_category)
             "#,
         )
         .bind(request.organization_id)

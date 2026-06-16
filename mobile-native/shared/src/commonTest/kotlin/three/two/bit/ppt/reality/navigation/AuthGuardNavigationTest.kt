@@ -6,7 +6,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import three.two.bit.ppt.reality.auth.AuthState
+import three.two.bit.ppt.reality.auth.GuardDecision
 import three.two.bit.ppt.reality.auth.SsoUserInfo
+import three.two.bit.ppt.reality.auth.authGuardDecision
 
 /**
  * Story 82-2, AC-5 — Auth guard for Reality Portal mobile navigation.
@@ -59,40 +61,22 @@ class AuthGuardNavigationTest {
     }
 
     /**
-     * AC-5 core invariant: the screen's `when (authState)` must cover every branch so that neither
-     * Unauthenticated nor Error reaches authenticated content.
-     *
-     * This test exercises each sealed subtype so a future subtype addition without a coverage
-     * update causes a compile-time `when`-exhaustiveness error in the screen composables.
+     * AC-5 core invariant: [authGuardDecision] — the single production guard used by every
+     * auth-gated screen — correctly partitions all [AuthState] variants. Only
+     * [AuthState.Authenticated] reaches protected content; Unauthenticated and Error both map to
+     * NOT_SIGNED_IN, so a regression (e.g. Error → CONTENT) fails this test.
      */
     @Test
-    fun auth_state_all_variants_are_covered_by_guard_logic() {
-        val states: List<AuthState> =
-            listOf(
-                AuthState.Unauthenticated,
-                AuthState.Loading,
-                AuthState.Authenticated(
-                    user = SsoUserInfo(userId = "u-1", email = "a@b.com", name = "A"),
-                    sessionToken = "t",
-                ),
-                AuthState.Error("err"),
+    fun auth_guard_decision_covers_all_variants() {
+        val authd =
+            AuthState.Authenticated(
+                user = SsoUserInfo(userId = "u-1", email = "a@b.com", name = "A"),
+                sessionToken = "t",
             )
-        for (state in states) {
-            // Simulate the guard: only Authenticated reaches protected content.
-            val isProtectedContentVisible =
-                when (state) {
-                    is AuthState.Unauthenticated -> false
-                    is AuthState.Loading -> false
-                    is AuthState.Authenticated -> true
-                    is AuthState.Error -> false
-                }
-            val expectVisible = state is AuthState.Authenticated
-            assertEquals(
-                expectVisible,
-                isProtectedContentVisible,
-                "Incorrect guard result for $state",
-            )
-        }
+        assertEquals(GuardDecision.CONTENT, authGuardDecision(authd))
+        assertEquals(GuardDecision.LOADING, authGuardDecision(AuthState.Loading))
+        assertEquals(GuardDecision.NOT_SIGNED_IN, authGuardDecision(AuthState.Unauthenticated))
+        assertEquals(GuardDecision.NOT_SIGNED_IN, authGuardDecision(AuthState.Error("err")))
     }
 
     // -------- AC-5: auth-required routes are not top-level / state-preserving --------
