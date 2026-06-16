@@ -21,6 +21,33 @@ if [[ "${1:-}" == "--strict" ]]; then
     STRICT_MODE=true
 fi
 
+# The handler scan below is built on ripgrep. Every rg call is suffixed with
+# `|| true` (rg exits 1 on no-match), which also swallows exit 127 when rg is
+# NOT INSTALLED — on a runner without ripgrep the whole script degrades to a
+# silent no-op that prints "No RLS violations found" (this is how 68 handler
+# violations merged to dev behind a green gate; see PAP-68). Hard-fail instead.
+if ! command -v rg >/dev/null 2>&1; then
+    echo "ERROR: ripgrep (rg) is required by this check but is not installed." >&2
+    echo "       Install it (apt-get install -y ripgrep / brew install ripgrep)" >&2
+    echo "       — refusing to pass silently without it." >&2
+    exit 2
+fi
+
+TMP_PREFIX=$(mktemp -d)
+trap 'rm -rf "$TMP_PREFIX"' EXIT
+
+# File-level baseline of KNOWN handler-side raw-pool offenders (pre-existing
+# debt that merged while the gate was a no-op). Paths are relative to
+# backend/. Baselined files warn instead of failing; new offenders in any
+# other file still fail --strict. Remove entries as files are cleaned up.
+HANDLER_BASELINE_FILE="$SCRIPT_DIR/rls-handler-baseline.txt"
+: > "$TMP_PREFIX/handler_baseline"
+if [[ -f "$HANDLER_BASELINE_FILE" ]]; then
+    { grep -vE '^[[:space:]]*(#|$)' "$HANDLER_BASELINE_FILE" || true; } | awk '{print $1}' | sort -u > "$TMP_PREFIX/handler_baseline"
+fi
+: > "$TMP_PREFIX/handler_hits"
+HANDLER_BASELINED=0
+
 echo "🔍 Checking for direct database pool access in handlers..."
 echo ""
 
@@ -147,6 +174,16 @@ scan_target() {
                 continue
             fi
 
+            local REL="${FILE#"$BACKEND_DIR"/}"
+            if grep -qxF "$REL" "$TMP_PREFIX/handler_baseline"; then
+                ((HANDLER_BASELINED+=1))
+                echo "$REL" >> "$TMP_PREFIX/handler_hits"
+                echo -e "${YELLOW}KNOWN OFFENDER${NC} [$FILE:$LINE] (baselined, cleanup pending)"
+                echo "  $CONTENT"
+                echo ""
+                continue
+            fi
+
             ((VIOLATIONS+=1))
             echo -e "${RED}VIOLATION${NC} [$FILE:$LINE]"
             echo "  $CONTENT"
@@ -175,6 +212,21 @@ for f in "${CHECK_FILES[@]}"; do
     scan_target "$FULL_FILE"
 done
 
+# Stale handler-baseline entries: listed but no longer flagged — remove them
+# so the ratchet only ever tightens.
+sort -u "$TMP_PREFIX/handler_hits" > "$TMP_PREFIX/handler_hits_sorted"
+while IFS= read -r stale; do
+    [[ -n "$stale" ]] || continue
+    ((WARNINGS+=1))
+    echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — file no longer flagged; remove it from $(basename "$HANDLER_BASELINE_FILE")"
+    echo ""
+done < <(comm -23 "$TMP_PREFIX/handler_baseline" "$TMP_PREFIX/handler_hits_sorted")
+
+if [[ $HANDLER_BASELINED -gt 0 ]]; then
+    echo -e "${YELLOW}⚠ $HANDLER_BASELINED known handler-side raw-pool access(es) pending cleanup (baselined)${NC}"
+    echo ""
+fi
+
 # Also check for repository methods that take raw pool instead of RlsConnection
 echo "🔍 Checking repository patterns..."
 
@@ -194,6 +246,125 @@ if [[ -d "$REPO_DIR" ]]; then
             echo ""
         fi
     done < <(rg -n 'pub async fn.*\(&self.*pool.*DbPool' "$REPO_DIR" 2>/dev/null || true)
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Pool-field detector (PAP-68): repositories that OWN a raw pool and query
+# FORCE-RLS tables without ever setting RLS context.
+#
+# The missed pattern behind PAP-67: a repository struct holds `pool: PgPool` /
+# `db: DbPool`, is built once at startup with the raw pool, and runs every
+# query via `&self.pool`. Under `FORCE ROW LEVEL SECURITY` (migration 00179
+# et al.) the owner connection is no longer exempt, `get_current_org_id()`
+# returns NULL, and the policy collapses to deny-all. The detectors above only
+# catch handler-side raw acquires and pool-typed *parameters* — not pool
+# *fields* — so this class merged green.
+#
+# A repo is flagged when ALL of the following hold:
+#   1. a struct field `pool:`/`db:` typed PgPool/DbPool (incl. pub / qualified)
+#   2. at least one `&self.pool` / `&self.db` use (a query or helper pass-through)
+#   3. zero `set_request_context` calls anywhere in the file
+#   4. the file's SQL references at least one table that a migration put under
+#      FORCE ROW LEVEL SECURITY
+#
+# Known-but-not-yet-converted repos live in rls-pool-field-baseline.txt next to
+# this script (one basename per line, '#' comments). Baselined hits warn;
+# anything NOT in the baseline is a violation (fails --strict). Fixing a repo
+# without removing its baseline entry produces a stale-baseline warning so the
+# ratchet only ever tightens.
+# ──────────────────────────────────────────────────────────────────────────────
+echo "🔍 Checking repository structs holding a raw pool field (FORCE-RLS guard)..."
+
+MIGRATIONS_DIR="$BACKEND_DIR/crates/db/migrations"
+BASELINE_FILE="$SCRIPT_DIR/rls-pool-field-baseline.txt"
+
+POOL_FIELD_VIOLATIONS=0
+POOL_FIELD_BASELINED=0
+
+if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
+    # FORCE-RLS table set, derived from migrations (source of truth). Tables
+    # later relaxed with NO FORCE are subtracted.
+    { grep -hE 'ALTER TABLE[[:space:]]+[A-Za-z0-9_."]+[[:space:]]+FORCE ROW LEVEL SECURITY' \
+        "$MIGRATIONS_DIR"/*.sql 2>/dev/null || true; } \
+        | sed -E 's/.*ALTER TABLE[[:space:]]+([A-Za-z0-9_."]+)[[:space:]]+FORCE ROW LEVEL SECURITY.*/\1/' \
+        | tr -d '"' | sed 's/^public\.//' | sort -u > "$TMP_PREFIX/force"
+    { grep -hE 'ALTER TABLE[[:space:]]+[A-Za-z0-9_."]+[[:space:]]+NO FORCE ROW LEVEL SECURITY' \
+        "$MIGRATIONS_DIR"/*.sql 2>/dev/null || true; } \
+        | sed -E 's/.*ALTER TABLE[[:space:]]+([A-Za-z0-9_."]+)[[:space:]]+NO FORCE ROW LEVEL SECURITY.*/\1/' \
+        | tr -d '"' | sed 's/^public\.//' | sort -u > "$TMP_PREFIX/noforce"
+    comm -23 "$TMP_PREFIX/force" "$TMP_PREFIX/noforce" > "$TMP_PREFIX/force_final"
+
+    FORCE_COUNT=$(wc -l < "$TMP_PREFIX/force_final")
+    echo "   ($FORCE_COUNT FORCE-RLS tables derived from migrations)"
+
+    # Baseline of known offenders (pending conversion, each tracked by issue).
+    : > "$TMP_PREFIX/baseline"
+    if [[ -f "$BASELINE_FILE" ]]; then
+        { grep -vE '^[[:space:]]*(#|$)' "$BASELINE_FILE" || true; } | awk '{print $1}' | sort -u > "$TMP_PREFIX/baseline"
+    fi
+    : > "$TMP_PREFIX/hit_names"
+
+    POOL_FIELD_RE='^[[:space:]]*(pub([[:space:]]*\([^)]*\))?[[:space:]]+)?(pool|db):[[:space:]]*(sqlx::|crate::)?(PgPool|DbPool)'
+
+    for repo_file in "$REPO_DIR"/*.rs; do
+        [[ -f "$repo_file" ]] || continue
+        base=$(basename "$repo_file")
+        case "$base" in mod.rs|*_test.rs|*_tests.rs) continue ;; esac
+
+        # Strip line comments so doc-prose about pools/tables can't false-positive.
+        grep -vE '^[[:space:]]*//' "$repo_file" > "$TMP_PREFIX/code" || true
+
+        grep -qE "$POOL_FIELD_RE" "$TMP_PREFIX/code" || continue
+        grep -qE '&self\.(pool|db)\b' "$TMP_PREFIX/code" || continue
+        grep -q 'set_request_context' "$TMP_PREFIX/code" && continue
+
+        # Tables this file's SQL touches, intersected with the FORCE-RLS set.
+        grep -ohiE '\b(from|join|into|update)[[:space:]]+[A-Za-z_][A-Za-z0-9_]*' "$TMP_PREFIX/code" \
+            | awk '{print tolower($2)}' | sort -u > "$TMP_PREFIX/touched" || true
+        comm -12 "$TMP_PREFIX/touched" "$TMP_PREFIX/force_final" > "$TMP_PREFIX/hit_tables"
+        [[ -s "$TMP_PREFIX/hit_tables" ]] || continue
+
+        echo "$base" >> "$TMP_PREFIX/hit_names"
+        tables_short=$(head -5 "$TMP_PREFIX/hit_tables" | paste -sd, -)
+        total_tables=$(wc -l < "$TMP_PREFIX/hit_tables")
+        field_line=$(grep -nE "$POOL_FIELD_RE" "$repo_file" | head -1 | cut -d: -f1)
+
+        if grep -qxF "$base" "$TMP_PREFIX/baseline"; then
+            ((POOL_FIELD_BASELINED+=1))
+            echo -e "${YELLOW}KNOWN OFFENDER${NC} [$repo_file:${field_line:-?}] (baselined, conversion pending)"
+            echo "  raw pool field + 0 set_request_context; FORCE-RLS tables ($total_tables): $tables_short"
+            echo ""
+        else
+            ((POOL_FIELD_VIOLATIONS+=1))
+            ((VIOLATIONS+=1))
+            echo -e "${RED}VIOLATION${NC} [$repo_file:${field_line:-?}]"
+            echo "  Repository holds a raw pool field and queries FORCE-RLS tables"
+            echo "  with zero set_request_context calls → deny-all under FORCE RLS"
+            echo "  FORCE-RLS tables touched ($total_tables): $tables_short"
+            echo "  → Convert to the executor pattern (take impl Executor / &mut PgConnection"
+            echo "    from the RlsConnection extractor) like document.rs / board_meetings.rs,"
+            echo "    or add a baseline entry with a tracking issue."
+            echo ""
+        fi
+    done
+
+    # Stale baseline entries: listed but no longer flagged — tighten the ratchet.
+    sort -u "$TMP_PREFIX/hit_names" > "$TMP_PREFIX/hit_names_sorted"
+    while IFS= read -r stale; do
+        [[ -n "$stale" ]] || continue
+        ((WARNINGS+=1))
+        echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — repo no longer flagged; remove it from $(basename "$BASELINE_FILE")"
+        echo ""
+    done < <(comm -23 "$TMP_PREFIX/baseline" "$TMP_PREFIX/hit_names_sorted")
+
+    if [[ $POOL_FIELD_VIOLATIONS -eq 0 ]]; then
+        if [[ $POOL_FIELD_BASELINED -gt 0 ]]; then
+            echo -e "${YELLOW}⚠ $POOL_FIELD_BASELINED known pool-field offender(s) pending conversion (baselined)${NC}"
+        else
+            echo -e "${GREEN}✓ No repositories holding raw pool fields against FORCE-RLS tables${NC}"
+        fi
+        echo ""
+    fi
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -11,6 +11,7 @@ use db::models::{
     WorkflowAction,
 };
 use db::repositories::{WorkflowRepository, MAX_RETRY_COUNT, MAX_RETRY_DELAY_SECONDS};
+use db::{RlsGuard, RlsPool};
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 use thiserror::Error;
@@ -188,7 +189,15 @@ impl Default for WorkflowExecutorConfig {
 }
 
 /// The workflow executor service.
+///
+/// RLS (PAP-77): the executor runs outside an HTTP request, so it cannot use
+/// the `RlsConnection` extractor. It instead holds an [`RlsPool`] and
+/// acquires a context-set connection per database operation, with the org
+/// derived from the **already-loaded workflow row** (or the verified event)
+/// — never from client input. Guards are scoped tightly so no pooled
+/// connection is held across action execution or retry sleeps.
 pub struct WorkflowExecutor {
+    db: RlsPool,
     workflow_repo: WorkflowRepository,
     action_registry: ActionRegistry,
     config: WorkflowExecutorConfig,
@@ -196,51 +205,68 @@ pub struct WorkflowExecutor {
 
 impl WorkflowExecutor {
     /// Create a new workflow executor.
-    pub fn new(workflow_repo: WorkflowRepository) -> Self {
-        Self::with_config(workflow_repo, WorkflowExecutorConfig::default())
+    pub fn new(db: RlsPool, workflow_repo: WorkflowRepository) -> Self {
+        Self::with_config(db, workflow_repo, WorkflowExecutorConfig::default())
     }
 
     /// Create a new workflow executor with custom configuration.
-    pub fn with_config(workflow_repo: WorkflowRepository, config: WorkflowExecutorConfig) -> Self {
+    pub fn with_config(
+        db: RlsPool,
+        workflow_repo: WorkflowRepository,
+        config: WorkflowExecutorConfig,
+    ) -> Self {
         Self {
+            db,
             workflow_repo,
             action_registry: ActionRegistry::new(),
             config,
         }
     }
 
-    /// Execute a workflow by ID.
+    /// Execute a workflow.
+    ///
+    /// Takes the **already-loaded** workflow row: callers (the trigger route,
+    /// `handle_event`) have necessarily fetched it org-scoped, so no unscoped
+    /// by-id read exists anymore. The RLS context for all execution writes is
+    /// derived from `workflow.organization_id`.
     pub async fn execute_workflow(
         &self,
-        workflow_id: Uuid,
+        workflow: Workflow,
         trigger_event: serde_json::Value,
         context: Option<serde_json::Value>,
     ) -> Result<Uuid, WorkflowError> {
-        // Get the workflow
-        let workflow = self
-            .workflow_repo
-            .find_by_id(workflow_id)
-            .await?
-            .ok_or(WorkflowError::NotFound(workflow_id))?;
+        let workflow_id = workflow.id;
 
         if !workflow.enabled {
             return Err(WorkflowError::Disabled(workflow_id));
         }
 
-        // Create execution record
+        // Create execution record on an org-context connection.
+        let mut guard = self
+            .db
+            .acquire_with_rls(workflow.organization_id, workflow.created_by, false)
+            .await?;
         let execution = self
             .workflow_repo
-            .create_execution(TriggerWorkflow {
-                workflow_id,
-                trigger_event: trigger_event.clone(),
-                context: context.clone(),
-            })
-            .await?;
+            .create_execution(
+                guard.conn(),
+                TriggerWorkflow {
+                    workflow_id,
+                    trigger_event: trigger_event.clone(),
+                    context: context.clone(),
+                },
+            )
+            .await;
+        guard.release().await;
+        let execution = execution?;
 
         let execution_id = execution.id;
 
         // Spawn async execution
         let executor = WorkflowExecutorTask {
+            db: self.db.clone(),
+            org_id: workflow.organization_id,
+            acting_user: workflow.created_by,
             workflow_repo: self.workflow_repo.clone(),
             action_registry: ActionRegistry::new(),
             config: self.config.clone(),
@@ -278,11 +304,29 @@ impl WorkflowExecutor {
             "Processing workflow trigger event"
         );
 
-        // Find matching workflows
+        // Find matching workflows on an org-context connection. The org is
+        // the verified event org (set by the route from the request
+        // principal, never client input). `triggered_by` is always set on the
+        // route path; nil only pads the user GUC, which the workflow
+        // policies don't consult.
+        let mut guard = self
+            .db
+            .acquire_with_rls(
+                event.organization_id,
+                event.triggered_by.unwrap_or(Uuid::nil()),
+                false,
+            )
+            .await?;
         let workflows = self
             .workflow_repo
-            .list_by_trigger_type(event.organization_id, &event.event_type)
-            .await?;
+            .list_by_trigger_type(
+                &mut **guard.conn(),
+                event.organization_id,
+                &event.event_type,
+            )
+            .await;
+        guard.release().await;
+        let workflows = workflows?;
 
         let mut execution_ids = Vec::new();
 
@@ -315,10 +359,11 @@ impl WorkflowExecutor {
                 continue;
             }
 
-            // Execute the workflow
+            // Execute the workflow (moves the loaded row into the executor).
+            let workflow_id = workflow.id;
             match self
                 .execute_workflow(
-                    workflow.id,
+                    workflow,
                     event.data.clone(),
                     Some(serde_json::json!({
                         "event_type": event.event_type,
@@ -334,7 +379,7 @@ impl WorkflowExecutor {
                 }
                 Err(e) => {
                     tracing::warn!(
-                        workflow_id = %workflow.id,
+                        workflow_id = %workflow_id,
                         error = %e,
                         "Failed to start workflow execution"
                     );
@@ -661,13 +706,46 @@ impl WorkflowExecutor {
 }
 
 /// Task that runs the actual workflow execution.
+///
+/// RLS (PAP-77): `org_id` / `acting_user` come from the workflow row loaded
+/// org-scoped by the caller. Every database operation acquires its own
+/// short-lived context-set connection via [`Self::rls_conn`] — a guard is
+/// never held across action execution or retry sleeps (which can last up to
+/// an hour), so the pool cannot be starved by slow actions.
 struct WorkflowExecutorTask {
+    db: RlsPool,
+    org_id: Uuid,
+    acting_user: Uuid,
     workflow_repo: WorkflowRepository,
     action_registry: ActionRegistry,
     config: WorkflowExecutorConfig,
 }
 
 impl WorkflowExecutorTask {
+    /// Acquire a connection with this execution's RLS context set.
+    async fn rls_conn(&self) -> Result<RlsGuard, sqlx::Error> {
+        self.db
+            .acquire_with_rls(self.org_id, self.acting_user, false)
+            .await
+    }
+
+    /// Update the execution status on a fresh org-context connection.
+    async fn set_execution_status(
+        &self,
+        execution_id: Uuid,
+        status: &str,
+        error_message: Option<&str>,
+    ) -> Result<(), WorkflowError> {
+        let mut guard = self.rls_conn().await?;
+        let res = self
+            .workflow_repo
+            .update_execution_status(&mut **guard.conn(), execution_id, status, error_message)
+            .await;
+        guard.release().await;
+        res?;
+        Ok(())
+    }
+
     /// Run the workflow execution.
     async fn run(
         &self,
@@ -685,11 +763,13 @@ impl WorkflowExecutorTask {
         // Get workflow actions. The executor is internal — we already
         // loaded `workflow`, so the organization scope is derived from the
         // row itself (no risk of cross-tenant leakage here).
+        let mut guard = self.rls_conn().await?;
         let actions = self
             .workflow_repo
-            .list_actions(workflow.id, workflow.organization_id)
-            .await?
-            .unwrap_or_default();
+            .list_actions(guard.conn(), workflow.id, workflow.organization_id)
+            .await;
+        guard.release().await;
+        let actions = actions?.unwrap_or_default();
 
         if actions.is_empty() {
             tracing::warn!(
@@ -697,8 +777,7 @@ impl WorkflowExecutorTask {
                 execution_id = %execution_id,
                 "Workflow has no actions"
             );
-            self.workflow_repo
-                .update_execution_status(execution_id, execution_status::COMPLETED, None)
+            self.set_execution_status(execution_id, execution_status::COMPLETED, None)
                 .await?;
             return Ok(());
         }
@@ -751,13 +830,12 @@ impl WorkflowExecutorTask {
                                 error = %e,
                                 "Action failed, stopping execution"
                             );
-                            self.workflow_repo
-                                .update_execution_status(
-                                    execution_id,
-                                    execution_status::FAILED,
-                                    Some(&e.to_string()),
-                                )
-                                .await?;
+                            self.set_execution_status(
+                                execution_id,
+                                execution_status::FAILED,
+                                Some(&e.to_string()),
+                            )
+                            .await?;
                             return Err(e);
                         }
                     }
@@ -766,8 +844,7 @@ impl WorkflowExecutorTask {
         }
 
         // Mark execution as completed
-        self.workflow_repo
-            .update_execution_status(execution_id, execution_status::COMPLETED, None)
+        self.set_execution_status(execution_id, execution_status::COMPLETED, None)
             .await?;
 
         tracing::info!(
@@ -786,10 +863,13 @@ impl WorkflowExecutorTask {
         context: &mut ActionContext,
     ) -> Result<ActionResult, WorkflowError> {
         // Create execution step record
+        let mut guard = self.rls_conn().await?;
         let step = self
             .workflow_repo
-            .create_execution_step(context.execution_id, action.id)
-            .await?;
+            .create_execution_step(&mut **guard.conn(), context.execution_id, action.id)
+            .await;
+        guard.release().await;
+        let step = step?;
 
         let start = Instant::now();
 
@@ -827,15 +907,20 @@ impl WorkflowExecutorTask {
                     let duration_ms = start.elapsed().as_millis() as i32;
 
                     // Update step record
-                    self.workflow_repo
+                    let mut guard = self.rls_conn().await?;
+                    let updated = self
+                        .workflow_repo
                         .update_execution_step(
+                            &mut **guard.conn(),
                             step.id,
                             step_status::COMPLETED,
                             result.output.clone(),
                             None,
                             Some(duration_ms),
                         )
-                        .await?;
+                        .await;
+                    guard.release().await;
+                    updated?;
 
                     return Ok(result);
                 }
@@ -859,15 +944,20 @@ impl WorkflowExecutorTask {
         let duration_ms = start.elapsed().as_millis() as i32;
 
         // Update step record with failure
-        self.workflow_repo
+        let mut guard = self.rls_conn().await?;
+        let updated = self
+            .workflow_repo
             .update_execution_step(
+                &mut **guard.conn(),
                 step.id,
                 step_status::FAILED,
                 serde_json::json!({}),
                 Some(&error.to_string()),
                 Some(duration_ms),
             )
-            .await?;
+            .await;
+        guard.release().await;
+        updated?;
 
         Err(WorkflowError::ActionFailed(error))
     }

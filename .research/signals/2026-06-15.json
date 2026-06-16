@@ -1,0 +1,210 @@
+{
+  "date": "2026-06-15",
+  "signals": [
+    {
+      "id": "untriaged-issue-1380",
+      "type": "untriaged-issue",
+      "source": "issue #1380",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1380 'Dispatcher: stale gap-scan buffer feeds no-op claims + Tier-2 escalation endpoint misconfigured' created 2026-06-14T16:27:59Z with no labels — vector=triage so won't promote; backlog row for visibility"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1378",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1378",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1378 'fix(db tests): DROP OWNED BY before DROP ROLE in RLS test teardown — unblocks dev-wide test job (#1332)' closed 2026-06-14T14:34:57Z without merging; superseded by #1379 which took a different approach (status::text casts in form.rs + cross-tenant org guard in documents/core.rs + COALESCE defaults in registry.rs). The #1378 theory (DROP OWNED BY) turned out to be the wrong root cause."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+      "type": "churn-hotspot",
+      "source": "PR #1383",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/app.config.icon.test.ts — 124 lines added in PR #1383 (gap-85-2 app icon variants regression test); NEW file co-added with source change — healthy co-evolution, not instability"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-app-config-ts",
+      "type": "churn-hotspot",
+      "source": "PR #1383",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/app.config.ts — 94 lines (+93/-1) in PR #1383 (gap-85-2 per-environment icon variant resolution via APP_ENV); intentional config-shape change, paired with regression test"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-form-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1379",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/repositories/form.rs — 53 lines (+30/-23) in PR #1379; status::text AS status casts across get/list/list_available_forms queries to fix form_status ENUM decode mismatch into Rust String model (unblocks dev-wide #1332 backend test job)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-core-vote-partial-cmp-panic",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 2,
+      "evidence": [
+        "backend/crates/db/src/repositories/vote.rs:1765 — calculate_question_result() uses partial_cmp(&b.weighted_count).unwrap() on f64 weighted vote counts; if any vote_weight is NaN/Inf (e.g. via try_into() fallback), partial_cmp returns None and .unwrap() panics. Reachable from VoteRepository::calculate_results -> /votes/{id}/results. Fix: use total_cmp or unwrap_or(Ordering::Equal)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "expert": "rust",
+      "severity": "medium"
+    },
+    {
+      "id": "code-review-api-core-osrng-expect",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/integrations/src/crypto.rs:127 — SysRng.try_fill_bytes(...).expect('OS rng failed') panics on every encrypt() call if the OS CSPRNG read errors. Hot path for stored-secret encryption (integration credentials, webhook secrets). Vanishingly rare on Linux but a hard panic crashes the worker; bubble the error as CryptoError::EncryptionFailed instead."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "rust",
+      "severity": "low"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-15.md && head -1 ... matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog id unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal id dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay (no items eligible <2026-06-01)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotation present",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "1 new plan with 4 metadata + 11 headings + Mode line + Files-exist",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets or private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7>=7",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix actions this run (no candidates)",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "action-list + risks parse JSON, project-state non-empty, pm_cursor 0..7, GC7 coverage_cursor advanced",
+      "observed": "all ok",
+      "expected": "all ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot-token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

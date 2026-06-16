@@ -8,7 +8,7 @@ implementations:
     component: CreateViolationPage
     buildStatus: in-progress
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: partial
 endpoints: []
 relatedScreens: []
 sharedComponents: []

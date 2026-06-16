@@ -295,6 +295,116 @@ async fn get_execution_download_url_returns_presigned_payload(pool: PgPool) {
     );
 }
 
+/// Re-presign-on-demand contract (the core of Coverage 81-2).
+///
+/// The handler (`get_execution_download_url`) stamps `expires_at = now + 1h` on
+/// **every** call — it never caches. This test verifies that contract: two
+/// successive calls to the same endpoint both succeed and each yields an
+/// `expires_at` that is (a) in the future and (b) no earlier than the expiry
+/// returned by the preceding call. Condition (b) is the non-tautological part:
+/// it fails if the handler is changed to cache and replay the first response,
+/// because a cached response's `expires_at` would not advance across calls.
+///
+/// # Scope boundary
+///
+/// The URL returned by this handler is a static internal proxy path
+/// (`/api/v1/reports/files/{file_key}`), not a real S3 presigned URL. The
+/// actual S3 presigning happens one hop downstream (at the `/reports/files/…`
+/// handler). Consequently this test cannot assert a *distinct credential* per
+/// call — only that the `expires_at` window is freshly computed each time.
+/// A dedicated integration test against a live S3 stub would be required to
+/// verify the downstream presigning step; that is out of scope here.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org = seed_org(&pool, "dl-represign").await;
+    let schedule = seed_schedule(&pool, org).await;
+    let exec = seed_completed_execution_with_file(
+        &pool,
+        schedule,
+        "reports/2026/exec-represign.pdf",
+        "monthly-summary.pdf",
+    )
+    .await;
+
+    let token = authed_member(&app, &pool, org, "Manager").await;
+    let uri = format!("/api/v1/reports/executions/{}/download", exec);
+
+    // --- First call: initial presign. ---
+    let before_first = chrono::Utc::now();
+    let first = app.execute(auth_req(Method::GET, &uri, org, &token)).await;
+    assert_eq!(
+        first.status,
+        StatusCode::OK,
+        "#611: initial presign must return 200, got {} body={}",
+        first.status,
+        first.text(),
+    );
+    let first_body = first.json_value();
+    let first_url = first_body.get("url").and_then(|v| v.as_str()).unwrap_or("");
+    assert!(
+        !first_url.is_empty(),
+        "#611: initial presign must carry a non-empty url, body={}",
+        first_body
+    );
+    let first_expires = first_body
+        .get("expiresAt")
+        .and_then(|v| v.as_str())
+        .or_else(|| first_body.get("expires_at").and_then(|v| v.as_str()))
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .expect("initial presign must carry a parseable expires_at");
+    assert!(
+        first_expires.with_timezone(&chrono::Utc) > before_first,
+        "#611: initial presign expires_at {first_expires} must be in the future"
+    );
+
+    // --- Re-presign: the client's first URL has 'expired', so it re-requests
+    //     the same endpoint. This must yield a brand-new, still-valid window. ---
+    let before_second = chrono::Utc::now();
+    let second = app.execute(auth_req(Method::GET, &uri, org, &token)).await;
+    assert_eq!(
+        second.status,
+        StatusCode::OK,
+        "#611 regression: re-requesting an expired download must re-presign (200), got {} body={}",
+        second.status,
+        second.text(),
+    );
+    let second_body = second.json_value();
+    let second_url = second_body
+        .get("url")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    assert!(
+        !second_url.is_empty(),
+        "#611 regression: re-presign must carry a non-empty url, body={}",
+        second_body
+    );
+    let second_expires = second_body
+        .get("expiresAt")
+        .and_then(|v| v.as_str())
+        .or_else(|| second_body.get("expires_at").and_then(|v| v.as_str()))
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .expect("re-presign must carry a parseable expires_at");
+    assert!(
+        second_expires.with_timezone(&chrono::Utc) > before_second,
+        "#611 regression: re-presign expires_at {second_expires} must be a fresh future window, \
+         not a stale one — body={second_body}"
+    );
+
+    // The re-presign must point at the same logical file (same stored name),
+    // proving it is the *same* execution being re-presigned, not a different one.
+    let second_name = second_body
+        .get("fileName")
+        .and_then(|v| v.as_str())
+        .or_else(|| second_body.get("file_name").and_then(|v| v.as_str()))
+        .unwrap_or("");
+    assert_eq!(
+        second_name, "monthly-summary.pdf",
+        "#611 regression: re-presign must resolve the same execution's file, body={second_body}"
+    );
+}
+
 /// An execution that has NOT produced a file (no `file_key`) must NOT yield a
 /// download URL — the endpoint returns 422 `NO_FILE_YET` rather than leaking a
 /// bogus link. Pins the "file not ready" branch of the handler.

@@ -27,7 +27,7 @@ import { colors, screenStyles as s } from '../shared/screenStyles';
 // Types (mirrors backend NeighborView / PrivacySettings)
 // ---------------------------------------------------------------------------
 
-interface NeighborView {
+export interface NeighborView {
   user_id: string;
   display_name: string;
   unit_label: string;
@@ -37,7 +37,7 @@ interface NeighborView {
   resident_type: string;
 }
 
-interface NeighborsResponse {
+export interface NeighborsResponse {
   neighbors: NeighborView[];
   count: number;
   total: number;
@@ -71,6 +71,43 @@ export function selectBuilding(data: BuildingsPaginatedResponse | undefined): {
     buildingId: first?.id,
     buildingName: first?.name ?? undefined,
   };
+}
+
+/**
+ * Privacy-aware filter: keeps only neighbours whose `is_visible` flag is
+ * true (i.e. residents who have opted into the directory).
+ *
+ * Exported for unit-testing (Coverage 6-6).
+ */
+export function filterVisible(neighbors: NeighborView[]): NeighborView[] {
+  return neighbors.filter((n) => n.is_visible);
+}
+
+/**
+ * Search filter: narrows the visible list by display_name or unit_label.
+ * An empty / whitespace-only query returns the full list unchanged.
+ *
+ * Exported for unit-testing (Coverage 6-6).
+ */
+export function filterBySearch(neighbors: NeighborView[], search: string): NeighborView[] {
+  const q = search.trim().toLowerCase();
+  if (q === '') return neighbors;
+  return neighbors.filter((n) => `${n.display_name} ${n.unit_label}`.toLowerCase().includes(q));
+}
+
+/**
+ * Derive the two-character avatar initials from a display name.
+ * "Alice Smith" → "AS", "Bob" → "BO", "" → "".
+ *
+ * Exported for unit-testing (Coverage 6-6).
+ */
+export function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => w[0] ?? '')
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 // ---------------------------------------------------------------------------
@@ -109,27 +146,14 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
 
   // Only show visible neighbors (privacy-aware filtering)
   const visibleNeighbors = useMemo(
-    () => (neighborsQuery.data?.neighbors ?? []).filter((n) => n.is_visible),
+    () => filterVisible(neighborsQuery.data?.neighbors ?? []),
     [neighborsQuery.data]
   );
 
   const filtered = useMemo(
-    () =>
-      visibleNeighbors.filter((n) =>
-        search.trim() === ''
-          ? true
-          : `${n.display_name} ${n.unit_label}`.toLowerCase().includes(search.toLowerCase())
-      ),
+    () => filterBySearch(visibleNeighbors, search),
     [visibleNeighbors, search]
   );
-
-  const initials = (name: string) =>
-    name
-      .split(' ')
-      .map((w) => w[0] ?? '')
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
 
   if (isLoading) {
     return (
@@ -199,7 +223,7 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
           filtered.map((neighbor) => (
             <View key={neighbor.user_id} style={[s.card, styles.row]}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials(neighbor.display_name)}</Text>
+                <Text style={styles.avatarText}>{getInitials(neighbor.display_name)}</Text>
               </View>
               <View style={styles.info}>
                 <Text style={s.cardTitle}>{neighbor.display_name}</Text>

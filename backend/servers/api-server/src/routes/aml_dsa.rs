@@ -376,6 +376,11 @@ async fn create_aml_assessment(
     user: AuthUser,
     Json(req): Json<CreateAmlAssessmentRequest>,
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
+    // Creating an AML risk assessment is a compliance-officer action, like every
+    // other AML/EDD handler in this module. Without this check any authenticated
+    // tenant user could create assessments (PAP-60/PAP-43).
+    require_compliance_role(&user)?;
+
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
@@ -2177,14 +2182,49 @@ async fn file_appeal(
     Path(id): Path<Uuid>,
     Json(req): Json<FileAppealRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
-    // Any authenticated user can file appeal for their content
-
     validate_text_field(&req.reason, MAX_APPEAL_REASON_LEN, "reason")
         .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
 
+    // A content owner may appeal a moderation decision on *their own* content.
+    // Load the case scoped to the caller's organization first and enforce
+    // ownership before mutating it; otherwise any authenticated user could
+    // appeal any case in any tenant via a global id (PAP-60/PAP-43 — F5 IDOR).
+    //
+    // A caller with no tenant context, or a case outside the caller's org, is
+    // treated as non-existent (404) so we never leak the case's existence
+    // across tenants.
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::NOT_FOUND,
+        "Moderation case not found".to_string(),
+    ))?;
+
+    let existing = state
+        .compliance_repo
+        .get_moderation_case(id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load moderation case: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to file appeal".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            "Moderation case not found".to_string(),
+        ))?;
+
+    // Ownership: only the content owner may file the appeal.
+    if existing.content_owner_id != user.user_id {
+        return Err((
+            StatusCode::FORBIDDEN,
+            "You can only appeal moderation decisions on your own content".to_string(),
+        ));
+    }
+
     let case = state
         .compliance_repo
-        .file_appeal(id, &req.reason)
+        .file_appeal(id, org_id, &req.reason)
         .await
         .map_err(|e| {
             tracing::error!("Failed to file appeal: {}", e);
@@ -2319,7 +2359,26 @@ async fn report_content(
     user: AuthUser,
     Json(req): Json<ReportContentRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
-    // Any authenticated user can report content
+    // Any authenticated user can report content, but the case must be stored
+    // against the *real* content owner — a random placeholder corrupts
+    // violation-history and owner-notification downstream (PAP-60/PAP-43 — F7).
+    // Resolve the owner (scoped to the caller's org) and reject the report if it
+    // can't be resolved rather than persisting a bogus owner.
+    let content_owner_id = state
+        .compliance_repo
+        .resolve_content_owner(req.content_type, req.content_id, user.tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to resolve content owner: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to report content".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            "Reported content could not be found".to_string(),
+        ))?;
 
     let create_req = CreateModerationCase {
         content_type: req.content_type,
@@ -2327,9 +2386,6 @@ async fn report_content(
         violation_type: req.violation_type,
         report_reason: req.reason,
     };
-
-    // For now, use a placeholder for content_owner_id - in production this would be looked up
-    let content_owner_id = Uuid::new_v4();
 
     let case = state
         .compliance_repo

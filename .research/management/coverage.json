@@ -1,5 +1,7 @@
 {
-  "generated": "2026-05-29T03:18:00Z",
+  "generated": "2026-06-16T00:00:00Z",
+  "sprint": null,
+  "version": null,
   "scan_kind": "upkeep",
   "stories": [
     {
@@ -337,14 +339,14 @@
         "sync.ts module + React Query handles refresh sync",
         "browser push utilities prepared",
         "WebSocket realtime sync infra shipped (PR #472, merged 2026-05-25) — WS half of preference sync now delivered",
-        "Epic 2B notification pipeline merged (PR #463) — channel routing + delivery transports available"
+        "Epic 2B notification pipeline merged (PR #463) — channel routing + delivery transports available",
+        "PR #1395 (merged this run) added CI-executable coverage for realtime preference-sync publish leg (#1376) — closes the test-gap call-out from the #480-#487 cluster on this slice"
       ],
       "gaps": [
-        "mobile OS push integration (FCM/APNs) still deferred",
-        "backend tests for realtime sync tracked in follow-up issue (#480-#487 cluster)"
+        "mobile OS push integration (FCM/APNs) still deferred"
       ],
-      "notes": "WS half cleared by PR #472; only mobile-push leg remains before promotion to done",
-      "last_checked": "2026-05-25"
+      "notes": "WS half cleared by PR #472; publish-leg tests cleared by PR #1395 (2026-06-16 upkeep); only mobile-push leg (FCM/APNs) remains before promotion to done",
+      "last_checked": "2026-06-16"
     },
     {
       "epic": "epic-9",
@@ -919,22 +921,28 @@
       "id": "82-5-inquiries-account",
       "title": "Inquiries and Account",
       "phase": "phase4",
-      "status": "partial",
-      "confidence": "low",
+      "status": "done",
+      "confidence": "high",
       "platform": [
         "mobile"
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "InquiriesView.swift + AccountView.swift",
-        "Auth/LoginView.swift"
+        "InquiriesView.swift (list: auth-gate, load, empty, error, card-row with status badge, tap→detail nav)",
+        "InquiryDetailView.swift: full conversation thread (original msg + realtor replies as MessageBubble), reply composer, closed-guard, fetch-on-load + reload-after-reply (no WebSocket — fetch-on-demand; real-time streaming explicitly not-in-scope, screen-map marks it [ ])",
+        "PushNotificationManager.swift: APNs registration, UNNotificationCategory setup (INQUIRY_REPLY/NEW_LISTING/PRICE_DROP/SAVED_SEARCH), per-preference UserDefaults, device token Keychain persistence via KeychainService",
+        "NotificationRepository.kt (KMP): register/unregister push token, getPreferences, updatePreferences, getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification",
+        "NotificationModelsContractTest.kt: 10 DTO contract tests (NotificationType serial names, NotificationEntry, RegisterPushTokenRequest snake_case, NotificationPreferences round-trip, AlertConfig)",
+        "InquiryModelsContractTest.kt: 10 DTO contract tests (InquiryStatus/ViewingStatus serial names, CreateInquiryRequest, Inquiry with responses, ScheduleViewingRequest, ViewingRequest, ReplyToInquiryRequest)",
+        "RealityPortalTests.swift PushNotificationManagerTests: 6 XCTest cases (defaults, persistence, clearDeviceToken, hex conversion, Keychain persistence)",
+        "RealityPortalTests.swift InquiryStatusTests + InquiryPreviewTests: display names, colours, formattedDate, sample data",
+        "AccountScreen.kt (Android Compose): notification preferences panel wired to NotificationRepository.getPreferences/updatePreferences"
       ],
       "gaps": [
-        "push notification manager not evidenced",
-        "Keychain integration for tokens not confirmed",
-        "streaming message conversation view unclear"
+        "InquiryDetail route was a stub at gap-82-1 audit time; now fully implemented as InquiryDetailView.swift with conversation thread + reply composer",
+        "Real-time WebSocket updates for inquiry replies: not implemented (screen-map inquiries.md item explicitly unchecked — acknowledged out-of-scope for epic-82)"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-06-10"
     },
     {
       "epic": "epic-83",
@@ -1123,15 +1131,15 @@
         "KMP ApiConfig.kt expect/actual + PlatformConfig",
         "Android PlatformConfig reads BuildConfig flavors",
         "iOS PlatformConfig reads Info.plist",
-        "env files .env.development/staging/production"
+        "env files .env.development/staging/production",
+        "app.config.ts present via PR #1383 (per-env icon + name)"
       ],
       "gaps": [
         "react-native-config + Metro bundler setup not done (Expo Constants used)",
         "env setup documentation missing",
-        "iOS Info.plist lacks API_BASE_URL/ENVIRONMENT keys",
-        "app.config.ts for Expo not present"
+        "iOS Info.plist lacks API_BASE_URL/ENVIRONMENT keys"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-06-15"
     },
     {
       "epic": "epic-85",
@@ -1139,7 +1147,7 @@
       "title": "Build Configuration by Environment",
       "phase": "mvp",
       "status": "partial",
-      "confidence": "medium",
+      "confidence": "high",
       "platform": [
         "mobile"
       ],
@@ -1148,15 +1156,15 @@
         "Android product flavors (dev/staging/prod) with suffix",
         "BuildConfig fields API_BASE_URL/ENVIRONMENT/ENABLE_LOGGING",
         "app_name resValue per flavor",
-        "KMP shared/build.gradle.kts variants"
+        "KMP shared/build.gradle.kts variants",
+        "per-env app icon variants (DEV/STG badges) shipped via PR #1383 — app.config.ts + app.config.icon.test.ts + assets/images/README.md"
       ],
       "gaps": [
-        "app icon variants with DEV/STG badges not created",
         "iOS xcconfig files + schemes not created",
         "app icons not generated for all sizes",
         "build scripts (scripts/build-mobile|android|ios.sh) not created"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-06-15"
     }
   ]
 }

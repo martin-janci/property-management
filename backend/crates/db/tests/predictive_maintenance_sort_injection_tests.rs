@@ -67,6 +67,7 @@ async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
 
 async fn seed_equipment(
     repo: &PredictiveMaintenanceRepository,
+    pool: &PgPool,
     org_id: Uuid,
     user_id: Uuid,
     building_id: Uuid,
@@ -74,6 +75,7 @@ async fn seed_equipment(
 ) -> Uuid {
     let eq = repo
         .create_equipment(
+            pool,
             org_id,
             user_id,
             CreateEquipment {
@@ -110,8 +112,8 @@ async fn malicious_sort_order_does_not_inject(pool: PgPool) {
     let org = seed_org(&pool, "inj-order").await;
     let user = seed_user(&pool, "inj-order@pm-sort.test").await;
     let building = seed_building(&pool, org, "inj-order").await;
-    seed_equipment(&repo, org, user, building, "Boiler").await;
-    seed_equipment(&repo, org, user, building, "Chiller").await;
+    seed_equipment(&repo, &pool, org, user, building, "Boiler").await;
+    seed_equipment(&repo, &pool, org, user, building, "Chiller").await;
 
     let query = EquipmentQuery {
         sort_by: Some("name".to_string()),
@@ -120,7 +122,7 @@ async fn malicious_sort_order_does_not_inject(pool: PgPool) {
         ..Default::default()
     };
 
-    let result = repo.list_equipment(org, query).await;
+    let result = repo.list_equipment(&pool, org, query).await;
 
     // The injection must be neutralised — the query succeeds and returns the
     // two seeded rows, sorted ascending by name (the allowlisted default).
@@ -146,7 +148,7 @@ async fn malicious_sort_by_does_not_inject(pool: PgPool) {
     let org = seed_org(&pool, "inj-by").await;
     let user = seed_user(&pool, "inj-by@pm-sort.test").await;
     let building = seed_building(&pool, org, "inj-by").await;
-    seed_equipment(&repo, org, user, building, "Alpha").await;
+    seed_equipment(&repo, &pool, org, user, building, "Alpha").await;
 
     let query = EquipmentQuery {
         // Subquery / column injection attempt.
@@ -156,7 +158,7 @@ async fn malicious_sort_by_does_not_inject(pool: PgPool) {
     };
 
     let equipment = repo
-        .list_equipment(org, query)
+        .list_equipment(&pool, org, query)
         .await
         .expect("list_equipment must succeed despite malicious sort_by");
     assert_eq!(equipment.len(), 1);
@@ -171,8 +173,8 @@ async fn legitimate_desc_ordering_still_works(pool: PgPool) {
     let org = seed_org(&pool, "ok-desc").await;
     let user = seed_user(&pool, "ok-desc@pm-sort.test").await;
     let building = seed_building(&pool, org, "ok-desc").await;
-    seed_equipment(&repo, org, user, building, "Aaa").await;
-    seed_equipment(&repo, org, user, building, "Zzz").await;
+    seed_equipment(&repo, &pool, org, user, building, "Aaa").await;
+    seed_equipment(&repo, &pool, org, user, building, "Zzz").await;
 
     let query = EquipmentQuery {
         sort_by: Some("name".to_string()),
@@ -180,7 +182,7 @@ async fn legitimate_desc_ordering_still_works(pool: PgPool) {
         ..Default::default()
     };
 
-    let equipment = repo.list_equipment(org, query).await.expect("list");
+    let equipment = repo.list_equipment(&pool, org, query).await.expect("list");
     assert_eq!(equipment.len(), 2);
     assert_eq!(equipment[0].name, "Zzz", "desc must put Zzz first");
     assert_eq!(equipment[1].name, "Aaa");

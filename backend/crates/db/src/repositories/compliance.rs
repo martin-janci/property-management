@@ -323,6 +323,110 @@ impl ComplianceRepository {
     // CONTENT MODERATION CASES
     // ========================================================================
 
+    /// Resolve the real owner (user id) of a piece of reportable content,
+    /// scoped to the caller's organization where the content table carries one.
+    ///
+    /// Returns `Ok(None)` when the content does not exist (or is not visible to
+    /// the caller's org, or the content type has no resolvable owner table), so
+    /// callers can reject the report instead of persisting a bogus owner.
+    /// Cross-tenant content resolves to `None` to avoid leaking its existence.
+    pub async fn resolve_content_owner(
+        &self,
+        content_type: ModeratedContentType,
+        content_id: Uuid,
+        org_id: Option<Uuid>,
+    ) -> Result<Option<Uuid>, SqlxError> {
+        let owner: Option<Uuid> =
+            match content_type {
+                // A user profile *is* a user; the content id is the owner.
+                ModeratedContentType::UserProfile => {
+                    sqlx::query_scalar(r#"SELECT id FROM users WHERE id = $1"#)
+                        .bind(content_id)
+                        .fetch_optional(&self.pool)
+                        .await?
+                }
+
+                // Org-scoped content: only resolvable from within the owning org.
+                ModeratedContentType::Listing => {
+                    sqlx::query_scalar(
+                        r#"SELECT created_by FROM listings WHERE id = $1 AND organization_id = $2"#,
+                    )
+                    .bind(content_id)
+                    .bind(org_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+                }
+
+                ModeratedContentType::ListingPhoto => {
+                    sqlx::query_scalar(
+                        r#"
+                SELECT l.created_by
+                FROM listing_photos p
+                JOIN listings l ON l.id = p.listing_id
+                WHERE p.id = $1 AND l.organization_id = $2
+                "#,
+                    )
+                    .bind(content_id)
+                    .bind(org_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+                }
+
+                ModeratedContentType::Announcement => sqlx::query_scalar(
+                    r#"SELECT author_id FROM announcements WHERE id = $1 AND organization_id = $2"#,
+                )
+                .bind(content_id)
+                .bind(org_id)
+                .fetch_optional(&self.pool)
+                .await?,
+
+                ModeratedContentType::Document => sqlx::query_scalar(
+                    r#"SELECT created_by FROM documents WHERE id = $1 AND organization_id = $2"#,
+                )
+                .bind(content_id)
+                .bind(org_id)
+                .fetch_optional(&self.pool)
+                .await?,
+
+                ModeratedContentType::Message => {
+                    sqlx::query_scalar(
+                        r#"
+                SELECT m.sender_id
+                FROM messages m
+                JOIN message_threads t ON t.id = m.thread_id
+                WHERE m.id = $1 AND t.organization_id = $2
+                "#,
+                    )
+                    .bind(content_id)
+                    .bind(org_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+                }
+
+                // community_posts scope by organization via the owning group's building.
+                ModeratedContentType::CommunityPost => {
+                    sqlx::query_scalar(
+                        r#"
+                SELECT cp.author_id
+                FROM community_posts cp
+                JOIN community_groups cg ON cg.id = cp.group_id
+                JOIN buildings b ON b.id = cg.building_id
+                WHERE cp.id = $1 AND b.organization_id = $2
+                "#,
+                    )
+                    .bind(content_id)
+                    .bind(org_id)
+                    .fetch_optional(&self.pool)
+                    .await?
+                }
+
+                // No backing owner table in this schema yet — caller rejects (404).
+                ModeratedContentType::Review | ModeratedContentType::Comment => None,
+            };
+
+        Ok(owner)
+    }
+
     /// Create a moderation case (user report).
     pub async fn create_moderation_case(
         &self,
@@ -679,8 +783,18 @@ impl ComplianceRepository {
         Ok(case)
     }
 
-    /// File an appeal.
-    pub async fn file_appeal(&self, id: Uuid, reason: &str) -> Result<ModerationCase, SqlxError> {
+    /// File an appeal, scoped to the case's organization.
+    ///
+    /// The `organization_id` predicate is defense-in-depth against the
+    /// cross-tenant IDOR (PAP-60): even though the handler already verifies
+    /// ownership before calling this, the UPDATE itself refuses to touch a case
+    /// outside `org_id`, mirroring `decide_appeal`.
+    pub async fn file_appeal(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+        reason: &str,
+    ) -> Result<ModerationCase, SqlxError> {
         let case = sqlx::query_as::<_, ModerationCase>(
             r#"
             UPDATE moderation_cases SET
@@ -689,12 +803,13 @@ impl ComplianceRepository {
                 appeal_filed_at = NOW(),
                 status = 'appealed',
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $3
             RETURNING *
             "#,
         )
         .bind(id)
         .bind(reason)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await?;
 

@@ -212,6 +212,10 @@
     <string name="filter_any">Beliebig</string>
     <string name="filter_rooms">Zimmer</string>
     <string name="filter_price_range_eur">Preisspanne (EUR)</string>
+    <string name="filter_near_me">In meiner Nähe</string>
+    <string name="filter_radius">Umkreis</string>
+    <string name="radius_km_format">%1$d km</string>
+    <string name="locating">Standort wird ermittelt…</string>
     <string name="filter_min">Min</string>
     <string name="filter_max">Max</string>
     <string name="filter_apply">Anwenden</string>

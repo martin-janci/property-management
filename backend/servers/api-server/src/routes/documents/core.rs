@@ -1154,6 +1154,21 @@ async fn get_download_url(
         }
     };
 
+    // Defense-in-depth cross-tenant guard. `find_by_id_rls` relies on the
+    // connection's `app.current_org_id` GUC + the `documents` FORCE-RLS policy
+    // to scope by org, but that lookup takes no org argument and a
+    // BYPASSRLS/superuser pool (e.g. the integration-test pool) is not bound by
+    // FORCE. Re-check the org explicitly so a foreign-org document is invisible
+    // (404, not a 503 existence leak) regardless of how the connection is
+    // privileged — matching the repository-layer `... AND organization_id = $N`
+    // convention used across the cross-tenant IDOR fixes.
+    if document.organization_id != tenant.tenant_id {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+        ));
+    }
+
     if !tenant.role.is_manager() {
         let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
         if !document_access_allowed(&document, auth.user_id, &user_role) {
@@ -1255,6 +1270,16 @@ async fn get_preview_url(
             ));
         }
     };
+
+    // Defense-in-depth cross-tenant guard (see `get_download_url`): a foreign-org
+    // document must be invisible (404) even on a BYPASSRLS/superuser pool that
+    // FORCE RLS does not bind.
+    if document.organization_id != tenant.tenant_id {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+        ));
+    }
 
     if !tenant.role.is_manager() {
         let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");

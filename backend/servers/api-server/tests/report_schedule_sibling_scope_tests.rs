@@ -5,16 +5,16 @@
 //!   - #624  Cross-tenant mutation via missing org_id in WHERE (update_schedule)
 //!   - #646  pause_schedule and resume_schedule IDOR (no org scope in WHERE)
 //!   - #647  list_executions / get_execution / get_execution_download_url /
-//!            retry_execution IDOR (no org scope)
+//!     retry_execution IDOR (no org scope)
 //!   - #693  The original cross-tenant tests below sent only `X-Tenant-ID`
-//!          (no Bearer JWT), so `AuthUser`/`RlsConnection` returned 401 at the
-//!          outer gate and the `AND organization_id = $caller_org_id` clause in
-//!          `pause`, `resume`, `get_by_id_scoped`, `get_execution_scoped`, and
-//!          `retry_execution_scoped` was never exercised. The companion
-//!          `*_authenticated` tests below send a real Bearer JWT from a
-//!          manager/resident in `org_b` targeting an `org_a` resource, asserting
-//!          the org-scoped WHERE clause produces a 404 — proving the DB-layer
-//!          isolation fires, not the auth gate.
+//!     (no Bearer JWT), so `AuthUser`/`RlsConnection` returned 401 at the
+//!     outer gate and the `AND organization_id = $caller_org_id` clause in
+//!     `pause`, `resume`, `get_by_id_scoped`, `get_execution_scoped`, and
+//!     `retry_execution_scoped` was never exercised. The companion
+//!     `*_authenticated` tests below send a real Bearer JWT from a
+//!     manager/resident in `org_b` targeting an `org_a` resource, asserting
+//!     the org-scoped WHERE clause produces a 404 — proving the DB-layer
+//!     isolation fires, not the auth gate.
 //!
 //! # Audit-matrix note
 //!
@@ -158,20 +158,6 @@ fn tenant_req(method: Method, uri: &str, org_id: Uuid) -> Request<Body> {
         .method(method)
         .uri(uri)
         .header("X-Tenant-ID", org_id.to_string())
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::empty())
-        .unwrap()
-}
-
-/// Build an authenticated request: Bearer JWT + `X-Tenant-ID` of the caller's
-/// own org. The handler reaches the repository, and the org-scoped WHERE
-/// clause must filter out resources belonging to other orgs.
-fn auth_req(method: Method, uri: &str, caller_org_id: Uuid, access_token: &str) -> Request<Body> {
-    Request::builder()
-        .method(method)
-        .uri(uri)
-        .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
-        .header("X-Tenant-ID", caller_org_id.to_string())
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::empty())
         .unwrap()
@@ -585,12 +571,13 @@ async fn pause_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let attacker_id = user_id_for(&pool, &attacker.email).await;
     seed_membership(&pool, org_b, attacker_id, "manager").await;
 
-    let req = auth_req(
-        Method::PUT,
-        &format!("/api/v1/reports/schedules/{}/pause", schedule_in_a),
-        org_b,
-        &access_token,
-    );
+    let session = app.session(access_token.to_string(), org_b);
+    let req = session
+        .put(&format!(
+            "/api/v1/reports/schedules/{}/pause",
+            schedule_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -660,12 +647,13 @@ async fn resume_schedule_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let attacker_id = user_id_for(&pool, &attacker.email).await;
     seed_membership(&pool, org_b, attacker_id, "manager").await;
 
-    let req = auth_req(
-        Method::PUT,
-        &format!("/api/v1/reports/schedules/{}/resume", schedule_in_a),
-        org_b,
-        &access_token,
-    );
+    let session = app.session(access_token.to_string(), org_b);
+    let req = session
+        .put(&format!(
+            "/api/v1/reports/schedules/{}/resume",
+            schedule_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -723,12 +711,13 @@ async fn list_executions_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let attacker_id = user_id_for(&pool, &attacker.email).await;
     seed_membership(&pool, org_b, attacker_id, "manager").await;
 
-    let req = auth_req(
-        Method::GET,
-        &format!("/api/v1/reports/schedules/{}/executions", schedule_in_a),
-        org_b,
-        &access_token,
-    );
+    let session = app.session(access_token.to_string(), org_b);
+    let req = session
+        .get(&format!(
+            "/api/v1/reports/schedules/{}/executions",
+            schedule_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -775,12 +764,10 @@ async fn get_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let attacker_id = user_id_for(&pool, &attacker.email).await;
     seed_membership(&pool, org_b, attacker_id, "Resident").await;
 
-    let req = auth_req(
-        Method::GET,
-        &format!("/api/v1/reports/executions/{}", execution_in_a),
-        org_b,
-        &access_token,
-    );
+    let session = app.session(access_token.to_string(), org_b);
+    let req = session
+        .get(&format!("/api/v1/reports/executions/{}", execution_in_a))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -826,12 +813,13 @@ async fn get_execution_download_url_cross_tenant_authenticated_returns_404(pool:
     let attacker_id = user_id_for(&pool, &attacker.email).await;
     seed_membership(&pool, org_b, attacker_id, "Resident").await;
 
-    let req = auth_req(
-        Method::GET,
-        &format!("/api/v1/reports/executions/{}/download", execution_in_a),
-        org_b,
-        &access_token,
-    );
+    let session = app.session(access_token.to_string(), org_b);
+    let req = session
+        .get(&format!(
+            "/api/v1/reports/executions/{}/download",
+            execution_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(
@@ -879,12 +867,13 @@ async fn retry_execution_cross_tenant_authenticated_returns_404(pool: PgPool) {
     let attacker_id = user_id_for(&pool, &attacker.email).await;
     seed_membership(&pool, org_b, attacker_id, "manager").await;
 
-    let req = auth_req(
-        Method::POST,
-        &format!("/api/v1/reports/executions/{}/retry", execution_in_a),
-        org_b,
-        &access_token,
-    );
+    let session = app.session(access_token.to_string(), org_b);
+    let req = session
+        .post(&format!(
+            "/api/v1/reports/executions/{}/retry",
+            execution_in_a
+        ))
+        .build();
     let response = app.execute(req).await;
 
     assert_eq!(

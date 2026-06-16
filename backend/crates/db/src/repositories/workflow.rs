@@ -1,4 +1,32 @@
 //! Workflow automation repository (Epic 13, Story 13.6 & 13.7).
+//!
+//! # RLS Integration (PAP-77 / PAP-67 / PAP-80)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on the workflow tables (`workflows`,
+//! `workflow_actions`, `workflow_executions`, `workflow_execution_steps`,
+//! `workflow_schedules`). Under `FORCE` the api-server's owner connection is
+//! no longer exempt, so a query issued on a connection without
+//! `app.current_org_id` set collapses to deny-all.
+//!
+//! Every method therefore takes an **executor whose connection already has
+//! RLS context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`; in the background
+//! workflow executor from `RlsPool::acquire_with_rls` with the org derived
+//! from the already-loaded workflow row. The repository holds **no pool**, so
+//! there is no way to issue a query that bypasses RLS. This mirrors the
+//! `board_meetings.rs` / `vendor.rs` / `budget.rs` precedent.
+//!
+//! Cross-tenant safety (PAP-133 defense-in-depth): RLS is the primary
+//! boundary, but by-id queries stay org-keyed — a connection whose role
+//! bypasses RLS (superuser pools, BYPASSRLS) must still never resolve another
+//! tenant's row. `workflows` carries its own `organization_id`; the child
+//! tables (`workflow_actions`, `workflow_executions`,
+//! `workflow_execution_steps`) are keyed through `workflows.organization_id`
+//! via JOIN / EXISTS. The previously-unscoped internal variants
+//! (`find_by_id`, `find_execution_by_id`, `list_execution_steps`) were
+//! removed: the executor now receives the loaded `Workflow` row from its
+//! caller, so no unscoped by-id read remains.
 
 use crate::models::{
     CreateWorkflow, CreateWorkflowAction, ExecutionQuery, TriggerWorkflow, UpdateWorkflow,
@@ -6,7 +34,7 @@ use crate::models::{
     WorkflowSchedule, WorkflowSummary,
 };
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Hard ceiling on `retry_count` per action (H4).
@@ -25,29 +53,39 @@ pub const MAX_RETRY_COUNT: i32 = 10;
 pub const MAX_RETRY_DELAY_SECONDS: i32 = 3600;
 
 /// Repository for workflow operations.
-#[derive(Clone)]
-pub struct WorkflowRepository {
-    pool: PgPool,
-}
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`)
+/// query.
+#[derive(Debug, Clone)]
+pub struct WorkflowRepository;
 
 impl WorkflowRepository {
     /// Create a new repository instance.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set
+    /// connection supplied by the caller).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
-    /// Create a new workflow.
     /// Create a workflow.
     ///
     /// `organization_id` and `created_by` are passed explicitly by the caller
     /// and must originate from the verified request principal, never from
     /// client input in `data`.
-    pub async fn create(
+    pub async fn create<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         created_by: Uuid,
         data: CreateWorkflow,
-    ) -> Result<Workflow, sqlx::Error> {
+    ) -> Result<Workflow, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO workflows
@@ -63,21 +101,8 @@ impl WorkflowRepository {
         .bind(sqlx::types::Json(data.trigger_config.unwrap_or_default()))
         .bind(sqlx::types::Json(data.conditions.unwrap_or_default()))
         .bind(created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
-    }
-
-    /// Get workflow by ID (no tenant scoping — internal use by the executor only).
-    ///
-    /// Handlers must use [`Self::find_by_id_for_org`] to enforce tenant
-    /// isolation. This unscoped variant is retained for the workflow executor,
-    /// which loads workflows during background execution where the
-    /// `organization_id` is derived from the persisted row itself.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Workflow>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM workflows WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
     }
 
     /// Get workflow by ID, scoped to the caller's organization.
@@ -85,24 +110,32 @@ impl WorkflowRepository {
     /// Returns `Ok(None)` when the workflow does not exist OR belongs to a
     /// different organization — the caller MUST surface this as a 404 to
     /// avoid disclosing cross-tenant existence.
-    pub async fn find_by_id_for_org(
+    pub async fn find_by_id_for_org<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<Workflow>, sqlx::Error> {
+    ) -> Result<Option<Workflow>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM workflows WHERE id = $1 AND organization_id = $2")
             .bind(id)
             .bind(org_id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List workflows with filters.
-    pub async fn list(
+    pub async fn list<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: WorkflowQuery,
-    ) -> Result<Vec<WorkflowSummary>, sqlx::Error> {
+    ) -> Result<Vec<WorkflowSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -133,7 +166,7 @@ impl WorkflowRepository {
         .bind(query.search)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -141,12 +174,16 @@ impl WorkflowRepository {
     ///
     /// Returns `Ok(None)` when the workflow does not exist OR belongs to a
     /// different organization. The caller MUST surface this as 404.
-    pub async fn update(
+    pub async fn update<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         data: UpdateWorkflow,
-    ) -> Result<Option<Workflow>, sqlx::Error> {
+    ) -> Result<Option<Workflow>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE workflows SET
@@ -169,16 +206,24 @@ impl WorkflowRepository {
         .bind(data.trigger_config.map(sqlx::types::Json))
         .bind(data.conditions.map(sqlx::types::Json))
         .bind(data.enabled)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Delete a workflow, scoped to the caller's organization.
-    pub async fn delete(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM workflows WHERE id = $1 AND organization_id = $2")
             .bind(id)
             .bind(org_id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -194,6 +239,7 @@ impl WorkflowRepository {
     /// — see [`MAX_RETRY_COUNT`] / [`MAX_RETRY_DELAY_SECONDS`] (H4 defense).
     pub async fn add_action(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         data: CreateWorkflowAction,
     ) -> Result<Option<WorkflowAction>, sqlx::Error> {
@@ -202,7 +248,7 @@ impl WorkflowRepository {
             sqlx::query_as("SELECT id FROM workflows WHERE id = $1 AND organization_id = $2")
                 .bind(data.workflow_id)
                 .bind(org_id)
-                .fetch_optional(&self.pool)
+                .fetch_optional(&mut *conn)
                 .await?;
         if belongs.is_none() {
             return Ok(None);
@@ -233,7 +279,7 @@ impl WorkflowRepository {
         .bind(data.on_failure.unwrap_or_else(|| "stop".to_string()))
         .bind(retry_count)
         .bind(retry_delay_seconds)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
         Ok(Some(action))
     }
@@ -244,6 +290,7 @@ impl WorkflowRepository {
     /// different organization. The caller MUST surface this as 404.
     pub async fn list_actions(
         &self,
+        conn: &mut PgConnection,
         workflow_id: Uuid,
         org_id: Uuid,
     ) -> Result<Option<Vec<WorkflowAction>>, sqlx::Error> {
@@ -253,7 +300,7 @@ impl WorkflowRepository {
             sqlx::query_as("SELECT id FROM workflows WHERE id = $1 AND organization_id = $2")
                 .bind(workflow_id)
                 .bind(org_id)
-                .fetch_optional(&self.pool)
+                .fetch_optional(&mut *conn)
                 .await?;
         if belongs.is_none() {
             return Ok(None);
@@ -263,7 +310,7 @@ impl WorkflowRepository {
             "SELECT * FROM workflow_actions WHERE workflow_id = $1 ORDER BY action_order",
         )
         .bind(workflow_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
         Ok(Some(actions))
     }
@@ -273,7 +320,15 @@ impl WorkflowRepository {
     /// The action is identified by its own ID. We JOIN through workflows to
     /// confirm the parent workflow belongs to `org_id`; otherwise the delete
     /// is a no-op and returns `false`, which the caller surfaces as 404.
-    pub async fn delete_action(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_action<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             DELETE FROM workflow_actions a
@@ -285,14 +340,20 @@ impl WorkflowRepository {
         )
         .bind(id)
         .bind(org_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(result.rows_affected() > 0)
     }
 
     /// Create an execution record.
+    ///
+    /// The caller must have verified that `data.workflow_id` belongs to the
+    /// org whose RLS context is set on `conn` — under `FORCE` RLS the INSERT
+    /// fails the policy otherwise (the policy keys `workflow_executions`
+    /// through the parent workflow's org).
     pub async fn create_execution(
         &self,
+        conn: &mut PgConnection,
         data: TriggerWorkflow,
     ) -> Result<WorkflowExecution, sqlx::Error> {
         let execution: WorkflowExecution = sqlx::query_as(
@@ -305,7 +366,7 @@ impl WorkflowRepository {
         .bind(data.workflow_id)
         .bind(sqlx::types::Json(data.trigger_event))
         .bind(sqlx::types::Json(data.context.unwrap_or_default()))
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Update workflow trigger stats
@@ -313,23 +374,10 @@ impl WorkflowRepository {
             "UPDATE workflows SET last_triggered_at = NOW(), trigger_count = trigger_count + 1 WHERE id = $1",
         )
         .bind(data.workflow_id)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await?;
 
         Ok(execution)
-    }
-
-    /// Get execution by ID (no tenant scoping — internal use only).
-    ///
-    /// HTTP handlers must use [`Self::find_execution_by_id_for_org`].
-    pub async fn find_execution_by_id(
-        &self,
-        id: Uuid,
-    ) -> Result<Option<WorkflowExecution>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM workflow_executions WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
     }
 
     /// Get execution by ID, scoped to the caller's organization.
@@ -337,11 +385,15 @@ impl WorkflowRepository {
     /// Returns `Ok(None)` when the execution does not exist OR belongs to a
     /// workflow in a different organization. The caller MUST surface this
     /// as 404.
-    pub async fn find_execution_by_id_for_org(
+    pub async fn find_execution_by_id_for_org<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<WorkflowExecution>, sqlx::Error> {
+    ) -> Result<Option<WorkflowExecution>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT e.* FROM workflow_executions e
@@ -351,16 +403,20 @@ impl WorkflowRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List executions with filters.
-    pub async fn list_executions(
+    pub async fn list_executions<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: ExecutionQuery,
-    ) -> Result<Vec<WorkflowExecution>, sqlx::Error> {
+    ) -> Result<Vec<WorkflowExecution>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -384,17 +440,25 @@ impl WorkflowRepository {
         .bind(query.to_date)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update execution status.
-    pub async fn update_execution_status(
+    ///
+    /// Internal use by the workflow executor only — the execution is
+    /// identified by its own ID; the RLS context on the connection (set from
+    /// the owning workflow's org) is what scopes the write.
+    pub async fn update_execution_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         error_message: Option<&str>,
-    ) -> Result<WorkflowExecution, sqlx::Error> {
+    ) -> Result<WorkflowExecution, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE workflow_executions SET
@@ -408,16 +472,20 @@ impl WorkflowRepository {
         .bind(id)
         .bind(status)
         .bind(error_message)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Create an execution step record.
-    pub async fn create_execution_step(
+    /// Create an execution step record (internal use by the executor).
+    pub async fn create_execution_step<'e, E>(
         &self,
+        executor: E,
         execution_id: Uuid,
         action_id: Uuid,
-    ) -> Result<WorkflowExecutionStep, sqlx::Error> {
+    ) -> Result<WorkflowExecutionStep, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO workflow_execution_steps (execution_id, action_id, status, started_at)
@@ -427,19 +495,23 @@ impl WorkflowRepository {
         )
         .bind(execution_id)
         .bind(action_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Update execution step.
-    pub async fn update_execution_step(
+    /// Update execution step (internal use by the executor).
+    pub async fn update_execution_step<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         output: serde_json::Value,
         error_message: Option<&str>,
         duration_ms: Option<i32>,
-    ) -> Result<WorkflowExecutionStep, sqlx::Error> {
+    ) -> Result<WorkflowExecutionStep, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE workflow_execution_steps SET
@@ -457,27 +529,7 @@ impl WorkflowRepository {
         .bind(sqlx::types::Json(output))
         .bind(error_message)
         .bind(duration_ms)
-        .fetch_one(&self.pool)
-        .await
-    }
-
-    /// Get execution steps (no tenant scoping — internal use only).
-    ///
-    /// HTTP handlers must use [`Self::list_execution_steps_for_org`].
-    pub async fn list_execution_steps(
-        &self,
-        execution_id: Uuid,
-    ) -> Result<Vec<WorkflowExecutionStep>, sqlx::Error> {
-        sqlx::query_as(
-            r#"
-            SELECT s.* FROM workflow_execution_steps s
-            JOIN workflow_actions a ON a.id = s.action_id
-            WHERE s.execution_id = $1
-            ORDER BY a.action_order
-            "#,
-        )
-        .bind(execution_id)
-        .fetch_all(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -488,6 +540,7 @@ impl WorkflowRepository {
     /// as 404 — disclosing presence/absence cross-tenant is itself a leak.
     pub async fn list_execution_steps_for_org(
         &self,
+        conn: &mut PgConnection,
         execution_id: Uuid,
         org_id: Uuid,
     ) -> Result<Option<Vec<WorkflowExecutionStep>>, sqlx::Error> {
@@ -501,7 +554,7 @@ impl WorkflowRepository {
         )
         .bind(execution_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
         if belongs.is_none() {
             return Ok(None);
@@ -516,34 +569,42 @@ impl WorkflowRepository {
             "#,
         )
         .bind(execution_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
         Ok(Some(steps))
     }
 
     /// Get workflows by trigger type (for event matching).
-    pub async fn list_by_trigger_type(
+    pub async fn list_by_trigger_type<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         trigger_type: &str,
-    ) -> Result<Vec<Workflow>, sqlx::Error> {
+    ) -> Result<Vec<Workflow>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM workflows WHERE organization_id = $1 AND trigger_type = $2 AND enabled = TRUE",
         )
         .bind(org_id)
         .bind(trigger_type)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Create or update workflow schedule.
-    pub async fn upsert_schedule(
+    pub async fn upsert_schedule<'e, E>(
         &self,
+        executor: E,
         workflow_id: Uuid,
         cron_expression: &str,
         timezone: &str,
         next_run_at: DateTime<Utc>,
-    ) -> Result<WorkflowSchedule, sqlx::Error> {
+    ) -> Result<WorkflowSchedule, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO workflow_schedules (workflow_id, cron_expression, timezone, next_run_at)
@@ -560,25 +621,39 @@ impl WorkflowRepository {
         .bind(cron_expression)
         .bind(timezone)
         .bind(next_run_at)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get due scheduled workflows.
-    pub async fn list_due_schedules(&self) -> Result<Vec<WorkflowSchedule>, sqlx::Error> {
+    ///
+    /// Under `FORCE` RLS this returns the due schedules of the org whose
+    /// context is set on the connection — a future cross-org scheduler must
+    /// iterate orgs with per-org contexts, not bypass RLS.
+    pub async fn list_due_schedules<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<WorkflowSchedule>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM workflow_schedules WHERE enabled = TRUE AND next_run_at <= NOW()",
         )
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update schedule after execution.
-    pub async fn update_schedule_after_run(
+    pub async fn update_schedule_after_run<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         next_run_at: DateTime<Utc>,
-    ) -> Result<WorkflowSchedule, sqlx::Error> {
+    ) -> Result<WorkflowSchedule, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE workflow_schedules
@@ -589,7 +664,7 @@ impl WorkflowRepository {
         )
         .bind(id)
         .bind(next_run_at)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 }

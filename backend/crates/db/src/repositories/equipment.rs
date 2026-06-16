@@ -1,35 +1,63 @@
 //! Equipment and predictive maintenance repository (Epic 13, Story 13.3).
+//!
+//! # RLS Integration (PAP-67 / PAP-71)
+//!
+//! Migration `00179` (PAP-62) put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on `equipment`, `equipment_maintenance`, and
+//! `maintenance_predictions`. The api-server connects as the table OWNER, which
+//! `FORCE` binds, so a query issued on a connection without `app.current_org_id`
+//! set collapses to deny-all (own-org reads return empty, writes fail the policy
+//! `WITH CHECK`).
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+//! pool**, so there is no way to issue a query that bypasses RLS. This mirrors
+//! the `work_order.rs` / `budget.rs` / `document.rs` precedent.
+//!
+//! The explicit `organization_id = $N` SQL filters are retained as
+//! defense-in-depth; handlers pass `rls.tenant_id()` (the org the caller was
+//! validated against), so the SQL filter and the RLS context can never disagree.
 
 use crate::models::{
     CreateEquipment, CreateMaintenance, Equipment, EquipmentMaintenance, EquipmentQuery,
     MaintenancePrediction, UpdateEquipment, UpdateMaintenance,
 };
 use chrono::NaiveDate;
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for equipment and maintenance operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct EquipmentRepository {
-    pool: PgPool,
-}
+pub struct EquipmentRepository;
 
 impl EquipmentRepository {
     /// Create a new repository instance.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
-    /// Create new equipment.
     /// Create equipment.
     ///
     /// `organization_id` is passed explicitly by the caller and must originate
     /// from the verified request principal, never from client input in `data`.
-    pub async fn create(
+    pub async fn create<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         data: CreateEquipment,
-    ) -> Result<Equipment, sqlx::Error> {
+    ) -> Result<Equipment, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO equipment
@@ -54,33 +82,41 @@ impl EquipmentRepository {
         .bind(data.maintenance_interval_days)
         .bind(data.notes)
         .bind(sqlx::types::Json(data.metadata.unwrap_or_default()))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
-    /// Get equipment by ID.
     /// Fetch a single equipment row scoped to `org_id`.
     ///
     /// Returns `None` for both "not found" and "belongs to another tenant" so
-    /// callers cannot enumerate foreign-tenant IDs by status code.
-    pub async fn find_by_id(
+    /// callers cannot enumerate foreign-tenant IDs by status code. RLS scopes
+    /// the result to the connection's org context as well.
+    pub async fn find_by_id<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<Equipment>, sqlx::Error> {
+    ) -> Result<Option<Equipment>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM equipment WHERE id = $1 AND organization_id = $2")
             .bind(id)
             .bind(org_id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List equipment with query filters.
-    pub async fn list(
+    pub async fn list<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: EquipmentQuery,
-    ) -> Result<Vec<Equipment>, sqlx::Error> {
+    ) -> Result<Vec<Equipment>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -105,7 +141,7 @@ impl EquipmentRepository {
         .bind(query.needs_maintenance)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -115,12 +151,16 @@ impl EquipmentRepository {
     /// caller in org B cannot modify equipment belonging to org A.  The WHERE
     /// clause `AND organization_id = $14` makes the update a no-op (returns
     /// `RowNotFound`) when the row exists but belongs to a different tenant.
-    pub async fn update(
+    pub async fn update<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         data: UpdateEquipment,
-    ) -> Result<Equipment, sqlx::Error> {
+    ) -> Result<Equipment, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE equipment SET
@@ -155,7 +195,7 @@ impl EquipmentRepository {
         .bind(data.notes)
         .bind(data.metadata.map(sqlx::types::Json))
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -165,27 +205,38 @@ impl EquipmentRepository {
     /// clause `AND organization_id = $2` ensures a caller in org B cannot delete
     /// equipment belonging to org A (returns `false` / not-found rather than
     /// deleting the row).
-    pub async fn delete(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM equipment WHERE id = $1 AND organization_id = $2")
             .bind(id)
             .bind(org_id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
 
-    /// Create maintenance record.
     /// Create a maintenance record — tenant-scoped.
     ///
     /// `org_id` must originate from the verified request principal.
     /// The INSERT is guarded by a sub-select that ensures `data.equipment_id`
     /// belongs to `org_id`; if the equipment does not exist in that org the
     /// INSERT produces no row and `sqlx` returns `RowNotFound`.
-    pub async fn create_maintenance(
+    pub async fn create_maintenance<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         data: CreateMaintenance,
-    ) -> Result<EquipmentMaintenance, sqlx::Error> {
+    ) -> Result<EquipmentMaintenance, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO equipment_maintenance
@@ -208,7 +259,7 @@ impl EquipmentRepository {
         .bind(data.scheduled_date)
         .bind(data.notes)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -218,11 +269,15 @@ impl EquipmentRepository {
     /// The JOIN ensures a caller in org B cannot read a maintenance record
     /// whose parent equipment belongs to org A; returns `None` for both
     /// "not found" and "belongs to another tenant" to prevent ID enumeration.
-    pub async fn find_maintenance_by_id(
+    pub async fn find_maintenance_by_id<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<EquipmentMaintenance>, sqlx::Error> {
+    ) -> Result<Option<EquipmentMaintenance>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT em.* FROM equipment_maintenance em
@@ -232,7 +287,7 @@ impl EquipmentRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -241,13 +296,17 @@ impl EquipmentRepository {
     /// `org_id` must originate from the verified request principal.
     /// The JOIN ensures only maintenance records whose parent equipment
     /// belongs to `org_id` are returned.
-    pub async fn list_maintenance(
+    pub async fn list_maintenance<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         org_id: Uuid,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<EquipmentMaintenance>, sqlx::Error> {
+    ) -> Result<Vec<EquipmentMaintenance>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT em.* FROM equipment_maintenance em
@@ -261,7 +320,7 @@ impl EquipmentRepository {
         .bind(org_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -272,8 +331,12 @@ impl EquipmentRepository {
     /// tenant boundary is enforced via the parent `equipment` row using an
     /// `EXISTS` sub-select so a caller in org B cannot mutate a maintenance
     /// record whose parent equipment belongs to org A.
+    ///
+    /// Multi-statement (update + optional last-maintenance refresh), so it takes
+    /// a connection and reborrows it for each query.
     pub async fn update_maintenance(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
         org_id: Uuid,
         data: UpdateMaintenance,
@@ -311,13 +374,13 @@ impl EquipmentRepository {
         .bind(data.status)
         .bind(data.notes)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Update equipment last maintenance date if completed
         if result.status == "completed" {
             if let Some(completed) = result.completed_date {
-                self.update_last_maintenance(result.equipment_id, completed)
+                self.update_last_maintenance(&mut *conn, result.equipment_id, completed)
                     .await?;
             }
         }
@@ -326,11 +389,15 @@ impl EquipmentRepository {
     }
 
     /// Update equipment's last maintenance date.
-    async fn update_last_maintenance(
+    async fn update_last_maintenance<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         date: NaiveDate,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query(
             r#"
             UPDATE equipment
@@ -347,21 +414,26 @@ impl EquipmentRepository {
         )
         .bind(equipment_id)
         .bind(date)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(())
     }
 
     /// Create or update a maintenance prediction.
-    pub async fn upsert_prediction(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn upsert_prediction<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         risk_score: f64,
         predicted_failure_date: Option<NaiveDate>,
         confidence: f64,
         recommendation: &str,
         factors: serde_json::Value,
-    ) -> Result<MaintenancePrediction, sqlx::Error> {
+    ) -> Result<MaintenancePrediction, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO maintenance_predictions
@@ -386,17 +458,21 @@ impl EquipmentRepository {
         .bind(confidence)
         .bind(recommendation)
         .bind(sqlx::types::Json(factors))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get high-risk predictions.
-    pub async fn list_high_risk_predictions(
+    pub async fn list_high_risk_predictions<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         min_risk_score: f64,
         limit: i64,
-    ) -> Result<Vec<MaintenancePrediction>, sqlx::Error> {
+    ) -> Result<Vec<MaintenancePrediction>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT p.* FROM maintenance_predictions p
@@ -409,7 +485,7 @@ impl EquipmentRepository {
         .bind(org_id)
         .bind(min_risk_score)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -421,13 +497,17 @@ impl EquipmentRepository {
     /// `RowNotFound` when either the prediction does not exist or the equipment
     /// belongs to a different tenant (callers should surface both as 404 to
     /// prevent ID enumeration).
-    pub async fn acknowledge_prediction(
+    pub async fn acknowledge_prediction<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         user_id: Uuid,
         action_taken: Option<&str>,
-    ) -> Result<MaintenancePrediction, sqlx::Error> {
+    ) -> Result<MaintenancePrediction, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE maintenance_predictions
@@ -445,17 +525,21 @@ impl EquipmentRepository {
         .bind(org_id)
         .bind(user_id)
         .bind(action_taken)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get equipment needing maintenance soon.
-    pub async fn list_needing_maintenance(
+    pub async fn list_needing_maintenance<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         days_ahead: i32,
         limit: i64,
-    ) -> Result<Vec<Equipment>, sqlx::Error> {
+    ) -> Result<Vec<Equipment>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM equipment
@@ -470,7 +554,7 @@ impl EquipmentRepository {
         .bind(org_id)
         .bind(days_ahead)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 }

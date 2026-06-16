@@ -8,7 +8,7 @@ implementations:
     component: PendingValidationsPage
     buildStatus: in-progress
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: complete
 endpoints: []
 relatedScreens: []
 sharedComponents: []

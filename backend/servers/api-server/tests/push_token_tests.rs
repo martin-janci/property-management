@@ -81,6 +81,7 @@ fn empty_request(method: Method, uri: &str) -> Request<Body> {
 /// - 401 when `AuthUser` can't find/validate a Bearer token.
 /// - 400 when the `X-Tenant-ID` header is missing.
 /// - 403 when a resolved tenant disagrees with the header.
+///
 /// What must NEVER happen is 2xx — that would mean a mutation succeeded.
 fn assert_rejected(status: StatusCode, ctx: &str) {
     let code = status.as_u16();

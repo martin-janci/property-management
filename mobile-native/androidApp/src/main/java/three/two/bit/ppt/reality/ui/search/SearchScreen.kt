@@ -103,6 +103,13 @@ fun SearchScreen(
     var maxPrice by remember { mutableStateOf("") }
     var minRooms by remember { mutableStateOf<Int?>(null) }
     var selectedSort by remember { mutableStateOf(ListingSortOption.NEWEST) }
+    // "Near Me" location filter (epic-82 story 82.3 FilterSheet). radiusKm drives the toggle;
+    // nearLat/nearLng are filled once the device coordinate resolves. The shared SearchState
+    // only sends a radius once a centre point is known (see buildSearchRequest).
+    var nearLat by remember { mutableStateOf<Double?>(null) }
+    var nearLng by remember { mutableStateOf<Double?>(null) }
+    var radiusKm by remember { mutableStateOf<Double?>(null) }
+    val nearMeRequester = rememberNearMeLocationRequester()
 
     val networkErrorMsg = stringResource(R.string.error_network)
     val searchFailedMsg = stringResource(R.string.error_generic)
@@ -141,6 +148,9 @@ fun SearchScreen(
                         minRooms = minRooms,
                         sort = selectedSort,
                         page = page,
+                        nearLat = nearLat,
+                        nearLng = nearLng,
+                        radiusKm = radiusKm,
                     )
                 val result = repository.searchListings(request)
 
@@ -204,13 +214,25 @@ fun SearchScreen(
     }
 
     val activeFilterCount =
-        remember(selectedType, selectedCategory, minRooms, minPrice, maxPrice) {
+        remember(
+            selectedType,
+            selectedCategory,
+            minRooms,
+            minPrice,
+            maxPrice,
+            nearLat,
+            nearLng,
+            radiusKm,
+        ) {
             SearchState.activeFilterCount(
                 type = selectedType,
                 category = selectedCategory,
                 minRooms = minRooms,
                 minPrice = minPrice,
                 maxPrice = maxPrice,
+                nearLat = nearLat,
+                nearLng = nearLng,
+                radiusKm = radiusKm,
             )
         }
 
@@ -223,13 +245,25 @@ fun SearchScreen(
             minPrice = minPrice,
             maxPrice = maxPrice,
             selectedSort = selectedSort,
+            radiusKm = radiusKm,
+            hasLocation = nearLat != null && nearLng != null,
+            locationRequester = nearMeRequester,
             onDismiss = { showFilters = false },
-            onApply = { type, category, minP, maxP, sort ->
+            onApply = { type, category, minP, maxP, sort, draftRadiusKm, coordinate ->
                 selectedType = type
                 selectedCategory = category
                 minPrice = minP
                 maxPrice = maxP
                 selectedSort = sort
+                radiusKm = draftRadiusKm
+                // A resolved coordinate overwrites the previous one; clearing the radius drops it.
+                if (draftRadiusKm == null) {
+                    nearLat = null
+                    nearLng = null
+                } else if (coordinate != null) {
+                    nearLat = coordinate.latitude
+                    nearLng = coordinate.longitude
+                }
                 showFilters = false
                 performSearch()
             },
@@ -239,6 +273,9 @@ fun SearchScreen(
                 minPrice = ""
                 maxPrice = ""
                 selectedSort = ListingSortOption.NEWEST
+                radiusKm = null
+                nearLat = null
+                nearLng = null
                 showFilters = false
                 performSearch()
             },
@@ -552,8 +589,20 @@ private fun FilterSheet(
     minPrice: String,
     maxPrice: String,
     selectedSort: ListingSortOption,
+    radiusKm: Double?,
+    hasLocation: Boolean,
+    locationRequester: NearMeLocationRequester,
     onDismiss: () -> Unit,
-    onApply: (ListingType?, PropertyCategory?, String, String, ListingSortOption) -> Unit,
+    onApply:
+        (
+            ListingType?,
+            PropertyCategory?,
+            String,
+            String,
+            ListingSortOption,
+            Double?,
+            NearMeCoordinate?,
+        ) -> Unit,
     onReset: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -564,6 +613,17 @@ private fun FilterSheet(
     var draftMinPrice by remember { mutableStateOf(minPrice) }
     var draftMaxPrice by remember { mutableStateOf(maxPrice) }
     var draftSort by remember { mutableStateOf(selectedSort) }
+    // Near Me draft. draftRadiusKm null = toggle off. draftCoordinate is filled once the device
+    // location resolves; isLocating tracks the in-flight permission/fetch so the UI can show a
+    // spinner. If the filter was already active (hasLocation), the previously-committed coordinate
+    // is reused unless a fresh one is fetched.
+    var draftRadiusKm by remember { mutableStateOf(radiusKm) }
+    var draftCoordinate by remember { mutableStateOf<NearMeCoordinate?>(null) }
+    var isLocating by remember { mutableStateOf(false) }
+    // The toggle is "on" while a radius is selected; it stays on optimistically while locating.
+    val nearMeEnabled = draftRadiusKm != null
+    // Whether we have (or had) a usable centre point for the search.
+    val hasCoordinate = draftCoordinate != null || (hasLocation && radiusKm != null)
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -683,6 +743,87 @@ private fun FilterSheet(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
+            // Near Me — location-radius filter (mirrors iOS FilterSheet.nearMeSection).
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.filter_near_me),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Switch(
+                    checked = nearMeEnabled,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            draftRadiusKm = SearchState.DEFAULT_NEAR_ME_RADIUS_KM
+                            if (!hasCoordinate) {
+                                isLocating = true
+                                locationRequester.acquire { coord ->
+                                    isLocating = false
+                                    if (coord != null) {
+                                        draftCoordinate = coord
+                                    } else {
+                                        // Permission denied / unavailable — revert the toggle.
+                                        draftRadiusKm = null
+                                    }
+                                }
+                            }
+                        } else {
+                            draftRadiusKm = null
+                            draftCoordinate = null
+                        }
+                    },
+                )
+            }
+            if (nearMeEnabled) {
+                when {
+                    isLocating ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.locating),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    hasCoordinate -> {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.filter_radius),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(SearchState.RADIUS_OPTIONS_KM) { km ->
+                                FilterChip(
+                                    selected = draftRadiusKm == km,
+                                    onClick = { draftRadiusKm = km },
+                                    label = {
+                                        Text(stringResource(R.string.radius_km_format, km.toInt()))
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(20.dp))
             // Action row — Reset (text) + Apply (filled).
             Row(
@@ -695,7 +836,15 @@ private fun FilterSheet(
                 }
                 Button(
                     onClick = {
-                        onApply(draftType, draftCategory, draftMinPrice, draftMaxPrice, draftSort)
+                        onApply(
+                            draftType,
+                            draftCategory,
+                            draftMinPrice,
+                            draftMaxPrice,
+                            draftSort,
+                            draftRadiusKm,
+                            draftCoordinate,
+                        )
                     },
                     modifier = Modifier.weight(1f),
                 ) {
