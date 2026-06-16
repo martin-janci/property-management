@@ -3,17 +3,14 @@
  *
  * `plugins/withIosBuildConfig.ts` selects the per-environment iOS .xcconfig at
  * prebuild and wires it into the generated Xcode project. The pure pieces —
- * environment resolution (`resolveAppEnv`) and template resolution + CI URL
- * override (`buildXcconfigContents`) — are unit-tested here without needing a
- * generated `ios/` project or a macOS toolchain.
+ * environment resolution (`resolveAppEnv`) and template reading
+ * (`buildXcconfigContents`) — are unit-tested here without needing a generated
+ * `ios/` project or a macOS toolchain.
  *
- * These mirror the contract that:
- *   - APP_ENV (then NODE_ENV) picks the environment, exactly like app.config.ts.
- *   - Each environment maps to its committed ios/xcconfig/*.xcconfig template.
- *   - A CI-provided API_BASE_URL overrides the template's PPT_API_BASE_URL
- *     (the same precedence app.config.ts uses for the runtime layer), and the
- *     URL `//` is escaped so xcconfig does not treat it as a comment.
- *   - Without an override, production keeps the __SET_BY_CI__ sentinel.
+ * The xcconfig files are native build-layer markers only (PPT_APP_ENV,
+ * PRODUCT_BUNDLE_IDENTIFIER). Runtime config (API_BASE_URL, ENVIRONMENT, etc.)
+ * is owned by `.env.<env>` -> app.config.ts -> ios.infoPlist and is NOT
+ * duplicated in xcconfig to avoid drift (GH #1410).
  */
 
 import * as path from 'node:path';
@@ -52,47 +49,23 @@ describe('TEMPLATE_BY_ENV', () => {
 });
 
 describe('buildXcconfigContents — per-environment templates', () => {
-  const cases: Array<[AppEnvironment, string, string]> = [
-    ['development', 'development', 'http:/$()/localhost:8080'],
-    ['staging', 'staging', 'https:/$()/staging-api.ppt.example.com'],
-    ['production', 'production', '__SET_BY_CI__'],
+  const cases: Array<[AppEnvironment, string]> = [
+    ['development', 'development'],
+    ['staging', 'staging'],
+    ['production', 'production'],
   ];
 
-  for (const [env, appEnvMarker, apiUrl] of cases) {
-    it(`reads the ${env} template (PPT_APP_ENV + API URL)`, () => {
-      const out = buildXcconfigContents(PROJECT_ROOT, env, {} as NodeJS.ProcessEnv);
+  for (const [env, appEnvMarker] of cases) {
+    it(`reads the ${env} template (PPT_APP_ENV + bundle id, no runtime config)`, () => {
+      const out = buildXcconfigContents(PROJECT_ROOT, env);
       expect(out).toContain(`PPT_APP_ENV = ${appEnvMarker}`);
-      expect(out).toContain(`PPT_API_BASE_URL = ${apiUrl}`);
       expect(out).toContain('PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.management');
+      // Runtime config must not appear — it is owned by app.config.ts (GH #1410)
+      expect(out).not.toContain('PPT_API_BASE_URL');
+      expect(out).not.toContain('PPT_ALLOWS_ARBITRARY_LOADS');
+      expect(out).not.toContain('PPT_BUILD_DISPLAY_NAME');
     });
   }
-
-  it('keeps the production sentinel when no CI override is present', () => {
-    const out = buildXcconfigContents(PROJECT_ROOT, 'production', {} as NodeJS.ProcessEnv);
-    expect(out).toContain('PPT_API_BASE_URL = __SET_BY_CI__');
-  });
-});
-
-describe('buildXcconfigContents — CI API_BASE_URL override', () => {
-  it('overrides PPT_API_BASE_URL for production and escapes the URL `//`', () => {
-    const out = buildXcconfigContents(PROJECT_ROOT, 'production', {
-      API_BASE_URL: 'https://api.ppt.realhost.sk',
-    } as NodeJS.ProcessEnv);
-    expect(out).toContain('PPT_API_BASE_URL = https:/$()/api.ppt.realhost.sk');
-    // The setting line itself must no longer carry the sentinel (the comment
-    // block above it may still *mention* __SET_BY_CI__ — that's fine).
-    const settingLine = out.split('\n').find((l) => /^\s*PPT_API_BASE_URL\s*=/.test(l));
-    expect(settingLine).toBeDefined();
-    expect(settingLine).not.toContain('__SET_BY_CI__');
-  });
-
-  it('also overrides for non-production environments', () => {
-    const out = buildXcconfigContents(PROJECT_ROOT, 'staging', {
-      API_BASE_URL: 'https://staging.real.sk',
-    } as NodeJS.ProcessEnv);
-    expect(out).toContain('PPT_API_BASE_URL = https:/$()/staging.real.sk');
-    expect(out).not.toContain('staging-api.ppt.example.com');
-  });
 });
 
 describe('committed template files exist', () => {

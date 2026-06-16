@@ -461,7 +461,7 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
         });
       }
     },
-    [updateFolder, showToast]
+    [updateFolder, showToast, t]
   );
 
   const handleDeleteRequest = useCallback((id: string, name: string) => {
@@ -487,7 +487,7 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
         setDeleteTarget(null);
       }
     },
-    [deleteTarget, deleteFolder, selectedFolderId, onSelectFolder, showToast]
+    [deleteTarget, deleteFolder, selectedFolderId, onSelectFolder, showToast, t]
   );
 
   const handleAddChild = useCallback((parentId: string, depth: number) => {
@@ -516,7 +516,7 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
         setNewFolder(null);
       }
     },
-    [newFolder, createFolder, buildingId, showToast]
+    [newFolder, createFolder, buildingId, showToast, t]
   );
 
   const tree = data?.tree ?? [];
