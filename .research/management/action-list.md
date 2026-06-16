@@ -5,7 +5,7 @@ _Generated: 2026-06-16T00:00:00Z · 61 items · 51 open_
 | Priority | Status | Owner | ID | Action | Dependency | Source |
 |---|---|---|---|---|---|---|
 | high | open | pm-devops | pm-devops-dev-push-compile-gate | Add a `cargo check --workspace --tests` smoke gate on `dev` push (not just PR) — would have caugh... | none | pm-analysis 2026-06-16 |
-| high | open | pm-devops | pm-devops-fix-dev-compile-1437 | URGENT: Fix `dev` backend compile break introduced by PR #1426 — land #1435 or #1436. Blocks ALL ... | pm-backend | pm-analysis 2026-06-16 |
+| high | open | pm-devops | pm-devops-fix-dev-compile-1437 | URGENT: Fix `dev` backend compile break introduced by PR #1426 — land #1435 or #1436. Blocks ALL ... | none | pm-analysis 2026-06-16 |
 | high | open | pm-frontend | bug-ios-searchview-uncompilable | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corru... | none | dispatcher-tier1-refill 2026-06-12 (backlog.json promote) |
 | high | open | pm-frontend | feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend | web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged (6-2... | none | gap-scan 2026-06-12 (buffer-low refill) |
 | high | open | pm-frontend | feat-build-configuration-by-environ-build-scripts-created-mobile | build scripts (scripts/build-mobile\|android\|ios.sh) not created (85-2-build-configuration Build... | none | gap-scan 2026-06-12 (buffer-low refill) |
@@ -26,8 +26,8 @@ _Generated: 2026-06-16T00:00:00Z · 61 items · 51 open_
 | medium | open | pm-backend | feat-esignature-email-webhook-idempotency-guard-backend | Coverage 84-2: add the missing e-signature email webhook idempotency guard (terminal-state dedup)... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
 | medium | open | pm-backend | feat-notification-pref-sync-mobile-push-fcm-apns-backend | Coverage 8a-3: implement mobile OS push integration (FCM/APNs) for notification preference sync —... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
 | medium | open | pm-devops | pm-devops-confirm-eas-workflows-healthy | Confirm `eas-build-android.yml` + `eas-build-ios.yml` (now in .github/workflows/) green on a no-o... | none | pm-analysis 2026-06-16 |
-| medium | open | pm-devops | pm-devops-pre-push-fmt-gate-scope | Decide pre-push fmt/clippy gate (#1431 merged) scope — local hook only, mirror as CI status check... | pm-tech-lead | pm-analysis 2026-06-16 |
-| medium | open | pm-devops | pm-devops-security-test-gate-required-check | Confirm `security-test-gate.yml` is configured as a required status check on `dev` branch protect... | pm-qa | pm-analysis 2026-06-16 |
+| medium | open | pm-devops | pm-devops-pre-push-fmt-gate-scope | Decide pre-push fmt/clippy gate (#1431 merged) scope — local hook only, mirror as CI status check... | none | pm-analysis 2026-06-16 |
+| medium | open | pm-devops | pm-devops-security-test-gate-required-check | Confirm `security-test-gate.yml` is configured as a required status check on `dev` branch protect... | none | pm-analysis 2026-06-16 |
 | medium | open | pm-frontend | feat-announcement-comments-discussion-web-ui-frontend | Coverage 6-3: implement/wire the announcement comments & discussion web UI in ppt-web (comment li... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
 | medium | open | pm-frontend | feat-document-download-preview-mobile-slice | Coverage 7a-4: implement the mobile document download & preview slice (presigned download + inlin... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
 | medium | open | pm-frontend | feat-folder-organization-mobile-implementation | Coverage 7a-2: implement the mobile (folder organization) slice for documents — folder tree/list ... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
