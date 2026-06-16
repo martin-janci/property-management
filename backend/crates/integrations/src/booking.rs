@@ -1649,10 +1649,18 @@ pub struct BookingClient {
 }
 
 impl BookingClient {
+    fn build_http_client() -> reqwest::Client {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .connect_timeout(std::time::Duration::from_secs(10))
+            .build()
+            .unwrap_or_default()
+    }
+
     /// Create a new Booking.com client.
     pub fn new(credentials: BookingCredentials) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: Self::build_http_client(),
             credentials,
             retry: BookingRetryConfig::default(),
         }
@@ -1661,7 +1669,7 @@ impl BookingClient {
     /// Create a new client with simple API key (for basic usage).
     pub fn with_api_key(api_key: String) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: Self::build_http_client(),
             credentials: BookingCredentials {
                 hotel_id: String::new(),
                 username: api_key.clone(),
@@ -1704,10 +1712,16 @@ impl BookingClient {
     async fn post_ota_with_retry(&self, op: &str, body: String) -> Result<String, BookingError> {
         let attempts = self.retry.max_attempts.max(1);
         let mut last_err: Option<BookingError> = None;
+        // Retry-After hint (ms) from the last 429/503 response.
+        let mut retry_after_ms: Option<u64> = None;
 
         for attempt in 0..attempts {
             if attempt > 0 {
-                let delay = self.retry.delay_for_attempt(attempt - 1);
+                let base_delay = self.retry.delay_for_attempt(attempt - 1);
+                let delay = retry_after_ms
+                    .map(|ra| ra.max(base_delay))
+                    .unwrap_or(base_delay);
+                retry_after_ms = None;
                 tracing::warn!(
                     op,
                     attempt = attempt + 1,
@@ -1745,15 +1759,38 @@ impl BookingClient {
             }
 
             let code = status.as_u16();
+
+            // Parse Retry-After before consuming the body (response is moved by .text()).
+            let ra_hint_secs = if code == 429 || code == 503 {
+                response
+                    .headers()
+                    .get(reqwest::header::RETRY_AFTER)
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|s| s.trim().parse::<u64>().ok())
+            } else {
+                None
+            };
+
             let error_body = response.text().await.unwrap_or_default();
 
             if is_retryable_status(code) {
                 tracing::warn!(
                     op,
                     status = code,
+                    retry_after_secs = ra_hint_secs,
                     "Booking.com OTA push returned retryable HTTP status"
                 );
-                last_err = Some(BookingError::Api(format!("HTTP {code}: {error_body}")));
+                if let Some(secs) = ra_hint_secs {
+                    retry_after_ms =
+                        Some(secs.saturating_mul(1000).min(self.retry.max_delay_ms));
+                }
+                // 429 always maps to RateLimited (with or without Retry-After);
+                // other retryable codes map to Api unless they carried Retry-After.
+                last_err = if code == 429 {
+                    Some(BookingError::RateLimited(ra_hint_secs.unwrap_or(0)))
+                } else {
+                    Some(BookingError::Api(format!("HTTP {code}: {error_body}")))
+                };
                 continue;
             }
 
@@ -2371,6 +2408,7 @@ mod tests {
     struct MockResponse {
         status: u16,
         body: String,
+        extra_headers: Vec<(String, String)>,
     }
 
     impl MockResponse {
@@ -2378,7 +2416,13 @@ mod tests {
             Self {
                 status,
                 body: body.to_string(),
+                extra_headers: vec![],
             }
+        }
+
+        fn with_header(mut self, name: &str, value: &str) -> Self {
+            self.extra_headers.push((name.to_string(), value.to_string()));
+            self
         }
     }
 
@@ -2420,18 +2464,23 @@ mod tests {
                             let mut it = script_inner.lock().unwrap();
                             it.next()
                         };
-                        let (status, body) = match resp {
-                            Some(r) => (r.status, r.body),
-                            None => (500, "<exhausted/>".to_string()),
+                        let (status, body, extra_headers) = match resp {
+                            Some(r) => (r.status, r.body, r.extra_headers),
+                            None => (500, "<exhausted/>".to_string(), vec![]),
                         };
                         let reason = match status {
                             200 => "OK",
                             400 => "Bad Request",
+                            429 => "Too Many Requests",
                             503 => "Service Unavailable",
                             _ => "Status",
                         };
+                        let extra = extra_headers
+                            .iter()
+                            .map(|(k, v)| format!("{k}: {v}\r\n"))
+                            .collect::<String>();
                         let response = format!(
-                            "HTTP/1.1 {status} {reason}\r\nContent-Type: application/xml\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                            "HTTP/1.1 {status} {reason}\r\nContent-Type: application/xml\r\nContent-Length: {}\r\nConnection: close\r\n{extra}\r\n{body}",
                             body.len()
                         );
                         let _ = socket.write_all(response.as_bytes()).await;
@@ -2677,6 +2726,50 @@ mod tests {
 
         let result = client.push_rates("H1", &updates).await;
         assert!(result.is_err(), "persistent 5xx must fail");
+        assert_eq!(server.hits(), 2, "should exhaust exactly max_attempts");
+    }
+
+    #[tokio::test]
+    async fn test_push_429_with_retry_after_returns_rate_limited() {
+        // Both attempts return 429 with Retry-After: 0 so the test stays fast
+        // (delay capped to 0 via max_delay_ms=0). Verify:
+        //   a) all attempts are consumed, and
+        //   b) the final error is RateLimited, not a generic Api error.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(429, "<rate-limited/>").with_header("Retry-After", "0"),
+            MockResponse::status(429, "<rate-limited/>").with_header("Retry-After", "0"),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 2,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: 2,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }];
+
+        let result = client.push_availability("H1", &updates).await;
+        assert!(
+            matches!(result, Err(BookingError::RateLimited(_))),
+            "429 with Retry-After must surface as RateLimited, got: {result:?}"
+        );
         assert_eq!(server.hits(), 2, "should exhaust exactly max_attempts");
     }
 
