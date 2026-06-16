@@ -277,7 +277,7 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, BankStatementLine>("SELECT * FROM bank_statement_line WHERE id = ")
+        sqlx::query_as::<_, BankStatementLine>("SELECT * FROM bank_statement_line WHERE id = $1")
             .bind(id)
             .fetch_optional(executor)
             .await

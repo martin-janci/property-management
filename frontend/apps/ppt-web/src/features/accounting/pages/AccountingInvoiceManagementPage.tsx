@@ -2,6 +2,7 @@
  * AccountingInvoiceManagementPage for managing native issued invoices.
  */
 
+import { useState } from 'react';
 import {
   type AccountingCreateInvoiceRequest,
   contactsApiList,
@@ -10,28 +11,32 @@ import {
   invoicesApiList,
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
+import { useAccountingAuth } from '../hooks/useAccountingAuth';
 
 export function AccountingInvoiceManagementPage() {
   const [isCreating, setIsCreating] = useState(false);
   const queryClient = useQueryClient();
+  const auth = useAccountingAuth();
 
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: ['accounting', 'invoices'],
-    queryFn: () => invoicesApiList({}),
+    queryFn: () => invoicesApiList({ headers: auth?.headers }),
+    enabled: !!auth,
   });
 
   const { data: contacts, isLoading: contactsLoading } = useQuery({
     queryKey: ['accounting', 'contacts'],
-    queryFn: () => contactsApiList({}),
+    queryFn: () => contactsApiList({ headers: auth?.headers }),
+    enabled: !!auth,
   });
 
   const isLoading = invoicesLoading || contactsLoading;
 
   const createMutation = useMutation({
-    mutationFn: (data: AccountingCreateInvoiceRequest) => invoicesApiCreate({ body: data }),
+    mutationFn: (data: AccountingCreateInvoiceRequest) =>
+      invoicesApiCreate({ body: data, headers: auth?.headers }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
       setIsCreating(false);
@@ -39,7 +44,7 @@ export function AccountingInvoiceManagementPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => invoicesApiDelete({ path: { id } }),
+    mutationFn: (id: string) => invoicesApiDelete({ path: { id }, headers: auth?.headers }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
     },
