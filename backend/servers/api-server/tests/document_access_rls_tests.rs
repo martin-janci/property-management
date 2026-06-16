@@ -69,10 +69,7 @@ async fn seed_doc(
     target_ids: &[Uuid],
     roles: &[&str],
 ) -> Uuid {
-    let target_json = serde_json::json!(target_ids
-        .iter()
-        .map(Uuid::to_string)
-        .collect::<Vec<_>>());
+    let target_json = serde_json::json!(target_ids.iter().map(Uuid::to_string).collect::<Vec<_>>());
     let roles_json = serde_json::json!(roles);
     sqlx::query_scalar::<_, Uuid>(
         r#"INSERT INTO documents
@@ -111,16 +108,41 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
 
     // Org A documents across scopes.
     seed_doc(&pool, org_a, creator, "Org Wide", "organization", &[], &[]).await;
-    let b1_doc =
-        seed_doc(&pool, org_a, creator, "Building B1", "building", &[building_b1], &[]).await;
-    let b2_doc =
-        seed_doc(&pool, org_a, creator, "Building B2", "building", &[building_b2], &[]).await;
+    let b1_doc = seed_doc(
+        &pool,
+        org_a,
+        creator,
+        "Building B1",
+        "building",
+        &[building_b1],
+        &[],
+    )
+    .await;
+    let b2_doc = seed_doc(
+        &pool,
+        org_a,
+        creator,
+        "Building B2",
+        "building",
+        &[building_b2],
+        &[],
+    )
+    .await;
     seed_doc(&pool, org_a, creator, "Unit U1", "unit", &[unit_u1], &[]).await;
     seed_doc(&pool, org_a, creator, "Owner Role", "role", &[], &["owner"]).await;
 
     // Cross-tenant trap: a doc in another org scoped to the SAME building id.
     // Tenant isolation must hide it even though the building id matches.
-    seed_doc(&pool, org_c, creator, "Cross-Org B1", "building", &[building_b1], &[]).await;
+    seed_doc(
+        &pool,
+        org_c,
+        creator,
+        "Cross-Org B1",
+        "building",
+        &[building_b1],
+        &[],
+    )
+    .await;
 
     let mut conn = pool.acquire().await.expect("acquire");
 
@@ -145,10 +167,22 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
     let titles: Vec<&str> = docs.iter().map(|d| d.title.as_str()).collect();
 
     // Positive — in-scope documents visible.
-    assert!(titles.contains(&"Org Wide"), "org-wide doc should be visible: {titles:?}");
-    assert!(titles.contains(&"Building B1"), "in-scope building doc should be visible: {titles:?}");
-    assert!(titles.contains(&"Unit U1"), "in-scope unit doc should be visible: {titles:?}");
-    assert!(titles.contains(&"Owner Role"), "in-scope role doc should be visible: {titles:?}");
+    assert!(
+        titles.contains(&"Org Wide"),
+        "org-wide doc should be visible: {titles:?}"
+    );
+    assert!(
+        titles.contains(&"Building B1"),
+        "in-scope building doc should be visible: {titles:?}"
+    );
+    assert!(
+        titles.contains(&"Unit U1"),
+        "in-scope unit doc should be visible: {titles:?}"
+    );
+    assert!(
+        titles.contains(&"Owner Role"),
+        "in-scope role doc should be visible: {titles:?}"
+    );
 
     // Negative — out-of-scope building hidden.
     assert!(
@@ -157,7 +191,10 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
     );
 
     // Tenant isolation — another org's doc with the same building id is hidden.
-    assert!(!titles.contains(&"Cross-Org B1"), "cross-tenant doc must be hidden: {titles:?}");
+    assert!(
+        !titles.contains(&"Cross-Org B1"),
+        "cross-tenant doc must be hidden: {titles:?}"
+    );
 
     // ---- Reader with NO building/unit membership and no roles ----
     let stranger = Uuid::new_v4();
@@ -179,10 +216,22 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
         .expect("list_accessible_rls (stranger)");
     let titles: Vec<&str> = docs.iter().map(|d| d.title.as_str()).collect();
 
-    assert!(titles.contains(&"Org Wide"), "org-wide doc visible to everyone in org: {titles:?}");
-    assert!(!titles.contains(&"Building B1"), "building doc hidden from non-member: {titles:?}");
-    assert!(!titles.contains(&"Unit U1"), "unit doc hidden from non-member: {titles:?}");
-    assert!(!titles.contains(&"Owner Role"), "role doc hidden from non-role user: {titles:?}");
+    assert!(
+        titles.contains(&"Org Wide"),
+        "org-wide doc visible to everyone in org: {titles:?}"
+    );
+    assert!(
+        !titles.contains(&"Building B1"),
+        "building doc hidden from non-member: {titles:?}"
+    );
+    assert!(
+        !titles.contains(&"Unit U1"),
+        "unit doc hidden from non-member: {titles:?}"
+    );
+    assert!(
+        !titles.contains(&"Owner Role"),
+        "role doc hidden from non-role user: {titles:?}"
+    );
 
     // ---- check_access_rls single-document gate (same org) ----
     // In-scope building doc: granted.
@@ -190,12 +239,18 @@ async fn list_accessible_rls_enforces_building_scope(pool: PgPool) {
         .check_access_rls(&mut *conn, b1_doc, reader, &[building_b1], &[], &[])
         .await
         .expect("check_access_rls in-scope");
-    assert!(in_scope, "reader in building B1 should pass the single-doc gate");
+    assert!(
+        in_scope,
+        "reader in building B1 should pass the single-doc gate"
+    );
 
     // Out-of-scope building doc: denied.
     let out_of_scope = repo
         .check_access_rls(&mut *conn, b2_doc, reader, &[building_b1], &[], &[])
         .await
         .expect("check_access_rls out-of-scope");
-    assert!(!out_of_scope, "reader not in building B2 must fail the single-doc gate");
+    assert!(
+        !out_of_scope,
+        "reader not in building B2 must fail the single-doc gate"
+    );
 }
