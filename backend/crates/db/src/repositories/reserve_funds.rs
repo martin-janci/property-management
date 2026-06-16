@@ -506,7 +506,7 @@ impl ReserveFundRepository {
         // Record withdrawal from source
         let withdrawal = self
             .record_transaction(
-                &mut *tx,
+                &mut tx,
                 org_id,
                 req.from_fund_id,
                 RecordFundTransaction {
@@ -525,7 +525,7 @@ impl ReserveFundRepository {
         // Record deposit to destination
         let deposit = self
             .record_transaction(
-                &mut *tx,
+                &mut tx,
                 org_id,
                 req.to_fund_id,
                 RecordFundTransaction {
