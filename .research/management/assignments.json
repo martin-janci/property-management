@@ -260,15 +260,15 @@
     {
       "task_id": "pm-devops-fix-dev-compile-1437",
       "branch": "auto-impl/pm-devops-fix-dev-compile-1437",
-      "status": "in-progress",
+      "status": "quarantined",
       "claimed_at": "2026-06-16T22:15:37Z",
-      "last_updated": "2026-06-16T22:15:37Z",
-      "status_changed_at": "2026-06-16T22:15:37Z",
+      "last_updated": "2026-06-16T22:45:15Z",
+      "status_changed_at": "2026-06-16T22:45:15Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend note=no-repro-on-current-dev: #1437 already fixed by PR #1435 (commit 5cedea3); issue closed 2026-06-16. cargo check -p api-server --tests / cargo check --workspace / cargo fmt --check all exit 0 on dev HEAD. Residual red `test` job on approved PRs is the separate #1332 DB/RLS-suite, not a compile break (out of scope).",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -277,7 +277,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": "2026-06-16T22:45:15Z",
+      "quarantine_reason": "no-op: dev backend compile (#1437) ALREADY FIXED by PR #1435 (5cedea3); issue closed. No branch/PR created. Quarantined to block re-claim + avoid archive push. Human action: close row + mark action-list item done. NOTE: remaining merge-blocker for #1420/#1421/#1450/#1456 is #1332 (DB/RLS test suite red), needs DB-backed CI run."
     },
     {
       "task_id": "feat-swiftui-project-setup-no-epic-82-commits-git-mobile",
