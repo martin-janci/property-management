@@ -6,11 +6,11 @@
  * Extracted from App.tsx to isolate rentals work.
  */
 import type {
-  Rentals_GuestRegistration,
-  Rentals_PlatformConnection,
-  Rentals_RentalPlatform,
-  Rentals_Reservation,
-  Rentals_SyncStatus,
+  RentalsGuestRegistration,
+  RentalsPlatformConnection,
+  RentalsRentalPlatform,
+  RentalsReservation,
+  RentalsSyncStatus,
 } from '@ppt/api-client';
 import {
   getToken,
@@ -65,10 +65,10 @@ const TaxReportPage = lazy(() =>
 );
 
 /**
- * Map a generated Rentals_RentalPlatform → the page-level BookingSource.
+ * Map a generated RentalsRentalPlatform → the page-level BookingSource.
  * The generated platform enum carries 'vrbo' which the page lacks; fold it to 'other'.
  */
-function mapRentalPlatformToSource(platform: Rentals_RentalPlatform): RentalBooking['source'] {
+function mapRentalPlatformToSource(platform: RentalsRentalPlatform): RentalBooking['source'] {
   switch (platform) {
     case 'airbnb':
       return 'airbnb';
@@ -81,14 +81,14 @@ function mapRentalPlatformToSource(platform: Rentals_RentalPlatform): RentalBook
   }
 }
 
-/** Map a generated Rentals_RentalPlatform → the page PlatformType (airbnb | booking). */
-function mapRentalPlatformToType(platform: Rentals_RentalPlatform): RentalPlatformType {
+/** Map a generated RentalsRentalPlatform → the page PlatformType (airbnb | booking). */
+function mapRentalPlatformToType(platform: RentalsRentalPlatform): RentalPlatformType {
   return platform === 'booking' ? 'booking' : 'airbnb';
 }
 
-/** Map a generated Rentals_SyncStatus → the page ConnectionStatus. */
+/** Map a generated RentalsSyncStatus → the page ConnectionStatus. */
 function mapSyncStatusToConnectionStatus(
-  syncStatus: Rentals_SyncStatus,
+  syncStatus: RentalsSyncStatus,
   isActive: boolean
 ): RentalPlatformConnection['status'] {
   if (!isActive) return 'disconnected';
@@ -104,8 +104,8 @@ function mapSyncStatusToConnectionStatus(
   }
 }
 
-/** Map a generated Rentals_Reservation → the page RentalBooking. */
-function mapReservationToBooking(res: Rentals_Reservation): RentalBooking {
+/** Map a generated RentalsReservation → the page RentalBooking. */
+function mapReservationToBooking(res: RentalsReservation): RentalBooking {
   return {
     id: res.id,
     unitId: res.unitId,
@@ -128,8 +128,8 @@ function mapReservationToBooking(res: Rentals_Reservation): RentalBooking {
   };
 }
 
-/** Map a generated Rentals_PlatformConnection → the page PlatformConnection. */
-function mapApiConnectionToUi(conn: Rentals_PlatformConnection): RentalPlatformConnection {
+/** Map a generated RentalsPlatformConnection → the page PlatformConnection. */
+function mapApiConnectionToUi(conn: RentalsPlatformConnection): RentalPlatformConnection {
   return {
     id: conn.id,
     unitId: conn.unitId,
@@ -142,8 +142,8 @@ function mapApiConnectionToUi(conn: Rentals_PlatformConnection): RentalPlatformC
   };
 }
 
-/** Map a generated Rentals_GuestRegistration → the page RentalGuest. */
-function mapApiGuestToUi(guest: Rentals_GuestRegistration): RentalGuest {
+/** Map a generated RentalsGuestRegistration → the page RentalGuest. */
+function mapApiGuestToUi(guest: RentalsGuestRegistration): RentalGuest {
   return {
     id: guest.id,
     bookingId: guest.reservationId ?? '',
@@ -201,8 +201,8 @@ function RentalsDashboardPageRoute() {
     enabled: !!auth,
   });
 
-  const bookings = (data?.data ?? []).map(mapReservationToBooking);
-  const connections = (connData ?? []).map(mapApiConnectionToUi);
+  const bookings = (data?.data?.data ?? []).map(mapReservationToBooking);
+  const connections = (connData?.data ?? []).map(mapApiConnectionToUi);
   const now = Date.now();
   const upcomingBookings = bookings.filter((b) => new Date(b.checkIn).getTime() >= now);
   const activeBookings = bookings.filter((b) => b.status === 'checked_in');
@@ -262,7 +262,7 @@ function PlatformConnectionsPageRoute() {
           Authorization: auth!.authorization,
           'X-Tenant-ID': auth!.xTenantId,
         },
-        body: { unitId: vars.unitId, platform: vars.platform as Rentals_RentalPlatform },
+        body: { unitId: vars.unitId, platform: vars.platform as RentalsRentalPlatform },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
@@ -283,7 +283,7 @@ function PlatformConnectionsPageRoute() {
     },
   });
 
-  const connections = (data ?? []).map(mapApiConnectionToUi);
+  const connections = (data?.data ?? []).map(mapApiConnectionToUi);
 
   return (
     <PlatformConnectionsPage
@@ -319,7 +319,7 @@ function BookingsPageRoute() {
         },
         query: {
           unitId: filters.unitId,
-          status: filters.status as Rentals_Reservation['status'],
+          status: filters.status as RentalsReservation['status'],
           from: filters.fromDate,
           to: filters.toDate,
           page: filters.page,
@@ -329,12 +329,12 @@ function BookingsPageRoute() {
     enabled: !!auth,
   });
 
-  const bookings = (data?.data ?? []).map(mapReservationToBooking);
+  const bookings = (data?.data?.data ?? []).map(mapReservationToBooking);
 
   return (
     <BookingsPage
       bookings={bookings}
-      total={data?.pagination?.totalItems ?? bookings.length}
+      total={data?.data?.pagination?.totalItems ?? bookings.length}
       buildings={[]}
       units={[]}
       isLoading={isLoading}
@@ -407,7 +407,7 @@ function BookingDetailPageRoute() {
     );
   }
 
-  const booking: BookingWithGuests = { ...mapReservationToBooking(data), guests: [] };
+  const booking: BookingWithGuests = { ...mapReservationToBooking(data.data), guests: [] };
 
   return (
     <BookingDetailPage
@@ -464,7 +464,7 @@ function GuestRegistrationPageRoute() {
   // Group registered guests by reservation so the page can list per-booking
   // pending registrations. Without per-booking metadata we surface a single
   // synthetic grouping keyed by reservationId.
-  const guests = (data?.data ?? []).map(mapApiGuestToUi);
+  const guests = (data?.data?.data ?? []).map(mapApiGuestToUi);
   const byBooking = new Map<string, RentalGuest[]>();
   for (const g of guests) {
     const list = byBooking.get(g.bookingId) ?? [];

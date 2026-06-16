@@ -105,7 +105,7 @@ export function AccountingInvoiceForm({
   const updateItem = (
     index: number,
     field: keyof AccountingCreateInvoiceItem,
-    value: string | number
+    value: string | number | undefined
   ) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
