@@ -148,14 +148,14 @@ object SearchState {
     /**
      * Infinite-scroll pipeline (AC-4).
      *
-     * Given the stream of last-visible-index values emitted as the user scrolls ([lastVisibleIndex],
-     * null when the list is empty), returns the stream of page numbers that should actually be
-     * fetched:
+     * Given the stream of last-visible-index values emitted as the user scrolls
+     * ([lastVisibleIndex], null when the list is empty), returns the stream of page numbers that
+     * should actually be fetched:
      * - `distinctUntilChanged()` collapses repeated index reports for the same row so we only react
      *   when the bottom-most visible item actually moves.
      * - For each new index we take a fresh [PageSnapshot] (loaded count, total, in-flight flag,
-     *   current page) via [snapshot] and run the [shouldLoadNextPage] predicate; when it fires we map
-     *   to `currentPage + 1`, otherwise to null.
+     *   current page) via [snapshot] and run the [shouldLoadNextPage] predicate; when it fires we
+     *   map to `currentPage + 1`, otherwise to null.
      * - `filterNotNull()` drops the indices that don't warrant a fetch.
      *
      * Extracted from `SearchScreen.kt` so the AC-4 trigger timing/threshold behaviour is
@@ -166,25 +166,24 @@ object SearchState {
      * @param snapshot reads the live pagination state at the moment an index change is processed
      * @return stream of page numbers to load (one emission per page boundary crossed)
      */
-    fun nextPageTriggerFlow(
-        lastVisibleIndex: Flow<Int?>,
-        snapshot: () -> PageSnapshot,
-    ): Flow<Int> =
-        lastVisibleIndex.distinctUntilChanged().map { last ->
-            val s = snapshot()
-            if (
-                shouldLoadNextPage(
-                    lastVisibleIndex = last,
-                    loadedCount = s.loadedCount,
-                    total = s.total,
-                    isLoading = s.isLoading,
-                )
-            ) {
-                s.currentPage + 1
-            } else {
-                null
+    fun nextPageTriggerFlow(lastVisibleIndex: Flow<Int?>, snapshot: () -> PageSnapshot): Flow<Int> =
+        lastVisibleIndex
+            .distinctUntilChanged()
+            .map { last ->
+                val s = snapshot()
+                if (
+                    shouldLoadNextPage(
+                        lastVisibleIndex = last,
+                        loadedCount = s.loadedCount,
+                        total = s.total,
+                        isLoading = s.isLoading,
+                    )
+                ) {
+                    s.currentPage + 1
+                } else {
+                    null
+                }
             }
-        }
             .filterNotNull()
 
     /** Merge a freshly-loaded page into the existing results (page 1 replaces, others append). */
