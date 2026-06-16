@@ -65,7 +65,9 @@ async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
             annual_contribution: dec!(1200.0),
             notes: None,
         },
-    ).await.expect("create reserve fund");
+    )
+    .await
+    .expect("create reserve fund");
 
     // --- Test transaction ---
     let mut conn = pool.acquire().await.expect("acquire");
@@ -80,7 +82,8 @@ async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
         transaction_date: chrono::Utc::now().date_naive(),
     };
 
-    let txn = repo.record_reserve_transaction(&mut *conn, fund.id, user_id, data)
+    let txn = repo
+        .record_reserve_transaction(&mut *conn, fund.id, user_id, data)
         .await
         .expect("record reserve transaction");
 
@@ -88,11 +91,12 @@ async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
     assert_eq!(txn.balance_after, dec!(500.0)); // Initial balance was 0
 
     // Verify fund balance was updated (via trigger or manual update)
-    let updated_fund = repo.find_reserve_fund_by_id_rls(&mut *conn, fund.id)
+    let updated_fund = repo
+        .find_reserve_fund_by_id_rls(&mut *conn, fund.id)
         .await
         .expect("find fund")
         .expect("fund exists");
-    
+
     assert_eq!(updated_fund.current_balance, dec!(500.0));
 }
 
@@ -122,7 +126,9 @@ async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
             currency: Some("EUR".to_string()),
         },
         user_id,
-    ).await.expect("create reserve fund");
+    )
+    .await
+    .expect("create reserve fund");
 
     // --- Test transaction ---
     let data = RecordFundTransaction {
@@ -135,7 +141,8 @@ async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
         requires_approval: None,
     };
 
-    let txn = repo.record_transaction(&mut *conn, org_id, fund.id, data, user_id)
+    let txn = repo
+        .record_transaction(&mut *conn, org_id, fund.id, data, user_id)
         .await
         .expect("record transaction");
 
@@ -143,10 +150,11 @@ async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
     assert_eq!(txn.balance_after, dec!(500.0));
 
     // Verify fund balance was updated
-    let updated_fund = repo.get_fund(&mut *conn, org_id, fund.id)
+    let updated_fund = repo
+        .get_fund(&mut *conn, org_id, fund.id)
         .await
         .expect("get fund")
         .expect("fund exists");
-    
+
     assert_eq!(updated_fund.current_balance, dec!(500.0));
 }
