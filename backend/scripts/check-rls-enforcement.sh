@@ -217,8 +217,13 @@ done
 sort -u "$TMP_PREFIX/handler_hits" > "$TMP_PREFIX/handler_hits_sorted"
 while IFS= read -r stale; do
     [[ -n "$stale" ]] || continue
-    ((WARNINGS+=1))
-    echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — file no longer flagged; remove it from $(basename "$HANDLER_BASELINE_FILE")"
+    if $STRICT_MODE; then
+        ((VIOLATIONS+=1))
+        echo -e "${RED}VIOLATION${NC} stale baseline entry '$stale' — file no longer flagged; remove it from $(basename "$HANDLER_BASELINE_FILE")"
+    else
+        ((WARNINGS+=1))
+        echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — file no longer flagged; remove it from $(basename "$HANDLER_BASELINE_FILE")"
+    fi
     echo ""
 done < <(comm -23 "$TMP_PREFIX/handler_baseline" "$TMP_PREFIX/handler_hits_sorted")
 
@@ -352,8 +357,13 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
     sort -u "$TMP_PREFIX/hit_names" > "$TMP_PREFIX/hit_names_sorted"
     while IFS= read -r stale; do
         [[ -n "$stale" ]] || continue
-        ((WARNINGS+=1))
-        echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — repo no longer flagged; remove it from $(basename "$BASELINE_FILE")"
+        if $STRICT_MODE; then
+            ((VIOLATIONS+=1))
+            echo -e "${RED}VIOLATION${NC} stale baseline entry '$stale' — repo no longer flagged; remove it from $(basename "$BASELINE_FILE")"
+        else
+            ((WARNINGS+=1))
+            echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — repo no longer flagged; remove it from $(basename "$BASELINE_FILE")"
+        fi
         echo ""
     done < <(comm -23 "$TMP_PREFIX/baseline" "$TMP_PREFIX/hit_names_sorted")
 
