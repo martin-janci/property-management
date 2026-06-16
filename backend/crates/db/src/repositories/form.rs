@@ -812,7 +812,7 @@ impl FormRepository {
                 f.title as form_title,
                 u.name as submitted_by_name,
                 r.name as reviewed_by_name,
-                un.unit_number,
+                un.designation as unit_number,
                 b.name as building_name
             FROM form_submissions s
             JOIN forms f ON f.id = s.form_id
@@ -906,7 +906,7 @@ impl FormRepository {
                 s.submitted_at,
                 s.status,
                 s.signature_data IS NOT NULL as has_signature,
-                un.unit_number,
+                un.designation as unit_number,
                 b.name as building_name
             FROM form_submissions s
             JOIN forms f ON f.id = s.form_id

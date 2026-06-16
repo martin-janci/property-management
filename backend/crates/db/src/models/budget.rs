@@ -290,72 +290,6 @@ pub struct CapitalPlanQuery {
 }
 
 // ===========================================
-// Reserve Fund Models
-// ===========================================
-
-/// Reserve fund entity.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
-pub struct ReserveFund {
-    pub id: Uuid,
-    pub organization_id: Uuid,
-    pub building_id: Option<Uuid>,
-    pub name: String,
-    pub current_balance: Decimal,
-    pub target_balance: Option<Decimal>,
-    pub annual_contribution: Decimal,
-    pub last_contribution_date: Option<NaiveDate>,
-    pub notes: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-/// Create reserve fund request.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct CreateReserveFund {
-    pub building_id: Option<Uuid>,
-    pub name: Option<String>,
-    pub target_balance: Option<Decimal>,
-    pub annual_contribution: Decimal,
-    pub notes: Option<String>,
-}
-
-/// Update reserve fund request.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct UpdateReserveFund {
-    pub name: Option<String>,
-    pub target_balance: Option<Decimal>,
-    pub annual_contribution: Option<Decimal>,
-    pub notes: Option<String>,
-}
-
-/// Reserve fund transaction entity.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
-pub struct ReserveFundTransaction {
-    pub id: Uuid,
-    pub reserve_fund_id: Uuid,
-    pub transaction_type: String,
-    pub amount: Decimal,
-    pub description: Option<String>,
-    pub reference_type: Option<String>,
-    pub reference_id: Option<Uuid>,
-    pub balance_after: Decimal,
-    pub transaction_date: NaiveDate,
-    pub recorded_by: Uuid,
-    pub created_at: DateTime<Utc>,
-}
-
-/// Record reserve fund transaction request.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct RecordReserveTransaction {
-    pub transaction_type: String,
-    pub amount: Decimal,
-    pub description: Option<String>,
-    pub reference_type: Option<String>,
-    pub reference_id: Option<Uuid>,
-    pub transaction_date: NaiveDate,
-}
-
-// ===========================================
 // Financial Forecast Models
 // ===========================================
 
@@ -468,16 +402,6 @@ pub struct YearlyCapitalSummary {
     pub total_estimated: Decimal,
     pub total_actual: Decimal,
     pub plan_count: i64,
-}
-
-/// Reserve fund projection.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ReserveFundProjection {
-    pub year: i32,
-    pub starting_balance: Decimal,
-    pub contributions: Decimal,
-    pub planned_withdrawals: Decimal,
-    pub ending_balance: Decimal,
 }
 
 /// Budget dashboard statistics.

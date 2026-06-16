@@ -1,6 +1,6 @@
 //! Budget and financial planning routes for Epic 24.
 //!
-//! Handles budgets, budget items, capital plans, reserve funds, and forecasts.
+//! Handles budgets, budget items, capital plans, and forecasts.
 
 use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{
@@ -13,9 +13,9 @@ use axum::{
 use common::ErrorResponse;
 use db::models::{
     AcknowledgeVarianceAlert, BudgetQuery, CapitalPlanQuery, CreateBudget, CreateBudgetCategory,
-    CreateBudgetItem, CreateCapitalPlan, CreateFinancialForecast, CreateReserveFund, ForecastQuery,
-    RecordBudgetActual, RecordReserveTransaction, UpdateBudget, UpdateBudgetCategory,
-    UpdateBudgetItem, UpdateCapitalPlan, UpdateFinancialForecast, UpdateReserveFund,
+    CreateBudgetItem, CreateCapitalPlan, CreateFinancialForecast, ForecastQuery,
+    RecordBudgetActual, UpdateBudget, UpdateBudgetCategory, UpdateBudgetItem, UpdateCapitalPlan,
+    UpdateFinancialForecast,
 };
 use rust_decimal::Decimal;
 use serde::Deserialize;
@@ -110,12 +110,6 @@ impl From<&ForecastListQuery> for ForecastQuery {
     }
 }
 
-/// Reserve projection query.
-#[derive(Debug, Deserialize, IntoParams)]
-pub struct ProjectionQuery {
-    pub years: Option<i32>,
-}
-
 /// Request wrappers.
 #[derive(Debug, Deserialize)]
 pub struct CreateBudgetRequest {
@@ -163,20 +157,6 @@ pub struct UpdateCapitalPlanRequest {
 pub struct CompleteCapitalPlanRequest {
     pub organization_id: Uuid,
     pub actual_cost: Decimal,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateReserveFundRequest {
-    pub organization_id: Uuid,
-    #[serde(flatten)]
-    pub data: CreateReserveFund,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateReserveFundRequest {
-    pub organization_id: Uuid,
-    #[serde(flatten)]
-    pub data: UpdateReserveFund,
 }
 
 #[derive(Debug, Deserialize)]
@@ -234,23 +214,6 @@ pub fn router() -> Router<AppState> {
         .route("/capital-plans/{id}", delete(delete_capital_plan))
         .route("/capital-plans/{id}/start", post(start_capital_plan))
         .route("/capital-plans/{id}/complete", post(complete_capital_plan))
-        // Reserve funds
-        .route("/reserve-funds", post(create_reserve_fund))
-        .route("/reserve-funds", get(list_reserve_funds))
-        .route("/reserve-funds/{id}", get(get_reserve_fund))
-        .route("/reserve-funds/{id}", put(update_reserve_fund))
-        .route(
-            "/reserve-funds/{id}/transactions",
-            post(record_reserve_transaction),
-        )
-        .route(
-            "/reserve-funds/{id}/transactions",
-            get(list_reserve_transactions),
-        )
-        .route(
-            "/reserve-funds/{id}/projection",
-            get(get_reserve_projection),
-        )
         // Forecasts
         .route("/forecasts", post(create_forecast))
         .route("/forecasts", get(list_forecasts))
@@ -1341,223 +1304,6 @@ async fn complete_capital_plan(
         }
         Err(e) => {
             tracing::error!("Failed to complete capital plan: {:?}", e);
-            rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
-        }
-    }
-}
-
-// ===========================================
-// Reserve Fund Handlers
-// ===========================================
-
-async fn create_reserve_fund(
-    State(state): State<AppState>,
-    _auth: AuthUser,
-    mut rls: RlsConnection,
-    Json(req): Json<CreateReserveFundRequest>,
-) -> impl IntoResponse {
-    match state
-        .budget_repo
-        .create_reserve_fund_rls(&mut **rls.conn(), req.organization_id, req.data)
-        .await
-    {
-        Ok(fund) => {
-            rls.release().await;
-            (StatusCode::CREATED, Json(fund)).into_response()
-        }
-        Err(e) => {
-            tracing::error!("Failed to create reserve fund: {:?}", e);
-            rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
-        }
-    }
-}
-
-async fn list_reserve_funds(
-    State(state): State<AppState>,
-    _auth: AuthUser,
-    mut rls: RlsConnection,
-    Query(query): Query<BuildingQuery>,
-) -> impl IntoResponse {
-    match state
-        .budget_repo
-        .list_reserve_funds_rls(&mut **rls.conn(), query.organization_id, query.building_id)
-        .await
-    {
-        Ok(funds) => {
-            rls.release().await;
-            Json(funds).into_response()
-        }
-        Err(e) => {
-            tracing::error!("Failed to list reserve funds: {:?}", e);
-            rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
-        }
-    }
-}
-
-async fn get_reserve_fund(
-    State(state): State<AppState>,
-    _auth: AuthUser,
-    mut rls: RlsConnection,
-    Path(id): Path<Uuid>,
-    Query(query): Query<OrgQuery>,
-) -> impl IntoResponse {
-    match state
-        .budget_repo
-        .find_reserve_fund_by_id_rls(&mut **rls.conn(), query.organization_id, id)
-        .await
-    {
-        Ok(Some(fund)) => {
-            rls.release().await;
-            Json(fund).into_response()
-        }
-        Ok(None) => {
-            rls.release().await;
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Reserve fund not found")),
-            )
-                .into_response()
-        }
-        Err(e) => {
-            tracing::error!("Failed to get reserve fund: {:?}", e);
-            rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
-        }
-    }
-}
-
-async fn update_reserve_fund(
-    State(state): State<AppState>,
-    _auth: AuthUser,
-    mut rls: RlsConnection,
-    Path(id): Path<Uuid>,
-    Json(req): Json<UpdateReserveFundRequest>,
-) -> impl IntoResponse {
-    match state
-        .budget_repo
-        .update_reserve_fund_rls(&mut **rls.conn(), req.organization_id, id, req.data)
-        .await
-    {
-        Ok(Some(fund)) => {
-            rls.release().await;
-            Json(fund).into_response()
-        }
-        Ok(None) => {
-            rls.release().await;
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Reserve fund not found")),
-            )
-                .into_response()
-        }
-        Err(e) => {
-            tracing::error!("Failed to update reserve fund: {:?}", e);
-            rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
-        }
-    }
-}
-
-async fn record_reserve_transaction(
-    State(state): State<AppState>,
-    auth: AuthUser,
-    mut rls: RlsConnection,
-    Path(id): Path<Uuid>,
-    Json(data): Json<RecordReserveTransaction>,
-) -> impl IntoResponse {
-    // Reads the reserve fund's current balance and records the transaction on
-    // the same RLS-bound connection so both queries run under RLS context.
-    match state
-        .budget_repo
-        .record_reserve_transaction(rls.conn(), id, auth.user_id, data)
-        .await
-    {
-        Ok(txn) => {
-            rls.release().await;
-            (StatusCode::CREATED, Json(txn)).into_response()
-        }
-        Err(e) => {
-            tracing::error!("Failed to record reserve transaction: {:?}", e);
-            rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
-        }
-    }
-}
-
-async fn list_reserve_transactions(
-    State(state): State<AppState>,
-    _auth: AuthUser,
-    mut rls: RlsConnection,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
-    match state
-        .budget_repo
-        .list_reserve_transactions_rls(&mut **rls.conn(), id)
-        .await
-    {
-        Ok(transactions) => {
-            rls.release().await;
-            Json(transactions).into_response()
-        }
-        Err(e) => {
-            tracing::error!("Failed to list reserve transactions: {:?}", e);
-            rls.release().await;
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-                .into_response()
-        }
-    }
-}
-
-async fn get_reserve_projection(
-    State(state): State<AppState>,
-    _auth: AuthUser,
-    mut rls: RlsConnection,
-    Path(id): Path<Uuid>,
-    Query(query): Query<ProjectionQuery>,
-) -> impl IntoResponse {
-    let years = query.years.unwrap_or(5);
-    // Reads the fund and its planned withdrawals on the RLS-bound connection.
-    match state
-        .budget_repo
-        .generate_reserve_projection(rls.conn(), id, years)
-        .await
-    {
-        Ok(projection) => {
-            rls.release().await;
-            Json(projection).into_response()
-        }
-        Err(e) => {
-            tracing::error!("Failed to get reserve projection: {:?}", e);
             rls.release().await;
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
