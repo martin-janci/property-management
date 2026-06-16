@@ -294,14 +294,16 @@ async fn test_preview_unsupported_type_returns_400(pool: PgPool) {
     let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
     seed_membership(&pool, org_id, user_id, "org_admin").await;
 
-    // text/plain is NOT in Document::supports_preview's allow-list.
+    // A binary archive is NOT in the inline-preview allow-list
+    // (`common::supports_inline_preview`). NB: as of GH #1413 `text/plain` IS
+    // previewable, so a genuinely unsupported type is used here.
     let doc_id = seed_document(
         &pool,
         org_id,
         user_id,
-        "Plain notes",
-        "text/plain",
-        "notes.txt",
+        "Archive",
+        "application/zip",
+        "bundle.zip",
         "organization",
         serde_json::json!([]),
     )
@@ -326,6 +328,56 @@ async fn test_preview_unsupported_type_returns_400(pool: PgPool) {
         response.json_value()["code"].as_str(),
         Some("PREVIEW_NOT_SUPPORTED"),
         "error code must be PREVIEW_NOT_SUPPORTED, body {}",
+        response.text()
+    );
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+// ============================================================================
+// T5b — text/plain IS previewable (GH #1413 deliberate decision).
+//       `Document::supports_preview` now delegates to
+//       `common::supports_inline_preview`, which includes text/plain — the same
+//       list the storage presigner uses for inline disposition. So a text/plain
+//       preview must clear supports_preview and reach the presigner (503), not
+//       400 PREVIEW_NOT_SUPPORTED.
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_preview_text_plain_is_supported(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    seed_membership(&pool, org_id, user_id, "org_admin").await;
+    let doc_id = seed_document(
+        &pool,
+        org_id,
+        user_id,
+        "Plain notes",
+        "text/plain",
+        "notes.txt",
+        "organization",
+        serde_json::json!([]),
+    )
+    .await;
+
+    let response = app
+        .execute(get_request(
+            &format!("/api/v1/documents/{doc_id}/preview"),
+            &token,
+            org_id,
+        ))
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "text/plain preview must clear supports_preview and reach the presigner \
+         (503), got {} body {}",
+        response.status,
         response.text()
     );
 
@@ -744,6 +796,101 @@ async fn test_preview_unit_scoped_allows_member_denies_outsider(pool: PgPool) {
         StatusCode::NOT_FOUND,
         "unit-scoped doc must be denied (404) to a resident of a different unit, got {} body {}",
         outsider_resp.status,
+        outsider_resp.text()
+    );
+
+    cleanup_test_user(&pool, &creator.email).await;
+    cleanup_test_user(&pool, &member.email).await;
+    cleanup_test_user(&pool, &outsider.email).await;
+}
+
+// ============================================================================
+// T11 — List path building/unit scope (GH #1413): the non-manager document
+//       list must INCLUDE a building/unit-scoped document for a member and
+//       EXCLUDE it for a same-org non-member. Before the fix the non-manager
+//       list used `list_accessible_simple_rls` (creator/org/role only), so a
+//       building/unit doc the member could now open via /download was still
+//       missing from their list — the inverse of the original divergence. This
+//       pins list ↔ gate consistency.
+// ============================================================================
+
+/// Returns `true` when the document list response body contains `doc_id`.
+fn list_contains(body: &serde_json::Value, doc_id: Uuid) -> bool {
+    body["documents"]
+        .as_array()
+        .is_some_and(|docs| docs.iter().any(|d| d["id"].as_str() == Some(&doc_id.to_string())))
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_building_scoped_visible_to_member_only(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    // Manager creator seeds a building-scoped doc.
+    let creator = TestUser::new();
+    cleanup_test_user(&pool, &creator.email).await;
+    let (_ctok, _) = create_authenticated_user(&app, &creator).await;
+    let creator_id = user_id_for(&pool, &creator.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    seed_membership(&pool, org_id, creator_id, "org_admin").await;
+
+    // Member: a tenant residing in a unit of the targeted building.
+    let member = TestUser::new();
+    cleanup_test_user(&pool, &member.email).await;
+    let (member_token, _) = create_authenticated_user(&app, &member).await;
+    let member_id = user_id_for(&pool, &member.email).await;
+    seed_membership(&pool, org_id, member_id, "tenant").await;
+    let (building_id, _unit_id) = seed_unit_with_resident(&pool, org_id, member_id).await;
+
+    // Outsider: same-org tenant, no residency in the building.
+    let outsider = TestUser::new();
+    cleanup_test_user(&pool, &outsider.email).await;
+    let (outsider_token, _) = create_authenticated_user(&app, &outsider).await;
+    let outsider_id = user_id_for(&pool, &outsider.email).await;
+    seed_membership(&pool, org_id, outsider_id, "tenant").await;
+
+    let doc_id = seed_document(
+        &pool,
+        org_id,
+        creator_id,
+        "Building handbook",
+        "application/pdf",
+        "building.pdf",
+        "building",
+        serde_json::json!([building_id.to_string()]),
+    )
+    .await;
+
+    // Member's list must include the building-scoped doc.
+    let member_resp = app
+        .execute(get_request("/api/v1/documents", &member_token, org_id))
+        .await;
+    assert_eq!(
+        member_resp.status,
+        StatusCode::OK,
+        "member list must be 200, got {} body {}",
+        member_resp.status,
+        member_resp.text()
+    );
+    assert!(
+        list_contains(&member_resp.json_value(), doc_id),
+        "building-scoped doc must be listed for a building member, body {}",
+        member_resp.text()
+    );
+
+    // Outsider's list must NOT include it.
+    let outsider_resp = app
+        .execute(get_request("/api/v1/documents", &outsider_token, org_id))
+        .await;
+    assert_eq!(
+        outsider_resp.status,
+        StatusCode::OK,
+        "outsider list must be 200, got {} body {}",
+        outsider_resp.status,
+        outsider_resp.text()
+    );
+    assert!(
+        !list_contains(&outsider_resp.json_value(), doc_id),
+        "building-scoped doc must NOT be listed for a non-member tenant, body {}",
         outsider_resp.text()
     );
 
