@@ -180,7 +180,12 @@ fn building_and_unit_scope_denied_by_in_memory_gate() {
 #[test]
 fn building_scope_granted_to_building_member() {
     let b = Uuid::new_v4();
-    let doc = make_doc("building", Uuid::new_v4(), json!([]), json!([b.to_string()]));
+    let doc = make_doc(
+        "building",
+        Uuid::new_v4(),
+        json!([]),
+        json!([b.to_string()]),
+    );
     // Member of the targeted building is granted.
     assert!(scope_membership_allows(&doc, &[b], &[]));
     // No membership → denied.
@@ -203,6 +208,10 @@ fn unit_scope_granted_to_unit_member() {
 fn membership_never_grants_non_building_unit_scopes() {
     for scope in ["organization", "role", "users", "private"] {
         let doc = make_doc(scope, Uuid::new_v4(), json!([]), json!([]));
-        assert!(!scope_membership_allows(&doc, &[Uuid::new_v4()], &[Uuid::new_v4()]));
+        assert!(!scope_membership_allows(
+            &doc,
+            &[Uuid::new_v4()],
+            &[Uuid::new_v4()]
+        ));
     }
 }
