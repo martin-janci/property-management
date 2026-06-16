@@ -148,16 +148,6 @@ async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
 // Request helpers
 // ---------------------------------------------------------------------------
 
-fn authed_post(uri: &str, token: &str, body: serde_json::Value) -> Request<Body> {
-    Request::builder()
-        .method(Method::POST)
-        .uri(uri)
-        .header(header::AUTHORIZATION, format!("Bearer {token}"))
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(body.to_string()))
-        .unwrap()
-}
-
 fn authed_post_with_tenant(
     uri: &str,
     token: &str,
