@@ -826,7 +826,18 @@ impl RegistryRepository {
                 max_pet_weight, vehicles_require_approval, max_vehicles_per_unit, notes
             )
             -- allowed_pet_types is pet_type[] enum; cast the text[] bind explicitly.
-            VALUES ($1, $2, $3, $4, $5, $6::text[]::pet_type[], $7, $8, $9, $10, $11)
+            -- pets_allowed / pets_require_approval / vehicles_require_approval are
+            -- NOT NULL columns bound from Option<bool>; COALESCE a None to the
+            -- column's schema DEFAULT (00067_create_building_registries.sql:
+            -- pets_allowed/pets_require_approval default TRUE, vehicles_require_approval FALSE).
+            VALUES (
+                $1, $2,
+                COALESCE($3, TRUE),
+                COALESCE($4, TRUE),
+                $5, $6::text[]::pet_type[], $7, $8,
+                COALESCE($9, FALSE),
+                $10, $11
+            )
             ON CONFLICT (tenant_id, building_id) DO UPDATE SET
                 pets_allowed = COALESCE($3, building_registry_rules.pets_allowed),
                 pets_require_approval = COALESCE($4, building_registry_rules.pets_require_approval),

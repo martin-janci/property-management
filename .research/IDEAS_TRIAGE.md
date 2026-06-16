@@ -1,6 +1,6 @@
 # Triage queue
 
-<sub>Last regenerated: 2026-06-13 04:00 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-16 03:25 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
 
@@ -8,6 +8,7 @@ Untriaged-issue signals (`vector: "triage"`) pile up here for human review rathe
 
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
+| 1 | Issue #1380 (no labels, OPEN): Dispatcher stale gap-scan buffer + Tier-2 escalation endpoint misconf | issue #1380 | 2026-06-15 | open |
 | 1 | Issue #1331 (no labels, OPEN): Backend `test` job red/hanging on dev base — blocks the entire backen | #1331 | 2026-06-13 | open |
 | 1 | Triage: dispatcher incident — assignments-archive.json corrupted to 1/196 rows on dev branch (#1061) | Issue #1061, #1061 closed | 2026-06-07 | done |
 | 1 | Issue #950 (no labels, OPEN): CI: trigger-deploy 403 marks all dev image builds red and blocks stagi | #950, PR #1143, issue #950 closed | 2026-06-07 | done |

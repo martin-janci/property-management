@@ -121,6 +121,68 @@ impl TestApp {
         }
     }
 
+    /// Create a test application whose `AppState` has a
+    /// [`PreferenceEventRecorder`](api_server::state::PreferenceEventRecorder)
+    /// installed, returning the app plus the recorder handle (issue #1376).
+    ///
+    /// This mirrors the `.with_redis(...)` builder the `#[ignore]`d S4 test
+    /// uses, but instead of a live Redis it captures the `preference.updated`
+    /// events the notification-preference handler would publish into an
+    /// in-memory sink — so the publish contract is assertable in CI (which has
+    /// no Redis daemon) without flakiness.
+    pub async fn with_recording_pubsub(
+        pool: PgPool,
+    ) -> (Self, api_server::state::PreferenceEventRecorder) {
+        use api_server::services::{EmailService, JwtService};
+        use api_server::state::AppState;
+
+        let config = TestConfig::default();
+
+        // Seed JWT_SECRET / RUST_ENV exactly like `with_config` so bearer
+        // tokens validate and `TotpService::new` doesn't panic.
+        static TEST_ENV_ONCE: std::sync::Once = std::sync::Once::new();
+        TEST_ENV_ONCE.call_once(|| {
+            if std::env::var("JWT_SECRET").is_err() {
+                std::env::set_var("JWT_SECRET", &config.jwt_secret);
+            }
+            if std::env::var("RUST_ENV").is_err() {
+                std::env::set_var("RUST_ENV", "development");
+            }
+        });
+
+        let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
+        let jwt_service =
+            JwtService::new(&config.jwt_secret).expect("Failed to create JWT service for tests");
+        let tenant_cache = std::sync::Arc::new(api_core::middleware::TenantResolutionCache::new(
+            300, 30, 10_000,
+        ));
+        let tenant_rate_limiters =
+            std::sync::Arc::new(api_core::middleware::TenantRateLimiterSet::new());
+
+        let (state, recorder) = AppState::new(
+            pool.clone(),
+            email_service,
+            jwt_service,
+            tenant_cache,
+            tenant_rate_limiters,
+        )
+        .with_pref_event_recorder();
+
+        let router =
+            api_server::create_router(state).layer(axum::extract::connect_info::MockConnectInfo(
+                std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
+            ));
+
+        (
+            Self {
+                router,
+                pool,
+                config,
+            },
+            recorder,
+        )
+    }
+
     /// Execute a request against the test application.
     pub async fn execute(&self, request: Request<Body>) -> TestResponse {
         let response = self
@@ -157,6 +219,57 @@ impl TestApp {
     pub fn patch(&self, uri: &str) -> RequestBuilder {
         RequestBuilder::new(Method::PATCH, uri)
     }
+
+    /// Create an authenticated session for the given token and org (Story 1370).
+    pub fn session(&self, token: String, org_id: Uuid) -> AuthenticatedSession<'_> {
+        AuthenticatedSession::new(self, token, org_id)
+    }
+}
+
+/// A session authenticated for a specific user and tenant (Story 1370).
+///
+/// Use this to build requests that automatically include both the Bearer
+/// token and the `X-Tenant-ID` header, preventing "forgotten header" bugs in
+/// RLS-aware integration tests.
+pub struct AuthenticatedSession<'a> {
+    app: &'a TestApp,
+    token: String,
+    org_id: Uuid,
+}
+
+impl<'a> AuthenticatedSession<'a> {
+    pub fn new(app: &'a TestApp, token: String, org_id: Uuid) -> Self {
+        Self { app, token, org_id }
+    }
+
+    /// Create a GET request with session credentials.
+    pub fn get(&self, uri: &str) -> RequestBuilder {
+        self.app.get(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    /// Create a POST request with session credentials.
+    pub fn post(&self, uri: &str) -> RequestBuilder {
+        self.app.post(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    /// Create a PUT request with session credentials.
+    pub fn put(&self, uri: &str) -> RequestBuilder {
+        self.app.put(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    /// Create a PATCH request with session credentials.
+    pub fn patch(&self, uri: &str) -> RequestBuilder {
+        self.app.patch(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    /// Create a DELETE request with session credentials.
+    pub fn delete(&self, uri: &str) -> RequestBuilder {
+        self.app.delete(uri).bearer(&self.token).tenant(self.org_id)
+    }
+
+    pub fn org_id(&self) -> Uuid {
+        self.org_id
+    }
 }
 
 /// Request builder for test requests.
@@ -188,6 +301,13 @@ impl RequestBuilder {
     /// Set authorization bearer token.
     pub fn bearer(mut self, token: &str) -> Self {
         self.auth_token = Some(token.to_string());
+        self
+    }
+
+    /// Set the tenant scope via the `X-Tenant-ID` header (Story 1370).
+    pub fn tenant(mut self, org_id: Uuid) -> Self {
+        self.headers
+            .push(("X-Tenant-ID".to_string(), org_id.to_string()));
         self
     }
 

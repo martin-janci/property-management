@@ -1,0 +1,274 @@
+{
+  "date": "2026-06-16",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-15 (commit 67c24bd..origin/dev)",
+      "score_delta": 1,
+      "evidence": "484 lines (new test file from PR #1393 — Booking.com OAuth handler/CSRF + secure-credential-replacement coverage, then merged via #1424)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-15",
+      "score_delta": 1,
+      "evidence": "381 lines (new test file from PR #1393 — booking OAuth routes coverage)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/booking_oauth_routes_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-15",
+      "score_delta": 0,
+      "evidence": "334 lines this run (PR #1397 hardened org-scoped submit/download; explicit cross-tenant 403 + RLS-release discipline). Re-emit (already in seen_signals; score_delta=0; cumulative).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/forms.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 1→2 with new churn this run",
+      "score_delta": 1,
+      "evidence": "forms.rs runs_seen=2: 2026-06-13 (PR #1337 explicit_auto_deref clippy fix, 2 lines) + 2026-06-16 (PR #1397 org-scope hardening, 334 lines). Instability proxy.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/forms.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1390",
+      "type": "dep-update-noise",
+      "source": "PR #1390",
+      "score_delta": 0,
+      "evidence": "dependabot npm-minor-patch group (22 updates) — closed unmerged 2026-06-15 (superseded by #1414/#1415 stack)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1414",
+      "type": "dep-update-noise",
+      "source": "PR #1414",
+      "score_delta": 0,
+      "evidence": "dependabot npm-minor-patch group (23 updates) — closed unmerged 2026-06-15 (superseded by open #1415 with 24 updates)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1425",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1425",
+      "score_delta": 1,
+      "evidence": "PR #1425 (\"GH #1377\" — document presigned-URL tests) closed unmerged 2026-06-15T21:04:50Z; functionally superseded by merged #1394 same day.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1418-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1418",
+      "score_delta": 2,
+      "evidence": "PR #1418 touched frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx (under routes/**) without updating docs/screens/ppt/*.md. HEURISTIC CAVEAT — the file is a test fix for #1349/#1350 (beforeEach import), not a route surface change; review-candidate, not promotable.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-report-fault-fake-submit",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+      "score_delta": 3,
+      "evidence": "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:158 — handleSubmit() executes `// Simulate API call` followed by `await new Promise((resolve) => setTimeout(resolve, 1500))` and then shows a success Alert. No API call is ever made. Screen is wired into App.tsx:126 as the user-facing fault-report flow, so submissions appear to succeed but never reach the backend (verified: lines 157-159).",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-screens-mock-data",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+      "score_delta": 2,
+      "evidence": "Production screens render hardcoded MOCK_* arrays — BuildingsScreen:23, MetersScreen:25, MeterDetailScreen:18, LeasesScreen:27, LeaseDetailScreen:11, PersonMonthsScreen:29, NotificationsScreen:30, ThreadDetailScreen:29, FormsScreen:22. onRefresh just setTimeout(500) and re-shows the same mocks. No useQuery / API wiring. Verified: BuildingsScreen.tsx:23 has `const MOCK_BUILDINGS: Building[]`.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/screens/buildings/BuildingsScreen.tsx",
+        "frontend/apps/mobile/src/screens/meters/MetersScreen.tsx",
+        "frontend/apps/mobile/src/screens/leases/LeasesScreen.tsx",
+        "frontend/apps/mobile/src/screens/notifications/NotificationsScreen.tsx"
+      ]
+    },
+    {
+      "id": "code-review-mobile-rn-deeplink-init-unhandled",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review of mobile-rn segment (2026-06-16)",
+      "score_delta": 2,
+      "evidence": "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts:27-36 — useEffect depends on onNavigate alone; if callback identity changes, deepLinkManager.initialize() re-runs and can re-emit cold-start initial URL (duplicate nav). `void deepLinkManager.initialize()` has no .catch → unhandled promise rejection on init failure. Verified: line 34 = `void deepLinkManager.initialize();`, line 36 = `}, [onNavigate]);`.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "frontend/apps/mobile/src/hooks/useDeepLinkRouting.ts"
+      ]
+    },
+    {
+      "id": "stalled-review-pr-1179",
+      "type": "stalled-review",
+      "source": "PR #1179",
+      "score_delta": 1,
+      "evidence": "PR #1179 (docs(epics): catalog backfill for 37 mounted-but-undocumented backend modules — PAP-…) open 7 days (created 2026-06-09), last updated 175h ago, no reviewDecision (process-level — docs PR).",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar (no high-confidence allowlist signal with score≥3 except the promoted plan, which is not an allowlist target)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-16.md && head -1 == '# 2026-06-16'",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced (cursors+seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-fired with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5(cap)",
+      "passed": true,
+      "command": "no score>8 in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5(decay)",
+      "passed": true,
+      "command": "every open item ≥14d old lost ≥1 point or dropped",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial-pass annotation in brief",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, all 15 sections, files exist on disk, capability ticked, mode declared",
+      "observed": "1 new plan; 4/4 metadata; 11/11 headings; mode=cloud-ok; ReportFaultScreen.tsx exists",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only contains only .research/ paths",
+      "observed": "0 non-.research/ files",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed this run",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plan slugs in plans/ or _archive/",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "staged=7 head=7",
+      "expected": "staged>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (caps+idempotency+kill-switch)",
+      "observed": "no actions this run",
+      "expected": "<=1 of each, idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; coverage_cursor advanced",
+      "observed": "EPICS=13 CC 11→12 PM 4→5",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}

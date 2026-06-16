@@ -132,11 +132,16 @@ fun RealityNavHost(
     val currentRoute = navBackStackEntry?.destination?.route
     val onSignInClick: () -> Unit = { navController.navigate(Screen.Login.route) }
 
+    // The tab-switch nav options come from the shared DeepLinkRouter so the
+    // state-preservation contract (popUpTo(home){saveState}; launchSingleTop;
+    // restoreState) has one definition that is unit-tested in commonTest and
+    // shared with iOS. Story 82-2, AC-4.
+    val tabOptions = DeepLinkRouter.TAB_NAV_OPTIONS
     val tabNavigate: (String) -> Unit = { route ->
         navController.navigate(route) {
-            popUpTo(Screen.Home.route) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
+            popUpTo(tabOptions.popUpToRoute) { saveState = tabOptions.popUpToSaveState }
+            launchSingleTop = tabOptions.launchSingleTop
+            restoreState = tabOptions.restoreState
         }
     }
 

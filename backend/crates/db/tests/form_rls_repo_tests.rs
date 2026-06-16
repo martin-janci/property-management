@@ -29,8 +29,9 @@
 //! to it so `FORCE` actually enforces the policy the way the production
 //! owner role experiences it. Mirrors `budget_rls_repo_tests.rs`.
 
-use db::models::FormListQuery;
+use db::models::{FormListQuery, FormSubmissionParams, SubmitForm};
 use db::repositories::FormRepository;
+use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -75,23 +76,34 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 }
 
 /// Insert a form directly as the (RLS-exempt) superuser for an org.
-async fn seed_form(pool: &PgPool, org_id: Uuid, user_id: Uuid, title: &str) -> Uuid {
+async fn seed_form_with_status(
+    pool: &PgPool,
+    org_id: Uuid,
+    user_id: Uuid,
+    title: &str,
+    status: &str,
+) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO forms (
             organization_id, title, status, target_type, target_ids,
             require_signatures, allow_multiple_submissions, created_by
         )
-        VALUES ($1, $2, 'draft', 'all', '[]'::jsonb, false, true, $3)
+        VALUES ($1, $2, $4::form_status, 'all', '[]'::jsonb, false, true, $3)
         RETURNING id
         "#,
     )
     .bind(org_id)
     .bind(title)
     .bind(user_id)
+    .bind(status)
     .fetch_one(pool)
     .await
     .expect("seed form")
+}
+
+async fn seed_form(pool: &PgPool, org_id: Uuid, user_id: Uuid, title: &str) -> Uuid {
+    seed_form_with_status(pool, org_id, user_id, title, "draft").await
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -106,6 +118,8 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let user_b = seed_user(&pool, "b@form.test").await;
     let form_a = seed_form(&pool, org_a, user_a, "Form A").await;
     let form_b = seed_form(&pool, org_b, user_b, "Form B").await;
+    let published_form_a =
+        seed_form_with_status(&pool, org_a, user_a, "Published Form A", "published").await;
 
     // --- NOSUPERUSER NOBYPASSRLS role so FORCE actually binds ---
     let role = format!("ppt_rls_form_{}", Uuid::new_v4().simple());
@@ -120,6 +134,10 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
              get_current_org_not_deleted() TO \"{role}\""
         ),
         format!("GRANT SELECT ON organizations TO \"{role}\""),
+        // `FormRepository::list` LEFT JOINs `users` to surface `created_by_name`,
+        // so the NOSUPERUSER RLS role needs SELECT on `users` or the join trips
+        // Postgres 42501 (permission denied on `users`).
+        format!("GRANT SELECT ON users TO \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
             .execute(&pool)
@@ -214,6 +232,47 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             "cross-tenant: org B's form must NOT be visible to an org-A caller"
         );
 
+        let submission = repo
+            .submit(
+                &mut *conn,
+                FormSubmissionParams {
+                    org_id: org_a,
+                    form_id: published_form_a,
+                    user_id: user_a,
+                    building_id: None,
+                    unit_id: None,
+                    data: SubmitForm {
+                        data: json!({}),
+                        attachments: None,
+                        signature_data: None,
+                    },
+                    ip_address: None,
+                    user_agent: None,
+                },
+            )
+            .await
+            .expect("submit (ctx)");
+        let fetched_submission = repo
+            .get_submission(&mut *conn, org_a, submission.id)
+            .await
+            .expect("get submission (ctx)");
+        assert!(
+            fetched_submission.is_some(),
+            "PAP-76 fix: submit/get_submission round-trip must work under RLS context"
+        );
+
+        repo.record_download(&mut *conn, org_a, published_form_a, user_a, None, None)
+            .await
+            .expect("record download (ctx)");
+        let downloads = repo
+            .get_download_count(&mut *conn, published_form_a)
+            .await
+            .expect("download count (ctx)");
+        assert_eq!(
+            downloads, 1,
+            "PAP-76 fix: record_download/get_download_count round-trip must work under RLS context"
+        );
+
         sqlx::query("RESET ROLE")
             .execute(&mut *conn)
             .await
@@ -228,6 +287,7 @@ async fn form_repo_force_rls_deny_all_and_fix(pool: PgPool) {
             "REVOKE ALL ON forms, form_fields, form_submissions, form_downloads FROM \"{role}\""
         ),
         format!("REVOKE ALL ON organizations FROM \"{role}\""),
+        format!("REVOKE ALL ON users FROM \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
