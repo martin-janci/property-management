@@ -770,7 +770,7 @@ impl FormRepository {
                 submitted_by, data, attachments, signature_data,
                 status, ip_address, user_agent
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::form_submission_status, $10::inet, $11)
             RETURNING *
             "#,
         )
