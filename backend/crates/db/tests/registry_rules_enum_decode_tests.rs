@@ -103,3 +103,51 @@ async fn registry_rules_decode_allowed_pet_types_enum_array(pool: PgPool) {
 
     assert_eq!(updated_rules.allowed_pet_types, Some(vec!["bird".into()]));
 }
+
+#[sqlx::test]
+async fn registry_rules_insert_branch_none_booleans_use_schema_defaults(pool: PgPool) {
+    // GH #1406 — the NOT-NULL COALESCE on the INSERT branch of upsert_registry_rules
+    // (COALESCE($3, TRUE) / COALESCE($4, TRUE) / COALESCE($9, FALSE)) was added to
+    // fix a 23502 "null value in column" error when all three booleans are None.
+    // The pre-existing test only binds all-Some on the INSERT path, so it cannot
+    // catch a regression to the INSERT branch. This test binds None for all three and
+    // asserts the schema DEFAULTs apply without a 23502.
+    //
+    // Reverting any of the three COALESCE(…, <default>) on the INSERT branch of
+    // upsert_registry_rules in registry.rs should make this test fail.
+    let org = seed_org(&pool, "coalesce_defaults").await;
+    let building = seed_building(&pool, org, "coalesce_defaults").await;
+    let repo = RegistryRepository::new(pool.clone());
+
+    // First upsert on a fresh (org, building) — hits the INSERT branch, not ON CONFLICT.
+    // All three NOT NULL boolean columns left as None → must COALESCE to schema DEFAULT.
+    let rules = repo
+        .upsert_registry_rules(
+            org,
+            building,
+            UpdateRegistryRules {
+                pets_allowed: None,            // DEFAULT TRUE
+                pets_require_approval: None,   // DEFAULT TRUE
+                max_pets_per_unit: None,
+                allowed_pet_types: None,
+                banned_pet_breeds: None,
+                max_pet_weight: None,
+                vehicles_require_approval: None, // DEFAULT FALSE
+                max_vehicles_per_unit: None,
+                notes: None,
+            },
+        )
+        .await
+        .expect("INSERT with None booleans applies COALESCE defaults (no 23502)");
+
+    // Schema DEFAULTs from 00067_create_building_registries.sql.
+    assert!(rules.pets_allowed, "pets_allowed should default to TRUE");
+    assert!(
+        rules.pets_require_approval,
+        "pets_require_approval should default to TRUE"
+    );
+    assert!(
+        !rules.vehicles_require_approval,
+        "vehicles_require_approval should default to FALSE"
+    );
+}
