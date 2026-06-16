@@ -86,7 +86,7 @@ async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
     };
 
     let txn = repo
-        .record_reserve_transaction(&mut *conn, fund.id, user_id, data)
+        .record_reserve_transaction(&mut conn, fund.id, user_id, data)
         .await
         .expect("record reserve transaction");
 
@@ -95,7 +95,7 @@ async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
 
     // Verify fund balance was updated (via trigger or manual update)
     let updated_fund = repo
-        .find_reserve_fund_by_id_rls(&mut *conn, org_id, fund.id)
+        .find_reserve_fund_by_id_rls(&mut conn, org_id, fund.id)
         .await
         .expect("find fund")
         .expect("fund exists");
@@ -118,7 +118,7 @@ async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
 
     let fund = repo
         .create_fund(
-            &mut *conn,
+            &mut conn,
             org_id,
             CreateReserveFund {
                 building_id: None,
@@ -146,7 +146,7 @@ async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
     };
 
     let txn = repo
-        .record_transaction(&mut *conn, org_id, fund.id, data, user_id)
+        .record_transaction(&mut conn, org_id, fund.id, data, user_id)
         .await
         .expect("record transaction");
 
@@ -155,7 +155,7 @@ async fn test_reserve_fund_management_transaction_atomicity(pool: PgPool) {
 
     // Verify fund balance was updated
     let updated_fund = repo
-        .get_fund(&mut *conn, org_id, fund.id)
+        .get_fund(&mut conn, org_id, fund.id)
         .await
         .expect("get fund")
         .expect("fund exists");
