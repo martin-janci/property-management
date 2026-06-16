@@ -1064,19 +1064,18 @@ async fn get_equipment_service_history(
     // gate the caller against it. `FORCE` RLS at the DB layer closes this gap
     // in production, but an explicit check is required so test pools (which
     // connect as superuser and bypass RLS) also enforce org isolation (#1372).
-    let org_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT organization_id FROM equipment WHERE id = $1",
-    )
-    .bind(equipment_id)
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to look up equipment org: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", "Database error")),
-        )
-    })?;
+    let org_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT organization_id FROM equipment WHERE id = $1")
+            .bind(equipment_id)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to look up equipment org: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                )
+            })?;
 
     let org_id = org_id.ok_or_else(|| {
         (
@@ -1121,19 +1120,18 @@ async fn get_building_service_history(
 
     // Resolve the owning org from the building row (404 if not found) and
     // gate the caller — same rationale as get_equipment_service_history (#1372).
-    let org_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT organization_id FROM buildings WHERE id = $1",
-    )
-    .bind(building_id)
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to look up building org: {:?}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", "Database error")),
-        )
-    })?;
+    let org_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT organization_id FROM buildings WHERE id = $1")
+            .bind(building_id)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to look up building org: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                )
+            })?;
 
     let org_id = org_id.ok_or_else(|| {
         (
