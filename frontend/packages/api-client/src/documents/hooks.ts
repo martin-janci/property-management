@@ -4,7 +4,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getToken } from '../auth';
-import { DocumentsService } from '../generated';
+import { documentsApiListVersions } from '../generated';
 import * as api from './api';
 import type {
   ClassificationFeedback,
@@ -294,10 +294,13 @@ export function useDocumentVersions(documentId: string) {
   return useQuery({
     queryKey: documentKeys.versions(documentId),
     queryFn: () =>
-      DocumentsService.documentsApiListVersions({
-        authorization: `Bearer ${getToken() ?? ''}`,
-        xTenantId: '',
-        id: documentId,
+      documentsApiListVersions({
+        headers: {
+          Authorization: `Bearer ${getToken() ?? ''}`,
+        },
+        path: {
+          id: documentId,
+        },
       }) as unknown as Promise<VersionHistoryResponse>,
     enabled: !!documentId,
     staleTime: 30_000,

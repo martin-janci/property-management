@@ -262,7 +262,7 @@ function PlatformConnectionsPageRoute() {
           Authorization: auth!.authorization,
           'X-Tenant-ID': auth!.xTenantId,
         },
-        body: { unitId: vars.unitId, platform: vars.platform as any },
+        body: { unitId: vars.unitId, platform: vars.platform as Rentals_RentalPlatform },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
@@ -319,7 +319,7 @@ function BookingsPageRoute() {
         },
         query: {
           unitId: filters.unitId,
-          status: filters.status as any,
+          status: filters.status as Rentals_Reservation['status'],
           from: filters.fromDate,
           to: filters.toDate,
           page: filters.page,

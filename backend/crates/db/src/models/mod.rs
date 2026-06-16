@@ -1,5 +1,7 @@
 //! Database models.
 
+pub mod accounting;
+pub mod accounting_provider;
 pub mod agency_branding;
 pub mod agency_domain;
 pub mod announcement;
@@ -13,8 +15,6 @@ pub mod document_template;
 pub mod facility;
 pub mod fault;
 pub mod financial;
-pub mod accounting;
-pub mod accounting_provider;
 
 pub mod device_push_token;
 pub mod granular_notification;

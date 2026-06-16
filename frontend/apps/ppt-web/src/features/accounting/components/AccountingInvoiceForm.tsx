@@ -2,14 +2,14 @@
  * AccountingInvoiceForm component for creating and editing native issued invoices.
  */
 
-import type { 
-  AccountingContact, 
-  AccountingCreateInvoiceRequest, 
+import type {
+  AccountingContact,
   AccountingCreateInvoiceItem,
+  AccountingCreateInvoiceRequest,
+  AccountingInvoice,
   AccountingVatRate,
-  AccountingInvoice
 } from '@ppt/api-client';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 const VAT_RATE_OPTIONS: { label: string; value: AccountingVatRate }[] = [
   { label: 'Standard (21% CZ / 20% SK)', value: 'standard' },
@@ -35,41 +35,43 @@ export function AccountingInvoiceForm({
 }: AccountingInvoiceFormProps) {
   const [contactId, setContactId] = useState(initialData?.contactId || '');
   const [number, setNumber] = useState(initialData?.number || '');
-  const [issueDate, setIssueDate] = useState(initialData?.issueDate || new Date().toISOString().split('T')[0]);
+  const [issueDate, setIssueDate] = useState(
+    initialData?.issueDate || new Date().toISOString().split('T')[0]
+  );
   const [dueDate, setDueDate] = useState(initialData?.dueDate || '');
   const [currency, setCurrency] = useState(initialData?.currency || 'CZK');
   const [variableSymbol, setVariableSymbol] = useState(initialData?.variableSymbol || '');
-  const [items, setItems] = useState<AccountingCreateInvoiceItem[]>(
-    [{ description: '', qty: 1, unitPrice: 0, vatRate: 21, vatRateType: 'standard' }]
-  );
+  const [items, setItems] = useState<AccountingCreateInvoiceItem[]>([
+    { description: '', qty: 1, unitPrice: 0, vatRate: 21, vatRateType: 'standard' },
+  ]);
   const [country, setCountry] = useState<'CZ' | 'SK'>('CZ');
 
   const totals = useMemo(() => {
     let base = 0;
     let vat = 0;
-    
-    items.forEach(item => {
+
+    items.forEach((item) => {
       const b = item.qty * item.unitPrice;
       let rate = item.vatRate;
-      
+
       if (item.vatRateType) {
         if (item.vatRateType === 'standard') rate = country === 'CZ' ? 21 : 20;
         else if (item.vatRateType === 'reduced') rate = 10;
         else if (item.vatRateType === 'first_reduced') rate = country === 'CZ' ? 15 : 10;
         else if (item.vatRateType === 'zero') rate = 0;
       }
-      
+
       const v = b * (rate / 100);
       base += b;
       vat += v;
     });
-    
+
     return { base, vat, total: base + vat };
   }, [items, country]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!contactId || !number || !dueDate || items.length === 0) {
       alert('Please fill all required fields');
       return;
@@ -82,13 +84,16 @@ export function AccountingInvoiceForm({
       dueDate,
       currency,
       variableSymbol: variableSymbol || undefined,
-      items: items.filter(i => i.description.trim() !== ''),
+      items: items.filter((i) => i.description.trim() !== ''),
       country,
     });
   };
 
   const addItem = () => {
-    setItems([...items, { description: '', qty: 1, unitPrice: 0, vatRate: 21, vatRateType: 'standard' }]);
+    setItems([
+      ...items,
+      { description: '', qty: 1, unitPrice: 0, vatRate: 21, vatRateType: 'standard' },
+    ]);
   };
 
   const removeItem = (index: number) => {
@@ -97,7 +102,11 @@ export function AccountingInvoiceForm({
     }
   };
 
-  const updateItem = (index: number, field: keyof AccountingCreateInvoiceItem, value: any) => {
+  const updateItem = (
+    index: number,
+    field: keyof AccountingCreateInvoiceItem,
+    value: string | number
+  ) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
@@ -117,8 +126,10 @@ export function AccountingInvoiceForm({
               required
             >
               <option value="">Select a contact</option>
-              {contacts.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+              {contacts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </select>
           </div>
@@ -210,11 +221,21 @@ export function AccountingInvoiceForm({
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VAT Rate</th>
-                <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Qty
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Unit Price
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  VAT Rate
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total
+                </th>
                 <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               </tr>
             </thead>
@@ -259,8 +280,10 @@ export function AccountingInvoiceForm({
                       }}
                       className="block w-full border-gray-300 rounded-md shadow-sm p-1 text-sm"
                     >
-                      {VAT_RATE_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      {VAT_RATE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
                       ))}
                       <option value="custom">Custom %</option>
                     </select>
@@ -298,15 +321,21 @@ export function AccountingInvoiceForm({
         <div className="w-64 space-y-2">
           <div className="flex justify-between text-sm text-gray-600">
             <span>Base Amount:</span>
-            <span>{totals.base.toFixed(2)} {currency}</span>
+            <span>
+              {totals.base.toFixed(2)} {currency}
+            </span>
           </div>
           <div className="flex justify-between text-sm text-gray-600">
             <span>VAT Amount:</span>
-            <span>{totals.vat.toFixed(2)} {currency}</span>
+            <span>
+              {totals.vat.toFixed(2)} {currency}
+            </span>
           </div>
           <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-100 pt-2">
             <span>Total:</span>
-            <span>{totals.total.toFixed(2)} {currency}</span>
+            <span>
+              {totals.total.toFixed(2)} {currency}
+            </span>
           </div>
         </div>
       </div>

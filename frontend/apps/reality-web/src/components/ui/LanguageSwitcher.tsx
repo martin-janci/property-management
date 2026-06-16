@@ -36,6 +36,16 @@ export function LanguageSwitcher() {
     if (i >= 0) setActiveIndex(i);
   }, [locale]);
 
+  const choose = useCallback(
+    (next: Locale) => {
+      setOpen(false);
+      triggerRef.current?.focus();
+      if (next === locale) return;
+      router.replace(pathname, { locale: next });
+    },
+    [locale, pathname, router]
+  );
+
   // Keyboard navigation while the menu is open. Listening on the document
   // because the listbox itself doesn't take focus (the trigger keeps it,
   // per APG listbox-with-aria-activedescendant pattern).
@@ -83,14 +93,7 @@ export function LanguageSwitcher() {
     // choose isn't in deps because the underlying functions (router,
     // pathname) are referentially-stable from next-intl across renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  const choose = (next: Locale) => {
-    setOpen(false);
-    triggerRef.current?.focus();
-    if (next === locale) return;
-    router.replace(pathname, { locale: next });
-  };
+  }, [open, choose]);
 
   const handleTriggerKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

@@ -10,10 +10,11 @@ use api_core::TenantMembershipProvider;
 use db::{
     repositories::{
         AccountingRepository, AgencyRepository, AiChatRepository, AnnouncementRepository,
-        ApiEcosystemRepository, AuditLogRepository, AutomationRepository, BackgroundJobRepository, BoardMeetingRepository,
-        BudgetRepository, BuildingCertificationRepository, BuildingRepository, CommunityRepository,
-        ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
-        DelegationRepository, DevicePushTokenRepository, DisputeRepository, DocumentRepository,
+        ApiEcosystemRepository, AuditLogRepository, AutomationRepository, BackgroundJobRepository,
+        BoardMeetingRepository, BudgetRepository, BuildingCertificationRepository,
+        BuildingRepository, CommunityRepository, ComplianceRepository,
+        CriticalNotificationRepository, DataExportRepository, DelegationRepository,
+        DevicePushTokenRepository, DisputeRepository, DocumentRepository,
         DocumentTemplateRepository, ESignatureNonceRepository, EddRepository, EmergencyRepository,
         EnergyRepository, EnhancedTenantScreeningRepository, EquipmentRepository,
         EsgReportingRepository, FacilityRepository, FaultRepository, FeatureAnalyticsRepository,

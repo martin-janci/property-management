@@ -4,7 +4,6 @@
 
 import type { AccountingInvoice, AccountingInvoiceStatus } from '@ppt/api-client';
 import { format } from 'date-fns';
-import { useState } from 'react';
 
 const INVOICE_STATUS_LABELS: Record<AccountingInvoiceStatus, string> = {
   draft: 'Draft',
@@ -50,7 +49,12 @@ export function AccountingInvoiceList({
       <div className="bg-white rounded-lg shadow p-12 text-center">
         <div className="mx-auto w-12 h-12 text-gray-400 mb-4">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
           </svg>
         </div>
         <h3 className="text-lg font-medium text-gray-900">No invoices found</h3>
@@ -64,12 +68,13 @@ export function AccountingInvoiceList({
       <ul className="divide-y divide-gray-200">
         {invoices.map((invoice) => (
           <li key={invoice.id}>
-            <div className="px-4 py-4 sm:px-6 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onViewInvoice(invoice.id)}>
+            <div
+              className="px-4 py-4 sm:px-6 hover:bg-gray-50 transition-colors cursor-pointer"
+              onClick={() => onViewInvoice(invoice.id)}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <p className="text-sm font-medium text-blue-600 truncate">
-                    {invoice.number}
-                  </p>
+                  <p className="text-sm font-medium text-blue-600 truncate">{invoice.number}</p>
                   <p className="text-xs text-gray-500">
                     Due: {format(new Date(invoice.dueDate), 'MMM d, yyyy')}
                   </p>
@@ -79,37 +84,59 @@ export function AccountingInvoiceList({
                     <p className="text-sm font-semibold text-gray-900">
                       {invoice.totalAmount.toFixed(2)} {invoice.currency}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      VAT: {invoice.vatAmount.toFixed(2)}
-                    </p>
+                    <p className="text-xs text-gray-500">VAT: {invoice.vatAmount.toFixed(2)}</p>
                   </div>
-                  <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${INVOICE_STATUS_STYLES[invoice.status]}`}>
+                  <p
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${INVOICE_STATUS_STYLES[invoice.status]}`}
+                  >
                     {INVOICE_STATUS_LABELS[invoice.status]}
                   </p>
                   <div className="flex items-center gap-2">
                     {onEditInvoice && (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onEditInvoice(invoice.id);
                         }}
                         className="text-gray-400 hover:text-blue-600"
                       >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
                         </svg>
                       </button>
                     )}
                     {onDeleteInvoice && (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeleteInvoice(invoice.id);
                         }}
                         className="text-gray-400 hover:text-red-600"
                       >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       </button>
                     )}

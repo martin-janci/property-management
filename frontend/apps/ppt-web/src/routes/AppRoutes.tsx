@@ -12,6 +12,7 @@
  * identical to the previous inline table).
  */
 import { Route, Routes } from 'react-router-dom';
+import { accountingRoutes } from './groups/accounting';
 import { announcementRoutes } from './groups/announcements';
 import { buildingRoutes } from './groups/buildings';
 import { communityRoutes } from './groups/community';
@@ -20,7 +21,6 @@ import { disputeRoutes } from './groups/disputes';
 import { documentRoutes, newsRoutes } from './groups/documents';
 import { faultRoutes } from './groups/faults';
 import { financialRoutes } from './groups/financial';
-import { accountingRoutes } from './groups/accounting';
 import { iotRoutes } from './groups/iot';
 import { leaseRoutes } from './groups/leases';
 import { messagingRoutes } from './groups/messaging';

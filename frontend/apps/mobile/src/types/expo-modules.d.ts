@@ -170,7 +170,7 @@ declare module 'expo-notifications' {
   export enum AndroidImportance {
     UNKNOWN = 0,
     UNSPECIFIED = -1000,
-    NONE = 0,
+    // NONE = 0, // Duplicate of UNKNOWN
     MIN = 1,
     LOW = 2,
     DEFAULT = 3,

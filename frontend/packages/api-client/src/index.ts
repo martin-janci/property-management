@@ -11,6 +11,7 @@ export * from './advanced-notifications';
 export * from './announcements';
 // Export auth token provider for secure token management
 export * from './auth';
+export type { AuthUser } from './auth';
 export * from './buildings';
 export * from './community';
 export * from './compliance';

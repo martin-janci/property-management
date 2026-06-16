@@ -2,16 +2,17 @@
  * AccountingInvoiceManagementPage for managing native issued invoices.
  */
 
-import { 
-  invoicesApiList, 
-  invoicesApiCreate, 
+import {
+  type AccountingCreateInvoiceRequest,
+  contactsApiList,
+  invoicesApiCreate,
   invoicesApiDelete,
-  contactsApiList
+  invoicesApiList,
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
+import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
 
 export function AccountingInvoiceManagementPage() {
   const [isCreating, setIsCreating] = useState(false);
@@ -30,7 +31,7 @@ export function AccountingInvoiceManagementPage() {
   const isLoading = invoicesLoading || contactsLoading;
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => invoicesApiCreate({ body: data }),
+    mutationFn: (data: AccountingCreateInvoiceRequest) => invoicesApiCreate({ body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
       setIsCreating(false);
@@ -53,6 +54,7 @@ export function AccountingInvoiceManagementPage() {
         </div>
         {!isCreating && (
           <button
+            type="button"
             onClick={() => setIsCreating(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
@@ -65,7 +67,7 @@ export function AccountingInvoiceManagementPage() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-semibold mb-4">New Invoice</h2>
           <AccountingInvoiceForm
-            contacts={contacts as any}
+            contacts={contacts?.data || []}
             onSubmit={(data) => createMutation.mutate(data)}
             onCancel={() => setIsCreating(false)}
             isSubmitting={createMutation.isPending}

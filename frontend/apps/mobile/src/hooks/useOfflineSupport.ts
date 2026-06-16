@@ -90,132 +90,6 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
 
-  // Monitor network status
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
-      setIsConnected(state.isConnected ?? false);
-      setIsInternetReachable(state.isInternetReachable);
-      setConnectionType(state.type);
-
-      // Auto-sync when coming back online
-      if (state.isConnected && state.isInternetReachable) {
-        processQueue();
-      }
-    });
-
-    // Initial network check
-    NetInfo.fetch().then((state: NetInfoState) => {
-      setIsConnected(state.isConnected ?? false);
-      setIsInternetReachable(state.isInternetReachable);
-      setConnectionType(state.type);
-    });
-
-    // Load last sync time
-    loadLastSyncTime();
-
-    // Load queue count
-    loadQueueCount();
-
-    return () => unsubscribe();
-  }, []);
-
-  const loadLastSyncTime = async () => {
-    try {
-      const timestamp = await AsyncStorage.getItem(LAST_SYNC_KEY);
-      if (timestamp) {
-        setLastSyncTime(new Date(Number.parseInt(timestamp, 10)));
-      }
-    } catch (error) {
-      console.error('Failed to load last sync time:', error);
-    }
-  };
-
-  const loadQueueCount = async () => {
-    try {
-      const queue = await getQueuedActions();
-      setQueuedActionsCount(queue.length);
-    } catch (error) {
-      console.error('Failed to load queue count:', error);
-    }
-  };
-
-  // Cache data locally
-  const cacheData = useCallback(
-    async <T>(key: string, data: T, expiresIn?: number): Promise<void> => {
-      try {
-        const cacheEntry = {
-          data,
-          timestamp: Date.now(),
-          expiresAt: expiresIn ? Date.now() + expiresIn : null,
-        };
-        await AsyncStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(cacheEntry));
-      } catch (error) {
-        console.error('Failed to cache data:', error);
-      }
-    },
-    []
-  );
-
-  // Get cached data
-  const getCachedData = useCallback(async <T>(key: string): Promise<T | null> => {
-    try {
-      const cached = await AsyncStorage.getItem(`${CACHE_PREFIX}${key}`);
-      if (!cached) return null;
-
-      const { data, expiresAt } = JSON.parse(cached);
-
-      // Check if expired
-      if (expiresAt && Date.now() > expiresAt) {
-        await AsyncStorage.removeItem(`${CACHE_PREFIX}${key}`);
-        return null;
-      }
-
-      return data as T;
-    } catch (error) {
-      console.error('Failed to get cached data:', error);
-      return null;
-    }
-  }, []);
-
-  // Clear cache
-  const clearCache = useCallback(async (key?: string): Promise<void> => {
-    try {
-      if (key) {
-        await AsyncStorage.removeItem(`${CACHE_PREFIX}${key}`);
-      } else {
-        // Clear all cache entries
-        const keys = await AsyncStorage.getAllKeys();
-        const cacheKeys = keys.filter((k: string) => k.startsWith(CACHE_PREFIX));
-        await AsyncStorage.removeMany(cacheKeys);
-      }
-    } catch (error) {
-      console.error('Failed to clear cache:', error);
-    }
-  }, []);
-
-  // Add action to offline queue
-  const addToQueue = useCallback(
-    async (action: Omit<QueuedAction, 'id' | 'timestamp' | 'retries'>): Promise<void> => {
-      try {
-        const queue = await getQueuedActions();
-
-        const newAction: QueuedAction = {
-          ...action,
-          id: `${Date.now()}-${Math.random().toString(36).substring(2)}`,
-          timestamp: Date.now(),
-          retries: 0,
-        };
-
-        queue.push(newAction);
-        await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-        setQueuedActionsCount(queue.length);
-      } catch (error) {
-        console.error('Failed to add to queue:', error);
-      }
-    },
-    []
-  );
-
   // Get all queued actions
   const getQueuedActions = useCallback(async (): Promise<QueuedAction[]> => {
     try {
@@ -224,6 +98,76 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     } catch (error) {
       console.error('Failed to get queued actions:', error);
       return [];
+    }
+  }, []);
+
+  const loadLastSyncTime = useCallback(async () => {
+    try {
+      const timestamp = await AsyncStorage.getItem(LAST_SYNC_KEY);
+      if (timestamp) {
+        setLastSyncTime(new Date(Number.parseInt(timestamp, 10)));
+      }
+    } catch (error) {
+      console.error('Failed to load last sync time:', error);
+    }
+  }, []);
+
+  const loadQueueCount = useCallback(async () => {
+    try {
+      const queue = await getQueuedActions();
+      setQueuedActionsCount(queue.length);
+    } catch (error) {
+      console.error('Failed to load queue count:', error);
+    }
+  }, [getQueuedActions]);
+
+  // Execute a single queued action against the real backend.
+  //
+  // The queue stores `endpoint` as either an absolute URL or a path
+  // beginning with `/`. For relative paths we prefix the configured API
+  // base URL. The bearer token (if available) is read from SecureStore
+  // at dispatch time so token rotations between enqueue and replay are
+  // honored.
+  const executeQueuedAction = useCallback(async (action: QueuedAction): Promise<void> => {
+    const url = action.endpoint.startsWith('http')
+      ? action.endpoint
+      : `${getApiBaseUrl()}${action.endpoint}`;
+
+    const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+      // Tenant-scoped api-server routes (RlsConnection extractor on
+      // /faults, /voting, /buildings, …) reject requests without
+      // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
+      // claim — extract it so replayed offline actions hit the same
+      // tenant the user was signed into when they enqueued.
+      const tenantId = extractTenantIdFromJwt(accessToken);
+      if (tenantId) {
+        headers['X-Tenant-ID'] = tenantId;
+      }
+    }
+
+    const response = await fetch(url, {
+      method: action.method,
+      headers,
+      body: action.body !== undefined ? JSON.stringify(action.body) : undefined,
+    });
+
+    if (!response.ok) {
+      // Treat 4xx as terminal (the request will never succeed even on
+      // retry — bad payload, gone, unauthorized, …) so the queue drops
+      // the action without burning the retry budget on hopeless replays.
+      // 5xx and network failures bubble up as a normal error so the
+      // outer retry loop handles them.
+      const error = new Error(`HTTP ${response.status} on ${action.method} ${action.endpoint}`);
+      if (response.status >= 400 && response.status < 500) {
+        // Mark the error so processQueue can decide to drop instead of retry.
+        (error as Error & { permanent?: boolean }).permanent = true;
+      }
+      throw error;
     }
   }, []);
 
@@ -305,58 +249,114 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         setIsSyncing(false);
       }
     },
-    [isConnected, isInternetReachable, getQueuedActions]
+    [isConnected, isInternetReachable, getQueuedActions, executeQueuedAction]
   );
 
-  // Execute a single queued action against the real backend.
-  //
-  // The queue stores `endpoint` as either an absolute URL or a path
-  // beginning with `/`. For relative paths we prefix the configured API
-  // base URL. The bearer token (if available) is read from SecureStore
-  // at dispatch time so token rotations between enqueue and replay are
-  // honored.
-  const executeQueuedAction = async (action: QueuedAction): Promise<void> => {
-    const url = action.endpoint.startsWith('http')
-      ? action.endpoint
-      : `${getApiBaseUrl()}${action.endpoint}`;
+  // Monitor network status
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
+      setIsConnected(state.isConnected ?? false);
+      setIsInternetReachable(state.isInternetReachable);
+      setConnectionType(state.type);
 
-    const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
-      // Tenant-scoped api-server routes (RlsConnection extractor on
-      // /faults, /voting, /buildings, …) reject requests without
-      // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
-      // claim — extract it so replayed offline actions hit the same
-      // tenant the user was signed into when they enqueued.
-      const tenantId = extractTenantIdFromJwt(accessToken);
-      if (tenantId) {
-        headers['X-Tenant-ID'] = tenantId;
+      // Auto-sync when coming back online
+      if (state.isConnected && state.isInternetReachable) {
+        processQueue();
       }
-    }
-
-    const response = await fetch(url, {
-      method: action.method,
-      headers,
-      body: action.body !== undefined ? JSON.stringify(action.body) : undefined,
     });
 
-    if (!response.ok) {
-      // Treat 4xx as terminal (the request will never succeed even on
-      // retry — bad payload, gone, unauthorized, …) so the queue drops
-      // the action without burning the retry budget on hopeless replays.
-      // 5xx and network failures bubble up as a normal error so the
-      // outer retry loop handles them.
-      const error = new Error(`HTTP ${response.status} on ${action.method} ${action.endpoint}`);
-      if (response.status >= 400 && response.status < 500) {
-        // Mark the error so processQueue can decide to drop instead of retry.
-        (error as Error & { permanent?: boolean }).permanent = true;
+    // Initial network check
+    NetInfo.fetch().then((state: NetInfoState) => {
+      setIsConnected(state.isConnected ?? false);
+      setIsInternetReachable(state.isInternetReachable);
+      setConnectionType(state.type);
+    });
+
+    // Load last sync time
+    loadLastSyncTime();
+
+    // Load queue count
+    loadQueueCount();
+
+    return () => unsubscribe();
+  }, [processQueue, loadLastSyncTime, loadQueueCount]);
+
+  // Cache data locally
+  const cacheData = useCallback(
+    async <T>(key: string, data: T, expiresIn?: number): Promise<void> => {
+      try {
+        const cacheEntry = {
+          data,
+          timestamp: Date.now(),
+          expiresAt: expiresIn ? Date.now() + expiresIn : null,
+        };
+        await AsyncStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(cacheEntry));
+      } catch (error) {
+        console.error('Failed to cache data:', error);
       }
-      throw error;
+    },
+    []
+  );
+
+  // Get cached data
+  const getCachedData = useCallback(async <T>(key: string): Promise<T | null> => {
+    try {
+      const cached = await AsyncStorage.getItem(`${CACHE_PREFIX}${key}`);
+      if (!cached) return null;
+
+      const { data, expiresAt } = JSON.parse(cached);
+
+      // Check if expired
+      if (expiresAt && Date.now() > expiresAt) {
+        await AsyncStorage.removeItem(`${CACHE_PREFIX}${key}`);
+        return null;
+      }
+
+      return data as T;
+    } catch (error) {
+      console.error('Failed to get cached data:', error);
+      return null;
     }
-  };
+  }, []);
+
+  // Clear cache
+  const clearCache = useCallback(async (key?: string): Promise<void> => {
+    try {
+      if (key) {
+        await AsyncStorage.removeItem(`${CACHE_PREFIX}${key}`);
+      } else {
+        // Clear all cache entries
+        const keys = await AsyncStorage.getAllKeys();
+        const cacheKeys = keys.filter((k: string) => k.startsWith(CACHE_PREFIX));
+        await AsyncStorage.removeMany(cacheKeys);
+      }
+    } catch (error) {
+      console.error('Failed to clear cache:', error);
+    }
+  }, []);
+
+  // Add action to offline queue
+  const addToQueue = useCallback(
+    async (action: Omit<QueuedAction, 'id' | 'timestamp' | 'retries'>): Promise<void> => {
+      try {
+        const queue = await getQueuedActions();
+
+        const newAction: QueuedAction = {
+          ...action,
+          id: `${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          timestamp: Date.now(),
+          retries: 0,
+        };
+
+        queue.push(newAction);
+        await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+        setQueuedActionsCount(queue.length);
+      } catch (error) {
+        console.error('Failed to add to queue:', error);
+      }
+    },
+    [getQueuedActions]
+  );
 
   // Clear the offline queue
   const clearQueue = useCallback(async (): Promise<void> => {
