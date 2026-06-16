@@ -399,7 +399,7 @@ function BookingDetailPageRoute() {
     return <div>Booking not found</div>;
   }
 
-  if (isLoading || !data) {
+  if (isLoading || !data || !data.data) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -407,7 +407,7 @@ function BookingDetailPageRoute() {
     );
   }
 
-  const booking: BookingWithGuests = { ...mapReservationToBooking(data.data!), guests: [] };
+  const booking: BookingWithGuests = { ...mapReservationToBooking(data.data), guests: [] };
 
   return (
     <BookingDetailPage

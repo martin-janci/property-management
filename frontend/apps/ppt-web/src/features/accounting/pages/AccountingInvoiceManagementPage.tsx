@@ -22,13 +22,23 @@ export function AccountingInvoiceManagementPage() {
 
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: ['accounting', 'invoices'],
-    queryFn: () => invoicesApiList({ headers: auth!.headers }),
+    queryFn: () => {
+      if (!auth) throw new Error('Not authenticated');
+      return invoicesApiList({
+        headers: auth.headers as unknown as { Authorization: string },
+      });
+    },
     enabled: !!auth,
   });
 
   const { data: contacts, isLoading: contactsLoading } = useQuery({
     queryKey: ['accounting', 'contacts'],
-    queryFn: () => contactsApiList({ headers: auth!.headers }),
+    queryFn: () => {
+      if (!auth) throw new Error('Not authenticated');
+      return contactsApiList({
+        headers: auth.headers as unknown as { Authorization: string },
+      });
+    },
     enabled: !!auth,
   });
 
@@ -37,7 +47,10 @@ export function AccountingInvoiceManagementPage() {
   const createMutation = useMutation({
     mutationFn: (data: AccountingCreateInvoiceRequest) => {
       if (!auth) throw new Error('Not authenticated');
-      return invoicesApiCreate({ body: data, headers: auth.headers });
+      return invoicesApiCreate({
+        body: data,
+        headers: auth.headers as unknown as { Authorization: string },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
@@ -48,7 +61,10 @@ export function AccountingInvoiceManagementPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => {
       if (!auth) throw new Error('Not authenticated');
-      return invoicesApiDelete({ path: { id }, headers: auth.headers });
+      return invoicesApiDelete({
+        path: { id },
+        headers: auth.headers as unknown as { Authorization: string },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });

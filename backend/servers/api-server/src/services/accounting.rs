@@ -199,7 +199,10 @@ impl AccountingService {
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| {
-                AppError::Internal(format!("Statement line {} not found", p_match.statement_line_id))
+                AppError::Internal(format!(
+                    "Statement line {} not found",
+                    p_match.statement_line_id
+                ))
             })?;
 
         // 1. Update match state
