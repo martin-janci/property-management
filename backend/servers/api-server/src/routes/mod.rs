@@ -188,4 +188,5 @@ pub mod multi_currency;
 pub mod data_residency;
 
 // Epic 150: API Ecosystem Expansion
+pub mod accounting;
 pub mod api_ecosystem;

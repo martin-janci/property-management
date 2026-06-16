@@ -1,4 +1,5 @@
 //! Business logic services.
+pub mod accounting;
 
 pub mod actions;
 pub mod auth;
@@ -42,3 +43,4 @@ pub use syndication::SyndicationService;
 pub use totp::TotpService;
 pub use voice_commands::VoiceCommandProcessor;
 pub use workflow_executor::{WorkflowEvent, WorkflowExecutor};
+pub use accounting::AccountingService;
