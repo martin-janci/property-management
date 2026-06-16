@@ -12,7 +12,17 @@ import type {
   Rentals_Reservation,
   Rentals_SyncStatus,
 } from '@ppt/api-client';
-import { getToken, ShortTermRentalsService } from '@ppt/api-client';
+import {
+  getToken,
+  rentalsApiCheckIn,
+  rentalsApiCheckOut,
+  rentalsApiCreateConnection,
+  rentalsApiGetReservation,
+  rentalsApiListConnections,
+  rentalsApiListGuests,
+  rentalsApiListReservations,
+  rentalsApiSyncPlatforms,
+} from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
 import { Route, useNavigate, useParams } from 'react-router-dom';
@@ -171,18 +181,22 @@ function RentalsDashboardPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservations', auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListReservations({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
+      rentalsApiListReservations({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
       }),
     enabled: !!auth,
   });
   const { data: connData } = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListConnections({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
+      rentalsApiListConnections({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
       }),
     enabled: !!auth,
   });
@@ -232,19 +246,23 @@ function PlatformConnectionsPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListConnections({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
+      rentalsApiListConnections({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
       }),
     enabled: !!auth,
   });
 
   const createConnection = useMutation({
     mutationFn: (vars: { unitId: string; platform: RentalPlatformType }) =>
-      ShortTermRentalsService.rentalsApiCreateConnection({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        requestBody: { unitId: vars.unitId, platform: vars.platform },
+      rentalsApiCreateConnection({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        body: { unitId: vars.unitId, platform: vars.platform as any },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
@@ -253,10 +271,12 @@ function PlatformConnectionsPageRoute() {
 
   const syncPlatforms = useMutation({
     mutationFn: (unitId: string) =>
-      ShortTermRentalsService.rentalsApiSyncPlatforms({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        unitId,
+      rentalsApiSyncPlatforms({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        query: { unitId },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
@@ -292,15 +312,19 @@ function BookingsPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservations', auth?.xTenantId, filters],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListReservations({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        unitId: filters.unitId,
-        status: filters.status,
-        from: filters.fromDate,
-        to: filters.toDate,
-        page: filters.page,
-        limit: filters.limit,
+      rentalsApiListReservations({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        query: {
+          unitId: filters.unitId,
+          status: filters.status as any,
+          from: filters.fromDate,
+          to: filters.toDate,
+          page: filters.page,
+          limit: filters.limit,
+        },
       }),
     enabled: !!auth,
   });
@@ -336,30 +360,36 @@ function BookingDetailPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservation', bookingId, auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiGetReservation({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        id: bookingId!,
+      rentalsApiGetReservation({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        path: { id: bookingId! },
       }),
     enabled: !!auth && !!bookingId,
   });
 
   const checkIn = useMutation({
     mutationFn: () =>
-      ShortTermRentalsService.rentalsApiCheckIn({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        id: bookingId!,
+      rentalsApiCheckIn({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        path: { id: bookingId! },
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
   });
   const checkOut = useMutation({
     mutationFn: () =>
-      ShortTermRentalsService.rentalsApiCheckOut({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        id: bookingId!,
+      rentalsApiCheckOut({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        path: { id: bookingId! },
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
@@ -422,9 +452,11 @@ function GuestRegistrationPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'guests', auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListGuests({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
+      rentalsApiListGuests({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
       }),
     enabled: !!auth,
   });

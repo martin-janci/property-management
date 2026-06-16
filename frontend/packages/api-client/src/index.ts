@@ -27,6 +27,7 @@ export * from './forms';
 // Export generated types and client
 // These will be populated after running `pnpm generate`
 export * from './generated';
+export { client } from './generated/client.gen';
 export * from './government-portal';
 export * from './integrations';
 export * from './iot';
