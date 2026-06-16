@@ -23,15 +23,22 @@ use db::models::RentalBooking;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-const BOOKING_COLUMNS: &str = r#"
-    id, organization_id, unit_id, connection_id,
-    platform::text AS platform, external_booking_id, external_booking_url,
-    guest_name, guest_email, guest_phone, guest_count,
-    check_in, check_out, check_in_time, check_out_time,
-    total_amount, currency, platform_fee, cleaning_fee,
-    status::text AS status, cancelled_at, cancellation_reason,
-    guest_notes, internal_notes, synced_at, raw_data,
-    created_at, updated_at
+// A `&'static str` literal (sqlx 0.9's `query_as` requires `SqlSafeStr`, which
+// is only implemented for `&'static str`). The projection casts the
+// `platform`/`status` PG enums to `text` (the model decodes them as `String`),
+// mirroring the explicit projections used across `RentalRepository`.
+const SELECT_BOOKING_BY_ID: &str = r#"
+    SELECT
+        id, organization_id, unit_id, connection_id,
+        platform::text AS platform, external_booking_id, external_booking_url,
+        guest_name, guest_email, guest_phone, guest_count,
+        check_in, check_out, check_in_time, check_out_time,
+        total_amount, currency, platform_fee, cleaning_fee,
+        status::text AS status, cancelled_at, cancellation_reason,
+        guest_notes, internal_notes, synced_at, raw_data,
+        created_at, updated_at
+    FROM rental_bookings
+    WHERE id = $1
 "#;
 
 async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
@@ -100,8 +107,7 @@ async fn rental_booking_decodes_null_financial_fields(pool: PgPool) {
 
     // Decode the row into the model — this is the path that used to error on the
     // non-null `try_from = "Decimal"` decode of a NULL column.
-    let query = format!("SELECT {BOOKING_COLUMNS} FROM rental_bookings WHERE id = $1");
-    let booking = sqlx::query_as::<_, RentalBooking>(&query)
+    let booking = sqlx::query_as::<_, RentalBooking>(SELECT_BOOKING_BY_ID)
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -118,7 +124,7 @@ async fn rental_booking_decodes_null_financial_fields(pool: PgPool) {
         .await
         .expect("set a non-null fee");
 
-    let booking = sqlx::query_as::<_, RentalBooking>(&query)
+    let booking = sqlx::query_as::<_, RentalBooking>(SELECT_BOOKING_BY_ID)
         .bind(id)
         .fetch_one(&pool)
         .await
