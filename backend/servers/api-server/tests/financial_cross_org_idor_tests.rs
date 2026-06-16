@@ -28,7 +28,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -61,21 +61,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-/// Make `user_id` an active member of `org_id`.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 /// Seed a financial account in `org_id` and return its id.
@@ -140,7 +125,7 @@ async fn list_accounts_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "lst-a").await;
     let org_b = seed_org(&pool, "lst-b").await;
     let user_b = seed_user(&pool, "lst-b@fin-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let _account_a = seed_account(&pool, org_a).await;
 
     // User B (member of Org B only) asks for Org A's accounts.
@@ -166,7 +151,7 @@ async fn get_account_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "get-a").await;
     let org_b = seed_org(&pool, "get-b").await;
     let user_b = seed_user(&pool, "get-b@fin-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let account_a = seed_account(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "get-b@fin-idor.test");
@@ -192,7 +177,7 @@ async fn record_payment_for_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "pay-a").await;
     let org_b = seed_org(&pool, "pay-b").await;
     let user_b = seed_user(&pool, "pay-b@fin-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
 
     let token_b = mint_token(user_b, "pay-b@fin-idor.test");
     let body = json!({
@@ -237,7 +222,7 @@ async fn list_accounts_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "own-a").await;
     let user_a = seed_user(&pool, "own-a@fin-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let _account_a = seed_account(&pool, org_a).await;
 
     let token_a = mint_token(user_a, "own-a@fin-idor.test");
