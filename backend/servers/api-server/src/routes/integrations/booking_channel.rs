@@ -307,24 +307,35 @@ pub async fn push_booking_listing(
     })?;
 
     // HIGH: Validate credentials explicitly — empty strings silently break OTA API calls.
-    let username = connection.access_token.clone().ok_or_else(|| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "NOT_CONFIGURED",
-                "Booking.com credentials are incomplete (missing access_token)",
-            )),
-        )
-    })?;
-    let password = connection.refresh_token.clone().ok_or_else(|| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "NOT_CONFIGURED",
-                "Booking.com credentials are incomplete (missing refresh_token)",
-            )),
-        )
-    })?;
+    // BIT-98: credentials are stored encrypted (enc: prefix); decrypt_if_available
+    // transparently passes through any legacy plaintext rows during rollout.
+    let crypto = integrations::IntegrationCrypto::try_from_env();
+    let username = connection
+        .access_token
+        .as_deref()
+        .map(|t| integrations::decrypt_if_available(crypto.as_ref(), t))
+        .ok_or_else(|| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "NOT_CONFIGURED",
+                    "Booking.com credentials are incomplete (missing access_token)",
+                )),
+            )
+        })?;
+    let password = connection
+        .refresh_token
+        .as_deref()
+        .map(|t| integrations::decrypt_if_available(crypto.as_ref(), t))
+        .ok_or_else(|| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "NOT_CONFIGURED",
+                    "Booking.com credentials are incomplete (missing refresh_token)",
+                )),
+            )
+        })?;
     if username.is_empty() || password.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,

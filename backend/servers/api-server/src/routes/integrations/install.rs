@@ -11,9 +11,9 @@ use axum::{
 };
 use db::models::infrastructure::{job_type, queue, CreateBackgroundJob};
 use integrations::{
-    encrypt_optional_required, encrypt_required, AirbnbClient, AirbnbOAuthConfig,
-    AvailabilityUpdate, BookingClient, BookingCredentials, IntegrationCrypto, PortalType,
-    RateUpdate,
+    decrypt_if_available, encrypt_optional_required, encrypt_required, AirbnbClient,
+    AirbnbOAuthConfig, AvailabilityUpdate, BookingClient, BookingCredentials, IntegrationCrypto,
+    PortalType, RateUpdate,
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
@@ -932,12 +932,38 @@ pub async fn connect_booking(
         }
     }
 
+    // BIT-98: encrypt the OTA Supply-XML basic-auth credentials before storage,
+    // mirroring the Airbnb path (#765). Booking.com reuses the access_token /
+    // refresh_token columns for username / password. Fail closed when crypto is
+    // not configured — never persist credentials in plaintext.
+    let crypto = IntegrationCrypto::try_from_env();
+    let stored_username = encrypt_required(crypto.as_ref(), &request.username).map_err(|e| {
+        tracing::error!(error = %e, "Refusing to store Booking.com username without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration credential encryption is not configured",
+            )),
+        )
+    })?;
+    let stored_password = encrypt_required(crypto.as_ref(), &request.password).map_err(|e| {
+        tracing::error!(error = %e, "Refusing to store Booking.com password without encryption");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "ENCRYPTION_REQUIRED",
+                "Integration credential encryption is not configured",
+            )),
+        )
+    })?;
+
     let _connection = rental_repo
         .create_or_update_booking_connection(
             path.org_id,
             &request.hotel_id,
-            &request.username,
-            &request.password,
+            &stored_username,
+            &stored_password,
         )
         .await
         .map_err(|e| {
@@ -1026,8 +1052,19 @@ pub async fn sync_booking(
         )
     })?;
 
-    let username = connection.access_token.clone().unwrap_or_default();
-    let password = connection.refresh_token.clone().unwrap_or_default();
+    // BIT-98: credentials are stored encrypted (enc: prefix). decrypt_if_available
+    // transparently passes through any legacy plaintext rows during rollout.
+    let crypto = IntegrationCrypto::try_from_env();
+    let username = connection
+        .access_token
+        .as_deref()
+        .map(|t| decrypt_if_available(crypto.as_ref(), t))
+        .unwrap_or_default();
+    let password = connection
+        .refresh_token
+        .as_deref()
+        .map(|t| decrypt_if_available(crypto.as_ref(), t))
+        .unwrap_or_default();
 
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
@@ -1337,8 +1374,19 @@ pub async fn push_booking_availability(
         )
     })?;
 
-    let username = connection.access_token.clone().unwrap_or_default();
-    let password = connection.refresh_token.clone().unwrap_or_default();
+    // BIT-98: credentials are stored encrypted (enc: prefix). decrypt_if_available
+    // transparently passes through any legacy plaintext rows during rollout.
+    let crypto = IntegrationCrypto::try_from_env();
+    let username = connection
+        .access_token
+        .as_deref()
+        .map(|t| decrypt_if_available(crypto.as_ref(), t))
+        .unwrap_or_default();
+    let password = connection
+        .refresh_token
+        .as_deref()
+        .map(|t| decrypt_if_available(crypto.as_ref(), t))
+        .unwrap_or_default();
 
     let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
@@ -1476,8 +1524,19 @@ pub async fn push_booking_rates(
         )
     })?;
 
-    let username = connection.access_token.clone().unwrap_or_default();
-    let password = connection.refresh_token.clone().unwrap_or_default();
+    // BIT-98: credentials are stored encrypted (enc: prefix). decrypt_if_available
+    // transparently passes through any legacy plaintext rows during rollout.
+    let crypto = IntegrationCrypto::try_from_env();
+    let username = connection
+        .access_token
+        .as_deref()
+        .map(|t| decrypt_if_available(crypto.as_ref(), t))
+        .unwrap_or_default();
+    let password = connection
+        .refresh_token
+        .as_deref()
+        .map(|t| decrypt_if_available(crypto.as_ref(), t))
+        .unwrap_or_default();
 
     let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
