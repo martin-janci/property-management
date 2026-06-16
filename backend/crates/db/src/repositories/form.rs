@@ -770,8 +770,14 @@ impl FormRepository {
                 submitted_by, data, attachments, signature_data,
                 status, ip_address, user_agent
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::form_submission_status, $10::inet, $11)
+            RETURNING
+                id, form_id, organization_id, building_id, unit_id,
+                submitted_by, submitted_at, data, attachments, signature_data,
+                status::text AS status,
+                reviewed_by, reviewed_at, review_notes,
+                ip_address::text AS ip_address,
+                user_agent, created_at, updated_at
             "#,
         )
         .bind(params.form_id)
@@ -966,13 +972,19 @@ impl FormRepository {
         sqlx::query_as::<_, FormSubmission>(
             r#"
             UPDATE form_submissions SET
-                status = $1,
+                status = $1::form_submission_status,
                 reviewed_by = $2,
                 reviewed_at = NOW(),
                 review_notes = $3,
                 updated_at = NOW()
             WHERE id = $4 AND organization_id = $5
-            RETURNING *
+            RETURNING
+                id, form_id, organization_id, building_id, unit_id,
+                submitted_by, submitted_at, data, attachments, signature_data,
+                status::text AS status,
+                reviewed_by, reviewed_at, review_notes,
+                ip_address::text AS ip_address,
+                user_agent, created_at, updated_at
             "#,
         )
         .bind(&data.status)

@@ -709,6 +709,7 @@ enum PubSubBackend {
     InMemory(Arc<InMemoryBroker>),
 }
 
+/// Redis pub/sub service (Story 103.4).
 #[derive(Clone)]
 pub struct PubSubService {
     inner: PubSubBackend,
@@ -940,7 +941,9 @@ impl PubSubService {
     pub fn client(&self) -> &RedisClient {
         match &self.inner {
             PubSubBackend::Redis(client) => client,
-            PubSubBackend::InMemory(_) => panic!("client() called on in-memory backend"),
+            PubSubBackend::InMemory(_) => {
+                panic!("PubSubService::client() requires a Redis backend; this service was built in-memory")
+            }
         }
     }
 }

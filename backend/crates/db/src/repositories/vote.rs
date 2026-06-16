@@ -38,6 +38,35 @@ use sha2::{Digest, Sha256};
 use sqlx::{Error as SqlxError, Executor, FromRow, Postgres};
 use uuid::Uuid;
 
+/// Pick the winning option (highest `weighted_count`) from a set of results.
+///
+/// This is NaN-safe by construction: `f64::partial_cmp` returns `None` for any
+/// comparison involving `NaN`, so the previous `partial_cmp(..).unwrap()` would
+/// panic the moment a single `weighted_count` was `NaN`, taking down the
+/// `/votes/{id}/results` handler. We treat `NaN` as the smallest possible value
+/// (it loses every comparison) and fall back to `Ordering::Equal` for the
+/// `NaN`-vs-`NaN` case, giving `max_by` a total order it can never trip on.
+///
+/// Returns `None` only for an empty input slice.
+fn select_winner(option_results: &[OptionResult]) -> Option<Uuid> {
+    option_results
+        .iter()
+        .max_by(|a, b| {
+            a.weighted_count
+                .partial_cmp(&b.weighted_count)
+                .unwrap_or_else(
+                    || match (a.weighted_count.is_nan(), b.weighted_count.is_nan()) {
+                        // Treat NaN as the smallest value so a real number always wins.
+                        (true, false) => std::cmp::Ordering::Less,
+                        (false, true) => std::cmp::Ordering::Greater,
+                        // NaN vs NaN (or any other unorderable pair): keep stable.
+                        _ => std::cmp::Ordering::Equal,
+                    },
+                )
+        })
+        .map(|r| r.option_id)
+}
+
 /// Row struct for vote with details query.
 #[derive(Debug, FromRow)]
 struct VoteDetailsRow {
@@ -1759,11 +1788,12 @@ impl VoteRepository {
             }
         }
 
-        // Determine winner (highest weighted count)
-        let winner = option_results
-            .iter()
-            .max_by(|a, b| a.weighted_count.partial_cmp(&b.weighted_count).unwrap())
-            .map(|r| r.option_id);
+        // Determine winner (highest weighted count).
+        // NaN-safe: a NaN `weighted_count` (e.g. from a degenerate float
+        // accumulation) must never reach `partial_cmp(..).unwrap()` — that
+        // would panic and take down the /votes/{id}/results handler. See
+        // `select_winner` for the total-ordering used here.
+        let winner = select_winner(&option_results);
 
         Ok(QuestionResult {
             question_id: question.id,
@@ -2048,5 +2078,121 @@ impl VoteRepository {
         .await?;
 
         Ok(rows)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::select_winner;
+    use crate::models::vote::OptionResult;
+    use uuid::Uuid;
+
+    fn opt(weighted_count: f64) -> OptionResult {
+        OptionResult {
+            option_id: Uuid::new_v4(),
+            option_text: "opt".to_string(),
+            count: 0,
+            weighted_count,
+            percentage: 0.0,
+        }
+    }
+
+    #[test]
+    fn select_winner_empty_is_none() {
+        assert_eq!(select_winner(&[]), None);
+    }
+
+    #[test]
+    fn select_winner_picks_highest() {
+        let results = vec![opt(1.0), opt(5.0), opt(3.0)];
+        assert_eq!(select_winner(&results), Some(results[1].option_id));
+    }
+
+    /// Regression guard for the Phase 1.5 finding: a `NaN` `weighted_count`
+    /// used to reach `partial_cmp(..).unwrap()` and panic the
+    /// `/votes/{id}/results` handler. A real option must still win over any
+    /// number of `NaN`-weighted options, and the call must never panic.
+    #[test]
+    fn select_winner_real_value_beats_nan() {
+        // NaN options surround the only real winner.
+        let results = vec![opt(f64::NAN), opt(2.0), opt(f64::NAN)];
+        assert_eq!(select_winner(&results), Some(results[1].option_id));
+    }
+
+    /// All-`NaN` input must not panic; any deterministic option is acceptable.
+    #[test]
+    fn select_winner_all_nan_does_not_panic() {
+        let results = vec![opt(f64::NAN), opt(f64::NAN), opt(f64::NAN)];
+        // Must return *some* option without panicking.
+        assert!(select_winner(&results).is_some());
+    }
+
+    /// Fuzz: random mixes of NaN / +/-inf / normal / subnormal / signed-zero
+    /// weights must never panic the winner selection, and whenever at least
+    /// one finite weight is present the winner must be finite (a NaN/inf must
+    /// never be reported as "highest" over a real result).
+    #[test]
+    fn select_winner_nan_weight_fuzz_never_panics() {
+        // Small deterministic xorshift PRNG — no external rand dependency.
+        let mut state: u64 = 0x9E37_79B9_7F4A_7C15;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+
+        // Pool of adversarial f64 values that can appear after float math.
+        let pool: [f64; 11] = [
+            f64::NAN,
+            -f64::NAN,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            0.0,
+            -0.0,
+            1.0,
+            -1.0,
+            f64::MIN_POSITIVE, // subnormal-adjacent
+            f64::MAX,
+            123.456,
+        ];
+
+        for _ in 0..5_000 {
+            let len = (next() % 8) as usize; // 0..=7 options
+            let mut results = Vec::with_capacity(len);
+            let mut max_finite: Option<f64> = None;
+            for _ in 0..len {
+                let w = pool[(next() as usize) % pool.len()];
+                if w.is_finite() {
+                    max_finite = Some(match max_finite {
+                        Some(m) if m >= w => m,
+                        _ => w,
+                    });
+                }
+                results.push(opt(w));
+            }
+
+            // Must never panic.
+            let winner_id = select_winner(&results);
+
+            match (len, &winner_id) {
+                (0, w) => assert!(w.is_none(), "empty input must yield None"),
+                (_, Some(id)) => {
+                    let chosen = results
+                        .iter()
+                        .find(|r| &r.option_id == id)
+                        .expect("winner id must be present in input");
+                    // If any finite weight existed, a NaN must never be picked
+                    // as the winner over a real value.
+                    if max_finite.is_some() {
+                        assert!(
+                            !chosen.weighted_count.is_nan(),
+                            "winner must never be NaN when a finite option exists"
+                        );
+                    }
+                }
+                (_, None) => panic!("non-empty input must yield Some"),
+            }
+        }
     }
 }
