@@ -293,7 +293,12 @@ async fn token_exchange_rejects_empty_code(pool: PgPool) {
     let token = mint_token(user_id, org_id);
     let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
     let resp = app
-        .execute(authed_post_with_tenant(&uri, &token, org_id, json!({"code": ""})))
+        .execute(authed_post_with_tenant(
+            &uri,
+            &token,
+            org_id,
+            json!({"code": ""}),
+        ))
         .await;
     assert_eq!(
         resp.status,
@@ -322,7 +327,12 @@ async fn token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
     let token_b = mint_token(user_b, org_b);
     let uri = format!("/api/v1/integrations/organizations/{org_a}/airbnb/token/exchange");
     let resp = app
-        .execute(authed_post_with_tenant(&uri, &token_b, org_b, json!({"code": "some-code"})))
+        .execute(authed_post_with_tenant(
+            &uri,
+            &token_b,
+            org_b,
+            json!({"code": "some-code"}),
+        ))
         .await;
     assert_eq!(
         resp.status,
@@ -348,7 +358,12 @@ async fn token_exchange_returns_503_when_not_configured(pool: PgPool) {
     // Airbnb is not configured in the test environment (AIRBNB_CLIENT_ID is
     // empty/unset), so we expect 503.
     let resp = app
-        .execute(authed_post_with_tenant(&uri, &token, org_id, json!({"code": "abc123"})))
+        .execute(authed_post_with_tenant(
+            &uri,
+            &token,
+            org_id,
+            json!({"code": "abc123"}),
+        ))
         .await;
     assert_eq!(
         resp.status,
