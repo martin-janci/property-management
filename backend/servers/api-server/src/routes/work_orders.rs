@@ -1056,6 +1056,17 @@ async fn list_executions(
 // scoped to the caller's org by the row-security policy — closing the #821 P2
 // cross-tenant gap at the database layer (a foreign org's equipment/building id
 // yields an empty history rather than another tenant's service records).
+//
+// BIT-56: the org-gate pre-lookup also runs on the caller's `RlsConnection`
+// (not the raw pool). `equipment` and `buildings` are tenant-isolation RLS
+// tables, so the lookup is scoped to the caller's org: an unknown id AND a
+// foreign-org id both resolve to empty -> 404. This deliberately supersedes
+// #1372's 404-vs-403 split: returning 403 for a foreign-org id is a
+// cross-tenant existence oracle (it confirms the resource exists in another
+// tenant), so 404 for both is the more secure contract. `verify_org_access`
+// is retained as defense-in-depth — under correct RLS the resolved org is
+// always the caller's own, so it is a belt-and-suspenders guard against RLS
+// being misconfigured or disabled.
 
 async fn get_equipment_service_history(
     State(state): State<AppState>,
@@ -1065,11 +1076,12 @@ async fn get_equipment_service_history(
 ) -> Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> = async {
-        // Resolve the owning org before touching RLS — 404 on unknown id, 403 for cross-org.
+        // Resolve the owning org on the caller's RLS connection — unknown id
+        // and foreign-org id both resolve to empty -> 404 (see BIT-56 note above).
         let org_id: Option<Uuid> =
             sqlx::query_scalar("SELECT organization_id FROM equipment WHERE id = $1")
                 .bind(equipment_id)
-                .fetch_optional(&state.db)
+                .fetch_optional(&mut **rls.conn())
                 .await
                 .map_err(|e| {
                     tracing::error!(error = ?e, "Failed to look up equipment org");
@@ -1119,11 +1131,12 @@ async fn get_building_service_history(
 ) -> Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> {
     let uid = rls.user_id();
     let out: Result<Json<Vec<ServiceHistoryEntry>>, (StatusCode, Json<ErrorResponse>)> = async {
-        // Resolve the owning org before touching RLS — 404 on unknown id, 403 for cross-org.
+        // Resolve the owning org on the caller's RLS connection — unknown id
+        // and foreign-org id both resolve to empty -> 404 (see BIT-56 note above).
         let org_id: Option<Uuid> =
             sqlx::query_scalar("SELECT organization_id FROM buildings WHERE id = $1")
                 .bind(building_id)
-                .fetch_optional(&state.db)
+                .fetch_optional(&mut **rls.conn())
                 .await
                 .map_err(|e| {
                     tracing::error!(error = ?e, "Failed to look up building org");
