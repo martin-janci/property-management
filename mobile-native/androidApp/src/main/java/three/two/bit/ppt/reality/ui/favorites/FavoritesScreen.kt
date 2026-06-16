@@ -32,8 +32,8 @@ import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.GuardDecision
-import three.two.bit.ppt.reality.auth.authGuardDecision
 import three.two.bit.ppt.reality.auth.SsoService
+import three.two.bit.ppt.reality.auth.authGuardDecision
 import three.two.bit.ppt.reality.favorites.*
 import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.listing.ListingSummary

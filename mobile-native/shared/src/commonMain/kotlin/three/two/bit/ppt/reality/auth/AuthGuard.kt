@@ -12,5 +12,6 @@ fun authGuardDecision(state: AuthState): GuardDecision =
     when (state) {
         is AuthState.Authenticated -> GuardDecision.CONTENT
         is AuthState.Loading -> GuardDecision.LOADING
-        is AuthState.Unauthenticated, is AuthState.Error -> GuardDecision.NOT_SIGNED_IN
+        is AuthState.Unauthenticated,
+        is AuthState.Error -> GuardDecision.NOT_SIGNED_IN
     }

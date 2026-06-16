@@ -38,9 +38,9 @@ import three.two.bit.ppt.reality.account.ProfileStatsLoader
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.GuardDecision
-import three.two.bit.ppt.reality.auth.authGuardDecision
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.auth.SsoUserInfo
+import three.two.bit.ppt.reality.auth.authGuardDecision
 import three.two.bit.ppt.reality.favorites.FavoritesRepository
 import three.two.bit.ppt.reality.inquiry.InquiryRepository
 import three.two.bit.ppt.reality.notifications.NotificationPreferences
