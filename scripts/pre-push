@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+BACKEND_DIR="./backend"
+
+echo "Running pre-push quality gate: Rust formatting + clippy..."
+
+if ! (cd "$BACKEND_DIR" && cargo fmt --all -- --check && cargo clippy --workspace -- -D warnings); then
+    echo "ERROR: Rust checks failed. Please fix formatting and clippy warnings."
+    exit 1
+fi
+
+echo "✓ Pre-push Rust checks passed."
+exit 0

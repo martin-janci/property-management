@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-15T00:00:00Z",
+  "generated": "2026-06-16T00:00:00Z",
   "sprint": null,
   "version": null,
   "scan_kind": "upkeep",
@@ -339,14 +339,14 @@
         "sync.ts module + React Query handles refresh sync",
         "browser push utilities prepared",
         "WebSocket realtime sync infra shipped (PR #472, merged 2026-05-25) — WS half of preference sync now delivered",
-        "Epic 2B notification pipeline merged (PR #463) — channel routing + delivery transports available"
+        "Epic 2B notification pipeline merged (PR #463) — channel routing + delivery transports available",
+        "PR #1395 (merged this run) added CI-executable coverage for realtime preference-sync publish leg (#1376) — closes the test-gap call-out from the #480-#487 cluster on this slice"
       ],
       "gaps": [
-        "mobile OS push integration (FCM/APNs) still deferred",
-        "backend tests for realtime sync tracked in follow-up issue (#480-#487 cluster)"
+        "mobile OS push integration (FCM/APNs) still deferred"
       ],
-      "notes": "WS half cleared by PR #472; only mobile-push leg remains before promotion to done",
-      "last_checked": "2026-05-25"
+      "notes": "WS half cleared by PR #472; publish-leg tests cleared by PR #1395 (2026-06-16 upkeep); only mobile-push leg (FCM/APNs) remains before promotion to done",
+      "last_checked": "2026-06-16"
     },
     {
       "epic": "epic-9",

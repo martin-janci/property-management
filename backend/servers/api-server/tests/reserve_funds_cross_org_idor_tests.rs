@@ -18,9 +18,11 @@
 //! read.
 //!
 //! Unlike the host-derived-tenant suites (dispute / equipment), reserve-fund
-//! tenancy comes straight from the JWT `tenant_id` claim, which `AuthUser`
-//! reads without a DB membership lookup. That lets these tests mint a real
-//! access token per org and drive the handlers end-to-end:
+//! tenancy is resolved via the `RlsConnection` / `ValidatedTenantExtractor`
+//! path, which performs a DB membership lookup (`OrganizationMemberRepository::
+//! is_member`, `api-core/src/extractors/tenant.rs`) before any handler runs.
+//! These tests therefore seed a membership row per user+org pair and mint a
+//! real access token per org to drive the handlers end-to-end:
 //!   - Org A's token reading Org A's fund -> 200 (same-org succeeds).
 //!   - Org B's token reading Org A's fund -> 404 (cross-org is blocked).
 
@@ -33,7 +35,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig, seed_membership};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -106,14 +108,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .await
     .expect("seed user")
 }
-
-/// Make `user_id` an active member of `org_id`. Required because the
-/// reserve-fund handlers now run through the `RlsConnection` extractor
-/// (PAP-79 / #1321), which validates tenant membership via
-/// `OrganizationMemberRepository::is_member` before any handler executes.
-/// Without a membership row the extractor returns 403 ("not a member of this
-/// tenant") before the org-scoped query can surface the 404 these tests assert.
-
 
 async fn seed_fund(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

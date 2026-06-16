@@ -30,7 +30,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{RequestBuilder, TestApp, TestConfig, seed_membership};
+use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -64,9 +64,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .await
     .expect("seed user")
 }
-
-/// Make `user_id` an active member of `org_id`.
-
 
 /// Seed a vendor in `org_id` and return its id.
 async fn seed_vendor(pool: &PgPool, org_id: Uuid) -> Uuid {

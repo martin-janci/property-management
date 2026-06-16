@@ -32,7 +32,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig, seed_membership};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -164,10 +164,6 @@ async fn seed_photo(pool: &PgPool, log_id: Uuid) -> Uuid {
     .await
     .expect("seed photo")
 }
-
-/// Make `user_id` an active member of `org_id` — required by the
-/// `RlsConnection` membership check.
-
 
 fn photos_uri(log_id: Uuid) -> String {
     format!("/api/v1/predictive-maintenance/maintenance-logs/{log_id}/photos")

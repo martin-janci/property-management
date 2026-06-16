@@ -34,7 +34,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{RequestBuilder, TestApp, TestConfig, seed_membership};
+use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -126,10 +126,6 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
     .await
     .expect("seed document")
 }
-
-/// Make `user_id` an active member of `org_id` — required by the
-/// `RlsConnection` membership check since the PAP-80 conversion.
-
 
 // ---------------------------------------------------------------------------
 // Test 1: same-org read succeeds (proves real org context is wired)

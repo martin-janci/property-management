@@ -58,7 +58,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig, seed_membership};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -92,9 +92,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .await
     .expect("seed user")
 }
-
-/// Make `user_id` an active member of `org_id`.
-
 
 async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

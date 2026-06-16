@@ -33,7 +33,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig, seed_membership};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -67,9 +67,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .await
     .expect("seed user")
 }
-
-/// Make `user_id` an active member of `org_id` with the given role.
-
 
 /// Seed an emergency protocol in `org_id` and return its id.
 async fn seed_protocol(pool: &PgPool, org_id: Uuid) -> Uuid {

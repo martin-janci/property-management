@@ -46,7 +46,7 @@ use axum::{
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser, seed_membership};
+use common::{create_authenticated_user, seed_membership, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -66,10 +66,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .await
     .expect("seed org")
 }
-
-/// Insert an `organization_members` row so `verify_org_access` (which calls
-/// `OrganizationMemberRepository::is_member`) returns true for this pair.
-
 
 async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")

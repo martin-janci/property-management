@@ -33,7 +33,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{RequestBuilder, TestApp, TestConfig, seed_membership};
+use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -67,9 +67,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .await
     .expect("seed user")
 }
-
-/// Make `user_id` an active member of `org_id`.
-
 
 /// Seed an ESG metric in `org_id` created by `created_by`, return its id.
 async fn seed_metric(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {

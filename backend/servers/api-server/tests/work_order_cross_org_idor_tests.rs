@@ -56,7 +56,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser, seed_membership};
+use common::{create_authenticated_user, seed_membership, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -76,11 +76,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .await
     .expect("seed org")
 }
-
-/// Insert an `organization_members` row so `verify_org_access` sees the user
-/// as a member of the org. Role is irrelevant for work-order access (only
-/// membership is checked), so any valid role string works.
-
 
 async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
@@ -394,5 +389,176 @@ async fn get_work_order_same_org_succeeds(pool: PgPool) {
         body.get("id").and_then(|v| v.as_str()),
         Some(wo_in_a.to_string().as_str()),
         "#821: same-org GET must return the requested work order"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Fixtures (service-history)
+// ---------------------------------------------------------------------------
+
+async fn seed_equipment(pool: &PgPool, org_id: Uuid, building_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO equipment (organization_id, building_id, name, category)
+        VALUES ($1, $2, 'Test HVAC Unit', 'hvac')
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed equipment")
+}
+
+async fn seed_completed_work_order(
+    pool: &PgPool,
+    org_id: Uuid,
+    building_id: Uuid,
+    equipment_id: Uuid,
+    created_by: Uuid,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO work_orders
+            (organization_id, building_id, equipment_id, title, description, created_by, status, completed_at)
+        VALUES ($1, $2, $3, 'Service visit', 'Completed maintenance', $4, 'completed', NOW())
+        RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .bind(equipment_id)
+    .bind(created_by)
+    .fetch_one(pool)
+    .await
+    .expect("seed completed work order")
+}
+
+// ---------------------------------------------------------------------------
+// GH #1372 — service-history cross-org negative coverage
+// ---------------------------------------------------------------------------
+
+/// An attacker in Org B requests service history for equipment owned by Org A.
+/// The handler resolves the equipment's org and calls verify_org_access; the
+/// attacker is not an Org A member, so the request is rejected with 403.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn equipment_service_history_cross_org_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "svc-a").await;
+    let org_b = seed_org(&pool, "svc-b").await;
+
+    // Attacker is a member of Org B only.
+    let attacker = TestUser::new();
+    let (b_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "member").await;
+
+    // Legitimate owner in Org A creates equipment.
+    let owner = TestUser::new();
+    let (_, _) = create_authenticated_user(&app, &owner).await;
+    let owner_id = user_id_for(&pool, &owner.email).await;
+    seed_membership(&pool, org_a, owner_id, "manager").await;
+    let building_a = seed_building(&pool, org_a).await;
+    let equipment_a = seed_equipment(&pool, org_a, building_a).await;
+
+    let response = app
+        .execute(
+            app.get(&format!(
+                "/api/v1/work-orders/equipment/{}/service-history",
+                equipment_a
+            ))
+            .bearer(&b_token)
+            .header("X-Tenant-ID", &org_b.to_string())
+            .build(),
+        )
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "#1372: cross-org equipment service history must be rejected (403), got {} body={}",
+        response.status,
+        response.text()
+    );
+}
+
+/// An attacker in Org B requests service history for a building owned by Org A.
+/// Same pattern as equipment — 403 before any repo call.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn building_service_history_cross_org_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "bsvc-a").await;
+    let org_b = seed_org(&pool, "bsvc-b").await;
+
+    let attacker = TestUser::new();
+    let (b_token, _) = create_authenticated_user(&app, &attacker).await;
+    let attacker_id = user_id_for(&pool, &attacker.email).await;
+    seed_membership(&pool, org_b, attacker_id, "member").await;
+
+    let owner = TestUser::new();
+    let (_, _) = create_authenticated_user(&app, &owner).await;
+    let owner_id = user_id_for(&pool, &owner.email).await;
+    seed_membership(&pool, org_a, owner_id, "manager").await;
+    let building_a = seed_building(&pool, org_a).await;
+
+    let response = app
+        .execute(
+            app.get(&format!(
+                "/api/v1/work-orders/buildings/{}/service-history",
+                building_a
+            ))
+            .bearer(&b_token)
+            .header("X-Tenant-ID", &org_b.to_string())
+            .build(),
+        )
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::FORBIDDEN,
+        "#1372: cross-org building service history must be rejected (403), got {} body={}",
+        response.status,
+        response.text()
+    );
+}
+
+/// A member of Org A reading Org A equipment service history succeeds — proves
+/// the fix does not over-block legitimate same-org access.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn equipment_service_history_same_org_succeeds(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "svc-same").await;
+
+    let member = TestUser::new();
+    let (token, _) = create_authenticated_user(&app, &member).await;
+    let member_id = user_id_for(&pool, &member.email).await;
+    seed_membership(&pool, org_a, member_id, "member").await;
+
+    let building_a = seed_building(&pool, org_a).await;
+    let equipment_a = seed_equipment(&pool, org_a, building_a).await;
+    seed_completed_work_order(&pool, org_a, building_a, equipment_a, member_id).await;
+
+    let response = app
+        .execute(
+            app.get(&format!(
+                "/api/v1/work-orders/equipment/{}/service-history",
+                equipment_a
+            ))
+            .bearer(&token)
+            .header("X-Tenant-ID", &org_a.to_string())
+            .build(),
+        )
+        .await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::OK,
+        "#1372: same-org equipment service history must succeed (200), got {} body={}",
+        response.status,
+        response.text()
     );
 }
