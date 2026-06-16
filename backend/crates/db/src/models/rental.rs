@@ -308,12 +308,17 @@ pub struct RentalBooking {
     pub check_out_time: Option<NaiveTime>,
 
     // Financial
-    #[sqlx(try_from = "Decimal")]
+    //
+    // NOTE: these columns are nullable (00051_create_short_term_rentals.sql).
+    // `#[sqlx(try_from = "Decimal")]` decodes the column as a non-null `Decimal`
+    // first, so a NULL value raised a runtime "unexpected null" decode error —
+    // any booking with no amount/fee failed to load (e.g. `RETURNING *` in
+    // `create_booking`, `SELECT *` in `find_booking_by_id`). sqlx decodes
+    // `Option<Decimal>` from a nullable NUMERIC natively, so the attribute is
+    // removed. (GH #1422)
     pub total_amount: Option<Decimal>,
     pub currency: Option<String>,
-    #[sqlx(try_from = "Decimal")]
     pub platform_fee: Option<Decimal>,
-    #[sqlx(try_from = "Decimal")]
     pub cleaning_fee: Option<Decimal>,
 
     // Status
