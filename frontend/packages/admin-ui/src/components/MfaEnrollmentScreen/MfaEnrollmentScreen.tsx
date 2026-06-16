@@ -172,7 +172,7 @@ export function MfaEnrollmentScreen({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onStart]);
 
   // Re-trigger onStart from the UI when the initial attempt failed and we
   // landed in the scan step with no enrollData. Without this the user has

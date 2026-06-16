@@ -90,6 +90,148 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
 
+  // Get all queued actions
+  const getQueuedActions = useCallback(async (): Promise<QueuedAction[]> => {
+    try {
+      const queue = await AsyncStorage.getItem(QUEUE_KEY);
+      return queue ? JSON.parse(queue) : [];
+    } catch (error) {
+      console.error('Failed to get queued actions:', error);
+      return [];
+    }
+  }, []);
+
+  const loadLastSyncTime = useCallback(async () => {
+    try {
+      const timestamp = await AsyncStorage.getItem(LAST_SYNC_KEY);
+      if (timestamp) {
+        setLastSyncTime(new Date(Number.parseInt(timestamp, 10)));
+      }
+    } catch (error) {
+      console.error('Failed to load last sync time:', error);
+    }
+  }, []);
+
+  const loadQueueCount = useCallback(async () => {
+    try {
+      const queue = await getQueuedActions();
+      setQueuedActionsCount(queue.length);
+    } catch (error) {
+      console.error('Failed to load queue count:', error);
+    }
+  }, [getQueuedActions]);
+
+  // Execute a single queued action against the real backend.
+  const executeQueuedAction = useCallback(async (action: QueuedAction): Promise<void> => {
+    const url = action.endpoint.startsWith('http')
+      ? action.endpoint
+      : `${getApiBaseUrl()}${action.endpoint}`;
+
+    const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+      const tenantId = extractTenantIdFromJwt(accessToken);
+      if (tenantId) {
+        headers['X-Tenant-ID'] = tenantId;
+      }
+    }
+
+    const response = await fetch(url, {
+      method: action.method,
+      headers,
+      body: action.body !== undefined ? JSON.stringify(action.body) : undefined,
+    });
+
+    if (!response.ok) {
+      const error = new Error(`HTTP ${response.status} on ${action.method} ${action.endpoint}`);
+      if (response.status >= 400 && response.status < 500) {
+        (error as Error & { permanent?: boolean }).permanent = true;
+      }
+      throw error;
+    }
+  }, []);
+
+  // Process offline queue when back online
+  const processQueue = useCallback(
+    async (onProgress?: SyncProgressCallback): Promise<{ success: number; failed: number }> => {
+      if (!isConnected || !isInternetReachable) {
+        return { success: 0, failed: 0 };
+      }
+
+      setIsSyncing(true);
+      let success = 0;
+      let failed = 0;
+
+      try {
+        const queue = await getQueuedActions();
+        const total = queue.length;
+
+        if (total === 0) {
+          return { success: 0, failed: 0 };
+        }
+
+        // Initialize progress
+        const initialProgress: SyncProgress = { total, current: 0, failed: 0, isComplete: false };
+        setSyncProgress(initialProgress);
+        onProgress?.(initialProgress);
+
+        const remainingActions: QueuedAction[] = [];
+
+        for (let i = 0; i < queue.length; i++) {
+          const action = queue[i];
+          try {
+            await executeQueuedAction(action);
+            success++;
+          } catch (error) {
+            const isPermanent = (error as { permanent?: boolean })?.permanent === true;
+            action.retries++;
+            if (!isPermanent && action.retries < 3) {
+              remainingActions.push(action);
+            } else {
+              failed++;
+              console.error('Action failed after max retries:', action);
+            }
+          }
+
+          // Update progress after each item
+          const currentProgress: SyncProgress = {
+            total,
+            current: i + 1,
+            failed,
+            isComplete: false,
+          };
+          setSyncProgress(currentProgress);
+          onProgress?.(currentProgress);
+        }
+
+        // Update queue with remaining actions
+        await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(remainingActions));
+        setQueuedActionsCount(remainingActions.length);
+
+        // Update last sync time
+        const now = Date.now();
+        await AsyncStorage.setItem(LAST_SYNC_KEY, now.toString());
+        setLastSyncTime(new Date(now));
+
+        // Final progress update
+        const finalProgress: SyncProgress = { total, current: total, failed, isComplete: true };
+        setSyncProgress(finalProgress);
+        onProgress?.(finalProgress);
+
+        return { success, failed };
+      } catch (error) {
+        console.error('Failed to process queue:', error);
+        return { success, failed };
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [isConnected, isInternetReachable, getQueuedActions, executeQueuedAction]
+  );
+
   // Monitor network status
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
@@ -117,27 +259,7 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     loadQueueCount();
 
     return () => unsubscribe();
-  }, []);
-
-  const loadLastSyncTime = async () => {
-    try {
-      const timestamp = await AsyncStorage.getItem(LAST_SYNC_KEY);
-      if (timestamp) {
-        setLastSyncTime(new Date(Number.parseInt(timestamp, 10)));
-      }
-    } catch (error) {
-      console.error('Failed to load last sync time:', error);
-    }
-  };
-
-  const loadQueueCount = async () => {
-    try {
-      const queue = await getQueuedActions();
-      setQueuedActionsCount(queue.length);
-    } catch (error) {
-      console.error('Failed to load queue count:', error);
-    }
-  };
+  }, [processQueue, loadLastSyncTime, loadQueueCount]);
 
   // Cache data locally
   const cacheData = useCallback(
@@ -213,150 +335,8 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         console.error('Failed to add to queue:', error);
       }
     },
-    []
+    [getQueuedActions]
   );
-
-  // Get all queued actions
-  const getQueuedActions = useCallback(async (): Promise<QueuedAction[]> => {
-    try {
-      const queue = await AsyncStorage.getItem(QUEUE_KEY);
-      return queue ? JSON.parse(queue) : [];
-    } catch (error) {
-      console.error('Failed to get queued actions:', error);
-      return [];
-    }
-  }, []);
-
-  // Process offline queue when back online
-  const processQueue = useCallback(
-    async (onProgress?: SyncProgressCallback): Promise<{ success: number; failed: number }> => {
-      if (!isConnected || !isInternetReachable) {
-        return { success: 0, failed: 0 };
-      }
-
-      setIsSyncing(true);
-      let success = 0;
-      let failed = 0;
-
-      try {
-        const queue = await getQueuedActions();
-        const total = queue.length;
-
-        if (total === 0) {
-          return { success: 0, failed: 0 };
-        }
-
-        // Initialize progress
-        const initialProgress: SyncProgress = { total, current: 0, failed: 0, isComplete: false };
-        setSyncProgress(initialProgress);
-        onProgress?.(initialProgress);
-
-        const remainingActions: QueuedAction[] = [];
-
-        for (let i = 0; i < queue.length; i++) {
-          const action = queue[i];
-          try {
-            await executeQueuedAction(action);
-            success++;
-          } catch (error) {
-            // 4xx responses are marked `permanent` by executeQueuedAction
-            // and dropped immediately — replaying them won't help.
-            // Everything else (5xx, network) goes through the retry budget.
-            const isPermanent = (error as { permanent?: boolean })?.permanent === true;
-            action.retries++;
-            if (!isPermanent && action.retries < 3) {
-              remainingActions.push(action);
-            } else {
-              failed++;
-              console.error('Action failed after max retries:', action);
-            }
-          }
-
-          // Update progress after each item
-          const currentProgress: SyncProgress = {
-            total,
-            current: i + 1,
-            failed,
-            isComplete: false,
-          };
-          setSyncProgress(currentProgress);
-          onProgress?.(currentProgress);
-        }
-
-        // Update queue with remaining actions
-        await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(remainingActions));
-        setQueuedActionsCount(remainingActions.length);
-
-        // Update last sync time
-        const now = Date.now();
-        await AsyncStorage.setItem(LAST_SYNC_KEY, now.toString());
-        setLastSyncTime(new Date(now));
-
-        // Final progress update
-        const finalProgress: SyncProgress = { total, current: total, failed, isComplete: true };
-        setSyncProgress(finalProgress);
-        onProgress?.(finalProgress);
-
-        return { success, failed };
-      } catch (error) {
-        console.error('Failed to process queue:', error);
-        return { success, failed };
-      } finally {
-        setIsSyncing(false);
-      }
-    },
-    [isConnected, isInternetReachable, getQueuedActions]
-  );
-
-  // Execute a single queued action against the real backend.
-  //
-  // The queue stores `endpoint` as either an absolute URL or a path
-  // beginning with `/`. For relative paths we prefix the configured API
-  // base URL. The bearer token (if available) is read from SecureStore
-  // at dispatch time so token rotations between enqueue and replay are
-  // honored.
-  const executeQueuedAction = async (action: QueuedAction): Promise<void> => {
-    const url = action.endpoint.startsWith('http')
-      ? action.endpoint
-      : `${getApiBaseUrl()}${action.endpoint}`;
-
-    const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
-      // Tenant-scoped api-server routes (RlsConnection extractor on
-      // /faults, /voting, /buildings, …) reject requests without
-      // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
-      // claim — extract it so replayed offline actions hit the same
-      // tenant the user was signed into when they enqueued.
-      const tenantId = extractTenantIdFromJwt(accessToken);
-      if (tenantId) {
-        headers['X-Tenant-ID'] = tenantId;
-      }
-    }
-
-    const response = await fetch(url, {
-      method: action.method,
-      headers,
-      body: action.body !== undefined ? JSON.stringify(action.body) : undefined,
-    });
-
-    if (!response.ok) {
-      // Treat 4xx as terminal (the request will never succeed even on
-      // retry — bad payload, gone, unauthorized, …) so the queue drops
-      // the action without burning the retry budget on hopeless replays.
-      // 5xx and network failures bubble up as a normal error so the
-      // outer retry loop handles them.
-      const error = new Error(`HTTP ${response.status} on ${action.method} ${action.endpoint}`);
-      if (response.status >= 400 && response.status < 500) {
-        // Mark the error so processQueue can decide to drop instead of retry.
-        (error as Error & { permanent?: boolean }).permanent = true;
-      }
-      throw error;
-    }
-  };
 
   // Clear the offline queue
   const clearQueue = useCallback(async (): Promise<void> => {
@@ -378,9 +358,6 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
       setIsSyncing(true);
 
       try {
-        // Process offline queue first. Per-domain prefetching (announcements,
-        // faults, votes) is intentionally left to each screen's own
-        // useQuery + cacheData call so this hook stays endpoint-agnostic.
         await processQueue(onProgress);
       } catch (error) {
         console.error('Failed to sync data:', error);

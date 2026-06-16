@@ -3,13 +3,13 @@
 use std::time::Instant;
 
 use crate::services::{
-    AuthService, EmailService, JwtService, NotificationPipeline, OAuthService, PipelineConfig,
+    AccountingService, AuthService, EmailService, JwtService, NotificationPipeline, OAuthService, PipelineConfig,
     TotpService,
 };
 use api_core::TenantMembershipProvider;
 use db::{
     repositories::{
-        AgencyRepository, AiChatRepository, AnnouncementRepository, ApiEcosystemRepository,
+        AccountingRepository, AgencyRepository, AiChatRepository, AnnouncementRepository, ApiEcosystemRepository,
         AuditLogRepository, AutomationRepository, BackgroundJobRepository, BoardMeetingRepository,
         BudgetRepository, BuildingCertificationRepository, BuildingRepository, CommunityRepository,
         ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
@@ -219,6 +219,8 @@ pub struct AppState {
     pub compliance_repo: ComplianceRepository,
     // Epic 81: Report Schedule Management & Execution History
     pub report_schedule_repo: ReportScheduleRepository,
+    pub accounting_service: AccountingService,
+    pub accounting_repo: AccountingRepository,
     // Epic 91: AI Chat LLM Integration
     pub llm_client: LlmClient,
     pub auth_service: AuthService,
@@ -394,9 +396,11 @@ impl AppState {
         let compliance_repo = ComplianceRepository::new(db.clone());
         // Epic 81: Report Schedule Management & Execution History
         let report_schedule_repo = ReportScheduleRepository::new(db.clone());
+        let accounting_repo = AccountingRepository::new(db.clone());
         // Epic 91: AI Chat LLM Integration
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
+        let accounting_service = AccountingService::new(accounting_repo.clone());
         let totp_service = TotpService::new("Property Management".to_string());
         let oauth_service =
             OAuthService::new(oauth_repo.clone(), user_repo.clone(), auth_service.clone());
@@ -504,6 +508,8 @@ impl AppState {
             edd_repo,
             compliance_repo,
             report_schedule_repo,
+            accounting_service,
+            accounting_repo,
             llm_client,
             auth_service,
             email_service,

@@ -12,7 +12,7 @@
  */
 
 import { useLocale } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { type Locale, localeFlags, localeNames, locales } from '../../i18n';
 import { usePathname, useRouter } from '../../i18n/routing';
 
@@ -35,6 +35,16 @@ export function LanguageSwitcher() {
     const i = locales.indexOf(locale);
     if (i >= 0) setActiveIndex(i);
   }, [locale]);
+
+  const choose = useCallback(
+    (next: Locale) => {
+      setOpen(false);
+      triggerRef.current?.focus();
+      if (next === locale) return;
+      router.replace(pathname, { locale: next });
+    },
+    [locale, router, pathname]
+  );
 
   // Keyboard navigation while the menu is open. Listening on the document
   // because the listbox itself doesn't take focus (the trigger keeps it,
@@ -80,17 +90,7 @@ export function LanguageSwitcher() {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-    // choose isn't in deps because the underlying functions (router,
-    // pathname) are referentially-stable from next-intl across renders.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  const choose = (next: Locale) => {
-    setOpen(false);
-    triggerRef.current?.focus();
-    if (next === locale) return;
-    router.replace(pathname, { locale: next });
-  };
+  }, [open, choose]);
 
   const handleTriggerKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
