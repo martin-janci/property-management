@@ -130,10 +130,10 @@ pub use workflow_executor::{
 
 // Story 103.2-103.4: Redis Integration
 pub use redis::{
-    channels as redis_channels, event_types as redis_events, CacheError, PubSubMessage,
-    PubSubService, RedisClient, RedisConfig, SessionData, SessionStore, CACHE_KEY_PREFIX,
-    DEFAULT_CACHE_TTL_SECS, DEFAULT_SESSION_TTL_SECS, PUBSUB_CHANNEL_PREFIX, REDIS_URL_ENV,
-    SESSION_KEY_PREFIX,
+    channels as redis_channels, event_types as redis_events, CacheError, InMemoryBroker,
+    PubSubMessage, PubSubService, RedisClient, RedisConfig, SessionData, SessionStore,
+    CACHE_KEY_PREFIX, DEFAULT_CACHE_TTL_SECS, DEFAULT_SESSION_TTL_SECS, PUBSUB_CHANNEL_PREFIX,
+    REDIS_URL_ENV, SESSION_KEY_PREFIX,
 };
 
 // Epic 150: API Ecosystem Expansion
