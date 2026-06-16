@@ -32,7 +32,7 @@ pub async fn confirm_match(
 ) -> Result<StatusCode, StatusCode> {
     state
         .accounting_service
-        .confirm_match(rls.tenant_id(), match_id, rls.user_id())
+        .confirm_match(&mut **rls, rls.tenant_id(), match_id, rls.user_id())
         .await
         .map_err(|e| {
             tracing::error!("Failed to confirm match: {}", e);
@@ -54,7 +54,7 @@ pub async fn reject_match(
 ) -> Result<StatusCode, StatusCode> {
     state
         .accounting_service
-        .reject_match(match_id, rls.user_id())
+        .reject_match(&mut **rls, match_id, rls.user_id())
         .await
         .map_err(|e| {
             tracing::error!("Failed to reject match: {}", e);

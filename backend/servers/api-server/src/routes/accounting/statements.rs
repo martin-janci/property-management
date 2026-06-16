@@ -36,7 +36,7 @@ pub async fn upload_statement(
 
     let statement = state
         .accounting_service
-        .process_statement_upload(rls.tenant_id(), filename, &data)
+        .process_statement_upload(&mut **rls, rls.tenant_id(), filename, &data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to process statement upload: {}", e);
