@@ -9,9 +9,9 @@
 export * from './admin';
 export * from './advanced-notifications';
 export * from './announcements';
+export type { AuthUser } from './auth';
 // Export auth token provider for secure token management
 export * from './auth';
-export type { AuthUser } from './auth';
 export * from './buildings';
 export * from './community';
 export * from './compliance';

@@ -103,6 +103,17 @@ pub use agency_domain::{
     AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
 };
 
+pub use accounting::{
+    BankStatement, BankStatementLine, Contact, CreateInvoice as CreateAccountingInvoice,
+    CreateInvoiceItem as CreateAccountingInvoiceItem, Invoice as AccountingInvoice,
+    InvoiceItem as AccountingInvoiceItem, InvoiceStatus as AccountingInvoiceStatus, PaymentMatch,
+    PaymentMatchState, UpdateInvoice, UpdateInvoiceItem, VatRate,
+};
+pub use accounting_provider::{
+    AccountingProviderAuthFlow, AccountingProviderConnection, AccountingProviderContact,
+    AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
+    AccountingProviderSyncCursor,
+};
 pub use announcement::{
     announcement_status, target_type, AcknowledgeAnnouncement, AcknowledgmentStats, Announcement,
     AnnouncementAttachment, AnnouncementComment, AnnouncementListQuery, AnnouncementRead,
@@ -171,16 +182,6 @@ pub use financial::{
     ListInvoicesResponse, OnlinePaymentSession, Payment, PaymentAllocation, PaymentMethod,
     PaymentResponse, PaymentStatus, RecordPayment, ReminderSchedule, TransactionCategory,
     TransactionType, UnitCreditBalance, UnitFee,
-};
-pub use accounting::{
-    BankStatement, BankStatementLine, Contact, CreateInvoice as CreateAccountingInvoice, CreateInvoiceItem as CreateAccountingInvoiceItem, Invoice as AccountingInvoice,
-    InvoiceItem as AccountingInvoiceItem, InvoiceStatus as AccountingInvoiceStatus, PaymentMatch, PaymentMatchState, UpdateInvoice, UpdateInvoiceItem,
-    VatRate,
-};
-pub use accounting_provider::{
-    AccountingProviderAuthFlow, AccountingProviderConnection, AccountingProviderContact,
-    AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
-    AccountingProviderSyncCursor,
 };
 pub use granular_notification::{
     AddToGroupRequest, CategorySummary, CreateHeldNotification, DigestNotification,
