@@ -1012,6 +1012,60 @@ impl DocumentRepository {
         Ok(row.get("has_access"))
     }
 
+    /// Resolve the caller's `building` and `unit` access-scope memberships.
+    ///
+    /// A user is a member of a unit (and, transitively, its building) when they
+    /// are an **active unit owner** (`unit_owners.status = 'active'` and not
+    /// expired) or a **current unit resident** (`unit_residents.end_date IS
+    /// NULL`). Returns `(building_ids, unit_ids)` — the inputs the in-memory
+    /// download/preview gate and `check_access_rls` need to resolve
+    /// `building`/`unit`-scoped documents.
+    ///
+    /// RLS-scoped: only memberships whose building belongs to the connection's
+    /// org are visible, mirroring `BuildingRepository::can_user_access_building`.
+    pub async fn user_scope_memberships_rls<'e, E>(
+        &self,
+        executor: E,
+        user_id: Uuid,
+    ) -> Result<(Vec<Uuid>, Vec<Uuid>), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let rows = sqlx::query(
+            r#"
+            SELECT DISTINCT u.id AS unit_id, u.building_id AS building_id
+            FROM units u
+            WHERE EXISTS (
+                SELECT 1 FROM unit_owners uo
+                WHERE uo.unit_id = u.id
+                  AND uo.user_id = $1
+                  AND uo.status = 'active'
+                  AND uo.valid_until IS NULL
+            )
+            OR EXISTS (
+                SELECT 1 FROM unit_residents ur
+                WHERE ur.unit_id = u.id
+                  AND ur.user_id = $1
+                  AND ur.end_date IS NULL
+            )
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(executor)
+        .await?;
+
+        let mut unit_ids = Vec::with_capacity(rows.len());
+        let mut building_ids = Vec::new();
+        for row in &rows {
+            unit_ids.push(row.get::<Uuid, _>("unit_id"));
+            let building_id: Uuid = row.get("building_id");
+            if !building_ids.contains(&building_id) {
+                building_ids.push(building_id);
+            }
+        }
+        Ok((building_ids, unit_ids))
+    }
+
     // ========================================================================
     // Legacy Document Operations (Story 7A.1) - migrate to RLS versions
     // ========================================================================
