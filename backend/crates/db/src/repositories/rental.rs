@@ -607,7 +607,7 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateBooking,
     ) -> Result<RentalBooking, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_bookings SET
                 guest_name = COALESCE($2, guest_name),
@@ -624,9 +624,9 @@ impl RentalRepository {
                 internal_notes = COALESCE($13, internal_notes),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
-            "#,
-        )
+            RETURNING {BOOKING_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(&data.guest_name)
         .bind(&data.guest_email)
@@ -673,7 +673,7 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateBooking,
     ) -> Result<Option<RentalBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_bookings SET
                 guest_name = COALESCE($2, guest_name),
@@ -690,9 +690,9 @@ impl RentalRepository {
                 internal_notes = COALESCE($13, internal_notes),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $14
-            RETURNING *
-            "#,
-        )
+            RETURNING {BOOKING_COLUMNS}
+            "#
+        )))
         .bind(id)
         .bind(&data.guest_name)
         .bind(&data.guest_email)
