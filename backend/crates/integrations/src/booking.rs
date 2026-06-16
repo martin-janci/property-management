@@ -1781,8 +1781,7 @@ impl BookingClient {
                     "Booking.com OTA push returned retryable HTTP status"
                 );
                 if let Some(secs) = ra_hint_secs {
-                    retry_after_ms =
-                        Some(secs.saturating_mul(1000).min(self.retry.max_delay_ms));
+                    retry_after_ms = Some(secs.saturating_mul(1000).min(self.retry.max_delay_ms));
                 }
                 // 429 always maps to RateLimited (with or without Retry-After);
                 // other retryable codes map to Api unless they carried Retry-After.
@@ -2421,7 +2420,8 @@ mod tests {
         }
 
         fn with_header(mut self, name: &str, value: &str) -> Self {
-            self.extra_headers.push((name.to_string(), value.to_string()));
+            self.extra_headers
+                .push((name.to_string(), value.to_string()));
             self
         }
     }
@@ -2808,7 +2808,11 @@ mod tests {
         }];
 
         let result = client.push_availability("H1", &updates).await;
-        assert_eq!(server.hits(), 2, "should exhaust max_attempts on persistent 429");
+        assert_eq!(
+            server.hits(),
+            2,
+            "should exhaust max_attempts on persistent 429"
+        );
         match result {
             Err(BookingError::RateLimited(secs)) => {
                 assert_eq!(secs, 0, "no Retry-After header → RateLimited(0)");
