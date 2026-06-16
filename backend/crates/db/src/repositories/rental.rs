@@ -2667,8 +2667,9 @@ impl RentalRepository {
     ) -> Result<Vec<RentalPlatformConnection>, SqlxError> {
         let threshold = Utc::now() + Duration::seconds(buffer_secs);
 
-        let connections = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
-            r#"
+        let connections =
+            sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
+                r#"
             SELECT {PLATFORM_CONNECTION_COLUMNS} FROM rental_platform_connections
             WHERE platform = 'airbnb'
               AND is_active = true
@@ -2678,10 +2679,10 @@ impl RentalRepository {
             ORDER BY token_expires_at ASC
             LIMIT 100
             "#
-        )))
-        .bind(threshold)
-        .fetch_all(&self.pool)
-        .await?;
+            )))
+            .bind(threshold)
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(connections)
     }
@@ -2710,17 +2711,18 @@ impl RentalRepository {
         &self,
         org_id: Uuid,
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
-        let connection = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
-            r#"
+        let connection =
+            sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
+                r#"
             SELECT {PLATFORM_CONNECTION_COLUMNS} FROM rental_platform_connections
             WHERE organization_id = $1 AND platform = 'booking'
             ORDER BY created_at DESC
             LIMIT 1
             "#
-        )))
-        .bind(org_id)
-        .fetch_optional(&self.pool)
-        .await?;
+            )))
+            .bind(org_id)
+            .fetch_optional(&self.pool)
+            .await?;
 
         Ok(connection)
     }
@@ -2737,8 +2739,9 @@ impl RentalRepository {
         let id = Uuid::new_v4();
         let unit_id = Uuid::nil(); // Booking connections are org-level
 
-        let connection = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
-            r#"
+        let connection =
+            sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
+                r#"
             INSERT INTO rental_platform_connections (
                 id, unit_id, organization_id, platform, external_property_id,
                 access_token, refresh_token, is_active,
@@ -2756,15 +2759,15 @@ impl RentalRepository {
                 updated_at = NOW()
             RETURNING {PLATFORM_CONNECTION_COLUMNS}
             "#
-        )))
-        .bind(id)
-        .bind(unit_id)
-        .bind(org_id)
-        .bind(hotel_id)
-        .bind(username)
-        .bind(password)
-        .fetch_one(&self.pool)
-        .await?;
+            )))
+            .bind(id)
+            .bind(unit_id)
+            .bind(org_id)
+            .bind(hotel_id)
+            .bind(username)
+            .bind(password)
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(connection)
     }
