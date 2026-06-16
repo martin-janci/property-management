@@ -1,8 +1,7 @@
 use db::models::reserve_funds::{
     CreateReserveFund, FundTransactionType, FundType, RecordFundTransaction,
 };
-use db::models::RecordReserveTransaction;
-use db::repositories::{BudgetRepository, ReserveFundRepository};
+use db::repositories::ReserveFundRepository;
 use rust_decimal_macros::dec;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -45,65 +44,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-// PoolConnection<Postgres> requires explicit deref to satisfy Executor trait bounds;
-// auto-deref does not work here due to lifetime constraints in sqlx's impl.
-#[allow(clippy::explicit_auto_deref)]
-#[sqlx::test(migrator = "db::MIGRATOR")]
-async fn test_budget_reserve_transaction_atomicity(pool: PgPool) {
-    let repo = BudgetRepository::new(pool.clone());
-
-    // --- Seed data ---
-    set_ctx(&pool, None, None, true).await;
-    let org_id = seed_org(&pool, "budget-atom").await;
-    let user_id = seed_user(&pool, "budget-atom@test.com").await;
-
-    // Create a reserve fund
-    let fund = repo
-        .create_reserve_fund_rls(
-            &pool,
-            org_id,
-            db::models::CreateReserveFund {
-                building_id: None,
-                name: Some("Atomicity Fund".to_string()),
-                target_balance: Some(dec!(10000.0)),
-                annual_contribution: dec!(1200.0),
-                notes: None,
-            },
-        )
-        .await
-        .expect("create reserve fund");
-
-    // --- Test transaction ---
-    let mut conn = pool.acquire().await.expect("acquire");
-    set_ctx(&pool, Some(org_id), Some(user_id), false).await;
-
-    let data = RecordReserveTransaction {
-        transaction_type: "contribution".to_string(),
-        amount: dec!(500.0),
-        description: Some("Test contribution".to_string()),
-        reference_type: None,
-        reference_id: None,
-        transaction_date: chrono::Utc::now().date_naive(),
-    };
-
-    let txn = repo
-        .record_reserve_transaction(&mut *conn, fund.id, user_id, data)
-        .await
-        .expect("record reserve transaction");
-
-    assert_eq!(txn.amount, dec!(500.0));
-    assert_eq!(txn.balance_after, dec!(500.0)); // Initial balance was 0
-
-    // Verify fund balance was updated (via trigger or manual update)
-    let updated_fund = repo
-        .find_reserve_fund_by_id_rls(&mut *conn, org_id, fund.id)
-        .await
-        .expect("find fund")
-        .expect("fund exists");
-
-    assert_eq!(updated_fund.current_balance, dec!(500.0));
 }
 
 // PoolConnection<Postgres> requires explicit deref to satisfy Executor trait bounds;

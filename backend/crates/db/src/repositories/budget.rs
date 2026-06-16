@@ -1,13 +1,14 @@
 //! Budget repository for Epic 24.
 //!
-//! Provides CRUD operations for budgets, budget items, capital plans, reserve funds, and forecasts.
+//! Provides CRUD operations for budgets, budget items, capital plans, and forecasts.
+//! (Reserve-fund CRUD lives in the canonical `reserve_funds` repository.)
 //!
 //! # RLS Integration
 //!
 //! All methods take an executor with RLS context already set (e.g. from an
 //! `RlsConnection`): single-query CRUD methods carry the `_rls` suffix and
-//! accept any `Executor`, while the multi-query reserve/dashboard helpers
-//! take `&mut PgConnection` so they can reborrow across queries. The
+//! accept any `Executor`, while the multi-query dashboard helper
+//! takes `&mut PgConnection` so it can reborrow across queries. The
 //! repository holds no pool — there is no non-RLS code path.
 //!
 //! ## Example
@@ -24,19 +25,16 @@
 //! }
 //! ```
 
-use chrono::Datelike;
-
 use crate::models::{
     budget_status, AcknowledgeVarianceAlert, Budget, BudgetActual, BudgetCategory, BudgetDashboard,
     BudgetItem, BudgetQuery, BudgetSummary, BudgetVarianceAlert, CapitalPlan, CapitalPlanQuery,
     CategoryVariance, CreateBudget, CreateBudgetCategory, CreateBudgetItem, CreateCapitalPlan,
-    CreateFinancialForecast, CreateReserveFund, FinancialForecast, ForecastQuery,
-    RecordBudgetActual, RecordReserveTransaction, ReserveFund, ReserveFundProjection,
-    ReserveFundTransaction, UpdateBudget, UpdateBudgetCategory, UpdateBudgetItem,
-    UpdateCapitalPlan, UpdateFinancialForecast, UpdateReserveFund, YearlyCapitalSummary,
+    CreateFinancialForecast, FinancialForecast, ForecastQuery, RecordBudgetActual, UpdateBudget,
+    UpdateBudgetCategory, UpdateBudgetItem, UpdateCapitalPlan, UpdateFinancialForecast,
+    YearlyCapitalSummary,
 };
 use rust_decimal::Decimal;
-use sqlx::{Connection, Executor, PgPool, Postgres};
+use sqlx::{Executor, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for budget and financial planning operations.
@@ -777,182 +775,6 @@ impl BudgetRepository {
     }
 
     // ===========================================
-    // RLS-aware Reserve Fund Operations
-    // ===========================================
-
-    /// Create a reserve fund with RLS context.
-    pub async fn create_reserve_fund_rls<'e, E>(
-        &self,
-        executor: E,
-        organization_id: Uuid,
-        data: CreateReserveFund,
-    ) -> Result<ReserveFund, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            r#"
-            INSERT INTO reserve_funds (organization_id, building_id, name, target_balance, annual_contribution, notes)
-            VALUES ($1, $2, COALESCE($3, 'General Reserve'), $4, $5, $6)
-            RETURNING *
-            "#,
-        )
-        .bind(organization_id)
-        .bind(data.building_id)
-        .bind(&data.name)
-        .bind(data.target_balance)
-        .bind(data.annual_contribution)
-        .bind(&data.notes)
-        .fetch_one(executor)
-        .await
-    }
-
-    /// Find reserve fund by ID with RLS context.
-    pub async fn find_reserve_fund_by_id_rls<'e, E>(
-        &self,
-        executor: E,
-        organization_id: Uuid,
-        id: Uuid,
-    ) -> Result<Option<ReserveFund>, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            r#"
-            SELECT * FROM reserve_funds
-            WHERE id = $1 AND organization_id = $2
-            "#,
-        )
-        .bind(id)
-        .bind(organization_id)
-        .fetch_optional(executor)
-        .await
-    }
-
-    /// List reserve funds with RLS context.
-    pub async fn list_reserve_funds_rls<'e, E>(
-        &self,
-        executor: E,
-        organization_id: Uuid,
-        building_id: Option<Uuid>,
-    ) -> Result<Vec<ReserveFund>, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            r#"
-            SELECT * FROM reserve_funds
-            WHERE organization_id = $1
-              AND ($2::uuid IS NULL OR building_id = $2)
-            ORDER BY name
-            "#,
-        )
-        .bind(organization_id)
-        .bind(building_id)
-        .fetch_all(executor)
-        .await
-    }
-
-    /// Update a reserve fund with RLS context.
-    pub async fn update_reserve_fund_rls<'e, E>(
-        &self,
-        executor: E,
-        organization_id: Uuid,
-        id: Uuid,
-        data: UpdateReserveFund,
-    ) -> Result<Option<ReserveFund>, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            r#"
-            UPDATE reserve_funds
-            SET name = COALESCE($3, name),
-                target_balance = COALESCE($4, target_balance),
-                annual_contribution = COALESCE($5, annual_contribution),
-                notes = COALESCE($6, notes),
-                updated_at = NOW()
-            WHERE id = $1 AND organization_id = $2
-            RETURNING *
-            "#,
-        )
-        .bind(id)
-        .bind(organization_id)
-        .bind(&data.name)
-        .bind(data.target_balance)
-        .bind(data.annual_contribution)
-        .bind(&data.notes)
-        .fetch_optional(executor)
-        .await
-    }
-
-    /// Record a reserve fund transaction with RLS context.
-    ///
-    /// Note: This method requires the reserve fund to be fetched first to calculate balance.
-    /// For full RLS support, fetch the fund using find_reserve_fund_by_id_rls first.
-    pub async fn record_reserve_transaction_rls<'e, E>(
-        &self,
-        executor: E,
-        reserve_fund_id: Uuid,
-        user_id: Uuid,
-        current_balance: Decimal,
-        data: RecordReserveTransaction,
-    ) -> Result<ReserveFundTransaction, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        let balance_after = match data.transaction_type.as_str() {
-            "contribution" | "interest" => current_balance + data.amount,
-            "withdrawal" => current_balance - data.amount,
-            "adjustment" => current_balance + data.amount,
-            _ => current_balance + data.amount,
-        };
-
-        sqlx::query_as(
-            r#"
-            INSERT INTO reserve_fund_transactions (
-                reserve_fund_id, transaction_type, amount, description,
-                reference_type, reference_id, balance_after, transaction_date, recorded_by
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING *
-            "#,
-        )
-        .bind(reserve_fund_id)
-        .bind(&data.transaction_type)
-        .bind(data.amount)
-        .bind(&data.description)
-        .bind(&data.reference_type)
-        .bind(data.reference_id)
-        .bind(balance_after)
-        .bind(data.transaction_date)
-        .bind(user_id)
-        .fetch_one(executor)
-        .await
-    }
-
-    /// List reserve fund transactions with RLS context.
-    pub async fn list_reserve_transactions_rls<'e, E>(
-        &self,
-        executor: E,
-        reserve_fund_id: Uuid,
-    ) -> Result<Vec<ReserveFundTransaction>, sqlx::Error>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
-        sqlx::query_as(
-            r#"
-            SELECT * FROM reserve_fund_transactions
-            WHERE reserve_fund_id = $1
-            ORDER BY transaction_date DESC, created_at DESC
-            "#,
-        )
-        .bind(reserve_fund_id)
-        .fetch_all(executor)
-        .await
-    }
-
-    // ===========================================
     // RLS-aware Financial Forecast Operations
     // ===========================================
 
@@ -1291,7 +1113,8 @@ impl BudgetRepository {
         .await?;
 
         // Reserve balance would need a separate executor call
-        // Return default for now; callers should use list_reserve_funds_rls for full data
+        // Return default for now; callers should use the canonical ReserveFundRepository
+        // (reserve_funds.rs) for full reserve-fund data
         Ok((active_budget, Decimal::ZERO))
     }
 
@@ -1305,119 +1128,6 @@ impl BudgetRepository {
     // RLS context. The `budgets` / `reserve_funds` / `capital_plans` /
     // `budget_variance_alerts` tables are FORCE-RLS, so a non-RLS connection
     // here is deny-all for own-org traffic.
-
-    /// Record a reserve fund transaction under the caller's RLS context.
-    ///
-    /// Reads the current balance and inserts the transaction on the same
-    /// connection so RLS policies are enforced for both queries.
-    ///
-    /// Atomicity (#1371): the balance read-modify-write runs inside an explicit
-    /// transaction that locks the fund row with `SELECT ... FOR UPDATE`. Without
-    /// the lock two concurrent callers both read the same `current_balance` and
-    /// write conflicting `balance_after` ledger values — a lost-update race that
-    /// silently corrupts the running balance. `begin()` on the caller-supplied
-    /// `&mut PgConnection` yields a `Transaction` that holds the row lock until
-    /// commit while preserving RLS (request context is connection-scoped, so it
-    /// survives the in-connection transaction).
-    pub async fn record_reserve_transaction(
-        &self,
-        conn: &mut sqlx::PgConnection,
-        reserve_fund_id: Uuid,
-        user_id: Uuid,
-        data: RecordReserveTransaction,
-    ) -> Result<ReserveFundTransaction, sqlx::Error> {
-        let mut tx = conn.begin().await?;
-
-        // Lock the fund row for the duration of the transaction. A concurrent
-        // writer on the same fund blocks here until this transaction commits,
-        // so it observes the updated balance instead of a stale snapshot.
-        let fund: ReserveFund =
-            sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1 FOR UPDATE")
-                .bind(reserve_fund_id)
-                .fetch_one(&mut *tx)
-                .await?;
-
-        // INSERT fires `trg_update_reserve_fund_balance` (migration 00057), which
-        // writes `reserve_funds.current_balance = NEW.balance_after`. Because the
-        // fund row is locked above, a concurrent writer cannot interleave between
-        // our read and that trigger-driven write, so the running balance is
-        // updated serially instead of being clobbered with a stale value.
-        let txn = self
-            .record_reserve_transaction_rls(
-                &mut *tx,
-                reserve_fund_id,
-                user_id,
-                fund.current_balance,
-                data,
-            )
-            .await?;
-
-        tx.commit().await?;
-        Ok(txn)
-    }
-
-    /// Generate a reserve fund projection under the caller's RLS context.
-    ///
-    /// Reads the fund and its planned capital withdrawals on the same
-    /// connection, then computes the multi-year projection in memory.
-    pub async fn generate_reserve_projection(
-        &self,
-        conn: &mut sqlx::PgConnection,
-        reserve_fund_id: Uuid,
-        years: i32,
-    ) -> Result<Vec<ReserveFundProjection>, sqlx::Error> {
-        let fund: ReserveFund = sqlx::query_as("SELECT * FROM reserve_funds WHERE id = $1")
-            .bind(reserve_fund_id)
-            .fetch_one(&mut *conn)
-            .await?;
-
-        // Get planned capital withdrawals
-        let org_id = fund.organization_id;
-        let building_id = fund.building_id;
-
-        let plans: Vec<CapitalPlan> = sqlx::query_as(
-            r#"
-            SELECT * FROM capital_plans
-            WHERE organization_id = $1
-              AND ($2::uuid IS NULL OR building_id = $2)
-              AND funding_source = 'reserve_fund'
-              AND status NOT IN ('completed', 'cancelled')
-            ORDER BY target_year
-            "#,
-        )
-        .bind(org_id)
-        .bind(building_id)
-        .fetch_all(&mut *conn)
-        .await?;
-
-        let current_year = chrono::Utc::now().year();
-        let mut projections = Vec::new();
-        let mut balance = fund.current_balance;
-
-        for year_offset in 0..years {
-            let year = current_year + year_offset;
-            let starting_balance = balance;
-            let contributions = fund.annual_contribution;
-
-            let planned_withdrawals: Decimal = plans
-                .iter()
-                .filter(|p| p.target_year == year)
-                .map(|p| p.estimated_cost)
-                .sum();
-
-            balance = starting_balance + contributions - planned_withdrawals;
-
-            projections.push(ReserveFundProjection {
-                year,
-                starting_balance,
-                contributions,
-                planned_withdrawals,
-                ending_balance: balance,
-            });
-        }
-
-        Ok(projections)
-    }
 
     /// Get the budget dashboard under the caller's RLS context.
     ///
