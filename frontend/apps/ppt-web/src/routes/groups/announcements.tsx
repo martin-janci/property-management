@@ -235,7 +235,7 @@ function CreateAnnouncementPageRoute() {
  *   useDeleteAnnouncementComment       — DELETE /api/v1/announcements/:id/comments/:cid (Story 6.3)
  *   usePublishAnnouncement / useArchiveAnnouncement / usePinAnnouncement / useDeleteAnnouncement
  */
-function ViewAnnouncementPageInner({ announcementId }: { announcementId: string }) {
+export function ViewAnnouncementPageInner({ announcementId }: { announcementId: string }) {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { t } = useTranslation();

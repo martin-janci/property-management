@@ -8,12 +8,28 @@
 //! environment variable to a 64-character hex string (32 bytes).
 //!
 //! Generate a key with: `openssl rand -hex 32`
+//!
+//! # RLS Integration (PAP-67 / PAP-80 / PAP-105)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on `webhook_subscriptions` — the one table used
+//! by this repository that is FORCE-bound today. Under `FORCE` the api-server's
+//! owner connection is no longer exempt, so a query issued on a connection
+//! without `app.current_org_id` set collapses to deny-all (own-org reads return
+//! empty, writes fail the policy `WITH CHECK`).
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+//! pool**, so it cannot issue an un-scoped query even against the tables that
+//! are not FORCE-bound yet. This mirrors the `work_order.rs` / `sentiment.rs`
+//! precedent.
 
 use crate::models::integration::*;
 use crate::DbPool;
 use chrono::{Duration, Utc};
 use integrations::{decrypt_if_available, encrypt_if_available, IntegrationCrypto};
-use sqlx::Error as SqlxError;
+use sqlx::{Error as SqlxError, Executor, PgConnection, Postgres};
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -37,9 +53,12 @@ pub enum IntegrationError {
 ///
 /// Supports optional encryption for sensitive data like OAuth tokens and webhook secrets.
 /// If INTEGRATION_ENCRYPTION_KEY is not set, data will be stored unencrypted (dev mode).
+///
+/// Stateless with respect to the database: every method receives an
+/// RLS-context-bearing executor. The repo holds no pool so it cannot issue an
+/// un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
 pub struct IntegrationRepository {
-    pool: DbPool,
     /// Optional crypto service for encrypting/decrypting sensitive data.
     crypto: Option<IntegrationCrypto>,
 }
@@ -49,11 +68,16 @@ impl IntegrationRepository {
     ///
     /// Automatically attempts to initialize encryption from environment.
     ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    ///
     /// # Security Warning
     /// If `INTEGRATION_ENCRYPTION_KEY` is not set, OAuth tokens and webhook secrets
     /// will be stored in plaintext. This is acceptable for development but should
     /// be configured in production environments.
-    pub fn new(pool: DbPool) -> Self {
+    pub fn new(_pool: DbPool) -> Self {
         let crypto = IntegrationCrypto::try_from_env();
         if crypto.is_none() {
             // Log at warn level - operators should configure encryption for production
@@ -62,12 +86,15 @@ impl IntegrationRepository {
                  will be stored in plaintext. Configure this for production deployments."
             );
         }
-        Self { pool, crypto }
+        Self { crypto }
     }
 
     /// Create a new IntegrationRepository with explicit crypto configuration.
-    pub fn with_crypto(pool: DbPool, crypto: Option<IntegrationCrypto>) -> Self {
-        Self { pool, crypto }
+    ///
+    /// The pool argument is retained for construction-site compatibility only
+    /// (see [`IntegrationRepository::new`]); it is not stored.
+    pub fn with_crypto(_pool: DbPool, crypto: Option<IntegrationCrypto>) -> Self {
+        Self { crypto }
     }
 
     /// Encrypt a value using the configured crypto, or return plaintext if not configured.
@@ -120,12 +147,16 @@ impl IntegrationRepository {
     /// Create a calendar connection.
     ///
     /// Validates that the provider is a valid calendar provider type.
-    pub async fn create_calendar_connection(
+    pub async fn create_calendar_connection<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         data: CreateCalendarConnection,
-    ) -> Result<CalendarConnection, IntegrationError> {
+    ) -> Result<CalendarConnection, IntegrationError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Validate provider
         CalendarProvider::from_str(&data.provider).map_err(IntegrationError::InvalidProvider)?;
 
@@ -143,7 +174,7 @@ impl IntegrationRepository {
         .bind(&data.provider)
         .bind(&data.calendar_id)
         .bind(&data.sync_direction)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(IntegrationError::Database)
     }
@@ -151,15 +182,19 @@ impl IntegrationRepository {
     /// Get calendar connection by ID.
     ///
     /// Returns the connection with decrypted access_token and refresh_token.
-    pub async fn get_calendar_connection(
+    pub async fn get_calendar_connection<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<CalendarConnection>, SqlxError> {
+    ) -> Result<Option<CalendarConnection>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let conn = sqlx::query_as::<_, CalendarConnection>(
             "SELECT * FROM calendar_connections WHERE id = $1",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(conn.map(|c| self.decrypt_calendar_connection(c)))
@@ -168,11 +203,15 @@ impl IntegrationRepository {
     /// List calendar connections for a user.
     ///
     /// Returns connections with decrypted access_token and refresh_token.
-    pub async fn list_calendar_connections(
+    pub async fn list_calendar_connections<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Option<Uuid>,
-    ) -> Result<Vec<CalendarConnection>, SqlxError> {
+    ) -> Result<Vec<CalendarConnection>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connections = if let Some(uid) = user_id {
             sqlx::query_as::<_, CalendarConnection>(
                 r#"
@@ -183,7 +222,7 @@ impl IntegrationRepository {
             )
             .bind(organization_id)
             .bind(uid)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await?
         } else {
             sqlx::query_as::<_, CalendarConnection>(
@@ -194,7 +233,7 @@ impl IntegrationRepository {
                 "#,
             )
             .bind(organization_id)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await?
         };
 
@@ -207,11 +246,15 @@ impl IntegrationRepository {
     /// Update calendar connection.
     ///
     /// Returns connection with decrypted tokens.
-    pub async fn update_calendar_connection(
+    pub async fn update_calendar_connection<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         data: UpdateCalendarConnection,
-    ) -> Result<CalendarConnection, SqlxError> {
+    ) -> Result<CalendarConnection, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let conn = sqlx::query_as::<_, CalendarConnection>(
             r#"
             UPDATE calendar_connections SET
@@ -227,17 +270,24 @@ impl IntegrationRepository {
         .bind(&data.calendar_id)
         .bind(&data.sync_direction)
         .bind(&data.sync_status)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(self.decrypt_calendar_connection(conn))
     }
 
     /// Delete calendar connection.
-    pub async fn delete_calendar_connection(&self, id: Uuid) -> Result<bool, SqlxError> {
+    pub async fn delete_calendar_connection<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM calendar_connections WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -245,13 +295,17 @@ impl IntegrationRepository {
     /// Update calendar connection tokens.
     ///
     /// Encrypts access_token and refresh_token before storage.
-    pub async fn update_calendar_tokens(
+    pub async fn update_calendar_tokens<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         access_token: &str,
         refresh_token: Option<&str>,
         expires_at: Option<chrono::DateTime<Utc>>,
-    ) -> Result<(), SqlxError> {
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Encrypt tokens before storage
         let encrypted_access = self.encrypt(access_token);
         let encrypted_refresh = self.encrypt_optional(refresh_token);
@@ -270,18 +324,22 @@ impl IntegrationRepository {
         .bind(&encrypted_access)
         .bind(&encrypted_refresh)
         .bind(expires_at)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(())
     }
 
     /// Update sync status.
-    pub async fn update_sync_status(
+    pub async fn update_sync_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         error: Option<&str>,
-    ) -> Result<(), SqlxError> {
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query(
             r#"
             UPDATE calendar_connections SET
@@ -295,7 +353,7 @@ impl IntegrationRepository {
         .bind(id)
         .bind(status)
         .bind(error)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(())
     }
@@ -305,10 +363,14 @@ impl IntegrationRepository {
     // ========================================================================
 
     /// Create a calendar event.
-    pub async fn create_calendar_event(
+    pub async fn create_calendar_event<'e, E>(
         &self,
+        executor: E,
         data: CreateCalendarEvent,
-    ) -> Result<CalendarEvent, SqlxError> {
+    ) -> Result<CalendarEvent, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, CalendarEvent>(
             r#"
             INSERT INTO calendar_events (
@@ -331,7 +393,7 @@ impl IntegrationRepository {
         .bind(data.all_day)
         .bind(&data.recurrence_rule)
         .bind(&data.attendees)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -339,13 +401,17 @@ impl IntegrationRepository {
     /// Returns true if a new event was created, false if skipped (duplicate).
     ///
     /// Uses atomic INSERT ... ON CONFLICT to avoid race conditions.
-    pub async fn upsert_calendar_event(
+    pub async fn upsert_calendar_event<'e, E>(
         &self,
+        executor: E,
         data: CreateCalendarEvent,
-    ) -> Result<bool, SqlxError> {
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // If no external_event_id provided, just do a regular insert
         if data.external_event_id.is_none() {
-            self.create_calendar_event(data).await?;
+            self.create_calendar_event(executor, data).await?;
             return Ok(true);
         }
 
@@ -372,7 +438,7 @@ impl IntegrationRepository {
         .bind(data.all_day)
         .bind(&data.recurrence_rule)
         .bind(&data.attendees)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         // rows_affected() is 1 if a new event was created, 0 if it already existed
@@ -380,12 +446,16 @@ impl IntegrationRepository {
     }
 
     /// List calendar events for a connection.
-    pub async fn list_calendar_events(
+    pub async fn list_calendar_events<'e, E>(
         &self,
+        executor: E,
         connection_id: Uuid,
         from: Option<chrono::DateTime<Utc>>,
         to: Option<chrono::DateTime<Utc>>,
-    ) -> Result<Vec<CalendarEvent>, SqlxError> {
+    ) -> Result<Vec<CalendarEvent>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let from_date = from.unwrap_or_else(Utc::now);
         let to_date = to.unwrap_or_else(|| Utc::now() + Duration::days(30));
 
@@ -401,7 +471,7 @@ impl IntegrationRepository {
         .bind(connection_id)
         .bind(from_date)
         .bind(to_date)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -412,12 +482,16 @@ impl IntegrationRepository {
     /// Create an accounting export.
     ///
     /// Validates that the system_type is a valid accounting system.
-    pub async fn create_accounting_export(
+    pub async fn create_accounting_export<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         exported_by: Uuid,
         data: CreateAccountingExport,
-    ) -> Result<AccountingExport, IntegrationError> {
+    ) -> Result<AccountingExport, IntegrationError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Validate accounting system type
         AccountingSystem::from_str(&data.system_type).map_err(IntegrationError::InvalidProvider)?;
 
@@ -437,29 +511,37 @@ impl IntegrationRepository {
         .bind(data.period_start)
         .bind(data.period_end)
         .bind(exported_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(IntegrationError::Database)
     }
 
     /// Get accounting export by ID.
-    pub async fn get_accounting_export(
+    pub async fn get_accounting_export<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<AccountingExport>, SqlxError> {
+    ) -> Result<Option<AccountingExport>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, AccountingExport>("SELECT * FROM accounting_exports WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List accounting exports for an organization.
-    pub async fn list_accounting_exports(
+    pub async fn list_accounting_exports<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         system_type: Option<&str>,
         limit: i32,
-    ) -> Result<Vec<AccountingExport>, SqlxError> {
+    ) -> Result<Vec<AccountingExport>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         if let Some(st) = system_type {
             sqlx::query_as::<_, AccountingExport>(
                 r#"
@@ -472,7 +554,7 @@ impl IntegrationRepository {
             .bind(organization_id)
             .bind(st)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
         } else {
             sqlx::query_as::<_, AccountingExport>(
@@ -485,21 +567,26 @@ impl IntegrationRepository {
             )
             .bind(organization_id)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
         }
     }
 
     /// Update accounting export status.
-    pub async fn update_accounting_export_status(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn update_accounting_export_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         file_path: Option<&str>,
         file_size: Option<i64>,
         record_count: Option<i32>,
         error_message: Option<&str>,
-    ) -> Result<AccountingExport, SqlxError> {
+    ) -> Result<AccountingExport, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, AccountingExport>(
             r#"
             UPDATE accounting_exports SET
@@ -519,13 +606,18 @@ impl IntegrationRepository {
         .bind(file_size)
         .bind(record_count)
         .bind(error_message)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get or create accounting export settings.
+    ///
+    /// Multi-statement (SELECT then conditional INSERT), so it takes a
+    /// `&mut PgConnection` and reborrows for each query rather than a generic
+    /// by-value executor.
     pub async fn get_accounting_export_settings(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
         system_type: &str,
     ) -> Result<AccountingExportSettings, SqlxError> {
@@ -535,7 +627,7 @@ impl IntegrationRepository {
         )
         .bind(organization_id)
         .bind(system_type)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         if let Some(settings) = existing {
@@ -551,18 +643,22 @@ impl IntegrationRepository {
             )
             .bind(organization_id)
             .bind(system_type)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await
         }
     }
 
     /// Update accounting export settings.
-    pub async fn update_accounting_export_settings(
+    pub async fn update_accounting_export_settings<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         system_type: &str,
         data: UpdateAccountingExportSettings,
-    ) -> Result<AccountingExportSettings, SqlxError> {
+    ) -> Result<AccountingExportSettings, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, AccountingExportSettings>(
             r#"
             UPDATE accounting_export_settings SET
@@ -583,7 +679,7 @@ impl IntegrationRepository {
         .bind(&data.vat_settings)
         .bind(data.auto_export_enabled)
         .bind(&data.auto_export_schedule)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -594,12 +690,16 @@ impl IntegrationRepository {
     /// Create an e-signature workflow.
     ///
     /// Validates that the provider (if specified) is a valid e-signature provider.
-    pub async fn create_esignature_workflow(
+    pub async fn create_esignature_workflow<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         created_by: Uuid,
         data: CreateESignatureWorkflow,
-    ) -> Result<ESignatureWorkflow, IntegrationError> {
+    ) -> Result<ESignatureWorkflow, IntegrationError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Validate provider if specified
         if let Some(ref provider) = data.provider {
             ESignatureProvider::from_str(provider).map_err(IntegrationError::InvalidProvider)?;
@@ -628,17 +728,21 @@ impl IntegrationRepository {
         .bind(data.reminder_enabled)
         .bind(data.reminder_days)
         .bind(created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(IntegrationError::Database)
     }
 
     /// Add recipient to e-signature workflow.
-    pub async fn add_esignature_recipient(
+    pub async fn add_esignature_recipient<'e, E>(
         &self,
+        executor: E,
         workflow_id: Uuid,
         data: CreateESignatureRecipient,
-    ) -> Result<ESignatureRecipient, SqlxError> {
+    ) -> Result<ESignatureRecipient, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ESignatureRecipient>(
             r#"
             INSERT INTO esignature_recipients (
@@ -653,29 +757,38 @@ impl IntegrationRepository {
         .bind(&data.name)
         .bind(&data.role)
         .bind(data.signing_order)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get e-signature workflow by ID.
-    pub async fn get_esignature_workflow(
+    pub async fn get_esignature_workflow<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<ESignatureWorkflow>, SqlxError> {
+    ) -> Result<Option<ESignatureWorkflow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ESignatureWorkflow>("SELECT * FROM esignature_workflows WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// Get e-signature workflow with recipients.
+    ///
+    /// Multi-statement (workflow lookup then recipients), so it takes a
+    /// `&mut PgConnection` and reborrows for each query rather than a generic
+    /// by-value executor.
     pub async fn get_esignature_workflow_with_recipients(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
     ) -> Result<Option<ESignatureWorkflowWithRecipients>, SqlxError> {
-        let workflow = self.get_esignature_workflow(id).await?;
+        let workflow = self.get_esignature_workflow(&mut *conn, id).await?;
         if let Some(w) = workflow {
-            let recipients = self.list_esignature_recipients(id).await?;
+            let recipients = self.list_esignature_recipients(&mut *conn, id).await?;
             Ok(Some(ESignatureWorkflowWithRecipients {
                 workflow: w,
                 recipients,
@@ -686,25 +799,33 @@ impl IntegrationRepository {
     }
 
     /// List e-signature recipients for a workflow.
-    pub async fn list_esignature_recipients(
+    pub async fn list_esignature_recipients<'e, E>(
         &self,
+        executor: E,
         workflow_id: Uuid,
-    ) -> Result<Vec<ESignatureRecipient>, SqlxError> {
+    ) -> Result<Vec<ESignatureRecipient>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ESignatureRecipient>(
             "SELECT * FROM esignature_recipients WHERE workflow_id = $1 ORDER BY signing_order",
         )
         .bind(workflow_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// List e-signature workflows for an organization.
-    pub async fn list_esignature_workflows(
+    pub async fn list_esignature_workflows<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         status: Option<&str>,
         limit: i32,
-    ) -> Result<Vec<ESignatureWorkflow>, SqlxError> {
+    ) -> Result<Vec<ESignatureWorkflow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         if let Some(s) = status {
             sqlx::query_as::<_, ESignatureWorkflow>(
                 r#"
@@ -717,7 +838,7 @@ impl IntegrationRepository {
             .bind(organization_id)
             .bind(s)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
         } else {
             sqlx::query_as::<_, ESignatureWorkflow>(
@@ -730,17 +851,21 @@ impl IntegrationRepository {
             )
             .bind(organization_id)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
         }
     }
 
     /// Update e-signature workflow status.
-    pub async fn update_esignature_workflow_status(
+    pub async fn update_esignature_workflow_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
-    ) -> Result<ESignatureWorkflow, SqlxError> {
+    ) -> Result<ESignatureWorkflow, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ESignatureWorkflow>(
             r#"
             UPDATE esignature_workflows SET
@@ -753,17 +878,21 @@ impl IntegrationRepository {
         )
         .bind(id)
         .bind(status)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Update e-signature recipient status.
-    pub async fn update_esignature_recipient_status(
+    pub async fn update_esignature_recipient_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         decline_reason: Option<&str>,
-    ) -> Result<ESignatureRecipient, SqlxError> {
+    ) -> Result<ESignatureRecipient, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ESignatureRecipient>(
             r#"
             UPDATE esignature_recipients SET
@@ -779,7 +908,29 @@ impl IntegrationRepository {
         .bind(id)
         .bind(status)
         .bind(decline_reason)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
+        .await
+    }
+
+    /// Find an e-signature workflow by its external provider envelope ID.
+    ///
+    /// Used by webhook handlers to resolve the owning organization (and the
+    /// originating user) from the unguessable, provider-signed envelope id
+    /// before binding RLS context for a status update. `LIMIT 1` keeps the
+    /// read total even if the (provider-unique) envelope id is ever duplicated.
+    pub async fn find_esignature_workflow_by_external_id<'e, E>(
+        &self,
+        executor: E,
+        external_envelope_id: &str,
+    ) -> Result<Option<ESignatureWorkflow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, ESignatureWorkflow>(
+            "SELECT * FROM esignature_workflows WHERE external_envelope_id = $1 LIMIT 1",
+        )
+        .bind(external_envelope_id)
+        .fetch_optional(executor)
         .await
     }
 
@@ -796,11 +947,15 @@ impl IntegrationRepository {
     /// read-modify-write races; the function still returns the current row (if
     /// the envelope exists) so callers can observe the unchanged terminal
     /// state, and returns `None` only when no workflow matches the envelope ID.
-    pub async fn update_esignature_workflow_by_external_id(
+    pub async fn update_esignature_workflow_by_external_id<'e, E>(
         &self,
+        executor: E,
         external_envelope_id: &str,
         status: &str,
-    ) -> Result<Option<ESignatureWorkflow>, SqlxError> {
+    ) -> Result<Option<ESignatureWorkflow>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let terminal: Vec<String> = esignature_status::TERMINAL
             .iter()
             .map(|s| s.to_string())
@@ -827,7 +982,7 @@ impl IntegrationRepository {
         .bind(external_envelope_id)
         .bind(status)
         .bind(terminal)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
@@ -838,12 +993,16 @@ impl IntegrationRepository {
     /// Create a video conference connection.
     ///
     /// Validates that the provider is a valid video conferencing provider.
-    pub async fn create_video_conference_connection(
+    pub async fn create_video_conference_connection<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Uuid,
         data: CreateVideoConferenceConnection,
-    ) -> Result<VideoConferenceConnection, IntegrationError> {
+    ) -> Result<VideoConferenceConnection, IntegrationError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Validate provider
         VideoProvider::from_str(&data.provider).map_err(IntegrationError::InvalidProvider)?;
 
@@ -859,7 +1018,7 @@ impl IntegrationRepository {
         .bind(organization_id)
         .bind(user_id)
         .bind(&data.provider)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(IntegrationError::Database)
     }
@@ -867,15 +1026,19 @@ impl IntegrationRepository {
     /// Get video conference connection by ID.
     ///
     /// Returns connection with decrypted access_token and refresh_token.
-    pub async fn get_video_conference_connection(
+    pub async fn get_video_conference_connection<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<VideoConferenceConnection>, SqlxError> {
+    ) -> Result<Option<VideoConferenceConnection>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let conn = sqlx::query_as::<_, VideoConferenceConnection>(
             "SELECT * FROM video_conference_connections WHERE id = $1",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(conn.map(|c| self.decrypt_video_connection(c)))
@@ -884,11 +1047,15 @@ impl IntegrationRepository {
     /// List video conference connections for a user.
     ///
     /// Returns connections with decrypted access_token and refresh_token.
-    pub async fn list_video_conference_connections(
+    pub async fn list_video_conference_connections<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         user_id: Option<Uuid>,
-    ) -> Result<Vec<VideoConferenceConnection>, SqlxError> {
+    ) -> Result<Vec<VideoConferenceConnection>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let connections = if let Some(uid) = user_id {
             sqlx::query_as::<_, VideoConferenceConnection>(
                 r#"
@@ -899,7 +1066,7 @@ impl IntegrationRepository {
             )
             .bind(organization_id)
             .bind(uid)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await?
         } else {
             sqlx::query_as::<_, VideoConferenceConnection>(
@@ -910,7 +1077,7 @@ impl IntegrationRepository {
                 "#,
             )
             .bind(organization_id)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await?
         };
 
@@ -923,13 +1090,17 @@ impl IntegrationRepository {
     /// Update video conference connection tokens.
     ///
     /// Encrypts access_token and refresh_token before storage.
-    pub async fn update_video_connection_tokens(
+    pub async fn update_video_connection_tokens<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         access_token: &str,
         refresh_token: Option<&str>,
         expires_at: Option<chrono::DateTime<Utc>>,
-    ) -> Result<(), SqlxError> {
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Encrypt tokens before storage
         let encrypted_access = self.encrypt(access_token);
         let encrypted_refresh = self.encrypt_optional(refresh_token);
@@ -948,18 +1119,25 @@ impl IntegrationRepository {
         .bind(&encrypted_access)
         .bind(&encrypted_refresh)
         .bind(expires_at)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(())
     }
 
     /// Delete video conference connection.
-    pub async fn delete_video_conference_connection(&self, id: Uuid) -> Result<bool, SqlxError> {
+    pub async fn delete_video_conference_connection<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             "UPDATE video_conference_connections SET is_active = false, updated_at = NOW() WHERE id = $1",
         )
         .bind(id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -969,12 +1147,16 @@ impl IntegrationRepository {
     // ========================================================================
 
     /// Create a video meeting.
-    pub async fn create_video_meeting(
+    pub async fn create_video_meeting<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         created_by: Uuid,
         data: CreateVideoMeeting,
-    ) -> Result<VideoMeeting, SqlxError> {
+    ) -> Result<VideoMeeting, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VideoMeeting>(
             r#"
             INSERT INTO video_meetings (
@@ -995,26 +1177,37 @@ impl IntegrationRepository {
         .bind(data.duration_minutes)
         .bind(&data.timezone)
         .bind(created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Get video meeting by ID.
-    pub async fn get_video_meeting(&self, id: Uuid) -> Result<Option<VideoMeeting>, SqlxError> {
+    pub async fn get_video_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<VideoMeeting>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VideoMeeting>("SELECT * FROM video_meetings WHERE id = $1")
             .bind(id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List video meetings for an organization.
-    pub async fn list_video_meetings(
+    pub async fn list_video_meetings<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         from: Option<chrono::DateTime<Utc>>,
         status: Option<&str>,
         limit: i32,
-    ) -> Result<Vec<VideoMeeting>, SqlxError> {
+    ) -> Result<Vec<VideoMeeting>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let from_date = from.unwrap_or_else(Utc::now);
 
         if let Some(s) = status {
@@ -1030,7 +1223,7 @@ impl IntegrationRepository {
             .bind(from_date)
             .bind(s)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
         } else {
             sqlx::query_as::<_, VideoMeeting>(
@@ -1044,17 +1237,21 @@ impl IntegrationRepository {
             .bind(organization_id)
             .bind(from_date)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
         }
     }
 
     /// Update video meeting.
-    pub async fn update_video_meeting(
+    pub async fn update_video_meeting<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         data: UpdateVideoMeeting,
-    ) -> Result<VideoMeeting, SqlxError> {
+    ) -> Result<VideoMeeting, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VideoMeeting>(
             r#"
             UPDATE video_meetings SET
@@ -1074,19 +1271,23 @@ impl IntegrationRepository {
         .bind(data.start_time)
         .bind(data.duration_minutes)
         .bind(&data.status)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Update video meeting join URLs.
-    pub async fn update_video_meeting_urls(
+    pub async fn update_video_meeting_urls<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         external_meeting_id: &str,
         join_url: &str,
         host_url: Option<&str>,
         password: Option<&str>,
-    ) -> Result<VideoMeeting, SqlxError> {
+    ) -> Result<VideoMeeting, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, VideoMeeting>(
             r#"
             UPDATE video_meetings SET
@@ -1104,15 +1305,22 @@ impl IntegrationRepository {
         .bind(join_url)
         .bind(host_url)
         .bind(password)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Delete video meeting.
-    pub async fn delete_video_meeting(&self, id: Uuid) -> Result<bool, SqlxError> {
+    pub async fn delete_video_meeting<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM video_meetings WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -1129,13 +1337,17 @@ impl IntegrationRepository {
     /// - Must not target localhost in production
     ///
     /// Encrypts the webhook secret before storage.
-    pub async fn create_webhook_subscription(
+    pub async fn create_webhook_subscription<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         created_by: Uuid,
         data: CreateWebhookSubscription,
         is_production: bool,
-    ) -> Result<WebhookSubscription, IntegrationError> {
+    ) -> Result<WebhookSubscription, IntegrationError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Validate webhook URL
         let validation = validate_webhook_url(&data.url, is_production);
         if !validation.is_valid {
@@ -1168,7 +1380,7 @@ impl IntegrationRepository {
         .bind(&data.headers)
         .bind(serde_json::to_value(&data.retry_policy).ok())
         .bind(created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(IntegrationError::Database)?;
 
@@ -1178,15 +1390,19 @@ impl IntegrationRepository {
     /// Get webhook subscription by ID.
     ///
     /// Returns subscription with decrypted secret.
-    pub async fn get_webhook_subscription(
+    pub async fn get_webhook_subscription<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
-    ) -> Result<Option<WebhookSubscription>, SqlxError> {
+    ) -> Result<Option<WebhookSubscription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let sub = sqlx::query_as::<_, WebhookSubscription>(
             "SELECT * FROM webhook_subscriptions WHERE id = $1",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(sub.map(|s| self.decrypt_webhook_subscription(s)))
@@ -1195,10 +1411,14 @@ impl IntegrationRepository {
     /// List webhook subscriptions for an organization.
     ///
     /// Returns subscriptions with decrypted secrets.
-    pub async fn list_webhook_subscriptions(
+    pub async fn list_webhook_subscriptions<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
-    ) -> Result<Vec<WebhookSubscription>, SqlxError> {
+    ) -> Result<Vec<WebhookSubscription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let subs = sqlx::query_as::<_, WebhookSubscription>(
             r#"
             SELECT * FROM webhook_subscriptions
@@ -1207,7 +1427,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         Ok(subs
@@ -1220,12 +1440,16 @@ impl IntegrationRepository {
     ///
     /// Validates the webhook URL if it's being updated.
     /// Encrypts the secret if it's being updated.
-    pub async fn update_webhook_subscription(
+    pub async fn update_webhook_subscription<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         data: UpdateWebhookSubscription,
         is_production: bool,
-    ) -> Result<WebhookSubscription, IntegrationError> {
+    ) -> Result<WebhookSubscription, IntegrationError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Validate new URL if provided
         if let Some(ref url) = data.url {
             let validation = validate_webhook_url(url, is_production);
@@ -1266,7 +1490,7 @@ impl IntegrationRepository {
         .bind(&data.headers)
         .bind(&data.status)
         .bind(serde_json::to_value(&data.retry_policy).ok())
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(IntegrationError::Database)?;
 
@@ -1274,10 +1498,17 @@ impl IntegrationRepository {
     }
 
     /// Delete webhook subscription.
-    pub async fn delete_webhook_subscription(&self, id: Uuid) -> Result<bool, SqlxError> {
+    pub async fn delete_webhook_subscription<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM webhook_subscriptions WHERE id = $1")
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -1285,11 +1516,15 @@ impl IntegrationRepository {
     /// Get subscriptions for a specific event.
     ///
     /// Returns subscriptions with decrypted secrets.
-    pub async fn get_subscriptions_for_event(
+    pub async fn get_subscriptions_for_event<'e, E>(
         &self,
+        executor: E,
         organization_id: Uuid,
         event_type: &str,
-    ) -> Result<Vec<WebhookSubscription>, SqlxError> {
+    ) -> Result<Vec<WebhookSubscription>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let subs = sqlx::query_as::<_, WebhookSubscription>(
             r#"
             SELECT * FROM webhook_subscriptions
@@ -1300,7 +1535,7 @@ impl IntegrationRepository {
         )
         .bind(organization_id)
         .bind(event_type)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         Ok(subs
@@ -1314,13 +1549,17 @@ impl IntegrationRepository {
     // ========================================================================
 
     /// Create a webhook delivery log.
-    pub async fn create_webhook_delivery_log(
+    pub async fn create_webhook_delivery_log<'e, E>(
         &self,
+        executor: E,
         subscription_id: Uuid,
         event_type: &str,
         event_id: Uuid,
         payload: serde_json::Value,
-    ) -> Result<WebhookDeliveryLog, SqlxError> {
+    ) -> Result<WebhookDeliveryLog, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, WebhookDeliveryLog>(
             r#"
             INSERT INTO webhook_delivery_logs (
@@ -1334,14 +1573,15 @@ impl IntegrationRepository {
         .bind(event_type)
         .bind(event_id)
         .bind(&payload)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Update webhook delivery status.
     #[allow(clippy::too_many_arguments)]
-    pub async fn update_webhook_delivery_status(
+    pub async fn update_webhook_delivery_status<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         status: &str,
         response_status: Option<i32>,
@@ -1349,7 +1589,10 @@ impl IntegrationRepository {
         error_message: Option<&str>,
         duration_ms: Option<i32>,
         next_retry_at: Option<chrono::DateTime<Utc>>,
-    ) -> Result<WebhookDeliveryLog, SqlxError> {
+    ) -> Result<WebhookDeliveryLog, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, WebhookDeliveryLog>(
             r#"
             UPDATE webhook_delivery_logs SET
@@ -1372,15 +1615,19 @@ impl IntegrationRepository {
         .bind(error_message)
         .bind(duration_ms)
         .bind(next_retry_at)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List webhook delivery logs.
-    pub async fn list_webhook_delivery_logs(
+    pub async fn list_webhook_delivery_logs<'e, E>(
         &self,
+        executor: E,
         query: WebhookDeliveryQuery,
-    ) -> Result<Vec<WebhookDeliveryLog>, SqlxError> {
+    ) -> Result<Vec<WebhookDeliveryLog>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
 
@@ -1403,15 +1650,19 @@ impl IntegrationRepository {
         .bind(query.to_date)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Get webhook statistics for a subscription.
-    pub async fn get_webhook_statistics(
+    pub async fn get_webhook_statistics<'e, E>(
         &self,
+        executor: E,
         subscription_id: Uuid,
-    ) -> Result<WebhookStatistics, SqlxError> {
+    ) -> Result<WebhookStatistics, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let stats = sqlx::query_as::<_, (i64, i64, i64, i64, Option<f64>)>(
             r#"
             SELECT
@@ -1425,7 +1676,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(subscription_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         let success_rate = if stats.0 > 0 {
@@ -1445,10 +1696,14 @@ impl IntegrationRepository {
     }
 
     /// Get pending webhook deliveries for retry.
-    pub async fn get_pending_webhook_deliveries(
+    pub async fn get_pending_webhook_deliveries<'e, E>(
         &self,
+        executor: E,
         limit: i32,
-    ) -> Result<Vec<WebhookDeliveryLog>, SqlxError> {
+    ) -> Result<Vec<WebhookDeliveryLog>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, WebhookDeliveryLog>(
             r#"
             SELECT wdl.* FROM webhook_delivery_logs wdl
@@ -1461,7 +1716,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -1473,8 +1728,15 @@ impl IntegrationRepository {
     ///
     /// Logs errors for individual statistics queries but continues collecting other stats.
     /// This ensures partial data is returned even if some queries fail.
+    ///
+    /// Multi-statement (six independent stats queries), so it takes a
+    /// `&mut PgConnection` and reborrows for each query rather than a generic
+    /// by-value executor. The webhook sub-queries hit FORCE-RLS
+    /// `webhook_subscriptions`, so the connection MUST carry the caller's org
+    /// context or they read as zero.
     pub async fn get_integration_statistics(
         &self,
+        conn: &mut PgConnection,
         organization_id: Uuid,
     ) -> Result<IntegrationStatistics, SqlxError> {
         // Calendar stats
@@ -1488,7 +1750,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or_else(|e| {
             tracing::warn!(
@@ -1508,7 +1770,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or_else(|e| {
             tracing::warn!(
@@ -1530,7 +1792,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or_else(|e| {
             tracing::warn!(
@@ -1551,7 +1813,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or_else(|e| {
             tracing::warn!(
@@ -1570,7 +1832,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or_else(|e| {
             tracing::warn!(
@@ -1593,7 +1855,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or_else(|e| {
             tracing::warn!(
@@ -1631,10 +1893,14 @@ impl IntegrationRepository {
     ///
     /// Returns connections where the token expires within the given buffer time
     /// and have a refresh token available.
-    pub async fn get_calendar_connections_needing_refresh(
+    pub async fn get_calendar_connections_needing_refresh<'e, E>(
         &self,
+        executor: E,
         buffer_secs: i64,
-    ) -> Result<Vec<CalendarConnection>, SqlxError> {
+    ) -> Result<Vec<CalendarConnection>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let threshold = Utc::now() + Duration::seconds(buffer_secs);
 
         let connections = sqlx::query_as::<_, CalendarConnection>(
@@ -1649,7 +1915,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(threshold)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         Ok(connections
@@ -1659,10 +1925,14 @@ impl IntegrationRepository {
     }
 
     /// Get video conference connections that need token refresh.
-    pub async fn get_video_connections_needing_refresh(
+    pub async fn get_video_connections_needing_refresh<'e, E>(
         &self,
+        executor: E,
         buffer_secs: i64,
-    ) -> Result<Vec<VideoConferenceConnection>, SqlxError> {
+    ) -> Result<Vec<VideoConferenceConnection>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let threshold = Utc::now() + Duration::seconds(buffer_secs);
 
         let connections = sqlx::query_as::<_, VideoConferenceConnection>(
@@ -1677,7 +1947,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(threshold)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         Ok(connections
@@ -1689,7 +1959,14 @@ impl IntegrationRepository {
     /// Mark a calendar connection's tokens as revoked (user-initiated revocation).
     ///
     /// This clears the tokens and sets sync_status to 'disconnected'.
-    pub async fn revoke_calendar_connection_tokens(&self, id: Uuid) -> Result<bool, SqlxError> {
+    pub async fn revoke_calendar_connection_tokens<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             UPDATE calendar_connections SET
@@ -1703,14 +1980,21 @@ impl IntegrationRepository {
             "#,
         )
         .bind(id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Mark a video conference connection's tokens as revoked.
-    pub async fn revoke_video_connection_tokens(&self, id: Uuid) -> Result<bool, SqlxError> {
+    pub async fn revoke_video_connection_tokens<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             UPDATE video_conference_connections SET
@@ -1723,7 +2007,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(result.rows_affected() > 0)
@@ -1732,12 +2016,16 @@ impl IntegrationRepository {
     /// Record a token refresh attempt result.
     ///
     /// Updates the connection with refresh result information for monitoring.
-    pub async fn record_calendar_refresh_result(
+    pub async fn record_calendar_refresh_result<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         success: bool,
         error: Option<&str>,
-    ) -> Result<(), SqlxError> {
+    ) -> Result<(), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         if success {
             sqlx::query(
                 r#"
@@ -1750,7 +2038,7 @@ impl IntegrationRepository {
                 "#,
             )
             .bind(id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         } else {
             sqlx::query(
@@ -1767,15 +2055,19 @@ impl IntegrationRepository {
             )
             .bind(id)
             .bind(error)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         }
         Ok(())
     }
 
     /// Get count of connections needing refresh (for monitoring).
+    ///
+    /// Multi-statement (two COUNT queries), so it takes a `&mut PgConnection`
+    /// and reborrows for each query rather than a generic by-value executor.
     pub async fn count_connections_needing_refresh(
         &self,
+        conn: &mut PgConnection,
         buffer_secs: i64,
     ) -> Result<(i64, i64), SqlxError> {
         let threshold = Utc::now() + Duration::seconds(buffer_secs);
@@ -1790,7 +2082,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(threshold)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or(0);
 
@@ -1804,7 +2096,7 @@ impl IntegrationRepository {
             "#,
         )
         .bind(threshold)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or(0);
 
@@ -1929,7 +2221,11 @@ mod esignature_webhook_idempotency_tests {
         // Provider re-delivers, this time trying to move the workflow to
         // `voided`. The guard must keep it `completed`.
         let returned = repo
-            .update_esignature_workflow_by_external_id(external_id, esignature_status::VOIDED)
+            .update_esignature_workflow_by_external_id(
+                &pool,
+                external_id,
+                esignature_status::VOIDED,
+            )
             .await
             .expect("repo call failed");
 
@@ -1967,7 +2263,11 @@ mod esignature_webhook_idempotency_tests {
         let repo = IntegrationRepository::new(pool.clone());
 
         let returned = repo
-            .update_esignature_workflow_by_external_id(external_id, esignature_status::COMPLETED)
+            .update_esignature_workflow_by_external_id(
+                &pool,
+                external_id,
+                esignature_status::COMPLETED,
+            )
             .await
             .expect("repo call failed");
 

@@ -4,10 +4,11 @@ name: Vote Detail
 product: ppt
 implementations:
   ppt-web:
+    route: /voting/:voteId
     component: VoteDetailPage
-    buildStatus: planned
+    buildStatus: shipped
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: complete
   mobile:
     component: VoteDetailScreen
     buildStatus: planned
@@ -103,4 +104,5 @@ UC-04 deep view + ballot interaction. The act of voting happens here — frictio
 
 <!-- newest entries on top -->
 
+- 2026-06-08 — agent (CTO/PAP-19): built ppt-web `VoteDetailPage` — state-aware manager toolbar (publish/close/cancel), per-unit per-question ballot (4 ballot variants via discriminated switch), live/final results bars, quorum tile, discussion thread — wired to `useVote`/`useVoteEligibility`/`useVoteResults`/`useCastVote`/`usePublishVote`/`useCloseVote`/`useCancelVote`/`useAddVoteComment`; route `/voting/:voteId`; buildStatus planned→shipped, apiStatus stub→complete. Sticky right-rail, audit-log card, and ranked drag-handle (desktop) remain design follow-ups.
 - 2026-05-09 — agent: bootstrapped from Batch E (pages/ppt-vote-detail.html — 4 artboards) + Batch F1 (MobVoteDetailScreen); 4 sections + 4 states + 4 notes; declared 9 sharedComponents; parent ppt/voting; sibling ppt/vote-create

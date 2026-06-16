@@ -9,12 +9,13 @@
 //! caller belongs to it. A foreign caller could read/mutate any other org's
 //! vendor, contract or invoice by UUID, or list/write into an arbitrary org.
 //!
-//! The fix threads the authenticated `user_id` through a `verify_org_access`
-//! membership check on the org-keyed paths, and re-derives the org from the
-//! fetched row (`verify_vendor_access` / `verify_contract_access` /
-//! `verify_invoice_access`) for by-id resources — returning `404` on
-//! cross-tenant probes so "missing" and "forbidden" are indistinguishable, and
-//! `403` on org-keyed reads/writes.
+//! Since the PAP-80 RLS conversion, every vendor handler acquires an
+//! `RlsConnection`: the tenant comes from the validated `X-Tenant-ID` header
+//! (membership checked against `organization_members`, 403 for non-members)
+//! and the client-supplied `organization_id` is ignored for scoping. By-id
+//! queries stay keyed on `(id, organization_id)`, so a cross-tenant probe made
+//! with the attacker's own valid tenant context resolves to `None` → `404` —
+//! "missing" and "forbidden" remain indistinguishable.
 //!
 //! These tests exercise the HTTP surface end-to-end with real HS256 JWTs:
 //!   1. Seed two orgs (A, B), a member user in each, and a vendor in Org A.
@@ -29,7 +30,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{RequestBuilder, TestApp, TestConfig};
+use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -62,21 +63,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-/// Make `user_id` an active member of `org_id`.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 /// Seed a vendor in `org_id` and return its id.
@@ -138,13 +124,20 @@ async fn list_vendors_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "lst-a").await;
     let org_b = seed_org(&pool, "lst-b").await;
     let user_b = seed_user(&pool, "lst-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let _vendor_a = seed_vendor(&pool, org_a).await;
 
     // User B (member of Org B only) asks for Org A's vendors.
     let token_b = mint_token(user_b, "lst-b@vendor-idor.test");
     let uri = format!("/api/v1/vendors?organization_id={org_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_a.to_string())
+                .build(),
+        )
+        .await;
 
     assert_eq!(
         resp.status,
@@ -164,12 +157,21 @@ async fn get_vendor_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "get-a").await;
     let org_b = seed_org(&pool, "get-b").await;
     let user_b = seed_user(&pool, "get-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "get-b@vendor-idor.test");
     let uri = format!("/api/v1/vendors/{vendor_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_b).build()).await;
+    // Valid context for the attacker's OWN org — the by-id probe must fail on
+    // row scoping (404), not on a missing tenant header.
+    let resp = app
+        .execute(
+            app.get(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_b.to_string())
+                .build(),
+        )
+        .await;
 
     assert_rejected(resp.status, "get_vendor cross-tenant");
     // Specifically: must not 200 with Org A's vendor.
@@ -190,12 +192,19 @@ async fn delete_vendor_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "del-a").await;
     let org_b = seed_org(&pool, "del-b").await;
     let user_b = seed_user(&pool, "del-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "del-b@vendor-idor.test");
     let uri = format!("/api/v1/vendors/{vendor_a}");
-    let resp = app.execute(app.delete(&uri).bearer(&token_b).build()).await;
+    let resp = app
+        .execute(
+            app.delete(&uri)
+                .bearer(&token_b)
+                .header("X-Tenant-ID", &org_b.to_string())
+                .build(),
+        )
+        .await;
 
     assert_rejected(resp.status, "delete_vendor cross-tenant");
     assert_ne!(
@@ -223,7 +232,7 @@ async fn update_vendor_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "upd-a").await;
     let org_b = seed_org(&pool, "upd-b").await;
     let user_b = seed_user(&pool, "upd-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "upd-b@vendor-idor.test");
@@ -233,6 +242,7 @@ async fn update_vendor_from_other_org_is_rejected(pool: PgPool) {
         .execute(
             RequestBuilder::new(Method::PATCH, &uri)
                 .bearer(&token_b)
+                .header("X-Tenant-ID", &org_b.to_string())
                 .json(body)
                 .build(),
         )
@@ -262,7 +272,7 @@ async fn create_vendor_for_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "crt-a").await;
     let org_b = seed_org(&pool, "crt-b").await;
     let user_b = seed_user(&pool, "crt-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
 
     let token_b = mint_token(user_b, "crt-b@vendor-idor.test");
     let body = json!({
@@ -274,6 +284,7 @@ async fn create_vendor_for_other_org_is_rejected(pool: PgPool) {
         .execute(
             app.post("/api/v1/vendors")
                 .bearer(&token_b)
+                .header("X-Tenant-ID", &org_a.to_string())
                 .json(body)
                 .build(),
         )
@@ -304,12 +315,13 @@ async fn get_vendor_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "own-a").await;
     let user_a = seed_user(&pool, "own-a@vendor-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_a = mint_token(user_a, "own-a@vendor-idor.test");
+    let session_a = app.session(token_a, org_a);
     let uri = format!("/api/v1/vendors/{vendor_a}");
-    let resp = app.execute(app.get(&uri).bearer(&token_a).build()).await;
+    let resp = app.execute(session_a.get(&uri).build()).await;
 
     assert_eq!(
         resp.status,

@@ -42,11 +42,9 @@
 #[allow(dead_code)]
 mod common;
 
-use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
-    middleware::Next,
 };
 use chrono::NaiveDate;
 use db::models::{
@@ -58,7 +56,7 @@ use sqlx::PgPool;
 use tower::ServiceExt;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser};
+use common::{create_authenticated_user_with_org, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -91,32 +89,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-/// Look up the user id created by `create_authenticated_user`.
-async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
-        .bind(email)
-        .fetch_one(pool)
-        .await
-        .expect("user id lookup")
-}
-
-/// Grant an active `user_memberships` row so `MembershipRepository::is_active`
-/// (used by `RequestPrincipal`) returns true for `(user, org)`.
-async fn seed_user_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO user_memberships (user_id, organization_id, role)
-        VALUES ($1, $2, 'manager')
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(user_id)
-    .bind(org_id)
-    .execute(pool)
-    .await
-    .expect("seed user_membership");
 }
 
 fn sample_policy(suffix: &str) -> CreateInsurancePolicy {
@@ -209,7 +181,7 @@ async fn list_policies_from_other_org_is_rejected(pool: PgPool) {
     let user_b = seed_user(&pool, "lst-pol-b@ins-idor.test").await;
 
     let repo = InsuranceRepository::new(pool.clone());
-    repo.create_policy(org_a, sample_policy("a1"))
+    repo.create_policy(&pool, org_a, sample_policy("a1"))
         .await
         .expect("seed policy in org A");
 
@@ -237,7 +209,7 @@ async fn get_policy_from_other_org_is_rejected(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_in_a = repo
-        .create_policy(org_a, sample_policy("a2"))
+        .create_policy(&pool, org_a, sample_policy("a2"))
         .await
         .expect("seed policy in org A");
 
@@ -264,7 +236,7 @@ async fn delete_policy_from_other_org_is_rejected(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_in_a = repo
-        .create_policy(org_a, sample_policy("a3"))
+        .create_policy(&pool, org_a, sample_policy("a3"))
         .await
         .expect("seed policy in org A");
 
@@ -298,10 +270,10 @@ async fn list_claims_from_other_org_is_rejected(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_in_a = repo
-        .create_policy(org_a, sample_policy("a4"))
+        .create_policy(&pool, org_a, sample_policy("a4"))
         .await
         .expect("seed policy in org A");
-    repo.create_claim(org_a, user_a, sample_claim(policy_in_a.id, "a4"))
+    repo.create_claim(&pool, org_a, user_a, sample_claim(policy_in_a.id, "a4"))
         .await
         .expect("seed claim in org A");
 
@@ -327,17 +299,17 @@ async fn repo_policies_are_scoped_to_owning_org(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_a = repo
-        .create_policy(org_a, sample_policy("repo-a"))
+        .create_policy(&pool, org_a, sample_policy("repo-a"))
         .await
         .expect("policy A");
     let _policy_b = repo
-        .create_policy(org_b, sample_policy("repo-b"))
+        .create_policy(&pool, org_b, sample_policy("repo-b"))
         .await
         .expect("policy B");
 
     // Org A's list contains only org A's policy.
     let listed_a = repo
-        .list_policies(org_a, InsurancePolicyQuery::default())
+        .list_policies(&pool, org_a, InsurancePolicyQuery::default())
         .await
         .expect("list A");
     assert_eq!(listed_a.len(), 1, "org A must see exactly its own policy");
@@ -351,7 +323,7 @@ async fn repo_policies_are_scoped_to_owning_org(pool: PgPool) {
 
     // Looking up org A's policy with org B's id returns nothing (closed IDOR).
     let cross = repo
-        .find_policy_by_id(org_b, policy_a.id)
+        .find_policy_by_id(&pool, org_b, policy_a.id)
         .await
         .expect("find with wrong org");
     assert!(
@@ -361,7 +333,7 @@ async fn repo_policies_are_scoped_to_owning_org(pool: PgPool) {
 
     // The legitimate owner can read it.
     let own = repo
-        .find_policy_by_id(org_a, policy_a.id)
+        .find_policy_by_id(&pool, org_a, policy_a.id)
         .await
         .expect("find with right org");
     assert!(own.is_some(), "org A must read its own policy by id");
@@ -380,25 +352,25 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 
     let repo = InsuranceRepository::new(pool.clone());
     let policy_a = repo
-        .create_policy(org_a, sample_policy("repo-clm-a"))
+        .create_policy(&pool, org_a, sample_policy("repo-clm-a"))
         .await
         .expect("policy A");
     let policy_b = repo
-        .create_policy(org_b, sample_policy("repo-clm-b"))
+        .create_policy(&pool, org_b, sample_policy("repo-clm-b"))
         .await
         .expect("policy B");
     let claim_a = repo
-        .create_claim(org_a, user_a, sample_claim(policy_a.id, "repo-a"))
+        .create_claim(&pool, org_a, user_a, sample_claim(policy_a.id, "repo-a"))
         .await
         .expect("claim A");
     let _claim_b = repo
-        .create_claim(org_b, user_b, sample_claim(policy_b.id, "repo-b"))
+        .create_claim(&pool, org_b, user_b, sample_claim(policy_b.id, "repo-b"))
         .await
         .expect("claim B");
 
     // Org A's claim list contains only org A's claim.
     let listed_a = repo
-        .list_claims(org_a, InsuranceClaimQuery::default())
+        .list_claims(&pool, org_a, InsuranceClaimQuery::default())
         .await
         .expect("list A");
     assert_eq!(listed_a.len(), 1, "org A must see exactly its own claim");
@@ -409,7 +381,7 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 
     // Org B cannot read org A's claim by id.
     let cross = repo
-        .find_claim_with_policy(org_b, claim_a.id)
+        .find_claim_with_policy(&pool, org_b, claim_a.id)
         .await
         .expect("find with wrong org");
     assert!(
@@ -419,7 +391,7 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 
     // The legitimate owner can.
     let own = repo
-        .find_claim_with_policy(org_a, claim_a.id)
+        .find_claim_with_policy(&pool, org_a, claim_a.id)
         .await
         .expect("find with right org");
     assert!(own.is_some(), "org A must read its own claim by id");
@@ -431,68 +403,46 @@ async fn repo_claims_are_scoped_to_owning_org(pool: PgPool) {
 // ---------------------------------------------------------------------------
 //
 // This is the end-to-end proof that the handler now derives the org from the
-// authenticated principal. We wrap `create_router` with a middleware that
-// injects `ResolvedTenant { Subdomain, org_a }` (standing in for
-// `host_tenant_middleware`, which `TestApp` does not mount), mint a real JWT
-// for a user who has an active membership in org A, and seed one policy in
-// org A.
+// authenticated principal via `RlsConnection`. We mint a real JWT for a user
+// who is an active `organization_members` member of org A (the membership table
+// `ValidatedTenantExtractor` checks), pass `X-Tenant-ID: org_a` (the canonical
+// tenant-resolution path under `TestApp`, which mounts no `host_tenant_middleware`),
+// and seed one policy in org A.
 //
-// On the FIXED code, `list_policies` resolves `org_id = principal.effective_org
-// = org_a` and returns that policy → `policies.len() == 1`.
+// On the FIXED code, `list_policies` resolves `org_id = rls.tenant_id() = org_a`
+// and returns that policy → `policies.len() == 1`.
 //
-// On `main`, `list_policies` ignores the principal and uses
+// On `main`, `list_policies` ignored the principal and used
 // `query.building_id.unwrap_or_default()` = `Uuid::nil()`, so the org-scoped
-// repository query matches nothing → `policies.len() == 0`. This assertion is
+// repository query matched nothing → `policies.len() == 0`. This assertion is
 // what fails on main and passes on the fix.
-
-/// Build a router (the production `create_router`) wrapped so that every
-/// request carries a `ResolvedTenant` for `org_id`, mimicking a real
-/// tenant-resolved host.
-async fn tenant_resolved_app(pool: PgPool, org_id: Uuid) -> (TestApp, axum::Router) {
-    let app = TestApp::new(pool).await;
-    let router = app.router.clone().layer(axum::middleware::from_fn(
-        move |mut req: Request<Body>, next: Next| async move {
-            req.extensions_mut().insert(ResolvedTenant {
-                organization_id: org_id,
-                source: TenantSource::Subdomain,
-            });
-            next.run(req).await
-        },
-    ));
-    (app, router)
-}
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_policies_returns_only_callers_own_org(pool: PgPool) {
-    let org_a = seed_org(&pool, "pos-pol-a").await;
-
-    // Register + verify + login a user → real access-token JWT.
-    let bootstrap = TestApp::new(pool.clone()).await;
+    // Register + verify + login a user and make them an active `org_admin`
+    // member of a fresh org A. `create_authenticated_user_with_org` seeds the
+    // membership into `organization_members` — the table `RlsConnection`'s
+    // `ValidatedTenantExtractor` validates against — and returns org A's id.
+    let app = TestApp::new(pool.clone()).await;
     let user = TestUser::with_email(&format!("pos-pol-{}@ins-idor.test", Uuid::new_v4()));
-    let (access_token, _refresh) = create_authenticated_user(&bootstrap, &user).await;
-    let uid = user_id_for(&pool, &user.email).await;
-
-    // Active membership in org A so `RequestPrincipal` resolves `effective_org`.
-    seed_user_membership(&pool, org_a, uid).await;
+    let (access_token, org_a) = create_authenticated_user_with_org(&app, &user, "pos-pol-a").await;
 
     // Seed a policy owned by org A.
     let repo = InsuranceRepository::new(pool.clone());
     let policy_a = repo
-        .create_policy(org_a, sample_policy("positive-a"))
+        .create_policy(&pool, org_a, sample_policy("positive-a"))
         .await
         .expect("seed policy in org A");
-
-    // Router with org_a as the resolved tenant.
-    let (_app, router) = tenant_resolved_app(pool.clone(), org_a).await;
 
     let request = Request::builder()
         .method(Method::GET)
         .uri("/api/v1/insurance/policies")
         .header(header::AUTHORIZATION, format!("Bearer {access_token}"))
+        .header("X-Tenant-ID", org_a.to_string())
         .body(Body::empty())
         .unwrap();
 
-    let response = router.oneshot(request).await.expect("request");
+    let response = app.router.clone().oneshot(request).await.expect("request");
     assert_eq!(
         response.status(),
         StatusCode::OK,

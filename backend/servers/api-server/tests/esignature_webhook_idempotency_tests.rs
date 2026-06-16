@@ -15,6 +15,7 @@
 //! |------|----------|
 //! | W1 | Duplicate `completed` webhook → 200, "already finalized" ack, no signer mutation |
 //! | W2 | Duplicate `declined` signer event on a terminal request → 200, signer status untouched |
+//! | W3 | Webhook for a `declined` / `expired` / `cancelled` (non-`completed`) terminal request → 200 ack, no signer mutation |
 //!
 //! The webhook endpoint is unauthenticated; authority comes from the
 //! `X-Webhook-Secret` header validated against `ESIGN_WEBHOOK_SECRET`. We pin
@@ -245,4 +246,77 @@ async fn signer_event_on_terminal_request_does_not_retransition(pool: PgPool) {
         "signed",
         "terminal request must not re-transition signer status on a late event"
     );
+}
+
+// ===========================================================================
+// W3 — the guard covers every terminal request status, not just `completed`
+// ===========================================================================
+//
+// `SignatureRequestStatus::is_terminal()` is true for completed / declined /
+// expired / cancelled. The W1/W2 cases above only exercise the `completed`
+// branch; this case asserts the guard also short-circuits webhooks for the
+// other three terminal request statuses (the task's "voided" family). A
+// duplicate provider delivery for such a request must be acknowledged with a
+// 200 idempotent ack and must not mutate the signer roster.
+async fn terminal_status_acks_without_side_effects(pool: PgPool, request_status: &str) {
+    ensure_webhook_secret();
+    let app = TestApp::new(pool.clone()).await;
+
+    // Seed a request that is already in the given terminal status. The signer
+    // is left `pending` so that any (erroneous) re-application of the webhook's
+    // `signer_status` would be observable as a flip to `signed`.
+    let req = seed_terminal_request(&pool, request_status, "pending").await;
+    assert_eq!(
+        signer_status(&pool, req.id).await,
+        "pending",
+        "precondition: signer starts pending for status {request_status}"
+    );
+
+    let resp = post_webhook(
+        &app,
+        json!({
+            "event_type": "completed",
+            "provider_request_id": req.provider_request_id,
+            "signer_email": req.signer_email,
+            "signer_status": "signed",
+            "signed_document_url": "https://provider.example/signed.pdf"
+        }),
+    )
+    .await;
+
+    // Idempotent acknowledgement regardless of which terminal status we are in.
+    resp.assert_status(StatusCode::OK);
+    let body = resp.json_value();
+    assert_eq!(body.get("success"), Some(&json!(true)));
+    assert_eq!(
+        body.get("message"),
+        Some(&json!(ALREADY_FINALIZED_MSG)),
+        "expected the terminal-state guard message for status {request_status}, got: {body}"
+    );
+
+    // No side effects: signer roster untouched, no signed document stored.
+    assert_eq!(
+        signer_status(&pool, req.id).await,
+        "pending",
+        "webhook on a {request_status} request must not mutate signer status"
+    );
+    assert!(
+        signed_document_id(&pool, req.id).await.is_none(),
+        "webhook on a {request_status} request must not store a signed document"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn webhook_on_declined_request_is_noop(pool: PgPool) {
+    terminal_status_acks_without_side_effects(pool, "declined").await;
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn webhook_on_expired_request_is_noop(pool: PgPool) {
+    terminal_status_acks_without_side_effects(pool, "expired").await;
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn webhook_on_cancelled_request_is_noop(pool: PgPool) {
+    terminal_status_acks_without_side_effects(pool, "cancelled").await;
 }

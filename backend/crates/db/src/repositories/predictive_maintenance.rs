@@ -1,8 +1,30 @@
 //! Repository for Epic 134: Predictive Maintenance & Equipment Intelligence.
+//!
+//! # RLS Integration (PAP-80)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on the predictive-maintenance tables
+//! (`equipment_registry`, `equipment_documents`, `maintenance_logs`,
+//! `maintenance_log_photos`, `equipment_predictions`, `maintenance_alerts`,
+//! `equipment_health_thresholds`). Under `FORCE` the api-server's owner
+//! connection is no longer exempt, so a query issued on a connection without
+//! `app.current_org_id` set collapses to deny-all (own-org reads return empty,
+//! writes fail the policy's `WITH CHECK`).
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+//! pool**, so there is no way to issue a query that bypasses RLS. This mirrors
+//! the `work_order.rs` / `budget.rs` / `document.rs` precedent.
+//!
+//! Single-statement methods take a generic `Executor`; the multi-statement
+//! methods (`run_prediction`, `get_dashboard`) take `&mut PgConnection` and
+//! reborrow it for each query.
 
 use chrono::Utc;
 use common::AppError;
 use rust_decimal::Decimal;
+use sqlx::{Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 use crate::models::predictive_maintenance::{
@@ -12,18 +34,23 @@ use crate::models::predictive_maintenance::{
     MaintenanceDashboard, MaintenanceLog, MaintenanceLogPhoto, PredictionFactor, PredictionResult,
     SetHealthThreshold, UpdateEquipment, UpdateMaintenanceLog,
 };
-use crate::DbPool;
 
 /// Repository for predictive maintenance operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Debug, Clone)]
-pub struct PredictiveMaintenanceRepository {
-    pool: DbPool,
-}
+pub struct PredictiveMaintenanceRepository;
 
 impl PredictiveMaintenanceRepository {
     /// Create a new repository.
-    pub fn new(pool: DbPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: crate::DbPool) -> Self {
+        Self
     }
 
     // ========================================================================
@@ -31,12 +58,16 @@ impl PredictiveMaintenanceRepository {
     // ========================================================================
 
     /// Create new equipment.
-    pub async fn create_equipment(
+    pub async fn create_equipment<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         req: CreateEquipment,
-    ) -> Result<Equipment, AppError> {
+    ) -> Result<Equipment, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let equipment = sqlx::query_as::<_, Equipment>(
             r#"
             INSERT INTO equipment_registry (
@@ -68,7 +99,7 @@ impl PredictiveMaintenanceRepository {
         .bind(&req.notes)
         .bind(&req.specifications)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -76,11 +107,18 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Get equipment by ID.
-    pub async fn get_equipment(
+    ///
+    /// RLS scopes the result to the connection's org context, so equipment
+    /// owned by another organization is invisible (returns `None`).
+    pub async fn get_equipment<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<Equipment>, AppError> {
+    ) -> Result<Option<Equipment>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let equipment = sqlx::query_as::<_, Equipment>(
             r#"
             SELECT * FROM equipment_registry
@@ -89,7 +127,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -97,11 +135,15 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// List equipment with filters.
-    pub async fn list_equipment(
+    pub async fn list_equipment<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: EquipmentQuery,
-    ) -> Result<Vec<Equipment>, AppError> {
+    ) -> Result<Vec<Equipment>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(50);
         let offset = query.offset.unwrap_or(0);
         let sort_by = query.sort_by.unwrap_or_else(|| "name".to_string());
@@ -147,7 +189,7 @@ impl PredictiveMaintenanceRepository {
             .bind(query.max_health_score)
             .bind(limit)
             .bind(offset)
-            .fetch_all(&self.pool)
+            .fetch_all(executor)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -155,13 +197,17 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Update equipment.
-    pub async fn update_equipment(
+    pub async fn update_equipment<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         user_id: Uuid,
         req: UpdateEquipment,
-    ) -> Result<Option<Equipment>, AppError> {
+    ) -> Result<Option<Equipment>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let equipment = sqlx::query_as::<_, Equipment>(
             r#"
             UPDATE equipment_registry SET
@@ -206,7 +252,7 @@ impl PredictiveMaintenanceRepository {
         .bind(&req.notes)
         .bind(&req.specifications)
         .bind(user_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -214,7 +260,15 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Delete equipment.
-    pub async fn delete_equipment(&self, id: Uuid, org_id: Uuid) -> Result<bool, AppError> {
+    pub async fn delete_equipment<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             r#"
             DELETE FROM equipment_registry
@@ -223,7 +277,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(id)
         .bind(org_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -231,13 +285,17 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Add document to equipment.
-    pub async fn add_equipment_document(
+    pub async fn add_equipment_document<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         org_id: Uuid,
         user_id: Uuid,
         req: CreateEquipmentDocument,
-    ) -> Result<EquipmentDocument, AppError> {
+    ) -> Result<EquipmentDocument, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let doc = sqlx::query_as::<_, EquipmentDocument>(
             r#"
             INSERT INTO equipment_documents (
@@ -256,7 +314,7 @@ impl PredictiveMaintenanceRepository {
         .bind(req.file_size)
         .bind(&req.mime_type)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -264,11 +322,15 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// List equipment documents.
-    pub async fn list_equipment_documents(
+    pub async fn list_equipment_documents<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         org_id: Uuid,
-    ) -> Result<Vec<EquipmentDocument>, AppError> {
+    ) -> Result<Vec<EquipmentDocument>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let docs = sqlx::query_as::<_, EquipmentDocument>(
             r#"
             SELECT * FROM equipment_documents
@@ -278,7 +340,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(equipment_id)
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -290,12 +352,16 @@ impl PredictiveMaintenanceRepository {
     // ========================================================================
 
     /// Create maintenance log.
-    pub async fn create_maintenance_log(
+    pub async fn create_maintenance_log<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         req: CreateMaintenanceLog,
-    ) -> Result<MaintenanceLog, AppError> {
+    ) -> Result<MaintenanceLog, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let log = sqlx::query_as::<_, MaintenanceLog>(
             r#"
             INSERT INTO maintenance_logs (
@@ -329,7 +395,7 @@ impl PredictiveMaintenanceRepository {
         .bind(&req.outcome)
         .bind(&req.notes)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -337,11 +403,18 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Get maintenance log by ID.
-    pub async fn get_maintenance_log(
+    ///
+    /// RLS scopes the result to the connection's org context, so a log owned by
+    /// another organization is invisible (returns `None`).
+    pub async fn get_maintenance_log<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<MaintenanceLog>, AppError> {
+    ) -> Result<Option<MaintenanceLog>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let log = sqlx::query_as::<_, MaintenanceLog>(
             r#"
             SELECT * FROM maintenance_logs
@@ -350,7 +423,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -358,13 +431,17 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// List maintenance logs for equipment.
-    pub async fn list_maintenance_logs(
+    pub async fn list_maintenance_logs<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         org_id: Uuid,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<MaintenanceLog>, AppError> {
+    ) -> Result<Vec<MaintenanceLog>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let logs = sqlx::query_as::<_, MaintenanceLog>(
             r#"
             SELECT * FROM maintenance_logs
@@ -377,7 +454,7 @@ impl PredictiveMaintenanceRepository {
         .bind(org_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -385,12 +462,16 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Update maintenance log.
-    pub async fn update_maintenance_log(
+    pub async fn update_maintenance_log<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         req: UpdateMaintenanceLog,
-    ) -> Result<Option<MaintenanceLog>, AppError> {
+    ) -> Result<Option<MaintenanceLog>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let log = sqlx::query_as::<_, MaintenanceLog>(
             r#"
             UPDATE maintenance_logs SET
@@ -429,7 +510,7 @@ impl PredictiveMaintenanceRepository {
         .bind(&req.work_performed)
         .bind(&req.outcome)
         .bind(&req.notes)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -438,8 +519,9 @@ impl PredictiveMaintenanceRepository {
 
     /// Add photo to maintenance log.
     #[allow(clippy::too_many_arguments)]
-    pub async fn add_maintenance_photo(
+    pub async fn add_maintenance_photo<'e, E>(
         &self,
+        executor: E,
         log_id: Uuid,
         user_id: Uuid,
         file_path: &str,
@@ -447,7 +529,10 @@ impl PredictiveMaintenanceRepository {
         mime_type: Option<&str>,
         caption: Option<&str>,
         photo_type: Option<&str>,
-    ) -> Result<MaintenanceLogPhoto, AppError> {
+    ) -> Result<MaintenanceLogPhoto, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let photo = sqlx::query_as::<_, MaintenanceLogPhoto>(
             r#"
             INSERT INTO maintenance_log_photos (
@@ -465,7 +550,7 @@ impl PredictiveMaintenanceRepository {
         .bind(caption)
         .bind(photo_type)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -476,14 +561,18 @@ impl PredictiveMaintenanceRepository {
     ///
     /// `maintenance_log_photos` has no `organization_id` column, so org
     /// ownership is enforced by joining through the parent `maintenance_logs`
-    /// row (which is org-scoped). A `log_id` belonging to another org yields
-    /// zero rows — the handler must surface that as a 404, never a
-    /// cross-tenant read (IDOR #848).
-    pub async fn list_maintenance_photos(
+    /// row (which is org-scoped, and under RLS only the caller's org rows are
+    /// visible). A `log_id` belonging to another org yields zero rows — the
+    /// handler must surface that as a 404, never a cross-tenant read (IDOR #848).
+    pub async fn list_maintenance_photos<'e, E>(
         &self,
+        executor: E,
         log_id: Uuid,
         org_id: Uuid,
-    ) -> Result<Vec<MaintenanceLogPhoto>, AppError> {
+    ) -> Result<Vec<MaintenanceLogPhoto>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let photos = sqlx::query_as::<_, MaintenanceLogPhoto>(
             r#"
             SELECT p.*
@@ -496,7 +585,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(log_id)
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -508,14 +597,20 @@ impl PredictiveMaintenanceRepository {
     // ========================================================================
 
     /// Run prediction for equipment (stub implementation).
+    ///
+    /// Multi-statement: reads equipment + maintenance history, then writes a
+    /// prediction row and updates the equipment health score. Takes a
+    /// `&mut PgConnection` and reborrows it for each query so every statement
+    /// runs under the same RLS context.
     pub async fn run_prediction(
         &self,
+        conn: &mut PgConnection,
         equipment_id: Uuid,
         org_id: Uuid,
     ) -> Result<PredictionResult, AppError> {
         // Get equipment info
         let equipment = self
-            .get_equipment(equipment_id, org_id)
+            .get_equipment(&mut *conn, equipment_id, org_id)
             .await?
             .ok_or_else(|| AppError::NotFound("Equipment not found".to_string()))?;
 
@@ -540,7 +635,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(equipment_id)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -627,7 +722,7 @@ impl PredictiveMaintenanceRepository {
         .bind(recommended_action)
         .bind(predicted_failure_date)
         .bind(urgency)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -648,7 +743,7 @@ impl PredictiveMaintenanceRepository {
         .bind(health_score)
         .bind(Decimal::from_f64_retain(failure_probability).unwrap_or_default())
         .bind(predicted_failure_date)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -665,12 +760,16 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Get prediction history for equipment.
-    pub async fn get_prediction_history(
+    pub async fn get_prediction_history<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         org_id: Uuid,
         limit: i64,
-    ) -> Result<Vec<EquipmentPrediction>, AppError> {
+    ) -> Result<Vec<EquipmentPrediction>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let predictions = sqlx::query_as::<_, EquipmentPrediction>(
             r#"
             SELECT * FROM equipment_predictions
@@ -682,7 +781,7 @@ impl PredictiveMaintenanceRepository {
         .bind(equipment_id)
         .bind(org_id)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -695,8 +794,9 @@ impl PredictiveMaintenanceRepository {
 
     /// Create maintenance alert.
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_alert(
+    pub async fn create_alert<'e, E>(
         &self,
+        executor: E,
         equipment_id: Uuid,
         org_id: Uuid,
         prediction_id: Option<Uuid>,
@@ -704,7 +804,10 @@ impl PredictiveMaintenanceRepository {
         severity: &str,
         title: &str,
         message: &str,
-    ) -> Result<MaintenanceAlert, AppError> {
+    ) -> Result<MaintenanceAlert, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let alert = sqlx::query_as::<_, MaintenanceAlert>(
             r#"
             INSERT INTO maintenance_alerts (
@@ -722,7 +825,7 @@ impl PredictiveMaintenanceRepository {
         .bind(severity)
         .bind(title)
         .bind(message)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -730,14 +833,18 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// List active alerts.
-    pub async fn list_alerts(
+    pub async fn list_alerts<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         status: Option<&str>,
         severity: Option<&str>,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<AlertWithEquipment>, AppError> {
+    ) -> Result<Vec<AlertWithEquipment>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let alerts = sqlx::query_as::<_, AlertWithEquipment>(
             r#"
             SELECT
@@ -768,7 +875,7 @@ impl PredictiveMaintenanceRepository {
         .bind(severity)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -776,12 +883,16 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Acknowledge alert.
-    pub async fn acknowledge_alert(
+    pub async fn acknowledge_alert<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         user_id: Uuid,
-    ) -> Result<Option<MaintenanceAlert>, AppError> {
+    ) -> Result<Option<MaintenanceAlert>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let alert = sqlx::query_as::<_, MaintenanceAlert>(
             r#"
             UPDATE maintenance_alerts SET
@@ -795,7 +906,7 @@ impl PredictiveMaintenanceRepository {
         .bind(id)
         .bind(org_id)
         .bind(user_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -803,13 +914,17 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Resolve alert.
-    pub async fn resolve_alert(
+    pub async fn resolve_alert<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         user_id: Uuid,
         maintenance_log_id: Option<Uuid>,
-    ) -> Result<Option<MaintenanceAlert>, AppError> {
+    ) -> Result<Option<MaintenanceAlert>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let alert = sqlx::query_as::<_, MaintenanceAlert>(
             r#"
             UPDATE maintenance_alerts SET
@@ -825,7 +940,7 @@ impl PredictiveMaintenanceRepository {
         .bind(org_id)
         .bind(user_id)
         .bind(maintenance_log_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -833,11 +948,15 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Dismiss alert.
-    pub async fn dismiss_alert(
+    pub async fn dismiss_alert<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<MaintenanceAlert>, AppError> {
+    ) -> Result<Option<MaintenanceAlert>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let alert = sqlx::query_as::<_, MaintenanceAlert>(
             r#"
             UPDATE maintenance_alerts SET
@@ -848,7 +967,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -860,11 +979,15 @@ impl PredictiveMaintenanceRepository {
     // ========================================================================
 
     /// Set health threshold.
-    pub async fn set_health_threshold(
+    pub async fn set_health_threshold<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         req: SetHealthThreshold,
-    ) -> Result<HealthThreshold, AppError> {
+    ) -> Result<HealthThreshold, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let threshold = sqlx::query_as::<_, HealthThreshold>(
             r#"
             INSERT INTO equipment_health_thresholds (
@@ -887,7 +1010,7 @@ impl PredictiveMaintenanceRepository {
         .bind(req.warning_threshold)
         .bind(req.alert_on_critical.unwrap_or(true))
         .bind(req.alert_on_warning.unwrap_or(true))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -895,10 +1018,14 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// List health thresholds.
-    pub async fn list_health_thresholds(
+    pub async fn list_health_thresholds<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
-    ) -> Result<Vec<HealthThreshold>, AppError> {
+    ) -> Result<Vec<HealthThreshold>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let thresholds = sqlx::query_as::<_, HealthThreshold>(
             r#"
             SELECT * FROM equipment_health_thresholds
@@ -907,7 +1034,7 @@ impl PredictiveMaintenanceRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -919,8 +1046,13 @@ impl PredictiveMaintenanceRepository {
     // ========================================================================
 
     /// Get maintenance dashboard data.
+    ///
+    /// Multi-statement read: issues several aggregate queries on one connection,
+    /// reborrowing `&mut *conn` for each so they all run under the same RLS
+    /// context.
     pub async fn get_dashboard(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         building_id: Option<Uuid>,
     ) -> Result<MaintenanceDashboard, AppError> {
@@ -934,7 +1066,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -950,7 +1082,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -991,7 +1123,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1025,7 +1157,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1043,7 +1175,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1077,7 +1209,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1094,7 +1226,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1118,7 +1250,7 @@ impl PredictiveMaintenanceRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -1135,12 +1267,16 @@ impl PredictiveMaintenanceRepository {
     }
 
     /// Get equipment sorted by health score (for dashboard list).
-    pub async fn get_equipment_by_health(
+    pub async fn get_equipment_by_health<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         building_id: Option<Uuid>,
         limit: i64,
-    ) -> Result<Vec<EquipmentSummary>, AppError> {
+    ) -> Result<Vec<EquipmentSummary>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let equipment = sqlx::query_as::<_, EquipmentSummary>(
             r#"
             SELECT
@@ -1160,7 +1296,7 @@ impl PredictiveMaintenanceRepository {
         .bind(org_id)
         .bind(building_id)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 

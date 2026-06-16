@@ -1,3 +1,5 @@
+// ROADMAP(PAP-24): roadmap stub — handlers return 501. Unmounted in lib.rs (no /api/v1/vendor-portal
+// route) so callers get 404 instead of a false 501. The live, implemented vendor surface is vendors.rs.
 //! Vendor Operations Portal routes (Epic 78).
 //!
 //! Provides vendor-facing endpoints for job management, property access,

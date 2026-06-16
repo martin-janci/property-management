@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
 import { useDeepLinkRouting, useOfflineSupport, usePushNotifications } from './hooks';
+import { resolveAuthGate } from './navigation/authGate';
 import { colors } from './screens/shared/screenStyles';
 import type { Screen } from './services/deepLinkRouting';
 import './i18n'; // Initialize i18n
@@ -97,7 +98,12 @@ function MainApp() {
   // links until the user is authenticated.
   useDeepLinkRouting(handleNavigate, isAuthenticated);
 
-  if (isLoading) {
+  // Navigation auth guard (AC-5): pick the top-level view from auth state.
+  // `auth` replaces every protected route with the login flow, i.e. it
+  // redirects unauthenticated users away from protected screens.
+  const gate = resolveAuthGate({ isLoading, isAuthenticated });
+
+  if (gate === 'loading') {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>{t('common.loading')}</Text>
@@ -105,7 +111,7 @@ function MainApp() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (gate === 'auth') {
     return <AuthFlow />;
   }
 

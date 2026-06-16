@@ -57,6 +57,47 @@ object DeepLinkRouter {
     fun preservesState(route: String?): Boolean = route in TOP_LEVEL_ROUTES
 
     /**
+     * Platform-agnostic description of the Compose `navOptions` that make tab switches preserve
+     * back-stack state. It is the data behind the inline lambda in the Android nav graph:
+     * ```kotlin
+     * navController.navigate(route) {
+     *     popUpTo(popUpToRoute) { saveState = true }
+     *     launchSingleTop = true
+     *     restoreState = true
+     * }
+     * ```
+     *
+     * Keeping the option *values* here (rather than only in the Compose lambda) gives the
+     * state-preservation behaviour a framework-free unit-test surface and lets iOS adopt the same
+     * contract. Story 82-2, AC-4.
+     *
+     * @property popUpToRoute the route the back stack is popped up to before navigating — the graph
+     *   start destination ([ROUTE_HOME]) so each tab is a single saved sub-stack under it.
+     * @property popUpToSaveState save the popped destinations' state so it can be restored later.
+     * @property launchSingleTop don't stack duplicate copies of an already-current tab.
+     * @property restoreState restore any previously-saved state for the destination being navigated
+     *   to, so re-selecting a tab returns the user to where they left off.
+     */
+    data class TabNavOptions(
+        val popUpToRoute: String,
+        val popUpToSaveState: Boolean,
+        val launchSingleTop: Boolean,
+        val restoreState: Boolean,
+    )
+
+    /**
+     * The single set of nav options every bottom-bar tap must use to preserve and restore per-tab
+     * back-stack state. Pop up to [ROUTE_HOME] saving state, single-top, and restore on the way in.
+     */
+    val TAB_NAV_OPTIONS: TabNavOptions =
+        TabNavOptions(
+            popUpToRoute = ROUTE_HOME,
+            popUpToSaveState = true,
+            launchSingleTop = true,
+            restoreState = true,
+        )
+
+    /**
      * Parse a `reality://…` deep-link string into a [DeepLinkTarget], or `null` if the URI is
      * malformed, uses a foreign scheme, or targets an unknown host.
      */

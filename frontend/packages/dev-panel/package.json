@@ -1,6 +1,6 @@
 {
   "name": "@ppt/dev-panel",
-  "version": "0.3.98",
+  "version": "0.3.218",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -13,7 +13,7 @@
     "@types/react": "^19.2.17",
     "react": "^19.2.7",
     "typescript": "^5.4.0",
-    "vitest": "^4.1.8",
+    "vitest": "^4.1.9",
     "@testing-library/react": "^16.0.0",
     "jsdom": "^29.1.1"
   },

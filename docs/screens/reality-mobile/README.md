@@ -21,6 +21,13 @@ They document iOS-specific implementation status, route bindings, and gaps.
 | [compare-listings.md](compare-listings.md) | CompareListingsView | UC-46.5 | in-progress |
 | [realtors.md](realtors.md) | RealtorsView | UC-49.1 | in-progress |
 | [agencies.md](agencies.md) | AgenciesView | UC-51.1 | in-progress |
+| [navigation.md](navigation.md) | NavigationCoordinator / DeepLinkHandler / NavigationStateRestorationService | 82.2 | shipped |
+
+## Cross-Cutting Infrastructure
+
+| Screen Map | Concern | AC | Status |
+|---|---|---|---|
+| [navigation.md](navigation.md) | Navigation state preservation, URL-scheme deep-linking, auth guard | AC-4, AC-5 | verified (Coverage 82-2); `Info.plist` URL-scheme registration gap flagged for pm-mobile |
 
 ## Stub Destinations (Routes defined, views not implemented)
 

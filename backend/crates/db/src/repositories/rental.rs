@@ -148,28 +148,14 @@ impl RentalRepository {
         Ok(conn)
     }
 
-    /// Find connection by ID.
-    pub async fn find_connection_by_id(
-        &self,
-        id: Uuid,
-    ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
-            r#"SELECT * FROM rental_platform_connections WHERE id = $1"#,
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(conn)
-    }
-
     /// Find connection by ID scoped to an organization.
     ///
-    /// SECURITY (#887 / #804): callers acting on behalf of an authenticated
-    /// tenant MUST use this instead of [`find_connection_by_id`] so a caller
-    /// from org B cannot read org A's connection (and its OAuth tokens).
-    /// Returns `None` when the connection does not exist OR belongs to a
-    /// different organization (the handler maps `None` → 404).
+    /// SECURITY (#887 / #804 / PAP-141): this is the ONLY by-id connection
+    /// lookup — the unkeyed `find_connection_by_id` was removed with the legacy
+    /// OAuth callbacks. The `AND organization_id = $2` guard means a caller from
+    /// org B cannot read org A's connection (and its OAuth tokens). Returns
+    /// `None` when the connection does not exist OR belongs to a different
+    /// organization (the handler maps `None` → 404).
     pub async fn find_connection_for_org(
         &self,
         org_id: Uuid,
@@ -295,73 +281,6 @@ impl RentalRepository {
         .await?;
 
         Ok(conn)
-    }
-
-    /// Save OAuth tokens for connection.
-    pub async fn save_oauth_tokens(
-        &self,
-        id: Uuid,
-        access_token: &str,
-        refresh_token: Option<&str>,
-        expires_at: Option<chrono::DateTime<Utc>>,
-    ) -> Result<(), SqlxError> {
-        sqlx::query(
-            r#"
-            UPDATE rental_platform_connections SET
-                access_token = $2,
-                refresh_token = COALESCE($3, refresh_token),
-                token_expires_at = $4,
-                updated_at = NOW()
-            WHERE id = $1
-            "#,
-        )
-        .bind(id)
-        .bind(access_token)
-        .bind(refresh_token)
-        .bind(expires_at)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
-    }
-
-    /// Update connection tokens and status (Story 98.2: Rental OAuth Implementation).
-    ///
-    /// # Arguments
-    /// * `id` - Connection ID
-    /// * `access_token` - Encrypted access token
-    /// * `refresh_token` - Optional encrypted refresh token
-    /// * `expires_at` - Token expiration time
-    /// * `is_connected` - Whether the connection is now connected
-    pub async fn update_connection_tokens(
-        &self,
-        id: Uuid,
-        access_token: &str,
-        refresh_token: Option<&str>,
-        expires_at: Option<chrono::DateTime<Utc>>,
-        is_connected: bool,
-    ) -> Result<(), SqlxError> {
-        sqlx::query(
-            r#"
-            UPDATE rental_platform_connections SET
-                access_token = $2,
-                refresh_token = COALESCE($3, refresh_token),
-                token_expires_at = $4,
-                is_active = $5,
-                sync_error = NULL,
-                updated_at = NOW()
-            WHERE id = $1
-            "#,
-        )
-        .bind(id)
-        .bind(access_token)
-        .bind(refresh_token)
-        .bind(expires_at)
-        .bind(is_connected)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
     }
 
     /// Update last sync time.
@@ -655,8 +574,24 @@ impl RentalRepository {
         platform: &str,
         external_id: &str,
     ) -> Result<Option<RentalBooking>, SqlxError> {
+        // `platform`/`status` are PG enums but the model decodes them as
+        // `String`; a bare `SELECT *` fails to decode (42804, FORCE-RLS-masked,
+        // PAP-158), so cast both enum columns to text. `platform = $1` keeps the
+        // text param comparing against the enum via the column's implicit cast.
         let booking = sqlx::query_as::<_, RentalBooking>(
-            r#"SELECT * FROM rental_bookings WHERE platform = $1 AND external_booking_id = $2"#,
+            r#"
+            SELECT
+                id, organization_id, unit_id, connection_id,
+                platform::text AS platform, external_booking_id, external_booking_url,
+                guest_name, guest_email, guest_phone, guest_count,
+                check_in, check_out, check_in_time, check_out_time,
+                total_amount, currency, platform_fee, cleaning_fee,
+                status::text AS status, cancelled_at, cancellation_reason,
+                guest_notes, internal_notes, synced_at, raw_data,
+                created_at, updated_at
+            FROM rental_bookings
+            WHERE platform = $1::rental_platform AND external_booking_id = $2
+            "#,
         )
         .bind(platform)
         .bind(external_id)
@@ -795,40 +730,6 @@ impl RentalRepository {
         Ok(booking)
     }
 
-    /// Update booking status.
-    pub async fn update_booking_status(
-        &self,
-        id: Uuid,
-        data: UpdateBookingStatus,
-    ) -> Result<RentalBooking, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
-            r#"
-            UPDATE rental_bookings SET
-                status = $2,
-                cancelled_at = CASE WHEN $2 = 'cancelled' THEN NOW() ELSE cancelled_at END,
-                cancellation_reason = COALESCE($3, cancellation_reason),
-                updated_at = NOW()
-            WHERE id = $1
-            RETURNING *
-            "#,
-        )
-        .bind(id)
-        .bind(&data.status)
-        .bind(&data.cancellation_reason)
-        .fetch_one(&self.pool)
-        .await?;
-
-        // Remove calendar block if cancelled
-        if data.status == booking_status::CANCELLED {
-            sqlx::query(r#"DELETE FROM rental_calendar_blocks WHERE booking_id = $1"#)
-                .bind(id)
-                .execute(&self.pool)
-                .await?;
-        }
-
-        Ok(booking)
-    }
-
     /// Update booking status scoped to an organization.
     ///
     /// SECURITY (#804): the `AND organization_id = $4` guard prevents a tenant
@@ -839,15 +740,30 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateBookingStatus,
     ) -> Result<Option<RentalBooking>, SqlxError> {
+        // `status`/`platform` are PG enums but the model decodes them as
+        // `String`. The status param `$2` is used both as an enum assignment
+        // AND in the `CASE WHEN $2 = 'cancelled'` text comparison; without the
+        // explicit `$2::rental_booking_status` cast the comparison pins `$2` to
+        // `text`, so the assignment fails with 42804 (FORCE-RLS-masked, see
+        // PAP-158). `RETURNING *` likewise must cast the enum columns to text or
+        // the row fails to decode into `RentalBooking`.
         let booking = sqlx::query_as::<_, RentalBooking>(
             r#"
             UPDATE rental_bookings SET
-                status = $2,
+                status = $2::rental_booking_status,
                 cancelled_at = CASE WHEN $2 = 'cancelled' THEN NOW() ELSE cancelled_at END,
                 cancellation_reason = COALESCE($3, cancellation_reason),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $4
-            RETURNING *
+            RETURNING
+                id, organization_id, unit_id, connection_id,
+                platform::text AS platform, external_booking_id, external_booking_url,
+                guest_name, guest_email, guest_phone, guest_count,
+                check_in, check_out, check_in_time, check_out_time,
+                total_amount, currency, platform_fee, cleaning_fee,
+                status::text AS status, cancelled_at, cancellation_reason,
+                guest_notes, internal_notes, synced_at, raw_data,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -2316,6 +2232,33 @@ impl RentalRepository {
         Ok(conn)
     }
 
+    /// Record an inbound Airbnb webhook delivery in the dedup ledger.
+    ///
+    /// Airbnb guarantees at-least-once delivery; this inserts the delivery's
+    /// dedup key into the global `airbnb_webhook_events` ledger and reports
+    /// whether the row was newly recorded. `ON CONFLICT DO NOTHING` makes a
+    /// re-delivery a no-op, so `Ok(false)` means "already seen — suppress".
+    ///
+    /// PAP-170 (PAP-150): `airbnb_webhook_events` is a global, tenant-less dedup
+    /// table (no `organization_id`), so this lives in the repository layer
+    /// instead of a raw `state.db` pool access inside the webhook handler.
+    pub async fn record_airbnb_webhook_event(
+        &self,
+        event_id: &str,
+        event_type: &str,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            "INSERT INTO airbnb_webhook_events (event_id, event_type) \
+             VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING",
+        )
+        .bind(event_id)
+        .bind(event_type)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
     /// Get Airbnb status for organization (aggregated from all connections).
     pub async fn get_airbnb_status(
         &self,
@@ -2389,6 +2332,61 @@ impl RentalRepository {
         .bind(refresh_token)
         .bind(expires_at)
         .bind(external_account_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(conn)
+    }
+
+    /// Create or update a Booking.com OAuth connection (Coverage 83-2).
+    ///
+    /// Mirrors [`Self::upsert_airbnb_connection`] but with `platform =
+    /// 'booking'`.  Tokens are expected to be already encrypted by the caller.
+    pub async fn upsert_booking_oauth_connection(
+        &self,
+        org_id: Uuid,
+        unit_id: Option<Uuid>,
+        access_token: &str,
+        refresh_token: Option<&str>,
+        expires_at: Option<chrono::DateTime<Utc>>,
+        external_property_id: Option<&str>,
+    ) -> Result<RentalPlatformConnection, SqlxError> {
+        let effective_unit_id = match unit_id {
+            Some(id) => id,
+            None => {
+                let existing = self.find_booking_connection_by_org(org_id).await?;
+                existing.map(|c| c.unit_id).unwrap_or_else(Uuid::nil)
+            }
+        };
+
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            r#"
+            INSERT INTO rental_platform_connections (
+                organization_id, unit_id, platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, is_active
+            )
+            VALUES ($1, $2, 'booking', $3, $4, $5, $3, $4, $6, true)
+            ON CONFLICT (unit_id, platform) DO UPDATE SET
+                access_token             = $3,
+                refresh_token            = COALESCE($4, rental_platform_connections.refresh_token),
+                encrypted_token          = $3,
+                encrypted_refresh_token  = COALESCE($4, rental_platform_connections.encrypted_refresh_token),
+                token_expires_at         = $5,
+                external_property_id     = COALESCE($6, rental_platform_connections.external_property_id),
+                is_active                = true,
+                sync_error               = NULL,
+                updated_at               = NOW()
+            RETURNING *
+            "#,
+        )
+        .bind(org_id)
+        .bind(effective_unit_id)
+        .bind(access_token)
+        .bind(refresh_token)
+        .bind(expires_at)
+        .bind(external_property_id)
         .fetch_one(&self.pool)
         .await?;
 

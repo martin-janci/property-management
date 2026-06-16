@@ -1,4 +1,29 @@
 //! Legal document and compliance repository (Epic 25).
+//!
+//! # RLS Integration (PAP-80 / PAP-67)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on all eight legal/compliance tables
+//! (`legal_documents`, `legal_document_versions`, `compliance_requirements`,
+//! `compliance_verifications`, `legal_notices`, `legal_notice_recipients`,
+//! `compliance_templates`, `compliance_audit_trail`). Under `FORCE` the
+//! api-server's owner connection is no longer exempt, so a query issued on a
+//! connection without `app.current_org_id` set collapses to deny-all (own-org
+//! reads return empty, writes fail the policy `WITH CHECK`).
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. The repository holds **no
+//! pool**, so there is no way to issue a query that bypasses RLS. Single-
+//! statement methods take a generic `Executor`; methods that run more than one
+//! statement (or call an `*_in_org` guard before their query) take
+//! `&mut PgConnection` and reborrow it per query. This mirrors the
+//! `work_order.rs` / `budget.rs` / `document.rs` precedent.
+//!
+//! The explicit `organization_id = $n` filters are retained as defence in
+//! depth: the handler passes `rls.tenant_id()` as the authoritative org, which
+//! is the same tenant the connection's RLS context was set to, so the SQL
+//! filter and the policy can never disagree.
 
 use crate::models::{
     AcknowledgeNotice, ApplyTemplate, ComplianceAuditTrail, ComplianceCategoryCount,
@@ -12,30 +37,40 @@ use crate::models::{
     UpdateComplianceTemplate, UpdateLegalDocument, UpdateLegalNotice,
 };
 use chrono::{Months, NaiveDate};
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, PgPool, Postgres};
 use uuid::Uuid;
 
 /// Repository for legal document and compliance operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct LegalRepository {
-    pool: PgPool,
-}
+pub struct LegalRepository;
 
 impl LegalRepository {
     /// Create a new LegalRepository.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // ==================== Legal Documents CRUD ====================
 
     /// Create a new legal document.
-    pub async fn create_document(
+    pub async fn create_document<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         data: CreateLegalDocument,
-    ) -> Result<LegalDocument, sqlx::Error> {
+    ) -> Result<LegalDocument, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // Calculate retention expiry date if retention period is provided
         // Using proper month arithmetic for accuracy
         let retention_expires_at = data.retention_period_months.map(|months| {
@@ -74,32 +109,40 @@ impl LegalRepository {
         .bind(&data.tags)
         .bind(data.metadata.map(sqlx::types::Json))
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find a legal document by ID, scoped to an organization.
     ///
     /// A foreign-org `id` returns `None` (→ HTTP 404), preventing cross-tenant
-    /// reads (IDOR, #829).
-    pub async fn find_document_by_id(
+    /// reads (IDOR, #829) — now enforced by RLS as well as the explicit filter.
+    pub async fn find_document_by_id<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<LegalDocument>, sqlx::Error> {
+    ) -> Result<Option<LegalDocument>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM legal_documents WHERE id = $1 AND organization_id = $2")
             .bind(id)
             .bind(org_id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// List legal documents for an organization.
-    pub async fn list_documents(
+    pub async fn list_documents<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: LegalDocumentQuery,
-    ) -> Result<Vec<LegalDocument>, sqlx::Error> {
+    ) -> Result<Vec<LegalDocument>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
         sqlx::query_as(
@@ -125,16 +168,20 @@ impl LegalRepository {
         .bind(&search_pattern)
         .bind(query.limit.unwrap_or(50))
         .bind(query.offset.unwrap_or(0))
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// List legal documents with version counts.
-    pub async fn list_documents_with_summary(
+    pub async fn list_documents_with_summary<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: LegalDocumentQuery,
-    ) -> Result<Vec<LegalDocumentSummary>, sqlx::Error> {
+    ) -> Result<Vec<LegalDocumentSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
         sqlx::query_as(
@@ -166,7 +213,7 @@ impl LegalRepository {
         .bind(&search_pattern)
         .bind(query.limit.unwrap_or(50))
         .bind(query.offset.unwrap_or(0))
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -174,12 +221,16 @@ impl LegalRepository {
     ///
     /// Returns `None` when no row in `org_id` matches `id` (→ HTTP 404),
     /// so a cross-tenant `id` cannot be mutated (IDOR, #829).
-    pub async fn update_document(
+    pub async fn update_document<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         data: UpdateLegalDocument,
-    ) -> Result<Option<LegalDocument>, sqlx::Error> {
+    ) -> Result<Option<LegalDocument>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE legal_documents SET
@@ -222,17 +273,25 @@ impl LegalRepository {
         .bind(data.retention_expires_at)
         .bind(&data.tags)
         .bind(data.metadata.map(sqlx::types::Json))
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Delete a legal document, scoped to an organization.
-    pub async fn delete_document(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_document<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result =
             sqlx::query("DELETE FROM legal_documents WHERE id = $1 AND organization_id = $2")
                 .bind(id)
                 .bind(org_id)
-                .execute(&self.pool)
+                .execute(executor)
                 .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -243,13 +302,21 @@ impl LegalRepository {
     ///
     /// Used to org-scope child-resource (version) operations so a foreign-org
     /// `document_id` cannot be read or written through (IDOR, #829).
-    async fn document_in_org(&self, document_id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    async fn document_in_org<'e, E>(
+        &self,
+        executor: E,
+        document_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let exists: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM legal_documents WHERE id = $1 AND organization_id = $2",
         )
         .bind(document_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
         Ok(exists.is_some())
     }
@@ -259,12 +326,16 @@ impl LegalRepository {
     /// Returns `None` when the parent document is not in `org_id` (→ HTTP 404).
     pub async fn add_document_version(
         &self,
+        conn: &mut PgConnection,
         document_id: Uuid,
         org_id: Uuid,
         user_id: Uuid,
         data: CreateLegalDocumentVersion,
     ) -> Result<Option<LegalDocumentVersion>, sqlx::Error> {
-        if !self.document_in_org(document_id, org_id).await? {
+        if !self
+            .document_in_org(&mut *conn, document_id, org_id)
+            .await?
+        {
             return Ok(None);
         }
         let version: LegalDocumentVersion = sqlx::query_as(
@@ -287,7 +358,7 @@ impl LegalRepository {
         .bind(&data.mime_type)
         .bind(&data.change_notes)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
         Ok(Some(version))
     }
@@ -297,10 +368,14 @@ impl LegalRepository {
     /// Returns `None` when the parent document is not in `org_id` (→ HTTP 404).
     pub async fn list_document_versions(
         &self,
+        conn: &mut PgConnection,
         document_id: Uuid,
         org_id: Uuid,
     ) -> Result<Option<Vec<LegalDocumentVersion>>, sqlx::Error> {
-        if !self.document_in_org(document_id, org_id).await? {
+        if !self
+            .document_in_org(&mut *conn, document_id, org_id)
+            .await?
+        {
             return Ok(None);
         }
         let versions = sqlx::query_as(
@@ -311,7 +386,7 @@ impl LegalRepository {
             "#,
         )
         .bind(document_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
         Ok(Some(versions))
     }
@@ -319,11 +394,15 @@ impl LegalRepository {
     /// Get a specific version, scoped to an organization.
     pub async fn get_document_version(
         &self,
+        conn: &mut PgConnection,
         document_id: Uuid,
         org_id: Uuid,
         version_number: i32,
     ) -> Result<Option<LegalDocumentVersion>, sqlx::Error> {
-        if !self.document_in_org(document_id, org_id).await? {
+        if !self
+            .document_in_org(&mut *conn, document_id, org_id)
+            .await?
+        {
             return Ok(None);
         }
         sqlx::query_as(
@@ -334,18 +413,22 @@ impl LegalRepository {
         )
         .bind(document_id)
         .bind(version_number)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await
     }
 
     // ==================== Compliance Requirements CRUD ====================
 
     /// Create a compliance requirement.
-    pub async fn create_requirement(
+    pub async fn create_requirement<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         data: CreateComplianceRequirement,
-    ) -> Result<ComplianceRequirement, sqlx::Error> {
+    ) -> Result<ComplianceRequirement, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO compliance_requirements
@@ -366,33 +449,41 @@ impl LegalRepository {
         .bind(data.is_mandatory.unwrap_or(true))
         .bind(&data.responsible_party)
         .bind(&data.notes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Find a compliance requirement by ID, scoped to an organization.
     ///
     /// A foreign-org `id` returns `None` (→ HTTP 404) (IDOR, #829).
-    pub async fn find_requirement_by_id(
+    pub async fn find_requirement_by_id<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<ComplianceRequirement>, sqlx::Error> {
+    ) -> Result<Option<ComplianceRequirement>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             "SELECT * FROM compliance_requirements WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List compliance requirements.
-    pub async fn list_requirements(
+    pub async fn list_requirements<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: ComplianceQuery,
-    ) -> Result<Vec<ComplianceRequirement>, sqlx::Error> {
+    ) -> Result<Vec<ComplianceRequirement>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM compliance_requirements
@@ -416,16 +507,20 @@ impl LegalRepository {
         .bind(query.overdue_only)
         .bind(query.limit.unwrap_or(50))
         .bind(query.offset.unwrap_or(0))
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// List requirements with verification details.
-    pub async fn list_requirements_with_details(
+    pub async fn list_requirements_with_details<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: ComplianceQuery,
-    ) -> Result<Vec<ComplianceRequirementWithDetails>, sqlx::Error> {
+    ) -> Result<Vec<ComplianceRequirementWithDetails>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT
@@ -455,19 +550,23 @@ impl LegalRepository {
         .bind(query.overdue_only)
         .bind(query.limit.unwrap_or(50))
         .bind(query.offset.unwrap_or(0))
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update a compliance requirement, scoped to an organization.
     ///
     /// Returns `None` when no row in `org_id` matches `id` (→ HTTP 404) (IDOR, #829).
-    pub async fn update_requirement(
+    pub async fn update_requirement<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         data: UpdateComplianceRequirement,
-    ) -> Result<Option<ComplianceRequirement>, sqlx::Error> {
+    ) -> Result<Option<ComplianceRequirement>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE compliance_requirements SET
@@ -500,18 +599,26 @@ impl LegalRepository {
         .bind(data.is_mandatory)
         .bind(&data.responsible_party)
         .bind(&data.notes)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Delete a compliance requirement, scoped to an organization.
-    pub async fn delete_requirement(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_requirement<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             "DELETE FROM compliance_requirements WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
         .bind(org_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -519,17 +626,21 @@ impl LegalRepository {
     // ==================== Compliance Verifications ====================
 
     /// Check that a compliance requirement belongs to an organization.
-    async fn requirement_in_org(
+    async fn requirement_in_org<'e, E>(
         &self,
+        executor: E,
         requirement_id: Uuid,
         org_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let exists: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM compliance_requirements WHERE id = $1 AND organization_id = $2",
         )
         .bind(requirement_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
         Ok(exists.is_some())
     }
@@ -539,12 +650,16 @@ impl LegalRepository {
     /// Returns `None` when the requirement is not in `org_id` (→ HTTP 404).
     pub async fn create_verification(
         &self,
+        conn: &mut PgConnection,
         requirement_id: Uuid,
         org_id: Uuid,
         user_id: Uuid,
         data: CreateComplianceVerification,
     ) -> Result<Option<ComplianceVerification>, sqlx::Error> {
-        if !self.requirement_in_org(requirement_id, org_id).await? {
+        if !self
+            .requirement_in_org(&mut *conn, requirement_id, org_id)
+            .await?
+        {
             return Ok(None);
         }
         // Record the verification
@@ -567,7 +682,7 @@ impl LegalRepository {
         .bind(data.valid_until)
         .bind(&data.issues_found)
         .bind(&data.corrective_actions)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Update the requirement status and verification dates
@@ -584,7 +699,7 @@ impl LegalRepository {
         .bind(requirement_id)
         .bind(&data.status)
         .bind(user_id)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await?;
 
         Ok(Some(verification))
@@ -595,10 +710,14 @@ impl LegalRepository {
     /// Returns `None` when the requirement is not in `org_id` (→ HTTP 404).
     pub async fn list_verifications(
         &self,
+        conn: &mut PgConnection,
         requirement_id: Uuid,
         org_id: Uuid,
     ) -> Result<Option<Vec<ComplianceVerification>>, sqlx::Error> {
-        if !self.requirement_in_org(requirement_id, org_id).await? {
+        if !self
+            .requirement_in_org(&mut *conn, requirement_id, org_id)
+            .await?
+        {
             return Ok(None);
         }
         let verifications = sqlx::query_as(
@@ -609,7 +728,7 @@ impl LegalRepository {
             "#,
         )
         .bind(requirement_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
         Ok(Some(verifications))
     }
@@ -617,6 +736,7 @@ impl LegalRepository {
     /// Get compliance statistics.
     pub async fn get_compliance_statistics(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
     ) -> Result<ComplianceStatistics, sqlx::Error> {
         let counts: (i64, i64, i64, i64, i64) = sqlx::query_as(
@@ -632,7 +752,7 @@ impl LegalRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let by_category: Vec<ComplianceCategoryCount> = sqlx::query_as(
@@ -645,7 +765,7 @@ impl LegalRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         let upcoming_verifications: Vec<UpcomingVerification> = sqlx::query_as(
@@ -662,7 +782,7 @@ impl LegalRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         Ok(ComplianceStatistics {
@@ -681,6 +801,7 @@ impl LegalRepository {
     /// Create a legal notice.
     pub async fn create_notice(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         user_id: Uuid,
         data: CreateLegalNotice,
@@ -704,7 +825,7 @@ impl LegalRepository {
         .bind(data.requires_acknowledgment.unwrap_or(false))
         .bind(data.acknowledgment_deadline)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Add recipients
@@ -721,7 +842,7 @@ impl LegalRepository {
             .bind(recipient.recipient_id)
             .bind(&recipient.recipient_name)
             .bind(&recipient.recipient_email)
-            .execute(&self.pool)
+            .execute(&mut *conn)
             .await?;
         }
 
@@ -731,36 +852,52 @@ impl LegalRepository {
     /// Find a legal notice by ID, scoped to an organization.
     ///
     /// A foreign-org `id` returns `None` (→ HTTP 404) (IDOR, #829).
-    pub async fn find_notice_by_id(
+    pub async fn find_notice_by_id<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<LegalNotice>, sqlx::Error> {
+    ) -> Result<Option<LegalNotice>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as("SELECT * FROM legal_notices WHERE id = $1 AND organization_id = $2")
             .bind(id)
             .bind(org_id)
-            .fetch_optional(&self.pool)
+            .fetch_optional(executor)
             .await
     }
 
     /// Check that a legal notice belongs to an organization.
-    async fn notice_in_org(&self, notice_id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    async fn notice_in_org<'e, E>(
+        &self,
+        executor: E,
+        notice_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let exists: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM legal_notices WHERE id = $1 AND organization_id = $2",
         )
         .bind(notice_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
         Ok(exists.is_some())
     }
 
     /// List legal notices.
-    pub async fn list_notices(
+    pub async fn list_notices<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: LegalNoticeQuery,
-    ) -> Result<Vec<LegalNotice>, sqlx::Error> {
+    ) -> Result<Vec<LegalNotice>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM legal_notices
@@ -782,16 +919,20 @@ impl LegalRepository {
         .bind(query.requires_acknowledgment)
         .bind(query.limit.unwrap_or(50))
         .bind(query.offset.unwrap_or(0))
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// List notices with recipient summary.
-    pub async fn list_notices_with_recipients(
+    pub async fn list_notices_with_recipients<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: LegalNoticeQuery,
-    ) -> Result<Vec<NoticeWithRecipients>, sqlx::Error> {
+    ) -> Result<Vec<NoticeWithRecipients>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT
@@ -821,19 +962,23 @@ impl LegalRepository {
         .bind(query.requires_acknowledgment)
         .bind(query.limit.unwrap_or(50))
         .bind(query.offset.unwrap_or(0))
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Update a legal notice, scoped to an organization.
     ///
     /// Returns `None` when no row in `org_id` matches `id` (→ HTTP 404) (IDOR, #829).
-    pub async fn update_notice(
+    pub async fn update_notice<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         data: UpdateLegalNotice,
-    ) -> Result<Option<LegalNotice>, sqlx::Error> {
+    ) -> Result<Option<LegalNotice>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE legal_notices SET
@@ -856,17 +1001,25 @@ impl LegalRepository {
         .bind(&data.delivery_method)
         .bind(data.requires_acknowledgment)
         .bind(data.acknowledgment_deadline)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Delete a legal notice, scoped to an organization.
-    pub async fn delete_notice(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_notice<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result =
             sqlx::query("DELETE FROM legal_notices WHERE id = $1 AND organization_id = $2")
                 .bind(id)
                 .bind(org_id)
-                .execute(&self.pool)
+                .execute(executor)
                 .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -878,6 +1031,7 @@ impl LegalRepository {
     /// that can retry failures and update individual recipient statuses accordingly.
     pub async fn send_notice(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
         org_id: Uuid,
     ) -> Result<Option<LegalNotice>, sqlx::Error> {
@@ -891,7 +1045,7 @@ impl LegalRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         let Some(notice) = notice else {
@@ -909,7 +1063,7 @@ impl LegalRepository {
             "#,
         )
         .bind(id)
-        .execute(&self.pool)
+        .execute(&mut *conn)
         .await?;
 
         Ok(Some(notice))
@@ -922,10 +1076,11 @@ impl LegalRepository {
     /// Returns `None` when the parent notice is not in `org_id` (→ HTTP 404).
     pub async fn list_notice_recipients(
         &self,
+        conn: &mut PgConnection,
         notice_id: Uuid,
         org_id: Uuid,
     ) -> Result<Option<Vec<LegalNoticeRecipient>>, sqlx::Error> {
-        if !self.notice_in_org(notice_id, org_id).await? {
+        if !self.notice_in_org(&mut *conn, notice_id, org_id).await? {
             return Ok(None);
         }
         let recipients = sqlx::query_as(
@@ -936,7 +1091,7 @@ impl LegalRepository {
             "#,
         )
         .bind(notice_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
         Ok(Some(recipients))
     }
@@ -947,12 +1102,13 @@ impl LegalRepository {
     /// Returns `None` when the parent notice is not in `org_id` (→ HTTP 404).
     pub async fn acknowledge_notice(
         &self,
+        conn: &mut PgConnection,
         notice_id: Uuid,
         recipient_id: Uuid,
         org_id: Uuid,
         data: AcknowledgeNotice,
     ) -> Result<Option<LegalNoticeRecipient>, sqlx::Error> {
-        if !self.notice_in_org(notice_id, org_id).await? {
+        if !self.notice_in_org(&mut *conn, notice_id, org_id).await? {
             return Ok(None);
         }
         // The unique constraint on (notice_id, recipient_id) ensures this update
@@ -972,13 +1128,14 @@ impl LegalRepository {
             data.acknowledgment_method
                 .unwrap_or_else(|| "manual".to_string()),
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await
     }
 
     /// Get notice statistics.
     pub async fn get_notice_statistics(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
     ) -> Result<NoticeStatistics, sqlx::Error> {
         let counts: (i64, i64, i64) = sqlx::query_as(
@@ -992,7 +1149,7 @@ impl LegalRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let by_type: Vec<NoticeTypeCount> = sqlx::query_as(
@@ -1005,7 +1162,7 @@ impl LegalRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         // Count at recipient level for consistency (all counts are recipient-based)
@@ -1022,7 +1179,7 @@ impl LegalRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         Ok(NoticeStatistics {
@@ -1042,11 +1199,15 @@ impl LegalRepository {
     // ==================== Compliance Templates ====================
 
     /// Create a compliance template.
-    pub async fn create_template(
+    pub async fn create_template<'e, E>(
         &self,
+        executor: E,
         org_id: Option<Uuid>,
         data: CreateComplianceTemplate,
-    ) -> Result<ComplianceTemplate, sqlx::Error> {
+    ) -> Result<ComplianceTemplate, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO compliance_templates
@@ -1061,7 +1222,7 @@ impl LegalRepository {
         .bind(&data.description)
         .bind(data.checklist_items.map(sqlx::types::Json))
         .bind(data.frequency.unwrap_or_else(|| "annually".to_string()))
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -1069,12 +1230,18 @@ impl LegalRepository {
     ///
     /// Resolves the caller's own org templates and shared system templates
     /// (`organization_id IS NULL`); a *different* org's private template
-    /// returns `None` (→ HTTP 404) (IDOR, #829).
-    pub async fn find_template_by_id(
+    /// returns `None` (→ HTTP 404) (IDOR, #829). The RLS policy on
+    /// `compliance_templates` mirrors this `org = current OR org IS NULL` rule,
+    /// so shared templates remain visible under context.
+    pub async fn find_template_by_id<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
-    ) -> Result<Option<ComplianceTemplate>, sqlx::Error> {
+    ) -> Result<Option<ComplianceTemplate>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM compliance_templates
@@ -1083,16 +1250,20 @@ impl LegalRepository {
         )
         .bind(id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// List templates (organization-specific + system templates).
-    pub async fn list_templates(
+    pub async fn list_templates<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         category: Option<String>,
-    ) -> Result<Vec<ComplianceTemplate>, sqlx::Error> {
+    ) -> Result<Vec<ComplianceTemplate>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM compliance_templates
@@ -1103,7 +1274,7 @@ impl LegalRepository {
         )
         .bind(org_id)
         .bind(&category)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -1111,12 +1282,16 @@ impl LegalRepository {
     ///
     /// Only the owning org's own (non-system) templates can be updated; a
     /// foreign-org or system template returns `None` (→ HTTP 404) (IDOR, #829).
-    pub async fn update_template(
+    pub async fn update_template<'e, E>(
         &self,
+        executor: E,
         id: Uuid,
         org_id: Uuid,
         data: UpdateComplianceTemplate,
-    ) -> Result<Option<ComplianceTemplate>, sqlx::Error> {
+    ) -> Result<Option<ComplianceTemplate>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             UPDATE compliance_templates SET
@@ -1137,20 +1312,28 @@ impl LegalRepository {
         .bind(&data.description)
         .bind(data.checklist_items.map(sqlx::types::Json))
         .bind(&data.frequency)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Delete a template, scoped to an organization.
     ///
     /// Only the owning org's own (non-system) templates can be deleted.
-    pub async fn delete_template(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_template<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query(
             "DELETE FROM compliance_templates WHERE id = $1 AND organization_id = $2 AND is_system = FALSE",
         )
         .bind(id)
         .bind(org_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -1158,13 +1341,14 @@ impl LegalRepository {
     /// Apply a template to create requirements.
     pub async fn apply_template(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         data: ApplyTemplate,
     ) -> Result<Vec<ComplianceRequirement>, sqlx::Error> {
         let template = self
-            .find_template_by_id(data.template_id, org_id)
+            .find_template_by_id(&mut *conn, data.template_id, org_id)
             .await?
-            .ok_or_else(|| sqlx::Error::RowNotFound)?;
+            .ok_or(sqlx::Error::RowNotFound)?;
 
         // Calculate next due date based on frequency
         let next_due_date = calculate_next_due_date(&template.frequency);
@@ -1185,7 +1369,7 @@ impl LegalRepository {
         .bind(&template.category)
         .bind(&template.frequency)
         .bind(next_due_date)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         Ok(vec![requirement])
@@ -1194,12 +1378,16 @@ impl LegalRepository {
     // ==================== Compliance Audit Trail ====================
 
     /// Create an audit trail entry.
-    pub async fn create_audit_entry(
+    pub async fn create_audit_entry<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         user_id: Uuid,
         data: CreateAuditTrailEntry,
-    ) -> Result<ComplianceAuditTrail, sqlx::Error> {
+    ) -> Result<ComplianceAuditTrail, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             INSERT INTO compliance_audit_trail
@@ -1218,20 +1406,25 @@ impl LegalRepository {
         .bind(data.old_values.map(sqlx::types::Json))
         .bind(data.new_values.map(sqlx::types::Json))
         .bind(&data.notes)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List audit trail entries.
-    pub async fn list_audit_trail(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn list_audit_trail<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         requirement_id: Option<Uuid>,
         document_id: Option<Uuid>,
         notice_id: Option<Uuid>,
         limit: i32,
         offset: i32,
-    ) -> Result<Vec<ComplianceAuditTrail>, sqlx::Error> {
+    ) -> Result<Vec<ComplianceAuditTrail>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as(
             r#"
             SELECT * FROM compliance_audit_trail
@@ -1249,7 +1442,7 @@ impl LegalRepository {
         .bind(notice_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 }

@@ -29,7 +29,10 @@ export * from './forms';
 export * from './generated';
 export * from './government-portal';
 export * from './integrations';
+export * from './iot';
+export * from './leases';
 export * from './messaging';
+export * from './meters';
 export * from './mfa';
 export * from './migration';
 export * from './neighbors';
@@ -42,6 +45,7 @@ export * from './outages';
 export * from './packages';
 export * from './registry';
 export * from './reports';
+export * from './voting';
 export * from './workflow-automation';
 
 // API client configuration

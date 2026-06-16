@@ -11,7 +11,7 @@
  *  - navigation: Cancel / Back route to /disputes
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { type DisputeFormValues, FileDisputePage } from './FileDisputePage';
 
@@ -305,5 +305,118 @@ describe('FileDisputePage', () => {
     renderPage();
     fireEvent.click(screen.getByRole('button', { name: /back to disputes/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/disputes');
+  });
+});
+
+// ── AC-4: draft auto-save ──
+describe('FileDisputePage · draft auto-save', () => {
+  const DRAFT_KEY = 'ppt-dispute-filing-draft';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  it('persists typed values to localStorage after the debounce window', () => {
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText(/^subject/i), {
+      target: { value: 'Drafted subject line' },
+    });
+
+    // Nothing persisted until the debounce flushes.
+    expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+
+    const stored = JSON.parse(localStorage.getItem(DRAFT_KEY) as string);
+    expect(stored.values.subject).toBe('Drafted subject line');
+  });
+
+  it('shows the auto-save indicator once a draft has been saved', () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText(/^subject/i), {
+      target: { value: 'Something worth saving' },
+    });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+
+    expect(screen.getByText(/draft saved/i)).toBeInTheDocument();
+  });
+
+  it('restores a previously-saved draft into the form fields on mount', () => {
+    localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        values: { type: 'noise', subject: 'Recovered subject', description: '', unitId: '' },
+        savedAt: Date.now(),
+      })
+    );
+
+    renderPage();
+
+    expect(screen.getByLabelText(/^subject/i)).toHaveValue('Recovered subject');
+    expect(screen.getByText(/restored your saved draft/i)).toBeInTheDocument();
+  });
+
+  it('clears the stored draft after a successful submit', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    renderPage({ onSubmit });
+
+    fireEvent.click(screen.getByRole('radio', { name: /noise/i }));
+    fireEvent.change(screen.getByLabelText(/^unit/i), { target: { value: 'unit-1' } });
+    fireEvent.change(screen.getByLabelText(/^subject/i), {
+      target: { value: 'Loud parties past midnight' },
+    });
+    fireEvent.change(screen.getByLabelText(/^description/i), {
+      target: { value: 'Repeated loud music and shouting well past the 22:00 quiet hours.' },
+    });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    expect(localStorage.getItem(DRAFT_KEY)).not.toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /file dispute/i }));
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
+  });
+
+  it('keeps the stored draft when the submit handler rejects', async () => {
+    const onSubmit = vi.fn().mockRejectedValue(new Error('filing failed'));
+    renderPage({ onSubmit });
+
+    fireEvent.click(screen.getByRole('radio', { name: /noise/i }));
+    fireEvent.change(screen.getByLabelText(/^unit/i), { target: { value: 'unit-1' } });
+    fireEvent.change(screen.getByLabelText(/^subject/i), {
+      target: { value: 'Loud parties past midnight' },
+    });
+    fireEvent.change(screen.getByLabelText(/^description/i), {
+      target: { value: 'Repeated loud music and shouting well past the 22:00 quiet hours.' },
+    });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /file dispute/i }));
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(DRAFT_KEY)).not.toBeNull();
   });
 });

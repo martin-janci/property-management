@@ -14,6 +14,7 @@ import { useAuth } from '../../contexts';
 import { ManagerDashboardPage, ResidentDashboardPage } from '../../features/dashboard';
 import {
   AccessibilitySettingsPage,
+  AdvancedNotificationSettingsPage,
   AiChatPage,
   AuthCallbackPage,
   AutomationRulesPage,
@@ -26,6 +27,7 @@ import {
   ForgotPasswordPage,
   LoginPage,
   NotFoundPage,
+  NotificationSettingsPage,
   OAuthGrantsPage,
   PrivacySettingsPage,
   ProfileEditPage,
@@ -182,6 +184,24 @@ export function settingsRoutes() {
         element={
           <ProtectedRoute>
             <SessionsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Notification preferences (Epic 8A, Story 8A.1) */}
+      <Route
+        path="/settings/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Advanced notification preferences (Epic 40) */}
+      <Route
+        path="/settings/notifications/advanced"
+        element={
+          <ProtectedRoute>
+            <AdvancedNotificationSettingsPage />
           </ProtectedRoute>
         }
       />

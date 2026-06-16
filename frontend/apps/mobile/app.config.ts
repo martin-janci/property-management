@@ -43,7 +43,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-
+// gap-85-2 (iOS build config): injects the per-environment iOS .xcconfig
+// (ios/xcconfig/{Development,Staging,Production}.xcconfig) into the generated
+// `ios/` project at prebuild and wires it as the baseConfigurationReference of
+// every Xcode build configuration. See plugins/withIosBuildConfig.ts.
+import withIosBuildConfig from './plugins/withIosBuildConfig';
 // Custom Expo config plugin -- re-adds legacy storage perms with
 // maxSdkVersion=32 so they apply only on API <= 32. Issue #626.
 import withLegacyStoragePermissions from './plugins/withLegacyStoragePermissions';
@@ -59,6 +63,89 @@ function loadEnvFile(env: AppEnvironment): dotenv.DotenvParseOutput {
     return {};
   }
   return result.parsed ?? {};
+}
+
+/**
+ * gap-85-2 (app icon variants): per-environment launcher icons.
+ *
+ * So a tester can tell a development / staging build apart from production on
+ * the home screen at a glance, each environment ships its own badged icon:
+ *
+ *   development  =>  assets/images/icon-dev.png      / adaptive-icon-dev.png     (DEV badge)
+ *   staging      =>  assets/images/icon-staging.png  / adaptive-icon-staging.png (STG badge)
+ *   production   =>  assets/images/icon.png          / adaptive-icon.png         (no badge)
+ *
+ * The badged PNGs are *design assets* dropped into `assets/images/` by the
+ * design team (1024x1024). They are intentionally not generated in code. If a
+ * badged variant is missing (e.g. a fresh checkout that only has the base
+ * production icon yet), we fall back to the un-badged production asset so
+ * `expo prebuild` / EAS build never fails on a missing file. The fallback is
+ * logged so the gap is visible in build output.
+ *
+ * See assets/images/README.md for the icon-asset convention.
+ */
+const ICON_DIR = 'assets/images';
+
+interface IconVariant {
+  /** Square launcher icon (iOS + Android legacy), relative project path. */
+  icon: string;
+  /** Android adaptive-icon foreground layer, relative project path. */
+  adaptiveForeground: string;
+}
+
+/** Base (production, un-badged) icon assets — the fallback for every env. */
+const BASE_ICON_VARIANT: IconVariant = {
+  icon: `./${ICON_DIR}/icon.png`,
+  adaptiveForeground: `./${ICON_DIR}/adaptive-icon.png`,
+};
+
+/** Per-environment badged-icon basenames (suffix appended before `.png`). */
+const ICON_SUFFIX_BY_ENV: Record<AppEnvironment, string> = {
+  development: '-dev',
+  staging: '-staging',
+  production: '',
+};
+
+/** Returns true when an icon asset exists on disk beside this config. */
+function iconAssetExists(relativePath: string): boolean {
+  // relativePath is like './assets/images/icon-dev.png'
+  return fs.existsSync(path.resolve(__dirname, relativePath));
+}
+
+/**
+ * Resolve the launcher-icon variant for the given environment, falling back to
+ * the un-badged production assets when the badged variant file is absent.
+ */
+function resolveIconVariant(env: AppEnvironment): IconVariant {
+  const suffix = ICON_SUFFIX_BY_ENV[env];
+  if (suffix === '') {
+    return BASE_ICON_VARIANT;
+  }
+
+  const candidate: IconVariant = {
+    icon: `./${ICON_DIR}/icon${suffix}.png`,
+    adaptiveForeground: `./${ICON_DIR}/adaptive-icon${suffix}.png`,
+  };
+
+  const resolved: IconVariant = {
+    icon: iconAssetExists(candidate.icon) ? candidate.icon : BASE_ICON_VARIANT.icon,
+    adaptiveForeground: iconAssetExists(candidate.adaptiveForeground)
+      ? candidate.adaptiveForeground
+      : BASE_ICON_VARIANT.adaptiveForeground,
+  };
+
+  if (
+    resolved.icon !== candidate.icon ||
+    resolved.adaptiveForeground !== candidate.adaptiveForeground
+  ) {
+    console.warn(
+      `[app.config.ts] Badged ${env} icon variant missing — falling back to the un-badged ` +
+        `production icon (expected ${candidate.icon} / ${candidate.adaptiveForeground}). ` +
+        'Add the badged asset under assets/images/ — see assets/images/README.md.'
+    );
+  }
+
+  return resolved;
 }
 
 function getAppEnv(): AppEnvironment {
@@ -145,6 +232,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   //   - the JS route matcher (src/qrcode/universalLinks.ts → extra.appLinkHost)
   const appLinkHost = envVars.APP_LINK_HOST ?? process.env.APP_LINK_HOST ?? 'app.ppt.example.com';
 
+  // gap-85-2: per-environment launcher icon (DEV / STG badge vs. clean prod).
+  const iconVariant = resolveIconVariant(appEnv);
+
   return {
     ...config,
     name: config.name ?? 'PPT Management',
@@ -153,6 +243,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     orientation: 'portrait',
     scheme: 'ppt-management',
     platforms: ['ios', 'android'],
+
+    // gap-85-2: top-level launcher icon — used by iOS and as the Android
+    // legacy (pre-adaptive) icon. Per-environment badged variant resolved above.
+    icon: iconVariant.icon,
 
     ios: {
       ...config.ios,
@@ -175,10 +269,36 @@ export default ({ config }: ConfigContext): ExpoConfig => {
        * this into the generated `<app>.entitlements` at prebuild time.
        */
       associatedDomains: [...(config.ios?.associatedDomains ?? []), `applinks:${appLinkHost}`],
+      /**
+       * feat-mobile-push: APNs entitlement (required for iOS push).
+       * Without `aps-environment`, iOS never issues an APNs device token, so
+       * `Notifications.getDevicePushTokenAsync()` in `usePushNotifications`
+       * cannot register the device with the backend notification pipeline.
+       * `development` for debug/staging (APNs sandbox gateway), `production`
+       * for release builds (APNs production gateway). Expo writes this into the
+       * generated `<app>.entitlements` at prebuild time, alongside the
+       * universal-links entitlement above.
+       */
+      entitlements: {
+        ...(config.ios?.entitlements ?? {}),
+        'aps-environment': debugMode ? 'development' : 'production',
+      },
       infoPlist: {
         ...(config.ios?.infoPlist ?? {}),
         API_BASE_URL: apiBaseUrl,
         ENVIRONMENT: environment,
+        /**
+         * feat-mobile-push: enable background/silent push delivery.
+         * `remote-notification` lets iOS wake the app for background (data-only)
+         * FCM/APNs pushes so the notification-preference pipeline's background
+         * path runs — e.g. `syncBadgeFromData` mirroring the badge count onto
+         * the app icon for data-only messages. Without it, iOS drops the wake
+         * event and only foreground/tapped notifications are handled.
+         */
+        UIBackgroundModes: [
+          ...((config.ios?.infoPlist?.UIBackgroundModes as string[] | undefined) ?? []),
+          'remote-notification',
+        ],
         NSPhotoLibraryUsageDescription:
           'The app needs access to your photos to upload property images.',
         NSCameraUsageDescription:
@@ -210,8 +330,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
       // Adaptive icon -- required for Android 8.0+ (API level 26+).
       // Asset: assets/images/adaptive-icon.png (1024x1024, transparent bg).
+      // gap-85-2: foreground layer is the per-environment badged variant
+      // (DEV / STG) resolved above, falling back to the un-badged prod asset.
       adaptiveIcon: {
-        foregroundImage: './assets/images/adaptive-icon.png',
+        foregroundImage: iconVariant.adaptiveForeground,
         backgroundColor: '#1A73E8',
       },
 
@@ -290,6 +412,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // devices (API <= 32) keep working while API 33+ uses the granular
       // READ_MEDIA_* permissions declared in `android.permissions` above.
       withLegacyStoragePermissions,
+      // gap-85-2: inject the per-environment iOS .xcconfig into the generated
+      // `ios/` project at prebuild (selected by APP_ENV) and wire it as the
+      // baseConfigurationReference of every Xcode build configuration.
+      withIosBuildConfig,
     ],
 
     extra: {

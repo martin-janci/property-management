@@ -22,10 +22,13 @@ phase3_stories_generated: 13
 phase3_epics: 2
 phase4_stories_generated: 24
 phase4_epics: 6
-total_stories_generated: 134
-total_epics: 25
+phase5_stories_generated: 25
+phase5_epics: 6
+total_stories_generated: 159
+total_epics: 31
 validation_passed: true
-fr_coverage: '101/101 FRs (all phases complete)'
+fr_coverage: '134/134 FRs (Phases 1-4 = FR1-101; Phase 5 backfill = FR102-134)'
+phase5_note: 'Phase 5 (Epics 25-30) backfills already-shipped backend modules per PAP-17 Option C; documentation only, no feature code. Per-epic UI-wiring gaps are recorded where the surface is dead-code.'
 ---
 
 # Property Management System (PPT) & Reality Portal - Epic Breakdown
@@ -57,6 +60,12 @@ This document provides the complete epic and story breakdown for Property Manage
 | CA-13 | Rental Management | 6 FRs | Phase 4 |
 | CA-14 | Compliance & Privacy | 6 FRs | MVP |
 | CA-15 | Platform Operations | 6 FRs | MVP |
+| CA-16 | Facilities & Operations | 6 FRs | Phase 5 |
+| CA-17 | Disputes, Legal, Insurance & Compliance | 8 FRs | Phase 5 |
+| CA-18 | Community, Marketplace & News | 5 FRs | Phase 5 |
+| CA-19 | Investor & Portfolio Analytics | 7 FRs | Phase 5 |
+| CA-20 | ESG & Building Certifications | 3 FRs | Phase 5 |
+| CA-21 | Forms, Registry & Government Portal | 4 FRs | Phase 5 |
 
 **Detailed Functional Requirements:**
 
@@ -190,6 +199,58 @@ This document provides the complete epic and story breakdown for Property Manage
 - FR99: Support staff can access organization data for troubleshooting (UC-18.4)
 - FR100: System provides onboarding tour for new users (UC-42.1)
 - FR101: System provides contextual help and documentation (UC-42.2)
+
+> **Phase 5 (FR102-134) — backfill of already-shipped backend.** The following FRs document
+> capabilities that already exist in code (route module + migration) but had no catalog entry.
+> Authored per PAP-17 Option C; "shipped on backend" unless a UI-wiring gap is noted on the
+> owning epic (Epics 25-30). UC references are indicative (the 508-UC taxonomy in
+> `docs/functional-requirements.md` is a separate, unreconciled numbering — see
+> `EPIC_STORY_STATUS.md` §6).
+
+**CA-16: Facilities & Operations (6 FRs) - Phase 5** — *Epic 25*
+- FR102: Managers can create and assign maintenance work orders with status lifecycle (`work_orders.rs`)
+- FR103: Managers can manage a vendor/supplier directory with ratings and assignment (`vendors.rs`)
+- FR104: Staff can run day-to-day building operations tasks and checklists (`operations.rs`)
+- FR105: Front-desk staff can log packages and register/track visitors (`package_visitor.rs`)
+- FR106: System tracks planned/unplanned outages and notifies affected residents (`outages.rs`)
+- FR107: Managers can schedule recurring/preventive facility maintenance (`work_orders.rs` + `operations.rs`)
+
+**CA-17: Disputes, Legal, Insurance & Compliance (8 FRs) - Phase 5** — *Epic 26*
+- FR108: Residents/managers can open and mediate disputes with notes and resolution tracking (`disputes.rs`)
+- FR109: Managers can record and enforce rule violations with escalation (`violations.rs`)
+- FR110: Managers can store legal documents, contracts and case records (`legal.rs`)
+- FR111: Managers can manage building/asset insurance policies and claims (`insurance.rs`)
+- FR112: System tracks compliance obligations and generates compliance evidence (`compliance.rs`)
+- FR113: System applies region-specific regulatory rules and reporting (`regional_compliance.rs`)
+- FR114: Managers can run emergency/incident response workflows and broadcasts (`emergency.rs`)
+- FR115: System performs AML/EDD screening and DSA obligations (`aml_dsa.rs`) — **flagged: needs a named owner + security review before this FR is treated as production-ready**
+
+**CA-18: Community, Marketplace & News (5 FRs) - Phase 5** — *Epic 27*
+- FR116: Residents can list, browse and trade items in a community marketplace (`marketplace.rs`)
+- FR117: Residents can join community groups, events and discussions (`community.rs`)
+- FR118: Managers can publish news articles and media to residents (`news_articles.rs`)
+- FR119: Residents can connect with neighbours and resident directory (`neighbors.rs`)
+- FR120: System moderates community/marketplace content (`marketplace.rs` + `community.rs`)
+
+**CA-19: Investor & Portfolio Analytics (7 FRs) - Phase 5** — *Epic 28*
+- FR121: Investors can view a portfolio investor portal with holdings and returns (`investor_portal.rs`)
+- FR122: Owners can view per-property owner analytics (`owner_analytics.rs`)
+- FR123: Managers can view cross-property portfolio analytics (`portfolio_analytics.rs`)
+- FR124: System computes portfolio performance metrics over time (`portfolio_performance.rs`)
+- FR125: System estimates and tracks property valuations (`property_valuation.rs`)
+- FR126: Boards can schedule and minute board meetings (`board_meetings.rs`)
+- FR127: Owners can manage platform subscriptions and billing plans (`subscriptions.rs`)
+
+**CA-20: ESG & Building Certifications (3 FRs) - Phase 5** — *Epic 29*
+- FR128: Managers can produce ESG/sustainability reports (`esg_reporting.rs`)
+- FR129: Managers can track building certifications and their renewals (`building_certifications.rs`)
+- FR130: System monitors energy/sustainability KPIs feeding ESG reports (`esg_reporting.rs`)
+
+**CA-21: Forms, Registry & Government Portal (4 FRs) - Phase 5** — *Epic 30*
+- FR131: Users can build, submit and process dynamic forms (`forms.rs`)
+- FR132: System maintains official registries of records (`registry.rs`)
+- FR133: System integrates with government portals for filings/lookups (`government_portal.rs`)
+- FR134: System validates form/registry submissions against government schemas (`forms.rs` + `government_portal.rs`)
 
 ### Non-Functional Requirements
 
@@ -5005,6 +5066,421 @@ So that **I don't miss important dates**.
 
 ---
 
+# Phase 5 Stories: Facilities, Compliance, Community & Analytics (Backfill)
+
+> **Backfill — documentation only, no feature code.** Phase 5 catalogs six "keeper" clusters
+> of backend that already ship in `backend/servers/api-server/src/routes/` with real migrations
+> under `backend/crates/db/migrations/`, but had no epic/story/FR entry. Authored per the board's
+> **Option C** decision on **PAP-17** (see the *Phase-5 Plan — Hybrid (Option C)* plan doc).
+> Selection rule: a module is a **keeper** if it is substantial, backed by a real migration, and
+> either already reachable (routed web group or mobile screen) or a clear product roadmap area.
+> Pure 501 scaffolds (`competitive.rs`, `public_api.rs`, `vendor_portal.rs`) and platform-infra
+> modules are **quarantined**, not cataloged (tracked separately under the Option-C "Child B" issue).
+>
+> Each epic records: **Goal**, **FRs covered**, **Backed by** (route module line-counts + migrations),
+> a **UI status** line (with the wiring gap where the surface is dead-code), and stories. The
+> flagship UI-wiring gaps already have dedicated issues (PAP-18…26); epics here reference them
+> rather than duplicate them.
+
+## Epic 25: Facilities & Operations
+
+**Goal:** Managers run building operations end-to-end — work orders, vendor management, daily
+operations tasks, package/visitor handling, and outage tracking.
+
+**FRs covered:** FR102, FR103, FR104, FR105, FR106, FR107
+**Estimate:** backend shipped; Phase-5 backfill (UI partial)
+
+**Backed by (code evidence):**
+- Routes: `work_orders.rs` (935 L), `vendors.rs` (989 L), `operations.rs` (1443 L),
+  `package_visitor.rs` (1175 L), `outages.rs` (932 L).
+- Migrations: `00053_create_work_orders.sql`, `00054_create_vendors.sql`,
+  `00075_create_operations.sql`, `00068_create_package_visitor_management.sql`,
+  `00086_create_outages.sql`.
+
+**UI status:** `outages/` (373 L group) and `facilities/` ppt-web groups are **routed**;
+mobile has `outages/` screens. The standalone `vendors`/`package_visitor` surfaces are
+thin/back-office only. No new dead-code gap to flag here beyond the routed surfaces.
+
+### Story 25.1: Work Order Lifecycle
+
+As a **building manager**, I want to **create, assign and track maintenance work orders**,
+So that **repairs move through a clear status lifecycle to completion**.
+
+**Acceptance Criteria:**
+**Given** a fault or planned task **When** a manager raises a work order with priority and assignee
+**Then** it is persisted with an open status **And** transitions (assigned → in-progress → done) are auditable.
+
+**Technical Notes:** `work_orders.rs` handlers; `00053_create_work_orders.sql` schema (status, priority, assignee, building_id).
+
+### Story 25.2: Vendor & Supplier Directory
+
+As a **manager**, I want to **maintain a directory of vendors with ratings**,
+So that **work orders can be assigned to qualified suppliers**.
+
+**Acceptance Criteria:**
+**Given** a vendor record **When** a manager assigns it to a work order **Then** the assignment and contact details are linked **And** the vendor's history is visible.
+
+**Technical Notes:** `vendors.rs`; `00054_create_vendors.sql`. (Distinct from the 501-stub `vendor_portal.rs` external facade, which is quarantined.)
+
+### Story 25.3: Daily Operations Tasks & Checklists
+
+As **operations staff**, I want to **run recurring operational tasks and checklists**,
+So that **routine building upkeep is tracked and not missed**.
+
+**Acceptance Criteria:**
+**Given** a recurring operations task **When** staff complete checklist items **Then** completion is timestamped and reportable.
+
+**Technical Notes:** `operations.rs` (1443 L); `00075_create_operations.sql`.
+
+### Story 25.4: Package & Visitor Management
+
+As **front-desk staff**, I want to **log incoming packages and register visitors**,
+So that **deliveries and access are tracked per resident**.
+
+**Acceptance Criteria:**
+**Given** a package arrives **When** logged against a unit/resident **Then** the resident is notified and pickup is recorded; **Given** a visitor **When** registered **Then** entry/exit is tracked.
+
+**Technical Notes:** `package_visitor.rs` (1175 L); `00068_create_package_visitor_management.sql`.
+
+### Story 25.5: Outage Tracking & Resident Notification
+
+As a **manager**, I want to **record planned/unplanned outages and notify affected residents**,
+So that **residents have advance notice of service interruptions**.
+
+**Acceptance Criteria:**
+**Given** an outage **When** created with scope and window **Then** affected residents are notified **And** the outage status is shown in the routed `outages/` UI.
+
+**Technical Notes:** `outages.rs`; `00086_create_outages.sql`; ppt-web `outages/` group routed; mobile `outages/` screens.
+
+---
+
+## Epic 26: Disputes, Legal, Insurance & Compliance
+
+**Goal:** Managers handle the regulatory and contentious side of property management — disputes,
+rule violations, legal records, insurance, compliance obligations, regional rules, emergency
+response, and AML/DSA screening.
+
+**FRs covered:** FR108, FR109, FR110, FR111, FR112, FR113, FR114, FR115
+**Estimate:** backend shipped; Phase-5 backfill — **`aml_dsa.rs` flagged for owner + security review**
+
+**Backed by (code evidence):**
+- Routes: `disputes.rs` (1581 L), `violations.rs`, `legal.rs` (1134 L), `insurance.rs`,
+  `compliance.rs`, `regional_compliance.rs`, `emergency.rs` (1634 L), **`aml_dsa.rs` (1963 L)**.
+- Migrations: `00076_create_disputes.sql`, `00115_rls_disputes.sql`,
+  `00160_disputes_mediation_notes.sql`, `00098_create_violations.sql`,
+  `00058_create_legal_compliance.sql`, `00055_create_insurance.sql`,
+  `00056_create_emergency.sql`.
+
+**UI status:** `disputes/` (482 L group) and `emergency/` ppt-web groups are **routed**.
+`insurance/` and `compliance/` ppt-web dirs exist but are **dead code (unrouted)** — wiring
+gap recorded; this is part of the broad UI-wiring backlog (see `EPIC_STORY_STATUS.md` §4.B),
+not a duplicate of a flagship gap issue.
+
+> ⚠️ **Security/ownership flag — `aml_dsa.rs` (1963 L).** This is a large AML/EDD + DSA module
+> with **no named owner and no security review on record**. It is folded into this epic for
+> catalog completeness only. **Action:** assign a named owner and run a security review (least
+> privilege, untrusted-input validation at the boundary, audit logging) **before** FR115 is
+> treated as production-ready. Owner: **Atlas to assign** (CTO recommends a dedicated child issue).
+
+### Story 26.1: Dispute Intake & Mediation
+
+As a **resident or manager**, I want to **open and mediate disputes with notes**,
+So that **conflicts are tracked to resolution**.
+
+**Acceptance Criteria:**
+**Given** a dispute **When** opened and mediation notes are added **Then** status and notes persist and are auditable.
+
+**Technical Notes:** `disputes.rs`; `00076_create_disputes.sql` + `00160_disputes_mediation_notes.sql`; routed `disputes/` group.
+
+### Story 26.2: Violation Tracking & Enforcement
+
+As a **manager**, I want to **record rule violations and escalate enforcement**,
+So that **community rules are enforced consistently**.
+
+**Acceptance Criteria:**
+**Given** a violation **When** logged against a unit/resident **Then** escalation steps and resolution are tracked.
+
+**Technical Notes:** `violations.rs`; `00098_create_violations.sql`.
+
+### Story 26.3: Legal Records & Insurance
+
+As a **manager**, I want to **store legal documents and manage insurance policies/claims**,
+So that **contracts and coverage are centrally tracked**.
+
+**Acceptance Criteria:**
+**Given** a legal document or policy **When** recorded **Then** it is retrievable with metadata; **Given** an insurance claim **When** filed **Then** its status is tracked.
+
+**Technical Notes:** `legal.rs`, `insurance.rs`; `00058_create_legal_compliance.sql`, `00055_create_insurance.sql`.
+
+### Story 26.4: Compliance & Regional Rules
+
+As a **manager**, I want to **track compliance obligations and apply region-specific rules**,
+So that **the platform meets local regulatory requirements**.
+
+**Acceptance Criteria:**
+**Given** a compliance obligation **When** due **Then** evidence/reporting is generated; **Given** a region **When** rules apply **Then** region-specific handling is enforced.
+
+**Technical Notes:** `compliance.rs`, `regional_compliance.rs`.
+
+### Story 26.5: Emergency Response & AML/DSA Screening
+
+As a **manager/compliance officer**, I want to **run emergency workflows and AML/EDD screening**,
+So that **incidents are handled and legal screening obligations are met**.
+
+**Acceptance Criteria:**
+**Given** an emergency **When** triggered **Then** response workflow + broadcast run; **Given** an entity **When** AML/EDD screening runs **Then** a screening result is recorded.
+
+**Technical Notes:** `emergency.rs` (`00056_create_emergency.sql`); `aml_dsa.rs` — **gated on the security/ownership flag above**.
+
+---
+
+## Epic 27: Community, Marketplace & News
+
+**Goal:** Residents engage with each other and the building — community marketplace, groups/events,
+news/media, and a neighbour directory. **Strongest keeper: fully reachable on web + mobile.**
+
+**FRs covered:** FR116, FR117, FR118, FR119, FR120
+**Estimate:** backend + UI shipped; Phase-5 backfill (catalog only)
+
+**Backed by (code evidence):**
+- Routes: `marketplace.rs` (1933 L), `community.rs`, `news_articles.rs` (1060 L), `neighbors.rs`.
+- Migrations: `00103_create_marketplace.sql`, `00121_rls_marketplace.sql`,
+  `00064_community_features.sql`, `00114_rls_community_features.sql`, `00069_create_news_media.sql`.
+
+**UI status:** **Fully reachable** — ppt-web `/community/marketplace|events|groups`, `news/`,
+`neighbors/` are routed; mobile has `news/`, `neighbors/` screens. No wiring gap.
+
+### Story 27.1: Community Marketplace
+
+As a **resident**, I want to **list, browse and trade items in a community marketplace**,
+So that **neighbours can exchange goods within the building**.
+
+**Acceptance Criteria:**
+**Given** a listing **When** posted **Then** it appears in the marketplace with moderation; **Given** interest **When** a resident responds **Then** a conversation is started.
+
+**Technical Notes:** `marketplace.rs` (1933 L); `00103_create_marketplace.sql` + RLS `00121`.
+
+### Story 27.2: Community Groups & Events
+
+As a **resident**, I want to **join groups and events**,
+So that **I can participate in building community life**.
+
+**Acceptance Criteria:**
+**Given** a group/event **When** a resident joins/RSVPs **Then** membership/attendance is tracked.
+
+**Technical Notes:** `community.rs`; `00064_community_features.sql` + RLS `00114`; routed `/community/*`.
+
+### Story 27.3: News & Media Publishing
+
+As a **manager**, I want to **publish news articles and media to residents**,
+So that **building announcements reach the community**.
+
+**Acceptance Criteria:**
+**Given** an article **When** published **Then** residents see it in the routed `news/` UI with media attachments.
+
+**Technical Notes:** `news_articles.rs` (1060 L); `00069_create_news_media.sql`.
+
+### Story 27.4: Neighbour Directory & Connections
+
+As a **resident**, I want to **connect with neighbours via a directory**,
+So that **residents can find and contact each other (privacy-respecting)**.
+
+**Acceptance Criteria:**
+**Given** opt-in **When** a resident appears in the directory **Then** connections respect privacy settings (ties to FR92).
+
+**Technical Notes:** `neighbors.rs`; routed `neighbors/` web + mobile.
+
+---
+
+## Epic 28: Investor & Portfolio Analytics
+
+**Goal:** Owners, investors and boards get a financial/analytics layer above Epic 11 — investor
+portal, owner/portfolio analytics, performance metrics, valuations, board meetings, and
+subscription billing.
+
+**FRs covered:** FR121, FR122, FR123, FR124, FR125, FR126, FR127
+**Estimate:** backend shipped; **UI is dead-code → wiring gap recorded**
+
+**Backed by (code evidence):**
+- Routes: `investor_portal.rs`, `owner_analytics.rs`, `portfolio_analytics.rs`,
+  `portfolio_performance.rs`, `property_valuation.rs`, `board_meetings.rs`, `subscriptions.rs` (1681 L).
+- Migrations: `00096_create_investor_portal.sql`, `00077_create_owner_analytics.sql`,
+  `00116_rls_owner_analytics.sql`, `00091_create_portfolio_analytics.sql`,
+  `00100_create_portfolio_performance.sql`, `00120_rls_portfolio_performance.sql`,
+  `00146_fix_perf_portfolios_super_admin_bypass.sql`, `00095_create_property_valuation.sql`,
+  `00099_create_board_meetings.sql`, `00059_create_subscription_billing.sql`.
+
+> **UI-wiring gap (recorded).** The ppt-web `subscription/`, `portfolio-performance/` dirs and
+> related investor surfaces are **dead code — built but not mounted** in `AppRoutes.tsx`. Backend
+> + schema are complete; the web surface is unreachable. This is a wiring gap, not a backend gap
+> (see `EPIC_STORY_STATUS.md` §4.B). Wiring is out of scope for this docs-only backfill.
+
+### Story 28.1: Investor Portal
+
+As an **investor**, I want to **view my portfolio holdings and returns**,
+So that **I can monitor my property investments**.
+
+**Acceptance Criteria:**
+**Given** investor holdings **When** the portal loads **Then** holdings and returns are shown (backend ready; web surface unrouted — gap recorded).
+
+**Technical Notes:** `investor_portal.rs`; `00096_create_investor_portal.sql`.
+
+### Story 28.2: Owner & Portfolio Analytics
+
+As an **owner/manager**, I want to **view per-property and cross-property analytics**,
+So that **I understand performance across the portfolio**.
+
+**Acceptance Criteria:**
+**Given** properties **When** analytics run **Then** owner-level and portfolio-level metrics are computed with RLS isolation.
+
+**Technical Notes:** `owner_analytics.rs`, `portfolio_analytics.rs`; `00077`/`00116`, `00091`.
+
+### Story 28.3: Portfolio Performance Metrics
+
+As a **manager**, I want to **track portfolio performance over time**,
+So that **trends and benchmarks are visible**.
+
+**Acceptance Criteria:**
+**Given** historical data **When** performance is computed **Then** time-series metrics are available; super-admin bypass is correctly scoped.
+
+**Technical Notes:** `portfolio_performance.rs`; `00100`/`00120` + `00146` (super-admin bypass fix).
+
+### Story 28.4: Property Valuation & Board Meetings
+
+As a **manager/board**, I want to **track valuations and run board meetings**,
+So that **asset values and governance decisions are recorded**.
+
+**Acceptance Criteria:**
+**Given** a property **When** valued **Then** the estimate is tracked; **Given** a board meeting **When** scheduled **Then** agenda/minutes persist.
+
+**Technical Notes:** `property_valuation.rs` (`00095`), `board_meetings.rs` (`00099`).
+
+### Story 28.5: Subscription & Billing
+
+As an **owner**, I want to **manage platform subscription plans and billing**,
+So that **organisations can pay for the tier they use**.
+
+**Acceptance Criteria:**
+**Given** a plan **When** subscribed **Then** billing state is tracked (backend ready; web `subscription/` dir unrouted — gap recorded).
+
+**Technical Notes:** `subscriptions.rs` (1681 L); `00059_create_subscription_billing.sql`.
+
+---
+
+## Epic 29: ESG & Building Certifications
+
+**Goal:** Managers meet sustainability and certification obligations — ESG reporting and tracking
+of building certifications and their renewals.
+
+**FRs covered:** FR128, FR129, FR130
+**Estimate:** backend shipped; Phase-5 backfill
+
+**Backed by (code evidence):**
+- Routes: `esg_reporting.rs`, `building_certifications.rs`.
+- Migrations: `00093_create_esg_reporting.sql`, `00094_create_building_certifications.sql`.
+
+**UI status:** Back-office/reporting surface; no dedicated routed ppt-web group yet — wiring is a
+future ticket only if the epic is prioritised (no dead-code dir to flag).
+
+### Story 29.1: ESG Reporting Dashboard
+
+As a **manager**, I want to **produce ESG/sustainability reports**,
+So that **the organisation meets increasingly-mandated ESG disclosure**.
+
+**Acceptance Criteria:**
+**Given** building/energy data **When** an ESG report is generated **Then** sustainability KPIs are aggregated into a report.
+
+**Technical Notes:** `esg_reporting.rs`; `00093_create_esg_reporting.sql`.
+
+### Story 29.2: Building Certification Tracking
+
+As a **manager**, I want to **track building certifications and renewal dates**,
+So that **certifications stay valid and renewals are not missed**.
+
+**Acceptance Criteria:**
+**Given** a certification **When** recorded with an expiry **Then** renewal reminders can be raised.
+
+**Technical Notes:** `building_certifications.rs`; `00094_create_building_certifications.sql`.
+
+### Story 29.3: Energy/Sustainability KPI Monitoring
+
+As a **manager**, I want to **monitor energy and sustainability KPIs**,
+So that **ESG reports are backed by tracked metrics**.
+
+**Acceptance Criteria:**
+**Given** sustainability metrics **When** captured over time **Then** they feed the ESG report (ties to Epic 14 IoT energy data where available).
+
+**Technical Notes:** `esg_reporting.rs` (consumes energy/sensor inputs).
+
+---
+
+## Epic 30: Forms, Registry & Government Portal
+
+**Goal:** Users build and submit dynamic forms, the system maintains official registries, and it
+integrates with government portals for filings and lookups.
+
+**FRs covered:** FR131, FR132, FR133, FR134
+**Estimate:** backend shipped; Phase-5 backfill
+
+**Backed by (code evidence):**
+- Routes: `forms.rs` (1873 L), `registry.rs` (1093 L), `government_portal.rs` (987 L).
+- Migrations: `00066_create_forms.sql`, `00062_government_portal_integration.sql`.
+
+**UI status:** `forms/` is **mobile-reachable** (RN `forms/` screens). `registry/` and
+`government-portal/` ppt-web dirs exist but are **dead code (unrouted)** — wiring gap recorded
+(see `EPIC_STORY_STATUS.md` §4.B). Gov/registry integrations are real external surfaces.
+
+### Story 30.1: Dynamic Form Builder & Submission
+
+As a **user**, I want to **build, submit and process dynamic forms**,
+So that **structured intake (applications, requests) is captured**.
+
+**Acceptance Criteria:**
+**Given** a form definition **When** a user submits **Then** the submission is validated and stored; mobile `forms/` screens consume the API.
+
+**Technical Notes:** `forms.rs` (1873 L); `00066_create_forms.sql`.
+
+### Story 30.2: Official Registry
+
+As a **system/manager**, I want to **maintain official registries of records**,
+So that **regulated record-keeping is supported**.
+
+**Acceptance Criteria:**
+**Given** a registry record **When** created/updated **Then** it is persisted with audit history (web `registry/` dir unrouted — gap recorded).
+
+**Technical Notes:** `registry.rs` (1093 L).
+
+### Story 30.3: Government Portal Integration
+
+As a **system**, I want to **integrate with government portals for filings/lookups**,
+So that **regulatory submissions and validations are automated**.
+
+**Acceptance Criteria:**
+**Given** a filing/lookup **When** sent to the gov portal **Then** the response is recorded and submissions are validated against government schemas.
+
+**Technical Notes:** `government_portal.rs` (987 L); `00062_government_portal_integration.sql`. Secure-by-default: validate all untrusted gov-portal responses at the boundary.
+
+---
+
+## Phase 5 Stories Summary
+
+| Epic | Name | Stories | FRs | UI status |
+|------|------|---------|-----|-----------|
+| 25 | Facilities & Operations | 5 | FR102-107 | 🟡 partial (outages/facilities routed) |
+| 26 | Disputes, Legal, Insurance & Compliance | 5 | FR108-115 | 🟡 partial (disputes/emergency routed; insurance/compliance dead-code) — **aml_dsa.rs flagged** |
+| 27 | Community, Marketplace & News | 4 | FR116-120 | ✅ fully reachable (web + mobile) |
+| 28 | Investor & Portfolio Analytics | 5 | FR121-127 | ❌ web dead-code (wiring gap recorded) |
+| 29 | ESG & Building Certifications | 3 | FR128-130 | 🟡 back-office (no routed group yet) |
+| 30 | Forms, Registry & Government Portal | 3 | FR131-134 | 🟡 partial (forms mobile-reachable; registry/gov dead-code) |
+| **Phase 5 Total** | | **25** | **33 FRs (FR102-134)** | |
+
+**Quarantined (NOT cataloged, per Option C):** pure 501 scaffolds `competitive.rs` (removed),
+`public_api.rs`, `vendor_portal.rs`; and platform/infra modules (`infrastructure`,
+`feature_packages`, `reports`, `migration`, `tenant_config`, `api_ecosystem`, `multi_currency`,
+`data_residency`). These are not product epics — they carry on the Option-C "Child B" cleanup issue.
+
+---
+
 ## Complete Summary
 
 | Phase | Epics | Stories | FRs | Weeks |
@@ -5013,23 +5489,26 @@ So that **I don't miss important dates**.
 | Phase 2 | 5 | 23 | 13 | ~5 |
 | Phase 3 | 2 | 13 | 12 | ~4 |
 | Phase 4 | 6 | 24 | 14 | ~8 |
-| **Total** | **25** | **134** | **102** | **~33** |
+| Phase 5 (backfill) | 6 | 25 | 33 | shipped (BE) |
+| **Total** | **31** | **159** | **134** | **~33+** |
 
-All 101 Functional Requirements from the PRD are now covered with detailed user stories.
+Phases 1-4 cover all 101 original PRD Functional Requirements. **Phase 5 (Epics 25-30)** is a
+documentation-only backfill of already-shipped backend modules (FR102-134) authored per PAP-17
+Option C — see the "Phase 5 Stories" section above and the reconciliation in
+`docs/EPIC_STORY_STATUS.md` §2.
 
 ---
 
 ## Continuation
 
-This document covers **Epics 1-17** (Phases 1-4 partial).
+This document is the **authoritative catalog**: Epics 1-19 (Phases 1-4) **plus the Phase 5
+backfill (Epics 25-30, FR102-134)** authored inline above per PAP-17 Option C.
 
-**Continues in:** [`epics-002.md`](./epics-002.md)
-
-The continuation document includes:
-- **Phase 4 Completion:** Epic 18 (Short-Term Rental), Epic 19 (Lease Management)
-- **Phase 5:** Epics 20-23 (Operations & Asset Management)
-- **Phase 6:** Epics 24-26 (Financial Planning & Compliance)
-- **Phase 7:** Epic 27 (Reality Portal Enhancements)
-
-**Additional FRs:** FR102-FR125 (24 new functional requirements)
-**Additional Stories:** 41 stories across 10 epics
+> **Superseded aspirational backlog.** The sibling files `epics-002.md` … `epics-015.md`
+> contain an earlier, never-delivered planning backlog that reuses epic numbers (e.g. a
+> *different* "Epic 25 — Legal Document & Compliance" in `epics-002.md`, and epics up to
+> ~150 across `epics-015.md`) and a conflicting "Phase 5: Epics 20-23 / FR102-FR125" scheme.
+> Those numberings are **not** authoritative and are not tracked in
+> `docs/EPIC_STORY_STATUS.md`. Where this document and a continuation file disagree, **this
+> document wins.** The continuation files are retained as raw brainstorming, pending a
+> separate cleanup decision.
