@@ -72,7 +72,7 @@ async fn submit_form_same_org_succeeds(pool: PgPool) {
         .execute(
             app.session(token, org_id)
                 .post(&format!("/api/v1/forms/{form_id}/submit"))
-                .json(json!({ "data": {} }))
+                .json(json!({ "data": { "q1": "answer" } }))
                 .build(),
         )
         .await;
@@ -107,7 +107,7 @@ async fn submit_form_cross_org_is_not_found_and_does_not_insert(pool: PgPool) {
         .execute(
             app.session(attacker_token, org_b)
                 .post(&format!("/api/v1/forms/{form_id}/submit"))
-                .json(json!({ "data": {} }))
+                .json(json!({ "data": { "q1": "answer" } }))
                 .build(),
         )
         .await;
