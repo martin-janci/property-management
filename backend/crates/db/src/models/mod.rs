@@ -1,5 +1,7 @@
 //! Database models.
 
+pub mod accounting;
+pub mod accounting_provider;
 pub mod agency_branding;
 pub mod agency_domain;
 pub mod announcement;
@@ -21,8 +23,6 @@ pub mod messaging;
 pub mod meter;
 pub mod notification_preference;
 pub mod oauth;
-pub mod accounting_provider;
-pub mod accounting;
 pub mod organization;
 pub mod organization_member;
 pub mod password_reset;
@@ -101,6 +101,19 @@ pub use workflow_templates::{
 pub use agency_branding::UpdateOrganizationBranding;
 pub use agency_domain::{
     AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
+};
+
+pub use accounting::{
+    BankStatement, BankStatementLine, Contact, CreateInvoice as CreateNativeInvoice,
+    CreateInvoiceItem as CreateNativeInvoiceItem, Invoice as NativeInvoice,
+    InvoiceItem as NativeInvoiceItem, InvoiceStatus as NativeInvoiceStatus, PaymentMatch,
+    PaymentMatchState, UpdateInvoice as UpdateNativeInvoice,
+    UpdateInvoiceItem as UpdateNativeInvoiceItem, VatRate,
+};
+pub use accounting_provider::{
+    AccountingProviderAuthFlow, AccountingProviderConnection, AccountingProviderContact,
+    AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
+    AccountingProviderSyncCursor,
 };
 
 pub use announcement::{

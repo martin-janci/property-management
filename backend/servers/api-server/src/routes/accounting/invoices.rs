@@ -7,8 +7,8 @@ use axum::{
     Json,
 };
 use db::models::accounting::{CreateInvoice, Invoice, InvoiceItem, UpdateInvoice};
-use uuid::Uuid;
 use sqlx::Connection;
+use uuid::Uuid;
 
 use crate::state::AppState;
 
@@ -125,11 +125,15 @@ pub async fn list_invoice_items(
 pub async fn create_invoice(
     mut rls: RlsConnection,
     State(state): State<AppState>,
-    AuthUser { user_id: _user_id, tenant_id, .. }: AuthUser,
+    AuthUser {
+        user_id: _user_id,
+        tenant_id,
+        ..
+    }: AuthUser,
     Json(mut data): Json<CreateInvoice>,
 ) -> Result<(StatusCode, Json<Invoice>), StatusCode> {
     let tenant_id = tenant_id.ok_or(StatusCode::FORBIDDEN)?;
-    
+
     // Force tenant_id from session
     data.tenant_id = tenant_id;
 
@@ -138,7 +142,7 @@ pub async fn create_invoice(
         tracing::error!("Failed to start transaction: {}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
-    
+
     let invoice = state
         .accounting_repo
         .create_invoice_rls(&mut *tx, data)

@@ -1,11 +1,7 @@
 //! Accounting contact routes for MVP.
 
 use api_core::extractors::{AuthUser, RlsConnection};
-use axum::{
-    extract::State,
-    http::StatusCode,
-    Json,
-};
+use axum::{extract::State, http::StatusCode, Json};
 use db::models::accounting::Contact;
 
 use crate::state::AppState;

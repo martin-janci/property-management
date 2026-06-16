@@ -1,9 +1,9 @@
 //! RLS isolation tests for external accounting provider integration (PAP-191).
 
+use db::models::accounting_provider::{AccountingProviderAuthFlow, AccountingProviderConnection};
+use db::repositories::accounting_provider::AccountingProviderRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
-use db::models::accounting_provider::{AccountingProviderConnection, AccountingProviderAuthFlow};
-use db::repositories::accounting_provider::AccountingProviderRepository;
 
 async fn set_ctx(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, is_super_admin: bool) {
     sqlx::query("SELECT set_request_context($1, $2, $3)")
@@ -42,28 +42,38 @@ async fn accounting_provider_connection_force_rls_blocks_cross_tenant_read(pool:
     let repo = AccountingProviderRepository::new(pool.clone());
 
     // Seed connection for org_a
-    repo.upsert_connection_rls(&pool, AccountingProviderConnection {
-        tenant_id: org_a,
-        auth_flow: AccountingProviderAuthFlow::Ccf,
-        provider_account_name: "Org A Connection".to_string(),
-        client_id: "client-a".to_string(),
-        client_secret_enc: Some("secret-a".to_string()),
-        refresh_token_enc: None,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-    }).await.expect("upsert org_a connection");
+    repo.upsert_connection_rls(
+        &pool,
+        AccountingProviderConnection {
+            tenant_id: org_a,
+            auth_flow: AccountingProviderAuthFlow::Ccf,
+            provider_account_name: "Org A Connection".to_string(),
+            client_id: "client-a".to_string(),
+            client_secret_enc: Some("secret-a".to_string()),
+            refresh_token_enc: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        },
+    )
+    .await
+    .expect("upsert org_a connection");
 
     // Seed connection for org_b
-    repo.upsert_connection_rls(&pool, AccountingProviderConnection {
-        tenant_id: org_b,
-        auth_flow: AccountingProviderAuthFlow::Ccf,
-        provider_account_name: "Org B Connection".to_string(),
-        client_id: "client-b".to_string(),
-        client_secret_enc: Some("secret-b".to_string()),
-        refresh_token_enc: None,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-    }).await.expect("upsert org_b connection");
+    repo.upsert_connection_rls(
+        &pool,
+        AccountingProviderConnection {
+            tenant_id: org_b,
+            auth_flow: AccountingProviderAuthFlow::Ccf,
+            provider_account_name: "Org B Connection".to_string(),
+            client_id: "client-b".to_string(),
+            client_secret_enc: Some("secret-b".to_string()),
+            refresh_token_enc: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        },
+    )
+    .await
+    .expect("upsert org_b connection");
 
     // Create a NOSUPERUSER role so FORCE actually binds.
     let role = format!("accounting_provider_rls_test_{}", Uuid::new_v4().simple());
@@ -113,19 +123,39 @@ async fn accounting_provider_connection_force_rls_blocks_cross_tenant_read(pool:
             .expect("set role");
 
         // Can see org-A's connection
-        let conn_a = repo.find_connection_rls(&mut *conn, org_a).await.expect("find conn_a");
+        let conn_a = repo
+            .find_connection_rls(&mut *conn, org_a)
+            .await
+            .expect("find conn_a");
         assert!(conn_a.is_some(), "Org A's own connection must be visible");
         assert_eq!(conn_a.unwrap().client_id, "client-a");
 
         // Cannot see org-B's connection
-        let conn_b = repo.find_connection_rls(&mut *conn, org_b).await.expect("find conn_b");
-        assert!(conn_b.is_none(), "Org B's connection must NOT be visible to Org A");
+        let conn_b = repo
+            .find_connection_rls(&mut *conn, org_b)
+            .await
+            .expect("find conn_b");
+        assert!(
+            conn_b.is_none(),
+            "Org B's connection must NOT be visible to Org A"
+        );
 
-        sqlx::query("RESET ROLE").execute(&mut *conn).await.expect("reset role");
+        sqlx::query("RESET ROLE")
+            .execute(&mut *conn)
+            .await
+            .expect("reset role");
     }
 
     // Cleanup
     set_ctx(&pool, None, None, true).await;
-    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\""))).execute(&pool).await.ok();
-    sqlx::query(sqlx::AssertSqlSafe(format!("DROP ROLE IF EXISTS \"{role}\""))).execute(&pool).await.ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY \"{role}\"")))
+        .execute(&pool)
+        .await
+        .ok();
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "DROP ROLE IF EXISTS \"{role}\""
+    )))
+    .execute(&pool)
+    .await
+    .ok();
 }

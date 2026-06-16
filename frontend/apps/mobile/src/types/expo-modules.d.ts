@@ -170,6 +170,7 @@ declare module 'expo-notifications' {
   export enum AndroidImportance {
     UNKNOWN = 0,
     UNSPECIFIED = -1000,
+    // biome-ignore lint/suspicious/noDuplicateEnumValues: intentional duplicates
     NONE = 0,
     MIN = 1,
     LOW = 2,

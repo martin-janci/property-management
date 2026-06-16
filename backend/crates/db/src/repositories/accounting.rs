@@ -1,8 +1,8 @@
 //! Repository for native accounting MVP (PAP-206).
 
 use crate::models::accounting::{
-    BankStatement, BankStatementLine, Contact, CreateInvoice, Invoice, InvoiceItem,
-    InvoiceStatus, PaymentMatch, UpdateInvoice,
+    BankStatement, BankStatementLine, Contact, CreateInvoice, Invoice, InvoiceItem, InvoiceStatus,
+    PaymentMatch, UpdateInvoice,
 };
 use crate::DbPool;
 use rust_decimal::Decimal;
@@ -39,10 +39,7 @@ impl AccountingRepository {
     }
 
     /// List all contacts for the current tenant.
-    pub async fn list_contacts_rls<'e, E>(
-        &self,
-        executor: E,
-    ) -> Result<Vec<Contact>, sqlx::Error>
+    pub async fn list_contacts_rls<'e, E>(&self, executor: E) -> Result<Vec<Contact>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -54,16 +51,15 @@ impl AccountingRepository {
     // --- Invoices ---
 
     /// List invoices with RLS.
-    pub async fn list_invoices_rls<'e, E>(
-        &self,
-        executor: E,
-    ) -> Result<Vec<Invoice>, sqlx::Error>
+    pub async fn list_invoices_rls<'e, E>(&self, executor: E) -> Result<Vec<Invoice>, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, Invoice>("SELECT * FROM invoice ORDER BY issue_date DESC, created_at DESC")
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, Invoice>(
+            "SELECT * FROM invoice ORDER BY issue_date DESC, created_at DESC",
+        )
+        .fetch_all(executor)
+        .await
     }
 
     /// Find an invoice by ID with RLS.
@@ -90,10 +86,12 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, InvoiceItem>("SELECT * FROM invoice_item WHERE invoice_id = $1 ORDER BY id ASC")
-            .bind(invoice_id)
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, InvoiceItem>(
+            "SELECT * FROM invoice_item WHERE invoice_id = $1 ORDER BY id ASC",
+        )
+        .bind(invoice_id)
+        .fetch_all(executor)
+        .await
     }
 
     /// Create an invoice and its items.
@@ -236,11 +234,7 @@ impl AccountingRepository {
     }
 
     /// Delete an invoice and its items (items deleted by FK cascade).
-    pub async fn delete_invoice_rls<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<(), sqlx::Error>
+    pub async fn delete_invoice_rls<'e, E>(&self, executor: E, id: Uuid) -> Result<(), sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
@@ -292,10 +286,12 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, BankStatementLine>("SELECT * FROM bank_statement_line WHERE statement_id = $1")
-            .bind(statement_id)
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, BankStatementLine>(
+            "SELECT * FROM bank_statement_line WHERE statement_id = $1",
+        )
+        .bind(statement_id)
+        .fetch_all(executor)
+        .await
     }
 
     // --- Payment Matches ---
@@ -397,10 +393,12 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, BankStatementLine>("SELECT * FROM bank_statement_line WHERE statement_id = $1 ORDER BY booking_date DESC")
-            .bind(statement_id)
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, BankStatementLine>(
+            "SELECT * FROM bank_statement_line WHERE statement_id = $1 ORDER BY booking_date DESC",
+        )
+        .bind(statement_id)
+        .fetch_all(executor)
+        .await
     }
 
     /// Update the match state of a bank statement line.
@@ -430,10 +428,12 @@ impl AccountingRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query_as::<_, PaymentMatch>("SELECT * FROM payment_match WHERE statement_line_id = $1")
-            .bind(line_id)
-            .fetch_all(executor)
-            .await
+        sqlx::query_as::<_, PaymentMatch>(
+            "SELECT * FROM payment_match WHERE statement_line_id = $1",
+        )
+        .bind(line_id)
+        .fetch_all(executor)
+        .await
     }
 
     /// Create or update a payment match (upsert).
