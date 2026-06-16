@@ -140,6 +140,25 @@ fn repo_error(
     }
 }
 
+/// Map an INSERT error on a child table to 404 when the parent fund is not
+/// visible in the caller's RLS context (`42501` — RLS WITH CHECK rejected)
+/// or does not exist (`23503` — FK violation); anything else is 500.
+fn insert_child_error(
+    action: &str,
+    not_found_msg: &str,
+    e: sqlx::Error,
+) -> (StatusCode, Json<ErrorResponse>) {
+    if let sqlx::Error::Database(ref db_err) = e {
+        if matches!(db_err.code().as_deref(), Some("42501") | Some("23503")) {
+            return not_found_error(not_found_msg);
+        }
+    }
+    match e {
+        sqlx::Error::RowNotFound => not_found_error(not_found_msg),
+        other => internal_error(&format!("Failed to {}: {}", action, other)),
+    }
+}
+
 // ============================================================================
 // Fund CRUD Handlers
 // ============================================================================
@@ -293,7 +312,7 @@ async fn create_schedule(
         .create_contribution_schedule(rls.conn(), org_id, fund_id, req)
         .await
         .map(Json)
-        .map_err(|e| repo_error("create schedule", "Fund not found", e));
+        .map_err(|e| insert_child_error("create schedule", "Fund not found", e));
     rls.release().await;
     out
 }
@@ -354,7 +373,7 @@ async fn record_transaction(
         .record_transaction(rls.conn(), org_id, fund_id, req, user_id)
         .await
         .map(Json)
-        .map_err(|e| repo_error("record transaction", "Fund not found", e));
+        .map_err(|e| insert_child_error("record transaction", "Fund not found", e));
     rls.release().await;
     out
 }
@@ -372,7 +391,7 @@ async fn transfer_funds(
         .transfer_funds(rls.conn(), org_id, req, user_id)
         .await
         .map(Json)
-        .map_err(|e| repo_error("transfer funds", "Fund not found", e));
+        .map_err(|e| insert_child_error("transfer funds", "Fund not found", e));
     rls.release().await;
     out
 }
@@ -411,7 +430,7 @@ async fn create_policy(
         .create_investment_policy(rls.conn(), org_id, fund_id, req)
         .await
         .map(Json)
-        .map_err(|e| repo_error("create policy", "Fund not found", e));
+        .map_err(|e| insert_child_error("create policy", "Fund not found", e));
     rls.release().await;
     out
 }
@@ -450,7 +469,7 @@ async fn create_projection(
         .create_projection(rls.conn(), org_id, fund_id, req)
         .await
         .map(Json)
-        .map_err(|e| repo_error("create projection", "Fund not found", e));
+        .map_err(|e| insert_child_error("create projection", "Fund not found", e));
     rls.release().await;
     out
 }
@@ -502,7 +521,7 @@ async fn add_projection_items(
         .add_projection_items(rls.conn(), org_id, projection_id, items)
         .await
         .map(Json)
-        .map_err(|e| repo_error("add projection items", "Projection not found", e));
+        .map_err(|e| insert_child_error("add projection items", "Projection not found", e));
     rls.release().await;
     out
 }
@@ -541,7 +560,7 @@ async fn create_component(
         .create_component(rls.conn(), org_id, fund_id, req)
         .await
         .map(Json)
-        .map_err(|e| repo_error("create component", "Fund not found", e));
+        .map_err(|e| insert_child_error("create component", "Fund not found", e));
     rls.release().await;
     out
 }

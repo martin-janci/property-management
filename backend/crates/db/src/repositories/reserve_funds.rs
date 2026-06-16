@@ -28,7 +28,7 @@
 //! by-id reads return no row (→ 404) under both layers.
 
 use rust_decimal::Decimal;
-use sqlx::{Executor, PgConnection, PgPool, Postgres};
+use sqlx::{Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 use crate::models::reserve_funds::{
@@ -44,17 +44,11 @@ use crate::models::reserve_funds::{
 ///
 /// Stateless: every method receives an RLS-context-bearing executor. The repo
 /// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ReserveFundRepository;
 
 impl ReserveFundRepository {
-    /// Create a new repository instance.
-    ///
-    /// The pool argument is retained for construction-site compatibility with
-    /// the other repositories on `AppState`; this repo deliberately does not
-    /// store it (see module docs — all queries run on a context-set connection
-    /// supplied by the handler's `RlsConnection`).
-    pub fn new(_pool: PgPool) -> Self {
+    pub fn new() -> Self {
         Self
     }
 
