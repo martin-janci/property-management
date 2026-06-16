@@ -816,9 +816,10 @@ async fn test_preview_unit_scoped_allows_member_denies_outsider(pool: PgPool) {
 
 /// Returns `true` when the document list response body contains `doc_id`.
 fn list_contains(body: &serde_json::Value, doc_id: Uuid) -> bool {
-    body["documents"]
-        .as_array()
-        .is_some_and(|docs| docs.iter().any(|d| d["id"].as_str() == Some(&doc_id.to_string())))
+    body["documents"].as_array().is_some_and(|docs| {
+        docs.iter()
+            .any(|d| d["id"].as_str() == Some(&doc_id.to_string()))
+    })
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

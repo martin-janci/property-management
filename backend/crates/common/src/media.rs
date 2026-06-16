@@ -15,12 +15,7 @@
 pub fn supports_inline_preview(content_type: &str) -> bool {
     matches!(
         content_type,
-        "application/pdf"
-            | "image/png"
-            | "image/jpeg"
-            | "image/gif"
-            | "image/webp"
-            | "text/plain"
+        "application/pdf" | "image/png" | "image/jpeg" | "image/gif" | "image/webp" | "text/plain"
     )
 }
 
