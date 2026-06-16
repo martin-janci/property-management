@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-16T02:20:36Z",
+  "archived_at": "2026-06-16T22:14:23Z",
   "assignments": [
     {
       "task_id": "bug-announcer-stale-message",
@@ -1539,6 +1539,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "feat-pinned-announcements-pin-unpin-web-ui-frontend",
+      "branch": "auto-impl/feat-pinned-announcements-pin-unpin-web-",
+      "status": "merged",
+      "claimed_at": "2026-06-16T08:28:35Z",
+      "last_updated": "2026-06-16T22:11:25Z",
+      "status_changed_at": "2026-06-16T22:11:25Z",
+      "pr_number": 1446,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1446",
+      "merged_at": "2026-06-16T16:19:03Z",
+      "specialist": null,
+      "implementer_summary": " [merged via PR #1446 squash db2d2432 at 2026-06-16T16:23:27Z; awaiting Phase-2 reconcile->archive]",
+      "reviewer_summary": "verdict=approve note=frontend-only pinned-sort+tests correct; sole red check is unrelated backend RLS flake",
+      "last_reviewed_oid": "11b3ead03ba4e250bb72048535b87dc7ea253259",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-06-16T16:23:27Z"
+    },
+    {
       "task_id": "feat-ppt-web-announcements-faults-api-wiring",
       "branch": "auto-impl/feat-ppt-web-announcements-faults-api-wi",
       "status": "merged",
@@ -1625,6 +1647,28 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "feat-swiftui-project-setup-no-epic-82-commits-git-mobile",
+      "branch": "auto-impl/feat-swiftui-project-setup-no-epic-82-co",
+      "status": "failed",
+      "claimed_at": "2026-06-16T08:29:32Z",
+      "last_updated": "2026-06-16T22:11:25Z",
+      "status_changed_at": "2026-06-16T22:11:25Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": " [sandbox-failure-after-reclaim: no branch after 1 reclaim]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
@@ -5190,6 +5234,28 @@
       "merge_attempted_at": null,
       "implementer_summary": "pr=595 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=EAS workflow @v6->@v4 fixed in both YAMLs; eas-cli devDep + Android build scripts added to package.json; drift=package.json justified by task (explicitly required)",
       "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-devops-pre-push-fmt-gate-scope",
+      "branch": "auto-impl/pm-devops-pre-push-fmt-gate-scope",
+      "status": "merged",
+      "specialist": null,
+      "claimed_at": "2026-06-16T12:28:45Z",
+      "last_updated": "2026-06-16T22:11:25Z",
+      "status_changed_at": "2026-06-16T22:11:25Z",
+      "pr_number": 1455,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1455",
+      "merged_at": "2026-06-16T20:12:59Z",
+      "last_reviewed_oid": "9aa03b2305ce9e3d0b95e8ca2aeda28b2da29080",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "implementer_summary": " [merge: mergeable_state=blocked — .github-only PR cannot satisfy path-filtered required backend checks; needs human merge or branch-protection change]",
+      "reviewer_summary": "verdict=approve head_oid=9aa03b2305ce9e3d0b95e8ca2aeda28b2da29080 note=ci-only-fmt+clippy-gate-consistent-non-dup-approved-via-comment"
     },
     {
       "task_id": "pm-frontend-protectedroute-failopen",
