@@ -20,7 +20,7 @@
 //!    - **invalid** state (malformed / org mismatch) → 400,
 //!    - **valid** state → clears the CSRF gate and proceeds (surfacing 503 when
 //!      Airbnb is not configured in test) —
-//!    plus the IDOR guard that runs after the state gate.
+//!      plus the IDOR guard that runs after the state gate.
 //!
 //! # Parity across the OAuth providers
 //!
