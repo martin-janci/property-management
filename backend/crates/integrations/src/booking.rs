@@ -2839,7 +2839,10 @@ mod tests {
     fn test_echo_token_is_deterministic_for_identical_payload() {
         let a = ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01");
         let b = ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01");
-        assert_eq!(a, b, "identical payload must yield identical idempotency key");
+        assert_eq!(
+            a, b,
+            "identical payload must yield identical idempotency key"
+        );
         assert_eq!(a.len(), 32, "token is a 128-bit hex digest");
     }
 
@@ -2920,11 +2923,10 @@ mod tests {
             "p".to_string(),
             server.url(),
         );
-        let client = BookingClient::new(creds).with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
+        let client = BookingClient::new(creds)
+            .with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
 
-        let result = client
-            .push_availability("H1", &[avail_update(4)])
-            .await;
+        let result = client.push_availability("H1", &[avail_update(4)]).await;
         assert!(result.is_ok(), "expected success after retry: {result:?}");
         assert_eq!(server.hits(), 2, "expected exactly one retry");
 
@@ -2932,7 +2934,10 @@ mod tests {
         assert_eq!(bodies.len(), 2, "both delivery attempts captured");
         let t0 = echo_token_of(&bodies[0]).expect("attempt 0 must carry a token");
         let t1 = echo_token_of(&bodies[1]).expect("attempt 1 must carry a token");
-        assert_eq!(t0, t1, "retried delivery must reuse the same idempotency key");
+        assert_eq!(
+            t0, t1,
+            "retried delivery must reuse the same idempotency key"
+        );
     }
 
     #[tokio::test]
@@ -2952,7 +2957,8 @@ mod tests {
             "p".to_string(),
             server.url(),
         );
-        let client = BookingClient::new(creds).with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
+        let client = BookingClient::new(creds)
+            .with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
 
         let result = client.push_rates("H1", &[rate_update("120.00")]).await;
         assert!(result.is_ok(), "expected success after retry: {result:?}");
