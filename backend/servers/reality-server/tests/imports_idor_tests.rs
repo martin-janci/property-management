@@ -96,7 +96,7 @@ async fn seed_portal_user(pool: &PgPool, tag: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
-        VALUES ($1, 'test_hash', $2, 'active', NOW(), 'public')
+        VALUES ($1, 'test_hash', $2, 'active', NOW(), 'platform')
         RETURNING id
         "#,
     )

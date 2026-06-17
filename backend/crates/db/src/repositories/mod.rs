@@ -1,6 +1,9 @@
 //! Repository pattern implementations.
 //! Each repository handles database operations for a specific domain.
 
+pub mod accounting;
+pub mod accounting_provider;
+pub mod accounting_test;
 pub mod agency_branding;
 pub mod agency_domain;
 pub mod announcement;
@@ -64,6 +67,8 @@ pub mod agency;
 // Epic 18: Short-Term Rental Integration
 pub mod rental;
 
+pub use accounting::AccountingRepository;
+pub use accounting_provider::AccountingProviderRepository;
 pub use ai_chat::AiChatRepository;
 pub use equipment::EquipmentRepository;
 pub use sentiment::SentimentRepository;

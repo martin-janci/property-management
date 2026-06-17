@@ -64,6 +64,24 @@ pub mod ota_xml {
         tag: &str,
         version: &str,
     ) -> Result<(), BookingError> {
+        write_root_start_with_echo_token(writer, tag, version, None)
+    }
+
+    /// Like [`write_root_start`] but additionally stamps an OTA `EchoToken`
+    /// attribute on the root element when `echo_token` is `Some`.
+    ///
+    /// The `EchoToken` is the OTA-standard idempotency / correlation key: the
+    /// supplier (Booking.com) echoes it back on the response and uses it to
+    /// deduplicate retried requests, so the same logical push that is re-sent
+    /// (e.g. by [`BookingClient::post_ota_with_retry`] after a transient 5xx)
+    /// must carry the *same* token to be recognised as a duplicate rather than
+    /// applied twice.
+    pub fn write_root_start_with_echo_token(
+        writer: &mut Writer<Cursor<Vec<u8>>>,
+        tag: &str,
+        version: &str,
+        echo_token: Option<&str>,
+    ) -> Result<(), BookingError> {
         // <?xml version="1.0" encoding="UTF-8"?>
         writer
             .write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))
@@ -72,11 +90,41 @@ pub mod ota_xml {
         let mut start = BytesStart::new(tag);
         start.push_attribute(("xmlns", OTA_NAMESPACE));
         start.push_attribute(("Version", version));
+        if let Some(token) = echo_token {
+            start.push_attribute(("EchoToken", token));
+        }
         writer
             .write_event(Event::Start(start))
             .map_err(|e| BookingError::Xml(e.to_string()))?;
 
         Ok(())
+    }
+
+    /// Compute a deterministic OTA `EchoToken` (idempotency key) for a push.
+    ///
+    /// The token is a stable, content-derived digest: identical logical
+    /// payloads (same hotel + same ordered set of update lines) always produce
+    /// the same token, while any change to the payload produces a different
+    /// one. This gives the upstream a key to deduplicate idempotent retries on
+    /// while still distinguishing genuinely different pushes.
+    ///
+    /// `kind` namespaces the digest per message type so an availability push and
+    /// a rate push with coincidentally-equal canonical bodies never collide.
+    pub fn compute_echo_token(kind: &str, canonical: &str) -> String {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(kind.as_bytes());
+        hasher.update(b"\x1f");
+        hasher.update(canonical.as_bytes());
+        let digest = hasher.finalize();
+        // 128-bit hex prefix is ample for dedup keying and keeps the attribute
+        // short in the on-wire XML.
+        let mut out = String::with_capacity(32);
+        for byte in &digest[..16] {
+            use std::fmt::Write as _;
+            let _ = write!(out, "{byte:02x}");
+        }
+        out
     }
 
     /// Write a closing tag for `tag`.
@@ -96,7 +144,34 @@ pub mod ota_xml {
     ) -> Result<String, BookingError> {
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
 
-        write_root_start(&mut writer, "OTA_HotelAvailNotifRQ", "1.0")?;
+        // Deterministic idempotency key: stamp an OTA EchoToken derived from the
+        // canonical (hotel + ordered messages) payload so retries of the same
+        // push carry the same token and the upstream can deduplicate them.
+        let mut canonical = String::new();
+        canonical.push_str(hotel_code);
+        for msg in messages {
+            use std::fmt::Write as _;
+            let _ = write!(
+                canonical,
+                "|{}:{}:{}:{}:{}:{}:{:?}:{:?}",
+                msg.room_type_code,
+                msg.rate_plan_code.as_deref().unwrap_or("STD"),
+                msg.start_date,
+                msg.end_date,
+                msg.booking_limit,
+                msg.status,
+                msg.los_restrictions.as_ref().and_then(|l| l.min_los),
+                msg.los_restrictions.as_ref().and_then(|l| l.max_los),
+            );
+        }
+        let echo_token = compute_echo_token("avail", &canonical);
+
+        write_root_start_with_echo_token(
+            &mut writer,
+            "OTA_HotelAvailNotifRQ",
+            "1.0",
+            Some(&echo_token),
+        )?;
 
         // <AvailStatusMessages HotelCode="...">
         let mut avail_msgs = BytesStart::new("AvailStatusMessages");
@@ -166,7 +241,25 @@ pub mod ota_xml {
         // updates: (start, end, room_type_id, rate_plan_code, base_rate, currency)
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
 
-        write_root_start(&mut writer, "OTA_HotelRateAmountNotifRQ", "1.0")?;
+        // Deterministic idempotency key (see build_avail_notif_rq): stamp an OTA
+        // EchoToken derived from the canonical payload so retries are dedupable.
+        let mut canonical = String::new();
+        canonical.push_str(hotel_id);
+        for (start, end, room_type, rate_plan, rate, currency) in updates {
+            use std::fmt::Write as _;
+            let _ = write!(
+                canonical,
+                "|{start}:{end}:{room_type}:{rate_plan}:{rate}:{currency}"
+            );
+        }
+        let echo_token = compute_echo_token("rate", &canonical);
+
+        write_root_start_with_echo_token(
+            &mut writer,
+            "OTA_HotelRateAmountNotifRQ",
+            "1.0",
+            Some(&echo_token),
+        )?;
 
         let mut rate_msgs = BytesStart::new("RateAmountMessages");
         rate_msgs.push_attribute(("HotelCode", hotel_id));
@@ -2139,6 +2232,16 @@ impl BookingRetryConfig {
         }
     }
 
+    /// Return a copy of this policy with `max_attempts` overridden, keeping the
+    /// other (delay/backoff) parameters. Handy for zero-delay multi-attempt
+    /// retry configs in tests (`no_retry().clone_with_attempts(3)`).
+    pub fn clone_with_attempts(&self, max_attempts: u32) -> Self {
+        Self {
+            max_attempts: max_attempts.max(1),
+            ..self.clone()
+        }
+    }
+
     /// Backoff delay (ms) before the retry that follows `attempt` (0-based:
     /// `attempt = 0` is the delay after the first attempt failed). Capped at
     /// [`Self::max_delay_ms`].
@@ -2955,6 +3058,7 @@ mod tests {
     struct MockOtaServer {
         addr: std::net::SocketAddr,
         hits: Arc<AtomicUsize>,
+        bodies: Arc<Mutex<Vec<String>>>,
     }
 
     impl MockOtaServer {
@@ -2963,6 +3067,8 @@ mod tests {
             let addr = listener.local_addr().unwrap();
             let hits = Arc::new(AtomicUsize::new(0));
             let hits_task = hits.clone();
+            let bodies: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+            let bodies_task = bodies.clone();
             let script = Arc::new(Mutex::new(responses.into_iter()));
 
             tokio::spawn(async move {
@@ -2972,13 +3078,20 @@ mod tests {
                         Err(_) => break,
                     };
                     let hits_inner = hits_task.clone();
+                    let bodies_inner = bodies_task.clone();
                     let script_inner = script.clone();
                     tokio::spawn(async move {
                         use tokio::io::{AsyncReadExt, AsyncWriteExt};
-                        // Drain the request (we don't assert on its content
-                        // here; the OTA-body shape is covered by builder tests).
-                        let mut buf = [0u8; 4096];
-                        let _ = socket.read(&mut buf).await;
+                        // Read the full request and capture the body so tests can
+                        // assert on idempotency tokens / OTA payload shape.
+                        let mut buf = [0u8; 8192];
+                        let n = socket.read(&mut buf).await.unwrap_or(0);
+                        let raw = String::from_utf8_lossy(&buf[..n]).to_string();
+                        let body = raw
+                            .split_once("\r\n\r\n")
+                            .map(|(_, b)| b.to_string())
+                            .unwrap_or_default();
+                        bodies_inner.lock().unwrap().push(body);
 
                         hits_inner.fetch_add(1, Ordering::SeqCst);
                         let resp = {
@@ -3010,7 +3123,7 @@ mod tests {
                 }
             });
 
-            Self { addr, hits }
+            Self { addr, hits, bodies }
         }
 
         fn url(&self) -> String {
@@ -3020,6 +3133,21 @@ mod tests {
         fn hits(&self) -> usize {
             self.hits.load(Ordering::SeqCst)
         }
+
+        /// Snapshot of the request bodies captured so far, in arrival order.
+        fn bodies(&self) -> Vec<String> {
+            self.bodies.lock().unwrap().clone()
+        }
+    }
+
+    /// Extract the value of the `EchoToken` attribute from an OTA RQ root, if
+    /// present. Test-only helper.
+    fn echo_token_of(xml: &str) -> Option<String> {
+        let marker = "EchoToken=\"";
+        let start = xml.find(marker)? + marker.len();
+        let rest = &xml[start..];
+        let end = rest.find('"')?;
+        Some(rest[..end].to_string())
     }
 
     #[test]
@@ -3385,6 +3513,168 @@ mod tests {
             }
             other => panic!("expected RateLimited(5), got: {other:?}"),
         }
+    }
+
+    // ==================== Idempotency (AC-5) ====================
+
+    fn avail_update(count: i32) -> AvailabilityUpdate {
+        AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: count,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }
+    }
+
+    fn rate_update(rate: &str) -> RateUpdate {
+        RateUpdate {
+            room_type_id: "DBL".to_string(),
+            rate_plan_code: "STD".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            base_rate: rate.parse().unwrap(),
+            currency: "EUR".to_string(),
+            extra_person_rate: None,
+            extra_child_rate: None,
+        }
+    }
+
+    #[test]
+    fn test_echo_token_is_deterministic_for_identical_payload() {
+        let a = ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01");
+        let b = ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01");
+        assert_eq!(
+            a, b,
+            "identical payload must yield identical idempotency key"
+        );
+        assert_eq!(a.len(), 32, "token is a 128-bit hex digest");
+    }
+
+    #[test]
+    fn test_echo_token_differs_for_different_payload_and_kind() {
+        let base = ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01:4");
+        // Different content -> different token.
+        assert_ne!(
+            base,
+            ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01:5")
+        );
+        // Same content, different message kind -> different token (no collision
+        // between an availability push and a rate push).
+        assert_ne!(
+            base,
+            ota_xml::compute_echo_token("rate", "H1|DBL:STD:2025-06-01:4")
+        );
+    }
+
+    #[test]
+    fn test_avail_xml_stamps_deterministic_echo_token() {
+        let rq = OtaHotelAvailNotifRQ {
+            hotel_code: "H1".to_string(),
+            avail_status_messages: vec![AvailStatusMessage {
+                room_type_code: "DBL".to_string(),
+                rate_plan_code: Some("STD".to_string()),
+                start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                end_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                booking_limit: 4,
+                status: "Open".to_string(),
+                los_restrictions: None,
+            }],
+        };
+        let first = rq.to_xml();
+        let second = rq.to_xml();
+        let t1 = echo_token_of(&first).expect("avail RQ must carry an EchoToken");
+        let t2 = echo_token_of(&second).expect("avail RQ must carry an EchoToken");
+        assert_eq!(t1, t2, "rebuilding the same push must reuse the same token");
+    }
+
+    #[test]
+    fn test_rate_xml_stamps_echo_token_and_changes_with_content() {
+        let token_for = |rate: &str| {
+            let xml = ota_xml::build_rate_amount_notif_rq(
+                "H1",
+                &[(
+                    NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                    NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                    "DBL",
+                    "STD",
+                    &rate.parse::<Decimal>().unwrap(),
+                    "EUR",
+                )],
+            )
+            .unwrap();
+            echo_token_of(&xml).expect("rate RQ must carry an EchoToken")
+        };
+        assert_eq!(token_for("120.00"), token_for("120.00"));
+        assert_ne!(token_for("120.00"), token_for("130.00"));
+    }
+
+    #[tokio::test]
+    async fn test_push_availability_reuses_echo_token_across_retries() {
+        // 503 then 200: the push retries. Both requests must carry the SAME
+        // EchoToken so the upstream can deduplicate the retried delivery.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(503, "<busy/>"),
+            MockResponse::status(
+                200,
+                "<OTA_HotelAvailNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelAvailNotifRS>",
+            ),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds)
+            .with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
+
+        let result = client.push_availability("H1", &[avail_update(4)]).await;
+        assert!(result.is_ok(), "expected success after retry: {result:?}");
+        assert_eq!(server.hits(), 2, "expected exactly one retry");
+
+        let bodies = server.bodies();
+        assert_eq!(bodies.len(), 2, "both delivery attempts captured");
+        let t0 = echo_token_of(&bodies[0]).expect("attempt 0 must carry a token");
+        let t1 = echo_token_of(&bodies[1]).expect("attempt 1 must carry a token");
+        assert_eq!(
+            t0, t1,
+            "retried delivery must reuse the same idempotency key"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_push_rates_reuses_echo_token_across_retries() {
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(503, "<busy/>"),
+            MockResponse::status(
+                200,
+                "<OTA_HotelRateAmountNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelRateAmountNotifRS>",
+            ),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds)
+            .with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
+
+        let result = client.push_rates("H1", &[rate_update("120.00")]).await;
+        assert!(result.is_ok(), "expected success after retry: {result:?}");
+        assert_eq!(server.hits(), 2);
+
+        let bodies = server.bodies();
+        let t0 = echo_token_of(&bodies[0]).expect("attempt 0 token");
+        let t1 = echo_token_of(&bodies[1]).expect("attempt 1 token");
+        assert_eq!(t0, t1, "rate retry must reuse the same idempotency key");
     }
 
     #[test]
