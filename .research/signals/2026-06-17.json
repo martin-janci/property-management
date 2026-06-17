@@ -1,0 +1,84 @@
+{
+  "version": "1.0",
+  "generated": "2026-06-17T20:15:00Z",
+  "trigger": "buffer-low",
+  "trigger_payload": "buffer-low: claimable=29/72 (floor=36) — refill backlog from coverage rubric",
+  "phase_status": {
+    "phase_1_observe": "partial — gh-pr-list pulled 39 merged PRs; issues fetch skipped (token budget); commit log skipped",
+    "phase_1_5_code_review": "skipped — buffer-low refill prioritized; rotating expert review deferred to next run",
+    "phase_1_6_project_management": "skipped — buffer-low refill prioritized; pm role rotation + coverage upkeep deferred to next run",
+    "phase_2_decide": "completed — resolution check + decay + buffer-low surfacing",
+    "phase_3_promote": "completed — 0 new plans (all score≥3 items already have plans; security fast-track has no eligible candidates)",
+    "phase_4_artifacts": "completed",
+    "phase_5_autofix": "no candidate — no signal at confidence=high + score≥3 + allowlist shape",
+    "phase_6_commit": "in-progress"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-17",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "routine last ran 40h ago (>36h threshold); single-run gap, not multi-day stale",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "buffer-low-2026-06-17",
+      "type": "operational",
+      "source": "routine trigger payload",
+      "score_delta": 0,
+      "evidence": "dispatcher reports claimable=29/72 (floor=36); refill from coverage rubric requested — see Phase 2 response below",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "merged-prs-snapshot-2026-06-17",
+      "type": "shipped-batch",
+      "source": "gh pr list --state merged --base dev",
+      "score_delta": 0,
+      "evidence": "39 merged PRs since #1439 → up to #1551 in 40h. Highlights: Reality SwiftUI mobile epic-82 stories (82-1/82-2/82-3/82-4 evidenced via #1447, #1514, #1515, #1516, #1541); native accounting MVP N1–N5 (#1453, #1454); document upload 7a-1 verify (#1550); folder org 7a-2 mobile (#1464); report-execution-history 81-2 verify (#1548); notification preference sync 8a-3 (#1450); enum-decode cast fixes BIT-113/118 (#1486, #1492, #1537, #1551); RLS test helper canonicalization (#1510, #1517); OAuth public-client secret rejection (#1539); reality-web /accounting prerender + favorites i18n unbreak (#1545); pre-push fmt/clippy ADR (#1529, #1530); Booking.com encryption IG3 (#1502). Many partial-coverage stories advanced toward done — recommend Phase 1.6 coverage upkeep next run to consolidate.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "resolution-pr-1543-mobile-announcements-test",
+      "type": "resolution",
+      "source": "PR #1543 (refactor-churn-hotspot-mobile-announcements-test: stabilize AnnouncementsScreen date test by pinning TZ=UTC)",
+      "score_delta": 0,
+      "evidence": "PR title verbatim-matches backlog item id refactor-churn-hotspot-mobile-announcements-test; AnnouncementsScreen.test churn stabilized via TZ=UTC pin",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-not-fired-2026-06-17",
+      "type": "operational",
+      "source": "lag check",
+      "score_delta": 0,
+      "evidence": "40h lag = 1d 16h; under 3d stale_routine_alert threshold; routine on schedule with cloud cron firing on buffer-low trigger",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no allowlist-match candidate at certainty bar (confidence=high + score≥3)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-06-17.md && head -1 == # 2026-06-17", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "compare staged state.json vs HEAD", "observed": "last_pr_seen 1439→1551, last_commit_sha advanced, seen_signals appended", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no re-scored non-cumulative signals", "observed": "all new signal ids", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score ≤ 8; 14d decay applied", "observed": "max score 6 (done); 4 open items decayed", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "promoted plans have adversarial pass annotation", "observed": "0 new plans this run — vacuously true", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans; metadata + headings", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "staged diff confined to .research/", "observed": "only .research/", "expected": "true" },
+    { "goal": "G9", "passed": true, "command": "no secrets/private hostnames in staged diff", "observed": "clean", "expected": "true" },
+    { "goal": "G10", "passed": true, "command": "regenerated backlog.md matches staged", "observed": "byte-identical", "expected": "true" },
+    { "goal": "G11", "passed": true, "command": "no failed-cursor mismatch", "observed": "issues+commit-log phases failed → cursors held at HEAD", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "promoted plans preserved", "observed": "no plans deleted", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive only grows", "observed": "no archive removals", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "regenerated IDEAS_TRIAGE.md matches staged", "observed": "byte-identical", "expected": "true" },
+    { "goal": "G15", "passed": true, "command": "auto-fix discipline", "observed": "no auto-fix actions", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts (Phase 1.6 skipped → no-op)", "observed": "no-op (phase skipped)", "expected": "no-op" },
+    { "goal": "G17", "passed": true, "command": "no Telegram token literal in staged diff", "observed": "clean", "expected": "true" }
+  ]
+}
