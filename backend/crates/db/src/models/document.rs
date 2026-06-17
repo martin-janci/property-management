@@ -171,11 +171,13 @@ impl Document {
     }
 
     /// Check if MIME type supports inline preview.
+    ///
+    /// Delegates to [`common::supports_inline_preview`] — the single source of
+    /// truth shared with the storage presigner
+    /// (`integrations::storage::supports_inline_preview`) so the preview gate
+    /// and the `Content-Disposition: inline` decision cannot diverge (GH #1413).
     pub fn supports_preview(&self) -> bool {
-        matches!(
-            self.mime_type.as_str(),
-            "application/pdf" | "image/png" | "image/jpeg" | "image/gif" | "image/webp"
-        )
+        common::supports_inline_preview(&self.mime_type)
     }
 
     /// Check if this is an image file.
