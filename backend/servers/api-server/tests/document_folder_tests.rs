@@ -89,20 +89,6 @@ async fn seed_user_f(pool: &PgPool, tag: &str) -> Uuid {
     .expect("seed_user_f")
 }
 
-async fn seed_member_f(pool: &PgPool, org: Uuid, user: Uuid, role: &str) {
-    sqlx::query(
-        "INSERT INTO organization_members \
-             (organization_id,user_id,role_type,status,joined_at) \
-         VALUES ($1,$2,$3,'active',NOW()) ON CONFLICT DO NOTHING",
-    )
-    .bind(org)
-    .bind(user)
-    .bind(role)
-    .execute(pool)
-    .await
-    .expect("seed_member_f");
-}
-
 /// Mint a signed HS256 JWT with `role: <role_str>` for TenantExtractor.
 fn mint_jwt_with_role(user_id: Uuid, role_str: &str) -> String {
     use jsonwebtoken::{encode, EncodingKey, Header};
@@ -504,7 +490,7 @@ async fn test_cross_org_folder_idor_authenticated_get_returns_404(pool: PgPool) 
 
     // Attacker: a real user with a Manager membership in Org B.
     let attacker = seed_user_f(&pool, "idor-auth-get-b-attacker").await;
-    seed_member_f(&pool, org_b, attacker, "manager").await;
+    common::seed_membership(&pool, org_b, attacker, "manager").await;
     let token = mint_jwt_with_role(attacker, "manager");
 
     let resp = app
@@ -555,7 +541,7 @@ async fn test_cross_org_folder_idor_authenticated_update_returns_404(pool: PgPoo
     let folder_in_a = seed_folder_f(&pool, org_a, None, "OrgA Original", user_a).await;
 
     let attacker = seed_user_f(&pool, "idor-auth-put-b-attacker").await;
-    seed_member_f(&pool, org_b, attacker, "manager").await;
+    common::seed_membership(&pool, org_b, attacker, "manager").await;
     let token = mint_jwt_with_role(attacker, "manager");
 
     let resp = app
@@ -604,7 +590,7 @@ async fn test_cross_org_folder_idor_authenticated_delete_returns_404(pool: PgPoo
     let folder_in_a = seed_folder_f(&pool, org_a, None, "OrgA Survivor", user_a).await;
 
     let attacker = seed_user_f(&pool, "idor-auth-del-b-attacker").await;
-    seed_member_f(&pool, org_b, attacker, "manager").await;
+    common::seed_membership(&pool, org_b, attacker, "manager").await;
     let token = mint_jwt_with_role(attacker, "manager");
 
     let resp = app
@@ -659,7 +645,7 @@ async fn test_folder_depth_limit_returns_bad_request(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "depth-limit").await;
     let user_id = seed_user_f(&pool, "depth-limit-mgr").await;
-    seed_member_f(&pool, org_id, user_id, "manager").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
 
     // Seed levels 1-5 directly (bypasses HTTP; trigger fires at INSERT).
     let mut parent: Option<Uuid> = None;
@@ -795,7 +781,7 @@ async fn test_create_folder_manager_succeeds(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "create-ok").await;
     let user_id = seed_user_f(&pool, "create-ok-mgr").await;
-    seed_member_f(&pool, org_id, user_id, "manager").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_jwt_with_role(user_id, "manager");
 
     let resp = app
@@ -854,7 +840,7 @@ async fn test_move_document_into_folder_succeeds(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "move-ok").await;
     let user_id = seed_user_f(&pool, "move-ok-mgr").await;
-    seed_member_f(&pool, org_id, user_id, "manager").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_jwt_with_role(user_id, "manager");
 
     let folder = seed_folder_f(&pool, org_id, None, "Destination", user_id).await;
@@ -904,7 +890,7 @@ async fn test_delete_folder_detaches_documents_to_root(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "del-detach").await;
     let user_id = seed_user_f(&pool, "del-detach-mgr").await;
-    seed_member_f(&pool, org_id, user_id, "manager").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_jwt_with_role(user_id, "manager");
 
     let folder = seed_folder_f(&pool, org_id, None, "ToDelete", user_id).await;
@@ -967,7 +953,7 @@ async fn test_update_folder_into_descendant_is_rejected(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_id = seed_org_f(&pool, "circular").await;
     let user_id = seed_user_f(&pool, "circular-mgr").await;
-    seed_member_f(&pool, org_id, user_id, "manager").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_jwt_with_role(user_id, "manager");
 
     // root -> child  (try to set root.parent = child => cycle)
