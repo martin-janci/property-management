@@ -12,8 +12,8 @@
  */
 
 import type { UseQueryOptions } from '@tanstack/react-query';
-import { useApiQuery } from './useApi';
 import type { ApiFolderTreeNode } from '../screens/documents/DocumentsScreen';
+import { useApiQuery } from './useApi';
 
 // ─── API shape ────────────────────────────────────────────────────────────────
 
