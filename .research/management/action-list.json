@@ -564,11 +564,12 @@
       "action": "Coverage 6-4: add pin/unpin announcement controls to the ppt-web announcements UI wired to the backend pin endpoint; reflect pinned ordering; include component tests.",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-15 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "dev_reconciled": "2026-06-17T10:24:44Z already shipped via PR #1446; dispatcher claim found empty diff"
     },
     {
       "id": "verify-document-upload-metadata-promote-to-done-backend",

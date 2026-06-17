@@ -192,28 +192,6 @@
       "quarantine_reason": "sandbox-failure-after-reclaim (no branch after 1 reclaim). Quarantined (not failed) to block re-claim AND avoid a 405KB assignments-archive push via MCP (infra: git push HTTP-403 by proxy + archive too large to inline). Human action: close row + decide retry of swiftui setup."
     },
     {
-      "task_id": "feat-pinned-announcements-pin-unpin-web-ui-frontend",
-      "branch": "auto-impl/feat-pinned-announcements-pin-unpin-web-",
-      "status": "in-progress",
-      "claimed_at": "2026-06-17T10:14:34Z",
-      "last_updated": "2026-06-17T10:14:34Z",
-      "status_changed_at": "2026-06-17T10:14:34Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "pm-qa-tenant-aware-rls-helper",
       "branch": "auto-impl/pm-qa-tenant-aware-rls-helper",
       "status": "in-progress",
