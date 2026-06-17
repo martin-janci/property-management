@@ -53,7 +53,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::TestApp;
+use common::{seed_membership, TestApp};
 
 // Must match `TestConfig::default().jwt_secret`.
 const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
@@ -127,23 +127,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .expect("seed user")
 }
 
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members
-            (id, organization_id, user_id, role_type, status, created_at)
-        VALUES ($1, $2, $3, 'manager', 'active', NOW())
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
-
 // ---------------------------------------------------------------------------
 // Request helpers
 // ---------------------------------------------------------------------------
@@ -209,7 +192,7 @@ async fn token_exchange_rejects_empty_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "te-empty").await;
     let user_id = seed_user(&pool, "te-empty@booking-routes.test").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
     let resp = app
         .execute(authed_post(
@@ -241,7 +224,7 @@ async fn token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
     let org_a = seed_org(&pool, "te-idor-a").await; // owns the target
     let org_b = seed_org(&pool, "te-idor-b").await; // caller's org
     let user_b = seed_user(&pool, "te-idor-b@booking-routes.test").await;
-    seed_membership(&pool, org_b, user_b).await; // member of B, not A
+    seed_membership(&pool, org_b, user_b, "manager").await; // member of B, not A
 
     let token_b = mint_token(user_b, org_b);
     let resp = app
@@ -270,7 +253,7 @@ async fn token_exchange_returns_503_when_not_configured(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "te-nocfg").await;
     let user_id = seed_user(&pool, "te-nocfg@booking-routes.test").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
     let resp = app
         .execute(authed_post(

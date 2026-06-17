@@ -53,7 +53,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::TestApp;
+use common::{seed_membership, TestApp};
 
 // Must match `TestConfig::default().jwt_secret`.
 const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
@@ -125,23 +125,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members
-            (id, organization_id, user_id, role_type, status, created_at)
-        VALUES ($1, $2, $3, 'manager', 'active', NOW())
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 // ---------------------------------------------------------------------------
@@ -221,7 +204,7 @@ async fn booking_token_exchange_rejects_empty_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "bk-empty").await;
     let user_id = seed_user(&pool, "bk-empty@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
 
     let resp = app
@@ -254,7 +237,7 @@ async fn booking_token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
     let org_a = seed_org(&pool, "bk-idor-a").await; // owns the target
     let org_b = seed_org(&pool, "bk-idor-b").await; // caller's org
     let user_b = seed_user(&pool, "bk-idor-b@test.local").await;
-    seed_membership(&pool, org_b, user_b).await; // member of B, not A
+    seed_membership(&pool, org_b, user_b, "manager").await; // member of B, not A
     let token_b = mint_token(user_b, org_b);
 
     let resp = app
@@ -281,7 +264,7 @@ async fn booking_token_exchange_returns_503_when_not_configured(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "bk-nocfg").await;
     let user_id = seed_user(&pool, "bk-nocfg@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
 
     let resp = app
@@ -312,7 +295,7 @@ async fn airbnb_callback_rejects_missing_state(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "cb-missing").await;
     let user_id = seed_user(&pool, "cb-missing@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
 
     let resp = app
@@ -343,7 +326,7 @@ async fn airbnb_callback_rejects_malformed_state(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "cb-malformed").await;
     let user_id = seed_user(&pool, "cb-malformed@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
 
     // No colon → a single segment → fails the `{org}:{nonce}` format check.
@@ -375,7 +358,7 @@ async fn airbnb_callback_rejects_org_mismatch_state(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "cb-mismatch").await;
     let user_id = seed_user(&pool, "cb-mismatch@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
 
     // state embeds a *different* org than the callback path.
@@ -412,7 +395,7 @@ async fn airbnb_callback_valid_state_passes_csrf_gate(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "cb-valid").await;
     let user_id = seed_user(&pool, "cb-valid@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
 
     let valid_state = format!("{org_id}:{}", Uuid::new_v4());
@@ -447,7 +430,7 @@ async fn airbnb_callback_idor_rejects_non_member(pool: PgPool) {
     let org_a = seed_org(&pool, "cb-idor-a").await; // callback target
     let org_b = seed_org(&pool, "cb-idor-b").await; // caller's org
     let user_b = seed_user(&pool, "cb-idor-b@test.local").await;
-    seed_membership(&pool, org_b, user_b).await; // member of B, not A
+    seed_membership(&pool, org_b, user_b, "manager").await; // member of B, not A
     let token_b = mint_token(user_b, org_b);
 
     // state correctly embeds org_a (passes the stateless org-prefix check), so
