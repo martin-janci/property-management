@@ -188,23 +188,26 @@ fun SearchScreen(
         SearchState.debouncedQueryFlow(snapshotFlow { searchQuery }).collect { performSearch() }
     }
 
-    // AC-4: infinite scroll. When the user scrolls within PREFETCH_THRESHOLD of the end and
-    // more results exist, fetch the next page automatically.
-    LaunchedEffect(listState, searchResults.size, totalResults, isLoading) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
-            .collect { lastVisible ->
-                if (
-                    SearchState.shouldLoadNextPage(
-                        lastVisibleIndex = lastVisible,
+    // AC-4: infinite scroll. The trigger pipeline (de-duplicate the last-visible index, snapshot
+    // the pagination state, apply the shouldLoadNextPage threshold) lives in
+    // SearchState.nextPageTriggerFlow so the trigger behaviour is unit-tested with virtual time;
+    // here we feed it the scroll-position snapshot and load each page it emits. The snapshot lambda
+    // reads the live pagination state at the moment an index change is processed, so this effect
+    // does not need to re-key on searchResults.size / totalResults / isLoading.
+    LaunchedEffect(listState) {
+        SearchState.nextPageTriggerFlow(
+                lastVisibleIndex =
+                    snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index },
+                snapshot = {
+                    SearchState.PageSnapshot(
                         loadedCount = searchResults.size,
                         total = totalResults,
                         isLoading = isLoading,
+                        currentPage = currentPage,
                     )
-                ) {
-                    performSearch(currentPage + 1)
-                }
-            }
+                },
+            )
+            .collect { page -> performSearch(page) }
     }
 
     val activeFilterCount =

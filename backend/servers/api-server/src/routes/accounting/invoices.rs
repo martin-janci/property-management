@@ -61,11 +61,9 @@ fn validate_update_invoice(data: &UpdateInvoice) -> Result<(), StatusCode> {
             return Err(StatusCode::BAD_REQUEST);
         }
     }
-    if let Some(ref vs_opt) = data.variable_symbol {
-        if let Some(ref vs) = vs_opt {
-            if vs.len() > 20 {
-                return Err(StatusCode::BAD_REQUEST);
-            }
+    if let Some(Some(vs)) = &data.variable_symbol {
+        if vs.len() > 20 {
+            return Err(StatusCode::BAD_REQUEST);
         }
     }
     if let Some(ref currency) = data.currency {
@@ -261,7 +259,7 @@ pub async fn create_invoice(
 
     let invoice = state
         .accounting_repo
-        .create_invoice_rls(&mut *tx, data)
+        .create_invoice_rls(&mut tx, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to create invoice: {}", e);

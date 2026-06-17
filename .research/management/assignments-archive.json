@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-17T10:16:16Z",
+  "archived_at": "2026-06-17T12:14:41Z",
   "assignments": [
     {
       "task_id": "bug-announcer-stale-message",
@@ -1407,6 +1407,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "feat-home-and-search-screens-infinite-scroll-evidenced-mobile",
+      "branch": "auto-impl/feat-home-and-search-screens-infinite-sc",
+      "status": "merged",
+      "claimed_at": "2026-06-16T08:28:35Z",
+      "last_updated": "2026-06-17T12:10:55Z",
+      "status_changed_at": "2026-06-17T12:10:55Z",
+      "pr_number": 1447,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/1447",
+      "merged_at": "2026-06-17T10:32:43Z",
+      "specialist": null,
+      "implementer_summary": " [Phase5.7 followup applied: spotlessApply reformatted nextPageTriggerFlow, pushed 1e9354b; awaiting CI re-run + re-review] [dispatcher 2026-06-17: update-branch 422 CONFLICT vs current dev (non-mechanical code conflict) — needs implementer/human rebase]",
+      "reviewer_summary": "verdict=approve head_oid=1e9354ba837354eb750db1e545bcc8525c590922 note=spotless-fixed-lint+android+ios-ci-green [dispatcher 2026-06-16: Phase5.6 auto-rebase FAILED — non-mechanical Kotlin/doc conflict in SearchScreen.kt + search.md vs merged #1392; needs implementer/human rebase]",
+      "last_reviewed_oid": "1e9354ba837354eb750db1e545bcc8525c590922",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "feat-mobile-build-config-scripts-icons",
       "branch": "auto-impl/feat-mobile-build-config-scripts-icons",
       "status": "failed",
@@ -1628,6 +1650,28 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "feat-pinned-announcements-pin-unpin-web-ui-frontend",
+      "branch": "auto-impl/feat-pinned-announcements-pin-unpin-web-",
+      "status": "failed",
+      "claimed_at": "2026-06-17T10:14:34Z",
+      "last_updated": "2026-06-17T10:24:44Z",
+      "status_changed_at": "2026-06-17T10:24:44Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-implemented-on-dev (PR #1446); empty diff vs origin/dev",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
       "merge_attempted_at": null
     },
     {
