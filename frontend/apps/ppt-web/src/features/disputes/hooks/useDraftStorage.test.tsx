@@ -87,4 +87,48 @@ describe('useDraftStorage', () => {
     const { result } = renderHook(() => useDraftStorage<{ subject: string }>(KEY));
     expect(result.current.restored).toBeNull();
   });
+
+  // ── #1364: unmount must flush a still-pending debounced save ──
+  // The hook advertises protection against "accidental tab close / navigation".
+  // For the in-app (SPA) navigation case that means: if the user types and the
+  // component unmounts before the 800ms debounce fires, the last keystrokes
+  // must still be persisted via the synchronous unmount flush — not silently
+  // dropped (the bug originally shipped in PR #1359).
+  it('flushes a pending debounced save synchronously on unmount', () => {
+    const { result, unmount } = renderHook(() => useDraftStorage<{ subject: string }>(KEY));
+
+    act(() => result.current.save({ subject: 'typed-then-navigated' }));
+
+    // Debounce has NOT fired yet — nothing persisted.
+    expect(localStorage.getItem(KEY)).toBeNull();
+
+    // Simulate SPA navigation away from the form before the timer fires.
+    act(() => unmount());
+
+    const raw = localStorage.getItem(KEY);
+    expect(raw, 'pending draft was dropped on unmount').not.toBeNull();
+    const parsed = JSON.parse(raw as string);
+    expect(parsed.values).toEqual({ subject: 'typed-then-navigated' });
+    expect(typeof parsed.savedAt).toBe('number');
+  });
+
+  it('does not write on unmount when nothing is pending', () => {
+    const { unmount } = renderHook(() => useDraftStorage<{ subject: string }>(KEY));
+    act(() => unmount());
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  it('does not re-flush an already-persisted draft on unmount', () => {
+    const { result, unmount } = renderHook(() => useDraftStorage<{ subject: string }>(KEY));
+
+    act(() => result.current.save({ subject: 'flushed' }));
+    act(() => vi.advanceTimersByTime(800));
+    const afterFlush = localStorage.getItem(KEY);
+    expect(afterFlush).not.toBeNull();
+
+    // Nothing pending now — unmount must be a no-op (pendingRef was cleared by
+    // the flush), so the stored value is byte-for-byte unchanged.
+    act(() => unmount());
+    expect(localStorage.getItem(KEY)).toBe(afterFlush);
+  });
 });
