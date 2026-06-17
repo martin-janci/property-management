@@ -18,6 +18,19 @@ use rust_decimal::Decimal;
 use sqlx::Error as SqlxError;
 use uuid::Uuid;
 
+/// Explicit column projection for `rental_platform_connections` reads/returns.
+///
+/// `platform` is a PG enum (`rental_platform`) but `RentalPlatformConnection`
+/// decodes it as `String`. A bare `SELECT *` / `RETURNING *` fails to decode the
+/// raw enum OID (Postgres 42804) - masked under FORCE RLS (PAP-158, GH #1363) -
+/// so cast it to `text`. All other columns are listed explicitly so the
+/// projection is stable and decode is order-independent.
+const PLATFORM_CONNECTION_COLUMNS: &str = "id, organization_id, unit_id, \
+    platform::text AS platform, access_token, refresh_token, token_expires_at, \
+    encrypted_token, encrypted_refresh_token, external_property_id, \
+    external_listing_url, is_active, last_sync_at, sync_error, sync_calendar, \
+    sync_interval_minutes, block_other_platforms, created_at, updated_at";
+
 /// Static mapping of ISO 3166-1 alpha-2 country codes to country names.
 /// Includes EU countries and common destinations for short-term rentals.
 static COUNTRY_NAMES: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
@@ -162,7 +175,14 @@ impl RentalRepository {
                 sync_calendar, sync_interval_minutes, block_other_platforms
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
+            RETURNING
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
             "#,
         )
         .bind(org_id)
@@ -223,10 +243,6 @@ impl RentalRepository {
         unit_id: Uuid,
         platform: &str,
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
-        // `platform` is the `rental_platform` enum; the model decodes it as
-        // `String`, so a bare `SELECT *` panics with "mismatched types … not
-        // compatible with SQL type rental_platform". Cast the column to text on
-        // read and the bound text arg to the enum in the predicate.
         let conn = sqlx::query_as::<_, RentalPlatformConnection>(
             r#"
             SELECT
@@ -238,7 +254,7 @@ impl RentalRepository {
                 sync_calendar, sync_interval_minutes, block_other_platforms,
                 created_at, updated_at
             FROM rental_platform_connections
-            WHERE unit_id = $1 AND platform = $2::rental_platform
+            WHERE unit_id = $1 AND platform = $2
             "#,
         )
         .bind(unit_id)
@@ -266,7 +282,14 @@ impl RentalRepository {
                 block_other_platforms = COALESCE($7, block_other_platforms),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, unit_id, platform::text AS platform,
+                access_token, refresh_token, token_expires_at,
+                encrypted_token, encrypted_refresh_token,
+                external_property_id, external_listing_url,
+                is_active, last_sync_at, sync_error,
+                sync_calendar, sync_interval_minutes, block_other_platforms,
+                created_at, updated_at
             "#,
         )
         .bind(id)
@@ -537,7 +560,7 @@ impl RentalRepository {
         org_id: Uuid,
         data: CreateBooking,
     ) -> Result<RentalBooking, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_bookings (
                 organization_id, unit_id, platform, external_booking_id,
@@ -547,9 +570,10 @@ impl RentalRepository {
                 guest_notes, internal_notes, status
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::BOOKING_COLUMNS
+        )))
         .bind(org_id)
         .bind(data.unit_id)
         .bind(&data.platform)
@@ -592,6 +616,9 @@ impl RentalRepository {
     }
 
     /// Find booking by ID.
+    ///
+    /// Uses [`BOOKING_COLUMNS`] (enum columns cast to text) instead of a bare
+    /// `SELECT *` to avoid the FORCE-RLS-masked 42804 enum decode gap (GH #1363).
     pub async fn find_booking_by_id(&self, id: Uuid) -> Result<Option<RentalBooking>, SqlxError> {
         let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             "SELECT {} FROM rental_bookings WHERE id = $1",
@@ -607,6 +634,9 @@ impl RentalRepository {
     /// Find booking by ID scoped to an organization.
     ///
     /// SECURITY (#804): prevents reading another org's booking PII by UUID.
+    ///
+    /// Uses [`BOOKING_COLUMNS`] (enum columns cast to text) instead of a bare
+    /// `SELECT *` to avoid the FORCE-RLS-masked 42804 enum decode gap (GH #1363).
     pub async fn find_booking_for_org(
         &self,
         org_id: Uuid,
@@ -663,7 +693,7 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateBooking,
     ) -> Result<RentalBooking, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_bookings SET
                 guest_name = COALESCE($2, guest_name),
@@ -680,9 +710,10 @@ impl RentalRepository {
                 internal_notes = COALESCE($13, internal_notes),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::BOOKING_COLUMNS
+        )))
         .bind(id)
         .bind(&data.guest_name)
         .bind(&data.guest_email)
@@ -729,7 +760,7 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateBooking,
     ) -> Result<Option<RentalBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_bookings SET
                 guest_name = COALESCE($2, guest_name),
@@ -746,9 +777,10 @@ impl RentalRepository {
                 internal_notes = COALESCE($13, internal_notes),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $14
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::BOOKING_COLUMNS
+        )))
         .bind(id)
         .bind(&data.guest_name)
         .bind(&data.guest_email)
@@ -2242,22 +2274,14 @@ impl RentalRepository {
         &self,
         org_id: Uuid,
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT
-                id, organization_id, unit_id, platform::text AS platform,
-                access_token, refresh_token, token_expires_at,
-                encrypted_token, encrypted_refresh_token,
-                external_property_id, external_listing_url,
-                is_active, last_sync_at, sync_error,
-                sync_calendar, sync_interval_minutes, block_other_platforms,
-                created_at, updated_at
-            FROM rental_platform_connections
+            SELECT {PLATFORM_CONNECTION_COLUMNS} FROM rental_platform_connections
             WHERE organization_id = $1 AND platform = 'airbnb'
             ORDER BY created_at DESC
             LIMIT 1
-            "#,
-        )
+            "#
+        )))
         .bind(org_id)
         .fetch_optional(&self.pool)
         .await?;
@@ -2282,22 +2306,14 @@ impl RentalRepository {
         &self,
         listing_id: &str,
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT
-                id, organization_id, unit_id, platform::text AS platform,
-                access_token, refresh_token, token_expires_at,
-                encrypted_token, encrypted_refresh_token,
-                external_property_id, external_listing_url,
-                is_active, last_sync_at, sync_error,
-                sync_calendar, sync_interval_minutes, block_other_platforms,
-                created_at, updated_at
-            FROM rental_platform_connections
+            SELECT {PLATFORM_CONNECTION_COLUMNS} FROM rental_platform_connections
             WHERE platform = 'airbnb' AND external_property_id = $1 AND is_active = true
             ORDER BY updated_at DESC
             LIMIT 1
-            "#,
-        )
+            "#
+        )))
         .bind(listing_id)
         .fetch_optional(&self.pool)
         .await?;
@@ -2410,7 +2426,7 @@ impl RentalRepository {
             return Ok(conn);
         }
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_platform_connections (
                 organization_id, unit_id, platform,
@@ -2430,9 +2446,9 @@ impl RentalRepository {
                 is_active                = true,
                 sync_error               = NULL,
                 updated_at               = NOW()
-            RETURNING *
-            "#,
-        )
+            RETURNING {PLATFORM_CONNECTION_COLUMNS}
+            "#
+        )))
         .bind(org_id)
         .bind(effective_unit_id)
         .bind(access_token)
@@ -2498,7 +2514,7 @@ impl RentalRepository {
             return Ok(conn);
         }
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_platform_connections (
                 organization_id, unit_id, platform,
@@ -2518,9 +2534,9 @@ impl RentalRepository {
                 is_active                = true,
                 sync_error               = NULL,
                 updated_at               = NOW()
-            RETURNING *
-            "#,
-        )
+            RETURNING {PLATFORM_CONNECTION_COLUMNS}
+            "#
+        )))
         .bind(org_id)
         .bind(effective_unit_id)
         .bind(access_token)
@@ -2594,7 +2610,7 @@ impl RentalRepository {
         encrypted_refresh: Option<&str>,
         expires_at: Option<chrono::DateTime<Utc>>,
     ) -> Result<RentalPlatformConnection, SqlxError> {
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_platform_connections SET
                 access_token             = $2,
@@ -2606,9 +2622,9 @@ impl RentalRepository {
                 updated_at               = NOW()
             WHERE id = $1
               AND platform = 'airbnb'
-            RETURNING *
-            "#,
-        )
+            RETURNING {PLATFORM_CONNECTION_COLUMNS}
+            "#
+        )))
         .bind(connection_id)
         .bind(encrypted_access)
         .bind(encrypted_refresh)
@@ -2655,17 +2671,10 @@ impl RentalRepository {
     ) -> Result<Vec<RentalPlatformConnection>, SqlxError> {
         let threshold = Utc::now() + Duration::seconds(buffer_secs);
 
-        let connections = sqlx::query_as::<_, RentalPlatformConnection>(
-            r#"
-            SELECT
-                id, organization_id, unit_id, platform::text AS platform,
-                access_token, refresh_token, token_expires_at,
-                encrypted_token, encrypted_refresh_token,
-                external_property_id, external_listing_url,
-                is_active, last_sync_at, sync_error,
-                sync_calendar, sync_interval_minutes, block_other_platforms,
-                created_at, updated_at
-            FROM rental_platform_connections
+        let connections =
+            sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
+                r#"
+            SELECT {PLATFORM_CONNECTION_COLUMNS} FROM rental_platform_connections
             WHERE platform = 'airbnb'
               AND is_active = true
               AND (encrypted_refresh_token IS NOT NULL OR refresh_token IS NOT NULL)
@@ -2673,11 +2682,11 @@ impl RentalRepository {
               AND token_expires_at <= $1
             ORDER BY token_expires_at ASC
             LIMIT 100
-            "#,
-        )
-        .bind(threshold)
-        .fetch_all(&self.pool)
-        .await?;
+            "#
+            )))
+            .bind(threshold)
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(connections)
     }
@@ -2706,25 +2715,18 @@ impl RentalRepository {
         &self,
         org_id: Uuid,
     ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
-        let connection = sqlx::query_as::<_, RentalPlatformConnection>(
-            r#"
-            SELECT
-                id, organization_id, unit_id, platform::text AS platform,
-                access_token, refresh_token, token_expires_at,
-                encrypted_token, encrypted_refresh_token,
-                external_property_id, external_listing_url,
-                is_active, last_sync_at, sync_error,
-                sync_calendar, sync_interval_minutes, block_other_platforms,
-                created_at, updated_at
-            FROM rental_platform_connections
+        let connection =
+            sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
+                r#"
+            SELECT {PLATFORM_CONNECTION_COLUMNS} FROM rental_platform_connections
             WHERE organization_id = $1 AND platform = 'booking'
             ORDER BY created_at DESC
             LIMIT 1
-            "#,
-        )
-        .bind(org_id)
-        .fetch_optional(&self.pool)
-        .await?;
+            "#
+            )))
+            .bind(org_id)
+            .fetch_optional(&self.pool)
+            .await?;
 
         Ok(connection)
     }
@@ -2741,8 +2743,9 @@ impl RentalRepository {
         let id = Uuid::new_v4();
         let unit_id = Uuid::nil(); // Booking connections are org-level
 
-        let connection = sqlx::query_as::<_, RentalPlatformConnection>(
-            r#"
+        let connection =
+            sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
+                r#"
             INSERT INTO rental_platform_connections (
                 id, unit_id, organization_id, platform, external_property_id,
                 access_token, refresh_token, is_active,
@@ -2758,17 +2761,17 @@ impl RentalRepository {
                 is_active = true,
                 sync_error = NULL,
                 updated_at = NOW()
-            RETURNING *
-            "#,
-        )
-        .bind(id)
-        .bind(unit_id)
-        .bind(org_id)
-        .bind(hotel_id)
-        .bind(username)
-        .bind(password)
-        .fetch_one(&self.pool)
-        .await?;
+            RETURNING {PLATFORM_CONNECTION_COLUMNS}
+            "#
+            )))
+            .bind(id)
+            .bind(unit_id)
+            .bind(org_id)
+            .bind(hotel_id)
+            .bind(username)
+            .bind(password)
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(connection)
     }
