@@ -8,32 +8,24 @@
 // `PPTEnv.xcconfig`, then wired as the baseConfigurationReference of every
 // build configuration.
 //
-// SINGLE SOURCE OF TRUTH NOTE
-// ---------------------------
-// Runtime config (the values JS reads at runtime via
-// Constants.expoConfig.extra / ios.infoPlist) is still owned by
-// `.env.development` -> app.config.ts. These xcconfig values mirror the same
-// env so the *native build layer* (bundle id, display name, APP_ENV marker,
-// API base URL) is configured consistently with that mechanism. Keep this file
-// in sync with `.env.development` when the dev API host changes.
+// SOURCE OF TRUTH
+// ---------------
+// Runtime config (API_BASE_URL, WS_BASE_URL, feature flags) is owned by
+// `.env.development` -> app.config.ts -> Constants.expoConfig.extra /
+// ios.infoPlist. Expo writes these values directly into the generated project;
+// they do NOT flow through xcconfig substitution.
+//
+// This xcconfig is the *native build-layer* marker. It carries only settings
+// that must be present in the Xcode build graph (bundle identifier, env marker)
+// rather than runtime config that app.config.ts already manages.
 
-// Marker for the active environment (also surfaced as a user-defined build
-// setting so it is greppable in the compiled product / build logs).
+// Marker for the active environment — greppable in build logs / the compiled
+// product. No consumer reads $(PPT_APP_ENV) at runtime; app.config.ts already
+// writes ENVIRONMENT into Info.plist directly.
 PPT_APP_ENV = development
 
 // Bundle identifier — matches app.config.ts ios.bundleIdentifier and
-// eas.json development profile. No suffix: EAS/Expo manage a single bundle id
-// for this app; the environment is distinguished by APP_ENV + badged icon.
+// eas.json development profile. Expo may shadow this with a direct
+// XCBuildConfiguration write at prebuild time; it is included here as the
+// documented canonical value so the xcconfig is self-describing.
 PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.management
-
-// Human-facing build marker (informational; the launcher name is set by Expo).
-PPT_BUILD_DISPLAY_NAME = PPT Management (Dev)
-
-// Backend API base URL for this environment — mirrors API_BASE_URL in
-// .env.development. NOTE: `//` starts a comment in xcconfig, so the scheme
-// separator in a URL must be written without inline trailing comments.
-PPT_API_BASE_URL = http:/$()/localhost:8080
-
-// App Transport Security posture marker: development allows cleartext HTTP to
-// the local backend (mirrors app.config.ts NSAllowsArbitraryLoads for debug).
-PPT_ALLOWS_ARBITRARY_LOADS = YES

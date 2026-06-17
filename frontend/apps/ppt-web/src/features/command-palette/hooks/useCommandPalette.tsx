@@ -12,23 +12,11 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { isLocalStorageAvailable } from '../../../lib/storage';
 import type { Command, CommandPaletteContextValue } from '../types';
 
 const RECENT_COMMANDS_KEY = 'ppt-command-palette-recent';
 const MAX_RECENT_COMMANDS = 5;
-
-/** Check if localStorage is available */
-function isLocalStorageAvailable(): boolean {
-  try {
-    if (typeof window === 'undefined') return false;
-    const test = '__storage_test__';
-    window.localStorage.setItem(test, test);
-    window.localStorage.removeItem(test);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 const CommandPaletteContext = createContext<CommandPaletteContextValue | null>(null);
 

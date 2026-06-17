@@ -671,7 +671,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -753,7 +753,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -811,7 +811,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -2393,7 +2393,7 @@ impl DocumentRepository {
         let rows = sqlx::query(
             r#"
             SELECT
-                d.id, d.title, d.category, d.file_name, d.mime_type, d.size_bytes,
+                d.id, d.title, d.category::text AS category, d.file_name, d.mime_type, d.size_bytes,
                 d.folder_id, d.created_at,
                 ts_rank_cd(d.search_vector, to_tsquery('english', $2)) as rank,
                 ts_headline('english', COALESCE(d.extracted_text, d.description, ''),
