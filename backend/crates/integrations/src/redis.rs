@@ -667,9 +667,6 @@ pub mod channels {
     }
 }
 
-/// Redis pub/sub service (Story 103.4).
-#[derive(Clone)]
-
 // ============================================================================
 // In-Memory Pub/Sub (for CI/testing)
 // ============================================================================
@@ -712,6 +709,8 @@ enum PubSubBackend {
     InMemory(Arc<InMemoryBroker>),
 }
 
+/// Redis pub/sub service (Story 103.4).
+#[derive(Clone)]
 pub struct PubSubService {
     inner: PubSubBackend,
     instance_id: String,
@@ -937,7 +936,12 @@ impl PubSubService {
     /// commands (`RPUSH` / `BLPOP` / `LLEN`) for fan-out job queues without a
     /// second connection handle.
     pub fn client(&self) -> &RedisClient {
-        &self.client
+        match &self.inner {
+            PubSubBackend::Redis(client) => client,
+            PubSubBackend::InMemory(_) => {
+                panic!("PubSubService::client() requires a Redis backend; this service was built in-memory")
+            }
+        }
     }
 }
 
