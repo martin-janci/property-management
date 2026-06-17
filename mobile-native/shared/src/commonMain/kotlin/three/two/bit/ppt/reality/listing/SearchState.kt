@@ -1,10 +1,17 @@
 package three.two.bit.ppt.reality.listing
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+
 /**
  * Pure search-screen state helpers shared across platforms.
  *
  * These functions hold the non-UI logic the Reality home/search screen needs so it can be unit
  * tested without a Compose (or SwiftUI) runtime and reused by the iOS target later:
+ * - [debouncedQueryFlow] — the AC-2 search-as-you-type debounce pipeline applied to the raw
+ *   free-text query stream (drop the initial emission, debounce, de-duplicate settled text).
  * - [buildSearchRequest] — assembles a [ListingSearchRequest] from the screen's filter inputs.
  * - [activeFilterCount] — the badge count shown on the "Filtre" chip.
  * - [shouldLoadNextPage] — the infinite-scroll trigger (AC-4): given the currently loaded count,
@@ -33,6 +40,35 @@ object SearchState {
      */
     const val PREFETCH_THRESHOLD: Int = 5
 
+    /**
+     * Default radius (km) applied when the user enables the FilterSheet "Near Me" toggle without
+     * having picked an explicit radius yet. Mirrors the iOS `nearMeSection` default of 10 km.
+     */
+    const val DEFAULT_NEAR_ME_RADIUS_KM: Double = 10.0
+
+    /**
+     * Radius options (km) offered by the FilterSheet "Near Me" picker. Mirrors the iOS
+     * `radiusOptions` list so both platforms present the same choices.
+     */
+    val RADIUS_OPTIONS_KM: List<Double> = listOf(1.0, 3.0, 5.0, 10.0, 20.0, 50.0)
+
+    /**
+     * Debounced search-as-you-type pipeline (AC-2).
+     *
+     * Given the raw stream of free-text query values emitted as the user types ([source]), returns
+     * the stream of queries that should actually trigger a network search:
+     * - `drop(1)` skips the initial/current value so the screen's own first load owns it (the
+     *   `LaunchedEffect(Unit) { performSearch() }` on mount) and a search isn't double-fired.
+     * - `debounce([SEARCH_DEBOUNCE_MS])` collapses rapid keystrokes into a single emission once the
+     *   user pauses for the debounce window — mirroring the iOS `SearchView` 300 ms `Task.sleep`.
+     * - `distinctUntilChanged()` avoids re-firing when the text settles back on the same value.
+     *
+     * Extracted from `SearchScreen.kt` so the AC-2 timing behaviour is unit-testable with
+     * `kotlinx-coroutines-test` virtual time instead of only living in a Compose `LaunchedEffect`.
+     */
+    fun debouncedQueryFlow(source: Flow<String>): Flow<String> =
+        source.drop(1).debounce(SEARCH_DEBOUNCE_MS).distinctUntilChanged()
+
     /** Build the search request payload from the raw screen inputs. */
     fun buildSearchRequest(
         query: String,
@@ -43,6 +79,9 @@ object SearchState {
         minRooms: Int? = null,
         sort: ListingSortOption = ListingSortOption.NEWEST,
         page: Int = 1,
+        nearLat: Double? = null,
+        nearLng: Double? = null,
+        radiusKm: Double? = null,
     ): ListingSearchRequest =
         ListingSearchRequest(
             query = query.takeIf { it.isNotBlank() },
@@ -53,11 +92,24 @@ object SearchState {
                     minPrice = minPrice.toLongOrNull(),
                     maxPrice = maxPrice.toLongOrNull(),
                     minRooms = minRooms,
+                    // A radius is only meaningful with a centre point: drop the radius unless we
+                    // actually have device coordinates, so the server never receives a dangling
+                    // radius_km with no near_lat/near_lng (which it would otherwise ignore or 400).
+                    nearLat = nearLat.takeIf { radiusKm != null },
+                    nearLng = nearLng.takeIf { radiusKm != null },
+                    radiusKm = radiusKm.takeIf { nearLat != null && nearLng != null },
                 ),
             sort = sort,
             page = page,
             pageSize = PAGE_SIZE,
         )
+
+    /**
+     * Whether a "Near Me" location filter is active — i.e. a radius AND a centre coordinate are
+     * both present. A radius with no coordinate (location not yet resolved) is not yet active.
+     */
+    fun isNearMeActive(nearLat: Double?, nearLng: Double?, radiusKm: Double?): Boolean =
+        radiusKm != null && nearLat != null && nearLng != null
 
     /** Count of distinct active filters, for the filter-chip badge. */
     fun activeFilterCount(
@@ -66,9 +118,13 @@ object SearchState {
         minRooms: Int?,
         minPrice: String,
         maxPrice: String,
+        nearLat: Double? = null,
+        nearLng: Double? = null,
+        radiusKm: Double? = null,
     ): Int =
         listOf(type, category, minRooms).count { it != null } +
-            (if (minPrice.isNotBlank() || maxPrice.isNotBlank()) 1 else 0)
+            (if (minPrice.isNotBlank() || maxPrice.isNotBlank()) 1 else 0) +
+            (if (isNearMeActive(nearLat, nearLng, radiusKm)) 1 else 0)
 
     /**
      * Infinite-scroll trigger (AC-4).

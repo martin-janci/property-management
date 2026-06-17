@@ -1,0 +1,67 @@
+# Dev-push compile smoke gate (pm-devops-dev-push-compile-gate).
+#
+# WHY a dedicated workflow rather than another job in backend.yml:
+#   The `check` job in backend.yml runs `cargo check --workspace` (no test
+#   targets) plus fmt + clippy + the RLS enforcement scripts + a Docker-Postgres
+#   RLS-coverage boot. It's the right thorough gate for a PR, but two gaps let a
+#   broken merge land on `dev` and stay green here while going red on every
+#   *downstream* PR (the #1426 -> #1437 episode):
+#     1. `cargo check --workspace` does NOT compile test targets, so a merge
+#        whose *test* code fails to compile slips past it and only surfaces in
+#        the much slower `test` job (or in the next person's PR).
+#     2. backend.yml's push trigger is path-filtered to `backend/**`; a fix that
+#        rides in on a non-backend-path merge commit can leave dev's tip without
+#        a fresh compile of the backend at all.
+#
+#   This workflow is the minimal, fast counter-measure: on every PUSH to `dev`
+#   it does exactly one cheap thing — `SQLX_OFFLINE=true cargo check --workspace
+#   --tests` — so a non-compiling merge (lib OR test code) is flagged on dev's
+#   tip immediately instead of being discovered one downstream PR at a time.
+#
+# Distinct from PR #1441 (gh-1375): that added a *local* pre-push fmt+clippy
+# git hook (scripts/pre-push). This is the *CI-level* gate — it cannot be
+# bypassed with `--no-verify`, it runs `--tests` (the hook does not), and it
+# fires on the merge commit itself rather than on a developer's local push.
+name: Backend dev-push gate
+
+on:
+  push:
+    branches: [dev]
+  # Lets maintainers re-run the smoke gate on demand (e.g. after a force-push
+  # to dev or to confirm a fix) without waiting for the next merge.
+  workflow_dispatch:
+
+# A newer push to dev makes an in-flight run obsolete — cancel it so the gate
+# always reflects dev's current tip and doesn't queue stale runs.
+concurrency:
+  group: backend-dev-push-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  compile-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.94.1
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      # The whole point: `--tests` compiles the test targets too, so a merge
+      # whose test code doesn't build is caught here on dev's tip rather than
+      # in the slow `test` job or on the next contributor's PR. SQLX_OFFLINE
+      # keeps it fast and DB-free — the repo uses runtime sqlx queries, so no
+      # DATABASE_URL is needed for a pure compile (see backend.yml's
+      # sqlx-migrations job comment).
+      - name: Compile smoke (cargo check --workspace --tests)
+        working-directory: backend
+        env:
+          SQLX_OFFLINE: true
+        run: cargo check --workspace --tests

@@ -136,3 +136,54 @@ describe('AnnouncementList — pin/unpin UI (Story 6.4)', () => {
     expect(onPin).toHaveBeenNthCalledWith(2, 'b', false);
   });
 });
+
+describe('AnnouncementList — pinned ordering (Story 6.4)', () => {
+  /** Titles of the rendered cards, in document order. */
+  function renderedTitlesInOrder(): string[] {
+    return screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim() ?? '');
+  }
+
+  it('floats pinned announcements to the top of the list, regardless of input order', () => {
+    render(
+      <AnnouncementList
+        {...baseProps}
+        announcements={[
+          ann({ id: 'u1', title: 'Unpinned A', pinned: false }),
+          ann({ id: 'p1', title: 'Pinned A', pinned: true }),
+          ann({ id: 'u2', title: 'Unpinned B', pinned: false }),
+          ann({ id: 'p2', title: 'Pinned B', pinned: true }),
+        ]}
+        total={4}
+      />
+    );
+
+    const titles = renderedTitlesInOrder();
+    // Both pinned rows precede both unpinned rows.
+    expect(titles.indexOf('Pinned A')).toBeLessThan(titles.indexOf('Unpinned A'));
+    expect(titles.indexOf('Pinned A')).toBeLessThan(titles.indexOf('Unpinned B'));
+    expect(titles.indexOf('Pinned B')).toBeLessThan(titles.indexOf('Unpinned A'));
+    expect(titles.indexOf('Pinned B')).toBeLessThan(titles.indexOf('Unpinned B'));
+  });
+
+  it('keeps the server-provided order stable among rows sharing a pinned state', () => {
+    render(
+      <AnnouncementList
+        {...baseProps}
+        announcements={[
+          ann({ id: 'p1', title: 'Pinned first', pinned: true }),
+          ann({ id: 'p2', title: 'Pinned second', pinned: true }),
+          ann({ id: 'u1', title: 'Unpinned first', pinned: false }),
+          ann({ id: 'u2', title: 'Unpinned second', pinned: false }),
+        ]}
+        total={4}
+      />
+    );
+
+    expect(renderedTitlesInOrder()).toEqual([
+      'Pinned first',
+      'Pinned second',
+      'Unpinned first',
+      'Unpinned second',
+    ]);
+  });
+});

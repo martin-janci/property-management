@@ -1,0 +1,31 @@
+// Development.xcconfig
+// Epic 85 - Story 85.2: Build Configuration by Environment (iOS)
+//
+// Per-environment iOS build settings for the Property Management app
+// (three.two.bit.ppt.management). Selected at `expo prebuild` time by the
+// `withIosBuildConfig` config plugin (plugins/withIosBuildConfig.ts) based on
+// APP_ENV=development and copied into the generated `ios/` project as
+// `PPTEnv.xcconfig`, then wired as the baseConfigurationReference of every
+// build configuration.
+//
+// SOURCE OF TRUTH
+// ---------------
+// Runtime config (API_BASE_URL, WS_BASE_URL, feature flags) is owned by
+// `.env.development` -> app.config.ts -> Constants.expoConfig.extra /
+// ios.infoPlist. Expo writes these values directly into the generated project;
+// they do NOT flow through xcconfig substitution.
+//
+// This xcconfig is the *native build-layer* marker. It carries only settings
+// that must be present in the Xcode build graph (bundle identifier, env marker)
+// rather than runtime config that app.config.ts already manages.
+
+// Marker for the active environment — greppable in build logs / the compiled
+// product. No consumer reads $(PPT_APP_ENV) at runtime; app.config.ts already
+// writes ENVIRONMENT into Info.plist directly.
+PPT_APP_ENV = development
+
+// Bundle identifier — matches app.config.ts ios.bundleIdentifier and
+// eas.json development profile. Expo may shadow this with a direct
+// XCBuildConfiguration write at prebuild time; it is included here as the
+// documented canonical value so the xcconfig is self-describing.
+PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.management

@@ -314,6 +314,10 @@
     <string name="filter_any">Akékoľvek</string>
     <string name="filter_rooms">Izby</string>
     <string name="filter_price_range_eur">Cenové rozpätie (EUR)</string>
+    <string name="filter_near_me">V mojom okolí</string>
+    <string name="filter_radius">Okruh</string>
+    <string name="radius_km_format">%1$d km</string>
+    <string name="locating">Zisťujem vašu polohu…</string>
     <string name="filter_min">Min</string>
     <string name="filter_max">Max</string>
     <string name="filter_apply">Použiť</string>

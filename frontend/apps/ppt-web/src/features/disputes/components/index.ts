@@ -7,6 +7,7 @@ export { ActionItemCard } from './ActionItemCard';
 export { DisputeCard } from './DisputeCard';
 export { DisputeList } from './DisputeList';
 export { DisputeTimeline } from './DisputeTimeline';
+export { DraftSavedIndicator } from './DraftSavedIndicator';
 export type { PendingEvidence } from './EvidenceUploader';
 export { EvidenceUploader } from './EvidenceUploader';
 export { FileDisputeDialog } from './FileDisputeDialog';

@@ -80,11 +80,22 @@ impl DocumentRepository {
         .await
     }
 
-    /// Find folder by ID with RLS context.
+    /// Find folder by ID, scoped to `org_id` (RLS context).
+    ///
+    /// The explicit `organization_id = $2` predicate is defense-in-depth on top
+    /// of the `folder_tenant_isolation` RLS policy: it guarantees cross-org rows
+    /// are invisible (lookup → `None` → 404) even when the connection is a
+    /// Postgres SUPERUSER, which bypasses RLS entirely (FORCE ROW LEVEL SECURITY
+    /// binds only the table OWNER, not superusers). The default test/CI
+    /// `cargo test` job connects as the `postgres` superuser, so without this
+    /// predicate the cross-org IDOR probes (#679) leak Org A's folder to an
+    /// Org B caller. Mirrors the explicit-org-scoping pattern used by the other
+    /// `*_cross_org_idor` suites.
     pub async fn find_folder_by_id_rls<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<DocumentFolder>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -92,10 +103,11 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentFolder>(
             r#"
             SELECT * FROM document_folders
-            WHERE id = $1 AND deleted_at IS NULL
+            WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .fetch_optional(executor)
         .await
     }
@@ -338,18 +350,6 @@ impl DocumentRepository {
     #[allow(deprecated)]
     pub async fn create_folder(&self, data: CreateFolder) -> Result<DocumentFolder, SqlxError> {
         self.create_folder_rls(&self.pool, data).await
-    }
-
-    /// Find folder by ID.
-    ///
-    /// **Deprecated**: Use `find_folder_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_folder_by_id_rls with RlsConnection instead"
-    )]
-    #[allow(deprecated)]
-    pub async fn find_folder_by_id(&self, id: Uuid) -> Result<Option<DocumentFolder>, SqlxError> {
-        self.find_folder_by_id_rls(&self.pool, id).await
     }
 
     /// Get all folders for an organization.
@@ -671,12 +671,12 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
               AND ($2::uuid IS NULL OR folder_id = $2)
-              AND ($3::text IS NULL OR category = $3)
+              AND ($3::text IS NULL OR category = $3::document_category)
               AND ($4::uuid IS NULL OR created_by = $4)
               AND ($5::text IS NULL OR title ILIKE '%' || $5 || '%')
             ORDER BY created_at DESC
@@ -711,7 +711,7 @@ impl DocumentRepository {
             WHERE organization_id = $1
               AND deleted_at IS NULL
               AND ($2::uuid IS NULL OR folder_id = $2)
-              AND ($3::text IS NULL OR category = $3)
+              AND ($3::text IS NULL OR category = $3::document_category)
               AND ($4::uuid IS NULL OR created_by = $4)
               AND ($5::text IS NULL OR title ILIKE '%' || $5 || '%')
             "#,
@@ -745,14 +745,15 @@ impl DocumentRepository {
         let limit = query.limit.unwrap_or(50).min(100);
         let offset = query.offset.unwrap_or(0);
 
-        let building_ids_json = serde_json::to_value(user_building_ids).unwrap();
-        let unit_ids_json = serde_json::to_value(user_unit_ids).unwrap();
-        let roles_json = serde_json::to_value(user_roles).unwrap();
+        // `?|` is `jsonb ?| text[]` — right operand must be text[], not jsonb.
+        let building_ids: Vec<String> = user_building_ids.iter().map(Uuid::to_string).collect();
+        let unit_ids: Vec<String> = user_unit_ids.iter().map(Uuid::to_string).collect();
+        let roles: Vec<String> = user_roles.to_vec();
 
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -762,16 +763,16 @@ impl DocumentRepository {
                 -- Organization-wide access
                 OR access_scope = 'organization'
                 -- Building-based access
-                OR (access_scope = 'building' AND access_target_ids ?| $3)
+                OR (access_scope = 'building' AND access_target_ids ?| $3::text[])
                 -- Unit-based access
-                OR (access_scope = 'unit' AND access_target_ids ?| $4)
+                OR (access_scope = 'unit' AND access_target_ids ?| $4::text[])
                 -- Role-based access
-                OR (access_scope = 'role' AND access_roles ?| $5)
+                OR (access_scope = 'role' AND access_roles ?| $5::text[])
                 -- Specific user access
                 OR (access_scope = 'users' AND access_target_ids ? $2::text)
               )
               AND ($6::uuid IS NULL OR folder_id = $6)
-              AND ($7::text IS NULL OR category = $7)
+              AND ($7::text IS NULL OR category = $7::document_category)
               AND ($8::text IS NULL OR title ILIKE '%' || $8 || '%')
             ORDER BY created_at DESC
             LIMIT $9 OFFSET $10
@@ -779,9 +780,9 @@ impl DocumentRepository {
         )
         .bind(org_id)
         .bind(user_id)
-        .bind(&building_ids_json)
-        .bind(&unit_ids_json)
-        .bind(&roles_json)
+        .bind(&building_ids)
+        .bind(&unit_ids)
+        .bind(&roles)
         .bind(query.folder_id)
         .bind(&query.category)
         .bind(&query.search)
@@ -789,6 +790,62 @@ impl DocumentRepository {
         .bind(offset)
         .fetch_all(executor)
         .await
+    }
+
+    /// Count documents accessible by a specific user with RLS context (GH #1413).
+    ///
+    /// Counterpart to [`Self::list_accessible_rls`]; the `WHERE` predicate is
+    /// kept identical so the non-manager list and its total never disagree.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn count_accessible_rls<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        user_id: Uuid,
+        user_building_ids: &[Uuid],
+        user_unit_ids: &[Uuid],
+        user_roles: &[String],
+        query: DocumentListQuery,
+    ) -> Result<i64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        // `?|` is `jsonb ?| text[]` — right operand must be text[], not jsonb.
+        let building_ids: Vec<String> = user_building_ids.iter().map(Uuid::to_string).collect();
+        let unit_ids: Vec<String> = user_unit_ids.iter().map(Uuid::to_string).collect();
+        let roles: Vec<String> = user_roles.to_vec();
+
+        let row = sqlx::query(
+            r#"
+            SELECT COUNT(*) as count
+            FROM documents
+            WHERE organization_id = $1
+              AND deleted_at IS NULL
+              AND (
+                created_by = $2
+                OR access_scope = 'organization'
+                OR (access_scope = 'building' AND access_target_ids ?| $3::text[])
+                OR (access_scope = 'unit' AND access_target_ids ?| $4::text[])
+                OR (access_scope = 'role' AND access_roles ?| $5::text[])
+                OR (access_scope = 'users' AND access_target_ids ? $2::text)
+              )
+              AND ($6::uuid IS NULL OR folder_id = $6)
+              AND ($7::text IS NULL OR category = $7)
+              AND ($8::text IS NULL OR title ILIKE '%' || $8 || '%')
+            "#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .bind(&building_ids)
+        .bind(&unit_ids)
+        .bind(&roles)
+        .bind(query.folder_id)
+        .bind(&query.category)
+        .bind(&query.search)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(row.get("count"))
     }
 
     /// List documents accessible by user (simplified) with RLS context.
@@ -810,7 +867,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -823,7 +880,7 @@ impl DocumentRepository {
                 OR (access_scope = 'role' AND access_roles ? $3)
               )
               AND ($4::uuid IS NULL OR folder_id = $4)
-              AND ($5::text IS NULL OR category = $5)
+              AND ($5::text IS NULL OR category = $5::document_category)
               AND ($6::text IS NULL OR title ILIKE '%' || $6 || '%')
             ORDER BY created_at DESC
             LIMIT $7 OFFSET $8
@@ -865,7 +922,7 @@ impl DocumentRepository {
                 OR (access_scope = 'role' AND access_roles ? $3)
               )
               AND ($4::uuid IS NULL OR folder_id = $4)
-              AND ($5::text IS NULL OR category = $5)
+              AND ($5::text IS NULL OR category = $5::document_category)
               AND ($6::text IS NULL OR title ILIKE '%' || $6 || '%')
             "#,
         )
@@ -933,12 +990,23 @@ impl DocumentRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // NOTE: `RETURNING *` returns `category` / `access_scope` as their native
+        // Postgres ENUM types (`document_category` / `document_access_scope`),
+        // which SQLx cannot decode into the `String` fields on `Document` — that
+        // produced a 500 on every move (the column list mirrors `find_by_id_rls`,
+        // casting the enums to text).
         sqlx::query_as::<_, Document>(
             r#"
             UPDATE documents
             SET folder_id = $2, updated_at = NOW()
             WHERE id = $1 AND deleted_at IS NULL
-            RETURNING *
+            RETURNING
+                id, organization_id, folder_id, title, description,
+                category::text AS category, file_key, file_name, mime_type,
+                size_bytes, access_scope::text AS access_scope,
+                access_target_ids, access_roles, created_by, created_at,
+                updated_at, deleted_at, version_number, parent_document_id,
+                is_current_version, template_id, generation_metadata
             "#,
         )
         .bind(data.document_id)
@@ -978,9 +1046,10 @@ impl DocumentRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let building_ids_json = serde_json::to_value(user_building_ids).unwrap();
-        let unit_ids_json = serde_json::to_value(user_unit_ids).unwrap();
-        let roles_json = serde_json::to_value(user_roles).unwrap();
+        // `?|` is `jsonb ?| text[]` — right operand must be text[], not jsonb.
+        let building_ids: Vec<String> = user_building_ids.iter().map(Uuid::to_string).collect();
+        let unit_ids: Vec<String> = user_unit_ids.iter().map(Uuid::to_string).collect();
+        let roles: Vec<String> = user_roles.to_vec();
 
         let row = sqlx::query(
             r#"
@@ -991,9 +1060,9 @@ impl DocumentRepository {
                   AND (
                     created_by = $2
                     OR access_scope = 'organization'
-                    OR (access_scope = 'building' AND access_target_ids ?| $3)
-                    OR (access_scope = 'unit' AND access_target_ids ?| $4)
-                    OR (access_scope = 'role' AND access_roles ?| $5)
+                    OR (access_scope = 'building' AND access_target_ids ?| $3::text[])
+                    OR (access_scope = 'unit' AND access_target_ids ?| $4::text[])
+                    OR (access_scope = 'role' AND access_roles ?| $5::text[])
                     OR (access_scope = 'users' AND access_target_ids ? $2::text)
                   )
             ) as has_access
@@ -1001,13 +1070,67 @@ impl DocumentRepository {
         )
         .bind(document_id)
         .bind(user_id)
-        .bind(&building_ids_json)
-        .bind(&unit_ids_json)
-        .bind(&roles_json)
+        .bind(&building_ids)
+        .bind(&unit_ids)
+        .bind(&roles)
         .fetch_one(executor)
         .await?;
 
         Ok(row.get("has_access"))
+    }
+
+    /// Resolve the caller's `building` and `unit` access-scope memberships.
+    ///
+    /// A user is a member of a unit (and, transitively, its building) when they
+    /// are an **active unit owner** (`unit_owners.status = 'active'` and not
+    /// expired) or a **current unit resident** (`unit_residents.end_date IS
+    /// NULL`). Returns `(building_ids, unit_ids)` — the inputs the in-memory
+    /// download/preview gate and `check_access_rls` need to resolve
+    /// `building`/`unit`-scoped documents.
+    ///
+    /// RLS-scoped: only memberships whose building belongs to the connection's
+    /// org are visible, mirroring `BuildingRepository::can_user_access_building`.
+    pub async fn user_scope_memberships_rls<'e, E>(
+        &self,
+        executor: E,
+        user_id: Uuid,
+    ) -> Result<(Vec<Uuid>, Vec<Uuid>), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let rows = sqlx::query(
+            r#"
+            SELECT DISTINCT u.id AS unit_id, u.building_id AS building_id
+            FROM units u
+            WHERE EXISTS (
+                SELECT 1 FROM unit_owners uo
+                WHERE uo.unit_id = u.id
+                  AND uo.user_id = $1
+                  AND uo.status = 'active'
+                  AND uo.valid_until IS NULL
+            )
+            OR EXISTS (
+                SELECT 1 FROM unit_residents ur
+                WHERE ur.unit_id = u.id
+                  AND ur.user_id = $1
+                  AND ur.end_date IS NULL
+            )
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(executor)
+        .await?;
+
+        let mut unit_ids = Vec::with_capacity(rows.len());
+        let mut building_ids = Vec::new();
+        for row in &rows {
+            unit_ids.push(row.get::<Uuid, _>("unit_id"));
+            let building_id: Uuid = row.get("building_id");
+            if !building_ids.contains(&building_id) {
+                building_ids.push(building_id);
+            }
+        }
+        Ok((building_ids, unit_ids))
     }
 
     // ========================================================================
@@ -2337,7 +2460,7 @@ impl DocumentRepository {
         let rows = sqlx::query(
             r#"
             SELECT
-                d.id, d.title, d.category, d.file_name, d.mime_type, d.size_bytes,
+                d.id, d.title, d.category::text AS category, d.file_name, d.mime_type, d.size_bytes,
                 d.folder_id, d.created_at,
                 ts_rank_cd(d.search_vector, to_tsquery('english', $2)) as rank,
                 ts_headline('english', COALESCE(d.extracted_text, d.description, ''),
@@ -2354,7 +2477,7 @@ impl DocumentRepository {
               AND d.deleted_at IS NULL
               AND d.search_vector @@ to_tsquery('english', $2)
               AND ($3::uuid IS NULL OR d.folder_id = $3)
-              AND ($4::text IS NULL OR d.category = $4)
+              AND ($4::text IS NULL OR d.category = $4::document_category)
             ORDER BY rank DESC, d.created_at DESC
             LIMIT $5 OFFSET $7
             "#,
@@ -2378,7 +2501,7 @@ impl DocumentRepository {
               AND d.deleted_at IS NULL
               AND d.search_vector @@ to_tsquery('english', $2)
               AND ($3::uuid IS NULL OR d.folder_id = $3)
-              AND ($4::text IS NULL OR d.category = $4)
+              AND ($4::text IS NULL OR d.category = $4::document_category)
             "#,
         )
         .bind(request.organization_id)

@@ -44,7 +44,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::TestApp;
+use common::{seed_membership, TestApp};
 
 // Must match `TestConfig::default().jwt_secret`.
 const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
@@ -116,23 +116,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members
-            (id, organization_id, user_id, role_type, status, created_at)
-        VALUES ($1, $2, $3, 'manager', 'active', NOW())
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 async fn seed_building(pool: &PgPool, org_id: Uuid, tag: &str) -> Uuid {
@@ -209,12 +192,18 @@ fn authed_get(uri: &str, token: &str) -> Request<Body> {
         .unwrap()
 }
 
-fn authed_post(uri: &str, token: &str, body: serde_json::Value) -> Request<Body> {
+fn authed_post_with_tenant(
+    uri: &str,
+    token: &str,
+    tenant_id: Uuid,
+    body: serde_json::Value,
+) -> Request<Body> {
     Request::builder()
         .method(Method::POST)
         .uri(uri)
         .header(header::AUTHORIZATION, format!("Bearer {token}"))
         .header(header::CONTENT_TYPE, "application/json")
+        .header("X-Tenant-ID", tenant_id.to_string())
         .body(Body::from(body.to_string()))
         .unwrap()
 }
@@ -273,11 +262,16 @@ async fn token_exchange_rejects_empty_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "te-empty").await;
     let user_id = seed_user(&pool, "te-empty@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
     let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
     let resp = app
-        .execute(authed_post(&uri, &token, json!({"code": ""})))
+        .execute(authed_post_with_tenant(
+            &uri,
+            &token,
+            org_id,
+            json!({"code": ""}),
+        ))
         .await;
     assert_eq!(
         resp.status,
@@ -301,12 +295,17 @@ async fn token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
     let org_a = seed_org(&pool, "te-idor-a").await; // owns the target
     let org_b = seed_org(&pool, "te-idor-b").await; // caller's org
     let user_b = seed_user(&pool, "te-idor-b@test.local").await;
-    seed_membership(&pool, org_b, user_b).await; // member of B, not A
+    seed_membership(&pool, org_b, user_b, "manager").await; // member of B, not A
 
     let token_b = mint_token(user_b, org_b);
     let uri = format!("/api/v1/integrations/organizations/{org_a}/airbnb/token/exchange");
     let resp = app
-        .execute(authed_post(&uri, &token_b, json!({"code": "some-code"})))
+        .execute(authed_post_with_tenant(
+            &uri,
+            &token_b,
+            org_b,
+            json!({"code": "some-code"}),
+        ))
         .await;
     assert_eq!(
         resp.status,
@@ -326,13 +325,18 @@ async fn token_exchange_returns_503_when_not_configured(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "te-nocfg").await;
     let user_id = seed_user(&pool, "te-nocfg@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
     let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
     // Airbnb is not configured in the test environment (AIRBNB_CLIENT_ID is
     // empty/unset), so we expect 503.
     let resp = app
-        .execute(authed_post(&uri, &token, json!({"code": "abc123"})))
+        .execute(authed_post_with_tenant(
+            &uri,
+            &token,
+            org_id,
+            json!({"code": "abc123"}),
+        ))
         .await;
     assert_eq!(
         resp.status,
@@ -368,7 +372,7 @@ async fn listings_idor_guard_rejects_non_member(pool: PgPool) {
     let org_a = seed_org(&pool, "ls-idor-a").await;
     let org_b = seed_org(&pool, "ls-idor-b").await;
     let user_b = seed_user(&pool, "ls-idor-b@test.local").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
 
     let token_b = mint_token(user_b, org_b);
     let uri = format!("/api/v1/integrations/organizations/{org_a}/airbnb/listings");
@@ -388,7 +392,7 @@ async fn listings_returns_404_when_no_connection(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "ls-noconn").await;
     let user_id = seed_user(&pool, "ls-noconn@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
 
     let token = mint_token(user_id, org_id);
     let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/listings");
@@ -427,7 +431,7 @@ async fn reservations_idor_guard_rejects_non_member(pool: PgPool) {
     let org_a = seed_org(&pool, "res-idor-a").await;
     let org_b = seed_org(&pool, "res-idor-b").await;
     let user_b = seed_user(&pool, "res-idor-b@test.local").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "manager").await;
 
     let token_b = mint_token(user_b, org_b);
     let uri = format!("/api/v1/integrations/organizations/{org_a}/airbnb/reservations");
@@ -448,7 +452,7 @@ async fn reservations_returns_404_when_no_connection(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "res-noconn").await;
     let user_id = seed_user(&pool, "res-noconn@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
 
     let token = mint_token(user_id, org_id);
     let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/reservations");
@@ -470,7 +474,7 @@ async fn reservations_listing_id_filter_is_parsed(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "res-filter").await;
     let user_id = seed_user(&pool, "res-filter@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
 
     let token = mint_token(user_id, org_id);
     // No connection — we expect 404, NOT a 400/500 from query parsing.
@@ -566,7 +570,7 @@ async fn listings_with_token_refresh_wrapper_invoked_on_expired_token(pool: PgPo
     // Seed org + member user.
     let org_id = seed_org(&pool, "tr-listings").await;
     let user_id = seed_user(&pool, "tr-listings@test.local").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "manager").await;
 
     // Seed a building and unit — required FK for rental_platform_connections.
     let building_id = seed_building(&pool, org_id, "Token Refresh Test").await;
@@ -605,6 +609,69 @@ async fn listings_with_token_refresh_wrapper_invoked_on_expired_token(pool: PgPo
         resp.status,
         StatusCode::BAD_GATEWAY,
         "expired token path must reach Airbnb API call and return 502; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
+// ===========================================================================
+// Manager-role gate — BIT-85
+// ===========================================================================
+
+/// A non-manager org member (role = "tenant" in JWT) must be rejected with 403
+/// when calling the Airbnb token-exchange endpoint.
+/// Binding an org-wide OTA integration is a manager-level action.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn airbnb_token_exchange_rejects_non_manager_member(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "mgr-gate-a").await;
+    let user_id = seed_user(&pool, "non-manager-a@airbnb-routes.test").await;
+    seed_membership(&pool, org_id, user_id, "tenant").await;
+
+    // Mint a token with a non-manager role. Membership is valid but
+    // verify_manager_role must still reject with 403.
+    let now = chrono::Utc::now();
+    #[derive(serde::Serialize)]
+    struct Claims {
+        sub: Uuid,
+        exp: i64,
+        iat: i64,
+        token_type: String,
+        tenant_id: Option<Uuid>,
+        role: Option<String>,
+        email: String,
+        name: String,
+    }
+    let claims = Claims {
+        sub: user_id,
+        iat: now.timestamp(),
+        exp: (now + Duration::hours(1)).timestamp(),
+        token_type: "access".to_string(),
+        tenant_id: Some(org_id),
+        role: Some("tenant".to_string()),
+        email: "non-manager-a@airbnb-routes.test".to_string(),
+        name: "Non-Manager Test".to_string(),
+    };
+    let non_manager_token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
+    )
+    .expect("mint non-manager token");
+
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/token/exchange");
+    let resp = app
+        .execute(authed_post_with_tenant(
+            &uri,
+            &non_manager_token,
+            org_id,
+            json!({"code": "valid-code"}),
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "non-manager member must be rejected with 403 on airbnb token exchange; got {}: {}",
         resp.status,
         resp.text()
     );

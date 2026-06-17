@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "NONE",
-  "selected_at": "2026-06-12T02:13:56Z",
-  "last_action": "repick",
-  "reason": "no open action-list item carries a gap-N or pm-<role> epic prefix; all claimable work is feat-/test-/verify-/bug- (per-item epics). finish-first has no valid target this cycle -> NONE; normal multi-epic claim path used.",
+  "epic_prefix": "feat-airbnb-oauth-token-exchange-route-backend",
+  "selected_at": "2026-06-16T22:12:13Z",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
-    "open": 22,
-    "claimable": 22
+    "open": 1,
+    "claimable": 1
   }
 }

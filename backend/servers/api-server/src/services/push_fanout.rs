@@ -45,6 +45,101 @@ use uuid::Uuid;
 use common::notifications::{Notification, NotificationError, PushTransport, TransportResult};
 
 // ============================================================================
+// Dispatch-target selection (preference-aware)
+// ============================================================================
+
+/// A single device that has been selected as a push dispatch target.
+///
+/// Produced by [`select_dispatch_targets`] from the raw rows stored in
+/// `device_push_tokens`. Keeping selection in a small pure struct (rather than
+/// passing whole [`DevicePushToken`] rows around the delivery loop) makes the
+/// "which devices do we actually send to" decision unit-testable without a DB
+/// or a live FCM/APNs gateway.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PushTarget {
+    /// The `device_push_tokens.id` of the selected row (used for receipts /
+    /// stale-token eviction).
+    pub token_id: Uuid,
+    /// The raw FCM registration token / APNs device token.
+    pub token: String,
+    /// Which OS gateway this target is delivered through.
+    pub platform: PushPlatform,
+    /// Bundle / package id the token was registered under, if any.
+    pub app_id: Option<String>,
+}
+
+/// Filter controlling which stored device tokens become dispatch targets.
+///
+/// This is the device-token-level companion to the channel-level
+/// `PreferenceRouter` in `notification_pipeline.rs`. The pipeline decides
+/// *whether* the push channel is enabled for a user at all; this filter then
+/// decides *which of the user's registered devices* should receive the push.
+///
+/// All fields default to "no restriction" so an empty filter selects every
+/// non-empty token the user has registered.
+#[derive(Debug, Clone, Default)]
+pub struct PushTargetFilter {
+    /// When set, only tokens registered under this bundle / package id are
+    /// selected. Lets a notification originating from the Property-Management
+    /// app avoid waking the Reality-Portal binary on the same device (and vice
+    /// versa) when both are installed.
+    pub app_id: Option<String>,
+    /// When set, only tokens for these platforms are selected. `None` selects
+    /// both FCM and APNs.
+    pub platforms: Option<Vec<PushPlatform>>,
+}
+
+impl PushTargetFilter {
+    /// Returns `true` when the given stored token row passes the filter.
+    fn accepts(&self, token: &db::models::DevicePushToken) -> bool {
+        // Never dispatch to an empty/blank token — it can only ever be rejected
+        // by the gateway and would waste a request + risk a spurious stale-token
+        // eviction.
+        if token.token.trim().is_empty() {
+            return false;
+        }
+
+        if let Some(ref want_app) = self.app_id {
+            match token.app_id.as_deref() {
+                Some(app) if app == want_app => {}
+                _ => return false,
+            }
+        }
+
+        if let Some(ref platforms) = self.platforms {
+            if !platforms.contains(&token.push_platform()) {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+/// Select the set of dispatch targets from a user's stored device tokens.
+///
+/// Pure function (no I/O): the caller fetches the rows, this decides which ones
+/// are valid push targets given `filter`. Blank tokens are always dropped.
+///
+/// The result preserves the input ordering so callers that fetched tokens
+/// `ORDER BY last_seen_at DESC` keep "most-recently-seen device first".
+pub fn select_dispatch_targets(
+    tokens: &[db::models::DevicePushToken],
+    filter: &PushTargetFilter,
+) -> Vec<PushTarget> {
+    tokens
+        .iter()
+        .filter(|t| filter.accepts(t))
+        .map(|t| PushTarget {
+            token_id: t.id,
+            token: t.token.clone(),
+            platform: t.push_platform(),
+            app_id: t.app_id.clone(),
+        })
+        .collect()
+}
+
+// ============================================================================
 // FCM delivery receipt (stored in memory for now; DB table in follow-up)
 // ============================================================================
 
@@ -397,10 +492,17 @@ impl PushTransport for FcmHttpAdapter {
             }
         };
 
-        if tokens.is_empty() {
+        // Device-token-level target selection. The pipeline already gated the
+        // *push channel* against user preferences before this adapter is called;
+        // here we select *which of the user's registered devices* get the push.
+        // An empty filter selects every non-blank token; blank tokens are dropped.
+        let targets = select_dispatch_targets(&tokens, &PushTargetFilter::default());
+
+        if targets.is_empty() {
             tracing::debug!(
                 user_id = %user_id,
-                "[8A-3] No device tokens registered for user — skipping push"
+                stored = tokens.len(),
+                "[8A-3] No dispatch targets selected for user — skipping push"
             );
             return Ok(());
         }
@@ -408,23 +510,22 @@ impl PushTransport for FcmHttpAdapter {
         let project_id = self.fcm_config.project_id.clone();
         let mut any_sent = false;
         let mut fcm_attempted = false;
-        let mut stale_token_ids: Vec<Uuid> = Vec::new();
+        let mut stale_tokens: Vec<(Uuid, String)> = Vec::new();
 
-        for token in &tokens {
-            let platform = token.push_platform();
-            match platform {
+        for target in &targets {
+            match target.platform {
                 PushPlatform::Fcm => {
                     fcm_attempted = true;
                     let (success, expired) = if let Some(ref pid) = project_id {
-                        self.send_fcm_v1(pid, &token.token, notification).await
+                        self.send_fcm_v1(pid, &target.token, notification).await
                     } else {
                         // No project ID — use legacy API
-                        self.send_fcm_legacy(&token.token, notification).await
+                        self.send_fcm_legacy(&target.token, notification).await
                     };
 
                     // Store delivery receipt (log + in-memory; DB table in follow-up)
                     let receipt = PushDeliveryReceipt {
-                        token_id: token.id,
+                        token_id: target.token_id,
                         user_id,
                         platform: PushPlatform::Fcm,
                         success,
@@ -445,7 +546,7 @@ impl PushTransport for FcmHttpAdapter {
                     );
 
                     if expired {
-                        stale_token_ids.push(token.id);
+                        stale_tokens.push((target.token_id, target.token.clone()));
                     }
                     if success {
                         any_sent = true;
@@ -454,7 +555,7 @@ impl PushTransport for FcmHttpAdapter {
                 PushPlatform::Apns => {
                     // APNs HTTP/2 with P8 key — placeholder for follow-up
                     tracing::info!(
-                        token_id = %token.id,
+                        token_id = %target.token_id,
                         user_id = %user_id,
                         "[8A-3] APNs delivery not yet implemented — log-only"
                     );
@@ -465,22 +566,20 @@ impl PushTransport for FcmHttpAdapter {
         // Purge stale tokens (token_expired == true) so they are not retried.
         // We call `delete_stale_token_by_string` which is a best-effort log;
         // the next upsert from the device will evict the token via ON CONFLICT DO UPDATE.
-        for stale_id in stale_token_ids {
-            if let Some(token) = tokens.iter().find(|t| t.id == stale_id) {
-                if let Err(e) =
-                    delete_stale_token_by_string(&self.token_repo, user_id, &token.token).await
-                {
-                    tracing::warn!(
-                        error = %e,
-                        token_id = %stale_id,
-                        "[8A-3] Failed to mark stale push token for eviction"
-                    );
-                } else {
-                    tracing::info!(
-                        token_id = %stale_id,
-                        "[8A-3] Stale push token queued for eviction (NOT_REGISTERED)"
-                    );
-                }
+        for (stale_id, stale_token) in stale_tokens {
+            if let Err(e) =
+                delete_stale_token_by_string(&self.token_repo, user_id, &stale_token).await
+            {
+                tracing::warn!(
+                    error = %e,
+                    token_id = %stale_id,
+                    "[8A-3] Failed to mark stale push token for eviction"
+                );
+            } else {
+                tracing::info!(
+                    token_id = %stale_id,
+                    "[8A-3] Stale push token queued for eviction (NOT_REGISTERED)"
+                );
             }
         }
 
@@ -757,6 +856,158 @@ impl PushFanoutWorker {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Utc;
+    use db::models::DevicePushToken;
+
+    // ------------------------------------------------------------------
+    // Test helpers for dispatch-target selection
+    // ------------------------------------------------------------------
+
+    /// Build a stored `DevicePushToken` row for selection tests.
+    fn stored_token(token: &str, platform: &str, app_id: Option<&str>) -> DevicePushToken {
+        DevicePushToken {
+            id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+            token: token.to_string(),
+            platform: platform.to_string(),
+            app_id: app_id.map(|s| s.to_string()),
+            device_name: None,
+            last_seen_at: Utc::now(),
+            created_at: Utc::now(),
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Token storage: row -> typed platform / response mapping
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn stored_token_maps_platform_string_to_enum() {
+        assert_eq!(
+            stored_token("t", "fcm", None).push_platform(),
+            PushPlatform::Fcm
+        );
+        assert_eq!(
+            stored_token("t", "apns", None).push_platform(),
+            PushPlatform::Apns
+        );
+    }
+
+    #[test]
+    fn stored_token_unknown_platform_falls_back_to_fcm() {
+        // Defensive: an unexpected platform value must not panic the fanout
+        // loop — it degrades to FCM (and is logged at warn by `push_platform`).
+        assert_eq!(
+            stored_token("t", "windows-phone", None).push_platform(),
+            PushPlatform::Fcm
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // Dispatch-target selection
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn select_targets_empty_filter_selects_all_non_blank() {
+        let tokens = vec![
+            stored_token("fcm-aaa", "fcm", None),
+            stored_token("apns-bbb", "apns", None),
+        ];
+        let targets = select_dispatch_targets(&tokens, &PushTargetFilter::default());
+        assert_eq!(targets.len(), 2);
+        assert_eq!(targets[0].platform, PushPlatform::Fcm);
+        assert_eq!(targets[1].platform, PushPlatform::Apns);
+    }
+
+    #[test]
+    fn select_targets_drops_blank_tokens() {
+        let tokens = vec![
+            stored_token("   ", "fcm", None),
+            stored_token("", "apns", None),
+            stored_token("real-token", "fcm", None),
+        ];
+        let targets = select_dispatch_targets(&tokens, &PushTargetFilter::default());
+        assert_eq!(
+            targets.len(),
+            1,
+            "only the non-blank token is a valid target"
+        );
+        assert_eq!(targets[0].token, "real-token");
+    }
+
+    #[test]
+    fn select_targets_preserves_input_order() {
+        // Callers fetch ORDER BY last_seen_at DESC; selection must keep the
+        // most-recently-seen device first.
+        let tokens = vec![
+            stored_token("first", "fcm", None),
+            stored_token("second", "apns", None),
+            stored_token("third", "fcm", None),
+        ];
+        let targets = select_dispatch_targets(&tokens, &PushTargetFilter::default());
+        let order: Vec<&str> = targets.iter().map(|t| t.token.as_str()).collect();
+        assert_eq!(order, vec!["first", "second", "third"]);
+    }
+
+    #[test]
+    fn select_targets_filters_by_platform() {
+        let tokens = vec![
+            stored_token("fcm-1", "fcm", None),
+            stored_token("apns-1", "apns", None),
+            stored_token("fcm-2", "fcm", None),
+        ];
+        let filter = PushTargetFilter {
+            platforms: Some(vec![PushPlatform::Fcm]),
+            ..Default::default()
+        };
+        let targets = select_dispatch_targets(&tokens, &filter);
+        assert_eq!(targets.len(), 2);
+        assert!(targets.iter().all(|t| t.platform == PushPlatform::Fcm));
+    }
+
+    #[test]
+    fn select_targets_filters_by_app_id() {
+        let tokens = vec![
+            stored_token("mgmt", "fcm", Some("three.two.bit.ppt.management")),
+            stored_token("reality", "fcm", Some("three.two.bit.ppt.reality")),
+            stored_token("legacy-no-app", "fcm", None),
+        ];
+        let filter = PushTargetFilter {
+            app_id: Some("three.two.bit.ppt.management".to_string()),
+            ..Default::default()
+        };
+        let targets = select_dispatch_targets(&tokens, &filter);
+        assert_eq!(targets.len(), 1, "only the matching bundle id is selected");
+        assert_eq!(targets[0].token, "mgmt");
+    }
+
+    #[test]
+    fn select_targets_app_id_filter_excludes_null_app_id() {
+        // A token registered without an app_id must NOT match a specific-bundle
+        // filter — otherwise a Reality push could wake a legacy un-tagged token.
+        let tokens = vec![stored_token("legacy", "fcm", None)];
+        let filter = PushTargetFilter {
+            app_id: Some("three.two.bit.ppt.management".to_string()),
+            ..Default::default()
+        };
+        assert!(select_dispatch_targets(&tokens, &filter).is_empty());
+    }
+
+    #[test]
+    fn select_targets_empty_input_is_empty() {
+        assert!(select_dispatch_targets(&[], &PushTargetFilter::default()).is_empty());
+    }
+
+    #[test]
+    fn select_targets_carries_token_id_for_receipts() {
+        let token = stored_token("fcm-x", "fcm", None);
+        let id = token.id;
+        let targets = select_dispatch_targets(&[token], &PushTargetFilter::default());
+        assert_eq!(
+            targets[0].token_id, id,
+            "token_id must survive selection for receipts/eviction"
+        );
+    }
 
     #[test]
     fn fcm_config_explicit_none_is_unconfigured() {

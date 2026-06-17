@@ -20,12 +20,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  brandingToStyleObject,
-  sanitizeCssValue,
-  type TenantBranding,
-  type TenantConfig,
-} from './tenant-config';
+import { brandingToStyleObject, type TenantBranding, type TenantConfig } from './tenant-config';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -169,8 +164,8 @@ describe('getTenantConfig — per-host fetch isolation', () => {
       'agency-b.test': makeTenantConfig('agency-b.test', '#0000bb', '#0011bb'),
     };
 
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
-      const hostHeader = (init?.headers as Record<string, string>)?.['Host'] ?? '';
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const hostHeader = (init?.headers as Record<string, string>)?.Host ?? '';
       const config = responses[hostHeader];
       if (!config) {
         return new Response(null, { status: 404 });
@@ -205,7 +200,7 @@ describe('getTenantConfig — per-host fetch isolation', () => {
     expect(fetchSpy).toHaveBeenCalled();
     const callArgs = fetchSpy.mock.calls[0];
     const headers = callArgs[1]?.headers as Record<string, string>;
-    expect(headers?.['Host']).toBe('agency-a.test');
+    expect(headers?.Host).toBe('agency-a.test');
 
     // Verify the returned config is for agency-a.
     expect(configA.branding.primary_color).toBe('#aa0000');

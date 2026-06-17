@@ -1068,10 +1068,15 @@ impl MarketplaceRepository {
         id: Uuid,
         provider_id: Uuid,
     ) -> Result<Option<RfqInvitation>, SqlxError> {
+        // Idempotent (#1301): key only on (id, provider_id) so a legitimate
+        // repeat view returns 200 with the invitation, not 404. `COALESCE`
+        // preserves the FIRST viewed_at timestamp on subsequent views. A None
+        // result now means only "this provider has no such invitation" (real
+        // 404), matching the sibling `decline_invitation` keying.
         sqlx::query_as::<_, RfqInvitation>(
             r#"
-            UPDATE rfq_invitations SET viewed_at = NOW()
-            WHERE id = $1 AND provider_id = $2 AND viewed_at IS NULL
+            UPDATE rfq_invitations SET viewed_at = COALESCE(viewed_at, NOW())
+            WHERE id = $1 AND provider_id = $2
             RETURNING *
             "#,
         )
