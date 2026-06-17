@@ -420,3 +420,178 @@ describe('FileDisputePage · draft auto-save', () => {
     expect(localStorage.getItem(DRAFT_KEY)).not.toBeNull();
   });
 });
+
+// ── #1364: re-render race — the auto-save must subscribe to value changes, not
+// fire on every render (the original watch()-via-render feedback loop) ──
+describe('FileDisputePage · draft auto-save re-render race (#1364)', () => {
+  const DRAFT_KEY = 'ppt-dispute-filing-draft';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  /**
+   * Back localStorage with an in-memory map and record every write to the
+   * dispute-draft key, so a test can count how many times the draft was
+   * persisted (the #1364 feedback loop manifests as extra writes).
+   */
+  function spyDraftWrites() {
+    const store = new Map<string, string>();
+    const writes: string[] = [];
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      if (String(key) === DRAFT_KEY) writes.push(String(value));
+      store.set(String(key), String(value));
+    });
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) =>
+      store.has(String(key)) ? (store.get(String(key)) as string) : null
+    );
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
+      store.delete(String(key));
+    });
+    return { writes, restore: () => vi.restoreAllMocks() };
+  }
+
+  it('persists exactly once per debounce window for a single field change', () => {
+    const { writes, restore } = spyDraftWrites();
+    try {
+      renderPage();
+
+      fireEvent.change(screen.getByLabelText(/^subject/i), {
+        target: { value: 'One coherent subject' },
+      });
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+
+      // A single value change followed by the debounce flush is exactly one
+      // persisted write. The pre-fix watch()-via-render loop (save → flush →
+      // setSavedAt → re-render → new watched object → effect re-fires → save…)
+      // would re-arm the debounce repeatedly and/or write multiple times.
+      expect(writes).toHaveLength(1);
+      expect(JSON.parse(writes[0]).values.subject).toBe('One coherent subject');
+    } finally {
+      restore();
+    }
+  });
+
+  it('does not re-persist when the indicator re-renders on its 10s tick', () => {
+    const { writes, restore } = spyDraftWrites();
+    try {
+      renderPage();
+
+      fireEvent.change(screen.getByLabelText(/^subject/i), {
+        target: { value: 'Stable subject' },
+      });
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+      expect(writes).toHaveLength(1);
+
+      // DraftSavedIndicator ticks every 10s to refresh its relative label. That
+      // re-render must NOT re-trigger a draft save — only real form-value
+      // changes should. Advance well past several indicator ticks.
+      act(() => {
+        vi.advanceTimersByTime(40_000);
+      });
+
+      expect(writes, 'indicator re-render must not write the draft again').toHaveLength(1);
+    } finally {
+      restore();
+    }
+  });
+
+  it('coalesces a rapid burst of keystrokes into a single persisted draft', () => {
+    const { writes, restore } = spyDraftWrites();
+    try {
+      renderPage();
+
+      const subject = screen.getByLabelText(/^subject/i);
+      for (const value of ['L', 'Lo', 'Lou', 'Loud parties past midnight']) {
+        fireEvent.change(subject, { target: { value } });
+      }
+      // No flush until the debounce settles after the last keystroke.
+      expect(writes).toHaveLength(0);
+
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+
+      expect(writes).toHaveLength(1);
+      expect(JSON.parse(writes[0]).values.subject).toBe('Loud parties past midnight');
+    } finally {
+      restore();
+    }
+  });
+
+  it('does not persist field changes while a submit is in flight', () => {
+    const { writes, restore } = spyDraftWrites();
+    try {
+      renderPage({ isSubmitting: true });
+
+      fireEvent.change(screen.getByLabelText(/^subject/i), {
+        target: { value: 'Typed during submit' },
+      });
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+
+      // isSubmitting gates the save() call — no draft write should happen.
+      expect(writes).toHaveLength(0);
+    } finally {
+      restore();
+    }
+  });
+});
+
+// ── #1360 / #1364: the localized draft copy renders real text, not bare keys ──
+describe('FileDisputePage · draft auto-save i18n rendering (#1360)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('renders the restored-draft notice as resolved English copy (not the key)', () => {
+    localStorage.setItem(
+      'ppt-dispute-filing-draft',
+      JSON.stringify({
+        values: { type: 'noise', subject: 'Recovered subject', description: '', unitId: '' },
+        savedAt: Date.now(),
+      })
+    );
+
+    renderPage();
+
+    // The global test i18n bundle resolves disputes.draftRestored → English copy.
+    // A missing key would surface the raw key string "disputes.draftRestored".
+    const notice = screen.getByText(/restored your saved draft/i);
+    expect(notice).toBeInTheDocument();
+    expect(notice.textContent).not.toContain('disputes.draftRestored');
+  });
+
+  it('renders the auto-save indicator copy as resolved text after a save', () => {
+    vi.useFakeTimers();
+    try {
+      renderPage();
+      fireEvent.change(screen.getByLabelText(/^subject/i), {
+        target: { value: 'Something worth saving' },
+      });
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+
+      const indicator = screen.getByText(/draft saved/i);
+      expect(indicator).toBeInTheDocument();
+      expect(indicator.textContent).not.toContain('disputes.draftSavedAgo');
+    } finally {
+      vi.runOnlyPendingTimers();
+      vi.useRealTimers();
+    }
+  });
+});
