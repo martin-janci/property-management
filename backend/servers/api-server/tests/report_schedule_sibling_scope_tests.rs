@@ -91,7 +91,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .expect("seed user")
 }
 
-
 async fn seed_schedule(pool: &PgPool, org_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"

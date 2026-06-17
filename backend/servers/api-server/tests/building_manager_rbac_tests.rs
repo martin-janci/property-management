@@ -36,7 +36,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .expect("seed org")
 }
 
-
 async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
         .bind(email)

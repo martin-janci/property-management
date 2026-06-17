@@ -110,7 +110,6 @@ async fn seed_fault_with_key(pool: &PgPool, org_id: Uuid, key: &str) -> Uuid {
     .expect("seed fault with idempotency key")
 }
 
-
 // ---------------------------------------------------------------------------
 // (#970.2) Idempotent offline create: find_by_idempotency_key_rls lookup.
 // ---------------------------------------------------------------------------

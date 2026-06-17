@@ -42,7 +42,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .expect("seed org")
 }
 
-
 /// Seed a background job (an export job) owned by `org_id`.
 async fn seed_export_job(pool: &PgPool, org_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
