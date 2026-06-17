@@ -808,7 +808,13 @@ impl FormRepository {
         let row = sqlx::query(
             r#"
             SELECT
-                s.*,
+                s.id, s.form_id, s.organization_id, s.building_id, s.unit_id,
+                s.submitted_by, s.submitted_at, s.data, s.attachments, s.signature_data,
+                -- `status` is the `form_submission_status` enum; the model decodes it
+                -- as `String`, so cast to text or `FromRow` trips ColumnDecode.
+                s.status::text AS status,
+                s.reviewed_by, s.reviewed_at, s.review_notes, s.ip_address, s.user_agent,
+                s.created_at, s.updated_at,
                 f.title as form_title,
                 u.name as submitted_by_name,
                 r.name as reviewed_by_name,
@@ -874,7 +880,9 @@ impl FormRepository {
             count_conditions.push("s.form_id = $2");
         }
         if query.status.is_some() {
-            count_conditions.push("s.status = $3");
+            // `status` is the `form_submission_status` enum; cast to text so the
+            // text-bound `$3` comparison parses (avoids 42883 operator mismatch).
+            count_conditions.push("s.status::text = $3");
         }
 
         let count_where = count_conditions.join(" AND ");
@@ -904,7 +912,7 @@ impl FormRepository {
                 s.submitted_by,
                 u.name as submitted_by_name,
                 s.submitted_at,
-                s.status,
+                s.status::text AS status,
                 s.signature_data IS NOT NULL as has_signature,
                 un.designation AS unit_number,
                 b.name as building_name
@@ -915,7 +923,7 @@ impl FormRepository {
             LEFT JOIN buildings b ON b.id = s.building_id
             WHERE s.organization_id = $1
                 AND ($2::uuid IS NULL OR s.form_id = $2)
-                AND ($3::text IS NULL OR s.status = $3)
+                AND ($3::text IS NULL OR s.status::text = $3)
                 AND ($4::uuid IS NULL OR s.building_id = $4)
                 AND ($5::uuid IS NULL OR s.unit_id = $5)
                 AND ($6::uuid IS NULL OR s.submitted_by = $6)
