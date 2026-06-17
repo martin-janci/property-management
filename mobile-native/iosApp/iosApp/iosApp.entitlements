@@ -10,24 +10,21 @@
       Without this entitlement iOS opens the links in Safari instead of the app,
       and the `applinks:` AASA negotiation never runs.
 
-      Hosts mirror the production/staging universal-link domains:
+      Hosts mirror ALL THREE sources that must stay in sync:
         - `Environment.universalLinkDomain` in Core/Configuration.swift
           (production: reality.example.com, staging: staging.reality.example.com)
         - `DeepLinkHandler.allowedUniversalLinkHosts`
-          (reality.example.com, staging-reality.example.com)
-      Both host spellings are listed so whichever AASA the reality-web origin
-      serves resolves. Each host requires `/.well-known/apple-app-site-association`
-      served at that origin for the link to activate on-device.
+          (reality.example.com, staging.reality.example.com)
+      Each host requires `/.well-known/apple-app-site-association` served at
+      that origin for the link to activate on-device.
 
       The custom `realityportal://` scheme is registered separately via
-      CFBundleURLTypes in Resources/Info.plist (and the legacy top-level
-      Info.plist) — it does NOT need an entitlement.
+      CFBundleURLTypes in Resources/Info.plist — it does NOT need an entitlement.
     -->
     <key>com.apple.developer.associated-domains</key>
     <array>
         <string>applinks:reality.example.com</string>
         <string>applinks:staging.reality.example.com</string>
-        <string>applinks:staging-reality.example.com</string>
     </array>
 </dict>
 </plist>

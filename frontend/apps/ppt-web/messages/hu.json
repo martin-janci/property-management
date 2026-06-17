@@ -540,7 +540,12 @@
       "errors": {
         "detailsMinLength": "A részleteknek legalább 10 karaktert kell tartalmazniuk."
       }
-    }
+    },
+    "draftSavedAgo": "Piszkozat mentve · {{time}}",
+    "draftJustNow": "épp most",
+    "draftSecondsAgo": "{{count}} másodperce",
+    "draftMinutesAgo": "{{count}} perce",
+    "draftRestored": "A mentett piszkozatot visszaállítottuk."
   },
   "packages": {
     "title": "Csomagkezelés",

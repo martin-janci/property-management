@@ -106,6 +106,12 @@ SANCTIONED_WEBHOOK_FNS=(
 
 VIOLATIONS=0
 WARNINGS=0
+# Stale baseline entries (a file/repo listed in a baseline but no longer flagged)
+# are tracked separately so `--strict` can fail on them: leaving a converted
+# repo in the baseline silently widens the allow-list and lets a future
+# regression on that file slip back in un-flagged (issue #1340). These are a
+# subset of WARNINGS for the non-strict summary.
+STALE_BASELINE=0
 
 # is_sanctioned <file> <line>
 # Returns 0 (true) when the matched line is an allow-listed raw-pool access:
@@ -218,6 +224,7 @@ sort -u "$TMP_PREFIX/handler_hits" > "$TMP_PREFIX/handler_hits_sorted"
 while IFS= read -r stale; do
     [[ -n "$stale" ]] || continue
     ((WARNINGS+=1))
+    ((STALE_BASELINE+=1))
     echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — file no longer flagged; remove it from $(basename "$HANDLER_BASELINE_FILE")"
     echo ""
 done < <(comm -23 "$TMP_PREFIX/handler_baseline" "$TMP_PREFIX/handler_hits_sorted")
@@ -353,6 +360,7 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
     while IFS= read -r stale; do
         [[ -n "$stale" ]] || continue
         ((WARNINGS+=1))
+        ((STALE_BASELINE+=1))
         echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — repo no longer flagged; remove it from $(basename "$BASELINE_FILE")"
         echo ""
     done < <(comm -23 "$TMP_PREFIX/baseline" "$TMP_PREFIX/hit_names_sorted")
@@ -372,26 +380,34 @@ echo ""
 
 if [[ $VIOLATIONS -gt 0 ]]; then
     echo -e "${RED}✗ Found $VIOLATIONS RLS violation(s)${NC}"
-    if [[ $WARNINGS -gt 0 ]]; then
-        echo -e "${YELLOW}⚠ Found $WARNINGS warning(s) in repositories${NC}"
-    fi
-    echo ""
+else
+    echo -e "${GREEN}✓ No RLS violations found${NC}"
+fi
+if [[ $STALE_BASELINE -gt 0 ]]; then
+    echo -e "${RED}✗ Found $STALE_BASELINE stale baseline entry(ies)${NC} — a baselined file/repo is no longer flagged; remove it so the ratchet can't silently re-admit a regression."
+fi
+if [[ $WARNINGS -gt 0 ]]; then
+    echo -e "${YELLOW}⚠ Found $WARNINGS warning(s) in repositories${NC}"
+fi
+echo ""
+
+if [[ $VIOLATIONS -gt 0 ]]; then
     echo "Handlers should use:"
     echo "  • RlsConnection extractor for request-scoped RLS"
     echo "  • RlsPool::acquire_with_rls() for explicit context"
     echo "  • RlsPool::acquire_public() for unauthenticated routes"
     echo ""
+fi
+
+# --strict fails on real violations OR stale baseline entries (#1340): a
+# converted repo left in the baseline must be removed, else the allow-list
+# silently widens.
+if [[ $VIOLATIONS -gt 0 || $STALE_BASELINE -gt 0 ]]; then
     if $STRICT_MODE; then
         echo -e "${RED}Failing in strict mode.${NC}"
         exit 1
     else
-        echo -e "${YELLOW}Run with --strict to fail CI on violations.${NC}"
-        exit 0
+        echo -e "${YELLOW}Run with --strict to fail CI on violations / stale baseline entries.${NC}"
     fi
-else
-    echo -e "${GREEN}✓ No RLS violations found${NC}"
-    if [[ $WARNINGS -gt 0 ]]; then
-        echo -e "${YELLOW}⚠ Found $WARNINGS warning(s) in repositories (review recommended)${NC}"
-    fi
-    exit 0
 fi
+exit 0
