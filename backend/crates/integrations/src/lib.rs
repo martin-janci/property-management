@@ -66,16 +66,16 @@ pub use portals::{
     SrealityContact, SrealityParser, SrealityWebhook,
 };
 
-// Story 61.1: Calendar Integration
-pub use calendar::{
-    AttendeeStatus, CalendarError, CalendarListItem, EventAttendee, ExternalCalendarEvent,
-    GoogleCalendarClient, MicrosoftCalendarClient, OAuthConfig, OAuthTokens, SyncResult,
-};
-
 // Story 61.2: Accounting System Export
 pub use accounting::{
     AccountingError, ExportInvoice, ExportPayment, InvoiceItem, MoneyS3Exporter, Partner,
     PaymentType, PohodaExporter, ValidationResult, VatRate,
+};
+
+// Story 61.1: Calendar Integration
+pub use calendar::{
+    AttendeeStatus, CalendarError, CalendarListItem, EventAttendee, ExternalCalendarEvent,
+    GoogleCalendarClient, MicrosoftCalendarClient, OAuthConfig, OAuthTokens, SyncResult,
 };
 
 // Encryption utilities for sensitive integration data

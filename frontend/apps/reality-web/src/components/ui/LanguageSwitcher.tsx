@@ -12,7 +12,7 @@
  */
 
 import { useLocale } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { type Locale, localeFlags, localeNames, locales } from '../../i18n';
 import { usePathname, useRouter } from '../../i18n/routing';
 
@@ -36,10 +36,19 @@ export function LanguageSwitcher() {
     if (i >= 0) setActiveIndex(i);
   }, [locale]);
 
+  const choose = useCallback(
+    (next: Locale) => {
+      setOpen(false);
+      triggerRef.current?.focus();
+      if (next === locale) return;
+      router.replace(pathname, { locale: next });
+    },
+    [locale, pathname, router]
+  );
+
   // Keyboard navigation while the menu is open. Listening on the document
   // because the listbox itself doesn't take focus (the trigger keeps it,
   // per APG listbox-with-aria-activedescendant pattern).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: choose captures stable router/pathname refs from next-intl; listing it would cause spurious re-subscriptions
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
@@ -81,14 +90,7 @@ export function LanguageSwitcher() {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
-
-  const choose = (next: Locale) => {
-    setOpen(false);
-    triggerRef.current?.focus();
-    if (next === locale) return;
-    router.replace(pathname, { locale: next });
-  };
+  }, [open, choose]);
 
   const handleTriggerKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

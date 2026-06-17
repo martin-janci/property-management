@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Property Management API
-  version: 0.1.28
+  version: 0.0.0
 tags:
   - name: Authentication
   - name: Organizations
@@ -9,11 +9,995 @@ tags:
   - name: Units
   - name: Faults
   - name: Voting
+  - name: Announcements
   - name: Documents
   - name: Short-term Rentals
   - name: Real Estate Listings
   - name: Compliance & GDPR
+  - name: Accounting
 paths:
+  /api/v1/accounting/contacts:
+    get:
+      operationId: ContactsApi_list
+      description: List contacts for current tenant
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Shared.PaginationQuery.page'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.limit'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.sortBy'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.sortOrder'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Accounting.Contact'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Accounting
+  /api/v1/accounting/invoices:
+    get:
+      operationId: InvoicesApi_list
+      description: List invoices for current tenant
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Shared.PaginationQuery.page'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.limit'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.sortBy'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.sortOrder'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Accounting.Invoice'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Accounting
+    post:
+      operationId: InvoicesApi_create
+      description: Create new invoice
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accounting.Invoice'
+        '400':
+          description: Bad Request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Accounting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Accounting.CreateInvoiceRequest'
+  /api/v1/accounting/invoices/{id}:
+    get:
+      operationId: InvoicesApi_get
+      description: Get invoice by ID
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accounting.Invoice'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Accounting
+    patch:
+      operationId: InvoicesApi_update
+      description: Update invoice
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accounting.Invoice'
+        '400':
+          description: Bad Request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Accounting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Accounting.UpdateInvoiceRequest'
+    delete:
+      operationId: InvoicesApi_delete
+      description: Delete invoice
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Accounting
+  /api/v1/accounting/invoices/{id}/items:
+    get:
+      operationId: InvoicesApi_listItems
+      description: List invoice items
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Accounting.InvoiceItem'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Accounting
+  /api/v1/announcements:
+    get:
+      operationId: AnnouncementsApi_list
+      description: List announcements with filters (managers)
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.page'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.limit'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.sortBy'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.sortOrder'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: targetType
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Announcements.AnnouncementTargetType'
+          explode: false
+        - name: authorId
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+          explode: false
+        - name: pinned
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: fromDate
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: toDate
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcements.AnnouncementSummary'
+                    description: Array of items
+                  pagination:
+                    allOf:
+                      - $ref: '#/components/schemas/Shared.PaginationMeta'
+                    description: Pagination metadata
+                description: Paginated response wrapper
+      tags:
+        - Announcements
+    post:
+      operationId: AnnouncementsApi_create
+      description: Create a new announcement
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    $ref: '#/components/schemas/Shared.uuid'
+                  message:
+                    type: string
+                required:
+                  - id
+                  - message
+      tags:
+        - Announcements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                targetType:
+                  $ref: '#/components/schemas/Announcements.AnnouncementTargetType'
+                targetIds:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Shared.uuid'
+                scheduledAt:
+                  $ref: '#/components/schemas/Shared.dateTime'
+                commentsEnabled:
+                  type: boolean
+                acknowledgmentRequired:
+                  type: boolean
+              required:
+                - title
+                - content
+                - targetType
+  /api/v1/announcements/published:
+    get:
+      operationId: AnnouncementsApi_listPublished
+      description: List published announcements (all users)
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.page'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.limit'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.sortBy'
+        - $ref: '#/components/parameters/Shared.PaginationQuery.sortOrder'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcements.AnnouncementSummary'
+                    description: Array of items
+                  pagination:
+                    allOf:
+                      - $ref: '#/components/schemas/Shared.PaginationMeta'
+                    description: Pagination metadata
+                description: Paginated response wrapper
+      tags:
+        - Announcements
+  /api/v1/announcements/statistics:
+    get:
+      operationId: AnnouncementsApi_getStatistics
+      description: Get announcement statistics
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcements.AnnouncementStatistics'
+      tags:
+        - Announcements
+  /api/v1/announcements/unread-count:
+    get:
+      operationId: AnnouncementsApi_getUnreadCount
+      description: Get unread announcement count
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unreadCount:
+                    type: integer
+                    format: int64
+                required:
+                  - unreadCount
+      tags:
+        - Announcements
+  /api/v1/announcements/{id}:
+    get:
+      operationId: AnnouncementsApi_get
+      description: Get announcement details
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcement:
+                    $ref: '#/components/schemas/Announcements.AnnouncementWithDetails'
+                  attachments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcements.AnnouncementAttachment'
+                required:
+                  - announcement
+                  - attachments
+        '404':
+          description: Not Found - Resource does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared.ErrorResponse'
+      tags:
+        - Announcements
+    put:
+      operationId: AnnouncementsApi_update
+      description: Update an announcement (draft/scheduled only)
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  announcement:
+                    $ref: '#/components/schemas/Announcements.Announcement'
+                required:
+                  - message
+                  - announcement
+      tags:
+        - Announcements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                targetType:
+                  $ref: '#/components/schemas/Announcements.AnnouncementTargetType'
+                targetIds:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Shared.uuid'
+                scheduledAt:
+                  $ref: '#/components/schemas/Shared.dateTime'
+                commentsEnabled:
+                  type: boolean
+                acknowledgmentRequired:
+                  type: boolean
+    delete:
+      operationId: AnnouncementsApi_delete
+      description: Delete an announcement (draft only)
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+      tags:
+        - Announcements
+  /api/v1/announcements/{id}/acknowledge:
+    post:
+      operationId: AnnouncementsApi_acknowledge
+      description: Acknowledge an announcement
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+      tags:
+        - Announcements
+  /api/v1/announcements/{id}/archive:
+    post:
+      operationId: AnnouncementsApi_archive
+      description: Archive an announcement
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  announcement:
+                    $ref: '#/components/schemas/Announcements.Announcement'
+                required:
+                  - message
+                  - announcement
+      tags:
+        - Announcements
+  /api/v1/announcements/{id}/attachments:
+    get:
+      operationId: AnnouncementsApi_listAttachments
+      description: List announcement attachments
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Announcements.AnnouncementAttachment'
+      tags:
+        - Announcements
+    post:
+      operationId: AnnouncementsApi_addAttachment
+      description: Add an attachment to an announcement
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcements.AnnouncementAttachment'
+      tags:
+        - Announcements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileKey:
+                  type: string
+                fileName:
+                  type: string
+                fileType:
+                  type: string
+                fileSize:
+                  type: integer
+                  format: int64
+              required:
+                - fileKey
+                - fileName
+                - fileType
+                - fileSize
+  /api/v1/announcements/{id}/attachments/{attachmentId}:
+    delete:
+      operationId: AnnouncementsApi_deleteAttachment
+      description: Delete an attachment
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+      tags:
+        - Announcements
+  /api/v1/announcements/{id}/pin:
+    post:
+      operationId: AnnouncementsApi_pin
+      description: Pin or unpin an announcement
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  announcement:
+                    $ref: '#/components/schemas/Announcements.Announcement'
+                required:
+                  - message
+                  - announcement
+      tags:
+        - Announcements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pinned:
+                  type: boolean
+              required:
+                - pinned
+  /api/v1/announcements/{id}/publish:
+    post:
+      operationId: AnnouncementsApi_publish
+      description: Publish an announcement immediately
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  announcement:
+                    $ref: '#/components/schemas/Announcements.Announcement'
+                required:
+                  - message
+                  - announcement
+      tags:
+        - Announcements
+  /api/v1/announcements/{id}/read:
+    post:
+      operationId: AnnouncementsApi_markRead
+      description: Mark an announcement as read
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+      tags:
+        - Announcements
+  /api/v1/announcements/{id}/schedule:
+    post:
+      operationId: AnnouncementsApi_schedule
+      description: Schedule an announcement for future publishing
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Shared.uuid'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  announcement:
+                    $ref: '#/components/schemas/Announcements.Announcement'
+                required:
+                  - message
+                  - announcement
+      tags:
+        - Announcements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduledAt:
+                  $ref: '#/components/schemas/Shared.dateTime'
+              required:
+                - scheduledAt
   /api/v1/auth/login:
     post:
       operationId: AuthApi_login
@@ -1636,15 +2620,14 @@ paths:
         '200':
           description: The request has succeeded.
           content:
-            '*/*':
+            application/json:
               schema:
-                type: string
-                format: binary
+                $ref: '#/components/schemas/Documents.DocumentUrlResponse'
       tags:
         - Documents
-  /api/v1/documents/{id}/new-version:
+  /api/v1/documents/{id}/versions:
     post:
-      operationId: DocumentsApi_uploadNewVersion
+      operationId: DocumentsApi_uploadVersion
       parameters:
         - name: Authorization
           in: header
@@ -1662,12 +2645,12 @@ paths:
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
-        '200':
-          description: The request has succeeded.
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Documents.Document'
+                $ref: '#/components/schemas/Documents.CreateVersionResponse'
       tags:
         - Documents
       requestBody:
@@ -1677,17 +2660,20 @@ paths:
             schema:
               type: object
               properties:
-                fileContent:
+                fileKey:
                   type: string
                 fileName:
                   type: string
                 mimeType:
                   type: string
+                sizeBytes:
+                  type: integer
+                  format: int64
               required:
-                - fileContent
+                - fileKey
                 - fileName
                 - mimeType
-  /api/v1/documents/{id}/versions:
+                - sizeBytes
     get:
       operationId: DocumentsApi_listVersions
       parameters:
@@ -1712,9 +2698,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Documents.Document'
+                $ref: '#/components/schemas/Documents.VersionHistoryResponse'
       tags:
         - Documents
   /api/v1/faults:
@@ -4493,6 +5477,602 @@ components:
         $ref: '#/components/schemas/Shared.dateTime'
       explode: false
   schemas:
+    Accounting.Contact:
+      type: object
+      required:
+        - id
+        - tenantId
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Unique identifier
+        tenantId:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Tenant identifier
+        name:
+          type: string
+          description: Contact name
+        ico:
+          type: string
+          description: ICO (identification number)
+        dic:
+          type: string
+          description: DIC (tax identification number)
+        email:
+          allOf:
+            - $ref: '#/components/schemas/Shared.email'
+          description: Email address
+        phone:
+          type: string
+          description: Phone number
+        address:
+          type: string
+          description: Physical address
+        iban:
+          type: string
+          description: IBAN for payments
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: Creation timestamp
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: Last update timestamp
+        createdBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: ID of user who created this entity
+        updatedBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: ID of user who last updated this entity
+      description: Native contact (CRM)
+    Accounting.CreateInvoiceItem:
+      type: object
+      required:
+        - description
+        - qty
+        - unitPrice
+        - vatRate
+      properties:
+        description:
+          type: string
+          description: Description
+        qty:
+          type: number
+          format: double
+          description: Quantity
+        unitPrice:
+          type: number
+          format: double
+          description: Unit price excluding VAT
+        vatRate:
+          type: number
+          format: double
+          description: VAT rate percentage
+        vatRateType:
+          allOf:
+            - $ref: '#/components/schemas/Accounting.VatRate'
+          description: Optional named VAT rate (overrides vatRate if provided)
+      description: Request to create a new invoice item
+    Accounting.CreateInvoiceRequest:
+      type: object
+      required:
+        - contactId
+        - number
+        - issueDate
+        - dueDate
+        - currency
+        - items
+      properties:
+        contactId:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Contact identifier
+        number:
+          type: string
+          description: Invoice number
+        issueDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Issue date
+        dueDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Due date
+        taxableSupplyDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Taxable supply date
+        currency:
+          type: string
+          description: Currency code (e.g., CZK)
+        variableSymbol:
+          type: string
+          description: Variable symbol
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Accounting.InvoiceStatus'
+          description: Initial status
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Accounting.CreateInvoiceItem'
+          description: Invoice line items
+        country:
+          type: string
+          description: Optional country code (e.g., 'CZ', 'SK') to resolve named VAT rates
+      description: Request to create a new invoice
+    Accounting.Invoice:
+      type: object
+      required:
+        - id
+        - tenantId
+        - contactId
+        - number
+        - issueDate
+        - dueDate
+        - currency
+        - totalAmount
+        - baseAmount
+        - vatAmount
+        - status
+        - paidAmount
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Unique identifier
+        tenantId:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Tenant identifier
+        contactId:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Contact identifier
+        number:
+          type: string
+          description: Invoice number
+        issueDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Issue date
+        dueDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Due date
+        taxableSupplyDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Taxable supply date
+        currency:
+          type: string
+          description: Currency code (e.g., CZK)
+        totalAmount:
+          type: number
+          format: double
+          description: Total amount including VAT
+        baseAmount:
+          type: number
+          format: double
+          description: Base amount excluding VAT
+        vatAmount:
+          type: number
+          format: double
+          description: VAT amount
+        variableSymbol:
+          type: string
+          description: Variable symbol for payment identification
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Accounting.InvoiceStatus'
+          description: Current status
+        paidAmount:
+          type: number
+          format: double
+          description: Amount already paid
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: Creation timestamp
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: Last update timestamp
+        createdBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: ID of user who created this entity
+        updatedBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: ID of user who last updated this entity
+      description: Native issued invoice
+    Accounting.InvoiceItem:
+      type: object
+      required:
+        - id
+        - invoiceId
+        - tenantId
+        - description
+        - qty
+        - unitPrice
+        - vatRate
+        - totalAmount
+        - baseAmount
+        - vatAmount
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Unique identifier
+        invoiceId:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Invoice identifier
+        tenantId:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Tenant identifier
+        description:
+          type: string
+          description: Description of the item
+        qty:
+          type: number
+          format: double
+          description: Quantity
+        unitPrice:
+          type: number
+          format: double
+          description: Unit price excluding VAT
+        vatRate:
+          type: number
+          format: double
+          description: VAT rate percentage
+        totalAmount:
+          type: number
+          format: double
+          description: Total amount including VAT
+        baseAmount:
+          type: number
+          format: double
+          description: Base amount excluding VAT
+        vatAmount:
+          type: number
+          format: double
+          description: VAT amount
+      description: Line item for an invoice
+    Accounting.InvoiceStatus:
+      type: string
+      enum:
+        - draft
+        - issued
+        - paid
+        - partially_paid
+        - overdue
+      description: Status of an issued invoice
+    Accounting.UpdateInvoiceRequest:
+      type: object
+      properties:
+        contactId:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: Contact identifier
+        number:
+          type: string
+          description: Invoice number
+        issueDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Issue date
+        dueDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Due date
+        taxableSupplyDate:
+          allOf:
+            - $ref: '#/components/schemas/Shared.date'
+          description: Taxable supply date
+        currency:
+          type: string
+          description: Currency code
+        variableSymbol:
+          type: string
+          description: Variable symbol
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Accounting.InvoiceStatus'
+          description: Status
+        paidAmount:
+          type: number
+          format: double
+          description: Paid amount
+      description: Request to update an existing invoice
+    Accounting.VatRate:
+      type: string
+      enum:
+        - zero
+        - reduced
+        - first_reduced
+        - standard
+      description: VAT rate types for CZ/SK
+    Announcements.Announcement:
+      type: object
+      required:
+        - id
+        - organizationId
+        - authorId
+        - title
+        - content
+        - targetType
+        - targetIds
+        - status
+        - pinned
+        - commentsEnabled
+        - acknowledgmentRequired
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Shared.uuid'
+        organizationId:
+          $ref: '#/components/schemas/Shared.uuid'
+        authorId:
+          $ref: '#/components/schemas/Shared.uuid'
+        title:
+          type: string
+        content:
+          type: string
+          description: Markdown formatted content
+        targetType:
+          $ref: '#/components/schemas/Announcements.AnnouncementTargetType'
+        targetIds:
+          type: array
+          items:
+            type: string
+          description: Array of target UUIDs (buildings, units, or role names)
+        status:
+          $ref: '#/components/schemas/Announcements.AnnouncementStatus'
+        scheduledAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+        publishedAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+        pinned:
+          type: boolean
+        pinnedAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+        pinnedBy:
+          $ref: '#/components/schemas/Shared.uuid'
+        commentsEnabled:
+          type: boolean
+        acknowledgmentRequired:
+          type: boolean
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: Creation timestamp
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: Last update timestamp
+        createdBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: ID of user who created this entity
+        updatedBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: ID of user who last updated this entity
+      description: Announcement (UC-06)
+    Announcements.AnnouncementAttachment:
+      type: object
+      required:
+        - id
+        - announcementId
+        - fileKey
+        - fileName
+        - fileType
+        - fileSize
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Shared.uuid'
+        announcementId:
+          $ref: '#/components/schemas/Shared.uuid'
+        fileKey:
+          type: string
+        fileName:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: integer
+          format: int64
+        createdAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+      description: Announcement attachment
+    Announcements.AnnouncementRead:
+      type: object
+      required:
+        - id
+        - announcementId
+        - userId
+        - readAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Shared.uuid'
+        announcementId:
+          $ref: '#/components/schemas/Shared.uuid'
+        userId:
+          $ref: '#/components/schemas/Shared.uuid'
+        readAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+        acknowledgedAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+      description: Announcement read record
+    Announcements.AnnouncementStatistics:
+      type: object
+      required:
+        - total
+        - published
+        - draft
+        - scheduled
+        - archived
+      properties:
+        total:
+          type: integer
+          format: int64
+        published:
+          type: integer
+          format: int64
+        draft:
+          type: integer
+          format: int64
+        scheduled:
+          type: integer
+          format: int64
+        archived:
+          type: integer
+          format: int64
+      description: Announcement statistics
+    Announcements.AnnouncementStatus:
+      type: string
+      enum:
+        - draft
+        - scheduled
+        - published
+        - archived
+    Announcements.AnnouncementSummary:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - targetType
+        - pinned
+        - commentsEnabled
+        - acknowledgmentRequired
+      properties:
+        id:
+          $ref: '#/components/schemas/Shared.uuid'
+        title:
+          type: string
+        status:
+          $ref: '#/components/schemas/Announcements.AnnouncementStatus'
+        targetType:
+          $ref: '#/components/schemas/Announcements.AnnouncementTargetType'
+        publishedAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+        pinned:
+          type: boolean
+        commentsEnabled:
+          type: boolean
+        acknowledgmentRequired:
+          type: boolean
+      description: Announcement summary for list view
+    Announcements.AnnouncementTargetType:
+      type: string
+      enum:
+        - all
+        - building
+        - units
+        - roles
+    Announcements.AnnouncementWithDetails:
+      type: object
+      required:
+        - id
+        - organizationId
+        - authorId
+        - title
+        - content
+        - targetType
+        - targetIds
+        - status
+        - pinned
+        - commentsEnabled
+        - acknowledgmentRequired
+        - createdAt
+        - updatedAt
+        - authorName
+        - readCount
+        - acknowledgedCount
+        - commentCount
+        - attachmentCount
+      properties:
+        id:
+          $ref: '#/components/schemas/Shared.uuid'
+        organizationId:
+          $ref: '#/components/schemas/Shared.uuid'
+        authorId:
+          $ref: '#/components/schemas/Shared.uuid'
+        title:
+          type: string
+        content:
+          type: string
+          description: Markdown formatted content
+        targetType:
+          $ref: '#/components/schemas/Announcements.AnnouncementTargetType'
+        targetIds:
+          type: array
+          items:
+            type: string
+          description: Array of target UUIDs (buildings, units, or role names)
+        status:
+          $ref: '#/components/schemas/Announcements.AnnouncementStatus'
+        scheduledAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+        publishedAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+        pinned:
+          type: boolean
+        pinnedAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+        pinnedBy:
+          $ref: '#/components/schemas/Shared.uuid'
+        commentsEnabled:
+          type: boolean
+        acknowledgmentRequired:
+          type: boolean
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: Creation timestamp
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/Shared.dateTime'
+          description: Last update timestamp
+        createdBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: ID of user who created this entity
+        updatedBy:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: ID of user who last updated this entity
+        authorName:
+          type: string
+        readCount:
+          type: integer
+          format: int64
+        acknowledgedCount:
+          type: integer
+          format: int64
+        commentCount:
+          type: integer
+          format: int64
+        attachmentCount:
+          type: integer
+          format: int64
+      description: Announcement with additional details
     Auth.LoginRequest:
       type: object
       required:
@@ -5199,6 +6779,21 @@ components:
         - completed
         - expired
         - failed
+    Documents.CreateVersionResponse:
+      type: object
+      required:
+        - id
+        - versionNumber
+        - message
+      properties:
+        id:
+          $ref: '#/components/schemas/Shared.uuid'
+        versionNumber:
+          type: integer
+          format: int32
+        message:
+          type: string
+      description: Result of creating a document version (Story 7B.1)
     Documents.Document:
       type: object
       required:
@@ -5272,6 +6867,74 @@ components:
         - permit
         - insurance
         - other
+    Documents.DocumentUrlResponse:
+      type: object
+      required:
+        - url
+        - expiresAt
+      properties:
+        url:
+          type: string
+        expiresAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+      description: Presigned-URL response for document download/preview (Story 7A.4)
+    Documents.DocumentVersion:
+      type: object
+      required:
+        - id
+        - versionNumber
+        - isCurrentVersion
+        - fileKey
+        - fileName
+        - mimeType
+        - sizeBytes
+        - createdBy
+        - createdByName
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Shared.uuid'
+        versionNumber:
+          type: integer
+          format: int32
+        isCurrentVersion:
+          type: boolean
+        fileKey:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+        createdBy:
+          $ref: '#/components/schemas/Shared.uuid'
+        createdByName:
+          type: string
+        createdAt:
+          $ref: '#/components/schemas/Shared.dateTime'
+      description: A single document version (Story 7B.1)
+    Documents.DocumentVersionHistory:
+      type: object
+      required:
+        - documentId
+        - title
+        - totalVersions
+        - versions
+      properties:
+        documentId:
+          $ref: '#/components/schemas/Shared.uuid'
+        title:
+          type: string
+        totalVersions:
+          type: integer
+          format: int32
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Documents.DocumentVersion'
+      description: Full version history for a document (Story 7B.1)
     Documents.DocumentVisibility:
       type: string
       enum:
@@ -5323,6 +6986,14 @@ components:
             - $ref: '#/components/schemas/Shared.uuid'
           description: ID of user who last updated this entity
       description: Document folder
+    Documents.VersionHistoryResponse:
+      type: object
+      required:
+        - history
+      properties:
+        history:
+          $ref: '#/components/schemas/Documents.DocumentVersionHistory'
+      description: Envelope returned by the version-history endpoint
     Faults.Fault:
       type: object
       required:

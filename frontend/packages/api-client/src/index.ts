@@ -9,6 +9,7 @@
 export * from './admin';
 export * from './advanced-notifications';
 export * from './announcements';
+export type { AuthUser } from './auth';
 // Export auth token provider for secure token management
 export * from './auth';
 export * from './buildings';
@@ -27,6 +28,7 @@ export * from './forms';
 // Export generated types and client
 // These will be populated after running `pnpm generate`
 export * from './generated';
+export { client } from './generated/client.gen';
 export * from './government-portal';
 export * from './integrations';
 export * from './iot';

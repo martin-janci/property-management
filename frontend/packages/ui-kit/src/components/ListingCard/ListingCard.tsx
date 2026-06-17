@@ -111,8 +111,6 @@ export const ListingCard: React.FC<ListingCardProps> = ({
       className={[styles.card, className].filter(Boolean).join(' ')}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={0}
       aria-label={`${title}, ${price}`}
     >
       {/* Photo */}

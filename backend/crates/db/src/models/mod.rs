@@ -1,5 +1,7 @@
 //! Database models.
 
+pub mod accounting;
+pub mod accounting_provider;
 pub mod agency_branding;
 pub mod agency_domain;
 pub mod announcement;
@@ -101,6 +103,17 @@ pub use agency_domain::{
     AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
 };
 
+pub use accounting::{
+    BankStatement, BankStatementLine, Contact, CreateInvoice as CreateAccountingInvoice,
+    CreateInvoiceItem as CreateAccountingInvoiceItem, Invoice as AccountingInvoice,
+    InvoiceItem as AccountingInvoiceItem, InvoiceStatus as AccountingInvoiceStatus, PaymentMatch,
+    PaymentMatchState, UpdateInvoice, UpdateInvoiceItem, VatRate,
+};
+pub use accounting_provider::{
+    AccountingProviderAuthFlow, AccountingProviderConnection, AccountingProviderContact,
+    AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
+    AccountingProviderSyncCursor,
+};
 pub use announcement::{
     announcement_status, target_type, AcknowledgeAnnouncement, AcknowledgmentStats, Announcement,
     AnnouncementAttachment, AnnouncementComment, AnnouncementListQuery, AnnouncementRead,

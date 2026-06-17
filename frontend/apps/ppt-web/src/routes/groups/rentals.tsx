@@ -6,13 +6,23 @@
  * Extracted from App.tsx to isolate rentals work.
  */
 import type {
-  Rentals_GuestRegistration,
-  Rentals_PlatformConnection,
-  Rentals_RentalPlatform,
-  Rentals_Reservation,
-  Rentals_SyncStatus,
+  RentalsGuestRegistration,
+  RentalsPlatformConnection,
+  RentalsRentalPlatform,
+  RentalsReservation,
+  RentalsSyncStatus,
 } from '@ppt/api-client';
-import { getToken, ShortTermRentalsService } from '@ppt/api-client';
+import {
+  getToken,
+  rentalsApiCheckIn,
+  rentalsApiCheckOut,
+  rentalsApiCreateConnection,
+  rentalsApiGetReservation,
+  rentalsApiListConnections,
+  rentalsApiListGuests,
+  rentalsApiListReservations,
+  rentalsApiSyncPlatforms,
+} from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, useState } from 'react';
 import { Route, useNavigate, useParams } from 'react-router-dom';
@@ -55,10 +65,10 @@ const TaxReportPage = lazy(() =>
 );
 
 /**
- * Map a generated Rentals_RentalPlatform → the page-level BookingSource.
+ * Map a generated RentalsRentalPlatform → the page-level BookingSource.
  * The generated platform enum carries 'vrbo' which the page lacks; fold it to 'other'.
  */
-function mapRentalPlatformToSource(platform: Rentals_RentalPlatform): RentalBooking['source'] {
+function mapRentalPlatformToSource(platform: RentalsRentalPlatform): RentalBooking['source'] {
   switch (platform) {
     case 'airbnb':
       return 'airbnb';
@@ -71,14 +81,14 @@ function mapRentalPlatformToSource(platform: Rentals_RentalPlatform): RentalBook
   }
 }
 
-/** Map a generated Rentals_RentalPlatform → the page PlatformType (airbnb | booking). */
-function mapRentalPlatformToType(platform: Rentals_RentalPlatform): RentalPlatformType {
+/** Map a generated RentalsRentalPlatform → the page PlatformType (airbnb | booking). */
+function mapRentalPlatformToType(platform: RentalsRentalPlatform): RentalPlatformType {
   return platform === 'booking' ? 'booking' : 'airbnb';
 }
 
-/** Map a generated Rentals_SyncStatus → the page ConnectionStatus. */
+/** Map a generated RentalsSyncStatus → the page ConnectionStatus. */
 function mapSyncStatusToConnectionStatus(
-  syncStatus: Rentals_SyncStatus,
+  syncStatus: RentalsSyncStatus,
   isActive: boolean
 ): RentalPlatformConnection['status'] {
   if (!isActive) return 'disconnected';
@@ -94,8 +104,8 @@ function mapSyncStatusToConnectionStatus(
   }
 }
 
-/** Map a generated Rentals_Reservation → the page RentalBooking. */
-function mapReservationToBooking(res: Rentals_Reservation): RentalBooking {
+/** Map a generated RentalsReservation → the page RentalBooking. */
+function mapReservationToBooking(res: RentalsReservation): RentalBooking {
   return {
     id: res.id,
     unitId: res.unitId,
@@ -118,8 +128,8 @@ function mapReservationToBooking(res: Rentals_Reservation): RentalBooking {
   };
 }
 
-/** Map a generated Rentals_PlatformConnection → the page PlatformConnection. */
-function mapApiConnectionToUi(conn: Rentals_PlatformConnection): RentalPlatformConnection {
+/** Map a generated RentalsPlatformConnection → the page PlatformConnection. */
+function mapApiConnectionToUi(conn: RentalsPlatformConnection): RentalPlatformConnection {
   return {
     id: conn.id,
     unitId: conn.unitId,
@@ -132,8 +142,8 @@ function mapApiConnectionToUi(conn: Rentals_PlatformConnection): RentalPlatformC
   };
 }
 
-/** Map a generated Rentals_GuestRegistration → the page RentalGuest. */
-function mapApiGuestToUi(guest: Rentals_GuestRegistration): RentalGuest {
+/** Map a generated RentalsGuestRegistration → the page RentalGuest. */
+function mapApiGuestToUi(guest: RentalsGuestRegistration): RentalGuest {
   return {
     id: guest.id,
     bookingId: guest.reservationId ?? '',
@@ -171,24 +181,28 @@ function RentalsDashboardPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservations', auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListReservations({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
+      rentalsApiListReservations({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
       }),
     enabled: !!auth,
   });
   const { data: connData } = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListConnections({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
+      rentalsApiListConnections({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
       }),
     enabled: !!auth,
   });
 
-  const bookings = (data?.data ?? []).map(mapReservationToBooking);
-  const connections = (connData ?? []).map(mapApiConnectionToUi);
+  const bookings = (data?.data?.data ?? []).map(mapReservationToBooking);
+  const connections = (connData?.data ?? []).map(mapApiConnectionToUi);
   const now = Date.now();
   const upcomingBookings = bookings.filter((b) => new Date(b.checkIn).getTime() >= now);
   const activeBookings = bookings.filter((b) => b.status === 'checked_in');
@@ -232,19 +246,23 @@ function PlatformConnectionsPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'connections', auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListConnections({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
+      rentalsApiListConnections({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
       }),
     enabled: !!auth,
   });
 
   const createConnection = useMutation({
     mutationFn: (vars: { unitId: string; platform: RentalPlatformType }) =>
-      ShortTermRentalsService.rentalsApiCreateConnection({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        requestBody: { unitId: vars.unitId, platform: vars.platform },
+      rentalsApiCreateConnection({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        body: { unitId: vars.unitId, platform: vars.platform as RentalsRentalPlatform },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
@@ -253,17 +271,19 @@ function PlatformConnectionsPageRoute() {
 
   const syncPlatforms = useMutation({
     mutationFn: (unitId: string) =>
-      ShortTermRentalsService.rentalsApiSyncPlatforms({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        unitId,
+      rentalsApiSyncPlatforms({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        query: { unitId },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentals', 'connections'] });
     },
   });
 
-  const connections = (data ?? []).map(mapApiConnectionToUi);
+  const connections = (data?.data ?? []).map(mapApiConnectionToUi);
 
   return (
     <PlatformConnectionsPage
@@ -292,25 +312,29 @@ function BookingsPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservations', auth?.xTenantId, filters],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListReservations({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        unitId: filters.unitId,
-        status: filters.status,
-        from: filters.fromDate,
-        to: filters.toDate,
-        page: filters.page,
-        limit: filters.limit,
+      rentalsApiListReservations({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        query: {
+          unitId: filters.unitId,
+          status: filters.status as RentalsReservation['status'],
+          from: filters.fromDate,
+          to: filters.toDate,
+          page: filters.page,
+          limit: filters.limit,
+        },
       }),
     enabled: !!auth,
   });
 
-  const bookings = (data?.data ?? []).map(mapReservationToBooking);
+  const bookings = (data?.data?.data ?? []).map(mapReservationToBooking);
 
   return (
     <BookingsPage
       bookings={bookings}
-      total={data?.pagination?.totalItems ?? bookings.length}
+      total={data?.data?.pagination?.totalItems ?? bookings.length}
       buildings={[]}
       units={[]}
       isLoading={isLoading}
@@ -336,30 +360,36 @@ function BookingDetailPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'reservation', bookingId, auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiGetReservation({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        id: bookingId!,
+      rentalsApiGetReservation({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        path: { id: bookingId! },
       }),
     enabled: !!auth && !!bookingId,
   });
 
   const checkIn = useMutation({
     mutationFn: () =>
-      ShortTermRentalsService.rentalsApiCheckIn({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        id: bookingId!,
+      rentalsApiCheckIn({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        path: { id: bookingId! },
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
   });
   const checkOut = useMutation({
     mutationFn: () =>
-      ShortTermRentalsService.rentalsApiCheckOut({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
-        id: bookingId!,
+      rentalsApiCheckOut({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
+        path: { id: bookingId! },
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['rentals', 'reservation', bookingId] }),
@@ -369,7 +399,7 @@ function BookingDetailPageRoute() {
     return <div>Booking not found</div>;
   }
 
-  if (isLoading || !data) {
+  if (isLoading || !data || !data.data) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -377,7 +407,7 @@ function BookingDetailPageRoute() {
     );
   }
 
-  const booking: BookingWithGuests = { ...mapReservationToBooking(data), guests: [] };
+  const booking: BookingWithGuests = { ...mapReservationToBooking(data.data), guests: [] };
 
   return (
     <BookingDetailPage
@@ -422,9 +452,11 @@ function GuestRegistrationPageRoute() {
   const { data, isLoading } = useQuery({
     queryKey: ['rentals', 'guests', auth?.xTenantId],
     queryFn: () =>
-      ShortTermRentalsService.rentalsApiListGuests({
-        authorization: auth!.authorization,
-        xTenantId: auth!.xTenantId,
+      rentalsApiListGuests({
+        headers: {
+          Authorization: auth!.authorization,
+          'X-Tenant-ID': auth!.xTenantId,
+        },
       }),
     enabled: !!auth,
   });
@@ -432,7 +464,7 @@ function GuestRegistrationPageRoute() {
   // Group registered guests by reservation so the page can list per-booking
   // pending registrations. Without per-booking metadata we surface a single
   // synthetic grouping keyed by reservationId.
-  const guests = (data?.data ?? []).map(mapApiGuestToUi);
+  const guests = (data?.data?.data ?? []).map(mapApiGuestToUi);
   const byBooking = new Map<string, RentalGuest[]>();
   for (const g of guests) {
     const list = byBooking.get(g.bookingId) ?? [];
