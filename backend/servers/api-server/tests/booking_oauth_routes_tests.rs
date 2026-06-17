@@ -435,3 +435,67 @@ async fn token_exchange_rejects_non_manager_member(pool: PgPool) {
         resp.text()
     );
 }
+
+/// #1525 regression: a manager of org A who is only a *plain member* of org B
+/// must NOT be able to bind org B's OTA integration. The old gate read the
+/// manager role from the JWT (tied to `X-Tenant-ID = A`) instead of the path
+/// org being mutated (B), so this desync bypassed the manager requirement.
+/// With the role now read from membership of the path org, it must 403.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_rejects_manager_of_a_different_org(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "mgr-gate-desync-a").await;
+    let org_b = seed_org(&pool, "mgr-gate-desync-b").await;
+    let user_id = seed_user(&pool, "cross-org-mgr@booking-routes.test").await;
+    seed_membership(&pool, org_a, user_id, "manager").await; // manager in A
+    seed_membership(&pool, org_b, user_id, "tenant").await; //  plain member in B
+
+    // JWT carries manager role + tenant_id = org A (X-Tenant-ID = A); the path
+    // org being mutated is B, where the caller is only a plain member.
+    let now = chrono::Utc::now();
+    use chrono::Duration;
+    use jsonwebtoken::{encode, EncodingKey, Header};
+    #[derive(serde::Serialize)]
+    struct Claims {
+        sub: Uuid,
+        exp: i64,
+        iat: i64,
+        token_type: String,
+        tenant_id: Option<Uuid>,
+        role: Option<String>,
+        email: String,
+        name: String,
+    }
+    let claims = Claims {
+        sub: user_id,
+        iat: now.timestamp(),
+        exp: (now + Duration::hours(1)).timestamp(),
+        token_type: "access".to_string(),
+        tenant_id: Some(org_a),
+        role: Some("manager".to_string()),
+        email: "cross-org-mgr@booking-routes.test".to_string(),
+        name: "Cross-Org Manager".to_string(),
+    };
+    let token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
+    )
+    .expect("mint cross-org manager token");
+
+    let resp = app
+        .execute(authed_post_with_tenant(
+            &token_exchange_uri(org_b), // mutate org B
+            &token,
+            org_a, // X-Tenant-ID = A (where the caller is a manager)
+            json!({"code": "valid-looking-code"}),
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "manager of org A must not bind org B's OTA integration as a plain member; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
