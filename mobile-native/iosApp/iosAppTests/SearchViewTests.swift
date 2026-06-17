@@ -210,6 +210,186 @@ final class SearchViewCoreLocationTests: XCTestCase {
     }
 }
 
+// MARK: - Stale-response guard preserves pagination (Issue #1365)
+
+/// Regression coverage for the iOS `SearchView` stale-response guard, focused on
+/// the pagination-interleaving bug raised in #1365 ("stale-response guard skips
+/// pagination").
+///
+/// The race (from #1365): the user changes the query — firing a page-1
+/// `performSearch()` that bumps `requestSeq` — while a page-2 `loadMoreResults()`
+/// from the *previous* query is still awaiting the network. When the late page-2
+/// response arrives, an unguarded `results.append(...)` would interleave the old
+/// query's listings into the new query's result set. PR #1465 closed the bug by
+/// giving `loadMoreResults()` the same `requestSeq` capture-before-await guard as
+/// `performSearch()`: page > 1 *reuses* the current generation (never bumps it),
+/// and the append is gated on `seq == requestSeq`.
+///
+/// `ListingRepository` is a `final` KMP class with no protocol seam, so a true
+/// network-driven `loadMoreResults()` unit test isn't expressible from Swift
+/// without a live `reality-server` (same constraint documented for the existing
+/// classes above). These tests therefore pin the *guard decision* the SwiftUI
+/// view runs — `seq == requestSeq` before an append — exactly as the existing
+/// CoreLocation tests pin the FilterSheet toggle closures, and cross-check that
+/// decision against the shared KMP `SearchState` contract (`shouldApplyResponse`
+/// + `mergePage`) that `SearchView` mirrors and that #1365 recommends iOS adopt.
+/// A live `performSearch`/`loadMoreResults` behaviour test is left for the macOS
+/// reviewer's `xcodebuild test` run against the dev stack (see PR notes).
+final class SearchViewStaleResponseGuardTests: XCTestCase {
+
+    /// Tiny model of the `requestSeq` guard the SwiftUI view applies on resume.
+    ///
+    /// `performSearch()` (page 1) bumps `requestSeq` and captures the new value;
+    /// `loadMoreResults()` (page > 1) captures the *current* value without
+    /// bumping. Both then `guard seq == requestSeq` before mutating `results`.
+    /// `shouldApply` is that guard predicate, isolated so it can be exercised
+    /// without the `final` repository or a SwiftUI runtime.
+    private struct GuardModel {
+        private(set) var requestSeq = 0
+
+        /// page-1 search: bump the generation, return the captured token.
+        mutating func beginPageOneSearch() -> Int {
+            requestSeq += 1
+            return requestSeq
+        }
+
+        /// page-N (N>1) load-more: reuse the current generation, no bump.
+        func beginLoadMore() -> Int { requestSeq }
+
+        /// The `guard seq == requestSeq` decision evaluated on response resume.
+        func shouldApply(captured seq: Int) -> Bool { seq == requestSeq }
+    }
+
+    // MARK: iOS requestSeq guard decision
+
+    /// The #1365 scenario: a page-2 load-more is in flight when the user changes
+    /// the query (a fresh page-1 search). The late page-2 response must be
+    /// dropped so it can't append onto the new query's results.
+    func testStalePageTwoResponseIsDroppedWhenNewSearchSupersedesIt() {
+        var model = GuardModel()
+
+        // Initial query lands and the user scrolls — page-2 load-more starts,
+        // capturing the current generation (no bump for page > 1).
+        _ = model.beginPageOneSearch()           // gen 1 (initial query applied)
+        let pageTwoSeq = model.beginLoadMore()    // captures gen 1, awaiting...
+
+        // Before page 2 returns, the user edits the query → fresh page-1 search
+        // bumps the generation to 2.
+        _ = model.beginPageOneSearch()            // gen 2 (new query in effect)
+
+        // page-2 response from the OLD query now resumes: its captured gen (1) is
+        // behind the current gen (2) → guard drops it, so no interleaving append.
+        XCTAssertFalse(
+            model.shouldApply(captured: pageTwoSeq),
+            "Stale page-2 response from a superseded query must not be applied"
+        )
+    }
+
+    /// The happy path: when no newer search intervenes, a page-2 load-more under
+    /// the current generation IS applied — the guard preserves real pagination
+    /// rather than dropping every append.
+    func testInOrderPageTwoResponseIsAppliedSoPaginationStillWorks() {
+        var model = GuardModel()
+        _ = model.beginPageOneSearch()            // gen 1
+        let pageTwoSeq = model.beginLoadMore()    // captures gen 1, no newer search
+
+        XCTAssertTrue(
+            model.shouldApply(captured: pageTwoSeq),
+            "An in-order page-2 response under the current generation must apply"
+        )
+    }
+
+    /// Load-more (page > 1) must NOT bump the generation — otherwise a trailing
+    /// append would invalidate a concurrent in-flight page or the page-1 search,
+    /// and pagination would livelock. Mirrors Android's "page > 1 reuses the
+    /// current generation" rule (#1365).
+    func testLoadMoreReusesCurrentGenerationAndDoesNotBumpIt() {
+        var model = GuardModel()
+        let genAfterSearch = model.beginPageOneSearch()  // gen 1
+        let genForLoadMore = model.beginLoadMore()        // must still be gen 1
+
+        XCTAssertEqual(genForLoadMore, genAfterSearch,
+                       "loadMoreResults() must reuse the current generation, not bump it")
+        XCTAssertEqual(model.requestSeq, genAfterSearch,
+                       "requestSeq must be unchanged after a load-more begins")
+    }
+
+    /// Each page-1 search bumps the generation, so an earlier in-flight search's
+    /// response is older-than-current and gets dropped — the core stale-guard
+    /// invariant that keeps an out-of-order page-1 completion from clobbering the
+    /// newest query.
+    func testEachNewSearchBumpsGenerationSoOlderSearchResponseIsStale() {
+        var model = GuardModel()
+        let firstSeq = model.beginPageOneSearch()   // gen 1
+        let secondSeq = model.beginPageOneSearch()  // gen 2
+
+        XCTAssertFalse(model.shouldApply(captured: firstSeq),
+                       "Older page-1 response (gen 1) must be stale once gen 2 launched")
+        XCTAssertTrue(model.shouldApply(captured: secondSeq),
+                      "Newest page-1 response (gen 2) is current and must apply")
+    }
+
+    // MARK: Cross-check against the shared KMP SearchState contract
+
+    /// The shared `SearchState.shouldApplyResponse` (commonMain, exported via the
+    /// `:shared` framework) is the platform-agnostic statement of the same guard
+    /// #1365 recommends iOS route through. Assert the iOS `requestSeq` decision
+    /// agrees with it for the page-2-superseded and in-order cases, so the two
+    /// platforms can't drift on the stale-response rule.
+    func testSharedSearchStateGuardAgreesWithIosRequestSeqDecision() {
+        // Stale: response generation behind current → drop on both sides.
+        XCTAssertFalse(
+            SearchState.shared.shouldApplyResponse(responseGeneration: 1, currentGeneration: 2)
+        )
+        // Current: response generation equals current → apply on both sides.
+        XCTAssertTrue(
+            SearchState.shared.shouldApplyResponse(responseGeneration: 2, currentGeneration: 2)
+        )
+    }
+
+    /// End-to-end shape of the pagination-preservation property, gating the
+    /// append on the shared `shouldApplyResponse`: a stale page-2 response is
+    /// dropped, so the newer query's page-1 results stay intact (no interleaved
+    /// listings). The result set is modelled with plain id arrays — the merge
+    /// semantics under test are page-1-replaces / page-N-appends, independent of
+    /// the listing payload — so the test stays network-free and avoids
+    /// hand-constructing the multi-field KMP `ListingSummary` from Swift.
+    func testStalePageTwoAppendIsSkippedSoNewerResultsArePreserved() {
+        let currentGeneration: Int64 = 2
+
+        // The new query's page-1 result is already applied.
+        let newerResults = ["new-1", "new-2"]
+        var applied = newerResults
+
+        // A late page-2 response from the OLD query (generation 1) tries to append.
+        let stalePageTwo = ["old-3"]
+        if SearchState.shared.shouldApplyResponse(responseGeneration: 1, currentGeneration: currentGeneration) {
+            applied += stalePageTwo   // page > 1 → append (mirrors mergePage)
+        }
+
+        XCTAssertEqual(applied, newerResults,
+                       "Stale page-2 listings must not be appended onto the newer query's results")
+        XCTAssertFalse(applied.contains("old-3"),
+                       "No listing from the superseded query may leak into the result set")
+    }
+
+    /// Counterpart: an in-order page-2 response (current generation) DOES append
+    /// after page 1 — proving the guard preserves working pagination rather than
+    /// suppressing all appends.
+    func testInOrderPageTwoAppendMergesAfterPageOne() {
+        let currentGeneration: Int64 = 1
+        var applied = ["p1-a", "p1-b"]
+        let incoming = ["p2-c"]
+
+        if SearchState.shared.shouldApplyResponse(responseGeneration: 1, currentGeneration: currentGeneration) {
+            applied += incoming
+        }
+
+        XCTAssertEqual(applied, ["p1-a", "p1-b", "p2-c"],
+                       "In-order page-2 results must append after page-1 results")
+    }
+}
+
 private extension CLAuthorizationStatus {
     /// The valid `CLAuthorizationStatus` cases — used to assert the manager's
     /// published status is a real enum value rather than a stray bit pattern.

@@ -502,7 +502,8 @@
     },
     "favorites": {
       "title": "Kedvenceim",
-      "description": "Az Ön által mentett ingatlanok."
+      "description": "Az Ön által mentett ingatlanok.",
+      "h1": "Kedvenceim"
     },
     "login": {
       "title": "Sign in",
