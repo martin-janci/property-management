@@ -1,62 +1,43 @@
-# pm-security — 2026-05-27
+# pm-security — analysis
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+Generated: 2026-06-17T00:00:00Z
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+Three pre-existing high-severity open issues (#481 revoked refresh tokens reusable, #480 JWT in WS query-param logs, #487 MFA rate-limit untested) carry over from 2026-05-27 with no evidence of closure; new #1538 CI gate gap means red backend test runs can merge to dev, undermining RLS and OAuth regression tests from BIT-74/76/78/85/98/110. Booking.com credential encryption at-rest confirmed shipped (BIT-98) and OAuth refresh-token revocation regression test exists, but neither is enforced by required CI without #1538 resolved.
 
-## next_actions
+## Next actions
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+- **[high]** Make backend `test` job a required status check on dev (issue #1538) — gates RLS/OAuth/credential-encryption regression tests — dep: `none`
+- **[high]** Fix issue #481: restore revoked_at IS NULL filter in OAuth refresh-token production lookup query (RFC 9700) — dep: `pm-backend`
+- **[high]** Fix issue #480: stop logging WS auth token from query param; move to header/cookie or redact at access log — dep: `pm-backend`
+- **[high]** Resolve prior-run outstanding #614/#624 (cross-tenant schedule mutation + missing RBAC on update_schedule) and #617 (cookie Path regression from PR #565) — dep: `pm-backend`
+- **[medium]** Add MFA rate-limit regression tests (issue #487) — gates story 10a-1-oauth-authorization-server — dep: `pm-backend`
+- **[medium]** Audit announce/faults direct getToken() bypass (#486) — dual-path auth skips axios refresh interceptor — dep: `pm-frontend`
 
-## risks
+## Risks
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+- **[high/high]** #1538 CI gate gap: backend test not required on dev — RLS/authz regression harness (36+ tests) is advisory only
+  - Mitigation: Add Backend / test as required check on dev branch protection
+- **[high/high]** #481 OAuth refresh-token revocation bypass — revoked tokens exchangeable for fresh access tokens
+  - Mitigation: Verify OAuthRepository::find_refresh_token_by_hash enforces revoked_at IS NULL; gate with regression test under required CI
+- **[medium/high]** #480 JWT in WS access logs — credential exfiltration via SIEM/log aggregators
+  - Mitigation: Move WS auth to header or short-lived ticket; redact query params at tracing layer
+- **[medium/high]** Legacy Booking.com plaintext credential rows — decrypt_if_available passes plaintext through; no forced migration scheduled
+  - Mitigation: One-time migration to re-encrypt rental_platform_connections rows lacking enc: prefix; periodic audit query
+- **[medium/high]** #614/#624 cross-tenant schedule mutation — update_schedule handler lacks tenant/org scope + RBAC; unfixed 3 weeks
+  - Mitigation: Thread tenant_id/org_id + RequireCapability into PUT /api/v1/reports/schedules/{id}; add cross-tenant regression test
 
-## open_questions
+## Decisions needed
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+- Classify #1538 as immediate release blocker; mandate fix before Epic 10A or Epic 7A stories promote to done — pm-lead
+- Classify #481 + #480 as P0 pre-production blockers for OAuth provider (Epic 10A) — pm-security/pm-backend
+- Decide whether legacy plaintext Booking.com creds require forced re-encryption migration or decrypt_if_available passthrough is acceptable — pm-backend/pm-lead
 
-## decisions_needed
+## Open questions
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Has #481 (revoked refresh token bypass) been fixed in find_refresh_token_by_hash since 2026-05-27?
+- Were #614/#624 (cross-tenant schedule mutation, missing RBAC) and #617 closed in the 3-week gap?
+- Does security-test-gate.yml block security-labelled PRs lacking a test file, or only advisory?
+- Is a migration scheduled to force-encrypt legacy plaintext Booking.com credential rows?
+- RLS enforcement status of BIT-76 (#1460) + BIT-78 (#1467) force-RLS landings — all handlers on RLS pool?

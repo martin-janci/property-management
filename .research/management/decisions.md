@@ -85,3 +85,12 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-06-16, pm-devops):** Scope of pre-push fmt/clippy gate (#1431): local hook only, CI status check, or both? Local-only did NOT catch the #1426 → #1437 compile break. Owner: pm-tech-lead.
 - **NEW (2026-06-16, pm-devops):** `dev`-push smoke gate enforcement model — fail-fast (block the push) vs warn-only (notify but allow)? backend.yml currently runs on PR only; #1437 would have been caught by an on-push `cargo check --workspace --tests`. Owner: pm-tech-lead + pm-devops.
 - **NEW (2026-06-16, pm-devops):** CI bisect protocol when `dev` breaks — who owns + escalates? PR #1426 → #1437 was not surfaced for ~1 day. Owner: pm-scrum-master.
+
+## 2026-06-17 — Decisions needed (pm-security + scrum master)
+
+- Classify #1538 as immediate release blocker; mandate fix before Epic 10A or Epic 7A stories promote to done — pm-lead
+- Classify #481 + #480 as P0 pre-production blockers for OAuth provider (Epic 10A) — pm-security/pm-backend
+- Decide whether legacy plaintext Booking.com creds require forced re-encryption migration or decrypt_if_available passthrough is acceptable — pm-backend/pm-lead
+- Track native accounting MVP (PR #1454) as a new epic in sprint-status.yaml, or out-of-sprint? — pm-product
+- Issues #480 + #481 as sprint blockers or deferred to security hardening sprint? — pm-security
+- Re-scope sprint (epics 6/7A/8A/10A) given volume of out-of-sprint work landed? — pm-product

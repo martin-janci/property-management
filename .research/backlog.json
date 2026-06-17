@@ -1479,16 +1479,18 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "local git numstat since 2026-06-10T03:05:00Z"
+        "local git numstat since 2026-06-10T03:05:00Z",
+        "git log 2026-06-17"
       ],
       "evidence": [
-        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening"
+        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening",
+        "2026-06-17 churn: +3093 lines across GH #1413 fixes (#1463 building/unit scope; #1480 list+preview gate)"
       ],
       "files": [
         "backend/crates/db/src/repositories/document.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-17",
       "plan": null
     },
     {
@@ -2216,13 +2218,14 @@
         "PR #1098"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework",
+        "[partial] PR #1543 stabilized AnnouncementsScreen date test by pinning TZ=UTC; file remains a churn hotspot"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-17",
       "plan": null
     },
     {
@@ -2239,13 +2242,14 @@
         "PR #1098"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)",
+        "[partial] PR #1543 stabilized this test (pinned TZ=UTC); long-term churn rate unchanged"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-17",
       "plan": null
     },
     {
@@ -3337,16 +3341,18 @@
       "score": 1,
       "status": "open",
       "sources": [
-        "PR #1294 commit 7ccce8a"
+        "PR #1294 commit 7ccce8a",
+        "git log 2026-06-17"
       ],
       "evidence": [
-        "backend/crates/integrations/src/booking.rs +404/-29 (433 line-changes) in PR #1294 (feat-booking-rate-availability-push-v2, epic-83 story 83.2). Hotspot due to Booking.com OTA retry/error handling — adds BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP server. First runs_seen entry."
+        "backend/crates/integrations/src/booking.rs +404/-29 (433 line-changes) in PR #1294 (feat-booking-rate-availability-push-v2, epic-83 story 83.2). Hotspot due to Booking.com OTA retry/error handling — adds BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP server. First runs_seen entry.",
+        "2026-06-17 churn: +3714 lines across BIT-98 (#1472), BIT-110 (#1485), tests (#1502)"
       ],
       "files": [
         "backend/crates/integrations/src/booking.rs"
       ],
       "created_at": "2026-06-12",
-      "updated_at": "2026-06-12",
+      "updated_at": "2026-06-17",
       "plan": null
     },
     {
@@ -3945,6 +3951,177 @@
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "title": "Churn hotspot: backend/crates/db/src/repositories/rental.rs — +3191 lines across 4 PRs",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1486",
+        "PR #1492",
+        "PR #1489",
+        "PR #1537"
+      ],
+      "evidence": [
+        "2026-06-17 churn: +3191 lines across BIT-113 (#1486 platform::text cast), BIT-118 (#1492 GUEST/CALENDAR_BLOCK/ICAL_FEED enum readers), nullable Decimal decode (#1489), enum write paths (#1537)"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "title": "Repeated churn: integrations/booking.rs hotspot for 2nd time — instability proxy",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen=2"
+      ],
+      "evidence": [
+        "booking.rs has been a top-3 hotspot in 2 runs (last 2026-06-12). Booking.com OTA + credential surface has been continuously patched (BIT-98 encrypt-at-rest, BIT-110 timeout/retry/RateLimited, Retry-After). Worth a structural review."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "title": "Repeated churn: db/repositories/document.rs hotspot for 2nd time — instability proxy",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot_history runs_seen=2"
+      ],
+      "evidence": [
+        "document.rs has been a top-3 hotspot in 2 runs (last 2026-06-10). Building/unit scope gate + RLS routing have churned across multiple PRs (#1463, #1480 in this run). Suggests the scoping abstraction is leaky."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "title": "Screen-map drift: PR #1454 added accounting + rentals route groups to ppt-web without docs/screens/ppt/ update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1454"
+      ],
+      "evidence": [
+        "PR #1454 (native accounting MVP + @hey-api migration, 17983 LOC) modified frontend/apps/ppt-web/src/routes/AppRoutes.tsx, routes/groups/accounting.tsx, routes/groups/rentals.tsx, routes/lazyRoutes.tsx without touching docs/screens/ppt/. Native accounting screens (PAP-210 N1-N4) added but no screen-map entries to anchor future redesign."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "title": "Screen-map drift: PR #1545 touched reality-web /accounting layout without docs/screens/reality/ update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1545"
+      ],
+      "evidence": [
+        "PR #1545 (reality-web /accounting QueryClient prerender + favorites i18n) modified frontend/apps/reality-web/src/app/accounting/layout.tsx without touching docs/screens/reality/."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-news-cross-tenant-idor",
+      "title": "Cross-tenant IDOR in news_articles.rs — 7 handlers discard tenant; repo SQL has no organization_id filter",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-06-17 api-handlers"
+      ],
+      "evidence": [
+        "routes/news_articles.rs:363,685,720,750,767,800,1030 — TenantExtractor(_tenant) destructured then discarded across get_article, delete_article, pin_article, list_media, add_media, delete_media, record_view",
+        "db/src/repositories/news_article.rs:74,247,255,279,313,322,555 — find_by_id_with_details, delete (DELETE FROM news_articles WHERE id=$1), set_pinned, add_media, list_media, delete_media, record_view all SQL with no organization_id predicate",
+        "Compare: announcement.rs:391,496,729,805,1036 all filter on organization_id — same domain, correct pattern"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/news_articles.rs",
+        "backend/crates/db/src/repositories/news_article.rs"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": "plans/security-news-articles-cross-tenant-idor.md"
+    },
+    {
+      "id": "code-review-api-handlers-voice-hmac-timing",
+      "title": "voice_webhooks.rs:959 — HMAC signature compared with raw `==` (timing leak)",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-06-17 api-handlers"
+      ],
+      "evidence": [
+        "routes/voice_webhooks.rs:948-959 — verify_hmac_signature returns Ok(signature == expected) on base64-encoded HMAC tag. Raw == short-circuits → timing oracle.",
+        "Prior art in repo: portal_webhooks.rs:112 mac.verify_slice(&expected), integrations/sync.rs:172,187,203 mac.verify_slice(&signature_bytes).is_ok(), signatures.rs:666 subtle::ConstantTimeEq::ct_eq"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": "plans/security-voice-webhooks-hmac-bypass.md"
+    },
+    {
+      "id": "code-review-api-handlers-voice-default-secret",
+      "title": "voice_webhooks.rs:950 — VOICE_WEBHOOK_SECRET falls back to literal \"default_secret\" — fails open",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "rotating-expert-review 2026-06-17 api-handlers"
+      ],
+      "evidence": [
+        "routes/voice_webhooks.rs:949-950 — std::env::var(\"VOICE_WEBHOOK_SECRET\").unwrap_or_else(|_| \"default_secret\".to_string()). Webhook validates against a public, well-known key if env var unset.",
+        "Combined with timing leak (code-review-api-handlers-voice-hmac-timing), signature gate is bypassable.",
+        "Prior art for fail-closed: integrations/install.rs:952 \"Refusing to store ... without encryption\"."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": "plans/security-voice-webhooks-hmac-bypass.md"
     }
   ]
 }

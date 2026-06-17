@@ -1,0 +1,226 @@
+{
+  "generated": "2026-06-17T18:31:09Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-17",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25Z — ~38h ago (>36h threshold). Cloud scheduler likely on schedule (under 72h), but flagging in brief.",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git log dev since 2026-06-16T03:25Z",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking.rs accumulated +3714 lines churn this run across BIT-98 (#1472 encrypt-at-rest), BIT-110 (#1485 timeout/Retry-After/RateLimited), and tests. Already flagged once (runs_seen=1 from 2026-06-12).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log dev since 2026-06-16T03:25Z",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/rental.rs accumulated +3191 lines churn this run across BIT-113 (#1486 platform::text cast), BIT-118 (#1492 GUEST/CALENDAR_BLOCK/ICAL_FEED), nullable-Decimal decode (#1489), enum write paths (#1537). First-time hotspot.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log dev since 2026-06-16T03:25Z",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/document.rs accumulated +3093 lines churn across GH #1413 building/unit scope fixes (#1463, #1480). Already flagged once (runs_seen=1 from 2026-06-10).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=1→2",
+      "score_delta": 1,
+      "evidence": "booking.rs hotspot for second time (prior 2026-06-12) — instability proxy. Booking.com OTA + credential surface has been continuously patched.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=1→2",
+      "score_delta": 1,
+      "evidence": "document.rs hotspot for second time (prior 2026-06-10) — building/unit scope gate + RLS routing have churned across multiple PRs.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": "PR #1454 (native accounting MVP + @hey-api migration) modified ppt-web routes — AppRoutes.tsx, routes/groups/accounting.tsx, routes/groups/rentals.tsx, routes/lazyRoutes.tsx — without touching docs/screens/ppt/. Native accounting screens added but no screen-map entries.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 (reality-web /accounting prerender + favorites i18n) modified frontend/apps/reality-web/src/app/accounting/layout.tsx without touching docs/screens/reality/.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-api-handlers-news-cross-tenant-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/news_articles.rs:363 — get_article destructures TenantExtractor(_tenant) and discards it; repo.find_by_id_with_details(id) at db/src/repositories/news_article.rs has no organization_id filter — cross-tenant article disclosure",
+        "backend/servers/api-server/src/routes/news_articles.rs:685 — delete_article: _tenant discarded; repo.delete(id) at news_article.rs:247 executes 'DELETE FROM news_articles WHERE id = $1' with no org filter — cross-tenant destructive write",
+        "backend/servers/api-server/src/routes/news_articles.rs:720 — pin_article: _tenant discarded; repo.set_pinned(id, ...) at news_article.rs:255 has no org filter — cross-tenant pin/unpin",
+        "backend/servers/api-server/src/routes/news_articles.rs:769,802,752 — add_media / delete_media / list_media: _tenant discarded; news_article.rs:279/313/322 take only article_id — cross-tenant media tampering & disclosure",
+        "backend/servers/api-server/src/routes/news_articles.rs:1032 — record_view: _tenant discarded; news_article.rs:555 INSERTs into article_views keyed by article_id alone — view-stats pollution across tenants"
+      ],
+      "expert": "rust"
+    },
+    {
+      "id": "code-review-api-handlers-voice-hmac-timing",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:959 — verify_hmac_signature() returns `signature == expected` (raw `==` on base64-encoded HMAC tag) rather than constant-time compare or mac.verify_slice(). Timing leak on webhook signature verification — attacker can forge a signature byte-by-byte. Other webhook paths (airbnb / portal / docusign / adobe / hellosign) correctly use constant_time_compare or verify_slice; this one is the outlier."
+      ],
+      "expert": "security"
+    },
+    {
+      "id": "code-review-api-handlers-voice-default-secret",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:949-950 — VOICE_WEBHOOK_SECRET falls back to literal string \"default_secret\" when env var unset. Webhook /api/v1/webhooks/voice/verify (and Google Actions HMAC path) will validate signatures against a public, well-known key. Should fail-closed like the rest of the integrations layer (cf. install.rs:952 'Refusing to store ... without encryption'). Combined with the timing leak above, the voice webhook signature check is effectively bypassable."
+      ],
+      "expert": "security"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + allowlist match this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "observed": "brief exists, first line matches",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "observed": "true (cap + no decay needed)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "observed": "both new plans annotated in brief",
+      "expected": "all-annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "observed": "2 new plans, 4 metadata + 11 headings each, Mode declared, capability ticked, files exist",
+      "expected": "≤2 + complete"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "observed": "backlog.md byte-identical to regen",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "observed": "no phase failures; brief reports none",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "observed": "9 prior plans all accounted for",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "observed": "archive 7 ≥ 7",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "observed": "IDEAS_TRIAGE.md byte-identical to regen",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "observed": "auto_fix_actions=[], no PR/issue/comment opened",
+      "expected": "discipline held"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "observed": "action-list+risks JSON valid; project-state non-empty; pm_cursor 5→6; coverage_cursor 12→0",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
