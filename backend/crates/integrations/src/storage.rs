@@ -945,11 +945,11 @@ pub fn get_content_type(filename: &str) -> &'static str {
 }
 
 /// Check if a content type supports inline preview (not download).
+///
+/// Thin re-export of [`common::supports_inline_preview`] — the single source of
+/// truth shared with `db::models::Document::supports_preview` (GH #1413).
 pub fn supports_inline_preview(content_type: &str) -> bool {
-    matches!(
-        content_type,
-        "application/pdf" | "image/png" | "image/jpeg" | "image/gif" | "image/webp" | "text/plain"
-    )
+    common::supports_inline_preview(content_type)
 }
 
 /// Generate a unique storage key for a file.
