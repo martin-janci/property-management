@@ -2373,7 +2373,7 @@ impl RentalRepository {
         // (unit_id, platform) constraint — and so one org's DO UPDATE can never
         // silently rebind another org's row. (BIT-85 cross-tenant hazard fix.)
         if effective_unit_id == Uuid::nil() {
-            let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
                 r#"
                 INSERT INTO rental_platform_connections (
                     organization_id, unit_id, platform,
@@ -2394,9 +2394,9 @@ impl RentalRepository {
                     is_active                = true,
                     sync_error               = NULL,
                     updated_at               = NOW()
-                RETURNING *
-                "#,
-            )
+                RETURNING {PLATFORM_CONNECTION_COLUMNS}
+                "#
+            )))
             .bind(org_id)
             .bind(effective_unit_id)
             .bind(access_token)
@@ -2461,7 +2461,7 @@ impl RentalRepository {
         // Same org-scoped conflict target as upsert_airbnb_connection for the
         // nil-unit_id case. (BIT-85 cross-tenant hazard fix.)
         if effective_unit_id == Uuid::nil() {
-            let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
                 r#"
                 INSERT INTO rental_platform_connections (
                     organization_id, unit_id, platform,
@@ -2482,9 +2482,9 @@ impl RentalRepository {
                     is_active                = true,
                     sync_error               = NULL,
                     updated_at               = NOW()
-                RETURNING *
-                "#,
-            )
+                RETURNING {PLATFORM_CONNECTION_COLUMNS}
+                "#
+            )))
             .bind(org_id)
             .bind(effective_unit_id)
             .bind(access_token)
