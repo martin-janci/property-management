@@ -38,8 +38,7 @@ use uuid::Uuid;
 
 use common::TestApp;
 
-const JWT_SECRET: &str =
-    "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
 
 #[derive(Serialize)]
 struct TestClaims {
@@ -154,9 +153,7 @@ async fn seed_report_no_file(pool: &PgPool, user_id: Uuid) -> Uuid {
 fn get_download(report_id: Uuid, org: Uuid, token: &str) -> Request<Body> {
     Request::builder()
         .method(Method::GET)
-        .uri(format!(
-            "/api/v1/aml-dsa/dsa/reports/{report_id}/download"
-        ))
+        .uri(format!("/api/v1/aml-dsa/dsa/reports/{report_id}/download"))
         .header(header::AUTHORIZATION, format!("Bearer {token}"))
         .header("X-Tenant-ID", org.to_string())
         .body(Body::empty())
@@ -276,9 +273,7 @@ async fn dsa_download_unknown_report_returns_404(pool: PgPool) {
     let user = seed_user(&pool).await;
 
     let token = mint_token(user, org, "platform_admin");
-    let resp = app
-        .execute(get_download(Uuid::new_v4(), org, &token))
-        .await;
+    let resp = app.execute(get_download(Uuid::new_v4(), org, &token)).await;
     assert_eq!(
         resp.status,
         StatusCode::NOT_FOUND,
