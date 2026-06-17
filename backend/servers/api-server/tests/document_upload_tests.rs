@@ -10,6 +10,8 @@
 //! - Validation failures: missing file, bad MIME type, bad category
 //! - MIME type allow-list: all 11 supported MIME types return 201 (T11)
 //! - File size limit: exactly 50 MiB succeeds (T12); 50 MiB + 1 byte rejected (T13)
+//! - Metadata round-trip: upload then GET /{id} returns the stored metadata
+//!   through the read handler, not just the raw DB row (T15)
 //!
 //! # Design notes
 //!
@@ -1117,6 +1119,142 @@ async fn test_upload_file_over_size_limit_rejected(pool: PgPool) {
     assert_eq!(
         count, 0,
         "no document record must be created for oversized upload"
+    );
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+// ============================================================================
+// T15: End-to-end metadata round-trip — upload then GET /{id} returns metadata
+// ============================================================================
+
+/// Story 7A.1 promotion gate — "upload + metadata persistence" must be
+/// observable through the read API, not just the raw DB row.
+///
+/// Every existing test verifies persistence by reading the `documents` row
+/// directly (`SELECT ... FROM documents`). That proves the write hit the
+/// table but NOT that the metadata round-trips back to a client through the
+/// authenticated read handler. This test closes that contract gap: it uploads
+/// a document with the full metadata set (title, description, category,
+/// file_name, mime_type) and then fetches it via `GET /api/v1/documents/{id}`
+/// as the same authenticated tenant, asserting every uploaded field is
+/// faithfully returned in the `DocumentDetailResponse` (`document.*`, which
+/// flattens the `Document` model). This is the create→read path a real client
+/// exercises after an upload, and the missing end-to-end handler assertion the
+/// verify task asks for.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_metadata_roundtrips_through_get_handler(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    add_org_member(&pool, org_id, user_id).await;
+
+    let unique_title = format!("Roundtrip Doc {}", Uuid::new_v4().simple());
+    let description = "Round-trip description body for the read path";
+    let category = "contracts";
+
+    let (ct, body) = build_multipart(
+        FAKE_PDF_BYTES,
+        "roundtrip.pdf",
+        "application/pdf",
+        &unique_title,
+        category,
+        Some(description),
+        None,
+    );
+
+    // --- Upload ---
+    let upload_req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let upload_resp = app.execute(upload_req).await;
+    assert_eq!(
+        upload_resp.status,
+        StatusCode::CREATED,
+        "upload must return 201. Body: {}",
+        upload_resp.text()
+    );
+    let upload_json = upload_resp.json_value();
+    let doc_id: Uuid = upload_json["id"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .expect("upload response must contain a valid id");
+
+    // --- Read back via the authenticated GET handler ---
+    let get_req = Request::builder()
+        .method(Method::GET)
+        .uri(format!("/api/v1/documents/{doc_id}"))
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .body(Body::empty())
+        .unwrap();
+
+    let get_resp = app.execute(get_req).await;
+    assert_eq!(
+        get_resp.status,
+        StatusCode::OK,
+        "GET /documents/{{id}} must return 200 for the owning tenant. Body: {}",
+        get_resp.text()
+    );
+
+    // DocumentDetailResponse { document: DocumentWithDetails } where
+    // DocumentWithDetails #[serde(flatten)]s the Document model, so the
+    // metadata fields live directly under the `document` object.
+    let json = get_resp.json_value();
+    let doc = &json["document"];
+
+    assert_eq!(
+        doc["id"].as_str().and_then(|s| s.parse::<Uuid>().ok()),
+        Some(doc_id),
+        "read-back id must match the uploaded document"
+    );
+    assert_eq!(
+        doc["title"].as_str(),
+        Some(unique_title.as_str()),
+        "title must round-trip through the read handler"
+    );
+    assert_eq!(
+        doc["description"].as_str(),
+        Some(description),
+        "description metadata must round-trip through the read handler"
+    );
+    assert_eq!(
+        doc["category"].as_str(),
+        Some(category),
+        "category metadata must round-trip through the read handler"
+    );
+    assert_eq!(
+        doc["file_name"].as_str(),
+        Some("roundtrip.pdf"),
+        "file_name must round-trip through the read handler"
+    );
+    assert_eq!(
+        doc["mime_type"].as_str(),
+        Some("application/pdf"),
+        "mime_type must round-trip through the read handler"
+    );
+    assert_eq!(
+        doc["organization_id"]
+            .as_str()
+            .and_then(|s| s.parse::<Uuid>().ok()),
+        Some(org_id),
+        "organization_id must reflect the uploading tenant"
+    );
+    assert_eq!(
+        doc["created_by"]
+            .as_str()
+            .and_then(|s| s.parse::<Uuid>().ok()),
+        Some(user_id),
+        "created_by must reflect the uploading user"
     );
 
     cleanup_test_user(&pool, &user.email).await;
