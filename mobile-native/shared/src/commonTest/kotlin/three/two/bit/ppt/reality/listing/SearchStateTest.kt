@@ -7,6 +7,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 
@@ -258,6 +259,89 @@ class SearchStateTest {
     fun shouldLoadNextPage_notTriggeredWhenEmpty() {
         assertFalse(SearchState.shouldLoadNextPage(null, 0, 0, isLoading = false))
     }
+
+    // ── nextPageTriggerFlow (AC-4 infinite-scroll pipeline) ──────────────
+    //
+    // These pin the Flow pipeline that drives pagination — the piece that previously lived only
+    // inline in SearchScreen.kt's `snapshotFlow { ... }.distinctUntilChanged().collect { ... }`
+    // LaunchedEffect and so had no unit coverage (the `shouldLoadNextPage_*` cases above only pin
+    // the threshold predicate, not the de-dup / snapshot / emit-page wiring). runTest drives the
+    // flow on virtual time so the contract is deterministic and instant.
+
+    @Test
+    fun nextPageTriggerFlow_emitsNextPageWhenScrolledNearEnd() = runTest {
+        // Page 1 of 100 loaded; the last-visible index crosses the prefetch threshold (20-5=15).
+        val snap = pageSnapshot(loadedCount = 20, total = 100, currentPage = 1)
+        // Only the threshold-crossing index (16) fires, and it maps to currentPage + 1.
+        assertEquals(listOf(2), triggeredPages(snap, 0, 8, 16))
+    }
+
+    @Test
+    fun nextPageTriggerFlow_doesNotEmitWhileFarFromEnd() = runTest {
+        val snap = pageSnapshot(loadedCount = 20, total = 100, currentPage = 1)
+        assertEquals(emptyList(), triggeredPages(snap, 0, 3, 5))
+    }
+
+    @Test
+    fun nextPageTriggerFlow_doesNotEmitWhileLoading() = runTest {
+        // A page request is already in flight → no duplicate fetch even at the threshold.
+        val snap = pageSnapshot(loadedCount = 20, total = 100, currentPage = 1, isLoading = true)
+        assertEquals(emptyList(), triggeredPages(snap, 16, 18, 19))
+    }
+
+    @Test
+    fun nextPageTriggerFlow_doesNotEmitWhenAllResultsLoaded() = runTest {
+        // Everything is already loaded (loadedCount >= total) → end of pagination, no fetch.
+        val snap = pageSnapshot(loadedCount = 20, total = 20, currentPage = 1)
+        assertEquals(emptyList(), triggeredPages(snap, 15, 18, 19))
+    }
+
+    @Test
+    fun nextPageTriggerFlow_dedupesRepeatedIndexSoEachBoundaryFiresOnce() = runTest {
+        // The bottom row is reported repeatedly while the user dwells at the end;
+        // distinctUntilChanged means only the first crossing of a given index produces a fetch —
+        // not one per recomposition.
+        val snap = pageSnapshot(loadedCount = 20, total = 100, currentPage = 1)
+        assertEquals(listOf(2), triggeredPages(snap, 16, 16, 16))
+    }
+
+    @Test
+    fun nextPageTriggerFlow_ignoresNullIndexFromEmptyList() = runTest {
+        // An empty list reports a null last-visible index → nothing to paginate.
+        val snap = pageSnapshot(loadedCount = 0, total = 0, currentPage = 1)
+        assertEquals(emptyList(), triggeredPages(snap, null))
+    }
+
+    @Test
+    fun nextPageTriggerFlow_advancesAcrossPagesAsSnapshotMoves() = runTest {
+        // The snapshot lambda reads live state: after page 2 lands (40 loaded, currentPage=2) a
+        // later index crossing fetches page 3 — proving the helper uses the *current* page, not a
+        // captured one.
+        var snap = pageSnapshot(loadedCount = 20, total = 100, currentPage = 1)
+        val firstFlow = SearchState.nextPageTriggerFlow(flowOf<Int?>(16), snapshot = { snap })
+        assertEquals(listOf(2), firstFlow.toList())
+
+        // Simulate page 2 having been applied.
+        snap = snap.copy(loadedCount = 40, currentPage = 2)
+        val secondFlow = SearchState.nextPageTriggerFlow(flowOf<Int?>(36), snapshot = { snap })
+        assertEquals(listOf(3), secondFlow.toList())
+    }
+
+    private fun pageSnapshot(
+        loadedCount: Int,
+        total: Int,
+        currentPage: Int,
+        isLoading: Boolean = false,
+    ) =
+        SearchState.PageSnapshot(
+            loadedCount = loadedCount,
+            total = total,
+            isLoading = isLoading,
+            currentPage = currentPage,
+        )
+
+    private suspend fun triggeredPages(snapshot: SearchState.PageSnapshot, vararg indices: Int?) =
+        SearchState.nextPageTriggerFlow(flowOf(*indices), snapshot = { snapshot }).toList()
 
     // ── mergePage ────────────────────────────────────────────────────────
 
