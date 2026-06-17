@@ -10,6 +10,7 @@ They document iOS-specific implementation status, route bindings, and gaps.
 
 | Screen Map | Component | Story | buildStatus |
 |---|---|---|---|
+| [project-setup.md](project-setup.md) | RealityPortalApp / DependencyContainer / KMPBridge | 82.1 | shipped |
 | [home.md](home.md) | HomeView | 82.3 | in-progress |
 | [search.md](search.md) | SearchView | 82.3 | in-progress |
 | [listing-detail.md](listing-detail.md) | ListingDetailView | 82.4 | in-progress |
@@ -27,6 +28,7 @@ They document iOS-specific implementation status, route bindings, and gaps.
 
 | Screen Map | Concern | AC | Status |
 |---|---|---|---|
+| [project-setup.md](project-setup.md) | Xcode/xcconfig build matrix, Info.plist tokens, KMP bridge, Keychain, localization, `@main` entry | Story 82.1 | shipped (Coverage 82-1); 3 non-blocking gaps: unlocalized tab titles, unauthenticated default repos, duplicate `SsoService` |
 | [navigation.md](navigation.md) | Navigation state preservation, URL-scheme deep-linking, auth guard | AC-4, AC-5 | verified (Coverage 82-2); `Info.plist` URL-scheme registration gap flagged for pm-mobile |
 
 ## Stub Destinations (Routes defined, views not implemented)
