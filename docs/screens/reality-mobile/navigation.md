@@ -70,15 +70,22 @@ screens sit on top of, and records the AC-4 / AC-5 verification evidence
 - [x] [m] **SSO CSRF nonce.** `beginSsoFlow()` mints a single-use nonce;
   `consumeSsoState(_:)` validates it exactly once (rejects nil/empty/mismatch/
   replay) before the SSO token is accepted.
-- [ ] [m] **GAP — `CFBundleURLTypes` not registered in `Info.plist`.** The
-  parsing + routing + auth-guard logic is complete and unit-tested, but
-  `mobile-native/iosApp/Info.plist` does not declare a `CFBundleURLTypes`
-  entry for the `realityportal` scheme, nor an `applinks:` associated-domains
-  entitlement. Without the URL-type registration iOS will not deliver
-  `realityportal://` URLs to `onOpenURL`, so deep-linking cannot fire at
-  runtime. Fix is owned by `pm-mobile` (touches `mobile-native/**`) — see
-  Agent Log. The scheme name is pinned in `Configuration.urlScheme`
-  (`"realityportal"`) and by `testEnvironmentDeepLinkSchemeIsStable`.
+- [x] [m] **`CFBundleURLTypes` registered in `Info.plist` (GAP closed).** The
+  `realityportal` custom scheme is now declared in
+  `mobile-native/iosApp/iosApp/Resources/Info.plist` under `CFBundleURLTypes`
+  → `CFBundleURLSchemes` (`CFBundleURLName = three.two.bit.ppt.reality`, role
+  `Editor`), added in commit `db3ccf1` (2026-06-16). iOS now delivers
+  `realityportal://` URLs to `onOpenURL`, so the deep-link handler is live at
+  runtime, not dead. The registration is pinned by
+  `testInfoPlistRegistersDeepLinkScheme` (asserts the plist declares the scheme
+  and that it matches `Environment.urlScheme`), and the scheme value itself by
+  `testEnvironmentDeepLinkSchemeIsStable`.
+- [ ] [m] **Remaining: no `applinks:` associated-domains entitlement.**
+  Custom-scheme deep-linking works; `https://` universal links are parsed and
+  host-allow-listed in `DeepLinkHandler` but iOS will not route them until an
+  `applinks:` entitlement + AASA file are wired. Lower priority than the custom
+  scheme (push-notification deep links use the custom scheme). Owner
+  `pm-mobile` (`mobile-native/**`).
 
 ## States
 
@@ -108,13 +115,22 @@ are intentionally different and not yet reconciled.
   are shipped in source and covered by `iosAppTests/RealityPortalTests.swift`
   (`DeepLinkHandlerTests`, `NavigationStateRestorationServiceTests`,
   `AuthenticationTests` SSO-nonce suite). No new feature code was required.
-- One runtime gap found: the `realityportal` URL scheme is not declared in
-  `Info.plist` (`CFBundleURLTypes`) and there is no `applinks:` entitlement for
-  universal links. The deep-link handler is dead at runtime until that
-  registration is added under `mobile-native/**` (pm-mobile owner).
+- 2026-06-17 re-verification: the runtime GAP previously flagged below is now
+  **closed**. `Info.plist` declares the `realityportal` scheme under
+  `CFBundleURLTypes` (added 2026-06-16, commit `db3ccf1`), so custom-scheme
+  deep-linking is live, not dead. Pinned by the new
+  `testInfoPlistRegistersDeepLinkScheme`. Only the `applinks:` universal-link
+  entitlement remains outstanding (lower priority — push deep links use the
+  custom scheme).
+- Cross-platform scheme reconciliation is still intentionally deferred: Android
+  uses `reality://` (manifest + shared `DeepLinkRouter.SCHEME`), iOS uses
+  `realityportal://` (`Configuration.urlScheme` + plist). Both schemes are
+  pinned by tests on their own platform; a single deep link still cannot target
+  both apps. Tracked, not blocking.
 
 ## Agent Log
 
 <!-- newest entries on top -->
 
+- 2026-06-17 — agent: Re-verified deep-linking + URL-scheme handling for the Reality KMP/SwiftUI app (verify task, static — KMP/Xcode not buildable offline). Confirmed: Android registers `reality://` (AndroidManifest intent-filters for sso/listing/search/favorites/inquiries) routed through shared `DeepLinkRouter` (`MainActivity.handleDeepLink` + `RealityNavHost`); iOS registers `realityportal://` via `Info.plist` `CFBundleURLTypes` (the GAP flagged on 2026-06-10 is now CLOSED — added 2026-06-16 in `db3ccf1`) routed through `DeepLinkHandler` + `onOpenURL`. Added test evidence `testInfoPlistRegistersDeepLinkScheme` (RealityPortalTests.swift) pinning the plist registration against `Environment.urlScheme`. Updated checklist + Notes. Remaining outstanding: `applinks:` universal-link entitlement (iOS) and the intentional Android/iOS scheme divergence (`reality` vs `realityportal`) — both tracked, neither blocking.
 - 2026-06-10 — agent: Coverage 82-2 — verified AC-4 (nav state preservation), URL-scheme deep-linking, and AC-5 (auth guard) against mobile-native iOS source. All three implemented + unit-tested; no feature code needed. Added this infra screen-map. Flagged GAP: `Info.plist` is missing the `realityportal` `CFBundleURLTypes` registration and `applinks:` entitlement (pm-mobile owner) — handler logic is complete but the OS never delivers the URL until that is added.
