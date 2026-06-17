@@ -27,7 +27,6 @@
 //! AFTER release so pool connections are not pinned on network calls.
 
 use api_core::extractors::RlsConnection;
-use api_core::TenantExtractor;
 use axum::{
     body::Body,
     extract::{Path, Query, State},
