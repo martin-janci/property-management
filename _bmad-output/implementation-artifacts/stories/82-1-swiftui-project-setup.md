@@ -2,6 +2,14 @@
 
 Status: pending
 
+> **Note (2026-06-17):** This is a *legacy build* story. It is **implemented in
+> code** — see `mobile-native/iosApp/` and `docs/superpowers/plans/gap-82-1-swiftui-audit.md`.
+> The `Status: pending` above is stale. Note also that its story number (82.1)
+> collides with a *different* story in `_bmad-output/epics-007.md` Epic 82
+> ("Remove Broken Direct Login Form"). The authoritative Epic 82 is the
+> `epics-007.md` "Mobile Native Completion" epic. Reconciliation:
+> `docs/superpowers/plans/epic-82-story-mapping.md`.
+
 ## Story
 
 As a **mobile developer**,
