@@ -551,12 +551,23 @@ impl DisputeRepository {
         Ok(evidence)
     }
 
-    pub async fn add_evidence(&self, req: AddEvidence) -> Result<DisputeEvidence, AppError> {
+    /// Add evidence to a dispute.
+    ///
+    /// `org_id` gates the INSERT via an EXISTS check on the parent `disputes` row
+    /// so a caller cannot attach evidence to another org's dispute (IDOR, BIT-73).
+    pub async fn add_evidence(
+        &self,
+        org_id: Uuid,
+        req: AddEvidence,
+    ) -> Result<DisputeEvidence, AppError> {
         let evidence = sqlx::query_as::<_, DisputeEvidence>(
             r#"
             INSERT INTO dispute_evidence (dispute_id, uploaded_by, filename, original_filename,
                                           content_type, size_bytes, storage_url, description)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            SELECT $1, $2, $3, $4, $5, $6, $7, $8
+            WHERE EXISTS (
+                SELECT 1 FROM disputes WHERE id = $1 AND organization_id = $9
+            )
             RETURNING id, dispute_id, uploaded_by, filename, original_filename, content_type,
                       size_bytes, storage_url, description, created_at
             "#,
@@ -569,9 +580,16 @@ impl DisputeRepository {
         .bind(req.size_bytes)
         .bind(&req.storage_url)
         .bind(&req.description)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        .map_err(|e| {
+            if matches!(e, sqlx::Error::RowNotFound) {
+                AppError::NotFound("Dispute not found".into())
+            } else {
+                AppError::Database(e.to_string())
+            }
+        })?;
 
         self.record_activity(
             req.dispute_id,

@@ -652,3 +652,129 @@ async fn appeal_cross_org_mutations_rejected(pool: PgPool) {
         "owner decide reduces the fine by the adjustment"
     );
 }
+
+// ---------------------------------------------------------------------------
+// add_evidence / add_comment — cross-org IDOR (BIT-73)
+// ---------------------------------------------------------------------------
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_evidence_cross_org_rejected(pool: PgPool) {
+    let repo = ViolationRepository::new(pool.clone());
+    let org_a = seed_org(&pool, "ev-add-a").await;
+    let org_b = seed_org(&pool, "ev-add-b").await;
+    let user_a = seed_user(&pool, "ev-add-a@violations-idor.test").await;
+    let user_b = seed_user(&pool, "ev-add-b@violations-idor.test").await;
+
+    let violation = repo
+        .create_violation(org_a, new_violation_req(), user_a)
+        .await
+        .expect("create violation");
+
+    // Org B cannot attach evidence to Org A's violation.
+    let res = repo
+        .add_evidence(
+            violation.id,
+            org_b,
+            CreateViolationEvidence {
+                file_name: "hack.jpg".into(),
+                file_type: "image/jpeg".into(),
+                file_size: Some(512),
+                storage_path: Some("s3://evil/hack.jpg".into()),
+                description: None,
+                captured_at: None,
+            },
+            user_b,
+        )
+        .await;
+    assert!(
+        matches!(res, Err(sqlx::Error::RowNotFound)),
+        "Org B must not add evidence to Org A's violation, got {res:?}"
+    );
+
+    // No evidence row was inserted.
+    let ev_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM violation_evidence WHERE violation_id = $1")
+            .bind(violation.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(ev_count, 0, "no evidence must be persisted after cross-org attempt");
+
+    // Legitimate owner can still add evidence.
+    let ev = repo
+        .add_evidence(
+            violation.id,
+            org_a,
+            CreateViolationEvidence {
+                file_name: "real.jpg".into(),
+                file_type: "image/jpeg".into(),
+                file_size: Some(1024),
+                storage_path: Some("s3://real/real.jpg".into()),
+                description: None,
+                captured_at: None,
+            },
+            user_a,
+        )
+        .await
+        .expect("owner add_evidence");
+    assert_eq!(ev.violation_id, violation.id);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn add_comment_cross_org_rejected(pool: PgPool) {
+    use db::models::violations::CreateViolationComment;
+
+    let repo = ViolationRepository::new(pool.clone());
+    let org_a = seed_org(&pool, "cmt-add-a").await;
+    let org_b = seed_org(&pool, "cmt-add-b").await;
+    let user_a = seed_user(&pool, "cmt-add-a@violations-idor.test").await;
+    let user_b = seed_user(&pool, "cmt-add-b@violations-idor.test").await;
+
+    let violation = repo
+        .create_violation(org_a, new_violation_req(), user_a)
+        .await
+        .expect("create violation");
+
+    // Org B cannot post a comment on Org A's violation.
+    let res = repo
+        .add_comment(
+            violation.id,
+            org_b,
+            CreateViolationComment {
+                comment_type: "note".into(),
+                content: "Hijacked comment".into(),
+                is_internal: Some(false),
+            },
+            user_b,
+        )
+        .await;
+    assert!(
+        matches!(res, Err(sqlx::Error::RowNotFound)),
+        "Org B must not add a comment to Org A's violation, got {res:?}"
+    );
+
+    // No comment row was inserted.
+    let cmt_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM violation_comments WHERE violation_id = $1")
+            .bind(violation.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(cmt_count, 0, "no comment must be persisted after cross-org attempt");
+
+    // Legitimate owner can still comment.
+    let cmt = repo
+        .add_comment(
+            violation.id,
+            org_a,
+            CreateViolationComment {
+                comment_type: "note".into(),
+                content: "Legitimate note".into(),
+                is_internal: Some(false),
+            },
+            user_a,
+        )
+        .await
+        .expect("owner add_comment");
+    assert_eq!(cmt.violation_id, violation.id);
+}

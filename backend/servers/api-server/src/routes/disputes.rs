@@ -773,21 +773,34 @@ async fn add_evidence(
     Path(id): Path<Uuid>,
     Json(data): Json<AddEvidenceRequest>,
 ) -> Result<(StatusCode, Json<DisputeEvidence>), (StatusCode, Json<ErrorResponse>)> {
+    let org_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
+
     let mut evidence = data.data;
     evidence.dispute_id = id;
     evidence.uploaded_by = user.user_id;
 
     state
         .dispute_repo
-        .add_evidence(evidence)
+        .add_evidence(org_id, evidence)
         .await
         .map(|e| (StatusCode::CREATED, Json(e)))
         .map_err(|e| {
             tracing::error!("Failed to add evidence: {:?}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to add evidence")),
-            )
+            match e {
+                common::errors::AppError::NotFound(_) => (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Dispute not found")),
+                ),
+                _ => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Failed to add evidence")),
+                ),
+            }
         })
 }
 
