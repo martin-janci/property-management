@@ -552,7 +552,12 @@ async fn mark_invitation_viewed_is_idempotent(pool: PgPool) {
 
     // First view — marks viewed_at
     let resp1 = app.execute(app.post(&uri).bearer(&token_a).build()).await;
-    assert_eq!(resp1.status, StatusCode::OK, "first view must succeed: {}", resp1.text());
+    assert_eq!(
+        resp1.status,
+        StatusCode::OK,
+        "first view must succeed: {}",
+        resp1.text()
+    );
 
     // Second view — already viewed, must still return 200 (idempotent)
     let resp2 = app.execute(app.post(&uri).bearer(&token_a).build()).await;

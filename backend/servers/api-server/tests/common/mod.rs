@@ -232,13 +232,13 @@ impl TestApp {
 /// token and the `X-Tenant-ID` header, preventing "forgotten header" bugs in
 /// RLS-aware integration tests.
 pub struct AuthenticatedSession<'a> {
-    app: 'a TestApp,
+    app: &'a TestApp,
     token: String,
     org_id: Uuid,
 }
 
 impl<'a> AuthenticatedSession<'a> {
-    pub fn new(app: 'a TestApp, token: String, org_id: Uuid) -> Self {
+    pub fn new(app: &'a TestApp, token: String, org_id: Uuid) -> Self {
         Self { app, token, org_id }
     }
 

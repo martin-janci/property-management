@@ -339,7 +339,8 @@ async fn service_history_force_rls_blocks_cross_tenant(pool: PgPool) {
     // One COMPLETED work order in org A, keyed by both the equipment and the
     // building — it must surface in both service-history queries for org A and
     // in NEITHER for org B.
-    let _wo_a = seed_completed_work_order(&pool, org_a, bldg_a, equip_a, user_a, "alpha-service").await;
+    let _wo_a =
+        seed_completed_work_order(&pool, org_a, bldg_a, equip_a, user_a, "alpha-service").await;
 
     let repo = WorkOrderRepository::new(pool.clone());
 
