@@ -28,7 +28,6 @@
 #[allow(dead_code)]
 mod common;
 
-use common::seed_membership;
 use db::repositories::{FaultRepository, MembershipRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -108,6 +107,25 @@ async fn seed_fault_with_key(pool: &PgPool, org_id: Uuid, key: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed fault with idempotency key")
+}
+
+/// Insert a row into `user_memberships` (the table `is_manager_in_org` queries).
+/// `common::seed_membership` writes to `organization_members` (legacy table),
+/// which is not live-synced to `user_memberships` after migration backfill —
+/// so tests that exercise `MembershipRepository::is_manager_in_org` must seed
+/// `user_memberships` directly.
+async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
+    sqlx::query(
+        r#"INSERT INTO user_memberships (user_id, organization_id, role)
+           VALUES ($1, $2, $3)
+           ON CONFLICT DO NOTHING"#,
+    )
+    .bind(user_id)
+    .bind(org_id)
+    .bind(role)
+    .execute(pool)
+    .await
+    .expect("seed user_membership");
 }
 
 // ---------------------------------------------------------------------------
