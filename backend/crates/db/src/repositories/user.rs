@@ -535,7 +535,7 @@ impl UserRepository {
                 u.profile_visibility,
                 u.show_contact_info,
                 un.id as unit_id,
-                un.unit_number,
+                un.designation AS unit_number,
                 b.name as building_name,
                 ur.resident_type
             FROM unit_residents ur
@@ -547,7 +547,7 @@ impl UserRepository {
               AND NOT (ur.unit_id = ANY($3))
               AND ur.end_date IS NULL
               AND u.status = 'active'
-            ORDER BY un.unit_number, u.name
+            ORDER BY un.designation, u.name
             "#,
         )
         .bind(building_id)
