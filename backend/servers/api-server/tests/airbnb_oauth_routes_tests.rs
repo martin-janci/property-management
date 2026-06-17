@@ -626,7 +626,7 @@ async fn airbnb_token_exchange_rejects_non_manager_member(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "mgr-gate-a").await;
     let user_id = seed_user(&pool, "non-manager-a@airbnb-routes.test").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "member").await;
 
     // Mint a token with a non-manager role. Membership is valid but
     // verify_manager_role must still reject with 403.
