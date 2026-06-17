@@ -18,23 +18,6 @@ use rust_decimal::Decimal;
 use sqlx::Error as SqlxError;
 use uuid::Uuid;
 
-/// Explicit column projection for `rental_bookings` reads/returns.
-///
-/// `platform` and `status` are PG enums (`rental_platform`, `rental_booking_status`)
-/// but `RentalBooking` decodes them as `String`. A bare `SELECT *` / `RETURNING *`
-/// hands sqlx the raw enum OID and fails to decode (Postgres 42804) - a failure
-/// masked under FORCE RLS (PAP-158, GH #1363). Casting both enum columns to
-/// `text` keeps the decode aligned with the model; every other column is listed
-/// explicitly so the projection is stable and order-independent.
-const BOOKING_COLUMNS: &str = "id, organization_id, unit_id, connection_id, \
-    platform::text AS platform, external_booking_id, external_booking_url, \
-    guest_name, guest_email, guest_phone, guest_count, \
-    check_in, check_out, check_in_time, check_out_time, \
-    total_amount, currency, platform_fee, cleaning_fee, \
-    status::text AS status, cancelled_at, cancellation_reason, \
-    guest_notes, internal_notes, synced_at, raw_data, \
-    created_at, updated_at";
-
 /// Explicit column projection for `rental_platform_connections` reads/returns.
 ///
 /// `platform` is a PG enum (`rental_platform`) but `RentalPlatformConnection`
@@ -570,8 +553,9 @@ impl RentalRepository {
                 guest_notes, internal_notes, status
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-            RETURNING {BOOKING_COLUMNS}
-            "#
+            RETURNING {}
+            "#,
+            Self::BOOKING_COLUMNS
         )))
         .bind(org_id)
         .bind(data.unit_id)
@@ -709,8 +693,9 @@ impl RentalRepository {
                 internal_notes = COALESCE($13, internal_notes),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING {BOOKING_COLUMNS}
-            "#
+            RETURNING {}
+            "#,
+            Self::BOOKING_COLUMNS
         )))
         .bind(id)
         .bind(&data.guest_name)
@@ -775,8 +760,9 @@ impl RentalRepository {
                 internal_notes = COALESCE($13, internal_notes),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $14
-            RETURNING {BOOKING_COLUMNS}
-            "#
+            RETURNING {}
+            "#,
+            Self::BOOKING_COLUMNS
         )))
         .bind(id)
         .bind(&data.guest_name)
