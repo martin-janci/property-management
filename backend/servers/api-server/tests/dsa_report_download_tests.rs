@@ -96,6 +96,19 @@ async fn seed_user(pool: &PgPool) -> Uuid {
     .expect("seed user")
 }
 
+/// Seed a platform-kind user. `RequestPrincipal` reads `principal_kind` from
+/// the DB (not the JWT), so platform-gated routes require this.
+async fn seed_platform_user(pool: &PgPool) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+         VALUES ($1, 'x', 'DSA DL Platform', 'active', NOW(), 'platform') RETURNING id",
+    )
+    .bind(format!("{}@dsa-dl-platform.test", Uuid::new_v4()))
+    .fetch_one(pool)
+    .await
+    .expect("seed platform user")
+}
+
 /// Seed a DSA report with `report_file_path` set (simulates a published report).
 async fn seed_report_with_file(pool: &PgPool, user_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
@@ -215,7 +228,7 @@ async fn dsa_download_requires_platform_compliance_role(pool: PgPool) {
 async fn dsa_download_dereferences_to_presigner_not_self_ref(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool).await;
-    let user = seed_user(&pool).await;
+    let user = seed_platform_user(&pool).await;
     let report = seed_report_with_file(&pool, user).await;
 
     let token = mint_token(user, org, "platform_admin");
@@ -249,7 +262,7 @@ async fn dsa_download_dereferences_to_presigner_not_self_ref(pool: PgPool) {
 async fn dsa_download_no_file_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool).await;
-    let user = seed_user(&pool).await;
+    let user = seed_platform_user(&pool).await;
     let report = seed_report_no_file(&pool, user).await;
 
     let token = mint_token(user, org, "platform_admin");
@@ -270,7 +283,7 @@ async fn dsa_download_no_file_returns_404(pool: PgPool) {
 async fn dsa_download_unknown_report_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org = seed_org(&pool).await;
-    let user = seed_user(&pool).await;
+    let user = seed_platform_user(&pool).await;
 
     let token = mint_token(user, org, "platform_admin");
     let resp = app.execute(get_download(Uuid::new_v4(), org, &token)).await;
