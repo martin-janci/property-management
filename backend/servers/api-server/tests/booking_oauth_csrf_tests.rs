@@ -140,12 +140,18 @@ fn authed_get(uri: &str, token: &str) -> Request<Body> {
         .unwrap()
 }
 
-fn authed_post(uri: &str, token: &str, body: serde_json::Value) -> Request<Body> {
+fn authed_post_with_tenant(
+    uri: &str,
+    token: &str,
+    tenant_id: Uuid,
+    body: serde_json::Value,
+) -> Request<Body> {
     Request::builder()
         .method(Method::POST)
         .uri(uri)
         .header(header::AUTHORIZATION, format!("Bearer {token}"))
         .header(header::CONTENT_TYPE, "application/json")
+        .header("X-Tenant-ID", tenant_id.to_string())
         .body(Body::from(body.to_string()))
         .unwrap()
 }
@@ -208,9 +214,10 @@ async fn booking_token_exchange_rejects_empty_code(pool: PgPool) {
     let token = mint_token(user_id, org_id);
 
     let resp = app
-        .execute(authed_post(
+        .execute(authed_post_with_tenant(
             &booking_exchange_uri(org_id),
             &token,
+            org_id,
             json!({"code": ""}),
         ))
         .await;
@@ -241,9 +248,10 @@ async fn booking_token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
     let token_b = mint_token(user_b, org_b);
 
     let resp = app
-        .execute(authed_post(
+        .execute(authed_post_with_tenant(
             &booking_exchange_uri(org_a),
             &token_b,
+            org_b,
             json!({"code": "some-code"}),
         ))
         .await;
@@ -268,9 +276,10 @@ async fn booking_token_exchange_returns_503_when_not_configured(pool: PgPool) {
     let token = mint_token(user_id, org_id);
 
     let resp = app
-        .execute(authed_post(
+        .execute(authed_post_with_tenant(
             &booking_exchange_uri(org_id),
             &token,
+            org_id,
             json!({"code": "abc123"}),
         ))
         .await;

@@ -131,12 +131,18 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
 // Request helpers
 // ---------------------------------------------------------------------------
 
-fn authed_post(uri: &str, token: &str, body: serde_json::Value) -> Request<Body> {
+fn authed_post_with_tenant(
+    uri: &str,
+    token: &str,
+    tenant_id: Uuid,
+    body: serde_json::Value,
+) -> Request<Body> {
     Request::builder()
         .method(Method::POST)
         .uri(uri)
         .header(header::AUTHORIZATION, format!("Bearer {token}"))
         .header(header::CONTENT_TYPE, "application/json")
+        .header("X-Tenant-ID", tenant_id.to_string())
         .body(Body::from(body.to_string()))
         .unwrap()
 }
@@ -195,9 +201,10 @@ async fn token_exchange_rejects_empty_code(pool: PgPool) {
     seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
     let resp = app
-        .execute(authed_post(
+        .execute(authed_post_with_tenant(
             &token_exchange_uri(org_id),
             &token,
+            org_id,
             json!({"code": ""}),
         ))
         .await;
@@ -228,9 +235,10 @@ async fn token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
 
     let token_b = mint_token(user_b, org_b);
     let resp = app
-        .execute(authed_post(
+        .execute(authed_post_with_tenant(
             &token_exchange_uri(org_a),
             &token_b,
+            org_b,
             json!({"code": "some-code"}),
         ))
         .await;
@@ -256,9 +264,10 @@ async fn token_exchange_returns_503_when_not_configured(pool: PgPool) {
     seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_token(user_id, org_id);
     let resp = app
-        .execute(authed_post(
+        .execute(authed_post_with_tenant(
             &token_exchange_uri(org_id),
             &token,
+            org_id,
             json!({"code": "abc123"}),
         ))
         .await;
@@ -360,5 +369,69 @@ async fn secure_booking_connect_requires_auth(pool: PgPool) {
         resp.status,
         StatusCode::OK,
         "anonymous Booking connect must never succeed (legacy unauthenticated behaviour)"
+    );
+}
+
+// ===========================================================================
+// Manager-role gate — BIT-85
+// ===========================================================================
+
+/// A non-manager org member (role = "tenant" in JWT) must be rejected with 403
+/// when calling the Booking.com token-exchange endpoint.
+/// Binding an org-wide OTA integration is a manager-level action.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_rejects_non_manager_member(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "mgr-gate-b").await;
+    let user_id = seed_user(&pool, "non-manager-b@booking-routes.test").await;
+    seed_membership(&pool, org_id, user_id).await;
+
+    // Mint a token with a non-manager role (tenant). Org membership is valid,
+    // but verify_manager_role must fire and return 403.
+    let now = chrono::Utc::now();
+    use chrono::Duration;
+    use jsonwebtoken::{encode, EncodingKey, Header};
+    #[derive(serde::Serialize)]
+    struct Claims {
+        sub: Uuid,
+        exp: i64,
+        iat: i64,
+        token_type: String,
+        tenant_id: Option<Uuid>,
+        role: Option<String>,
+        email: String,
+        name: String,
+    }
+    let claims = Claims {
+        sub: user_id,
+        iat: now.timestamp(),
+        exp: (now + Duration::hours(1)).timestamp(),
+        token_type: "access".to_string(),
+        tenant_id: Some(org_id),
+        role: Some("tenant".to_string()),
+        email: "non-manager-b@booking-routes.test".to_string(),
+        name: "Non-Manager Test".to_string(),
+    };
+    let non_manager_token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
+    )
+    .expect("mint non-manager token");
+
+    let resp = app
+        .execute(authed_post_with_tenant(
+            &token_exchange_uri(org_id),
+            &non_manager_token,
+            org_id,
+            json!({"code": "valid-looking-code"}),
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "non-manager member must be rejected with 403; got {}: {}",
+        resp.status,
+        resp.text()
     );
 }
