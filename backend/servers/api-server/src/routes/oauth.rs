@@ -324,14 +324,19 @@ pub async fn token(
             .validate_client_credentials(client_id, client_secret)
             .await
             .map_err(|e| (StatusCode::UNAUTHORIZED, Json(e.into())))?;
-    } else if let Some(client_secret) = request.client_secret.as_ref() {
-        // Public client that supplied a secret anyway — still validate it
-        // so a misconfigured public client surfaces the mismatch.
-        state
-            .oauth_service
-            .validate_client_credentials(client_id, client_secret)
-            .await
-            .map_err(|e| (StatusCode::UNAUTHORIZED, Json(e.into())))?;
+    } else if request.client_secret.is_some() {
+        // Public client (RFC 6749 §2.3.1 has no credentials) that supplied a
+        // client_secret anyway → client-authentication failure. Reject with
+        // `invalid_client` directly: a public client has no usable secret hash,
+        // so routing into `validate_client_credentials` would `verify_password`
+        // against an empty hash and surface `InternalError`/`server_error`
+        // instead of the correct `invalid_client`.
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(OAuthError::invalid_client(
+                "public client must not authenticate with a client_secret",
+            )),
+        ));
     }
 
     // Phase 6 C17 + review R5: audit the principal_kind rejection as a real
