@@ -57,7 +57,7 @@ development_status:
   6-5-direct-messaging: ready-for-dev
   6-6-neighbor-information: done
   # Epic 7A: Basic Document Management
-  7a-1-document-upload-metadata: ready-for-dev
+  7a-1-document-upload-metadata: done  # Verified 2026-06-17 (verify-document-upload-metadata): POST /api/v1/documents/upload present in documents/core.rs (multipart parse of file/title/description/category/folder_id, title/desc length + size + MIME allow-list + category validation, S3 upload, RLS-aware create_rls). Metadata persistence + RLS isolation covered by document_upload_tests.rs (T1-T15): auth guard, missing-file/MIME/category rejects + orphan guards, DB-row persistence (T5/T6/T7), S3 happy (wiremock T14)/failure-no-orphan (T8), 50 MiB boundary (T12/T13), cross-tenant (T9) + non-member (T10) RLS reject, AC-2/AC-3 error bodies, and new end-to-end metadata round-trip through GET /{id} (T15). Stale 'upload route missing' verify report superseded — route + tests are on dev.
   7a-2-folder-organization: review  # CI test job red (document_folder_tests FK/isolation fix in PR #1316 round 1); reverted from done pending green CI
   7a-3-permission-based-access: ready-for-dev
   7a-4-document-download-preview: ready-for-dev

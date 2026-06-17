@@ -830,7 +830,7 @@ impl DocumentRepository {
                 OR (access_scope = 'users' AND access_target_ids ? $2::text)
               )
               AND ($6::uuid IS NULL OR folder_id = $6)
-              AND ($7::text IS NULL OR category = $7)
+              AND ($7::text IS NULL OR category = $7::document_category)
               AND ($8::text IS NULL OR title ILIKE '%' || $8 || '%')
             "#,
         )
