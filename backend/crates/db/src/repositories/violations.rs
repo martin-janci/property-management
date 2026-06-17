@@ -408,10 +408,15 @@ impl ViolationRepository {
     // EVIDENCE
     // =========================================================================
 
-    /// Add evidence to a violation.
+    /// Add evidence to a violation (tenant-scoped via parent violation).
+    ///
+    /// The INSERT is gated on the parent `violations` row matching `org_id`, so
+    /// an Org B caller cannot attach evidence to an Org A violation. If no parent
+    /// row matches, no row is inserted and `RowNotFound` is returned.
     pub async fn add_evidence(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
         req: CreateViolationEvidence,
         uploaded_by: Uuid,
     ) -> Result<ViolationEvidence, sqlx::Error> {
@@ -421,11 +426,14 @@ impl ViolationRepository {
                 violation_id, file_name, file_type, file_size, storage_path,
                 description, captured_at, uploaded_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            SELECT v.id, $3, $4, $5, $6, $7, $8, $9
+            FROM violations v
+            WHERE v.id = $1 AND v.organization_id = $2
             RETURNING *
             "#,
         )
         .bind(violation_id)
+        .bind(org_id)
         .bind(&req.file_name)
         .bind(&req.file_type)
         .bind(req.file_size)
@@ -433,8 +441,9 @@ impl ViolationRepository {
         .bind(&req.description)
         .bind(req.captured_at)
         .bind(uploaded_by)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(sqlx::Error::RowNotFound)
     }
 
     /// List evidence for a violation.
@@ -636,18 +645,31 @@ impl ViolationRepository {
         let year = Utc::now().format("%Y");
         let appeal_number = format!("APP-{}-{:04}", year, count.0 + 1);
 
-        // Update violation status to disputed
-        sqlx::query("UPDATE violations SET status = 'disputed', updated_at = NOW() WHERE id = $1")
+        // Update violation status to disputed — org-scoped. If the violation
+        // does not belong to this org, no row is updated; bail out *before*
+        // inserting the appeal so an Org B caller cannot cascade onto Org A.
+        let vio_updated = sqlx::query(
+            "UPDATE violations SET status = 'disputed', updated_at = NOW() WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(violation_id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await?;
+        if vio_updated.rows_affected() == 0 {
+            return Err(sqlx::Error::RowNotFound);
+        }
+
+        // Update enforcement action status if specified — scoped on org and on
+        // the parent violation so the cascade can only touch this org's action.
+        if let Some(action_id) = req.enforcement_action_id {
+            sqlx::query(
+                "UPDATE enforcement_actions SET status = 'appealed', updated_at = NOW() WHERE id = $1 AND organization_id = $2 AND violation_id = $3",
+            )
+            .bind(action_id)
+            .bind(org_id)
             .bind(violation_id)
             .execute(&self.pool)
             .await?;
-
-        // Update enforcement action status if specified
-        if let Some(action_id) = req.enforcement_action_id {
-            sqlx::query("UPDATE enforcement_actions SET status = 'appealed', updated_at = NOW() WHERE id = $1")
-                .bind(action_id)
-                .execute(&self.pool)
-                .await?;
         }
 
         sqlx::query_as::<_, ViolationAppeal>(
@@ -842,27 +864,37 @@ impl ViolationRepository {
     // COMMENTS
     // =========================================================================
 
-    /// Add a comment to a violation.
+    /// Add a comment to a violation (tenant-scoped via parent violation).
+    ///
+    /// The INSERT is gated on the parent `violations` row matching `org_id`, so
+    /// an Org B caller cannot inject a comment (including `is_internal` notes)
+    /// onto an Org A violation. If no parent row matches, no row is inserted and
+    /// `RowNotFound` is returned.
     pub async fn add_comment(
         &self,
         violation_id: Uuid,
+        org_id: Uuid,
         req: CreateViolationComment,
         author_id: Uuid,
     ) -> Result<ViolationComment, sqlx::Error> {
         sqlx::query_as::<_, ViolationComment>(
             r#"
             INSERT INTO violation_comments (violation_id, comment_type, content, is_internal, author_id)
-            VALUES ($1, $2, $3, $4, $5)
+            SELECT v.id, $3, $4, $5, $6
+            FROM violations v
+            WHERE v.id = $1 AND v.organization_id = $2
             RETURNING *
             "#,
         )
         .bind(violation_id)
+        .bind(org_id)
         .bind(&req.comment_type)
         .bind(&req.content)
         .bind(req.is_internal.unwrap_or(false))
         .bind(author_id)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(sqlx::Error::RowNotFound)
     }
 
     /// List comments for a violation.

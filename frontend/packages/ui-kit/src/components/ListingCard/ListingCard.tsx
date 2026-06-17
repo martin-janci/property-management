@@ -107,7 +107,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   };
 
   return (
-    <article
+    <div
       className={[styles.card, className].filter(Boolean).join(' ')}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
@@ -160,7 +160,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
           </div>
         )}
       </div>
-    </article>
+    </div>
   );
 };
 

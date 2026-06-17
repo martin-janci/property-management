@@ -16,9 +16,10 @@ You are the PR follow-up driver. Invoke
 
 0. **Workspace isolation (MANDATORY — issue #7).** When step 2 below
    spawns the original specialist via Task, the brief you pass that
-   specialist MUST include the standard worktree preamble from the
-   "Subagent workspace isolation" section above (export
-   `TASK_ID=<task_id>`, `BRANCH=<row.branch>`). The followup script
+   specialist MUST include the standard worktree preamble (the "Subagent
+   workspace isolation" preamble; canonical source: the "Subagent workspace
+   isolation" section of `.research/dispatcher-prompt.md`) — export
+   `TASK_ID=<task_id>`, `BRANCH=<row.branch>`. The followup script
    itself runs read-only `gh` calls and is safe in the dispatcher's
    tree.
 1. Run `bash .claude/skills/ppt-pr-followup/scripts/dispatcher-followup.sh --pr <n>`.

@@ -21,9 +21,9 @@
 use chrono::Utc;
 use db::models::violations::{
     AppealStatus, CreateCommunityRule, CreateEnforcementAction, CreateViolation,
-    CreateViolationAppeal, CreateViolationEvidence, EnforcementActionType, RecordFinePayment,
-    UpdateCommunityRule, UpdateEnforcementAction, UpdateViolation, UpdateViolationAppeal,
-    ViolationCategory, ViolationStatus,
+    CreateViolationAppeal, CreateViolationComment, CreateViolationEvidence, EnforcementActionType,
+    RecordFinePayment, UpdateCommunityRule, UpdateEnforcementAction, UpdateViolation,
+    UpdateViolationAppeal, ViolationCategory, ViolationStatus,
 };
 use db::repositories::ViolationRepository;
 use rust_decimal::Decimal;
@@ -209,6 +209,7 @@ async fn violation_cross_org_mutations_rejected(pool: PgPool) {
     let evidence = repo
         .add_evidence(
             violation.id,
+            org_a,
             CreateViolationEvidence {
                 file_name: "photo.jpg".into(),
                 file_type: "image/jpeg".into(),
@@ -221,6 +222,96 @@ async fn violation_cross_org_mutations_rejected(pool: PgPool) {
         )
         .await
         .expect("add evidence");
+
+    // add_evidence cross-org → RowNotFound, and no evidence row is inserted.
+    let res = repo
+        .add_evidence(
+            violation.id,
+            org_b,
+            CreateViolationEvidence {
+                file_name: "inject.jpg".into(),
+                file_type: "image/jpeg".into(),
+                file_size: Some(2048),
+                storage_path: Some("s3://evidence/inject.jpg".into()),
+                description: Some("cross-tenant".into()),
+                captured_at: None,
+            },
+            user_b,
+        )
+        .await;
+    assert!(
+        matches!(res, Err(sqlx::Error::RowNotFound)),
+        "Org B must not add evidence to Org A's violation, got {res:?}"
+    );
+    let injected_evidence: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM violation_evidence WHERE violation_id = $1 AND file_name = 'inject.jpg'",
+    )
+    .bind(violation.id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        injected_evidence, 0,
+        "no evidence row may be inserted cross-tenant"
+    );
+
+    // add_comment cross-org → RowNotFound, and no comment row is inserted
+    // (is_internal comments are a cross-tenant injection vector).
+    let res = repo
+        .add_comment(
+            violation.id,
+            org_b,
+            CreateViolationComment {
+                comment_type: "general".into(),
+                content: "internal cross-tenant note".into(),
+                is_internal: Some(true),
+            },
+            user_b,
+        )
+        .await;
+    assert!(
+        matches!(res, Err(sqlx::Error::RowNotFound)),
+        "Org B must not add a comment to Org A's violation, got {res:?}"
+    );
+    let injected_comments: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM violation_comments WHERE violation_id = $1")
+            .bind(violation.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        injected_comments, 0,
+        "no comment row may be inserted cross-tenant"
+    );
+
+    // The legitimate owner can still add evidence and a comment.
+    repo.add_evidence(
+        violation.id,
+        org_a,
+        CreateViolationEvidence {
+            file_name: "owner.jpg".into(),
+            file_type: "image/jpeg".into(),
+            file_size: Some(512),
+            storage_path: Some("s3://evidence/owner.jpg".into()),
+            description: None,
+            captured_at: None,
+        },
+        user_a,
+    )
+    .await
+    .expect("owner add evidence");
+    repo.add_comment(
+        violation.id,
+        org_a,
+        CreateViolationComment {
+            comment_type: "general".into(),
+            content: "owner note".into(),
+            is_internal: Some(false),
+        },
+        user_a,
+    )
+    .await
+    .expect("owner add comment");
 
     // update_violation cross-org → RowNotFound.
     let res = repo
@@ -399,6 +490,60 @@ async fn appeal_cross_org_mutations_rejected(pool: PgPool) {
         .create_enforcement_action(violation.id, org_a, new_action_req(), user_a)
         .await
         .expect("create action");
+
+    // create_appeal cross-org → RowNotFound, and the cascade must NOT fire:
+    // no appeal row inserted, the violation must stay 'reported', and the
+    // enforcement action must stay 'pending'.
+    let res = repo
+        .create_appeal(
+            violation.id,
+            org_b,
+            CreateViolationAppeal {
+                enforcement_action_id: Some(action.id),
+                reason: "Hijacked appeal".into(),
+                requested_outcome: None,
+                supporting_evidence: None,
+            },
+            user_a,
+        )
+        .await;
+    assert!(
+        matches!(res, Err(sqlx::Error::RowNotFound)),
+        "Org B must not create an appeal against Org A's violation, got {res:?}"
+    );
+    let appeals_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM violation_appeals WHERE violation_id = $1")
+            .bind(violation.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        appeals_count, 0,
+        "no appeal row may be inserted cross-tenant"
+    );
+    let vio_status: ViolationStatus =
+        sqlx::query_scalar("SELECT status FROM violations WHERE id = $1")
+            .bind(violation.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        vio_status,
+        ViolationStatus::Reported,
+        "cross-tenant create_appeal must not flip the violation to disputed"
+    );
+    let action_status: db::models::violations::EnforcementStatus =
+        sqlx::query_scalar("SELECT status FROM enforcement_actions WHERE id = $1")
+            .bind(action.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        action_status,
+        db::models::violations::EnforcementStatus::Pending,
+        "cross-tenant create_appeal must not mark the action appealed"
+    );
+
     let appeal = repo
         .create_appeal(
             violation.id,

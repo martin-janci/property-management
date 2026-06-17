@@ -18,7 +18,8 @@
     "lint": "biome lint .",
     "generate-api": "pnpm --filter @ppt/api-client generate",
     "generate-reality-api": "pnpm --filter @ppt/reality-api-client generate",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "test:e2e": "pnpm -r --filter './apps/*' e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",

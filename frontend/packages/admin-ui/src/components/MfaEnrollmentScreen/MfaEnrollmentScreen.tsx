@@ -152,6 +152,7 @@ export function MfaEnrollmentScreen({
   const codeRef = useRef<HTMLInputElement | null>(null);
 
   // Kick off enrollment on mount.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only — onStart is a stable callback prop; re-triggering on prop change would restart enrollment unexpectedly
   useEffect(() => {
     let cancelled = false;
     setStep('loading');
@@ -171,8 +172,7 @@ export function MfaEnrollmentScreen({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onStart]);
+  }, []);
 
   // Re-trigger onStart from the UI when the initial attempt failed and we
   // landed in the scan step with no enrollData. Without this the user has

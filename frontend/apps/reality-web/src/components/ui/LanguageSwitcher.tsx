@@ -90,9 +90,6 @@ export function LanguageSwitcher() {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-    // choose isn't in deps because the underlying functions (router,
-    // pathname) are referentially-stable from next-intl across renders.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, choose]);
 
   const handleTriggerKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {

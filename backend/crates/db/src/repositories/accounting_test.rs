@@ -15,9 +15,12 @@ mod tests {
 
         // Setup: Create an organization
         let org_id: uuid::Uuid =
-            sqlx::query("INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id")
+            sqlx::query(
+                "INSERT INTO organizations (name, slug, contact_email) VALUES ($1, $2, $3) RETURNING id",
+            )
                 .bind("Test Org")
                 .bind("test-org")
+                .bind("acct-test@example.com")
                 .fetch_one(&pool)
                 .await
                 .unwrap()

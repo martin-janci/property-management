@@ -43,6 +43,16 @@ pub fn router() -> Router<AppState> {
         // Airbnb flow is served securely by Story 83.1
         // (`/api/v1/integrations/organizations/{org_id}/airbnb/callback`,
         // Redis single-use `oauth_state` + `verify_org_access`).
+        //
+        // The Booking.com connect flow is likewise served securely by the
+        // authenticated, org-scoped integrations routes
+        // (`POST /api/v1/integrations/organizations/{org_id}/booking/connect`,
+        // `connect_booking`, behind `verify_org_access`), with credential
+        // token-exchange at `.../booking/token/exchange` (#1374). The legacy
+        // basic-auth credential persistence is interim; the migration to a real
+        // Booking.com OAuth/Connectivity flow (real access+refresh token
+        // rotation, replacing the repurposed credential columns) is tracked in
+        // #1374 / BIT-27, not in this removed callback.
         // Bookings (Story 18.2)
         .route("/bookings", get(list_bookings))
         .route("/bookings", post(create_booking))

@@ -1,0 +1,82 @@
+# Backend fmt + clippy lint gate (pm-devops-pre-push-fmt-gate-scope).
+#
+# WHY this exists — the #1426 -> #1437 episode:
+#   PR #1431 (gh-1375) added a *local* pre-push git hook (scripts/pre-push) that
+#   runs `cargo fmt --all -- --check && cargo clippy --workspace -- -D warnings`.
+#   A local hook is bypassable with `git push --no-verify` and never runs on the
+#   merge commit, so a fmt/clippy-breaking change still reached `dev`. This
+#   workflow mirrors that exact gate as a CI status check so it CANNOT be
+#   bypassed — it runs on the GitHub side on every backend PR.
+#
+# HOW it differs from the two adjacent gates (do NOT duplicate them):
+#   - `backend-dev-push-gate.yml` (PR #1452) is the *compile* smoke gate
+#     (`cargo check --workspace --tests`) and fires on PUSH to `dev`. This is the
+#     complementary *lint* (fmt + clippy) gate, and it fires on PULL_REQUEST so
+#     the feedback lands before merge.
+#   - `backend.yml`'s heavyweight `check` job also runs fmt + clippy, but only as
+#     one step inside a long job that boots Docker-Postgres, installs ripgrep, and
+#     runs four RLS/WS enforcement scripts + `cargo check`. This gate is the
+#     minimal, fast, independently-named status check that mirrors the documented
+#     local pre-flight 1:1 — so a fmt/clippy break is surfaced in seconds as a
+#     dedicated red check rather than buried in (and blocked behind) that job.
+#
+# This keeps the existing local hook (scripts/pre-push) in place — the two are
+# defence-in-depth: the hook gives instant local feedback, this gate makes it
+# unbypassable on the merge path.
+name: Backend fmt + clippy gate
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      # Trigger when this workflow itself changes — otherwise edits here never
+      # fire CI and the PR sits without this status (same rationale as
+      # backend.yml's self-path trigger).
+      - '.github/workflows/backend-fmt-clippy-gate.yml'
+  # Lets maintainers re-run the lint gate on demand (e.g. after a toolchain bump)
+  # without waiting for the next backend/** PR.
+  workflow_dispatch:
+
+# A newer push to the PR branch makes an in-flight run obsolete — cancel it so
+# the gate always reflects the PR's current tip.
+concurrency:
+  group: backend-fmt-clippy-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt-clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.94.1
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      # Mirrors the local pre-push hook (scripts/pre-push) and the documented
+      # pre-flight in CLAUDE.md.
+      - name: Check formatting
+        working-directory: backend
+        run: cargo fmt --all -- --check
+
+      # `--all-targets` includes test/bench targets — the local hook does NOT
+      # pass it (one of the gaps that let lint debt through), so the CI gate is
+      # the stricter mirror and matches backend.yml's clippy step + the
+      # documented `cargo clippy --workspace --all-targets -- -D warnings`
+      # pre-flight. SQLX_OFFLINE keeps it DB-free and fast (the repo uses runtime
+      # sqlx queries — no DATABASE_URL needed for a pure lint).
+      - name: Clippy
+        working-directory: backend
+        env:
+          SQLX_OFFLINE: true
+        run: cargo clippy --workspace --all-targets -- -D warnings

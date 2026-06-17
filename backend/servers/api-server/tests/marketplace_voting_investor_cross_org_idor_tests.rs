@@ -523,6 +523,38 @@ async fn mark_invitation_viewed_for_other_provider_is_rejected(pool: PgPool) {
     assert_not_ok(resp.status, "mark_invitation_viewed cross-provider");
 }
 
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mark_invitation_viewed_is_idempotent(pool: PgPool) {
+    // #1301: a provider viewing its OWN invitation a second time must get 200
+    // (idempotent), not 404. The old `AND viewed_at IS NULL` guard returned no
+    // row on the repeat view, so the handler 404'd a legitimate re-view.
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "inv-idem-org").await;
+    let user_a = seed_user(&pool, "inv-idem-a@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "inv-idem-a").await;
+    let rfq = seed_rfq(&pool, org, user_a).await;
+    let invitation = seed_invitation(&pool, rfq, provider_a).await;
+
+    let token = mint_token(user_a, "inv-idem-a@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/invitations/{invitation}/view");
+
+    let first = app.execute(app.post(&uri).bearer(&token).build()).await;
+    assert_eq!(
+        first.status,
+        StatusCode::OK,
+        "first view must succeed: {}",
+        first.text()
+    );
+
+    let second = app.execute(app.post(&uri).bearer(&token).build()).await;
+    assert_eq!(
+        second.status,
+        StatusCode::OK,
+        "repeat view must be idempotent (200), not 404: {}",
+        second.text()
+    );
+}
+
 // ---------------------------------------------------------------------------
 // Marketplace — verification read (owner-or-platform-admin; PAP-140)
 //
