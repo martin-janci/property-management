@@ -46,7 +46,7 @@ pub async fn confirm_match(
 
     state
         .accounting_service
-        .confirm_match(&mut **rls, tenant_id, match_id, user_id)
+        .confirm_match(&mut rls, tenant_id, match_id, user_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to confirm match: {}", e);
@@ -75,7 +75,7 @@ pub async fn reject_match(
 
     state
         .accounting_service
-        .reject_match(&mut **rls, match_id, user_id)
+        .reject_match(&mut rls, match_id, user_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to reject match: {}", e);
