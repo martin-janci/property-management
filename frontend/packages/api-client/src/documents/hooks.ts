@@ -276,7 +276,7 @@ export function useRevokeDocumentShare(documentId: string) {
 /**
  * List the version history for a document (`GET /api/v1/documents/{id}/versions`).
  *
- * Wraps the generated `documentsApiListVersions`. The Bearer
+ * Wraps the generated `DocumentsService.documentsApiListVersions`. The Bearer
  * token is sourced from the registered token provider (same source the rest of
  * the client uses); the tenant is derived server-side from the JWT, so an empty
  * `xTenantId` is passed for the generated header parameter.

@@ -312,7 +312,7 @@ function AnnouncementCard({ announcement }: AnnouncementCardProps) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn more about this announcement
+          {`Learn more about ${announcement.title}`}
         </a>
       )}
     </div>

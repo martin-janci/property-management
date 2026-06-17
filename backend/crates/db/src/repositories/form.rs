@@ -1,6 +1,26 @@
 //! Form repository for Epic 54.
 //!
 //! Handles all database operations for forms, fields, and submissions.
+//!
+//! # RLS Integration (PAP-67 / PAP-76)
+//!
+//! Migration `00179` put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on the form tables (`forms`, `form_fields`,
+//! `form_submissions`, `form_downloads`). Under `FORCE` the api-server's owner
+//! connection is no longer exempt, so a query issued on a connection WITHOUT
+//! `app.current_org_id` set collapses to deny-all (own-org reads return empty,
+//! writes fail) — and on a BYPASSRLS/superuser pool the same query would run
+//! completely unscoped.
+//!
+//! Every method therefore takes an **executor whose connection already has RLS
+//! context set** (org + user GUCs) — in handlers this comes from the
+//! `RlsConnection` extractor via `&mut **rls.conn()`. Multi-statement methods
+//! (those that fire more than one query, e.g. a count plus a page fetch, or an
+//! INSERT that fans out into child-row INSERTs) take a `&mut PgConnection` so
+//! every statement runs on the *same* context-bearing connection. The
+//! repository holds **no pool**, so there is no way to issue a query that
+//! bypasses RLS. This mirrors the `work_order.rs` (PAP-179) /
+//! `budget.rs` (PAP-180) precedent.
 
 use crate::models::{
     form::FormSubmissionParams, form_status, submission_status, CreateForm, CreateFormField, Form,
@@ -8,19 +28,25 @@ use crate::models::{
     FormSubmissionWithDetails, FormSummary, FormWithDetails, ReviewSubmission, SubmissionListQuery,
     UpdateForm, UpdateFormField,
 };
-use sqlx::{PgPool, Row};
+use sqlx::{Executor, PgConnection, PgPool, Postgres, Row};
 use uuid::Uuid;
 
 /// Repository for form-related database operations.
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
 #[derive(Clone)]
-pub struct FormRepository {
-    pool: PgPool,
-}
+pub struct FormRepository;
 
 impl FormRepository {
     /// Creates a new form repository.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    ///
+    /// The pool argument is retained for construction-site compatibility with
+    /// the other repositories on `AppState`; this repo deliberately does not
+    /// store it (see module docs — all queries run on a context-set connection
+    /// supplied by the handler's `RlsConnection`).
+    pub fn new(_pool: PgPool) -> Self {
+        Self
     }
 
     // ========================================================================
@@ -30,6 +56,7 @@ impl FormRepository {
     /// Creates a new form.
     pub async fn create(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         user_id: Uuid,
         data: CreateForm,
@@ -64,7 +91,7 @@ impl FormRepository {
         .bind(data.submission_deadline)
         .bind(&data.confirmation_message)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Create fields if provided
@@ -72,57 +99,74 @@ impl FormRepository {
         // The performance benefit is minimal for typical form creation (< 20 fields).
         // Keeping the simple approach for maintainability.
         for (index, field) in data.fields.into_iter().enumerate() {
-            self.create_field(form.id, field, index as i32).await?;
+            self.create_field(&mut *conn, form.id, field, index as i32)
+                .await?;
         }
 
         Ok(form)
     }
 
     /// Gets a form by ID.
-    pub async fn get(&self, org_id: Uuid, form_id: Uuid) -> Result<Option<Form>, sqlx::Error> {
+    pub async fn get<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        form_id: Uuid,
+    ) -> Result<Option<Form>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, Form>(
             r#"
-            SELECT * FROM forms
+            SELECT
+                id, organization_id, building_id, title, description, category,
+                status::text AS status, version, target_type, target_ids,
+                require_signatures, allow_multiple_submissions, submission_deadline,
+                confirmation_message, pdf_template_settings, created_by, updated_by,
+                published_by, published_at, archived_at, created_at, updated_at,
+                deleted_at
+            FROM forms
             WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
             "#,
         )
         .bind(form_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Gets a form with all its details.
     pub async fn get_with_details(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         form_id: Uuid,
     ) -> Result<Option<FormWithDetails>, sqlx::Error> {
-        let form = match self.get(org_id, form_id).await? {
+        let form = match self.get(&mut *conn, org_id, form_id).await? {
             Some(f) => f,
             None => return Ok(None),
         };
 
-        let fields = self.get_fields(form_id).await?;
+        let fields = self.get_fields(&mut *conn, form_id).await?;
 
         let submission_count = sqlx::query_scalar::<_, i64>(
             "SELECT COUNT(*) FROM form_submissions WHERE form_id = $1",
         )
         .bind(form_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         let created_by_name = sqlx::query_scalar::<_, String>(
             "SELECT COALESCE(name, email) FROM users WHERE id = $1",
         )
         .bind(form.created_by)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
 
         let published_by_name = if let Some(published_by) = form.published_by {
             sqlx::query_scalar::<_, String>("SELECT COALESCE(name, email) FROM users WHERE id = $1")
                 .bind(published_by)
-                .fetch_optional(&self.pool)
+                .fetch_optional(&mut *conn)
                 .await?
         } else {
             None
@@ -140,6 +184,7 @@ impl FormRepository {
     /// Lists forms for an organization with filtering and pagination.
     pub async fn list(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         query: FormListQuery,
     ) -> Result<(Vec<FormSummary>, i64), sqlx::Error> {
@@ -157,7 +202,7 @@ impl FormRepository {
             FROM forms f
             WHERE f.organization_id = $1
                 AND f.deleted_at IS NULL
-                AND ($2::text IS NULL OR f.status = $2)
+                AND ($2::text IS NULL OR f.status::text = $2)
                 AND ($3::text IS NULL OR f.category = $3)
                 AND ($4::uuid IS NULL OR f.building_id = $4)
                 AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
@@ -168,7 +213,7 @@ impl FormRepository {
         .bind(&query.category)
         .bind(query.building_id)
         .bind(query.search.as_ref().map(|s| format!("%{}%", s)))
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         // Build complete SQL with safe ORDER BY - avoid format!() with user input
@@ -177,13 +222,13 @@ impl FormRepository {
         let sql = match (sort_by, is_asc) {
             ("title", true) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.title ASC LIMIT $6 OFFSET $7
@@ -191,13 +236,13 @@ impl FormRepository {
             }
             ("title", false) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.title DESC LIMIT $6 OFFSET $7
@@ -205,13 +250,13 @@ impl FormRepository {
             }
             ("status", true) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.status ASC LIMIT $6 OFFSET $7
@@ -219,13 +264,13 @@ impl FormRepository {
             }
             ("status", false) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.status DESC LIMIT $6 OFFSET $7
@@ -233,13 +278,13 @@ impl FormRepository {
             }
             ("published_at", true) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.published_at ASC LIMIT $6 OFFSET $7
@@ -247,13 +292,13 @@ impl FormRepository {
             }
             ("published_at", false) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.published_at DESC LIMIT $6 OFFSET $7
@@ -261,13 +306,13 @@ impl FormRepository {
             }
             ("category", true) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.category ASC LIMIT $6 OFFSET $7
@@ -275,13 +320,13 @@ impl FormRepository {
             }
             ("category", false) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.category DESC LIMIT $6 OFFSET $7
@@ -290,13 +335,13 @@ impl FormRepository {
             // Default: created_at DESC
             (_, false) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.created_at DESC LIMIT $6 OFFSET $7
@@ -305,13 +350,13 @@ impl FormRepository {
             // Default: created_at ASC
             (_, true) => {
                 r#"
-                SELECT f.id, f.title, f.description, f.category, f.status, f.target_type,
+                SELECT f.id, f.title, f.description, f.category, f.status::text AS status, f.target_type,
                        f.require_signatures, f.submission_deadline, f.published_at, f.created_at,
                        COALESCE((SELECT COUNT(*) FROM form_submissions WHERE form_id = f.id), 0) as submission_count,
                        u.name as created_by_name
                 FROM forms f LEFT JOIN users u ON u.id = f.created_by
                 WHERE f.organization_id = $1 AND f.deleted_at IS NULL
-                  AND ($2::text IS NULL OR f.status = $2) AND ($3::text IS NULL OR f.category = $3)
+                  AND ($2::text IS NULL OR f.status::text = $2) AND ($3::text IS NULL OR f.category = $3)
                   AND ($4::uuid IS NULL OR f.building_id = $4)
                   AND ($5::text IS NULL OR f.title ILIKE $5 OR f.description ILIKE $5)
                 ORDER BY f.created_at ASC LIMIT $6 OFFSET $7
@@ -327,7 +372,7 @@ impl FormRepository {
             .bind(query.search.as_ref().map(|s| format!("%{}%", s)))
             .bind(per_page)
             .bind(offset)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *conn)
             .await?;
 
         let forms: Vec<FormSummary> = rows
@@ -354,13 +399,14 @@ impl FormRepository {
     /// Updates a form.
     pub async fn update(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         form_id: Uuid,
         user_id: Uuid,
         data: UpdateForm,
     ) -> Result<Form, sqlx::Error> {
         // Check if form exists and is in draft status
-        let existing = self.get(org_id, form_id).await?;
+        let existing = self.get(&mut *conn, org_id, form_id).await?;
         if existing.is_none() {
             return Err(sqlx::Error::RowNotFound);
         }
@@ -402,12 +448,20 @@ impl FormRepository {
         .bind(user_id)
         .bind(form_id)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// Soft deletes a form.
-    pub async fn delete(&self, org_id: Uuid, form_id: Uuid) -> Result<(), sqlx::Error> {
+    pub async fn delete<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        form_id: Uuid,
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query(
             r#"
             UPDATE forms SET deleted_at = NOW()
@@ -416,19 +470,23 @@ impl FormRepository {
         )
         .bind(form_id)
         .bind(org_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(())
     }
 
     /// Publishes a form.
-    pub async fn publish(
+    pub async fn publish<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         form_id: Uuid,
         user_id: Uuid,
-    ) -> Result<Form, sqlx::Error> {
+    ) -> Result<Form, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, Form>(
             r#"
             UPDATE forms SET
@@ -445,12 +503,20 @@ impl FormRepository {
         .bind(form_id)
         .bind(org_id)
         .bind(form_status::DRAFT)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Archives a form.
-    pub async fn archive(&self, org_id: Uuid, form_id: Uuid) -> Result<Form, sqlx::Error> {
+    pub async fn archive<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        form_id: Uuid,
+    ) -> Result<Form, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, Form>(
             r#"
             UPDATE forms SET
@@ -464,7 +530,7 @@ impl FormRepository {
         .bind(form_status::ARCHIVED)
         .bind(form_id)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -473,12 +539,16 @@ impl FormRepository {
     // ========================================================================
 
     /// Creates a new field for a form.
-    pub async fn create_field(
+    pub async fn create_field<'e, E>(
         &self,
+        executor: E,
         form_id: Uuid,
         data: CreateFormField,
         order: i32,
-    ) -> Result<FormField, sqlx::Error> {
+    ) -> Result<FormField, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let validation_rules = data
             .validation_rules
             .map(|r| serde_json::to_value(r).unwrap_or_default())
@@ -522,12 +592,19 @@ impl FormRepository {
         .bind(&data.width)
         .bind(&data.section)
         .bind(&conditional_display)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Gets all fields for a form.
-    pub async fn get_fields(&self, form_id: Uuid) -> Result<Vec<FormField>, sqlx::Error> {
+    pub async fn get_fields<'e, E>(
+        &self,
+        executor: E,
+        form_id: Uuid,
+    ) -> Result<Vec<FormField>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FormField>(
             r#"
             SELECT * FROM form_fields
@@ -536,17 +613,21 @@ impl FormRepository {
             "#,
         )
         .bind(form_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
     /// Updates a form field.
-    pub async fn update_field(
+    pub async fn update_field<'e, E>(
         &self,
+        executor: E,
         form_id: Uuid,
         field_id: Uuid,
         data: UpdateFormField,
-    ) -> Result<FormField, sqlx::Error> {
+    ) -> Result<FormField, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let validation_rules = data
             .validation_rules
             .map(|r| serde_json::to_value(r).unwrap_or_default());
@@ -593,27 +674,39 @@ impl FormRepository {
         .bind(&conditional_display)
         .bind(field_id)
         .bind(form_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Deletes a form field.
-    pub async fn delete_field(&self, form_id: Uuid, field_id: Uuid) -> Result<(), sqlx::Error> {
+    pub async fn delete_field<'e, E>(
+        &self,
+        executor: E,
+        form_id: Uuid,
+        field_id: Uuid,
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query("DELETE FROM form_fields WHERE id = $1 AND form_id = $2")
             .bind(field_id)
             .bind(form_id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
 
         Ok(())
     }
 
     /// Reorders form fields.
-    pub async fn reorder_fields(
+    pub async fn reorder_fields<'e, E>(
         &self,
+        executor: E,
         form_id: Uuid,
         field_orders: Vec<(Uuid, i32)>,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         // If there are no fields to reorder, avoid running a no-op query.
         if field_orders.is_empty() {
             return Ok(());
@@ -640,7 +733,7 @@ impl FormRepository {
         .bind(&field_ids)
         .bind(&orders)
         .bind(form_id)
-        .execute(&self.pool)
+        .execute(executor)
         .await?;
 
         Ok(())
@@ -651,10 +744,14 @@ impl FormRepository {
     // ========================================================================
 
     /// Submits a form.
-    pub async fn submit(
+    pub async fn submit<'e, E>(
         &self,
+        executor: E,
         params: FormSubmissionParams,
-    ) -> Result<FormSubmission, sqlx::Error> {
+    ) -> Result<FormSubmission, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let attachments = params
             .data
             .attachments
@@ -673,8 +770,14 @@ impl FormRepository {
                 submitted_by, data, attachments, signature_data,
                 status, ip_address, user_agent
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::form_submission_status, $10::inet, $11)
+            RETURNING
+                id, form_id, organization_id, building_id, unit_id,
+                submitted_by, submitted_at, data, attachments, signature_data,
+                status::text AS status,
+                reviewed_by, reviewed_at, review_notes,
+                ip_address::text AS ip_address,
+                user_agent, created_at, updated_at
             "#,
         )
         .bind(params.form_id)
@@ -688,24 +791,32 @@ impl FormRepository {
         .bind(submission_status::PENDING)
         .bind(&params.ip_address)
         .bind(&params.user_agent)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Gets a submission by ID.
-    pub async fn get_submission(
+    pub async fn get_submission<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         submission_id: Uuid,
-    ) -> Result<Option<FormSubmissionWithDetails>, sqlx::Error> {
+    ) -> Result<Option<FormSubmissionWithDetails>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query(
             r#"
             SELECT
                 s.*,
+                -- `s.*` returns `status` as the `form_submission_status` ENUM,
+                -- which the model reads into a `String` (ColumnDecode). Re-expose
+                -- it as text under a distinct name and read that below.
+                s.status::text AS submission_status,
                 f.title as form_title,
                 u.name as submitted_by_name,
                 r.name as reviewed_by_name,
-                un.unit_number,
+                un.designation AS unit_number,
                 b.name as building_name
             FROM form_submissions s
             JOIN forms f ON f.id = s.form_id
@@ -718,7 +829,7 @@ impl FormRepository {
         )
         .bind(submission_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         Ok(row.map(|r| FormSubmissionWithDetails {
@@ -733,7 +844,7 @@ impl FormRepository {
                 data: r.get("data"),
                 attachments: r.get("attachments"),
                 signature_data: r.get("signature_data"),
-                status: r.get("status"),
+                status: r.get("submission_status"),
                 reviewed_by: r.get("reviewed_by"),
                 reviewed_at: r.get("reviewed_at"),
                 review_notes: r.get("review_notes"),
@@ -753,6 +864,7 @@ impl FormRepository {
     /// Lists form submissions with filtering and pagination.
     pub async fn list_submissions(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         query: SubmissionListQuery,
     ) -> Result<(Vec<FormSubmissionSummary>, i64), sqlx::Error> {
@@ -766,7 +878,7 @@ impl FormRepository {
             count_conditions.push("s.form_id = $2");
         }
         if query.status.is_some() {
-            count_conditions.push("s.status = $3");
+            count_conditions.push("s.status::text = $3");
         }
 
         let count_where = count_conditions.join(" AND ");
@@ -784,7 +896,7 @@ impl FormRepository {
             count_query = count_query.bind(status);
         }
 
-        let total = count_query.fetch_one(&self.pool).await?;
+        let total = count_query.fetch_one(&mut *conn).await?;
 
         // Main query
         let rows = sqlx::query(
@@ -796,9 +908,9 @@ impl FormRepository {
                 s.submitted_by,
                 u.name as submitted_by_name,
                 s.submitted_at,
-                s.status,
+                s.status::text AS status,
                 s.signature_data IS NOT NULL as has_signature,
-                un.unit_number,
+                un.designation AS unit_number,
                 b.name as building_name
             FROM form_submissions s
             JOIN forms f ON f.id = s.form_id
@@ -807,7 +919,7 @@ impl FormRepository {
             LEFT JOIN buildings b ON b.id = s.building_id
             WHERE s.organization_id = $1
                 AND ($2::uuid IS NULL OR s.form_id = $2)
-                AND ($3::text IS NULL OR s.status = $3)
+                AND ($3::text IS NULL OR s.status::text = $3)
                 AND ($4::uuid IS NULL OR s.building_id = $4)
                 AND ($5::uuid IS NULL OR s.unit_id = $5)
                 AND ($6::uuid IS NULL OR s.submitted_by = $6)
@@ -827,7 +939,7 @@ impl FormRepository {
         .bind(query.to_date)
         .bind(per_page)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await?;
 
         let submissions: Vec<FormSubmissionSummary> = rows
@@ -850,23 +962,33 @@ impl FormRepository {
     }
 
     /// Reviews a submission (approve/reject).
-    pub async fn review_submission(
+    pub async fn review_submission<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         submission_id: Uuid,
         reviewer_id: Uuid,
         data: ReviewSubmission,
-    ) -> Result<FormSubmission, sqlx::Error> {
+    ) -> Result<FormSubmission, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FormSubmission>(
             r#"
             UPDATE form_submissions SET
-                status = $1,
+                status = $1::form_submission_status,
                 reviewed_by = $2,
                 reviewed_at = NOW(),
                 review_notes = $3,
                 updated_at = NOW()
             WHERE id = $4 AND organization_id = $5
-            RETURNING *
+            RETURNING
+                id, form_id, organization_id, building_id, unit_id,
+                submitted_by, submitted_at, data, attachments, signature_data,
+                status::text AS status,
+                reviewed_by, reviewed_at, review_notes,
+                ip_address::text AS ip_address,
+                user_agent, created_at, updated_at
             "#,
         )
         .bind(&data.status)
@@ -874,7 +996,7 @@ impl FormRepository {
         .bind(&data.review_notes)
         .bind(submission_id)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -883,7 +1005,14 @@ impl FormRepository {
     // ========================================================================
 
     /// Gets form statistics for an organization.
-    pub async fn get_statistics(&self, org_id: Uuid) -> Result<FormStatistics, sqlx::Error> {
+    pub async fn get_statistics<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<FormStatistics, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let row = sqlx::query(
             r#"
             SELECT
@@ -898,7 +1027,7 @@ impl FormRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(FormStatistics {
@@ -918,34 +1047,52 @@ impl FormRepository {
     // ========================================================================
 
     /// Records a form download.
-    pub async fn record_download(
+    pub async fn record_download<'e, E>(
         &self,
+        executor: E,
+        org_id: Uuid,
         form_id: Uuid,
         user_id: Uuid,
         ip_address: Option<String>,
         user_agent: Option<String>,
-    ) -> Result<(), sqlx::Error> {
-        sqlx::query(
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let inserted = sqlx::query_scalar::<_, Uuid>(
             r#"
             INSERT INTO form_downloads (form_id, downloaded_by, ip_address, user_agent)
-            VALUES ($1, $2, $3::inet, $4)
+            SELECT f.id, $3, $4::inet, $5
+            FROM forms f
+            WHERE f.id = $1
+              AND f.organization_id = $2
+              AND f.deleted_at IS NULL
+            RETURNING form_id
             "#,
         )
         .bind(form_id)
+        .bind(org_id)
         .bind(user_id)
         .bind(&ip_address)
         .bind(&user_agent)
-        .execute(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
-        Ok(())
+        Ok(inserted.is_some())
     }
 
     /// Gets download count for a form.
-    pub async fn get_download_count(&self, form_id: Uuid) -> Result<i64, sqlx::Error> {
+    pub async fn get_download_count<'e, E>(
+        &self,
+        executor: E,
+        form_id: Uuid,
+    ) -> Result<i64, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM form_downloads WHERE form_id = $1")
             .bind(form_id)
-            .fetch_one(&self.pool)
+            .fetch_one(executor)
             .await
     }
 
@@ -954,12 +1101,16 @@ impl FormRepository {
     // ========================================================================
 
     /// Lists published forms available to a user.
-    pub async fn list_available_forms(
+    pub async fn list_available_forms<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         building_id: Option<Uuid>,
         _user_role: &str,
-    ) -> Result<Vec<FormSummary>, sqlx::Error> {
+    ) -> Result<Vec<FormSummary>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let rows = sqlx::query(
             r#"
             SELECT
@@ -967,7 +1118,7 @@ impl FormRepository {
                 f.title,
                 f.description,
                 f.category,
-                f.status,
+                f.status::text AS status,
                 f.target_type,
                 f.require_signatures,
                 f.submission_deadline,
@@ -996,7 +1147,7 @@ impl FormRepository {
         )
         .bind(org_id)
         .bind(building_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await?;
 
         Ok(rows
@@ -1019,17 +1170,21 @@ impl FormRepository {
     }
 
     /// Checks if a user has already submitted a form.
-    pub async fn has_user_submitted(
+    pub async fn has_user_submitted<'e, E>(
         &self,
+        executor: E,
         form_id: Uuid,
         user_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let count = sqlx::query_scalar::<_, i64>(
             "SELECT COUNT(*) FROM form_submissions WHERE form_id = $1 AND submitted_by = $2",
         )
         .bind(form_id)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         Ok(count > 0)

@@ -1,0 +1,19 @@
+// Staging.xcconfig
+// Epic 85 - Story 85.2: Build Configuration by Environment (iOS)
+//
+// Per-environment iOS build settings for the Property Management app
+// (three.two.bit.ppt.management). Selected at `expo prebuild` time by the
+// `withIosBuildConfig` config plugin (plugins/withIosBuildConfig.ts) based on
+// APP_ENV=staging and copied into the generated `ios/` project as
+// `PPTEnv.xcconfig`, then wired as the baseConfigurationReference of every
+// build configuration.
+//
+// SOURCE OF TRUTH
+// ---------------
+// Runtime config (API_BASE_URL, ENVIRONMENT, etc.) is owned by
+// `.env.staging` -> app.config.ts -> ios.infoPlist. This xcconfig carries
+// only the native build-layer marker (PPT_APP_ENV) and the bundle identifier.
+
+PPT_APP_ENV = staging
+
+PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.management

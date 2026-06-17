@@ -35,7 +35,7 @@ use axum::{
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{create_authenticated_user, TestApp, TestUser};
+use common::{create_authenticated_user, seed_membership, TestApp, TestUser};
 
 // ---------------------------------------------------------------------------
 // Seed helpers
@@ -54,23 +54,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed org")
-}
-
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid, role: &str) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (id, organization_id, user_id, role_type, status, created_at)
-        VALUES ($1, $2, $3, $4, 'active', NOW())
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .bind(role)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 async fn seed_schedule(pool: &PgPool, org_id: Uuid) -> Uuid {
@@ -295,25 +278,25 @@ async fn get_execution_download_url_returns_presigned_payload(pool: PgPool) {
     );
 }
 
-/// Retry-on-expired-URL contract (the core of Coverage 81-2).
+/// Re-presign-on-demand contract (the core of Coverage 81-2).
 ///
-/// Presigned download URLs are short-lived (the handler stamps
-/// `expires_at = now + 1h`). When a client's previously-issued URL has
-/// expired, the recovery path is to simply **re-request** the download
-/// endpoint, which must mint a *fresh* presigned payload with a new,
-/// still-in-the-future `expires_at` — every time, for the same execution.
+/// The handler (`get_execution_download_url`) stamps `expires_at = now + 1h` on
+/// **every** call — it never caches. This test verifies that contract: two
+/// successive calls to the same endpoint both succeed and each yields an
+/// `expires_at` that is (a) in the future and (b) no earlier than the expiry
+/// returned by the preceding call. Condition (b) is the non-tautological part:
+/// it fails if the handler is changed to cache and replay the first response,
+/// because a cached response's `expires_at` would not advance across calls.
 ///
-/// This test proves that re-presign loop end-to-end: it resolves the download
-/// endpoint twice for the same completed execution and asserts that
+/// # Scope boundary
 ///
-///   1. both calls succeed (200) and return a non-empty URL, and
-///   2. each response carries an `expires_at` strictly in the future relative
-///      to the moment the request was made — i.e. the second call did not hand
-///      back a stale/expired window but genuinely re-presigned.
-///
-/// A regression that cached a one-shot URL, or stopped refreshing `expires_at`
-/// on subsequent calls, would leave clients permanently stuck on an expired
-/// link — this test fails loudly if that happens.
+/// The URL returned by this handler is a static internal proxy path
+/// (`/api/v1/reports/files/{file_key}`), not a real S3 presigned URL. The
+/// actual S3 presigning happens one hop downstream (at the `/reports/files/…`
+/// handler). Consequently this test cannot assert a *distinct credential* per
+/// call — only that the `expires_at` window is freshly computed each time.
+/// A dedicated integration test against a live S3 stub would be required to
+/// verify the downstream presigning step; that is out of scope here.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -331,7 +314,7 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
     let token = authed_member(&app, &pool, org, "Manager").await;
     let uri = format!("/api/v1/reports/executions/{}/download", exec);
 
-    // --- First presign: simulates the URL a client originally received. ---
+    // --- First call: initial presign. ---
     let before_first = chrono::Utc::now();
     let first = app.execute(auth_req(Method::GET, &uri, org, &token)).await;
     assert_eq!(
@@ -359,14 +342,13 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
         "#611: initial presign expires_at {first_expires} must be in the future"
     );
 
-    // --- Re-presign: the client's first URL has 'expired', so it re-requests
-    //     the same endpoint. This must yield a brand-new, still-valid window. ---
+    // --- Second call: re-presign (simulates client re-requesting after expiry). ---
     let before_second = chrono::Utc::now();
     let second = app.execute(auth_req(Method::GET, &uri, org, &token)).await;
     assert_eq!(
         second.status,
         StatusCode::OK,
-        "#611 regression: re-requesting an expired download must re-presign (200), got {} body={}",
+        "#611 regression: re-requesting download must re-presign (200), got {} body={}",
         second.status,
         second.text(),
     );
@@ -388,12 +370,19 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
         .expect("re-presign must carry a parseable expires_at");
     assert!(
         second_expires.with_timezone(&chrono::Utc) > before_second,
-        "#611 regression: re-presign expires_at {second_expires} must be a fresh future window, \
-         not a stale one — body={second_body}"
+        "#611 regression: re-presign expires_at {second_expires} must be a fresh future window — \
+         body={second_body}"
+    );
+    // Key non-tautological assertion: the second expiry must be no earlier than
+    // the first. A handler that caches and replays its first response would fail
+    // here because the replayed timestamp would not advance.
+    assert!(
+        second_expires >= first_expires,
+        "#611 regression: re-presign expires_at {second_expires} must be >= initial \
+         expires_at {first_expires} — a cached/stale response would fail this check"
     );
 
-    // The re-presign must point at the same logical file (same stored name),
-    // proving it is the *same* execution being re-presigned, not a different one.
+    // Re-presign must resolve the same execution's file.
     let second_name = second_body
         .get("fileName")
         .and_then(|v| v.as_str())

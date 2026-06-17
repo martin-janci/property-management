@@ -335,6 +335,12 @@ pub async fn push_booking_listing(
         ));
     }
 
+    // BIT-99: credentials are stored encrypted; decrypt for OTA API use.
+    // decrypt_if_available tolerates legacy plaintext rows (no "enc:" prefix).
+    let crypto = integrations::IntegrationCrypto::try_from_env();
+    let username = integrations::decrypt_if_available(crypto.as_ref(), &username);
+    let password = integrations::decrypt_if_available(crypto.as_ref(), &password);
+
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 

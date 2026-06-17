@@ -620,24 +620,47 @@ async fn list_documents(
             .unwrap_or(0);
         (docs, total)
     } else {
-        // Use simplified access control for non-managers
-        // Shows: org-wide documents + own documents + role-based documents
-        // TODO: Full implementation needs building/unit context from TenantContext
+        // Full access control for non-managers (GH #1413). Shows org-wide docs,
+        // own docs, role-based docs, plus building/unit-scoped docs the caller is
+        // a member of. Building/unit membership is resolved via the same
+        // `user_scope_memberships_rls` resolver the download/preview gate uses, so
+        // the list and the gate agree: a building/unit doc the caller can open is
+        // also listed (no openable-but-not-listed divergence). A DB error fails
+        // closed (no memberships → building/unit scopes omitted, never widened).
         let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
+        let (building_ids, unit_ids) = state
+            .document_repo
+            .user_scope_memberships_rls(&mut **rls.conn(), user_id)
+            .await
+            .unwrap_or_else(|e| {
+                tracing::error!(error = %e, "Failed to resolve user scope memberships");
+                (Vec::new(), Vec::new())
+            });
+        let roles = [user_role];
         let docs = state
             .document_repo
-            .list_accessible_simple_rls(
+            .list_accessible_rls(
                 &mut **rls.conn(),
                 org_id,
                 user_id,
-                &user_role,
+                &building_ids,
+                &unit_ids,
+                &roles,
                 list_query.clone(),
             )
             .await
             .unwrap_or_default();
         let total = state
             .document_repo
-            .count_accessible_simple_rls(&mut **rls.conn(), org_id, user_id, &user_role, list_query)
+            .count_accessible_rls(
+                &mut **rls.conn(),
+                org_id,
+                user_id,
+                &building_ids,
+                &unit_ids,
+                &roles,
+                list_query,
+            )
             .await
             .unwrap_or(0);
         (docs, total)
@@ -1095,6 +1118,11 @@ async fn update_document_access(
 /// Managers bypass this check entirely (their RLS policy already grants
 /// full org-wide access). For everyone else the caller's `user_id` and
 /// normalised `user_role` are matched against the document's `access_scope`.
+///
+/// This resolves only the membership-free scopes (creator / organization /
+/// role / users). `building` and `unit` scope resolution needs the caller's
+/// building/unit memberships and lives in [`scope_membership_allows`]; both
+/// are OR'd at the call site so a building/unit member is granted access.
 fn document_access_allowed(doc: &Document, user_id: Uuid, user_role: &str) -> bool {
     doc.created_by == user_id
         || doc.access_scope == "organization"
@@ -1108,6 +1136,41 @@ fn document_access_allowed(doc: &Document, user_id: Uuid, user_role: &str) -> bo
                 arr.iter()
                     .any(|id| id.as_str() == Some(&user_id.to_string()))
             }))
+}
+
+/// Returns `true` when a `building`- or `unit`-scoped document targets a
+/// building/unit the caller is a member of.
+///
+/// `user_building_ids` / `user_unit_ids` are the caller's active owner/resident
+/// memberships (see [`DocumentRepository::user_scope_memberships_rls`]). This
+/// mirrors the `building`/`unit` branches of the SQL gate
+/// (`DocumentRepository::check_access_rls`); without it a building/unit
+/// resident would see a scoped document in their list but get a 404 on
+/// download/preview (GH #1413).
+fn scope_membership_allows(
+    doc: &Document,
+    user_building_ids: &[Uuid],
+    user_unit_ids: &[Uuid],
+) -> bool {
+    match doc.access_scope.as_str() {
+        "building" => target_ids_intersect(&doc.access_target_ids, user_building_ids),
+        "unit" => target_ids_intersect(&doc.access_target_ids, user_unit_ids),
+        _ => false,
+    }
+}
+
+/// True when any `id` in `member_ids` appears (as its string form) in the
+/// document's `access_target_ids` JSON array. Target ids are stored as JSON
+/// strings, matching the `users`-scope convention in [`document_access_allowed`].
+fn target_ids_intersect(access_target_ids: &serde_json::Value, member_ids: &[Uuid]) -> bool {
+    if member_ids.is_empty() {
+        return false;
+    }
+    access_target_ids.as_array().is_some_and(|arr| {
+        arr.iter()
+            .filter_map(|v| v.as_str())
+            .any(|target| member_ids.iter().any(|id| id.to_string() == target))
+    })
 }
 
 #[utoipa::path(
@@ -1154,9 +1217,37 @@ async fn get_download_url(
         }
     };
 
+    // Defense-in-depth cross-tenant guard. `find_by_id_rls` relies on the
+    // connection's `app.current_org_id` GUC + the `documents` FORCE-RLS policy
+    // to scope by org, but that lookup takes no org argument and a
+    // BYPASSRLS/superuser pool (e.g. the integration-test pool) is not bound by
+    // FORCE. Re-check the org explicitly so a foreign-org document is invisible
+    // (404, not a 503 existence leak) regardless of how the connection is
+    // privileged — matching the repository-layer `... AND organization_id = $N`
+    // convention used across the cross-tenant IDOR fixes.
+    if document.organization_id != tenant.tenant_id {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+        ));
+    }
+
     if !tenant.role.is_manager() {
         let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
-        if !document_access_allowed(&document, auth.user_id, &user_role) {
+        // Resolve building/unit memberships so scoped documents the caller can
+        // see in their list are also downloadable/previewable (GH #1413). A DB
+        // error fails closed (no memberships → deny building/unit scopes).
+        let (building_ids, unit_ids) = state
+            .document_repo
+            .user_scope_memberships_rls(&mut **rls.conn(), auth.user_id)
+            .await
+            .unwrap_or_else(|e| {
+                tracing::error!(error = %e, "Failed to resolve user scope memberships");
+                (Vec::new(), Vec::new())
+            });
+        let allowed = document_access_allowed(&document, auth.user_id, &user_role)
+            || scope_membership_allows(&document, &building_ids, &unit_ids);
+        if !allowed {
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
@@ -1256,9 +1347,32 @@ async fn get_preview_url(
         }
     };
 
+    // Defense-in-depth cross-tenant guard (see `get_download_url`): a foreign-org
+    // document must be invisible (404) even on a BYPASSRLS/superuser pool that
+    // FORCE RLS does not bind.
+    if document.organization_id != tenant.tenant_id {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+        ));
+    }
+
     if !tenant.role.is_manager() {
         let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
-        if !document_access_allowed(&document, auth.user_id, &user_role) {
+        // Resolve building/unit memberships so scoped documents the caller can
+        // see in their list are also downloadable/previewable (GH #1413). A DB
+        // error fails closed (no memberships → deny building/unit scopes).
+        let (building_ids, unit_ids) = state
+            .document_repo
+            .user_scope_memberships_rls(&mut **rls.conn(), auth.user_id)
+            .await
+            .unwrap_or_else(|e| {
+                tracing::error!(error = %e, "Failed to resolve user scope memberships");
+                (Vec::new(), Vec::new())
+            });
+        let allowed = document_access_allowed(&document, auth.user_id, &user_role)
+            || scope_membership_allows(&document, &building_ids, &unit_ids);
+        if !allowed {
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Document not found")),

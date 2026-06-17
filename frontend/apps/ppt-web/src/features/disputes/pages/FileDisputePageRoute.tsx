@@ -87,6 +87,9 @@ export function FileDisputePageRoute() {
         title: t('disputes.failedToFile', 'Failed to file dispute'),
         message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
+      // Re-throw so FileDisputePage keeps the auto-saved draft (AC-4): a failed
+      // filing must not wipe the user's in-progress work.
+      throw error;
     } finally {
       setIsSubmitting(false);
     }

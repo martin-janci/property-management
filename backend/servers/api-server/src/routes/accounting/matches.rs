@@ -5,6 +5,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use common::TenantRole;
 use db::models::accounting::PaymentMatch;
 use uuid::Uuid;
 
@@ -14,6 +15,11 @@ pub async fn list_matches(
     State(state): State<AppState>,
     Path(line_id): Path<Uuid>,
 ) -> Result<Json<Vec<PaymentMatch>>, StatusCode> {
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let matches = state
         .accounting_repo
         .list_payment_matches_by_line_rls(&mut **rls, line_id)
@@ -30,9 +36,17 @@ pub async fn confirm_match(
     State(state): State<AppState>,
     Path(match_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    let tenant_id = rls.tenant_id();
+    let user_id = rls.user_id();
+
     state
         .accounting_service
-        .confirm_match(rls.tenant_id(), match_id, rls.user_id())
+        .confirm_match(&mut **rls, tenant_id, match_id, user_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to confirm match: {}", e);
@@ -52,9 +66,16 @@ pub async fn reject_match(
     State(state): State<AppState>,
     Path(match_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
+    // Role check: Accounting is manager-only
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    let user_id = rls.user_id();
+
     state
         .accounting_service
-        .reject_match(match_id, rls.user_id())
+        .reject_match(&mut **rls, match_id, user_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to reject match: {}", e);

@@ -501,7 +501,19 @@ if [ -f "$OBJECTIVE_FILE" ]; then
     case "$EP" in
       NONE) note "objective=NONE (no claimable work)";;
       gap-[0-9]*|pm-*) note "objective epic_prefix='$EP' is well-formed";;
-      *) fail "objective.epic_prefix='$EP' does not match gap-N[a-z]? or pm-<role> or NONE";;
+      "") fail "objective.epic_prefix is empty";;
+      # The dispatcher's epic_prefix() else-branch returns the full task_id,
+      # so the finish-first picker legitimately writes a flat kebab id here
+      # (feat-*/test-*/refactor-*/screen-*/triage-issue-* …). Accept any
+      # non-empty lowercase kebab token; reject malformed shapes (uppercase,
+      # spaces, leading separator) that signal a corrupt objective.json.
+      *)
+        if printf '%s' "$EP" | grep -Eq '^[a-z0-9][a-z0-9._-]*$'; then
+          note "objective epic_prefix='$EP' is a full task_id (epic_prefix else-branch)"
+        else
+          fail "objective.epic_prefix='$EP' is not NONE, gap-N[a-z]?, pm-<role>, or a kebab task_id"
+        fi
+        ;;
     esac
   fi
   echo

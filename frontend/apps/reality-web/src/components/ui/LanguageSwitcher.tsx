@@ -43,7 +43,7 @@ export function LanguageSwitcher() {
       if (next === locale) return;
       router.replace(pathname, { locale: next });
     },
-    [locale, router, pathname]
+    [locale, pathname, router]
   );
 
   // Keyboard navigation while the menu is open. Listening on the document

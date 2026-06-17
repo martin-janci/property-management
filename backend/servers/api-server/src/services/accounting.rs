@@ -8,6 +8,7 @@ use db::models::accounting::{
 use db::repositories::AccountingRepository;
 use rust_decimal::Decimal;
 use serde::Deserialize;
+use sqlx::PgConnection;
 use std::io::Cursor;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -35,6 +36,7 @@ impl AccountingService {
     /// Process a bank statement upload.
     pub async fn process_statement_upload(
         &self,
+        executor: &mut PgConnection,
         tenant_id: Uuid,
         filename: String,
         content: &[u8],
@@ -47,7 +49,7 @@ impl AccountingService {
         let statement = self
             .repo
             .create_bank_statement_rls(
-                &self.repo.pool,
+                &mut *executor,
                 tenant_id,
                 filename,
                 None,
@@ -80,13 +82,14 @@ impl AccountingService {
             };
 
             self.repo
-                .create_bank_statement_line_rls(&self.repo.pool, line)
+                .create_bank_statement_line_rls(&mut *executor, line)
                 .await
                 .map_err(|e| AppError::Database(e.to_string()))?;
         }
 
         // Trigger matcher
-        self.run_payment_matcher(tenant_id, statement.id).await?;
+        self.run_payment_matcher(&mut *executor, tenant_id, statement.id)
+            .await?;
 
         Ok(statement)
     }
@@ -94,18 +97,19 @@ impl AccountingService {
     /// Run the payment matching engine for a statement.
     pub async fn run_payment_matcher(
         &self,
+        executor: &mut PgConnection,
         tenant_id: Uuid,
         statement_id: Uuid,
     ) -> Result<(), AppError> {
         let lines = self
             .repo
-            .list_bank_statement_lines_rls(&self.repo.pool, statement_id)
+            .list_bank_statement_lines_rls(&mut *executor, statement_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
         let open_invoices = self
             .repo
-            .list_invoices_rls(&self.repo.pool)
+            .list_invoices_rls(&mut *executor)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -155,13 +159,13 @@ impl AccountingService {
                         state: PaymentMatchState::Suggested,
                     };
                     self.repo
-                        .upsert_payment_match_rls(&self.repo.pool, p_match)
+                        .upsert_payment_match_rls(&mut *executor, p_match)
                         .await
                         .map_err(|e| AppError::Database(e.to_string()))?;
 
                     self.repo
                         .update_bank_statement_line_match_state_rls(
-                            &self.repo.pool,
+                            &mut *executor,
                             line.id,
                             "suggested".to_string(),
                         )
@@ -177,13 +181,14 @@ impl AccountingService {
     /// Confirm a suggested payment match.
     pub async fn confirm_match(
         &self,
+        executor: &mut PgConnection,
         _tenant_id: Uuid,
         match_id: Uuid,
         user_id: Uuid,
     ) -> Result<(), AppError> {
         let p_match = self
             .repo
-            .find_payment_match_rls(&self.repo.pool, match_id)
+            .find_payment_match_rls(&mut *executor, match_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Match {} not found", match_id)))?;
@@ -194,7 +199,7 @@ impl AccountingService {
 
         let line = self
             .repo
-            .find_bank_statement_line_rls(&self.repo.pool, p_match.statement_line_id)
+            .find_bank_statement_line_rls(&mut *executor, p_match.statement_line_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| {
@@ -210,14 +215,14 @@ impl AccountingService {
         updated_match.decided_by = Some(user_id);
         updated_match.decided_at = Some(Utc::now());
         self.repo
-            .upsert_payment_match_rls(&self.repo.pool, updated_match)
+            .upsert_payment_match_rls(&mut *executor, updated_match)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
         // 2. Update statement line state
         self.repo
             .update_bank_statement_line_match_state_rls(
-                &self.repo.pool,
+                &mut *executor,
                 p_match.statement_line_id,
                 "matched".to_string(),
             )
@@ -226,7 +231,7 @@ impl AccountingService {
 
         // 3. Update invoice paid_amount and status
         self.repo
-            .update_invoice_payment_status_rls(&self.repo.pool, p_match.invoice_id, line.amount)
+            .update_invoice_payment_status_rls(&mut *executor, p_match.invoice_id, line.amount)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -234,10 +239,15 @@ impl AccountingService {
     }
 
     /// Reject a suggested payment match.
-    pub async fn reject_match(&self, match_id: Uuid, user_id: Uuid) -> Result<(), AppError> {
+    pub async fn reject_match(
+        &self,
+        executor: &mut PgConnection,
+        match_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<(), AppError> {
         let p_match = self
             .repo
-            .find_payment_match_rls(&self.repo.pool, match_id)
+            .find_payment_match_rls(&mut *executor, match_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Match {} not found", match_id)))?;
@@ -248,14 +258,14 @@ impl AccountingService {
         updated_match.decided_by = Some(user_id);
         updated_match.decided_at = Some(Utc::now());
         self.repo
-            .upsert_payment_match_rls(&self.repo.pool, updated_match)
+            .upsert_payment_match_rls(&mut *executor, updated_match)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
         // 2. Update statement line state if no other suggested matches remain
         let other_matches = self
             .repo
-            .list_payment_matches_by_line_rls(&self.repo.pool, p_match.statement_line_id)
+            .list_payment_matches_by_line_rls(&mut *executor, p_match.statement_line_id)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -265,7 +275,7 @@ impl AccountingService {
         if !has_suggested {
             self.repo
                 .update_bank_statement_line_match_state_rls(
-                    &self.repo.pool,
+                    &mut *executor,
                     p_match.statement_line_id,
                     "unmatched".to_string(),
                 )

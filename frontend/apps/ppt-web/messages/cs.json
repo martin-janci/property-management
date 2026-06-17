@@ -541,7 +541,12 @@
       "errors": {
         "detailsMinLength": "Podrobnosti musí obsahovat alespoň 10 znaků."
       }
-    }
+    },
+    "draftSavedAgo": "Návrh uložen · {{time}}",
+    "draftJustNow": "právě teď",
+    "draftSecondsAgo": "před {{count}}s",
+    "draftMinutesAgo": "před {{count}}m",
+    "draftRestored": "Obnovili jsme váš uložený návrh."
   },
   "packages": {
     "title": "Správa zásilek",

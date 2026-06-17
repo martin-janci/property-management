@@ -1,6 +1,6 @@
 //! Business logic services.
-pub mod accounting;
 
+pub mod accounting;
 pub mod actions;
 pub mod auth;
 pub mod auth_policy;

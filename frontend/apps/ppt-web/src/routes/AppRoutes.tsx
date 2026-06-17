@@ -49,7 +49,6 @@ export function AppRoutes() {
       {financialRoutes()}
       {accountingRoutes()}
       {rentalRoutes()}
-
       {meterRoutes()}
       {leaseRoutes()}
       {votingRoutes()}

@@ -146,7 +146,6 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/admin", routes::admin_tenant_lifecycle::router())
         // Organizations routes
         .nest("/api/v1/organizations", routes::organizations::router())
-        .nest("/api/v1/accounting", routes::accounting::router())
         // Buildings routes
         .nest("/api/v1/buildings", routes::buildings::router())
         // Delegations routes
@@ -242,6 +241,8 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/integrations", routes::integrations::router())
         // Financial routes
         .nest("/api/v1/financial", routes::financial::router())
+        // Accounting routes
+        .nest("/api/v1/accounting", routes::accounting::router())
         // Meters routes
         .nest("/api/v1/meters", routes::meters::router())
         // AI routes

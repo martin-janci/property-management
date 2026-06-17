@@ -30,7 +30,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{RequestBuilder, TestApp, TestConfig};
+use common::{seed_membership, RequestBuilder, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -63,21 +63,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-/// Make `user_id` an active member of `org_id`.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 /// Seed a vendor in `org_id` and return its id.
@@ -139,7 +124,7 @@ async fn list_vendors_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "lst-a").await;
     let org_b = seed_org(&pool, "lst-b").await;
     let user_b = seed_user(&pool, "lst-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let _vendor_a = seed_vendor(&pool, org_a).await;
 
     // User B (member of Org B only) asks for Org A's vendors.
@@ -172,7 +157,7 @@ async fn get_vendor_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "get-a").await;
     let org_b = seed_org(&pool, "get-b").await;
     let user_b = seed_user(&pool, "get-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "get-b@vendor-idor.test");
@@ -207,7 +192,7 @@ async fn delete_vendor_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "del-a").await;
     let org_b = seed_org(&pool, "del-b").await;
     let user_b = seed_user(&pool, "del-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "del-b@vendor-idor.test");
@@ -247,7 +232,7 @@ async fn update_vendor_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "upd-a").await;
     let org_b = seed_org(&pool, "upd-b").await;
     let user_b = seed_user(&pool, "upd-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "upd-b@vendor-idor.test");
@@ -287,7 +272,7 @@ async fn create_vendor_for_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "crt-a").await;
     let org_b = seed_org(&pool, "crt-b").await;
     let user_b = seed_user(&pool, "crt-b@vendor-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
 
     let token_b = mint_token(user_b, "crt-b@vendor-idor.test");
     let body = json!({
@@ -330,19 +315,13 @@ async fn get_vendor_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "own-a").await;
     let user_a = seed_user(&pool, "own-a@vendor-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let vendor_a = seed_vendor(&pool, org_a).await;
 
     let token_a = mint_token(user_a, "own-a@vendor-idor.test");
+    let session_a = app.session(token_a, org_a);
     let uri = format!("/api/v1/vendors/{vendor_a}");
-    let resp = app
-        .execute(
-            app.get(&uri)
-                .bearer(&token_a)
-                .header("X-Tenant-ID", &org_a.to_string())
-                .build(),
-        )
-        .await;
+    let resp = app.execute(session_a.get(&uri).build()).await;
 
     assert_eq!(
         resp.status,

@@ -3,7 +3,6 @@
  */
 
 import type { AccountingInvoice, AccountingInvoiceStatus } from '@ppt/api-client';
-import { format } from 'date-fns';
 
 const INVOICE_STATUS_LABELS: Record<AccountingInvoiceStatus, string> = {
   draft: 'Draft',
@@ -76,7 +75,12 @@ export function AccountingInvoiceList({
                 <div className="flex flex-col">
                   <p className="text-sm font-medium text-blue-600 truncate">{invoice.number}</p>
                   <p className="text-xs text-gray-500">
-                    Due: {format(new Date(invoice.dueDate), 'MMM d, yyyy')}
+                    Due:{' '}
+                    {new Date(invoice.dueDate).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
                   </p>
                 </div>
                 <div className="ml-2 flex-shrink-0 flex items-center gap-4">

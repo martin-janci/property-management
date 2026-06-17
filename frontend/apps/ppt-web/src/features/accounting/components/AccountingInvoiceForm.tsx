@@ -9,7 +9,7 @@ import type {
   AccountingInvoice,
   AccountingVatRate,
 } from '@ppt/api-client';
-import { useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 
 const VAT_RATE_OPTIONS: { label: string; value: AccountingVatRate }[] = [
   { label: 'Standard (21% CZ / 20% SK)', value: 'standard' },
@@ -50,7 +50,7 @@ export function AccountingInvoiceForm({
     let base = 0;
     let vat = 0;
 
-    items.forEach((item) => {
+    for (const item of items) {
       const b = item.qty * item.unitPrice;
       let rate = item.vatRate;
 
@@ -64,12 +64,12 @@ export function AccountingInvoiceForm({
       const v = b * (rate / 100);
       base += b;
       vat += v;
-    });
+    }
 
     return { base, vat, total: base + vat };
   }, [items, country]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     if (!contactId || !number || !dueDate || items.length === 0) {
@@ -105,7 +105,7 @@ export function AccountingInvoiceForm({
   const updateItem = (
     index: number,
     field: keyof AccountingCreateInvoiceItem,
-    value: string | number | AccountingVatRate | undefined
+    value: string | number | undefined
   ) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };

@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
 import { useState } from 'react';
+
+function formatDate(value: string, month: 'short' | 'long'): string {
+  return new Date(value).toLocaleDateString('en-US', {
+    month,
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
 
 interface BankStatement {
   id: string;
@@ -204,7 +211,7 @@ export function PaymentMatchingPage() {
                   </p>
                   <div className="flex justify-between items-center mt-2">
                     <p className="text-[10px] text-gray-500">
-                      {format(new Date(s.imported_at), 'MMM d, yyyy')}
+                      {formatDate(s.imported_at, 'short')}
                     </p>
                     <p className="text-[10px] font-mono text-gray-400 truncate max-w-[100px]">
                       {s.account_iban}
@@ -263,7 +270,7 @@ export function PaymentMatchingPage() {
                         </span>
                       </p>
                       <p className="text-[10px] font-medium text-gray-400 mt-2 tracking-tight uppercase">
-                        {format(new Date(l.booking_date), 'MMMM d, yyyy')}
+                        {formatDate(l.booking_date, 'long')}
                       </p>
                     </div>
                     <span

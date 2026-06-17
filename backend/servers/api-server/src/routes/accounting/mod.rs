@@ -1,11 +1,11 @@
+use crate::AppState;
+use axum::routing::{get, post};
+use axum::Router;
+
 pub mod contacts;
 pub mod invoices;
 pub mod matches;
 pub mod statements;
-
-use crate::AppState;
-use axum::routing::{get, post};
-use axum::Router;
 
 pub fn router() -> Router<AppState> {
     Router::new()

@@ -122,6 +122,12 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
   }, [getQueuedActions]);
 
   // Execute a single queued action against the real backend.
+  //
+  // The queue stores `endpoint` as either an absolute URL or a path
+  // beginning with `/`. For relative paths we prefix the configured API
+  // base URL. The bearer token (if available) is read from SecureStore
+  // at dispatch time so token rotations between enqueue and replay are
+  // honored.
   const executeQueuedAction = useCallback(async (action: QueuedAction): Promise<void> => {
     const url = action.endpoint.startsWith('http')
       ? action.endpoint
@@ -133,6 +139,11 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     };
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
+      // Tenant-scoped api-server routes (RlsConnection extractor on
+      // /faults, /voting, /buildings, …) reject requests without
+      // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
+      // claim — extract it so replayed offline actions hit the same
+      // tenant the user was signed into when they enqueued.
       const tenantId = extractTenantIdFromJwt(accessToken);
       if (tenantId) {
         headers['X-Tenant-ID'] = tenantId;
@@ -146,8 +157,14 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     });
 
     if (!response.ok) {
+      // Treat 4xx as terminal (the request will never succeed even on
+      // retry — bad payload, gone, unauthorized, …) so the queue drops
+      // the action without burning the retry budget on hopeless replays.
+      // 5xx and network failures bubble up as a normal error so the
+      // outer retry loop handles them.
       const error = new Error(`HTTP ${response.status} on ${action.method} ${action.endpoint}`);
       if (response.status >= 400 && response.status < 500) {
+        // Mark the error so processQueue can decide to drop instead of retry.
         (error as Error & { permanent?: boolean }).permanent = true;
       }
       throw error;
@@ -186,6 +203,9 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
             await executeQueuedAction(action);
             success++;
           } catch (error) {
+            // 4xx responses are marked `permanent` by executeQueuedAction
+            // and dropped immediately — replaying them won't help.
+            // Everything else (5xx, network) goes through the retry budget.
             const isPermanent = (error as { permanent?: boolean })?.permanent === true;
             action.retries++;
             if (!isPermanent && action.retries < 3) {
@@ -358,6 +378,9 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
       setIsSyncing(true);
 
       try {
+        // Process offline queue first. Per-domain prefetching (announcements,
+        // faults, votes) is intentionally left to each screen's own
+        // useQuery + cacheData call so this hook stays endpoint-agnostic.
         await processQueue(onProgress);
       } catch (error) {
         console.error('Failed to sync data:', error);

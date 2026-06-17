@@ -3,7 +3,6 @@
  */
 
 import {
-  type AccountingContact,
   type AccountingCreateInvoiceRequest,
   contactsApiList,
   invoicesApiCreate,
@@ -14,25 +13,45 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
+import { useAccountingAuth } from '../hooks/useAccountingAuth';
 
 export function AccountingInvoiceManagementPage() {
   const [isCreating, setIsCreating] = useState(false);
   const queryClient = useQueryClient();
+  const auth = useAccountingAuth();
 
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: ['accounting', 'invoices'],
-    queryFn: () => invoicesApiList({}),
+    queryFn: () => {
+      if (!auth) throw new Error('Not authenticated');
+      return invoicesApiList({
+        headers: auth.headers as unknown as { Authorization: string },
+      });
+    },
+    enabled: !!auth,
   });
 
   const { data: contacts, isLoading: contactsLoading } = useQuery({
     queryKey: ['accounting', 'contacts'],
-    queryFn: () => contactsApiList({}),
+    queryFn: () => {
+      if (!auth) throw new Error('Not authenticated');
+      return contactsApiList({
+        headers: auth.headers as unknown as { Authorization: string },
+      });
+    },
+    enabled: !!auth,
   });
 
   const isLoading = invoicesLoading || contactsLoading;
 
   const createMutation = useMutation({
-    mutationFn: (data: AccountingCreateInvoiceRequest) => invoicesApiCreate({ body: data }),
+    mutationFn: (data: AccountingCreateInvoiceRequest) => {
+      if (!auth) throw new Error('Not authenticated');
+      return invoicesApiCreate({
+        body: data,
+        headers: auth.headers as unknown as { Authorization: string },
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
       setIsCreating(false);
@@ -40,7 +59,13 @@ export function AccountingInvoiceManagementPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => invoicesApiDelete({ path: { id } }),
+    mutationFn: (id: string) => {
+      if (!auth) throw new Error('Not authenticated');
+      return invoicesApiDelete({
+        path: { id },
+        headers: auth.headers as unknown as { Authorization: string },
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
     },
@@ -68,7 +93,7 @@ export function AccountingInvoiceManagementPage() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-semibold mb-4">New Invoice</h2>
           <AccountingInvoiceForm
-            contacts={contacts as unknown as AccountingContact[]}
+            contacts={contacts?.data || []}
             onSubmit={(data) => createMutation.mutate(data)}
             onCancel={() => setIsCreating(false)}
             isSubmitting={createMutation.isPending}

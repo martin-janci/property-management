@@ -50,10 +50,11 @@ pub use airbnb::{
 pub use booking::{
     map_reservation_status as map_booking_status, AvailStatusMessage, AvailabilityUpdate,
     BookingAddress, BookingClient, BookingContact, BookingCredentials, BookingError, BookingGuest,
-    BookingProperty, BookingReservation, BookingReservationStatus, BookingRoomType,
-    LosRestrictions, OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelResNotifRQ,
-    OtaHotelResNotifRS, OtaReadRQ, OtaReadRS, OtaReservationNotification, PropertyMapping,
-    RateUpdate, RoomTypeMapping,
+    BookingOAuthClient, BookingOAuthConfig, BookingOAuthTokens, BookingProperty,
+    BookingReservation, BookingReservationStatus, BookingRoomType, LosRestrictions,
+    OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelResNotifRQ, OtaHotelResNotifRS, OtaReadRQ,
+    OtaReadRS, OtaReservationNotification, PropertyMapping, RateUpdate, RoomTypeMapping,
+    BOOKING_OAUTH_AUTH_URL, BOOKING_OAUTH_TOKEN_URL,
 };
 
 // Story 83.3: Portal Webhooks
@@ -65,16 +66,16 @@ pub use portals::{
     SrealityContact, SrealityParser, SrealityWebhook,
 };
 
-// Story 61.1: Calendar Integration
-pub use calendar::{
-    AttendeeStatus, CalendarError, CalendarListItem, EventAttendee, ExternalCalendarEvent,
-    GoogleCalendarClient, MicrosoftCalendarClient, OAuthConfig, OAuthTokens, SyncResult,
-};
-
 // Story 61.2: Accounting System Export
 pub use accounting::{
     AccountingError, ExportInvoice, ExportPayment, InvoiceItem, MoneyS3Exporter, Partner,
     PaymentType, PohodaExporter, ValidationResult, VatRate,
+};
+
+// Story 61.1: Calendar Integration
+pub use calendar::{
+    AttendeeStatus, CalendarError, CalendarListItem, EventAttendee, ExternalCalendarEvent,
+    GoogleCalendarClient, MicrosoftCalendarClient, OAuthConfig, OAuthTokens, SyncResult,
 };
 
 // Encryption utilities for sensitive integration data
@@ -129,10 +130,10 @@ pub use workflow_executor::{
 
 // Story 103.2-103.4: Redis Integration
 pub use redis::{
-    channels as redis_channels, event_types as redis_events, CacheError, PubSubMessage,
-    PubSubService, RedisClient, RedisConfig, SessionData, SessionStore, CACHE_KEY_PREFIX,
-    DEFAULT_CACHE_TTL_SECS, DEFAULT_SESSION_TTL_SECS, PUBSUB_CHANNEL_PREFIX, REDIS_URL_ENV,
-    SESSION_KEY_PREFIX,
+    channels as redis_channels, event_types as redis_events, CacheError, InMemoryBroker,
+    PubSubMessage, PubSubService, RedisClient, RedisConfig, SessionData, SessionStore,
+    CACHE_KEY_PREFIX, DEFAULT_CACHE_TTL_SECS, DEFAULT_SESSION_TTL_SECS, PUBSUB_CHANNEL_PREFIX,
+    REDIS_URL_ENV, SESSION_KEY_PREFIX,
 };
 
 // Epic 150: API Ecosystem Expansion
