@@ -128,6 +128,51 @@ impl RentalRepository {
         created_at, updated_at
     "#;
 
+    /// PAP-158: explicit projection for rental_platform_connections. `platform`
+    /// is the `rental_platform` enum but `RentalPlatformConnection.platform` is
+    /// `String`, so a bare `SELECT */RETURNING *` panics with ColumnDecode
+    /// ("not compatible with SQL type rental_platform"). Cast the enum to text.
+    const CONNECTION_COLUMNS: &'static str = r#"
+        id, organization_id, unit_id, platform::text AS platform,
+        access_token, refresh_token, token_expires_at,
+        encrypted_token, encrypted_refresh_token,
+        external_property_id, external_listing_url,
+        is_active, last_sync_at, sync_error,
+        sync_calendar, sync_interval_minutes, block_other_platforms,
+        created_at, updated_at
+    "#;
+
+    /// PAP-158: explicit projection for rental_guests. `status` is the
+    /// `guest_registration_status` enum but `RentalGuest.status` is `String`,
+    /// so cast it to text (bare `SELECT */RETURNING *` fails ColumnDecode).
+    const GUEST_COLUMNS: &'static str = r#"
+        id, organization_id, booking_id,
+        first_name, last_name, date_of_birth, nationality,
+        id_type, id_number, id_issuing_country, id_expiry_date, id_document_url,
+        email, phone,
+        address_street, address_city, address_postal_code, address_country,
+        status::text AS status, registered_at, reported_at, report_reference,
+        is_primary, created_at, updated_at
+    "#;
+
+    /// PAP-158: explicit projection for rental_calendar_blocks. `source_platform`
+    /// is the nullable `rental_platform` enum but `CalendarBlock.source_platform`
+    /// is `Option<String>`, so cast it to text.
+    const CALENDAR_BLOCK_COLUMNS: &'static str = r#"
+        id, organization_id, unit_id, block_start, block_end,
+        reason, booking_id, source_platform::text AS source_platform,
+        synced_at, notes, created_at
+    "#;
+
+    /// PAP-158: explicit projection for rental_ical_feeds. `import_platform` is
+    /// the nullable `rental_platform` enum but `ICalFeed.import_platform` is
+    /// `Option<String>`, so cast it to text.
+    const ICAL_FEED_COLUMNS: &'static str = r#"
+        id, organization_id, unit_id, feed_name, feed_token, feed_url,
+        import_url, import_platform::text AS import_platform,
+        last_import_at, import_error, is_active, created_at, updated_at
+    "#;
+
     // ========================================================================
     // Platform Connections (Story 18.1)
     // ========================================================================
@@ -138,16 +183,19 @@ impl RentalRepository {
         org_id: Uuid,
         data: CreatePlatformConnection,
     ) -> Result<RentalPlatformConnection, SqlxError> {
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        // PAP-158: RETURNING * would decode the `platform` enum into the model's
+        // `String` field and panic; project the columns with `platform::text`.
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_platform_connections (
                 organization_id, unit_id, platform, external_property_id,
                 sync_calendar, sync_interval_minutes, block_other_platforms
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::CONNECTION_COLUMNS
+        )))
         .bind(org_id)
         .bind(data.unit_id)
         .bind(&data.platform)
@@ -238,7 +286,9 @@ impl RentalRepository {
         id: Uuid,
         data: UpdatePlatformConnection,
     ) -> Result<RentalPlatformConnection, SqlxError> {
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        // PAP-158: cast the `platform` enum to text in RETURNING (see
+        // CONNECTION_COLUMNS) so the row decodes into the `String` model field.
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_platform_connections SET
                 external_property_id = COALESCE($2, external_property_id),
@@ -249,9 +299,10 @@ impl RentalRepository {
                 block_other_platforms = COALESCE($7, block_other_platforms),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::CONNECTION_COLUMNS
+        )))
         .bind(id)
         .bind(&data.external_property_id)
         .bind(&data.external_listing_url)
@@ -520,7 +571,9 @@ impl RentalRepository {
         org_id: Uuid,
         data: CreateBooking,
     ) -> Result<RentalBooking, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        // PAP-158: RETURNING * would decode the `platform`/`status` enums into
+        // the model's `String` fields and panic; project with enum-to-text casts.
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_bookings (
                 organization_id, unit_id, platform, external_booking_id,
@@ -530,9 +583,10 @@ impl RentalRepository {
                 guest_notes, internal_notes, status
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::BOOKING_COLUMNS
+        )))
         .bind(org_id)
         .bind(data.unit_id)
         .bind(&data.platform)
@@ -646,7 +700,8 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateBooking,
     ) -> Result<RentalBooking, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        // PAP-158: project enum columns as text in RETURNING (see BOOKING_COLUMNS).
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_bookings SET
                 guest_name = COALESCE($2, guest_name),
@@ -663,9 +718,10 @@ impl RentalRepository {
                 internal_notes = COALESCE($13, internal_notes),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::BOOKING_COLUMNS
+        )))
         .bind(id)
         .bind(&data.guest_name)
         .bind(&data.guest_email)
@@ -712,7 +768,8 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateBooking,
     ) -> Result<Option<RentalBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
+        // PAP-158: project enum columns as text in RETURNING (see BOOKING_COLUMNS).
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_bookings SET
                 guest_name = COALESCE($2, guest_name),
@@ -729,9 +786,10 @@ impl RentalRepository {
                 internal_notes = COALESCE($13, internal_notes),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $14
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::BOOKING_COLUMNS
+        )))
         .bind(id)
         .bind(&data.guest_name)
         .bind(&data.guest_email)
@@ -847,11 +905,15 @@ impl RentalRepository {
         }
         if query.platform.is_some() {
             param_count += 1;
-            conditions.push(format!("b.platform = ${}", param_count));
+            // PAP-158: `platform` is the `rental_platform` enum; comparing it to a
+            // bound text param needs an explicit `::text` cast (else 42883).
+            conditions.push(format!("b.platform::text = ${}", param_count));
         }
         if query.status.is_some() {
             param_count += 1;
-            conditions.push(format!("b.status = ${}", param_count));
+            // PAP-158: `status` is the `rental_booking_status` enum; cast to text
+            // for the text-param comparison.
+            conditions.push(format!("b.status::text = ${}", param_count));
         }
         if query.from_date.is_some() {
             param_count += 1;
@@ -914,8 +976,8 @@ impl RentalRepository {
                 b.id, b.unit_id, u.name, bld.name,
                 b.platform::text, b.external_booking_id, b.guest_name, b.guest_count,
                 b.check_in, b.check_out, b.total_amount, b.currency,
-                b.status,
-                (SELECT status FROM rental_guests WHERE booking_id = b.id AND is_primary = true LIMIT 1)
+                b.status::text,
+                (SELECT status::text FROM rental_guests WHERE booking_id = b.id AND is_primary = true LIMIT 1)
             FROM rental_bookings b
             JOIN units u ON u.id = b.unit_id
             JOIN buildings bld ON bld.id = u.building_id
@@ -1026,13 +1088,16 @@ impl RentalRepository {
         org_id: Uuid,
         data: CreateCalendarBlock,
     ) -> Result<CalendarBlock, SqlxError> {
-        let block = sqlx::query_as::<_, CalendarBlock>(
+        // PAP-158: RETURNING * would decode the nullable `source_platform` enum
+        // into `Option<String>` and panic; project with enum-to-text cast.
+        let block = sqlx::query_as::<_, CalendarBlock>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_calendar_blocks (organization_id, unit_id, block_start, block_end, reason, notes)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::CALENDAR_BLOCK_COLUMNS
+        )))
         .bind(org_id)
         .bind(data.unit_id)
         .bind(data.block_start)
@@ -1143,8 +1208,10 @@ impl RentalRepository {
         for (id, block_start, block_end, reason, booking_id, source_platform) in blocks {
             let (title, booking_status, color) = if let Some(bid) = booking_id {
                 // Get booking info
+                // PAP-158: `status` is the `rental_booking_status` enum decoded
+                // into a `String` tuple field; cast it to text.
                 let booking: Option<(String, String, String)> = sqlx::query_as(
-                    r#"SELECT guest_name, platform::text, status FROM rental_bookings WHERE id = $1"#,
+                    r#"SELECT guest_name, platform::text, status::text FROM rental_bookings WHERE id = $1"#,
                 )
                 .bind(bid)
                 .fetch_optional(&self.pool)
@@ -1231,7 +1298,9 @@ impl RentalRepository {
         org_id: Uuid,
         data: CreateGuest,
     ) -> Result<RentalGuest, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(
+        // PAP-158: RETURNING * would decode the `status` enum into the model's
+        // `String` field and panic; project with enum-to-text cast.
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_guests (
                 organization_id, booking_id, first_name, last_name,
@@ -1241,9 +1310,10 @@ impl RentalRepository {
                 is_primary, status
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::GUEST_COLUMNS
+        )))
         .bind(org_id)
         .bind(data.booking_id)
         .bind(&data.first_name)
@@ -1270,11 +1340,14 @@ impl RentalRepository {
 
     /// Find guest by ID.
     pub async fn find_guest_by_id(&self, id: Uuid) -> Result<Option<RentalGuest>, SqlxError> {
-        let guest =
-            sqlx::query_as::<_, RentalGuest>(r#"SELECT * FROM rental_guests WHERE id = $1"#)
-                .bind(id)
-                .fetch_optional(&self.pool)
-                .await?;
+        // PAP-158: `status` is an enum; project with enum-to-text cast.
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM rental_guests WHERE id = $1",
+            Self::GUEST_COLUMNS
+        )))
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(guest)
     }
@@ -1287,9 +1360,11 @@ impl RentalRepository {
         org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<RentalGuest>, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(
-            r#"SELECT * FROM rental_guests WHERE id = $1 AND organization_id = $2"#,
-        )
+        // PAP-158: `status` is an enum; project with enum-to-text cast.
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM rental_guests WHERE id = $1 AND organization_id = $2",
+            Self::GUEST_COLUMNS
+        )))
         .bind(id)
         .bind(org_id)
         .fetch_optional(&self.pool)
@@ -1304,7 +1379,8 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateGuest,
     ) -> Result<RentalGuest, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(
+        // PAP-158: project `status` enum as text in RETURNING (see GUEST_COLUMNS).
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_guests SET
                 first_name = COALESCE($2, first_name),
@@ -1324,9 +1400,10 @@ impl RentalRepository {
                 address_country = COALESCE($16, address_country),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::GUEST_COLUMNS
+        )))
         .bind(id)
         .bind(&data.first_name)
         .bind(&data.last_name)
@@ -1360,7 +1437,8 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateGuest,
     ) -> Result<Option<RentalGuest>, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(
+        // PAP-158: project `status` enum as text in RETURNING (see GUEST_COLUMNS).
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_guests SET
                 first_name = COALESCE($2, first_name),
@@ -1380,9 +1458,10 @@ impl RentalRepository {
                 address_country = COALESCE($16, address_country),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $17
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::GUEST_COLUMNS
+        )))
         .bind(id)
         .bind(&data.first_name)
         .bind(&data.last_name)
@@ -1408,16 +1487,19 @@ impl RentalRepository {
 
     /// Register guest (mark as registered).
     pub async fn register_guest(&self, id: Uuid) -> Result<RentalGuest, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(
+        // PAP-158: cast the bound text status arg to the enum on assignment and
+        // project `status` as text in RETURNING (see GUEST_COLUMNS).
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_guests SET
-                status = $2,
+                status = $2::guest_registration_status,
                 registered_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::GUEST_COLUMNS
+        )))
         .bind(id)
         .bind(guest_status::REGISTERED)
         .fetch_one(&self.pool)
@@ -1435,16 +1517,19 @@ impl RentalRepository {
         org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<RentalGuest>, SqlxError> {
-        let guest = sqlx::query_as::<_, RentalGuest>(
+        // PAP-158: cast the bound text status arg to the enum on assignment and
+        // project `status` as text in RETURNING (see GUEST_COLUMNS).
+        let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_guests SET
-                status = $2,
+                status = $2::guest_registration_status,
                 registered_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $3
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::GUEST_COLUMNS
+        )))
         .bind(id)
         .bind(guest_status::REGISTERED)
         .bind(org_id)
@@ -1459,13 +1544,15 @@ impl RentalRepository {
         &self,
         booking_id: Uuid,
     ) -> Result<Vec<RentalGuest>, SqlxError> {
-        let guests = sqlx::query_as::<_, RentalGuest>(
+        // PAP-158: `status` is an enum; project with enum-to-text cast.
+        let guests = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT * FROM rental_guests
+            SELECT {} FROM rental_guests
             WHERE booking_id = $1
             ORDER BY is_primary DESC, created_at
             "#,
-        )
+            Self::GUEST_COLUMNS
+        )))
         .bind(booking_id)
         .fetch_all(&self.pool)
         .await?;
@@ -1919,16 +2006,19 @@ impl RentalRepository {
     ) -> Result<ICalFeed, SqlxError> {
         let token = Uuid::new_v4().to_string().replace("-", "");
 
-        let feed = sqlx::query_as::<_, ICalFeed>(
+        // PAP-158: RETURNING * would decode the nullable `import_platform` enum
+        // into `Option<String>` and panic; project with enum-to-text cast.
+        let feed = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_ical_feeds (
                 organization_id, unit_id, feed_name, feed_token,
                 import_url, import_platform
             )
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::ICAL_FEED_COLUMNS
+        )))
         .bind(org_id)
         .bind(data.unit_id)
         .bind(&data.feed_name)
@@ -1946,9 +2036,11 @@ impl RentalRepository {
         &self,
         token: &str,
     ) -> Result<Option<ICalFeed>, SqlxError> {
-        let feed = sqlx::query_as::<_, ICalFeed>(
-            r#"SELECT * FROM rental_ical_feeds WHERE feed_token = $1 AND is_active = true"#,
-        )
+        // PAP-158: `import_platform` is an enum; project with enum-to-text cast.
+        let feed = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM rental_ical_feeds WHERE feed_token = $1 AND is_active = true",
+            Self::ICAL_FEED_COLUMNS
+        )))
         .bind(token)
         .fetch_optional(&self.pool)
         .await?;
@@ -1958,9 +2050,11 @@ impl RentalRepository {
 
     /// Get iCal feeds for unit.
     pub async fn get_ical_feeds_for_unit(&self, unit_id: Uuid) -> Result<Vec<ICalFeed>, SqlxError> {
-        let feeds = sqlx::query_as::<_, ICalFeed>(
-            r#"SELECT * FROM rental_ical_feeds WHERE unit_id = $1 ORDER BY feed_name"#,
-        )
+        // PAP-158: `import_platform` is an enum; project with enum-to-text cast.
+        let feeds = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM rental_ical_feeds WHERE unit_id = $1 ORDER BY feed_name",
+            Self::ICAL_FEED_COLUMNS
+        )))
         .bind(unit_id)
         .fetch_all(&self.pool)
         .await?;
@@ -1977,9 +2071,11 @@ impl RentalRepository {
         org_id: Uuid,
         unit_id: Uuid,
     ) -> Result<Vec<ICalFeed>, SqlxError> {
-        let feeds = sqlx::query_as::<_, ICalFeed>(
-            r#"SELECT * FROM rental_ical_feeds WHERE unit_id = $1 AND organization_id = $2 ORDER BY feed_name"#,
-        )
+        // PAP-158: `import_platform` is an enum; project with enum-to-text cast.
+        let feeds = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM rental_ical_feeds WHERE unit_id = $1 AND organization_id = $2 ORDER BY feed_name",
+            Self::ICAL_FEED_COLUMNS
+        )))
         .bind(unit_id)
         .bind(org_id)
         .fetch_all(&self.pool)
@@ -1998,7 +2094,8 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateICalFeed,
     ) -> Result<Option<ICalFeed>, SqlxError> {
-        let feed = sqlx::query_as::<_, ICalFeed>(
+        // PAP-158: project `import_platform` enum as text (see ICAL_FEED_COLUMNS).
+        let feed = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_ical_feeds SET
                 feed_name = COALESCE($2, feed_name),
@@ -2006,9 +2103,10 @@ impl RentalRepository {
                 is_active = COALESCE($4, is_active),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $5
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::ICAL_FEED_COLUMNS
+        )))
         .bind(id)
         .bind(&data.feed_name)
         .bind(&data.import_url)
@@ -2045,7 +2143,8 @@ impl RentalRepository {
         id: Uuid,
         data: UpdateICalFeed,
     ) -> Result<ICalFeed, SqlxError> {
-        let feed = sqlx::query_as::<_, ICalFeed>(
+        // PAP-158: project `import_platform` enum as text (see ICAL_FEED_COLUMNS).
+        let feed = sqlx::query_as::<_, ICalFeed>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_ical_feeds SET
                 feed_name = COALESCE($2, feed_name),
@@ -2053,9 +2152,10 @@ impl RentalRepository {
                 is_active = COALESCE($4, is_active),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::ICAL_FEED_COLUMNS
+        )))
         .bind(id)
         .bind(&data.feed_name)
         .bind(&data.import_url)
@@ -2357,7 +2457,8 @@ impl RentalRepository {
         // (unit_id, platform) constraint — and so one org's DO UPDATE can never
         // silently rebind another org's row. (BIT-85 cross-tenant hazard fix.)
         if effective_unit_id == Uuid::nil() {
-            let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            // PAP-158: cast the `platform` enum to text in RETURNING.
+            let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
                 r#"
                 INSERT INTO rental_platform_connections (
                     organization_id, unit_id, platform,
@@ -2378,9 +2479,10 @@ impl RentalRepository {
                     is_active                = true,
                     sync_error               = NULL,
                     updated_at               = NOW()
-                RETURNING *
+                RETURNING {}
                 "#,
-            )
+                Self::CONNECTION_COLUMNS
+            )))
             .bind(org_id)
             .bind(effective_unit_id)
             .bind(access_token)
@@ -2392,7 +2494,8 @@ impl RentalRepository {
             return Ok(conn);
         }
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        // PAP-158: cast the `platform` enum to text in RETURNING.
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_platform_connections (
                 organization_id, unit_id, platform,
@@ -2412,9 +2515,10 @@ impl RentalRepository {
                 is_active                = true,
                 sync_error               = NULL,
                 updated_at               = NOW()
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::CONNECTION_COLUMNS
+        )))
         .bind(org_id)
         .bind(effective_unit_id)
         .bind(access_token)
@@ -2445,7 +2549,8 @@ impl RentalRepository {
         // Same org-scoped conflict target as upsert_airbnb_connection for the
         // nil-unit_id case. (BIT-85 cross-tenant hazard fix.)
         if effective_unit_id == Uuid::nil() {
-            let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            // PAP-158: cast the `platform` enum to text in RETURNING.
+            let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
                 r#"
                 INSERT INTO rental_platform_connections (
                     organization_id, unit_id, platform,
@@ -2466,9 +2571,10 @@ impl RentalRepository {
                     is_active                = true,
                     sync_error               = NULL,
                     updated_at               = NOW()
-                RETURNING *
+                RETURNING {}
                 "#,
-            )
+                Self::CONNECTION_COLUMNS
+            )))
             .bind(org_id)
             .bind(effective_unit_id)
             .bind(access_token)
@@ -2480,7 +2586,8 @@ impl RentalRepository {
             return Ok(conn);
         }
 
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        // PAP-158: cast the `platform` enum to text in RETURNING.
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_platform_connections (
                 organization_id, unit_id, platform,
@@ -2500,9 +2607,10 @@ impl RentalRepository {
                 is_active                = true,
                 sync_error               = NULL,
                 updated_at               = NOW()
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::CONNECTION_COLUMNS
+        )))
         .bind(org_id)
         .bind(effective_unit_id)
         .bind(access_token)
@@ -2576,7 +2684,8 @@ impl RentalRepository {
         encrypted_refresh: Option<&str>,
         expires_at: Option<chrono::DateTime<Utc>>,
     ) -> Result<RentalPlatformConnection, SqlxError> {
-        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+        // PAP-158: cast the `platform` enum to text in RETURNING.
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_platform_connections SET
                 access_token             = $2,
@@ -2588,9 +2697,10 @@ impl RentalRepository {
                 updated_at               = NOW()
             WHERE id = $1
               AND platform = 'airbnb'
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::CONNECTION_COLUMNS
+        )))
         .bind(connection_id)
         .bind(encrypted_access)
         .bind(encrypted_refresh)
@@ -2723,7 +2833,8 @@ impl RentalRepository {
         let id = Uuid::new_v4();
         let unit_id = Uuid::nil(); // Booking connections are org-level
 
-        let connection = sqlx::query_as::<_, RentalPlatformConnection>(
+        // PAP-158: cast the `platform` enum to text in RETURNING.
+        let connection = sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
             r#"
             INSERT INTO rental_platform_connections (
                 id, unit_id, organization_id, platform, external_property_id,
@@ -2740,9 +2851,10 @@ impl RentalRepository {
                 is_active = true,
                 sync_error = NULL,
                 updated_at = NOW()
-            RETURNING *
+            RETURNING {}
             "#,
-        )
+            Self::CONNECTION_COLUMNS
+        )))
         .bind(id)
         .bind(unit_id)
         .bind(org_id)
