@@ -227,9 +227,10 @@ async fn get_folder(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FolderDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     match state
         .document_repo
-        .find_folder_by_id_rls(&mut **rls.conn(), id)
+        .find_folder_by_id_rls(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(folder)) => {
@@ -285,10 +286,12 @@ async fn update_folder(
         ));
     }
 
-    // Check folder exists
+    // Check folder exists (org-scoped: cross-org rows are invisible even under
+    // a superuser connection that bypasses RLS — see find_folder_by_id_rls).
+    let org_id = rls.tenant_id();
     match state
         .document_repo
-        .find_folder_by_id_rls(&mut **rls.conn(), id)
+        .find_folder_by_id_rls(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(_)) => {}
@@ -434,10 +437,12 @@ async fn delete_folder(
         ));
     }
 
-    // Check folder exists
+    // Check folder exists (org-scoped: cross-org rows are invisible even under
+    // a superuser connection that bypasses RLS — see find_folder_by_id_rls).
+    let org_id = rls.tenant_id();
     match state
         .document_repo
-        .find_folder_by_id_rls(&mut **rls.conn(), id)
+        .find_folder_by_id_rls(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(_)) => {}

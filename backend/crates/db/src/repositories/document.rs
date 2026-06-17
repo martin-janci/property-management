@@ -80,11 +80,22 @@ impl DocumentRepository {
         .await
     }
 
-    /// Find folder by ID with RLS context.
+    /// Find folder by ID, scoped to `org_id` (RLS context).
+    ///
+    /// The explicit `organization_id = $2` predicate is defense-in-depth on top
+    /// of the `folder_tenant_isolation` RLS policy: it guarantees cross-org rows
+    /// are invisible (lookup → `None` → 404) even when the connection is a
+    /// Postgres SUPERUSER, which bypasses RLS entirely (FORCE ROW LEVEL SECURITY
+    /// binds only the table OWNER, not superusers). The default test/CI
+    /// `cargo test` job connects as the `postgres` superuser, so without this
+    /// predicate the cross-org IDOR probes (#679) leak Org A's folder to an
+    /// Org B caller. Mirrors the explicit-org-scoping pattern used by the other
+    /// `*_cross_org_idor` suites.
     pub async fn find_folder_by_id_rls<'e, E>(
         &self,
         executor: E,
         id: Uuid,
+        org_id: Uuid,
     ) -> Result<Option<DocumentFolder>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
@@ -92,10 +103,11 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentFolder>(
             r#"
             SELECT * FROM document_folders
-            WHERE id = $1 AND deleted_at IS NULL
+            WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .fetch_optional(executor)
         .await
     }
@@ -338,18 +350,6 @@ impl DocumentRepository {
     #[allow(deprecated)]
     pub async fn create_folder(&self, data: CreateFolder) -> Result<DocumentFolder, SqlxError> {
         self.create_folder_rls(&self.pool, data).await
-    }
-
-    /// Find folder by ID.
-    ///
-    /// **Deprecated**: Use `find_folder_by_id_rls` with an RLS-enabled connection instead.
-    #[deprecated(
-        since = "0.2.276",
-        note = "Use find_folder_by_id_rls with RlsConnection instead"
-    )]
-    #[allow(deprecated)]
-    pub async fn find_folder_by_id(&self, id: Uuid) -> Result<Option<DocumentFolder>, SqlxError> {
-        self.find_folder_by_id_rls(&self.pool, id).await
     }
 
     /// Get all folders for an organization.
@@ -990,12 +990,23 @@ impl DocumentRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        // NOTE: `RETURNING *` returns `category` / `access_scope` as their native
+        // Postgres ENUM types (`document_category` / `document_access_scope`),
+        // which SQLx cannot decode into the `String` fields on `Document` — that
+        // produced a 500 on every move (the column list mirrors `find_by_id_rls`,
+        // casting the enums to text).
         sqlx::query_as::<_, Document>(
             r#"
             UPDATE documents
             SET folder_id = $2, updated_at = NOW()
             WHERE id = $1 AND deleted_at IS NULL
-            RETURNING *
+            RETURNING
+                id, organization_id, folder_id, title, description,
+                category::text AS category, file_key, file_name, mime_type,
+                size_bytes, access_scope::text AS access_scope,
+                access_target_ids, access_roles, created_by, created_at,
+                updated_at, deleted_at, version_number, parent_document_id,
+                is_current_version, template_id, generation_metadata
             "#,
         )
         .bind(data.document_id)

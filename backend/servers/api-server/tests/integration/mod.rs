@@ -9,7 +9,10 @@
 //! - Health checks
 
 pub mod auth_tests;
-pub mod document_folder_tests;
+// document_folder_tests (and the former document_access_tests) moved to the
+// root-level `tests/document_folder_tests.rs` binary (this `integration/` subtree
+// is never declared as `mod integration;` by any test bin, so it does not compile
+// — see that file's header note).
 pub mod health_tests;
 pub mod integration_sync_tests;
 pub mod mfa_e2e_tests;
