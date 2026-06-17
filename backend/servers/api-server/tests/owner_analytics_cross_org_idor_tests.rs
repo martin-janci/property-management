@@ -28,7 +28,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -61,20 +61,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 async fn seed_building(pool: &PgPool, org_id: Uuid) -> Uuid {
@@ -170,7 +156,7 @@ async fn unit_valuation_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "valuation-a").await;
     let org_b = seed_org(&pool, "valuation-b").await;
     let user_b = seed_user(&pool, &format!("val-b-{}@owner-idor.test", Uuid::new_v4())).await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
 
     let building_a = seed_building(&pool, org_a).await;
     let unit_a = seed_unit(&pool, building_a).await;
@@ -199,7 +185,7 @@ async fn value_history_from_other_org_is_empty(pool: PgPool) {
     let org_a = seed_org(&pool, "hist-a").await;
     let org_b = seed_org(&pool, "hist-b").await;
     let user_b = seed_user(&pool, &format!("hist-b-{}@owner-idor.test", Uuid::new_v4())).await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
 
     let building_a = seed_building(&pool, org_a).await;
     let unit_a = seed_unit(&pool, building_a).await;
@@ -242,7 +228,7 @@ async fn unit_valuation_same_org_succeeds(pool: PgPool) {
         &format!("legit-a-{}@owner-idor.test", Uuid::new_v4()),
     )
     .await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
 
     let building_a = seed_building(&pool, org_a).await;
     let unit_a = seed_unit(&pool, building_a).await;

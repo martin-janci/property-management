@@ -110,21 +110,36 @@ pub async fn verify_and_consume(
         }
     };
 
+    // Always consume the key once seen (match or mismatch) to prevent reuse /
+    // replay, then decide the outcome from the (now consumed) record.
+    if record.is_some() {
+        let _ = redis.delete(&key).await;
+    }
+
+    decide_consume(record, org_id)
+}
+
+/// Pure decision for [`verify_and_consume`]: given the record looked up from the
+/// store (if any) and the `org_id` from the callback path, decide whether the
+/// state is accepted.
+///
+/// Kept side-effect free (no Redis) so the CSRF single-use + org-binding rules
+/// can be unit-tested deterministically (#1374): a state is [`Consumed`] only
+/// when it was found AND bound to the same org; a missing record (expired,
+/// forged, or already-consumed → replay) and an org mismatch both [`Rejected`].
+///
+/// [`Consumed`]: ConsumeOutcome::Consumed
+/// [`Rejected`]: ConsumeOutcome::Rejected
+fn decide_consume(record: Option<OAuthStateRecord>, path_org_id: Uuid) -> ConsumeOutcome {
     match record {
+        Some(rec) if rec.org_id == path_org_id => ConsumeOutcome::Consumed,
         Some(rec) => {
-            // Always consume the key once seen, on match or mismatch, to
-            // prevent reuse / replay.
-            let _ = redis.delete(&key).await;
-            if rec.org_id == org_id {
-                ConsumeOutcome::Consumed
-            } else {
-                tracing::warn!(
-                    stored_org = %rec.org_id,
-                    path_org = %org_id,
-                    "OAuth state org mismatch on callback"
-                );
-                ConsumeOutcome::Rejected
-            }
+            tracing::warn!(
+                stored_org = %rec.org_id,
+                path_org = %path_org_id,
+                "OAuth state org mismatch on callback"
+            );
+            ConsumeOutcome::Rejected
         }
         None => {
             tracing::warn!("OAuth state not found or already consumed (possible replay)");
@@ -154,5 +169,49 @@ mod tests {
         let back: OAuthStateRecord = serde_json::from_str(&json).unwrap();
         assert_eq!(back.org_id, org_id);
         assert_eq!(back.user_id, user_id);
+    }
+
+    // ---- CSRF single-use + org-binding decision (#1374) -------------------
+    //
+    // `verify_and_consume` reads the record from Redis and then defers to the
+    // pure `decide_consume`. These pin the security-relevant outcomes — valid,
+    // invalid (org mismatch), and missing/replayed state — without a live Redis.
+
+    #[test]
+    fn decide_consume_accepts_state_bound_to_the_callback_org() {
+        let org_id = Uuid::new_v4();
+        let rec = OAuthStateRecord {
+            org_id,
+            user_id: Uuid::new_v4(),
+        };
+        // A state that was issued for this org is the only accepted ("valid") case.
+        assert!(matches!(
+            decide_consume(Some(rec), org_id),
+            ConsumeOutcome::Consumed
+        ));
+    }
+
+    #[test]
+    fn decide_consume_rejects_state_bound_to_a_different_org() {
+        // Forged/cross-org replay: the stored record exists but is bound to a
+        // different org than the callback path — must be rejected (no IDOR).
+        let rec = OAuthStateRecord {
+            org_id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+        };
+        assert!(matches!(
+            decide_consume(Some(rec), Uuid::new_v4()),
+            ConsumeOutcome::Rejected
+        ));
+    }
+
+    #[test]
+    fn decide_consume_rejects_missing_state() {
+        // No record => the state never existed, expired, or was already consumed
+        // (single-use replay). Either way the callback must be rejected.
+        assert!(matches!(
+            decide_consume(None, Uuid::new_v4()),
+            ConsumeOutcome::Rejected
+        ));
     }
 }

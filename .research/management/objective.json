@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "NONE",
-  "selected_at": "2026-06-11T20:16:01Z",
-  "last_action": "reset",
-  "reason": "picker selected non-conforming target bug-ios-deeplink-info-plist-missing (full task_id, not gap-N/pm-role); reset to NONE to keep T21 green (issue #1238 finding 1). Task still claimed via normal pool.",
+  "epic_prefix": "feat-airbnb-oauth-token-exchange-route-backend",
+  "selected_at": "2026-06-16T22:12:13Z",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
-    "open": 29,
-    "claimable": 29
+    "open": 1,
+    "claimable": 1
   }
 }

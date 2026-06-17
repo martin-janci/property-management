@@ -540,7 +540,12 @@
       "errors": {
         "detailsMinLength": "Details müssen mindestens 10 Zeichen enthalten."
       }
-    }
+    },
+    "draftSavedAgo": "Entwurf gespeichert · {{time}}",
+    "draftJustNow": "gerade eben",
+    "draftSecondsAgo": "vor {{count}}s",
+    "draftMinutesAgo": "vor {{count}}m",
+    "draftRestored": "Ihr gespeicherter Entwurf wurde wiederhergestellt."
   },
   "packages": {
     "title": "Paketverwaltung",

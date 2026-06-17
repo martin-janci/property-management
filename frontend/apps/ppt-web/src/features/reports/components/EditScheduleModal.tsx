@@ -34,11 +34,25 @@ interface FormErrors {
 /**
  * Derive an initial cron expression from a schedule.
  *
- * The `time` field on legacy schedules stores "HH:mm"; we convert that +
- * the frequency/day fields into a 5-field cron expression so the picker
- * can display a sensible starting value.
+ * Round-trip contract (gap-81-1 / issue #616): the backend now persists the
+ * edited expression to a dedicated `cron_expression` column and returns it on
+ * read, so when that field is present and valid we surface it verbatim — a
+ * custom every-15-minutes-on-weekday-business-hours expression survives an
+ * edit round-trip instead of being flattened back into the overloaded
+ * `time`/`frequency` fields.
+ *
+ * Back-compat fallback: legacy rows predating the column have no
+ * `cron_expression`. For those, the `time` field stores "HH:mm"; we convert
+ * that + the frequency/day fields into a 5-field cron expression so the picker
+ * can still display a sensible starting value.
  */
-function scheduleToInitialCron(schedule: ReportSchedule): string {
+export function scheduleToInitialCron(schedule: ReportSchedule): string {
+  // Prefer the dedicated cron column when the backend returned a usable one.
+  const stored = schedule.cron_expression?.trim();
+  if (stored && isValidCron(stored)) {
+    return stored;
+  }
+
   const [hh, mm] = (schedule.time || '08:00').split(':');
   const h = String(Number(hh) || 0);
   const m = String(Number(mm) || 0);

@@ -13,6 +13,7 @@ pub mod ai;
 // Phase 3: Hosting & Theming — Caddy on-demand TLS gate (internal-only).
 pub mod caddy_ask;
 // Phase 3: Hosting & Theming — public per-host tenant config endpoint.
+pub mod accounting;
 pub mod announcements;
 pub mod auth;
 pub mod buildings;

@@ -1,4 +1,4 @@
-use super::document_access_allowed;
+use super::{document_access_allowed, scope_membership_allows};
 use chrono::Utc;
 use db::models::Document;
 use serde_json::json;
@@ -78,4 +78,140 @@ fn users_scope_allows_listed_user_id() {
 fn unknown_scope_denies_non_creator() {
     let doc = make_doc("private", Uuid::new_v4(), json!([]), json!([]));
     assert!(!document_access_allowed(&doc, Uuid::new_v4(), "tenant"));
+}
+
+// ----------------------------------------------------------------------------
+// Story 7A.3 acceptance-criteria coverage
+// ----------------------------------------------------------------------------
+
+/// AC-2: a document restricted to the "owner" role must NOT be visible to a
+/// tenant. Guards the role-mismatch denial path of the download/preview gate.
+#[test]
+fn ac2_role_scoped_owners_only_denies_tenant() {
+    let doc = make_doc("role", Uuid::new_v4(), json!(["owner"]), json!([]));
+    // A non-creator owner is allowed...
+    assert!(document_access_allowed(&doc, Uuid::new_v4(), "owner"));
+    // ...but a tenant is denied (the document is not their list / download).
+    assert!(!document_access_allowed(&doc, Uuid::new_v4(), "tenant"));
+}
+
+/// AC-3 (negative): a document shared with a specific set of users must NOT be
+/// accessible to a user who is not in that set, even when several users are
+/// listed.
+#[test]
+fn ac3_user_scope_denies_user_not_in_share_list() {
+    let shared_a = Uuid::new_v4();
+    let shared_b = Uuid::new_v4();
+    let outsider = Uuid::new_v4();
+    let doc = make_doc(
+        "users",
+        Uuid::new_v4(),
+        json!([]),
+        json!([shared_a.to_string(), shared_b.to_string()]),
+    );
+    assert!(document_access_allowed(&doc, shared_a, "tenant"));
+    assert!(document_access_allowed(&doc, shared_b, "tenant"));
+    assert!(!document_access_allowed(&doc, outsider, "tenant"));
+}
+
+/// AC-3: the document creator retains access even when the `users` share list
+/// does not include them (creator-always-allowed wins over scope).
+#[test]
+fn ac3_creator_retains_access_when_not_in_user_list() {
+    let creator = Uuid::new_v4();
+    let doc = make_doc(
+        "users",
+        creator,
+        json!([]),
+        json!([Uuid::new_v4().to_string()]),
+    );
+    assert!(document_access_allowed(&doc, creator, "tenant"));
+}
+
+/// AC-1 / building & unit scope — regression guard.
+///
+/// `document_access_allowed` is the *in-memory* gate used by the download /
+/// preview handlers. It deliberately resolves only creator / organization /
+/// role / users scope, because building- and unit-scope resolution needs the
+/// caller's building/unit membership, which the SQL gate
+/// (`DocumentRepository::list_accessible_rls` / `check_access_rls`) owns.
+///
+/// This test pins that contract: a non-creator with no membership context is
+/// denied a building/unit-scoped document by the in-memory gate. If a future
+/// change wires building/unit membership into this helper, update this guard
+/// alongside it (see story 7A.3 AC-1 — the read path must then grant building
+/// residents access via the SQL gate).
+#[test]
+fn building_and_unit_scope_denied_by_in_memory_gate() {
+    let building_doc = make_doc(
+        "building",
+        Uuid::new_v4(),
+        json!([]),
+        json!([Uuid::new_v4().to_string()]),
+    );
+    assert!(!document_access_allowed(
+        &building_doc,
+        Uuid::new_v4(),
+        "owner"
+    ));
+
+    let unit_doc = make_doc(
+        "unit",
+        Uuid::new_v4(),
+        json!([]),
+        json!([Uuid::new_v4().to_string()]),
+    );
+    assert!(!document_access_allowed(&unit_doc, Uuid::new_v4(), "owner"));
+
+    // The creator still gets in regardless of building/unit scope.
+    let creator = Uuid::new_v4();
+    let creator_doc = make_doc("building", creator, json!([]), json!([]));
+    assert!(document_access_allowed(&creator_doc, creator, "tenant"));
+}
+
+// ----------------------------------------------------------------------------
+// GH #1413 — building/unit scope resolved from caller membership.
+//
+// `document_access_allowed` (above) stays membership-free; building/unit
+// resolution lives in `scope_membership_allows`, OR'd into the download/preview
+// handlers so a building/unit member is no longer 404'd. These pin that helper.
+// ----------------------------------------------------------------------------
+
+#[test]
+fn building_scope_granted_to_building_member() {
+    let b = Uuid::new_v4();
+    let doc = make_doc(
+        "building",
+        Uuid::new_v4(),
+        json!([]),
+        json!([b.to_string()]),
+    );
+    // Member of the targeted building is granted.
+    assert!(scope_membership_allows(&doc, &[b], &[]));
+    // No membership → denied.
+    assert!(!scope_membership_allows(&doc, &[], &[]));
+    // Membership in a different building → denied.
+    assert!(!scope_membership_allows(&doc, &[Uuid::new_v4()], &[]));
+}
+
+#[test]
+fn unit_scope_granted_to_unit_member() {
+    let u = Uuid::new_v4();
+    let doc = make_doc("unit", Uuid::new_v4(), json!([]), json!([u.to_string()]));
+    // Resident/owner of the targeted unit is granted.
+    assert!(scope_membership_allows(&doc, &[], &[u]));
+    // Building membership does not grant unit scope.
+    assert!(!scope_membership_allows(&doc, &[Uuid::new_v4()], &[]));
+}
+
+#[test]
+fn membership_never_grants_non_building_unit_scopes() {
+    for scope in ["organization", "role", "users", "private"] {
+        let doc = make_doc(scope, Uuid::new_v4(), json!([]), json!([]));
+        assert!(!scope_membership_allows(
+            &doc,
+            &[Uuid::new_v4()],
+            &[Uuid::new_v4()]
+        ));
+    }
 }

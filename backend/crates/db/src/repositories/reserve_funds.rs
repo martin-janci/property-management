@@ -1,7 +1,34 @@
 //! Reserve Fund Management repository for Epic 141.
+//!
+//! # RLS Integration (PAP-67 / PAP-79)
+//!
+//! Migration `00179` (PAP-62) put `FORCE ROW LEVEL SECURITY` + the canonical
+//! `get_current_org_id()` policy on the reserve-fund cluster: `reserve_funds`,
+//! `fund_contribution_schedules`, `fund_transactions`, `fund_investment_policies`,
+//! `fund_projections`, `fund_projection_items`, `fund_components`, and
+//! `fund_alerts`. Under `FORCE` the api-server's table-owner connection is no
+//! longer exempt, so a query issued on a connection without `app.current_org_id`
+//! set collapses to deny-all (own-org reads return empty, writes fail the policy
+//! `WITH CHECK`).
+//!
+//! This repository therefore holds **no pool**. Every method takes an executor
+//! whose connection already has RLS context set — in handlers this comes from
+//! the `RlsConnection` extractor via `&mut **rls.conn()`:
+//!
+//! * single-statement methods take a generic `executor: E`;
+//! * multi-statement methods that compose helpers take `conn: &mut PgConnection`
+//!   and reborrow `&mut *conn` per call.
+//!
+//! Because the repo cannot reach a raw pool, there is no path that bypasses RLS.
+//! This mirrors the `work_order.rs` / `budget.rs` precedent.
+//!
+//! The explicit `organization_id = $n` predicates are retained as
+//! defense-in-depth: the authoritative org is the caller's `rls.tenant_id()`,
+//! so the SQL filter and the RLS context can never disagree, and cross-tenant
+//! by-id reads return no row (→ 404) under both layers.
 
 use rust_decimal::Decimal;
-use sqlx::PgPool;
+use sqlx::{Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
 use crate::models::reserve_funds::{
@@ -14,15 +41,15 @@ use crate::models::reserve_funds::{
 };
 
 /// Repository for reserve fund operations.
-#[derive(Clone)]
-pub struct ReserveFundRepository {
-    pool: PgPool,
-}
+///
+/// Stateless: every method receives an RLS-context-bearing executor. The repo
+/// holds no pool so it cannot issue an un-scoped (deny-all under `FORCE`) query.
+#[derive(Clone, Default)]
+pub struct ReserveFundRepository;
 
 impl ReserveFundRepository {
-    /// Create a new repository instance.
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new() -> Self {
+        Self
     }
 
     // ========================================================================
@@ -30,12 +57,16 @@ impl ReserveFundRepository {
     // ========================================================================
 
     /// Create a new reserve fund.
-    pub async fn create_fund(
+    pub async fn create_fund<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         req: CreateReserveFund,
         created_by: Uuid,
-    ) -> Result<ReserveFund, sqlx::Error> {
+    ) -> Result<ReserveFund, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ReserveFund>(
             r#"
             INSERT INTO reserve_funds (
@@ -55,7 +86,7 @@ impl ReserveFundRepository {
         .bind(req.minimum_balance)
         .bind(req.currency.unwrap_or_else(|| "EUR".to_string()))
         .bind(created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -64,30 +95,43 @@ impl ReserveFundRepository {
     /// Returns `None` if the fund does not exist **or** belongs to a different
     /// organization, so callers cannot distinguish "not found" from "not yours"
     /// — the handler maps both to a 404 and cross-tenant reads (IDOR) are
-    /// impossible (see #810).
-    pub async fn get_fund(
+    /// impossible (see #810). Under FORCE-RLS the connection's org context is a
+    /// second, database-enforced guard on top of the explicit predicate.
+    pub async fn get_fund<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         fund_id: Uuid,
-    ) -> Result<Option<ReserveFund>, sqlx::Error> {
+    ) -> Result<Option<ReserveFund>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ReserveFund>(
             "SELECT * FROM reserve_funds WHERE id = $1 AND organization_id = $2",
         )
         .bind(fund_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await
     }
 
     /// Verify a fund belongs to `org_id`, returning [`sqlx::Error::RowNotFound`]
     /// otherwise so child-resource operations on the fund stay tenant-scoped.
-    async fn ensure_fund_in_org(&self, org_id: Uuid, fund_id: Uuid) -> Result<(), sqlx::Error> {
+    async fn ensure_fund_in_org<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        fund_id: Uuid,
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let exists: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM reserve_funds WHERE id = $1 AND organization_id = $2",
         )
         .bind(fund_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         if exists.is_some() {
@@ -98,13 +142,17 @@ impl ReserveFundRepository {
     }
 
     /// List all funds for an organization.
-    pub async fn list_funds(
+    pub async fn list_funds<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         fund_type: Option<FundType>,
         building_id: Option<Uuid>,
         active_only: bool,
-    ) -> Result<Vec<ReserveFund>, sqlx::Error> {
+    ) -> Result<Vec<ReserveFund>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let mut query = String::from("SELECT * FROM reserve_funds WHERE organization_id = $1");
         let mut param_count = 1;
 
@@ -134,7 +182,7 @@ impl ReserveFundRepository {
             q = q.bind(bid);
         }
 
-        q.fetch_all(&self.pool).await
+        q.fetch_all(executor).await
     }
 
     /// Update a reserve fund, scoped to the caller's organization.
@@ -142,12 +190,16 @@ impl ReserveFundRepository {
     /// The `organization_id = $8` predicate means an update targeting another
     /// org's fund matches zero rows and surfaces as
     /// [`sqlx::Error::RowNotFound`] (→ 404), not a silent cross-tenant write.
-    pub async fn update_fund(
+    pub async fn update_fund<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         fund_id: Uuid,
         req: UpdateReserveFund,
-    ) -> Result<ReserveFund, sqlx::Error> {
+    ) -> Result<ReserveFund, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, ReserveFund>(
             r#"
             UPDATE reserve_funds SET
@@ -170,15 +222,18 @@ impl ReserveFundRepository {
         .bind(req.minimum_balance)
         .bind(req.is_active)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Delete a reserve fund.
-    pub async fn delete_fund(&self, fund_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_fund<'e, E>(&self, executor: E, fund_id: Uuid) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM reserve_funds WHERE id = $1")
             .bind(fund_id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -188,13 +243,17 @@ impl ReserveFundRepository {
     // ========================================================================
 
     /// Create a contribution schedule for a fund the caller owns.
+    ///
+    /// Multi-statement (ownership check + insert), so it takes a connection and
+    /// reborrows it for each query.
     pub async fn create_contribution_schedule(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
         req: CreateContributionSchedule,
     ) -> Result<FundContributionSchedule, sqlx::Error> {
-        self.ensure_fund_in_org(org_id, fund_id).await?;
+        self.ensure_fund_in_org(&mut *conn, org_id, fund_id).await?;
         sqlx::query_as::<_, FundContributionSchedule>(
             r#"
             INSERT INTO fund_contribution_schedules (
@@ -213,18 +272,19 @@ impl ReserveFundRepository {
         .bind(req.start_date)
         .bind(req.end_date)
         .bind(req.auto_collect.unwrap_or(false))
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// List contribution schedules for a fund the caller owns.
     pub async fn list_contribution_schedules(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
         active_only: bool,
     ) -> Result<Vec<FundContributionSchedule>, sqlx::Error> {
-        self.ensure_fund_in_org(org_id, fund_id).await?;
+        self.ensure_fund_in_org(&mut *conn, org_id, fund_id).await?;
         let query = if active_only {
             "SELECT * FROM fund_contribution_schedules WHERE fund_id = $1 AND is_active = true ORDER BY next_due_date"
         } else {
@@ -233,7 +293,7 @@ impl ReserveFundRepository {
 
         sqlx::query_as::<_, FundContributionSchedule>(query)
             .bind(fund_id)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *conn)
             .await
     }
 
@@ -242,12 +302,16 @@ impl ReserveFundRepository {
     /// The `fund_id IN (… organization_id = $9)` subquery ensures a schedule
     /// owned by another org matches zero rows (→ 404), closing the #810 IDOR
     /// for the child resource.
-    pub async fn update_contribution_schedule(
+    pub async fn update_contribution_schedule<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         schedule_id: Uuid,
         req: UpdateContributionSchedule,
-    ) -> Result<FundContributionSchedule, sqlx::Error> {
+    ) -> Result<FundContributionSchedule, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FundContributionSchedule>(
             r#"
             UPDATE fund_contribution_schedules SET
@@ -275,18 +339,22 @@ impl ReserveFundRepository {
         .bind(req.is_active)
         .bind(req.auto_collect)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Delete a contribution schedule.
-    pub async fn delete_contribution_schedule(
+    pub async fn delete_contribution_schedule<'e, E>(
         &self,
+        executor: E,
         schedule_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM fund_contribution_schedules WHERE id = $1")
             .bind(schedule_id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -296,18 +364,29 @@ impl ReserveFundRepository {
     // ========================================================================
 
     /// Record a fund transaction against a fund the caller owns.
+    ///
+    /// Multi-statement (balance read + insert + balance update), so it takes a
+    /// connection and reborrows it for each query.
     pub async fn record_transaction(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
         req: RecordFundTransaction,
         created_by: Uuid,
     ) -> Result<FundTransaction, sqlx::Error> {
-        // Get current balance — org-scoped so a foreign fund yields RowNotFound.
-        let fund = self
-            .get_fund(org_id, fund_id)
-            .await?
-            .ok_or_else(|| sqlx::Error::RowNotFound)?;
+        use sqlx::Connection;
+        let mut tx = conn.begin().await?;
+
+        // Get current balance with lock — org-scoped so a foreign fund yields RowNotFound.
+        let fund = sqlx::query_as::<_, ReserveFund>(
+            "SELECT * FROM reserve_funds WHERE id = $1 AND organization_id = $2 FOR UPDATE",
+        )
+        .bind(fund_id)
+        .bind(org_id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(sqlx::Error::RowNotFound)?;
 
         // Calculate new balance
         let amount = req.amount;
@@ -351,7 +430,7 @@ impl ReserveFundRepository {
         .bind(req.transfer_to_fund_id)
         .bind(req.requires_approval.unwrap_or(false))
         .bind(created_by)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         // Update fund balance
@@ -360,9 +439,10 @@ impl ReserveFundRepository {
         )
         .bind(fund_id)
         .bind(new_balance)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
+        tx.commit().await?;
         Ok(transaction)
     }
 
@@ -371,11 +451,15 @@ impl ReserveFundRepository {
     /// The `fund_id IN (… organization_id = $7)` predicate confines results to
     /// funds owned by the caller, so passing another org's `fund_id` returns an
     /// empty list rather than leaking transactions (#810).
-    pub async fn list_transactions(
+    pub async fn list_transactions<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         query: TransactionQuery,
-    ) -> Result<Vec<FundTransaction>, sqlx::Error> {
+    ) -> Result<Vec<FundTransaction>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let limit = query.limit.unwrap_or(100);
         let offset = query.offset.unwrap_or(0);
 
@@ -400,7 +484,7 @@ impl ReserveFundRepository {
         .bind(limit)
         .bind(offset)
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -411,13 +495,18 @@ impl ReserveFundRepository {
     /// [`sqlx::Error::RowNotFound`] before any balance is mutated (#810).
     pub async fn transfer_funds(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         req: FundTransferRequest,
         created_by: Uuid,
     ) -> Result<(FundTransaction, FundTransaction), sqlx::Error> {
+        use sqlx::Connection;
+        let mut tx = conn.begin().await?;
+
         // Record withdrawal from source
         let withdrawal = self
             .record_transaction(
+                &mut tx,
                 org_id,
                 req.from_fund_id,
                 RecordFundTransaction {
@@ -436,6 +525,7 @@ impl ReserveFundRepository {
         // Record deposit to destination
         let deposit = self
             .record_transaction(
+                &mut tx,
                 org_id,
                 req.to_fund_id,
                 RecordFundTransaction {
@@ -451,6 +541,7 @@ impl ReserveFundRepository {
             )
             .await?;
 
+        tx.commit().await?;
         Ok((withdrawal, deposit))
     }
 
@@ -461,11 +552,12 @@ impl ReserveFundRepository {
     /// Create an investment policy for a fund the caller owns.
     pub async fn create_investment_policy(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
         req: CreateInvestmentPolicy,
     ) -> Result<FundInvestmentPolicy, sqlx::Error> {
-        self.ensure_fund_in_org(org_id, fund_id).await?;
+        self.ensure_fund_in_org(&mut *conn, org_id, fund_id).await?;
         sqlx::query_as::<_, FundInvestmentPolicy>(
             r#"
             INSERT INTO fund_investment_policies (
@@ -489,17 +581,18 @@ impl ReserveFundRepository {
         .bind(req.max_single_investment)
         .bind(req.min_liquidity_pct)
         .bind(req.effective_date)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// Get active investment policy for a fund the caller owns.
     pub async fn get_active_investment_policy(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
     ) -> Result<Option<FundInvestmentPolicy>, sqlx::Error> {
-        self.ensure_fund_in_org(org_id, fund_id).await?;
+        self.ensure_fund_in_org(&mut *conn, org_id, fund_id).await?;
         sqlx::query_as::<_, FundInvestmentPolicy>(
             r#"
             SELECT * FROM fund_investment_policies
@@ -511,22 +604,23 @@ impl ReserveFundRepository {
             "#,
         )
         .bind(fund_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await
     }
 
     /// List investment policies for a fund the caller owns.
     pub async fn list_investment_policies(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
     ) -> Result<Vec<FundInvestmentPolicy>, sqlx::Error> {
-        self.ensure_fund_in_org(org_id, fund_id).await?;
+        self.ensure_fund_in_org(&mut *conn, org_id, fund_id).await?;
         sqlx::query_as::<_, FundInvestmentPolicy>(
             "SELECT * FROM fund_investment_policies WHERE fund_id = $1 ORDER BY effective_date DESC",
         )
         .bind(fund_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await
     }
 
@@ -537,20 +631,21 @@ impl ReserveFundRepository {
     /// Create a fund projection for a fund the caller owns.
     pub async fn create_projection(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
         req: CreateFundProjection,
     ) -> Result<FundProjection, sqlx::Error> {
         // Get current balance for starting balance — org-scoped (#810).
         let fund = self
-            .get_fund(org_id, fund_id)
+            .get_fund(&mut *conn, org_id, fund_id)
             .await?
-            .ok_or_else(|| sqlx::Error::RowNotFound)?;
+            .ok_or(sqlx::Error::RowNotFound)?;
 
         // Mark existing projections as not current
         sqlx::query("UPDATE fund_projections SET is_current = false WHERE fund_id = $1")
             .bind(fund_id)
-            .execute(&self.pool)
+            .execute(&mut *conn)
             .await?;
 
         sqlx::query_as::<_, FundProjection>(
@@ -573,33 +668,36 @@ impl ReserveFundRepository {
         .bind(fund.current_balance)
         .bind(req.recommended_annual_contribution)
         .bind(&req.prepared_by)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// Get current projection for a fund the caller owns.
     pub async fn get_current_projection(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
     ) -> Result<Option<FundProjection>, sqlx::Error> {
-        self.ensure_fund_in_org(org_id, fund_id).await?;
+        self.ensure_fund_in_org(&mut *conn, org_id, fund_id).await?;
         sqlx::query_as::<_, FundProjection>(
             "SELECT * FROM fund_projections WHERE fund_id = $1 AND is_current = true LIMIT 1",
         )
         .bind(fund_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await
     }
 
     /// Add projection line items to a projection the caller owns.
     pub async fn add_projection_items(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         projection_id: Uuid,
         items: Vec<CreateProjectionItem>,
     ) -> Result<Vec<FundProjectionItem>, sqlx::Error> {
-        self.ensure_projection_in_org(org_id, projection_id).await?;
+        self.ensure_projection_in_org(&mut *conn, org_id, projection_id)
+            .await?;
         let mut results = Vec::new();
 
         for item in items {
@@ -623,7 +721,7 @@ impl ReserveFundRepository {
             .bind(item.beginning_balance)
             .bind(item.ending_balance)
             .bind(&item.expenditure_details)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await?;
 
             results.push(result);
@@ -635,25 +733,31 @@ impl ReserveFundRepository {
     /// Get projection items for a projection the caller owns.
     pub async fn get_projection_items(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         projection_id: Uuid,
     ) -> Result<Vec<FundProjectionItem>, sqlx::Error> {
-        self.ensure_projection_in_org(org_id, projection_id).await?;
+        self.ensure_projection_in_org(&mut *conn, org_id, projection_id)
+            .await?;
         sqlx::query_as::<_, FundProjectionItem>(
             "SELECT * FROM fund_projection_items WHERE projection_id = $1 ORDER BY projection_year",
         )
         .bind(projection_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *conn)
         .await
     }
 
     /// Verify a projection's parent fund belongs to `org_id`, returning
     /// [`sqlx::Error::RowNotFound`] otherwise (#810).
-    async fn ensure_projection_in_org(
+    async fn ensure_projection_in_org<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         projection_id: Uuid,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<(), sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let exists: Option<Uuid> = sqlx::query_scalar(
             r#"
             SELECT fp.id
@@ -664,7 +768,7 @@ impl ReserveFundRepository {
         )
         .bind(projection_id)
         .bind(org_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(executor)
         .await?;
 
         if exists.is_some() {
@@ -681,11 +785,12 @@ impl ReserveFundRepository {
     /// Create a fund component for a fund the caller owns.
     pub async fn create_component(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
         req: CreateFundComponent,
     ) -> Result<FundComponent, sqlx::Error> {
-        self.ensure_fund_in_org(org_id, fund_id).await?;
+        self.ensure_fund_in_org(&mut *conn, org_id, fund_id).await?;
         sqlx::query_as::<_, FundComponent>(
             r#"
             INSERT INTO fund_components (
@@ -708,31 +813,36 @@ impl ReserveFundRepository {
         .bind(req.condition_rating)
         .bind(req.last_inspection_date)
         .bind(req.next_replacement_date)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await
     }
 
     /// List components for a fund the caller owns.
     pub async fn list_components(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
     ) -> Result<Vec<FundComponent>, sqlx::Error> {
-        self.ensure_fund_in_org(org_id, fund_id).await?;
-        self.list_components_unscoped(fund_id).await
+        self.ensure_fund_in_org(&mut *conn, org_id, fund_id).await?;
+        self.list_components_unscoped(&mut *conn, fund_id).await
     }
 
     /// List components without an organization check. Internal helper for
     /// methods that have already verified fund ownership.
-    async fn list_components_unscoped(
+    async fn list_components_unscoped<'e, E>(
         &self,
+        executor: E,
         fund_id: Uuid,
-    ) -> Result<Vec<FundComponent>, sqlx::Error> {
+    ) -> Result<Vec<FundComponent>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FundComponent>(
             "SELECT * FROM fund_components WHERE fund_id = $1 ORDER BY next_replacement_date NULLS LAST",
         )
         .bind(fund_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -740,12 +850,16 @@ impl ReserveFundRepository {
     ///
     /// The `fund_id IN (… organization_id = $11)` subquery makes an update
     /// against another org's component match zero rows (→ 404) (#810).
-    pub async fn update_component(
+    pub async fn update_component<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         component_id: Uuid,
         req: UpdateFundComponent,
-    ) -> Result<FundComponent, sqlx::Error> {
+    ) -> Result<FundComponent, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FundComponent>(
             r#"
             UPDATE fund_components SET
@@ -777,15 +891,22 @@ impl ReserveFundRepository {
         .bind(req.last_inspection_date)
         .bind(req.next_replacement_date)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Delete a component.
-    pub async fn delete_component(&self, component_id: Uuid) -> Result<bool, sqlx::Error> {
+    pub async fn delete_component<'e, E>(
+        &self,
+        executor: E,
+        component_id: Uuid,
+    ) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let result = sqlx::query("DELETE FROM fund_components WHERE id = $1")
             .bind(component_id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(result.rows_affected() > 0)
     }
@@ -796,8 +917,9 @@ impl ReserveFundRepository {
 
     /// Create a fund alert.
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_alert(
+    pub async fn create_alert<'e, E>(
         &self,
+        executor: E,
         fund_id: Uuid,
         alert_type: &str,
         severity: &str,
@@ -805,7 +927,10 @@ impl ReserveFundRepository {
         message: &str,
         threshold_value: Option<Decimal>,
         current_value: Option<Decimal>,
-    ) -> Result<FundAlert, sqlx::Error> {
+    ) -> Result<FundAlert, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FundAlert>(
             r#"
             INSERT INTO fund_alerts (
@@ -823,12 +948,19 @@ impl ReserveFundRepository {
         .bind(message)
         .bind(threshold_value)
         .bind(current_value)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// List active alerts for an organization.
-    pub async fn list_active_alerts(&self, org_id: Uuid) -> Result<Vec<FundAlert>, sqlx::Error> {
+    pub async fn list_active_alerts<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+    ) -> Result<Vec<FundAlert>, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FundAlert>(
             r#"
             SELECT fa.* FROM fund_alerts fa
@@ -838,7 +970,7 @@ impl ReserveFundRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_all(&self.pool)
+        .fetch_all(executor)
         .await
     }
 
@@ -846,12 +978,16 @@ impl ReserveFundRepository {
     ///
     /// The `fund_id IN (… organization_id = $3)` subquery confines the update
     /// to alerts on funds the caller owns (#810).
-    pub async fn acknowledge_alert(
+    pub async fn acknowledge_alert<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         alert_id: Uuid,
         user_id: Uuid,
-    ) -> Result<FundAlert, sqlx::Error> {
+    ) -> Result<FundAlert, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FundAlert>(
             r#"
             UPDATE fund_alerts SET
@@ -867,17 +1003,21 @@ impl ReserveFundRepository {
         .bind(alert_id)
         .bind(user_id)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
     /// Resolve an alert, scoped to the caller's organization (#810).
-    pub async fn resolve_alert(
+    pub async fn resolve_alert<'e, E>(
         &self,
+        executor: E,
         org_id: Uuid,
         alert_id: Uuid,
         user_id: Uuid,
-    ) -> Result<FundAlert, sqlx::Error> {
+    ) -> Result<FundAlert, sqlx::Error>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         sqlx::query_as::<_, FundAlert>(
             r#"
             UPDATE fund_alerts SET
@@ -894,7 +1034,7 @@ impl ReserveFundRepository {
         .bind(alert_id)
         .bind(user_id)
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await
     }
 
@@ -903,9 +1043,15 @@ impl ReserveFundRepository {
     // ========================================================================
 
     /// Get fund dashboard for an organization.
-    pub async fn get_fund_dashboard(&self, org_id: Uuid) -> Result<FundDashboard, sqlx::Error> {
+    pub async fn get_fund_dashboard(
+        &self,
+        conn: &mut PgConnection,
+        org_id: Uuid,
+    ) -> Result<FundDashboard, sqlx::Error> {
         // Get all funds
-        let funds = self.list_funds(org_id, None, None, true).await?;
+        let funds = self
+            .list_funds(&mut *conn, org_id, None, None, true)
+            .await?;
 
         let mut total_balance = Decimal::ZERO;
         let mut total_target = Decimal::ZERO;
@@ -938,7 +1084,7 @@ impl ReserveFundRepository {
 
             // Get upcoming contributions
             let schedules = self
-                .list_contribution_schedules(org_id, fund.id, true)
+                .list_contribution_schedules(&mut *conn, org_id, fund.id, true)
                 .await?;
             let upcoming = schedules.iter().map(|s| s.amount).sum();
 
@@ -947,7 +1093,7 @@ impl ReserveFundRepository {
                 "SELECT COUNT(*) FROM fund_alerts WHERE fund_id = $1 AND is_active = true",
             )
             .bind(fund.id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *conn)
             .await?;
 
             fund_summaries.push(FundSummary {
@@ -978,7 +1124,7 @@ impl ReserveFundRepository {
             "#,
         )
         .bind(org_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *conn)
         .await?;
 
         Ok(FundDashboard {
@@ -994,13 +1140,14 @@ impl ReserveFundRepository {
     /// Get fund health report for a fund the caller owns.
     pub async fn get_fund_health_report(
         &self,
+        conn: &mut PgConnection,
         org_id: Uuid,
         fund_id: Uuid,
     ) -> Result<FundHealthReport, sqlx::Error> {
         let fund = self
-            .get_fund(org_id, fund_id)
+            .get_fund(&mut *conn, org_id, fund_id)
             .await?
-            .ok_or_else(|| sqlx::Error::RowNotFound)?;
+            .ok_or(sqlx::Error::RowNotFound)?;
 
         let mut issues = Vec::new();
         let mut recommendations = Vec::new();
@@ -1044,7 +1191,7 @@ impl ReserveFundRepository {
             "SELECT * FROM fund_projections WHERE fund_id = $1 AND is_current = true LIMIT 1",
         )
         .bind(fund_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *conn)
         .await?;
         if projection.is_none() {
             issues.push("No current reserve study".to_string());
@@ -1053,7 +1200,7 @@ impl ReserveFundRepository {
         }
 
         // Check upcoming component replacements (fund ownership verified).
-        let components = self.list_components_unscoped(fund_id).await?;
+        let components = self.list_components_unscoped(&mut *conn, fund_id).await?;
         let urgent_components: Vec<_> = components
             .iter()
             .filter(|c| c.remaining_life_years.map(|y| y <= 2).unwrap_or(false))

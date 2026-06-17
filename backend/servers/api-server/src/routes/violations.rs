@@ -159,13 +159,17 @@ async fn list_rules(
 
 async fn update_rule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(rule_id): Path<Uuid>,
     Json(req): Json<UpdateCommunityRule>,
 ) -> ApiResult<Json<db::models::violations::CommunityRule>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .update_rule(rule_id, req)
+        .update_rule(rule_id, org_id, req)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to update rule: {}", e)))
@@ -173,12 +177,16 @@ async fn update_rule(
 
 async fn delete_rule(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(rule_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     let deleted = state
         .violation_repo
-        .delete_rule(rule_id)
+        .delete_rule(rule_id, org_id)
         .await
         .map_err(|e| internal_error(&format!("Failed to delete rule: {}", e)))?;
 
@@ -247,13 +255,17 @@ async fn list_violations(
 
 async fn update_violation(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<UpdateViolation>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .update_violation(violation_id, req)
+        .update_violation(violation_id, org_id, req)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to update violation: {}", e)))
@@ -266,13 +278,17 @@ struct AssignRequest {
 
 async fn assign_violation(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path(violation_id): Path<Uuid>,
     Json(req): Json<AssignRequest>,
 ) -> ApiResult<Json<db::models::violations::Violation>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .assign_violation(violation_id, req.assigned_to)
+        .assign_violation(violation_id, org_id, req.assigned_to)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to assign violation: {}", e)))
@@ -288,12 +304,19 @@ async fn add_evidence(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationEvidence>,
 ) -> ApiResult<Json<db::models::violations::ViolationEvidence>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .add_evidence(violation_id, req, user.user_id)
+        .add_evidence(violation_id, org_id, req, user.user_id)
         .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => not_found_error("Violation not found"),
+            _ => internal_error(&format!("Failed to add evidence: {}", e)),
+        })
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to add evidence: {}", e)))
 }
 
 async fn list_evidence(
@@ -311,12 +334,16 @@ async fn list_evidence(
 
 async fn delete_evidence(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((_violation_id, evidence_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     let deleted = state
         .violation_repo
-        .delete_evidence(evidence_id)
+        .delete_evidence(evidence_id, org_id)
         .await
         .map_err(|e| internal_error(&format!("Failed to delete evidence: {}", e)))?;
 
@@ -388,13 +415,17 @@ async fn list_actions(
 
 async fn update_action(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateEnforcementAction>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .update_enforcement_action(action_id, req)
+        .update_enforcement_action(action_id, org_id, req)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to update action: {}", e)))
@@ -407,13 +438,17 @@ struct SendNoticeRequest {
 
 async fn mark_action_sent(
     State(state): State<AppState>,
-    _user: AuthUser,
+    user: AuthUser,
     Path((_violation_id, action_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<SendNoticeRequest>,
 ) -> ApiResult<Json<db::models::violations::EnforcementAction>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .mark_action_sent(action_id, &req.method)
+        .mark_action_sent(action_id, org_id, &req.method)
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to mark action sent: {}", e)))
@@ -513,9 +548,13 @@ async fn update_appeal(
     Path(appeal_id): Path<Uuid>,
     Json(req): Json<UpdateViolationAppeal>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .update_appeal(appeal_id, req, Some(user.user_id))
+        .update_appeal(appeal_id, org_id, req, Some(user.user_id))
         .await
         .map(Json)
         .map_err(|e| internal_error(&format!("Failed to update appeal: {}", e)))
@@ -534,10 +573,15 @@ async fn decide_appeal(
     Path(appeal_id): Path<Uuid>,
     Json(req): Json<DecideAppealRequest>,
 ) -> ApiResult<Json<db::models::violations::ViolationAppeal>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
         .decide_appeal(
             appeal_id,
+            org_id,
             req.approved,
             &req.decision,
             req.fine_adjustment,
@@ -558,12 +602,19 @@ async fn add_comment(
     Path(violation_id): Path<Uuid>,
     Json(req): Json<CreateViolationComment>,
 ) -> ApiResult<Json<db::models::violations::ViolationComment>> {
+    let org_id = user
+        .tenant_id
+        .ok_or_else(|| forbidden_error("No organization context"))?;
+
     state
         .violation_repo
-        .add_comment(violation_id, req, user.user_id)
+        .add_comment(violation_id, org_id, req, user.user_id)
         .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => not_found_error("Violation not found"),
+            _ => internal_error(&format!("Failed to add comment: {}", e)),
+        })
         .map(Json)
-        .map_err(|e| internal_error(&format!("Failed to add comment: {}", e)))
 }
 
 #[derive(Debug, Deserialize)]

@@ -725,6 +725,34 @@ green run-to-run because the leak is drained here every cycle; once the orphan
 triage backlog reaches 0 (coverage authored for the missing stems), flip GC1 to
 a hard Phase 6 gate (`hard=true`) the same way GC2 is enforced today.
 
+**Dev-reconciliation pass (NEW — GH #1380 defect 1, `stale-gap-scan-buffer`).**
+Run this RIGHT AFTER `gc1-reconcile.sh`, also before computing the claimable
+pool. `gc1-reconcile` only catches leaks recorded in the dispatcher's OWN merge
+ledger (`assignments-archive.json`). But work also lands on `dev` **out of
+band** — a coverage feature shipped under a different branch/PR, a sibling
+race-merge, or an implementer squash-merge the dispatcher never archived. Those
+merges leave the action-list row `open`, so the next buffer-low refill re-claims
+already-shipped work and the run logs `0 claimed … 0 merged` while no-op
+implementers churn. This pass reconciles open items against the ACTUAL
+integration branch, independent of the ledger:
+
+```bash
+# Closes any OPEN action-list item whose work already landed on $BASE (origin/dev)
+# under a squash-merge whose SUBJECT begins with "<id>:". Subject-PREFIX join
+# (anchored), never a body grep — so a dispatcher chore(research) commit that
+# merely lists an id in its body is NOT a false positive. open -> done + a
+# `dev_reconciled` evidence stamp (landing commit + subject). Idempotent.
+bash .research/dev-reconcile.sh --apply
+```
+
+Bounded and self-describing like `gc1-reconcile`: it only ever flips
+`open -> done` (item count is a guarded invariant — never adds/removes rows),
+and every closed row carries the landing commit as evidence. Include
+`action-list.json` in the Phase 6 commit when it closed any row. Items that land
+out of band under a NON-id subject (no `<id>:` prefix) are not auto-matched —
+those still need a manual reconcile note (that is how the Airbnb cluster was
+drained in this defect). Smoke-tested by `.research/test-dev-reconcile.sh`.
+
 **Archive lookup pattern (issue #9 — token spending).** With terminal rows
 split into `assignments-archive.json`, the dep_blocked check below MUST
 consult BOTH files when resolving a `depends_on` entry. Compute a set of
@@ -807,14 +835,20 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
 
   **Self-test impact.** `"deferred"` is a new action-list `status` value not present in any existing fixture. Self-tests that classify rows by status (T24 one-open-per-stem, the legacy-dependency invariants, any coverage of `action-list.json` rows) must treat `deferred` as a **non-terminal claimable-pool exclusion** — equivalent to `open` for stem-uniqueness and dep-graph checks, but NOT counted toward `open_claimable_count`. When adding fixtures, include at least one `deferred` row so the predicates are exercised.
 - **Tier 1 (self-refill):** if `open_claimable_count < BUFFER_FLOOR` (half of the `BUFFER_TARGET` target) → **first, re-open any deferred rows** (inverse of Tier 0): flip `status` from `deferred` back to `open` in `pri_rank` *descending* order (id ascending tiebreaker) until either no deferred rows remain OR `open_claimable_count == BUFFER_TARGET`. This is the closing half of the Tier 0 / Tier 1 cycle — without it, deferred rows would accumulate and the buffer could starve while a valid backlog sits idle. Log `Tier 1: re-opened <N> deferred [<id>, …]` when any flip occurs. **Then**, if still below `BUFFER_FLOOR`, **NOW read `coverage.json`** (was previously loaded in Phase 1; deferred to here in issue #9). If coverage has stories → refill using rubric, appending only up to the cap: `refill_n = min(BUFFER_TARGET, BUFFER_CEIL) - open_claimable_count` (the `min` is belt-and-suspenders — `BUFFER_TARGET <= BUFFER_CEIL` by construction, so Tier 1 alone can never overshoot the GC3 ceiling). Log `Tier 1: <old_claimable> → <new_claimable> (+N, cap=BUFFER_CEIL)`. When `open_claimable_count >= BUFFER_FLOOR` the file is never opened, saving ~10k tokens / run.
-- **Tier 2 (upstream kick):** if `open_claimable_count` still `< BUFFER_FLOOR/2` (default 18 — deep-starvation last resort, scaled with the floor so it stays proportional to throughput; raised from a hardcoded 12 alongside `BUFFER_FLOOR` 18→36 so Tier-2 doesn't leave a wide dead band below the Tier-1 floor) OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
+- **Tier 2 (upstream kick):** if `open_claimable_count` still `< BUFFER_FLOOR/2` (default 18 — deep-starvation last resort, scaled with the floor so it stays proportional to throughput; raised from a hardcoded 12 alongside `BUFFER_FLOOR` 18→36 so Tier-2 doesn't leave a wide dead band below the Tier-1 floor) OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, the `anthropic-version` header, a `{"text": …}` body, and `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it. The body/header shape is fixed per issue #1151 / #1380 — see the comment below):
 
   ```bash
   T2_TMP=$(mktemp)
+  # The $DISPATCHER_URL routine-fire endpoint accepts ONLY a `{"text": "..."}`
+  # body and REQUIRES the `anthropic-version` header (issue #1151 / #1380): the
+  # old `{"reason","claimable"}` body 400'd with `claimable` rejected as an extra
+  # input, so the deep-starvation kick never fired. Carry the buffer context in
+  # the `text` trigger message instead.
   T2_CODE=$(curl -sS -X POST "$DISPATCHER_URL" \
     -H "Authorization: Bearer $DISPATCHER_TOKEN" \
+    -H "anthropic-version: 2023-06-01" \
     -H "Content-Type: application/json" \
-    -d '{"reason":"buffer-low","claimable":'"$open_claimable_count"'}' \
+    -d '{"text":"buffer-low: claimable='"$open_claimable_count"'/'"$BUFFER_TARGET"' — refill planner"}' \
     -o "$T2_TMP" -w '%{http_code}' --max-time 10 2>/dev/null || echo "curl-error")
   T2_BODY=$(head -c 200 "$T2_TMP" 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')
   rm -f "$T2_TMP"
@@ -824,6 +858,32 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
   Still semantically fire-and-forget (we don't retry on non-2xx), but the body
   surfaces in the dispatcher commit log so a stuck/broken planner endpoint is
   visible without grepping the trigger's run history.
+
+  **Endpoint contract + misconfig diagnostic (GH #1380 defect 2).** `$DISPATCHER_URL`
+  MUST point at the **planner / coverage-refill routine trigger** — a webhook that
+  accepts the small `{"reason":…,"claimable":…}` JSON above with
+  `Authorization: Bearer $DISPATCHER_TOKEN` and returns 2xx. It is NOT an
+  Anthropic API endpoint. **Diagnostic:** if Tier-2 logs `http=400` with a body
+  that complains about a missing/invalid `anthropic-version` header (or otherwise
+  looks like a Messages-API error), then `$DISPATCHER_URL` has been mis-set to an
+  **Anthropic API proxy** (e.g. the CCR `…/v1/messages` proxy) instead of the
+  planner trigger — the proxy rejects this payload because it expects an
+  `anthropic-version` header and a Messages body. This is a **secret/env
+  misconfiguration on the cloud trigger, not an in-repo bug**: the dispatcher
+  cannot self-heal it (we never commit the secret). Remediation — the operator/CTO
+  must repoint the trigger secret:
+  - Set `DISPATCHER_URL` to the planner routine's webhook trigger URL (the same
+    Claude.ai-routine trigger shape as the dispatcher's own
+    `trig_01RDNN7kYxzr4XULbi4xn5r2`; see `.research/dispatcher-trigger-bootstrap.md`),
+    NOT an `api.anthropic.com` / CCR proxy URL.
+  - Keep `DISPATCHER_TOKEN` as the bearer that webhook authorizes.
+  - If the planner is intentionally an Anthropic Messages call, then instead add
+    `-H "anthropic-version: 2023-06-01"` and send a Messages payload — but the
+    intended design here is a planner trigger, so prefer repointing the URL.
+
+  Until the secret is corrected, Tier-2 stays a logged no-op (the buffer is
+  refilled by Tier-0/Tier-1 + dev-reconcile, which do not depend on the planner),
+  so a broken `DISPATCHER_URL` degrades gracefully rather than wedging the run.
 - Else: SKIP, log `buffer OK: claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>)`.
 
 The Phase 6 commit message MUST surface both counts:

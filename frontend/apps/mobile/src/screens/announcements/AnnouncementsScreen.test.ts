@@ -213,7 +213,8 @@ describe('formatRelativeDate', () => {
     // (see jest.config.js); we derive the expected label from that same UTC
     // contract rather than hard-coding it, so the assertion can't drift if the
     // pinned zone ever changes — while still proving an absolute (not relative)
-    // label is returned via the `Mon D` shape check.
+    // label is returned via the `Mon D` shape check. Under the pinned UTC zone
+    // this date renders as "May 1" (the value dev asserted literally).
     const old = '2026-05-01T12:00:00Z';
     const expected = new Date(old).toLocaleDateString('en-US', {
       month: 'short',
