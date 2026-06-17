@@ -6,6 +6,13 @@ This directory contains screen maps for the SwiftUI iOS app at
 Screen maps here complement the shared `docs/screens/reality/` web screen maps.
 They document iOS-specific implementation status, route bindings, and gaps.
 
+> **Story numbering:** the "Story" column below uses the **build** story set
+> (`_bmad-output/implementation-artifacts/stories/82-*.md`, e.g. 82.2 =
+> Navigation, 82.3 = Home & Search). This is *not* the same numbering as
+> `epics-007.md` Epic 82 (Mobile Native Completion). See
+> [`docs/superpowers/plans/epic-82-story-mapping.md`](../../superpowers/plans/epic-82-story-mapping.md)
+> for the reconciliation.
+
 ## Epic-82 Screen Coverage
 
 | Screen Map | Component | Story | buildStatus |
