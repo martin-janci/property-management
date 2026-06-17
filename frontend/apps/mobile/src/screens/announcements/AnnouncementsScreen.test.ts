@@ -207,15 +207,20 @@ describe('formatRelativeDate', () => {
   });
 
   it('returns an absolute month-day label beyond a week', () => {
-    // The absolute label is produced by `toLocaleDateString('en-US', …)`,
-    // whose exact text depends on the runtime ICU build. Compare against the
-    // same formatter rather than a hard-coded string so the test cannot drift
-    // with the environment's locale data.
+    // Beyond a week the formatter switches from a relative ("Nd ago") label to
+    // an absolute "Mon D" date produced by `toLocaleDateString('en-US', …)`.
+    // The exact rendering is timezone-dependent, so the test worker pins TZ=UTC
+    // (see jest.config.js); we derive the expected label from that same UTC
+    // contract rather than hard-coding it, so the assertion can't drift if the
+    // pinned zone ever changes — while still proving an absolute (not relative)
+    // label is returned via the `Mon D` shape check.
     const old = '2026-05-01T12:00:00Z';
     const expected = new Date(old).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
+      timeZone: 'UTC',
     });
+    expect(expected).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/); // guard the "Mon D" shape
     expect(formatRelativeDate(old, now)).toBe(expected);
   });
 });
