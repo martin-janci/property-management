@@ -115,6 +115,19 @@ impl RentalRepository {
         Self { pool }
     }
 
+    /// Explicit column projection for rental_bookings with enum-to-text casts.
+    /// `platform` and `status` are PG enums; bare SELECT * fails ColumnDecode.
+    const BOOKING_COLUMNS: &'static str = r#"
+        id, organization_id, unit_id, connection_id,
+        platform::text AS platform, external_booking_id, external_booking_url,
+        guest_name, guest_email, guest_phone, guest_count,
+        check_in, check_out, check_in_time, check_out_time,
+        total_amount, currency, platform_fee, cleaning_fee,
+        status::text AS status, cancelled_at, cancellation_reason,
+        guest_notes, internal_notes, synced_at, raw_data,
+        created_at, updated_at
+    "#;
+
     // ========================================================================
     // Platform Connections (Story 18.1)
     // ========================================================================
@@ -563,11 +576,13 @@ impl RentalRepository {
 
     /// Find booking by ID.
     pub async fn find_booking_by_id(&self, id: Uuid) -> Result<Option<RentalBooking>, SqlxError> {
-        let booking =
-            sqlx::query_as::<_, RentalBooking>(r#"SELECT * FROM rental_bookings WHERE id = $1"#)
-                .bind(id)
-                .fetch_optional(&self.pool)
-                .await?;
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM rental_bookings WHERE id = $1",
+            Self::BOOKING_COLUMNS
+        )))
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(booking)
     }
@@ -580,9 +595,10 @@ impl RentalRepository {
         org_id: Uuid,
         id: Uuid,
     ) -> Result<Option<RentalBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(
-            r#"SELECT * FROM rental_bookings WHERE id = $1 AND organization_id = $2"#,
-        )
+        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM rental_bookings WHERE id = $1 AND organization_id = $2",
+            Self::BOOKING_COLUMNS
+        )))
         .bind(id)
         .bind(org_id)
         .fetch_optional(&self.pool)
