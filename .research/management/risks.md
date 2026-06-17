@@ -1,6 +1,18 @@
 # PPT Risk Register
 
-_Generated: 2026-06-16T00:00:00Z · 42 risks_
+_Generated: 2026-06-17T03:30:00Z · 47 risks (5 new pm-security 2026-06-17)_
+
+## New this run (pm-security rotation 2026-06-17)
+
+| Prob | Impact | Owner | ID | Risk | Mitigation |
+|---|---|---|---|---|---|
+| high | high | pm-security | pm-security-booking-oauth-cross-tenant-token-binding | PR #1473 OPEN: Booking.com OAuth cross-tenant token-binding hazard + missing manager-role gate. State token can be issued by org A and consumed in org B's callback... | Bind OAuth state token to (org_id, principal_user_id); add RequireRole(manager\|admin) extractor on connect-initiate; cross-tenant + role-deny regression tests. |
+| high | high | pm-security | pm-security-mfa-verify-hardcoded-url | Phase 1.5: ppt-web App.tsx:69 hardcoded `/api/v1/auth/mfa/verify` ignores VITE_API_URL — cross-origin deploys 404 → "wrong code" on MFA. Trust-anchor surface. | Route through @ppt/api-client base like useMfa hooks; vitest case asserting VITE_API_URL honored. |
+| medium | high | pm-security | pm-security-document-download-handler-idor-test-gap | Issue #1300 OPEN: PR #1463 doc download/preview org-scope hardening shipped without handler-level cross-org IDOR test. Same omission class as PR #497. | Add handler-level IDOR tests covering foreign-org id + foreign building/unit scope; gate further documents.rs on test file existing. |
+| medium | high | pm-security | pm-security-rls-routing-test-coverage-gap | Issues #1305/#1306/#1307 OPEN: missing FORCE-RLS-asserting tests for ai/sessions+calendar+public plans, new RLS-routed webhook repos, ESG cross-tenant. | Three test files: ai_sessions_rls_tests.rs, webhook_rls_tests.rs, esg_force_rls_tests.rs; block further RLS-touching refactors on FORCE-RLS leg. |
+| medium | medium | pm-security | pm-security-residual-rls-followups-1471 | Issue #1471 OPEN: residual RLS gap from PR #1495 form-RLS cluster, orphaned without owner. | Assign #1471 to pm-security or pm-qa this run; or close as superseded. |
+
+## Full register
 
 | Prob | Impact | Owner | ID | Risk | Mitigation |
 |---|---|---|---|---|---|

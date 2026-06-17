@@ -1476,19 +1476,24 @@
       "title": "Churn hotspot: 2940 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06-10 03:05Z→18:30Z)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "local git numstat since 2026-06-10T03:05:00Z"
+        "local git numstat since 2026-06-10T03:05:00Z",
+        "PR #1469",
+        "PR #1495",
+        "PR #1499",
+        "PR #1487"
       ],
       "evidence": [
-        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening"
+        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening",
+        "2026-06-17 re-emit: 4 commits / 114 LOC this run (form/user/document RLS-cascade cluster); runs_seen 1→2; repeated-churn fired (+1)"
       ],
       "files": [
         "backend/crates/db/src/repositories/document.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-17",
       "plan": null
     },
     {
@@ -3186,22 +3191,24 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "issue #1267",
-        "PR #1256 (verify)"
+        "PR #1256 (verify)",
+        "PR #1465"
       ],
       "evidence": [
         "Issue #1267: NavigationCoordinator / DeepLinkHandler / NavigationStateRestorationService fully implemented + unit-tested (parsing, universal-link host allow-list, AC-5 auth guard, SSO CSRF nonce) — but iOS will never deliver realityportal:// URLs to onOpenURL because mobile-native/iosApp/Info.plist has no CFBundleURLTypes entry for the realityportal scheme",
         "No applinks: associated-domains entitlement either — universal links also dead",
         "Configuration.urlScheme=realityportal pinned by testEnvironmentDeepLinkSchemeIsStable; Android counterpart uses scheme=reality (intentionally different, not yet reconciled)",
-        "Affects the SSO realityportal://sso?token=&state= callback path"
+        "Affects the SSO realityportal://sso?token=&state= callback path",
+        "resolved: PR #1465 merged 2026-06-16 — iOS stale-response guard, staging deep-link host, orphaned plist, xcconfig drift; mobile-native/iosApp/Info.plist no longer tracked (evidence-gone)"
       ],
       "files": [
         "mobile-native/iosApp/Info.plist"
       ],
       "created_at": "2026-06-11",
-      "updated_at": "2026-06-11",
+      "updated_at": "2026-06-17",
       "plan": null
     },
     {
@@ -3944,6 +3951,119 @@
       "files": [],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-url",
+      "title": "MfaWrapper.verify uses hardcoded /api/v1/auth/mfa/verify, ignoring VITE_API_URL — cross-origin deploys 404 the MFA challenge",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review 2026-06-17"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:69 — MfaWrapper.verify uses fetch(\"/api/v1/auth/mfa/verify\", ...) with a hardcoded relative path",
+        "main.tsx:18 sets OpenAPI.BASE = VITE_API_URL; AuthContext.tsx:93 reads VITE_API_BASE_URL — auth surface is meant to be configurable",
+        "Cross-origin deploys (frontend host != api-server host) make MFA verify hit the frontend origin and 404; result.ok=false renders as \"invalidCode\" so the user sees a generic \"wrong code\" error",
+        "Bypasses api-client retry/error transformation and request-id propagation"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-api-base-url-env-drift",
+      "title": "API base-url env-var drift: VITE_API_URL vs VITE_API_BASE_URL split-brain between auth and the rest of the API",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review 2026-06-17"
+      ],
+      "evidence": [
+        "AuthContext reads import.meta.env.VITE_API_BASE_URL while main.tsx:18 and lib/api.ts:64 read import.meta.env.VITE_API_URL — three modules, two env var names",
+        "If only VITE_API_URL is set, getAuthApi() falls back to \"\" and uses relative paths, while OpenAPI.BASE is set to the cross-origin URL (silent split-brain between auth and rest of API)",
+        ".env.example must document both names, or one must be canonicalized — currently any deploy is one typo away from broken auth or broken queries"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx",
+        "frontend/apps/ppt-web/src/main.tsx",
+        "frontend/apps/ppt-web/src/lib/api.ts"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-wrapper-untested",
+      "title": "MfaWrapper.verify untested — non-2xx swallowed into return false, conflating wrong-code with server-down",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 review 2026-06-17"
+      ],
+      "evidence": [
+        "MfaWrapper.verify swallows every non-2xx (incl. 5xx + network) into return false, conflating \"wrong code\" with \"server down\" for the api-client retry logic",
+        "Grep for \"mfa\" shows only TwoFactorAuthPage tests; no test exercises MfaWrapper.verify handler or its error mapping",
+        "Hot path for security-sensitive MFA challenges — refactor regressions will go unnoticed (RECENT_MFA_WINDOW assumptions in api-client comment)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-budgets-rs",
+      "title": "Churn hotspot: backend/servers/api-server/src/routes/budgets.rs — 258 LOC across 2 commits (#1481, #1487)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1481",
+        "PR #1487"
+      ],
+      "evidence": [
+        "2 commits / 258 LOC this run — PR #1481 retired duplicate budget reserve-fund surface (schema drift); PR #1487 follow-up rustfmt use-list cleanup",
+        "First appearance as hotspot (runs_seen 0→1); not yet repeated-churn"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-1469-document-rs",
+      "title": "Risky churn: PR #1469 (fix schema-drift SQL in document/form/user repos) touched document.rs hotspot without a regression test",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1469"
+      ],
+      "evidence": [
+        "PR #1469 \"fix(db): correct schema-drift SQL in document/form/user repos (backend test job red)\" touched the document.rs hotspot",
+        "PR body lists repo files only; no /tests/ or _test.rs file in diff — fix without regression test on a 4-commit hot file",
+        "Cluster: #1469/#1495/#1499/#1487 are all stabilization patches on the same enum-decode/schema-drift surface"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "created_at": "2026-06-17",
+      "updated_at": "2026-06-17",
       "plan": null
     }
   ]

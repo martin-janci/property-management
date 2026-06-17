@@ -1,0 +1,279 @@
+{
+  "version": 1,
+  "date": "2026-06-17",
+  "signals": [
+    {
+      "id": "dep-update-noise-pr-1449",
+      "type": "dep-update-noise",
+      "source": "PR #1449",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot]: bump npm-minor-patch group across 1 directory with 25 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1277",
+      "type": "dep-update-noise",
+      "source": "PR #1277",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot]: bump expo-device 55.0.16 → 56.0.4"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1276",
+      "type": "dep-update-noise",
+      "source": "PR #1276",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot]: bump react-i18next 16.6.6 → 17.0.8"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1278",
+      "type": "dep-update-noise",
+      "source": "PR #1278",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot]: bump expo 55.0.25 → 56.0.11"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1279",
+      "type": "dep-update-noise",
+      "source": "PR #1279",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot]: bump expo-status-bar 55.0.6 → 56.0.4"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1313",
+      "type": "dep-update-noise",
+      "source": "PR #1313",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot]: bump cargo-minor-patch group across 1 directory with 10 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev 2026-06-16..2026-06-17",
+      "score_delta": 0,
+      "evidence": [
+        "churn re-emit 2026-06-17: 4 commits, 114 LOC this run (PRs #1469, #1495, #1499, #1487); runs_seen 1→2 — repeated-churn fires"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "git log origin/dev 2026-06-16..2026-06-17",
+      "score_delta": 1,
+      "evidence": [
+        "document.rs in hotspots for 2nd run (last_seen 2026-06-10 → 2026-06-17); enum-decode + schema-drift cluster is unstable surface"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-budgets-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev 2026-06-16..2026-06-17",
+      "score_delta": 1,
+      "evidence": [
+        "2 commits, 258 LOC this run (PR #1481 reserve-fund retirement + #1487 rustfmt); first appearance as hotspot"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "risky-churn-pr-1469-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1469",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1469 (fix(db): correct schema-drift SQL in document/form/user repos) touched document.rs hotspot; diff body lists only repo files (no tests/) — fix without regression test"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-verify-hardcoded-url",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/App.tsx:69",
+      "score_delta": 3,
+      "evidence": [
+        "MfaWrapper calls fetch('/api/v1/auth/mfa/verify', ...) with a hardcoded relative path, ignoring VITE_API_URL/VITE_API_BASE_URL",
+        "main.tsx:18 sets OpenAPI.BASE = VITE_API_URL and AuthContext.tsx:93 reads VITE_API_BASE_URL — both indicate the auth surface is meant to be configurable",
+        "On cross-origin deploys (frontend host != api-server host) MFA verify hits the frontend origin and 404s; result.ok=false renders as 'invalidCode' so the user sees a generic 'wrong code' error",
+        "Also bypasses api-client retry/error transformation and request-id propagation"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-api-base-url-env-drift",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/contexts/AuthContext.tsx:93",
+      "score_delta": 2,
+      "evidence": [
+        "AuthContext reads import.meta.env.VITE_API_BASE_URL while main.tsx:18 and lib/api.ts:64 read import.meta.env.VITE_API_URL — three modules, two env var names",
+        "If only VITE_API_URL is set, getAuthApi() falls back to '' and uses relative paths, while OpenAPI.BASE is set to the cross-origin URL (silent split-brain between auth and rest of API)",
+        ".env.example must document both names, or one must be canonicalized — currently any deploy is one typo away from broken auth or broken queries"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-mfa-wrapper-untested",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/App.tsx:43",
+      "score_delta": 2,
+      "evidence": [
+        "MfaWrapper.verify swallows every non-2xx (including 5xx + network) into return false, conflating 'wrong code' with 'server down' for the api-client retry logic",
+        "Grep for 'mfa' shows only TwoFactorAuthPage tests; no test exercises MfaWrapper's verify handler or its error mapping",
+        "Hot path for security-sensitive MFA challenges — refactor regressions will go unnoticed (RECENT_MFA_WINDOW assumptions in api-client comment)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == \"# YYYY-MM-DD\"",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json delta vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counted signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 and decay applied (no candidates)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans match adversarial pass annotation",
+      "observed": "vacuous — no new plans",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans this run",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "all staged paths under .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed → no cursor un-advancement required",
+      "observed": "no failures recorded",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every HEAD plan still in plans/ or plans/_archive/",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count >= HEAD _archive count",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline: 0 actions, kill-switch respected",
+      "observed": "auto_fix_actions=[]",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor 0..7 + coverage_cursor advanced",
+      "observed": "pm_cursor.next_index=6 coverage_cursor.next_index=0 (epic-9 → epic-10a)",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

@@ -1,6 +1,18 @@
 # PPT Action List
 
-_Generated: 2026-06-16T00:00:00Z · 61 items · 51 open_
+_Generated: 2026-06-17T03:30:00Z · 66 items · 56 open (5 new pm-security 2026-06-17)_
+
+## New this run (pm-security rotation 2026-06-17)
+
+| Priority | Status | Owner | ID | Action | Source |
+|---|---|---|---|---|---|
+| high | open | pm-security | pm-security-booking-oauth-1473-tenant-binding | URGENT: Land PR #1473 — Booking.com OAuth cross-tenant token-binding fix + manager-role gate; cross-tenant + role-deny regression tests. Block further Booking.com OTA work until merged. | pm-security 2026-06-17 |
+| high | open | pm-frontend | pm-security-fix-mfa-verify-hardcoded-url-ppt-web | Fix ppt-web App.tsx:69 hardcoded `/api/v1/auth/mfa/verify` to honor VITE_API_URL (route via @ppt/api-client like useMfa); add vitest case asserting cross-origin base. | pm-security 2026-06-17 (Phase 1.5 finding) |
+| high | open | pm-qa | pm-security-document-download-handler-idor-test-1300 | Add handler-level cross-org IDOR regression tests for document download/preview (Issue #1300) — foreign-org id + foreign building/unit scope. Gate further documents.rs on test file. | pm-security 2026-06-17 |
+| high | open | pm-qa | pm-security-rls-routing-test-coverage-1305-1306-1307 | FORCE-RLS-asserting tests for ai/sessions+calendar+public plans (#1305), webhook RLS-routed repos (#1306), ESG cross-tenant FORCE-RLS (#1307). | pm-security 2026-06-17 |
+| medium | open | pm-scrum-master | pm-security-triage-rls-followup-1471 | Triage Issue #1471 residual RLS gap from PR #1495 — assign owner or close as superseded. | pm-security 2026-06-17 |
+
+## Full list
 
 | Priority | Status | Owner | ID | Action | Dependency | Source |
 |---|---|---|---|---|---|---|

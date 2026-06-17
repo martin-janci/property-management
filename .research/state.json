@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 1439,
+  "last_run_iso": "2026-06-17T03:30:00Z",
+  "last_run_ms": 1500000,
+  "last_pr_seen": 1499,
   "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_commit_sha": "eb238737",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -238,9 +238,9 @@
       "recent_churn": 709
     },
     "backend/crates/db/src/repositories/document.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-10",
-      "recent_churn": 2940
+      "runs_seen": 2,
+      "last_seen": "2026-06-17",
+      "recent_churn": 114
     },
     "backend/crates/db/src/repositories/subscription.rs": {
       "runs_seen": 1,
@@ -321,6 +321,11 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "backend/servers/api-server/src/routes/budgets.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-17",
+      "recent_churn": 258
     }
   },
   "seen_signals": [
@@ -553,7 +558,19 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "dep-update-noise-pr-1449",
+    "dep-update-noise-pr-1277",
+    "dep-update-noise-pr-1276",
+    "dep-update-noise-pr-1278",
+    "dep-update-noise-pr-1279",
+    "dep-update-noise-pr-1313",
+    "repeated-churn-backend-crates-db-src-repositories-document-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-budgets-rs",
+    "risky-churn-pr-1469-document-rs",
+    "code-review-ppt-web-core-mfa-verify-hardcoded-url",
+    "code-review-ppt-web-core-api-base-url-env-drift",
+    "code-review-ppt-web-core-mfa-wrapper-untested"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -561,14 +578,14 @@
     "api-core": "2026-06-15",
     "reality-server": "2026-06-11",
     "ppt-web-ui": "2026-06-11",
-    "ppt-web-core": "2026-06-05",
+    "ppt-web-core": "2026-06-17",
     "reality-web": "2026-06-14",
     "mobile-rn": "2026-06-16",
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 178,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
@@ -584,19 +601,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
       "pm-qa": "2026-06-15",
       "pm-devops": "2026-06-16",
-      "pm-security": "2026-05-27",
+      "pm-security": "2026-06-17",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }
