@@ -154,7 +154,10 @@ async fn add_evidence_cross_org_rejected(pool: PgPool) {
             .fetch_one(&pool)
             .await
             .unwrap();
-    assert_eq!(ev_count, 0, "no evidence must be persisted after cross-org attempt");
+    assert_eq!(
+        ev_count, 0,
+        "no evidence must be persisted after cross-org attempt"
+    );
 
     // Legitimate owner can still add evidence.
     let ev = repo
