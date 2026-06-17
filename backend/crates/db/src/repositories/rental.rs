@@ -1289,7 +1289,7 @@ impl RentalRepository {
                 address_street, address_city, address_postal_code, address_country,
                 is_primary, status
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::guest_registration_status)
             RETURNING {GUEST_COLUMNS}
             "#
         )))
@@ -1461,7 +1461,7 @@ impl RentalRepository {
         let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_guests SET
-                status = $2,
+                status = $2::guest_registration_status,
                 registered_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
@@ -1488,7 +1488,7 @@ impl RentalRepository {
         let guest = sqlx::query_as::<_, RentalGuest>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE rental_guests SET
-                status = $2,
+                status = $2::guest_registration_status,
                 registered_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1 AND organization_id = $3
@@ -1790,7 +1790,7 @@ impl RentalRepository {
         let report = sqlx::query_as::<_, RentalGuestReport>(
             r#"
             UPDATE rental_guest_reports SET
-                status = $2,
+                status = $2::guest_registration_status,
                 submitted_at = NOW(),
                 submitted_by = $3,
                 updated_at = NOW()
@@ -1840,7 +1840,7 @@ impl RentalRepository {
         let report = sqlx::query_as::<_, RentalGuestReport>(
             r#"
             UPDATE rental_guest_reports SET
-                status = $2,
+                status = $2::guest_registration_status,
                 submitted_at = NOW(),
                 submitted_by = $3,
                 updated_at = NOW()
