@@ -220,7 +220,10 @@ async fn esg_metrics_force_rls_blocks_cross_tenant_and_deny_all(pool: PgPool) {
     // The repo method uses `organization_id = $2` as the app-layer guard. An
     // IDOR probe passes org_b as the `organization_id` while targeting org_a's
     // metric_id — the WHERE clause rejects it, returning None.
-    let result = repo.get_metric(&pool, metric_a, org_b).await.expect("repo get_metric");
+    let result = repo
+        .get_metric(&pool, metric_a, org_b)
+        .await
+        .expect("repo get_metric");
     assert!(
         result.is_none(),
         "EsgReportingRepository::get_metric must return None for an IDOR probe \
