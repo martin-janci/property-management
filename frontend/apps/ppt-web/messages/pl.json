@@ -542,7 +542,12 @@
       "errors": {
         "detailsMinLength": "Szczegóły muszą zawierać co najmniej 10 znaków."
       }
-    }
+    },
+    "draftSavedAgo": "Szkic zapisany · {{time}}",
+    "draftJustNow": "przed chwilą",
+    "draftSecondsAgo": "{{count}}s temu",
+    "draftMinutesAgo": "{{count}}m temu",
+    "draftRestored": "Przywrócono zapisany szkic."
   },
   "packages": {
     "title": "Zarządzanie przesyłkami",

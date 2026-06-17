@@ -35,9 +35,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.listing.*
@@ -182,16 +180,12 @@ fun SearchScreen(
 
     LaunchedEffect(Unit) { performSearch() }
 
-    // AC-2: debounced search. A 300ms debounce on free-text query changes mirrors the
-    // iOS SearchView (Task.sleep 300ms). drop(1) skips the initial empty emission so the
-    // LaunchedEffect(Unit) above owns the first load; distinctUntilChanged avoids re-firing
-    // when the same text settles.
+    // AC-2: debounced search. The pipeline (drop initial emission, 300ms debounce,
+    // distinctUntilChanged) lives in SearchState.debouncedQueryFlow so the timing behaviour is
+    // unit-tested with virtual time; here we just feed it the query snapshot and search on each
+    // settled value.
     LaunchedEffect(Unit) {
-        snapshotFlow { searchQuery }
-            .drop(1)
-            .debounce(SearchState.SEARCH_DEBOUNCE_MS)
-            .distinctUntilChanged()
-            .collect { performSearch() }
+        SearchState.debouncedQueryFlow(snapshotFlow { searchQuery }).collect { performSearch() }
     }
 
     // AC-4: infinite scroll. The trigger pipeline (de-duplicate the last-visible index, snapshot
@@ -393,7 +387,7 @@ private enum class ViewMode {
     MAP,
 }
 
-// ─── Top bar ────────────────────────────────────────────────────
+// ─── Top bar ────────────────────────────────────────────────────────
 
 @Composable
 private fun ListingsTopBar(
@@ -492,7 +486,7 @@ private fun SegmentChip(icon: ImageVector, label: String, selected: Boolean, onC
     }
 }
 
-// ─── Search input ──────────────────────────────────────────────────
+// ─── Search input ────────────────────────────────────────────────────
 
 @Composable
 private fun SearchInputRow(
@@ -526,7 +520,7 @@ private fun SearchInputRow(
     )
 }
 
-// ─── Rooms chip strip ───────────────────────────────────────
+// ─── Rooms chip strip ─────────────────────────────────────────
 
 @Composable
 private fun RoomsChipStrip(selected: Int?, onSelect: (Int?) -> Unit, totalResults: Int) {
@@ -858,7 +852,7 @@ private fun FilterSheet(
     }
 }
 
-// ─── Empty / error / map placeholder ─────────────────────────
+// ─── Empty / error / map placeholder ──────────────────────
 
 @Composable
 private fun ErrorBanner(error: String) {

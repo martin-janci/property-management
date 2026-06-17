@@ -1,4 +1,6 @@
 export { useDeepLinkRouting } from './useDeepLinkRouting';
+export type { FolderTreeResponse, UseFolderTreeOptions } from './useFolderTree';
+export { FOLDER_TREE_QUERY_KEY, useFolderTree } from './useFolderTree';
 export type {
   CacheOptions,
   OfflineState,

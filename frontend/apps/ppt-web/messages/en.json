@@ -601,7 +601,12 @@
       "errors": {
         "detailsMinLength": "Details must be at least 10 characters."
       }
-    }
+    },
+    "draftSavedAgo": "Draft saved · {{time}}",
+    "draftJustNow": "just now",
+    "draftSecondsAgo": "{{count}}s ago",
+    "draftMinutesAgo": "{{count}}m ago",
+    "draftRestored": "Restored your saved draft."
   },
   "packages": {
     "title": "Package Management",

@@ -12,6 +12,7 @@
  * identical to the previous inline table).
  */
 import { Route, Routes } from 'react-router-dom';
+import { accountingRoutes } from './groups/accounting';
 import { announcementRoutes } from './groups/announcements';
 import { buildingRoutes } from './groups/buildings';
 import { communityRoutes } from './groups/community';
@@ -46,6 +47,7 @@ export function AppRoutes() {
       {faultRoutes()}
       {communityRoutes()}
       {financialRoutes()}
+      {accountingRoutes()}
       {rentalRoutes()}
       {meterRoutes()}
       {leaseRoutes()}

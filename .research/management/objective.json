@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "epic_prefix": "NONE",
-  "selected_at": "2026-06-15T16:18:22Z",
-  "last_action": "reset-invalid-target",
-  "reason": "picker chose feat- epic already quarantined (PR#1318); invalid per self-test schema; reset to NONE",
+  "epic_prefix": "feat-airbnb-oauth-token-exchange-route-backend",
+  "selected_at": "2026-06-16T22:12:13Z",
+  "last_action": "keep",
+  "reason": "current target still has claimable work",
   "stats_at_selection": {
-    "open": 0,
-    "claimable": 0
+    "open": 1,
+    "claimable": 1
   }
 }
