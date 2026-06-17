@@ -602,6 +602,14 @@ So that **UI buttons work**.
 #### Epic 82: Mobile Native Completion
 **Goal:** Fix broken functionality in the iOS Reality Portal app and complete API integration.
 
+> **Note — story-number collision.** This Epic 82 (the authoritative one) is a
+> *completion/fix* epic on an already-built iOS app. A separate, legacy *build*
+> story set under `_bmad-output/implementation-artifacts/stories/82-*.md` reuses
+> the same numbers (e.g. its "82.1" is "SwiftUI Project Setup", not "Remove
+> Broken Direct Login Form" below). For the full reconciliation of both
+> definitions against the actual `mobile-native/iosApp/` implementation, see
+> [`docs/superpowers/plans/epic-82-story-mapping.md`](../docs/superpowers/plans/epic-82-story-mapping.md).
+
 **Target Apps:** mobile-native (iosApp, shared)
 **Estimate:** 6 stories, ~2 weeks
 **Dependencies:** Epic 79 (Security)
