@@ -620,24 +620,47 @@ async fn list_documents(
             .unwrap_or(0);
         (docs, total)
     } else {
-        // Use simplified access control for non-managers
-        // Shows: org-wide documents + own documents + role-based documents
-        // TODO: Full implementation needs building/unit context from TenantContext
+        // Full access control for non-managers (GH #1413). Shows org-wide docs,
+        // own docs, role-based docs, plus building/unit-scoped docs the caller is
+        // a member of. Building/unit membership is resolved via the same
+        // `user_scope_memberships_rls` resolver the download/preview gate uses, so
+        // the list and the gate agree: a building/unit doc the caller can open is
+        // also listed (no openable-but-not-listed divergence). A DB error fails
+        // closed (no memberships → building/unit scopes omitted, never widened).
         let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
+        let (building_ids, unit_ids) = state
+            .document_repo
+            .user_scope_memberships_rls(&mut **rls.conn(), user_id)
+            .await
+            .unwrap_or_else(|e| {
+                tracing::error!(error = %e, "Failed to resolve user scope memberships");
+                (Vec::new(), Vec::new())
+            });
+        let roles = [user_role];
         let docs = state
             .document_repo
-            .list_accessible_simple_rls(
+            .list_accessible_rls(
                 &mut **rls.conn(),
                 org_id,
                 user_id,
-                &user_role,
+                &building_ids,
+                &unit_ids,
+                &roles,
                 list_query.clone(),
             )
             .await
             .unwrap_or_default();
         let total = state
             .document_repo
-            .count_accessible_simple_rls(&mut **rls.conn(), org_id, user_id, &user_role, list_query)
+            .count_accessible_rls(
+                &mut **rls.conn(),
+                org_id,
+                user_id,
+                &building_ids,
+                &unit_ids,
+                &roles,
+                list_query,
+            )
             .await
             .unwrap_or(0);
         (docs, total)

@@ -307,13 +307,14 @@ pub struct RentalBooking {
     pub check_in_time: Option<NaiveTime>,
     pub check_out_time: Option<NaiveTime>,
 
-    // Financial
-    #[sqlx(try_from = "Decimal")]
+    // Financial — these DECIMAL columns are NULLABLE (migration 00051), so they
+    // must decode as native nullable NUMERIC. `#[sqlx(try_from = "Decimal")]`
+    // forces a NON-NULL `Decimal` decode first, which fails with "unexpected
+    // null" on any booking row whose amount/fee is NULL (issue #1422). Plain
+    // `Option<Decimal>` decodes nullable NUMERIC natively.
     pub total_amount: Option<Decimal>,
     pub currency: Option<String>,
-    #[sqlx(try_from = "Decimal")]
     pub platform_fee: Option<Decimal>,
-    #[sqlx(try_from = "Decimal")]
     pub cleaning_fee: Option<Decimal>,
 
     // Status

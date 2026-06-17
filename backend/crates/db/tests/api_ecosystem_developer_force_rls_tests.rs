@@ -113,14 +113,18 @@ async fn seed_sandbox(pool: &PgPool, developer_id: Uuid, name: &str) -> Uuid {
     .expect("seed sandbox")
 }
 
-/// Fail-on-`dev` guard (IG3): the eight catalog + developer-portal tables must
+/// Fail-on-`dev` guard (IG3): the eleven catalog + developer-portal tables must
 /// carry `FORCE ROW LEVEL SECURITY`. A plain non-owner role (as the behavioral
 /// test below uses) is bound by ENABLE alone, so only this catalog-metadata
 /// assertion distinguishes the migration being present from absent — it fails
-/// before migration `00180` and passes after. `#[sqlx::test]` runs as a
-/// superuser, so a behavioral owner-bypass assertion would pass vacuously;
+/// before migrations `00180`/`00181` and passes after. `#[sqlx::test]` runs as
+/// a superuser, so a behavioral owner-bypass assertion would pass vacuously;
 /// asserting `pg_class.relforcerowsecurity` is the robust check (mirrors
 /// `epic11_org_guc_rls_tests.rs` / `notification_rls_guc_tests.rs`).
+///
+/// The three OAuth/usage tables (`developer_oauth_apps`, `developer_oauth_grants`,
+/// `api_key_usage_logs`) were forced in `00181` — `developer_oauth_apps` holds
+/// `client_secret_hash` (credential-class), making it the highest-value target.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn api_ecosystem_catalog_and_developer_tables_are_force_rls(pool: PgPool) {
     let tables = [
@@ -132,6 +136,10 @@ async fn api_ecosystem_catalog_and_developer_tables_are_force_rls(pool: PgPool) 
         "developer_accounts",
         "developer_api_keys",
         "developer_sandboxes",
+        // Added by migration 00181 (GH #1303 — remaining 00102 owner-bypass gap):
+        "developer_oauth_apps",
+        "developer_oauth_grants",
+        "api_key_usage_logs",
     ];
 
     for table in tables {
@@ -145,8 +153,8 @@ async fn api_ecosystem_catalog_and_developer_tables_are_force_rls(pool: PgPool) 
 
         assert!(
             forced,
-            "PAP-171 regression: table `{table}` must be FORCE ROW LEVEL SECURITY \
-             (migration 00180) so the owner app role is not exempt from its RLS policy"
+            "PAP-171/GH-1303 regression: table `{table}` must be FORCE ROW LEVEL SECURITY \
+             (migrations 00180/00181) so the owner app role is not exempt from its RLS policy"
         );
 
         // RLS must also remain enabled (FORCE without ENABLE is meaningless).
