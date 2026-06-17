@@ -763,7 +763,10 @@ async fn add_comment_cross_org_rejected(pool: PgPool) {
             .fetch_one(&pool)
             .await
             .unwrap();
-    assert_eq!(cmt_count, 0, "no comment must be persisted after cross-org attempt");
+    assert_eq!(
+        cmt_count, 0,
+        "no comment must be persisted after cross-org attempt"
+    );
 
     // Legitimate owner can still comment.
     let cmt = repo
