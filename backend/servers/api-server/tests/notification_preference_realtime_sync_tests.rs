@@ -53,6 +53,7 @@
 //! |------|----------------|---------|
 //! | S12 | no | A successful PATCH records **exactly one** `preference.updated` event on `notifications:{user_id}` with payload `{channel, enabled}` echoing the patched channel and new state — the publish contract S4 proves over real Redis, now assertable in CI. |
 //! | S13 | no | A 409-rejected unconfirmed disable-all records **nothing** — the publish point sits after the disable-all guard, so a rejected change never emits a spurious `preference.updated` (the CI-executable mirror of S3's intent at the publish layer). |
+//! | S14 | no | A *replayed* identical disable PATCH records **one event per apply** with identical payloads (issue #1308) — the publish leg has no dedup, so the idempotency contract S5–S7 prove for DB state is now pinned for the realtime leg too: a client replaying a PATCH receives a redundant-but-identical `preference.updated` and converges regardless. |
 //!
 //! The no-Redis cases run in CI (the default `AppState` has `pubsub_service =
 //! None`). The Redis case mirrors the `#[ignore]` style of the fanout test in
@@ -754,6 +755,86 @@ async fn rejected_disable_all_records_no_event(pool: PgPool) {
         post.is_empty(),
         "S13: a 409-rejected disable-all must record no preference.updated event (got {})",
         post.len()
+    );
+}
+
+// ============================================================================
+// S14 — publish contract under replay (CI): a replayed PATCH re-publishes
+// ============================================================================
+
+/// Issue #1308: the idempotency cases (S5–S7) prove a replayed PATCH converges
+/// on the same *persisted DB state*, but never assert what the *realtime publish
+/// leg* does under replay — which is the leg the "idempotent apply" framing
+/// claims to cover. The handler publishes `preference.updated` *unconditionally
+/// on every successful update* (the `if let Some(pubsub)` branch has no
+/// dedup/no-op short-circuit), so a replayed identical disable emits the event
+/// **again**. This pins that contract in CI via the `PreferenceEventRecorder`
+/// (no live Redis): a realtime client that replays a PATCH (reconnect, duplicate
+/// tab, retry after a dropped response) will receive one `preference.updated`
+/// per apply, each with an identical `{channel, enabled}` payload, and must
+/// converge regardless. If a future change adds publish-side deduplication this
+/// test will fail and force an explicit decision rather than a silent behaviour
+/// shift.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn replayed_disable_republishes_identical_event(pool: PgPool) {
+    let (app, recorder) = TestApp::with_recording_pubsub(pool.clone()).await;
+    let user = TestUser::new();
+    let (access_token, org) = create_authenticated_user_with_org(&app, &user, "s14").await;
+
+    let user_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_one(&app.pool)
+        .await
+        .expect("lookup user id");
+
+    // Apply the identical "disable email" PATCH twice. push + in_app stay
+    // enabled, so neither apply trips the disable-all guard; both must succeed.
+    for _ in 0..2 {
+        let req = app
+            .patch("/api/v1/users/me/notification-preferences/email")
+            .bearer(&access_token)
+            .header("X-Tenant-ID", &org.to_string())
+            .json(json!({ "enabled": false, "confirmDisableAll": false }))
+            .build();
+        app.execute(req).await.assert_status(StatusCode::OK);
+    }
+
+    // The publish leg fires once per successful apply: a replayed disable is a
+    // DB no-op but still a published event (no publish-side dedup).
+    let events = recorder.drain();
+    assert_eq!(
+        events.len(),
+        2,
+        "S14: a replayed identical disable must record one preference.updated per apply (got {})",
+        events.len()
+    );
+
+    // Both events are identical: same channel, same event type, same payload —
+    // the replay carries no drift, so a client converges to the same state.
+    for (i, event) in events.iter().enumerate() {
+        assert_eq!(
+            event.channel,
+            format!("notifications:{user_id}"),
+            "S14: event #{i} must target the user's notifications channel"
+        );
+        assert_eq!(
+            event.event_type, "preference.updated",
+            "S14: event #{i} must be preference.updated"
+        );
+        assert_eq!(
+            event.payload["channel"],
+            json!("email"),
+            "S14: event #{i} payload.channel must echo the patched channel"
+        );
+        assert_eq!(
+            event.payload["enabled"],
+            json!(false),
+            "S14: event #{i} payload.enabled must echo the (unchanged) new state"
+        );
+    }
+    assert_eq!(
+        events[0].payload, events[1].payload,
+        "S14: both replayed publishes must carry an identical payload"
     );
 }
 

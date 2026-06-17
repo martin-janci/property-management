@@ -1,4 +1,4 @@
-//! Regression tests for BIT-11 — allowed_pet_types pet_type[] decode+bind fix
+//! Regression tests for PAP-159 — allowed_pet_types pet_type[] decode+bind fix
 //! in [`db::repositories::RegistryRepository`].
 
 use db::models::UpdateRegistryRules;

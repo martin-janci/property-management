@@ -671,12 +671,12 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
               AND ($2::uuid IS NULL OR folder_id = $2)
-              AND ($3::text IS NULL OR category = $3)
+              AND ($3::text IS NULL OR category = $3::document_category)
               AND ($4::uuid IS NULL OR created_by = $4)
               AND ($5::text IS NULL OR title ILIKE '%' || $5 || '%')
             ORDER BY created_at DESC
@@ -711,7 +711,7 @@ impl DocumentRepository {
             WHERE organization_id = $1
               AND deleted_at IS NULL
               AND ($2::uuid IS NULL OR folder_id = $2)
-              AND ($3::text IS NULL OR category = $3)
+              AND ($3::text IS NULL OR category = $3::document_category)
               AND ($4::uuid IS NULL OR created_by = $4)
               AND ($5::text IS NULL OR title ILIKE '%' || $5 || '%')
             "#,
@@ -753,7 +753,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -772,7 +772,7 @@ impl DocumentRepository {
                 OR (access_scope = 'users' AND access_target_ids ? $2::text)
               )
               AND ($6::uuid IS NULL OR folder_id = $6)
-              AND ($7::text IS NULL OR category = $7)
+              AND ($7::text IS NULL OR category = $7::document_category)
               AND ($8::text IS NULL OR title ILIKE '%' || $8 || '%')
             ORDER BY created_at DESC
             LIMIT $9 OFFSET $10
@@ -811,7 +811,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -824,7 +824,7 @@ impl DocumentRepository {
                 OR (access_scope = 'role' AND access_roles ? $3)
               )
               AND ($4::uuid IS NULL OR folder_id = $4)
-              AND ($5::text IS NULL OR category = $5)
+              AND ($5::text IS NULL OR category = $5::document_category)
               AND ($6::text IS NULL OR title ILIKE '%' || $6 || '%')
             ORDER BY created_at DESC
             LIMIT $7 OFFSET $8
@@ -866,7 +866,7 @@ impl DocumentRepository {
                 OR (access_scope = 'role' AND access_roles ? $3)
               )
               AND ($4::uuid IS NULL OR folder_id = $4)
-              AND ($5::text IS NULL OR category = $5)
+              AND ($5::text IS NULL OR category = $5::document_category)
               AND ($6::text IS NULL OR title ILIKE '%' || $6 || '%')
             "#,
         )
@@ -1010,6 +1010,60 @@ impl DocumentRepository {
         .await?;
 
         Ok(row.get("has_access"))
+    }
+
+    /// Resolve the caller's `building` and `unit` access-scope memberships.
+    ///
+    /// A user is a member of a unit (and, transitively, its building) when they
+    /// are an **active unit owner** (`unit_owners.status = 'active'` and not
+    /// expired) or a **current unit resident** (`unit_residents.end_date IS
+    /// NULL`). Returns `(building_ids, unit_ids)` — the inputs the in-memory
+    /// download/preview gate and `check_access_rls` need to resolve
+    /// `building`/`unit`-scoped documents.
+    ///
+    /// RLS-scoped: only memberships whose building belongs to the connection's
+    /// org are visible, mirroring `BuildingRepository::can_user_access_building`.
+    pub async fn user_scope_memberships_rls<'e, E>(
+        &self,
+        executor: E,
+        user_id: Uuid,
+    ) -> Result<(Vec<Uuid>, Vec<Uuid>), SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let rows = sqlx::query(
+            r#"
+            SELECT DISTINCT u.id AS unit_id, u.building_id AS building_id
+            FROM units u
+            WHERE EXISTS (
+                SELECT 1 FROM unit_owners uo
+                WHERE uo.unit_id = u.id
+                  AND uo.user_id = $1
+                  AND uo.status = 'active'
+                  AND uo.valid_until IS NULL
+            )
+            OR EXISTS (
+                SELECT 1 FROM unit_residents ur
+                WHERE ur.unit_id = u.id
+                  AND ur.user_id = $1
+                  AND ur.end_date IS NULL
+            )
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(executor)
+        .await?;
+
+        let mut unit_ids = Vec::with_capacity(rows.len());
+        let mut building_ids = Vec::new();
+        for row in &rows {
+            unit_ids.push(row.get::<Uuid, _>("unit_id"));
+            let building_id: Uuid = row.get("building_id");
+            if !building_ids.contains(&building_id) {
+                building_ids.push(building_id);
+            }
+        }
+        Ok((building_ids, unit_ids))
     }
 
     // ========================================================================
@@ -2339,7 +2393,7 @@ impl DocumentRepository {
         let rows = sqlx::query(
             r#"
             SELECT
-                d.id, d.title, d.category, d.file_name, d.mime_type, d.size_bytes,
+                d.id, d.title, d.category::text AS category, d.file_name, d.mime_type, d.size_bytes,
                 d.folder_id, d.created_at,
                 ts_rank_cd(d.search_vector, to_tsquery('english', $2)) as rank,
                 ts_headline('english', COALESCE(d.extracted_text, d.description, ''),
@@ -2356,7 +2410,7 @@ impl DocumentRepository {
               AND d.deleted_at IS NULL
               AND d.search_vector @@ to_tsquery('english', $2)
               AND ($3::uuid IS NULL OR d.folder_id = $3)
-              AND ($4::text IS NULL OR d.category = $4)
+              AND ($4::text IS NULL OR d.category = $4::document_category)
             ORDER BY rank DESC, d.created_at DESC
             LIMIT $5 OFFSET $7
             "#,
@@ -2380,7 +2434,7 @@ impl DocumentRepository {
               AND d.deleted_at IS NULL
               AND d.search_vector @@ to_tsquery('english', $2)
               AND ($3::uuid IS NULL OR d.folder_id = $3)
-              AND ($4::text IS NULL OR d.category = $4)
+              AND ($4::text IS NULL OR d.category = $4::document_category)
             "#,
         )
         .bind(request.organization_id)
