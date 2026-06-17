@@ -361,6 +361,7 @@ struct SearchView: View {
     private func loadMoreResults() async {
         guard currentPage < totalPages, !isLoading, !isLoadingMore else { return }
         isLoadingMore = true
+        let seq = requestSeq          // capture before await; mirrors performSearch() guard
         let prevPage = currentPage
         currentPage += 1
         let request = ListingSearchRequest(
@@ -371,6 +372,7 @@ struct SearchView: View {
             pageSize: 20
         )
         let result = await listingRepository.searchListings(request: request)
+        guard seq == requestSeq else { isLoadingMore = false; return }
         if let response = result.getOrNull() {
             results.append(contentsOf: response.listings.map { KMPBridge.toListingPreview($0) })
         } else {

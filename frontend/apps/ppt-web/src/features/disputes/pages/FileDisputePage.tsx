@@ -11,7 +11,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -144,15 +144,24 @@ export function FileDisputePage({
   // serialisable by zod; they are passed alongside the validated values).
   const [evidence, setEvidence] = React.useState<PendingEvidence[]>([]);
 
-  // Persist the draft on every change (debounced inside the hook). Skip while a
-  // submit is in flight so we don't re-save a form that's about to be cleared.
-  const watchedValues = watch();
+  // Keep isSubmitting in a ref so the watch subscription closure doesn't
+  // re-register every time the flag toggles.
+  const isSubmittingRef = React.useRef(isSubmitting);
   React.useEffect(() => {
-    if (isSubmitting) return;
-    save(watchedValues);
-  }, [watchedValues, isSubmitting, save]);
+    isSubmittingRef.current = isSubmitting;
+  }, [isSubmitting]);
 
-  const descriptionLength = watchedValues.description?.length ?? 0;
+  // Subscribe to field changes (fires only on real changes, not on every render)
+  // and persist the draft debounced. Skips while a submit is in flight.
+  React.useEffect(() => {
+    const sub = watch((values) => {
+      if (!isSubmittingRef.current) save(values as Partial<DisputeFormValues>);
+    });
+    return () => sub.unsubscribe();
+  }, [watch, save]);
+
+  const descriptionValue = useWatch({ control, name: 'description' });
+  const descriptionLength = descriptionValue?.length ?? 0;
 
   const handleFormSubmit = handleSubmit(async (values) => {
     try {

@@ -671,7 +671,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -753,7 +753,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -792,6 +792,62 @@ impl DocumentRepository {
         .await
     }
 
+    /// Count documents accessible by a specific user with RLS context (GH #1413).
+    ///
+    /// Counterpart to [`Self::list_accessible_rls`]; the `WHERE` predicate is
+    /// kept identical so the non-manager list and its total never disagree.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn count_accessible_rls<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        user_id: Uuid,
+        user_building_ids: &[Uuid],
+        user_unit_ids: &[Uuid],
+        user_roles: &[String],
+        query: DocumentListQuery,
+    ) -> Result<i64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        // `?|` is `jsonb ?| text[]` — right operand must be text[], not jsonb.
+        let building_ids: Vec<String> = user_building_ids.iter().map(Uuid::to_string).collect();
+        let unit_ids: Vec<String> = user_unit_ids.iter().map(Uuid::to_string).collect();
+        let roles: Vec<String> = user_roles.to_vec();
+
+        let row = sqlx::query(
+            r#"
+            SELECT COUNT(*) as count
+            FROM documents
+            WHERE organization_id = $1
+              AND deleted_at IS NULL
+              AND (
+                created_by = $2
+                OR access_scope = 'organization'
+                OR (access_scope = 'building' AND access_target_ids ?| $3::text[])
+                OR (access_scope = 'unit' AND access_target_ids ?| $4::text[])
+                OR (access_scope = 'role' AND access_roles ?| $5::text[])
+                OR (access_scope = 'users' AND access_target_ids ? $2::text)
+              )
+              AND ($6::uuid IS NULL OR folder_id = $6)
+              AND ($7::text IS NULL OR category = $7)
+              AND ($8::text IS NULL OR title ILIKE '%' || $8 || '%')
+            "#,
+        )
+        .bind(org_id)
+        .bind(user_id)
+        .bind(&building_ids)
+        .bind(&unit_ids)
+        .bind(&roles)
+        .bind(query.folder_id)
+        .bind(&query.category)
+        .bind(&query.search)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(row.get("count"))
+    }
+
     /// List documents accessible by user (simplified) with RLS context.
     /// Used when building/unit context is not available.
     pub async fn list_accessible_simple_rls<'e, E>(
@@ -811,7 +867,7 @@ impl DocumentRepository {
         sqlx::query_as::<_, DocumentSummary>(
             r#"
             SELECT
-                id, title, category, file_name, mime_type, size_bytes, folder_id, created_at
+                id, title, category::text AS category, file_name, mime_type, size_bytes, folder_id, created_at
             FROM documents
             WHERE organization_id = $1
               AND deleted_at IS NULL
@@ -2393,7 +2449,7 @@ impl DocumentRepository {
         let rows = sqlx::query(
             r#"
             SELECT
-                d.id, d.title, d.category, d.file_name, d.mime_type, d.size_bytes,
+                d.id, d.title, d.category::text AS category, d.file_name, d.mime_type, d.size_bytes,
                 d.folder_id, d.created_at,
                 ts_rank_cd(d.search_vector, to_tsquery('english', $2)) as rank,
                 ts_headline('english', COALESCE(d.extracted_text, d.description, ''),

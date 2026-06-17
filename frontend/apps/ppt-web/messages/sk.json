@@ -542,7 +542,12 @@
       "errors": {
         "detailsMinLength": "Podrobnosti musia obsahovať aspoň 10 znakov."
       }
-    }
+    },
+    "draftSavedAgo": "Návrh uložený · {{time}}",
+    "draftJustNow": "práve teraz",
+    "draftSecondsAgo": "pred {{count}}s",
+    "draftMinutesAgo": "pred {{count}}m",
+    "draftRestored": "Obnovili sme váš uložený návrh."
   },
   "packages": {
     "title": "Správa zásielok",

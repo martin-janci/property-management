@@ -440,6 +440,28 @@ final class DeepLinkHandlerTests: XCTestCase {
             return XCTFail("Expected unrecognized for unknown host")
         }
     }
+
+    // MARK: Universal-link host consistency (GH #1408)
+
+    /// Every Environment.universalLinkDomain must be in DeepLinkHandler.allowedUniversalLinkHosts
+    /// so staging/production universal links are not silently dropped by the parser.
+    func testEveryEnvironmentUniversalLinkDomainIsAllowed() {
+        let allowed = DeepLinkHandler.allowedUniversalLinkHosts
+        for env in [Environment.staging, Environment.production] {
+            XCTAssertTrue(
+                allowed.contains(env.universalLinkDomain),
+                "\(env) universalLinkDomain '\(env.universalLinkDomain)' missing from allowedUniversalLinkHosts"
+            )
+        }
+    }
+
+    /// A URL from an out-of-allow-list host must not be routed to the app.
+    func testOutOfAllowlistUniversalLinkIsUnrecognised() throws {
+        let url = try XCTUnwrap(URL(string: "https://attacker.example/listing/lst-1"))
+        guard case .unrecognized = handler.parse(url) else {
+            return XCTFail("Expected unrecognized for non-allow-listed universal-link host")
+        }
+    }
 }
 
 // MARK: - NavigationStateRestorationService Tests

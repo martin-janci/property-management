@@ -39,7 +39,7 @@ use axum::http::StatusCode;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{seed_membership, TestApp, TestConfig};
 use db::models::WorkOrderQuery;
 use db::repositories::WorkOrderRepository;
 
@@ -74,20 +74,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 /// Seed a building in `org_id` and return its id (work orders require one).
@@ -147,7 +133,7 @@ async fn job_details_never_returns_fabricated_pii(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "pii-a").await;
     let user_a = seed_user(&pool, "pii-a@vendor-portal.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
 
     let job_id = Uuid::new_v4();
     let uri = format!("/api/v1/vendor-portal/jobs/{job_id}");
@@ -186,7 +172,7 @@ async fn list_endpoints_never_return_fabricated_arrays(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "lst-a").await;
     let user_a = seed_user(&pool, "lst-a@vendor-portal.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let token = mint_token(user_a, "lst-a@vendor-portal.test");
 
     for uri in [

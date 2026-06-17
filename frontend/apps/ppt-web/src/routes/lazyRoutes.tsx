@@ -231,6 +231,12 @@ export const BudgetManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.BudgetManagementPage }))
 );
 
+// --- Accounting ---
+
+export const AccountingInvoiceManagementPage = lazy(() =>
+  import('../features/accounting').then((m) => ({ default: m.AccountingInvoiceManagementPage }))
+);
+
 // Reports feature (Epic 81)
 export const ReportsPage = lazy(() =>
   import('../features/reports').then((m) => ({ default: m.ReportsPage }))

@@ -24,9 +24,11 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use api_core::TenantExtractor;
+
 use super::{
     install::{AirbnbCallbackResponse, OAuthCallbackQuery},
-    sync::{verify_org_access, OrgIdPath},
+    sync::{verify_manager_role, verify_org_access, OrgIdPath},
     token_rotation::with_token_refresh,
 };
 use crate::state::AppState;
@@ -107,6 +109,7 @@ pub struct BookingTokenExchangeResponse {
 )]
 pub async fn booking_token_exchange(
     State(state): State<AppState>,
+    tenant: TenantExtractor,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(body): Json<BookingTokenExchangeRequest>,
@@ -129,6 +132,8 @@ pub async fn booking_token_exchange(
 
     // IDOR guard — caller must belong to the target org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Manager-level gate: binding a paid OTA integration is an org-wide action.
+    verify_manager_role(&tenant)?;
 
     let client_id = state.booking_config.client_id.clone();
     let client_secret = state.booking_config.client_secret.clone();
@@ -270,6 +275,7 @@ pub struct AirbnbTokenExchangeResponse {
 )]
 pub async fn airbnb_token_exchange(
     State(state): State<AppState>,
+    tenant: TenantExtractor,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(body): Json<AirbnbTokenExchangeRequest>,
@@ -292,6 +298,8 @@ pub async fn airbnb_token_exchange(
 
     // IDOR guard — caller must belong to the target org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Manager-level gate: binding a paid OTA integration is an org-wide action.
+    verify_manager_role(&tenant)?;
 
     let client_id = state.airbnb_config.client_id.clone();
     let client_secret = state.airbnb_config.client_secret.clone();
