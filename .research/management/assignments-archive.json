@@ -1,5 +1,5 @@
 {
-  "archived_at": "2026-06-17T10:16:16Z",
+  "archived_at": "2026-06-17T10:26:08Z",
   "assignments": [
     {
       "task_id": "bug-announcer-stale-message",
@@ -1628,6 +1628,28 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "feat-pinned-announcements-pin-unpin-web-ui-frontend",
+      "branch": "auto-impl/feat-pinned-announcements-pin-unpin-web-",
+      "status": "failed",
+      "claimed_at": "2026-06-17T10:14:34Z",
+      "last_updated": "2026-06-17T10:24:44Z",
+      "status_changed_at": "2026-06-17T10:24:44Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-implemented-on-dev (PR #1446); empty diff vs origin/dev",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
       "merge_attempted_at": null
     },
     {
