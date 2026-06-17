@@ -384,7 +384,7 @@ async fn token_exchange_rejects_non_manager_member(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "mgr-gate-b").await;
     let user_id = seed_user(&pool, "non-manager-b@booking-routes.test").await;
-    seed_membership(&pool, org_id, user_id).await;
+    seed_membership(&pool, org_id, user_id, "member").await;
 
     // Mint a token with a non-manager role (tenant). Org membership is valid,
     // but verify_manager_role must fire and return 403.
