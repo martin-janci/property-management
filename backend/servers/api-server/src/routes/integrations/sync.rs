@@ -27,7 +27,6 @@
 //! AFTER release so pool connections are not pinned on network calls.
 
 use api_core::extractors::RlsConnection;
-use api_core::TenantExtractor;
 use axum::{
     body::Body,
     extract::{Path, Query, State},
@@ -145,15 +144,45 @@ pub(super) async fn verify_org_access(
     Ok(())
 }
 
-pub(super) fn verify_manager_role(
-    tenant: &TenantExtractor,
+/// Verify the caller holds a manager-level role **in `org_id`** — the org being
+/// mutated (the path org), not the JWT/`X-Tenant-ID` tenant.
+///
+/// SECURITY (#1525): the previous `verify_manager_role(&tenant)` read
+/// `tenant.role`, which `TenantExtractor` populates from JWT claims tied to the
+/// `X-Tenant-ID` header and never cross-checks against the path org. A user who
+/// is manager in org A (JWT) but only a plain member of org B could mutate org
+/// B's OTA integration (`verify_org_access(B)` passes on membership;
+/// `verify_manager_role` passes on the A-role from the JWT). This reads the
+/// caller's `role_type` from `organization_members` for `org_id` itself — the
+/// same active-membership row `verify_org_access` checks — and rejects
+/// non-managers. The manager set mirrors `TenantRole::is_manager`.
+pub(super) async fn verify_manager_role_in_org(
+    state: &AppState,
+    user_id: uuid::Uuid,
+    org_id: uuid::Uuid,
 ) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to look up org role for manager gate");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+
+    let is_manager = matches!(
+        role_type.as_deref(),
+        Some("super_admin" | "platform_admin" | "org_admin" | "manager" | "technical_manager")
+    );
+    if !is_manager {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
                 "FORBIDDEN",
-                "Manager-level access required",
+                "Manager-level access required for this organization",
             )),
         ));
     }
