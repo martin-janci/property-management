@@ -605,7 +605,9 @@ impl DocumentRepository {
             r#"
             SELECT
                 d.*,
-                u.full_name as created_by_name,
+                d.category::text AS category_text,
+                d.access_scope::text AS access_scope_text,
+                u.name as created_by_name,
                 f.name as folder_name,
                 COALESCE(s.share_count, 0) as share_count
             FROM documents d
@@ -631,12 +633,15 @@ impl DocumentRepository {
                 folder_id: r.get("folder_id"),
                 title: r.get("title"),
                 description: r.get("description"),
-                category: r.get("category"),
+                // `category` / `access_scope` are PG enums; `d.*` returns them
+                // raw, which fails a `String` decode (#1008). Read the ::text
+                // aliases instead (matches the sibling find methods).
+                category: r.get("category_text"),
                 file_key: r.get("file_key"),
                 file_name: r.get("file_name"),
                 mime_type: r.get("mime_type"),
                 size_bytes: r.get("size_bytes"),
-                access_scope: r.get("access_scope"),
+                access_scope: r.get("access_scope_text"),
                 access_target_ids: r.get("access_target_ids"),
                 access_roles: r.get("access_roles"),
                 created_by: r.get("created_by"),
@@ -1556,7 +1561,7 @@ impl DocumentRepository {
             SELECT
                 s.*,
                 d.title as document_title,
-                u.full_name as shared_by_name
+                u.name as shared_by_name
             FROM document_shares s
             JOIN documents d ON d.id = s.document_id
             JOIN users u ON u.id = s.shared_by
