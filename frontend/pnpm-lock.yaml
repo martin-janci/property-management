@@ -247,8 +247,8 @@ importers:
         specifier: ^1.18.0
         version: 1.18.0
       dompurify:
-        specifier: ^3.4.10
-        version: 3.4.10
+        specifier: ^3.4.11
+        version: 3.4.11
       i18next:
         specifier: ^25.7.3
         version: 25.10.10(typescript@5.9.3)
@@ -554,7 +554,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^2.0.5
-        version: 2.0.5(hono@4.12.25)
+        version: 2.0.5(hono@4.12.26)
       '@ppt/sitemap':
         specifier: workspace:*
         version: link:../sitemap
@@ -565,8 +565,8 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
       hono:
-        specifier: ^4.12.25
-        version: 4.12.25
+        specifier: ^4.12.26
+        version: 4.12.26
       yauzl-promise:
         specifier: ^4.0.0
         version: 4.0.0
@@ -2633,13 +2633,13 @@ packages:
     resolution: {integrity: sha512-thWfawrDIP7wSI9ioT13I5soaaqB5vAPIiZmgD8PbeEVKNrkonc0N/Sjj97ezl7oQgusZmaNphGdMKipPO6IBg==}
     dev: true
 
-  /@hono/node-server@2.0.5(hono@4.12.25):
+  /@hono/node-server@2.0.5(hono@4.12.26):
     resolution: {integrity: sha512-yQFvDmyDo3y6rEOJZDUYPJ49DIKTPpIk4kGvm40xx4Ejne0Pu9a1+exxPN+C1UppWK/WGZX9F++/Xs231tE86g==}
     engines: {node: '>=20'}
     peerDependencies:
       hono: ^4
     dependencies:
-      hono: 4.12.25
+      hono: 4.12.26
     dev: false
 
   /@hookform/resolvers@5.4.0(react-hook-form@7.79.0):
@@ -4612,7 +4612,7 @@ packages:
     resolution: {integrity: sha512-Fgg31wv9QbLDA0SpTOXO3MaxySc4DKGLi8sna4/Utjo4r3ZRPdCt4UQee8BWr+Q5z21yifghREPJGYaEOEIACg==}
     deprecated: This is a stub types definition. dompurify provides its own type definitions, so you do not need this installed.
     dependencies:
-      dompurify: 3.4.10
+      dompurify: 3.4.11
     dev: true
 
   /@types/estree@1.0.9:
@@ -5852,8 +5852,8 @@ packages:
       webidl-conversions: 7.0.0
     dev: true
 
-  /dompurify@3.4.10:
-    resolution: {integrity: sha512-0xzNv0e7oYC6yyuOGZIABPM4qtg3QxLFniDNPP4ZP90wR8Yq3zgwpRbrNiT4N3IKqDbbYFEJLV+JWEs19aZ//w==}
+  /dompurify@3.4.11:
+    resolution: {integrity: sha512-zhlUV12GsaRzMsf9q5M254YhA4+VuF0fG+QFqu6aYpoGlKtz+w8//jBcGVYBgQkR5GHjUomejY84AV+/uPbWdw==}
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -6724,8 +6724,8 @@ packages:
     dependencies:
       hermes-estree: 0.36.0
 
-  /hono@4.12.25:
-    resolution: {integrity: sha512-2NFaIyNVgJmBs/ecmtGzlmluTFs5cHEWGTdu0t1HBwYzoGXOL5nUQBRMXsXWla5i4KkG//QMzVP88m1+I3fdAQ==}
+  /hono@4.12.26:
+    resolution: {integrity: sha512-uyZtpnYxM9CmQ7QsQknM4zN8EftNqhON1qYeIKM0Se67CCEe2c44xyGURwB0axX2fBDu1dqHrHAc1hmNT8ITkw==}
     engines: {node: '>=16.9.0'}
     dev: false
 
