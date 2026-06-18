@@ -113,6 +113,51 @@ async fn seed_sandbox(pool: &PgPool, developer_id: Uuid, name: &str) -> Uuid {
     .expect("seed sandbox")
 }
 
+async fn seed_oauth_app(pool: &PgPool, developer_id: Uuid, client_id: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO developer_oauth_apps
+            (developer_id, name, client_id, client_secret_hash, redirect_uris)
+        VALUES ($1, 'Test OAuth App', $2, 'sha256:secret', ARRAY['https://example.test/cb'])
+        RETURNING id
+        "#,
+    )
+    .bind(developer_id)
+    .bind(client_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed oauth app")
+}
+
+async fn seed_oauth_grant(pool: &PgPool, oauth_app_id: Uuid, user_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO developer_oauth_grants (oauth_app_id, user_id, scopes)
+        VALUES ($1, $2, ARRAY['read'])
+        RETURNING id
+        "#,
+    )
+    .bind(oauth_app_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed oauth grant")
+}
+
+async fn seed_usage_log(pool: &PgPool, api_key_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO api_key_usage_logs (api_key_id, endpoint, method, status_code)
+        VALUES ($1, '/v1/ping', 'GET', 200)
+        RETURNING id
+        "#,
+    )
+    .bind(api_key_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed usage log")
+}
+
 /// Fail-on-`dev` guard (IG3): the eleven catalog + developer-portal tables must
 /// carry `FORCE ROW LEVEL SECURITY`. A plain non-owner role (as the behavioral
 /// test below uses) is bound by ENABLE alone, so only this catalog-metadata
@@ -178,10 +223,20 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
     let user_b = seed_user(&pool, "force-b@dev.test").await;
     let dev_a = seed_developer_account(&pool, user_a, "force-a@dev.test").await;
     let dev_b = seed_developer_account(&pool, user_b, "force-b@dev.test").await;
-    let _key_a = seed_api_key(&pool, dev_a, "A live key").await;
+    let key_a = seed_api_key(&pool, dev_a, "A live key").await;
     let key_b = seed_api_key(&pool, dev_b, "B confidential key").await;
     let _sandbox_a = seed_sandbox(&pool, dev_a, "A sandbox").await;
     let _sandbox_b = seed_sandbox(&pool, dev_b, "B sandbox").await;
+    // OAuth apps + grants + usage logs for A and B — the three tables FORCEd by
+    // migration 00181/00182 (GH #1303). Their policy predicates differ:
+    // oauth_apps scopes by developer_id->user, oauth_grants by user_id directly,
+    // and api_key_usage_logs by api_key_id->developer_api_keys->developer_accounts->user.
+    let app_a = seed_oauth_app(&pool, dev_a, "client-a").await;
+    let app_b = seed_oauth_app(&pool, dev_b, "client-b").await;
+    let _grant_a = seed_oauth_grant(&pool, app_a, user_a).await;
+    let grant_b = seed_oauth_grant(&pool, app_b, user_b).await;
+    let _usage_a = seed_usage_log(&pool, key_a).await;
+    let usage_b = seed_usage_log(&pool, key_b).await;
 
     // --- NOSUPERUSER NOBYPASSRLS role so FORCE actually binds. ---
     let role = format!("ppt_rls_devportal_{}", Uuid::new_v4().simple());
@@ -190,6 +245,9 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
         format!("GRANT SELECT, INSERT, UPDATE, DELETE ON developer_accounts TO \"{role}\""),
         format!("GRANT SELECT, INSERT, UPDATE, DELETE ON developer_api_keys TO \"{role}\""),
         format!("GRANT SELECT, INSERT, UPDATE, DELETE ON developer_sandboxes TO \"{role}\""),
+        format!("GRANT SELECT, INSERT, UPDATE, DELETE ON developer_oauth_apps TO \"{role}\""),
+        format!("GRANT SELECT, INSERT, UPDATE, DELETE ON developer_oauth_grants TO \"{role}\""),
+        format!("GRANT SELECT, INSERT, UPDATE, DELETE ON api_key_usage_logs TO \"{role}\""),
         format!("GRANT SELECT, INSERT, UPDATE, DELETE ON marketplace_integrations TO \"{role}\""),
     ] {
         sqlx::query(sqlx::AssertSqlSafe(stmt))
@@ -221,6 +279,25 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
             visible, 0,
             "without RLS context the developer_api_keys table must be deny-all under FORCE"
         );
+
+        // The three tables FORCEd by 00181/00182 (GH #1303) also collapse to
+        // deny-all without a context, mirroring developer_api_keys.
+        for (table, label) in [
+            ("developer_oauth_apps", "OAuth apps"),
+            ("developer_oauth_grants", "OAuth grants"),
+            ("api_key_usage_logs", "API key usage logs"),
+        ] {
+            let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+                "SELECT COUNT(*) FROM {table}"
+            )))
+            .fetch_one(&mut *conn)
+            .await
+            .unwrap_or_else(|e| panic!("count {table} (no ctx): {e}"));
+            assert_eq!(
+                n, 0,
+                "without RLS context `{label}` ({table}) must be deny-all under FORCE"
+            );
+        }
 
         sqlx::query("RESET ROLE")
             .execute(&mut *conn)
@@ -266,6 +343,45 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
             .await
             .expect("count sandboxes");
         assert_eq!(sandboxes, 1, "user A must see only their own sandbox");
+
+        // The three tables FORCEd by 00181/00182 (GH #1303): under A's context,
+        // A sees exactly their own row in each.
+        for (table, label) in [
+            ("developer_oauth_apps", "OAuth app"),
+            ("developer_oauth_grants", "OAuth grant"),
+            ("api_key_usage_logs", "API key usage log"),
+        ] {
+            let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+                "SELECT COUNT(*) FROM {table}"
+            )))
+            .fetch_one(&mut *conn)
+            .await
+            .unwrap_or_else(|e| panic!("count {table} under A: {e}"));
+            assert_eq!(n, 1, "user A must see only their own {label} ({table})");
+        }
+
+        // Probe B's OAuth app / grant / usage-log row by id → invisible. This is
+        // the predicate-correctness assertion the catalog-metadata check can't
+        // make: a wrong join column on api_key_usage_logs (which reaches user
+        // identity via developer_api_keys -> developer_accounts) would pass the
+        // FORCE-presence check yet still leak B's rows here.
+        for (table, id) in [
+            ("developer_oauth_apps", app_b),
+            ("developer_oauth_grants", grant_b),
+            ("api_key_usage_logs", usage_b),
+        ] {
+            let cross: Option<Uuid> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+                "SELECT id FROM {table} WHERE id = $1"
+            )))
+            .bind(id)
+            .fetch_optional(&mut *conn)
+            .await
+            .unwrap_or_else(|e| panic!("probe B {table}: {e}"));
+            assert!(
+                cross.is_none(),
+                "user A must NOT read user B's row in `{table}` by id"
+            );
+        }
 
         // Probing B's account / key by id surfaces nothing.
         let cross_account: Option<Uuid> =
@@ -412,6 +528,9 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
         format!("REVOKE ALL ON developer_accounts FROM \"{role}\""),
         format!("REVOKE ALL ON developer_api_keys FROM \"{role}\""),
         format!("REVOKE ALL ON developer_sandboxes FROM \"{role}\""),
+        format!("REVOKE ALL ON developer_oauth_apps FROM \"{role}\""),
+        format!("REVOKE ALL ON developer_oauth_grants FROM \"{role}\""),
+        format!("REVOKE ALL ON api_key_usage_logs FROM \"{role}\""),
         format!("REVOKE ALL ON marketplace_integrations FROM \"{role}\""),
         format!("DROP OWNED BY \"{role}\""),
         format!("DROP ROLE IF EXISTS \"{role}\""),
