@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Property Management (PPT) app icon — canonical source SVG.
+
+  Epic 85 — Coverage 85-2: App icon generation for all required sizes.
+
+  Usage
+  -----
+  This file is the single source of truth for the app icon.
+  Run the generation script to produce all required PNG outputs:
+
+    ./scripts/generate-rn-app-icons.sh \
+        frontend/apps/mobile/assets/images/icon-source.svg
+
+  The script requires ImageMagick (brew install imagemagick / apt install imagemagick)
+  and produces:
+
+  React Native / Expo managed-workflow outputs (under frontend/apps/mobile/):
+    assets/images/icon.png                     1024x1024  Expo launcher (prod)
+    assets/images/icon-dev.png                 1024x1024  DEV-badged variant
+    assets/images/icon-staging.png             1024x1024  STG-badged variant
+    assets/images/adaptive-icon.png            1024x1024  Android adaptive fg (prod)
+    assets/images/adaptive-icon-dev.png        1024x1024  Android adaptive fg (DEV)
+    assets/images/adaptive-icon-staging.png    1024x1024  Android adaptive fg (STG)
+    assets/images/notification-icon.png         96x96     White monochrome notification
+
+  Icon design
+  -----------
+  Background: PPT blue (#1A73E8) — matches adaptiveIcon.backgroundColor in app.config.ts.
+  Foreground: white "P" lettermark inside rounded-square safe zone.
+  Safe zone: central 72% of canvas (737x737 centred in 1024x1024) — icons outside
+  this area may be clipped by round/squircle launchers on Android and iOS.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1024"
+  height="1024"
+  viewBox="0 0 1024 1024"
+>
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#1A73E8" rx="220" ry="220"/>
+
+  <!-- White "P" lettermark — centred in safe zone -->
+  <!-- Stem -->
+  <rect x="340" y="280" width="80" height="464" fill="white" rx="12" ry="12"/>
+  <!-- Bowl (outer) -->
+  <ellipse cx="524" cy="420" rx="144" ry="140" fill="white"/>
+  <!-- Bowl cutout (inner) -->
+  <ellipse cx="524" cy="420" rx="80" ry="80" fill="#1A73E8"/>
+  <!-- Stem overlap cover (clean joint between stem and bowl) -->
+  <rect x="340" y="280" width="184" height="280" fill="white"/>
+  <!-- Inner cutout re-applied over overlap cover -->
+  <ellipse cx="524" cy="420" rx="80" ry="80" fill="#1A73E8"/>
+</svg>
