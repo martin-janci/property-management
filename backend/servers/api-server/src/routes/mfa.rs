@@ -1078,9 +1078,7 @@ pub async fn verify_recovery_code(
                 resource_type: Some("mfa_recovery_rate_limited".to_string()),
                 resource_id: Some(user_id),
                 org_id: None,
-                details: Some(
-                    serde_json::json!({ "outcome": "denied", "reason": "rate_limited" }),
-                ),
+                details: Some(serde_json::json!({ "outcome": "denied", "reason": "rate_limited" })),
                 old_values: None,
                 new_values: None,
                 ip_address: None,
