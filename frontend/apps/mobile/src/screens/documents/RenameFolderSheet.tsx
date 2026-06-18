@@ -1,17 +1,17 @@
 /**
- * NewFolderSheet (gap-7a-2-mobile-folder-manage-ui)
+ * RenameFolderSheet (feat-folder-organization-document-mobile)
  *
- * A modal bottom-sheet that lets a manager create a new folder under the
- * current parent. Calls POST /api/v1/documents/folders and invalidates the
- * folder-tree query on success.
+ * A modal bottom-sheet that lets a manager rename an existing folder.
+ * Calls PUT /api/v1/documents/folders/{id} with the updated name (and
+ * optionally description), then invalidates the folder-tree query.
  *
  * Usage:
- *   <NewFolderSheet
- *     visible={showNewFolder}
- *     parentId={currentFolderId}           // null = create at root
- *     parentName={currentFolderName}       // shown in subtitle
- *     onClose={() => setShowNewFolder(false)}
- *     onCreated={() => refetchFolders()}   // tree refresh
+ *   <RenameFolderSheet
+ *     visible={showRename}
+ *     folderId={folder.id}
+ *     currentName={folder.name}
+ *     onClose={() => setShowRename(false)}
+ *     onRenamed={() => refetchFolders()}
  *   />
  */
 
@@ -36,65 +36,62 @@ import { colors } from '../shared/screenStyles';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
-interface CreateFolderRequest {
-  name: string;
+interface UpdateFolderRequest {
+  name?: string;
   description?: string;
-  parent_id?: string | null;
 }
 
-interface CreateFolderResponse {
-  id: string;
+// UpdateFolderResponse is not used (we only care about cache invalidation),
+// but the mutateAsync call needs a type so it compiles cleanly.
+interface UpdateFolderResponse {
   message: string;
 }
 
-// ─── Props ─────────────────────────────────────────────────────────────────────────
+// ─── Props ──────────────────────────────────────────────────────────────────────
 
-export interface NewFolderSheetProps {
+export interface RenameFolderSheetProps {
   visible: boolean;
-  /** Parent folder id. Pass null to create at root level. */
-  parentId: string | null;
-  /** Human-readable parent folder name (shown in subtitle). Pass null for root. */
-  parentName: string | null;
+  folderId: string;
+  /** Current folder name – pre-populates the name field. */
+  currentName: string;
   onClose: () => void;
-  /** Called after the folder is successfully created. */
-  onCreated: () => void;
+  /** Called after the folder is successfully renamed. */
+  onRenamed: () => void;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────────
+// ─── Component ──────────────────────────────────────────────────────────────────
 
-export function NewFolderSheet({
+export function RenameFolderSheet({
   visible,
-  parentId,
-  parentName,
+  folderId,
+  currentName,
   onClose,
-  onCreated,
-}: NewFolderSheetProps) {
+  onRenamed,
+}: RenameFolderSheetProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState(currentName);
   const [nameError, setNameError] = useState<string | null>(null);
 
-  const createMutation = useApiMutation<CreateFolderResponse, CreateFolderRequest>(
-    '/api/v1/documents/folders',
-    'POST'
+  const renameMutation = useApiMutation<UpdateFolderResponse, UpdateFolderRequest>(
+    `/api/v1/documents/folders/${folderId}`,
+    'PUT'
   );
 
   const reset = () => {
-    setName('');
-    setDescription('');
+    setName(currentName);
     setNameError(null);
   };
 
   const handleClose = () => {
-    if (!createMutation.isPending) {
+    if (!renameMutation.isPending) {
       reset();
       onClose();
     }
   };
 
-  const handleCreate = async () => {
+  const handleRename = async () => {
     const trimmedName = name.trim();
 
     // Client-side validation — mirrors backend (1–255 chars)
@@ -106,25 +103,24 @@ export function NewFolderSheet({
       setNameError(t('documents.folder.nameTooLong'));
       return;
     }
+    // No-op if nothing changed
+    if (trimmedName === currentName) {
+      onClose();
+      return;
+    }
     setNameError(null);
 
     try {
-      await createMutation.mutateAsync({
-        name: trimmedName,
-        description: description.trim() || undefined,
-        parent_id: parentId,
-      });
+      await renameMutation.mutateAsync({ name: trimmedName });
 
       // Invalidate the folder tree so DocumentsScreen refetches
-      await queryClient.invalidateQueries({ queryKey: FOLDER_TREE_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: [...FOLDER_TREE_QUERY_KEY] });
 
-      reset();
-      onCreated();
+      onRenamed();
       onClose();
     } catch (err) {
       const message = err instanceof Error ? err.message : t('errors.generic');
-      // Surface server errors (e.g. MAX_DEPTH_EXCEEDED, FORBIDDEN) via Alert
-      Alert.alert(t('documents.folder.createError'), message);
+      Alert.alert(t('documents.folder.renameError'), message);
     }
   };
 
@@ -143,18 +139,16 @@ export function NewFolderSheet({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerText}>
-              <Text style={styles.title}>{t('documents.folder.newTitle')}</Text>
+              <Text style={styles.title}>{t('documents.folder.renameTitle')}</Text>
               <Text style={styles.subtitle} numberOfLines={1}>
-                {parentName
-                  ? t('documents.folder.insideFolder', { name: parentName })
-                  : t('documents.folder.atRoot')}
+                {currentName}
               </Text>
             </View>
             <Pressable
               style={styles.closeBtn}
               onPress={handleClose}
               hitSlop={8}
-              disabled={createMutation.isPending}
+              disabled={renameMutation.isPending}
             >
               <Text style={styles.closeBtnText}>✕</Text>
             </Pressable>
@@ -162,7 +156,6 @@ export function NewFolderSheet({
 
           {/* Form */}
           <View style={styles.form}>
-            {/* Name field */}
             <Text style={styles.label}>{t('documents.folder.nameLabel')}</Text>
             <TextInput
               style={[styles.input, nameError ? styles.inputError : null]}
@@ -174,36 +167,22 @@ export function NewFolderSheet({
               }}
               maxLength={255}
               autoFocus
-              returnKeyType="next"
-              editable={!createMutation.isPending}
+              returnKeyType="done"
+              onSubmitEditing={handleRename}
+              editable={!renameMutation.isPending}
             />
             {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
 
-            {/* Description field (optional) */}
-            <Text style={[styles.label, styles.labelSpaced]}>
-              {t('documents.folder.descriptionLabel')}
-            </Text>
-            <TextInput
-              style={[styles.input, styles.inputMultiline]}
-              placeholder={t('documents.folder.descriptionPlaceholder')}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              maxLength={500}
-              editable={!createMutation.isPending}
-            />
-
             {/* Submit */}
             <Pressable
-              style={[styles.createBtn, createMutation.isPending && styles.createBtnDisabled]}
-              onPress={handleCreate}
-              disabled={createMutation.isPending}
+              style={[styles.renameBtn, renameMutation.isPending && styles.renameBtnDisabled]}
+              onPress={handleRename}
+              disabled={renameMutation.isPending}
             >
-              {createMutation.isPending ? (
+              {renameMutation.isPending ? (
                 <ActivityIndicator size="small" color={colors.white} />
               ) : (
-                <Text style={styles.createBtnText}>{t('documents.folder.createButton')}</Text>
+                <Text style={styles.renameBtnText}>{t('documents.folder.renameButton')}</Text>
               )}
             </Pressable>
           </View>
@@ -213,7 +192,7 @@ export function NewFolderSheet({
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────────────
+// ─── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   outerWrap: {
@@ -281,9 +260,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 6,
   },
-  labelSpaced: {
-    marginTop: 16,
-  },
   input: {
     backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
@@ -297,16 +273,12 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: colors.danger,
   },
-  inputMultiline: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
   errorText: {
     fontSize: 12,
     color: colors.danger,
     marginTop: 4,
   },
-  createBtn: {
+  renameBtn: {
     marginTop: 24,
     backgroundColor: colors.accent,
     borderRadius: 10,
@@ -314,10 +286,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  createBtnDisabled: {
+  renameBtnDisabled: {
     backgroundColor: colors.accentDisabled,
   },
-  createBtnText: {
+  renameBtnText: {
     fontSize: 15,
     fontWeight: '600',
     color: colors.white,

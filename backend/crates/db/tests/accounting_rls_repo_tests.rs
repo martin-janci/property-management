@@ -1,7 +1,9 @@
 //! RLS isolation tests for native Accounting MVP (PAP-206).
 
-use db::models::accounting::{Contact, Invoice};
+use db::models::accounting::{Contact, CreateInvoice, CreateInvoiceItem, Invoice};
 use db::repositories::accounting::AccountingRepository;
+use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -820,4 +822,88 @@ async fn accounting_confirm_match_cross_tenant_denied(pool: PgPool) {
     .execute(&pool)
     .await
     .ok();
+}
+
+/// #1522 finding 3: the invoice header totals must equal the sum of the stored
+/// (rounded NUMERIC(18,2)) line rows. The old two-loop code summed full-precision
+/// lines into the header while each item row was rounded on insert, so a line
+/// whose VAT carries a third decimal (e.g. 0.10 * 15% = 0.015) could leave the
+/// header off by a cent from the sum of its items. The single-pass round-once
+/// fix makes the header == sum(items) by construction.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_invoice_header_totals_equal_sum_of_rounded_lines(pool: PgPool) {
+    let org = seed_org(&pool, "inv-round").await;
+    set_ctx(&pool, Some(org), None, true).await;
+
+    let contact_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO contact (tenant_id, name) VALUES ($1, 'Rounding Contact') RETURNING id",
+    )
+    .bind(org)
+    .fetch_one(&pool)
+    .await
+    .expect("seed contact");
+
+    let repo = AccountingRepository::new(pool.clone());
+    let mut conn = pool.acquire().await.expect("acquire");
+    sqlx::query("SELECT set_request_context($1, $2, $3)")
+        .bind(Some(org))
+        .bind(Option::<Uuid>::None)
+        .bind(true)
+        .execute(&mut *conn)
+        .await
+        .expect("set ctx on conn");
+
+    // Three lines whose per-line VAT (0.10 * 15% = 0.015) rounds individually —
+    // the scenario where summing-then-rounding and rounding-then-summing differ.
+    let item = CreateInvoiceItem {
+        description: "Fractional VAT line".to_string(),
+        qty: dec!(1),
+        unit_price: dec!(0.10),
+        vat_rate: dec!(15),
+        vat_rate_type: None,
+    };
+    let invoice = repo
+        .create_invoice_rls(
+            &mut conn,
+            CreateInvoice {
+                tenant_id: org,
+                contact_id,
+                number: "INV-ROUND-1".to_string(),
+                issue_date: chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+                due_date: chrono::NaiveDate::from_ymd_opt(2026, 1, 15).unwrap(),
+                taxable_supply_date: None,
+                currency: "EUR".to_string(),
+                variable_symbol: None,
+                status: None,
+                items: vec![item.clone(), item.clone(), item],
+                country: Some("SK".to_string()),
+            },
+        )
+        .await
+        .expect("create invoice");
+
+    let (base_sum, vat_sum, total_sum): (Decimal, Decimal, Decimal) = sqlx::query_as(
+        r#"
+        SELECT COALESCE(SUM(base_amount), 0), COALESCE(SUM(vat_amount), 0),
+               COALESCE(SUM(total_amount), 0)
+        FROM invoice_item WHERE invoice_id = $1
+        "#,
+    )
+    .bind(invoice.id)
+    .fetch_one(&mut *conn)
+    .await
+    .expect("sum line rows");
+
+    assert_eq!(
+        invoice.base_amount, base_sum,
+        "header base_amount must equal the sum of stored line base_amounts"
+    );
+    assert_eq!(
+        invoice.vat_amount, vat_sum,
+        "header vat_amount must equal the sum of stored line vat_amounts"
+    );
+    assert_eq!(
+        invoice.total_amount, total_sum,
+        "header total_amount must equal the sum of stored line total_amounts"
+    );
 }

@@ -1,22 +1,22 @@
 /**
- * MoveDocumentSheet (gap-7a-2-mobile-folder-manage-ui)
+ * MoveFolderSheet (feat-folder-organization-document-mobile)
  *
- * A modal bottom-sheet that lets a user move a document into a folder (or back
- * to root). It renders a flat, scrollable list of folders from the live folder
- * tree — mirroring the web MoveFolderDialog but adapted for touch-first RN
- * interaction (no nested expand/collapse, just a flat list ordered depth-first).
+ * A modal bottom-sheet that lets a manager move a folder to a new parent (or
+ * back to root). It renders a flat, scrollable list of all OTHER folders from
+ * the live tree — the folder being moved and all its descendants are excluded
+ * to prevent circular references.
  *
- * API: POST /api/v1/documents/{documentId}/move  { folder_id: string | null }
+ * API: PUT /api/v1/documents/folders/{folderId}  { parent_id: string | null }
  *
  * Usage:
- *   <MoveDocumentSheet
- *     visible={showMove}
- *     documentId={doc.id}
- *     documentTitle={doc.name}
- *     currentFolderId={doc.parentId}
- *     folderTree={folderTree}          // ApiFolderTreeNode[] from DocumentsScreen
- *     onClose={() => setShowMove(false)}
- *     onMoved={() => Promise.all([refetch(), refetchFolders()])}
+ *   <MoveFolderSheet
+ *     visible={showMoveFolder}
+ *     folderId={folder.id}
+ *     folderName={folder.name}
+ *     currentParentId={folder.parentId}
+ *     folderTree={folderTree}
+ *     onClose={() => setShowMoveFolder(false)}
+ *     onMoved={() => refetchFolders()}
  *   />
  */
 
@@ -34,86 +34,123 @@ import {
   View,
 } from 'react-native';
 import { useApiMutation } from '../../hooks/useApi';
-import { type ApiFolderTreeNode, FOLDER_TREE_QUERY_KEY } from '../../hooks/useFolderTree';
+import { FOLDER_TREE_QUERY_KEY } from '../../hooks/useFolderTree';
 import { colors } from '../shared/screenStyles';
+import type { ApiFolderTreeNode } from './DocumentsScreen';
+import type { FlatFolder } from './MoveDocumentSheet';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
-interface MoveDocumentRequest {
-  folder_id: string | null;
+interface UpdateFolderRequest {
+  parent_id: string | null;
 }
 
-// ─── Flatten tree to a depth-first list for the scrollable folder picker ─────────
+interface UpdateFolderResponse {
+  message: string;
+}
 
-/** Shape of a depth-first flattened folder entry. Exported for unit tests. */
-export interface FlatFolder {
-  id: string;
-  name: string;
-  depth: number;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Collect all descendant folder ids of `targetId` within the tree (inclusive
+ * of `targetId` itself). Used to exclude the subtree being moved from the
+ * destination picker — prevents circular references on the client side before
+ * the server validates them.
+ *
+ * Exported for unit-testing.
+ */
+export function collectDescendantIds(nodes: ApiFolderTreeNode[], targetId: string): Set<string> {
+  const ids = new Set<string>();
+
+  function walk(current: ApiFolderTreeNode) {
+    ids.add(current.id);
+    for (const child of current.children ?? []) {
+      walk(child);
+    }
+  }
+
+  function findAndWalk(nodes: ApiFolderTreeNode[]): boolean {
+    for (const node of nodes) {
+      if (node.id === targetId) {
+        walk(node);
+        return true;
+      }
+      if (findAndWalk(node.children ?? [])) return true;
+    }
+    return false;
+  }
+
+  findAndWalk(nodes);
+  return ids;
 }
 
 /**
- * Depth-first flatten of the folder tree into a scrollable list. Each node
- * gets a `depth` field used for visual indentation in the picker.
+ * Flatten the full tree into a depth-first list, excluding the subtree rooted
+ * at `excludeId` (which is the folder being moved — it cannot be its own
+ * parent or a parent of its own ancestor).
  *
- * Exported for unit-testing (feat-mobile-document-folder-organization).
+ * Exported for unit-testing.
  */
-export function flattenTree(nodes: ApiFolderTreeNode[], depth = 0): FlatFolder[] {
+export function flattenTreeExcluding(
+  nodes: ApiFolderTreeNode[],
+  excludeIds: Set<string>,
+  depth = 0
+): FlatFolder[] {
   const result: FlatFolder[] = [];
   for (const node of nodes) {
+    if (excludeIds.has(node.id)) continue;
     result.push({ id: node.id, name: node.name, depth });
-    if (node.children && node.children.length > 0) {
-      result.push(...flattenTree(node.children, depth + 1));
-    }
+    result.push(...flattenTreeExcluding(node.children ?? [], excludeIds, depth + 1));
   }
   return result;
 }
 
-// ─── Props ─────────────────────────────────────────────────────────────────────────
+// ─── Props ──────────────────────────────────────────────────────────────────────
 
-export interface MoveDocumentSheetProps {
+export interface MoveFolderSheetProps {
   visible: boolean;
-  documentId: string;
-  documentTitle: string;
-  /** Current folder id (null = document is at root). Highlighted in the list. */
-  currentFolderId: string | null;
+  folderId: string;
+  folderName: string;
+  /** Current parent folder id (null = folder is at root). */
+  currentParentId: string | null;
   /** Live folder tree passed from DocumentsScreen (avoids double-fetch). */
   folderTree: ApiFolderTreeNode[];
   onClose: () => void;
-  /** Called after the document is successfully moved. */
+  /** Called after the folder is successfully moved. */
   onMoved: () => void;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────────
+// ─── Component ──────────────────────────────────────────────────────────────────
 
-export function MoveDocumentSheet({
+export function MoveFolderSheet({
   visible,
-  documentId,
-  documentTitle,
-  currentFolderId,
+  folderId,
+  folderName,
+  currentParentId,
   folderTree,
   onClose,
   onMoved,
-}: MoveDocumentSheetProps) {
+}: MoveFolderSheetProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const [selectedId, setSelectedId] = useState<string | null>(currentFolderId);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(currentParentId);
 
-  // The move endpoint returns the full updated Document, but the result is
-  // never read here (we just invalidate the affected queries on success), so
-  // the response is typed as `void` rather than a hand-rolled shape.
-  const moveMutation = useApiMutation<void, MoveDocumentRequest>(
-    `/api/v1/documents/${documentId}/move`,
-    'POST'
+  const moveMutation = useApiMutation<UpdateFolderResponse, UpdateFolderRequest>(
+    `/api/v1/documents/folders/${folderId}`,
+    'PUT'
   );
 
-  const flatFolders = flattenTree(folderTree);
-  const hasChanged = selectedId !== currentFolderId;
+  // Build the set of ids to exclude from the destination list (the folder
+  // itself and all its descendants — they cannot become parents of themselves).
+  const excludedIds = collectDescendantIds(folderTree, folderId);
+  const availableFolders = flattenTreeExcluding(folderTree, excludedIds);
+
+  const hasChanged = selectedParentId !== currentParentId;
 
   const handleClose = () => {
     if (!moveMutation.isPending) {
-      setSelectedId(currentFolderId);
+      setSelectedParentId(currentParentId);
       onClose();
     }
   };
@@ -122,24 +159,25 @@ export function MoveDocumentSheet({
     if (!hasChanged) return;
 
     try {
-      await moveMutation.mutateAsync({ folder_id: selectedId });
+      await moveMutation.mutateAsync({ parent_id: selectedParentId });
 
-      // Invalidate both the document list and the folder tree so counts update
-      await queryClient.invalidateQueries({ queryKey: ['documents', 'list'] });
-      await queryClient.invalidateQueries({ queryKey: FOLDER_TREE_QUERY_KEY });
+      // Invalidate the folder tree so counts and hierarchy update everywhere
+      await queryClient.invalidateQueries({ queryKey: [...FOLDER_TREE_QUERY_KEY] });
 
-      setSelectedId(currentFolderId);
+      setSelectedParentId(currentParentId);
       onMoved();
       onClose();
     } catch (err) {
       const message = err instanceof Error ? err.message : t('errors.generic');
-      Alert.alert(t('documents.move.errorTitle'), message);
+      Alert.alert(t('documents.folderMove.errorTitle'), message);
     }
   };
 
-  // Derive selected folder name for the destination preview
-  const selectedFolder = flatFolders.find((f) => f.id === selectedId);
-  const destinationLabel = selectedFolder ? selectedFolder.name : t('documents.move.rootLabel');
+  // Derive destination label for the preview strip
+  const selectedFolder = availableFolders.find((f) => f.id === selectedParentId);
+  const destinationLabel = selectedFolder
+    ? selectedFolder.name
+    : t('documents.folderMove.rootLabel');
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
@@ -153,9 +191,9 @@ export function MoveDocumentSheet({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerText}>
-              <Text style={styles.title}>{t('documents.move.title')}</Text>
+              <Text style={styles.title}>{t('documents.folderMove.title')}</Text>
               <Text style={styles.subtitle} numberOfLines={1}>
-                {documentTitle}
+                {folderName}
               </Text>
             </View>
             <Pressable
@@ -170,7 +208,7 @@ export function MoveDocumentSheet({
 
           {/* Destination preview strip */}
           <View style={styles.destStrip}>
-            <Text style={styles.destLabel}>{t('documents.move.destination')}</Text>
+            <Text style={styles.destLabel}>{t('documents.folderMove.destination')}</Text>
             <Text style={styles.destValue} numberOfLines={1}>
               {destinationLabel}
             </Text>
@@ -178,33 +216,33 @@ export function MoveDocumentSheet({
 
           {/* Folder list */}
           <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-            {/* Root / "no folder" option */}
+            {/* Root / "no parent" option */}
             <Pressable
-              style={[styles.folderRow, selectedId === null && styles.folderRowSelected]}
-              onPress={() => setSelectedId(null)}
+              style={[styles.folderRow, selectedParentId === null && styles.folderRowSelected]}
+              onPress={() => setSelectedParentId(null)}
             >
               <Text style={styles.folderIcon}>🏠</Text>
               <Text
-                style={[styles.folderName, selectedId === null && styles.folderNameSelected]}
+                style={[styles.folderName, selectedParentId === null && styles.folderNameSelected]}
                 numberOfLines={1}
               >
-                {t('documents.move.rootLabel')}
+                {t('documents.folderMove.rootLabel')}
               </Text>
-              {selectedId === null && <Text style={styles.checkmark}>✓</Text>}
+              {selectedParentId === null && <Text style={styles.checkmark}>✓</Text>}
             </Pressable>
 
-            {flatFolders.length === 0 ? (
+            {availableFolders.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>{t('documents.move.noFolders')}</Text>
+                <Text style={styles.emptyText}>{t('documents.folderMove.noFolders')}</Text>
               </View>
             ) : (
-              flatFolders.map((folder) => {
-                const isSelected = selectedId === folder.id;
+              availableFolders.map((folder) => {
+                const isSelected = selectedParentId === folder.id;
                 return (
                   <Pressable
                     key={folder.id}
                     style={[styles.folderRow, isSelected && styles.folderRowSelected]}
-                    onPress={() => setSelectedId(folder.id)}
+                    onPress={() => setSelectedParentId(folder.id)}
                   >
                     {/* Indent by depth */}
                     {folder.depth > 0 && <View style={{ width: folder.depth * 16 }} />}
@@ -245,7 +283,7 @@ export function MoveDocumentSheet({
               {moveMutation.isPending ? (
                 <ActivityIndicator size="small" color={colors.white} />
               ) : (
-                <Text style={styles.moveBtnText}>{t('documents.move.confirm')}</Text>
+                <Text style={styles.moveBtnText}>{t('documents.folderMove.confirm')}</Text>
               )}
             </Pressable>
           </View>
@@ -255,7 +293,7 @@ export function MoveDocumentSheet({
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────────────
+// ─── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   outerWrap: {

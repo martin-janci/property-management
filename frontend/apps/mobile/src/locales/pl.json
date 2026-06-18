@@ -179,7 +179,7 @@
     },
     "folder": {
       "newTitle": "Nowy folder",
-      "insideFolder": "W folderze „{{name}}”",
+      "insideFolder": "W folderze „{{name}}“",
       "atRoot": "Na poziomie glownym",
       "nameLabel": "Nazwa folderu",
       "namePlaceholder": "np. Umowy 2024",
@@ -188,7 +188,10 @@
       "nameRequired": "Nazwa folderu jest wymagana",
       "nameTooLong": "Nazwa folderu musi miec co najwyzej 255 znakow",
       "createButton": "Utworz folder",
-      "createError": "Nie udalo sie utworzyc folderu"
+      "createError": "Nie udalo sie utworzyc folderu",
+      "renameTitle": "Zmien nazwe folderu",
+      "renameButton": "Zapisz nazwe",
+      "renameError": "Nie udalo sie zmienic nazwy folderu"
     },
     "move": {
       "title": "Przenies dokument",
@@ -212,6 +215,14 @@
       "openFailed": "Nie udalo sie otworzyc dokumentu.",
       "sharingUnavailableTitle": "Udostepnianie niedostepne",
       "shareFailed": "Nie udalo sie udostepnic dokumentu."
+    },
+    "folderMove": {
+      "title": "Przenes folder",
+      "destination": "CEL",
+      "rootLabel": "Katalog glowny",
+      "noFolders": "Brak innych folderow",
+      "confirm": "Przenes tutaj",
+      "errorTitle": "Nie udalo sie przeniesc folderu"
     }
   },
   "settings": {
