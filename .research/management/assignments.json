@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-18T22:22:38Z",
+  "generated": "2026-06-18T22:26:01Z",
   "assignments": [
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -312,24 +312,26 @@
     {
       "task_id": "feat-report-schedule-editing-cron-expression-column-backend",
       "branch": "auto-impl/feat-report-schedule-editing-cron-expres",
-      "status": "in-progress",
+      "status": "quarantined",
       "claimed_at": "2026-06-18T22:13:43Z",
-      "last_updated": "2026-06-18T22:13:43Z",
-      "status_changed_at": "2026-06-18T22:13:43Z",
+      "last_updated": "2026-06-18T22:26:01Z",
+      "status_changed_at": "2026-06-18T22:26:01Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-implemented-on-dev: migration 00166_report_schedules_add_cron_expression + model/repo/handler/tests for #616; empty diff, cargo check -p db clean",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": "2026-06-18T22:26:01Z",
+      "quarantine_reason": "completed-but-no-PR: gap-81-1 / issue #616 dedicated cron_expression column already fully shipped on dev (migration 00166 + ReportSchedule model + repo update_schedule + PUT handler validation + roundtrip integration test). coverage.json (2026-06-16) is STALE. Human action: close row + mark action-list item + refresh coverage.json 81-1. NOTE: all 3 tasks claimed this run (79-1, 83-1-webhook, 81-1) were already-shipped — coverage.json is the systemic blocker."
     },
     {
       "task_id": "feat-airbnb-integration-webhook-handler-backend",
