@@ -1,0 +1,252 @@
+{
+  "date": "2026-06-18",
+  "generated_at": "2026-06-18T20:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 2d 62h (cloud cron missed Jun 17)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dx-pm-coverage-stale-2026-06-18",
+      "type": "untriaged-issue",
+      "source": "routine-fire trigger payload",
+      "score_delta": 3,
+      "evidence": [
+        "dispatcher payload: claimable=0/72 \u2014 buffer empty",
+        "coverage.json scanned 2026-06-16; 20 partial stories all map to merged/active work",
+        "requires local /ppt-project-management scan to refill"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-api-ecosystem-developer-force-rls-tests-rs",
+      "type": "churn-hotspot",
+      "source": "3 commits since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/tests/api_ecosystem_developer_force_rls_tests.rs touched in 3 commits this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "3 commits since 2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "backend/crates/integrations/src/booking.rs touched in 3 commits this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "runs_seen >= 2 (history: 2026-06-12)",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/integrations/src/booking.rs hot across multiple runs (last_seen 2026-06-12; now +3 commits)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-Cargo-toml",
+      "type": "churn-hotspot",
+      "source": "2 commits since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "backend/Cargo.toml touched in 2 commits this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1545 touched reality-web app (frontend/apps/reality-web/src/app/accounting/layout.tsx) without docs/screens/reality/ update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1555 touched ppt-web routes (frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx, frontend/apps/ppt-web/src/routes/groups/faults.tsx) without docs/screens/ppt/ update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1559 touched ppt-web routes (frontend/apps/ppt-web/src/routes/groups/announcements.tsx) without docs/screens/ppt/ update"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-batch-2026-06-18",
+      "type": "dep-update-noise",
+      "source": "5 dependabot PRs merged",
+      "score_delta": 0,
+      "evidence": [
+        "5 dependabot PRs merged in window"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-unmerged-batch-2026-06-18",
+      "type": "closed-not-merged-pr",
+      "source": "26 PRs closed unmerged in window",
+      "score_delta": 0,
+      "evidence": [
+        "26 PRs closed without merging since 2026-06-16T03:25:00Z \u2014 vast majority dispatcher state superseded by newer state PRs"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "triage"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-18.md && head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative duplicate signal check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; vacuously true",
+      "observed": "0 new plans",
+      "expected": "no plans \u2192 trivially pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count <=2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure cursors honest",
+      "observed": "Phase 1.5 + 1.6 skipped; review_cursor, pm_cursor, coverage_cursor unchanged in state.json",
+      "expected": "no advancement for skipped phases"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans converge",
+      "observed": "all prior plan slugs accounted for",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "HEAD=7 NEW=7",
+      "expected": "NEW >= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions discipline (per-run caps)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2192 gate is no-op",
+      "observed": "pm_cursor.next_index unchanged at 5",
+      "expected": "no-op when phase 1.6 didn't run"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token leak scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
