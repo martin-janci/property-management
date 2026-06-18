@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-18T08:15:37Z",
+  "generated": "2026-06-18T10:13:32Z",
   "assignments": [
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -244,20 +244,20 @@
       "branch": "auto-impl/feat-booking-integration-ota-xml-parsing",
       "status": "in-progress",
       "claimed_at": "2026-06-18T04:13:36Z",
-      "last_updated": "2026-06-18T05:08:02Z",
-      "status_changed_at": "2026-06-18T04:13:36Z",
+      "last_updated": "2026-06-18T10:13:32Z",
+      "status_changed_at": "2026-06-18T10:13:32Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": "pr=none status=done specialist=rust-backend note=code done locally (fixed find_element_start colon-in-attr bug + 9 tests, 191 integrations tests pass) BUT MCP push-child hit 32k output-token limit inlining +325-line booking.rs -> PR NOT created; needs reclaim/re-push next run",
+      "implementer_summary": "pr=none status=done specialist=rust-backend note=code done locally (fixed find_element_start colon-in-attr bug + 9 tests, 191 integrations tests pass) BUT MCP push-child hit 32k output-token limit inlining +325-line booking.rs -> PR NOT created; needs reclaim/re-push next run [sandbox-reclaim respawn #1: no branch after timeout]",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
-      "reclaim_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
