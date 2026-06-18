@@ -17,11 +17,16 @@
       "action": "Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) — signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1319 merged 2026-06-15T02:24:30Z"
+      }
     },
     {
       "id": "feat-build-configuration-by-environ-build-scripts-created-mobile",
@@ -42,10 +47,15 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1387 merged 2026-06-15T06:19:07Z"
+      }
     },
     {
       "id": "feat-environment-variable-setup-env-setup-documentation-mobile",
@@ -54,10 +64,15 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1385 merged 2026-06-15T06:18:54Z"
+      }
     },
     {
       "id": "feat-environment-variable-setup-ios-info-lacks-api-base-url-mobile",
@@ -66,10 +81,15 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1389 merged 2026-06-15T06:24:15Z"
+      }
     },
     {
       "id": "feat-environment-variable-setup-react-native-config-metro-bundler-mobile",
@@ -102,10 +122,15 @@
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1359 merged 2026-06-13T20:14:40Z"
+      }
     },
     {
       "id": "fix-report-schedule-editing-cron-edits-round-trip-through-frontend",
@@ -114,10 +139,15 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1358 merged 2026-06-13T20:13:58Z"
+      }
     },
     {
       "id": "feat-swiftui-project-setup-no-epic-82-commits-git-mobile",
@@ -138,10 +168,15 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1514 merged 2026-06-17T14:34:26Z"
+      }
     },
     {
       "id": "feat-swiftui-project-setup-vs-implementation-mapping-mobile",
@@ -150,10 +185,15 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1515 merged 2026-06-17T14:34:33Z"
+      }
     },
     {
       "id": "verify-navigation-and-routing-deep-linking-url-schemes-confirmed-mobile",
@@ -162,10 +202,15 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1516 merged 2026-06-17T14:40:24Z"
+      }
     },
     {
       "id": "feat-airbnb-oauth-and-sync-no-integrations-airbnb-backend",
@@ -184,11 +229,16 @@
       "action": "iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted",
       "owner_role": "pm-frontend",
       "priority": "high",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-12 (backlog.json promote)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1357 merged 2026-06-14T04:22:00Z"
+      }
     },
     {
       "id": "pm-qa-service-history-cross-org-idor",
@@ -196,10 +246,15 @@
       "owner_role": "pm-qa",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1399 merged 2026-06-15T14:17:40Z"
+      }
     },
     {
       "id": "pm-qa-tenant-aware-rls-helper",
@@ -207,10 +262,15 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1510 merged 2026-06-17T12:30:47Z"
+      }
     },
     {
       "id": "pm-qa-canonical-seed-membership-helper",
@@ -218,10 +278,15 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1517 merged 2026-06-17T14:38:28Z"
+      }
     },
     {
       "id": "pm-qa-cron-validator-drift-test",
@@ -229,10 +294,15 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1400 merged 2026-06-15T14:20:37Z"
+      }
     },
     {
       "id": "pm-qa-triage-followup-issues-2026-06-14",
@@ -273,10 +343,15 @@
       "owner_role": "pm-qa",
       "priority": "high",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1398 merged 2026-06-15T14:17:28Z"
+      }
     },
     {
       "id": "pm-qa-allowed-pet-types-enum-decode-audit",
@@ -295,10 +370,15 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1542 merged 2026-06-17T17:17:04Z"
+      }
     },
     {
       "id": "pm-qa-record-reserve-transaction-atomicity",
@@ -306,10 +386,15 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1416 merged 2026-06-15T21:16:38Z"
+      }
     },
     {
       "id": "feat-announcement-comments-discussion-web-ui-frontend",
@@ -360,11 +445,16 @@
       "action": "Coverage 82-4: complete the remaining SwiftUI listing-detail polish for the Reality mobile Listing Detail & Favorites screen (draft #641 follow-through); add docs/screens reality-mobile map entry + tests where runnable.",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-15 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1541 merged 2026-06-17T17:15:58Z"
+      }
     },
     {
       "id": "feat-esignature-email-webhook-idempotency-guard-backend",
@@ -405,10 +495,15 @@
       "owner_role": "pm-devops",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-16",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1526 merged 2026-06-17T14:39:26Z"
+      }
     },
     {
       "id": "pm-devops-security-test-gate-required-check",
@@ -416,10 +511,15 @@
       "owner_role": "pm-devops",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-16",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1530 merged 2026-06-17T14:39:41Z"
+      }
     },
     {
       "id": "pm-devops-app-tsx-merge-queue-confirm",
@@ -427,10 +527,15 @@
       "owner_role": "pm-devops",
       "priority": "low",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-16",
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:19:59Z",
+        "by": "dispatcher-exact-id-reconcile",
+        "evidence": "PR #1540 merged 2026-06-17T17:15:07Z"
+      }
     }
   ]
 }
