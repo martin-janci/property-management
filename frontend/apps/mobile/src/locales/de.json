@@ -179,7 +179,7 @@
     },
     "folder": {
       "newTitle": "Neuer Ordner",
-      "insideFolder": "In Ordner „{{name}}”",
+      "insideFolder": "In Ordner „{{name}}“",
       "atRoot": "Auf Stammebene",
       "nameLabel": "Ordnername",
       "namePlaceholder": "z.B. Vertrage 2024",
@@ -188,7 +188,10 @@
       "nameRequired": "Ordnername ist erforderlich",
       "nameTooLong": "Ordnername darf hochstens 255 Zeichen haben",
       "createButton": "Ordner erstellen",
-      "createError": "Ordner konnte nicht erstellt werden"
+      "createError": "Ordner konnte nicht erstellt werden",
+      "renameTitle": "Ordner umbenennen",
+      "renameButton": "Name speichern",
+      "renameError": "Ordner konnte nicht umbenannt werden"
     },
     "move": {
       "title": "Dokument verschieben",
@@ -212,6 +215,14 @@
       "openFailed": "Dokument konnte nicht geoffnet werden.",
       "sharingUnavailableTitle": "Teilen nicht verfugbar",
       "shareFailed": "Dokument konnte nicht geteilt werden."
+    },
+    "folderMove": {
+      "title": "Ordner verschieben",
+      "destination": "ZIEL",
+      "rootLabel": "Stammverzeichnis",
+      "noFolders": "Keine anderen Ordner verfuegbar",
+      "confirm": "Hierher verschieben",
+      "errorTitle": "Ordner konnte nicht verschoben werden"
     }
   },
   "settings": {

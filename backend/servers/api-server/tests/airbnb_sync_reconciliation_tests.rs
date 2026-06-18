@@ -289,9 +289,6 @@ fn created_event(event_id: &str, listing_id: &str, confirmation_code: &str) -> S
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "blocked on handler enum-cast bug in routes/integrations/webhook.rs reconcile branch: \
-find_booking_by_external_id binds platform (&str) against rental_platform enum column \
-causing 'operator does not exist: rental_platform = text'; tracked for separate prod fix"]
 async fn cancellation_event_reconciles_booking_to_cancelled(pool: PgPool) {
     ensure_webhook_secret();
     let app = TestApp::new(pool.clone()).await;
@@ -337,9 +334,6 @@ async fn cancellation_event_reconciles_booking_to_cancelled(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "blocked on handler enum-cast bug in routes/integrations/webhook.rs reconcile branch: \
-find_booking_by_external_id binds platform (&str) against rental_platform enum column \
-causing 'operator does not exist: rental_platform = text'; tracked for separate prod fix"]
 async fn second_distinct_cancellation_is_state_idempotent(pool: PgPool) {
     ensure_webhook_secret();
     let app = TestApp::new(pool.clone()).await;
@@ -473,10 +467,6 @@ async fn created_event_for_unknown_listing_is_acknowledged(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "blocked on handler enum-cast bug in routes/integrations/webhook.rs reconcile branch: \
-find_airbnb_connection_by_listing_id does SELECT * and SQLx cannot decode the rental_platform \
-enum column into String when a row is returned; the Err is swallowed by the handler so no \
-SYNC_EXTERNAL job is enqueued; tracked for separate prod fix"]
 async fn created_event_for_connected_listing_enqueues_one_sync_job(pool: PgPool) {
     ensure_webhook_secret();
     let app = TestApp::new(pool.clone()).await;
