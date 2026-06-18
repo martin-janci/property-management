@@ -31,6 +31,7 @@ import {
   View,
 } from 'react-native';
 import { useApiMutation } from '../../hooks/useApi';
+import { FOLDER_TREE_QUERY_KEY } from '../../hooks/useFolderTree';
 import { colors } from '../shared/screenStyles';
 
 // ─── API types ────────────────────────────────────────────────────────────────
@@ -115,7 +116,7 @@ export function NewFolderSheet({
       });
 
       // Invalidate the folder tree so DocumentsScreen refetches
-      await queryClient.invalidateQueries({ queryKey: ['documents', 'folders', 'tree'] });
+      await queryClient.invalidateQueries({ queryKey: FOLDER_TREE_QUERY_KEY });
 
       reset();
       onCreated();
