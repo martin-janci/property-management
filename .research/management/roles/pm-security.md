@@ -1,62 +1,48 @@
-# pm-security — 2026-05-27
+# pm-security — 2026-06-18
 
-_Rotating role this run (pm_cursor idx 5). Static read; no compile/run._
+_Rotation slot 5 — last run 2026-05-27 (22 days stale)._
 
 ## Summary
 
-Authz/tenant-scoping is the dominant risk surface this window. Three open post-merge
-security follow-ups are confirmed exploitable-by-omission on the new reports surface:
-**#614** (`update_schedule` missing RBAC capability check), **#624** (`update_schedule`
-missing tenant/org scope — cross-tenant schedule mutation), and **#617** (cookie `Path`
-breaking change introduced by the #565 session-cookie scope hardening). The #565
-SameSite/Secure/scoped-cookie hardening (P0-12) landed this window — good — but it shipped
-a `Path` regression (#617) that must be reconciled before release, and the residual
-P1-04 Debug-format audit-hash leak from PR #435 is still open.
+The sprint's most critical active security gap is the CI gate: `dev` branch protection requires only a single generic `"check"` context (`app_id: 15368`) — `cargo test` is **NOT** a required check, confirming issue **#1538** and meaning auth/RLS regression PRs can merge freely. Seven of eight test-hardening batch issues (#480-#487) remain open, including OAuth refresh-token revocation bypass (#481), WebSocket JWT-in-query-param (#480), and multiple IDOR gaps without regression tests.
 
-## next_actions
+## Findings
 
-- **[high]** Fix #624 + #614 together: thread `tenant_id`/`org_id` scope AND a
-  `RequireCapability` extractor into `update_schedule` (PUT
-  `/api/v1/reports/schedules/{id}`) in `report_schedule.rs`; add a cross-tenant +
-  unauthorized-role regression test. DoD: foreign-tenant/unauthorized callers get 403/404,
-  test in CI. dependency: pm-backend.
-- **[high]** Reconcile the #617 cookie `Path` breaking change from PR #565 (P0-12): confirm
-  the new `Path` scope does not silently log existing sessions out or widen/narrow the
-  cookie beyond the API prefix; document the migration. DoD: session set/clear verified
-  across `/` and API prefix; no auth regression. dependency: none.
-- **[high]** Close P1-04 Debug-format audit-hash domain leak (PR #435 residual): replace
-  `{:?}` on internal types in audit-trail records with `Display`/structured fields. DoD:
-  no Debug-formatted internal types in audit log lines. dependency: none.
-- **[medium]** Land the OAuth introspection + refresh-rotation security tests
-  (pm-qa-oauth-security-tests): revoked-token rejection, family-reuse replay block, PKCE
-  S256 enforcement — 10a-* shipped without end-to-end security coverage. dependency: pm-qa.
-- **[medium]** Audit the reports.rs / report_schedule.rs churn cluster for sibling missing
-  scope (the #614/#624 pattern often repeats across CRUD handlers in the same module).
-  DoD: every mutating reports handler binds + uses the principal's tenant/org. dependency:
-  pm-backend.
+- `dev` branch protection (`enforce_admins: false`, `strict: false`) lists only `"check"` (app 15368) as a required status check — backend `cargo test` job is advisory only (issue #1538 confirmed).
+- `session.rs:55` `find_by_token_hash` still contains `revoked_at IS NULL` guard — the PR #470 regression in issue #481 appears partially remediated, but no integration test asserts it; sprint-status still marks #481 open.
+- `ws_notifications.rs:122` carries a `// Never log params.token` comment so the JWT does not appear in handler logs, but it is still transmitted in the `?token=…` query param → access logs / proxy logs / Referer headers (#480 structural exposure persists).
+- `backend/crates/db/src/repositories/document.rs` retains many `#[deprecated]` legacy non-RLS methods. Epic 7A is the active sprint with 8-PR churn on this file in 48h — any handler regression to a deprecated method silently bypasses tenant isolation.
+- `rental.rs` queries all bind `org_id`; the FORCE-RLS workaround for GH #1363 is inline-documented and legitimate. Cross-org IDOR test scaffolding exists (`reserve_funds_cross_org_idor_tests.rs`).
+- Recent landings (positive direction): #1467 (mfa cross-user IDOR test), #1460 (FORCE RLS on developer_oauth_apps/grants), #1561 (PortalPrincipal for imports closes #1300), #1473 (BIT-85 cross-tenant OAuth upsert hazard), #1539 (reject public client supplying client_secret), #1502 (Booking.com credential encryption at-rest IG3). Net direction is positive — but the gate gap negates that net.
 
-## risks
+## Risks (top 5)
 
-- **update_schedule cross-tenant + missing-RBAC (high/high):** #624 + #614 — an
-  authenticated user can mutate another tenant's report schedule and/or mutate schedules
-  without the required capability. Same omission class as the prior `ai.rs` equipment IDOR
-  cluster. Mitigation: scope + capability extractor + regression test before promoting 81-1.
-- **Cookie Path breaking change (#617) (medium/high):** the #565 cookie-scope hardening
-  changed cookie `Path`; if mis-scoped it either logs users out or leaks the session to
-  unintended paths. Mitigation: verify set/clear across paths; document migration.
-- **Audit-hash Debug-format leak P1-04 (medium/medium):** internal type internals may reach
-  audit logs via `{:?}`. Mitigation: structured/Display formatting.
-- **OAuth provider untested security contract (medium/high):** 10a-1/10a-2/10a-3 shipped
-  with no introspection/refresh-rotation/PKCE security tests; a refactor could silently
-  reintroduce revoked-token acceptance or replay. Mitigation: add the security test suite.
+| risk | prob | impact | mitigation |
+|---|---|---|---|
+| CI test job not required on dev (#1538) | high | high | Add `backend / test` to required_status_checks; freeze backend merges until done |
+| OAuth refresh-token revocation bypass (#481) | medium | high | Add integration test asserting revoked tokens rejected; close #481 only when green |
+| WebSocket JWT in query param (#480) | high | medium | Migrate to OTT exchange (`POST /ws/ticket` → opaque short-lived token) |
+| Legacy non-RLS document.rs methods callable during 7A churn | medium | high | Grep routes for deprecated calls; enforce `clippy -D deprecated` in CI |
+| 5 IDOR backlog signals — merge status unconfirmed | medium | high | `gh pr list --search idor`; per-finding confirm patch+test or open tracking issue |
 
-## open_questions
+## Next actions
 
-- Does `security-test-gate.yml` actually block security-labelled PRs lacking a test file,
-  or is it advisory? PR #497 and several reports PRs shipped without tests.
-- Are #614 and #624 the only missing-scope handlers in `report_schedule.rs`, or does the
-  whole CRUD set share the omission?
+1. **[high]** Add `backend / test` as required status check on dev — close #1538 — owner: pm-security (→ pm-devops landing)
+2. **[high]** Close #481: add revoked-OAuth-token rejection integration test; verify guard still in session.rs:55 — owner: pm-security (→ pm-backend)
+3. **[high]** Close #480: migrate WebSocket auth to OTT exchange — owner: pm-security (→ pm-backend)
+4. **[high]** Audit document.rs route handlers for deprecated method calls; add `clippy -D deprecated` CI gate — owner: pm-security
+5. **[medium]** Re-audit 5 IDOR backlog signals (equipment, voice-device, llm-doc, reality-inquiry, reserve-funds); close #483 — owner: pm-security
+6. **[medium]** Close #486: replace direct getToken() calls in announcement/fault frontend with axios-interceptor path — owner: pm-security (→ pm-frontend)
 
-## decisions_needed
+## Decisions needed
 
-- Treat #614/#624/#617 as pre-release P0/P1 blockers gating Epic 81 promotion — owner: pm-security.
+- Treat #1538 (test gate) as a release blocker: freeze backend feature merges until required check is enforced.
+- Does #480 (WS JWT in query) require an OTT protocol change before Epic 8A ships, or is it accepted-risk deferred?
+- Should deprecated non-RLS document.rs methods be removed outright (breaking) or kept with a `clippy -D deprecated` CI gate?
+
+## Open questions
+
+- Which of the 5 IDOR backlog signals have merged remediation vs still open? (`gh pr list --search idor` unavailable this run)
+- Is the `security-test-gate.yml` workflow enforcing or advisory on dev? (`gh issue list --label security` unavailable)
+- Are there deprecated-method callers in the active 7A document route handlers?
+- Does the `WS_MAX_SESSION_SECS` (4h) vs JWT lifetime (15m) mismatch in #480 have a wired exp-based close in the session loop?

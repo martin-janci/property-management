@@ -1,67 +1,32 @@
 # PPT Action List
 
-_Generated: 2026-06-16T00:00:00Z · 61 items · 51 open_
+_Generated: 2026-06-18 — 24 open · 31 done · 59 total._
 
-| Priority | Status | Owner | ID | Action | Dependency | Source |
-|---|---|---|---|---|---|---|
-| high | open | pm-devops | pm-devops-dev-push-compile-gate | Add a `cargo check --workspace --tests` smoke gate on `dev` push (not just PR) — would have caugh... | none | pm-analysis 2026-06-16 |
-| high | open | pm-devops | pm-devops-fix-dev-compile-1437 | URGENT: Fix `dev` backend compile break introduced by PR #1426 — land #1435 or #1436. Blocks ALL ... | none | pm-analysis 2026-06-16 |
-| high | open | pm-frontend | bug-ios-searchview-uncompilable | iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corru... | none | dispatcher-tier1-refill 2026-06-12 (backlog.json promote) |
-| high | open | pm-frontend | feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend | web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged (6-2... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-build-configuration-by-environ-build-scripts-created-mobile | build scripts (scripts/build-mobile\|android\|ios.sh) not created (85-2-build-configuration Build... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-build-configuration-by-environ-ios-xcconfig-files-mobile | iOS xcconfig files + schemes not created (85-2-build-configuration Build Configuration by Environ... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-dispute-filing-flow-task-checklist-unchecked-frontend | task checklist unchecked (80-2-dispute-filing-flow Dispute Filing Flow) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-environment-variable-setup-env-setup-documentation-mobile | env setup documentation missing (85-1-environment-variables Environment Variable Setup) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-environment-variable-setup-ios-info-lacks-api-base-url-mobile | iOS Info.plist lacks API_BASE_URL/ENVIRONMENT keys (85-1-environment-variables Environment Variab... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-frontend | feat-environment-variable-setup-react-native-config-metro-bundler-mobile | react-native-config + Metro bundler setup not done (Expo Constants used) (85-1-environment-variab... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| high | open | pm-qa | pm-qa-record-payment-atomicity-test | Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-p... | none | pm-analysis 2026-06-15 |
-| high | open | pm-qa | pm-qa-service-history-cross-org-idor | Add cross-org IDOR test coverage to service-history endpoints (#1372) | none | pm-analysis 2026-06-15 |
-| high | open | pm-scrum-master | pm-qa-close-issue-1332-if-ci-green | Close issue #1332 if dev CI now green after PR #1379 unblock | none | pm-analysis 2026-06-15 |
-| high | open | pm-scrum-master | pm-qa-triage-followup-issues-2026-06-14 | Triage the 18 follow-up issues #1360-#1377 from 2026-06-14 post-merge review — assign owners or c... | none | pm-analysis 2026-06-15 |
-| medium | open | pm-backend | feat-airbnb-oauth-and-sync-no-integrations-airbnb-backend | no /integrations/airbnb/* API routes (83-1-airbnb-integration Airbnb OAuth and Sync) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-backend | feat-airbnb-oauth-token-exchange-route-backend | Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/... | none | dispatcher-tier1-refill 2026-06-11 (coverage.json gap) |
-| medium | open | pm-backend | feat-airbnb-realtime-webhook-handler-backend | Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notif... | none | dispatcher-tier1-refill 2026-06-11 (coverage.json gap) |
-| medium | open | pm-backend | feat-booking-integration-ota-xml-parsing-backend | Coverage 83-2: implement Booking.com OTA XML parsing/generation for rate/availability messages; i... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-backend | feat-booking-integration-rate-availability-push-backend | Coverage 83-2 (AC-5): complete the Booking.com rate/availability push full flow (build + send OTA... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-backend | feat-esignature-email-webhook-idempotency-guard-backend | Coverage 84-2: add the missing e-signature email webhook idempotency guard (terminal-state dedup)... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-backend | feat-notification-pref-sync-mobile-push-fcm-apns-backend | Coverage 8a-3: implement mobile OS push integration (FCM/APNs) for notification preference sync —... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-devops | pm-devops-confirm-eas-workflows-healthy | Confirm `eas-build-android.yml` + `eas-build-ios.yml` (now in .github/workflows/) green on a no-o... | none | pm-analysis 2026-06-16 |
-| medium | open | pm-devops | pm-devops-pre-push-fmt-gate-scope | Decide pre-push fmt/clippy gate (#1431 merged) scope — local hook only, mirror as CI status check... | none | pm-analysis 2026-06-16 |
-| medium | open | pm-devops | pm-devops-security-test-gate-required-check | Confirm `security-test-gate.yml` is configured as a required status check on `dev` branch protect... | none | pm-analysis 2026-06-16 |
-| medium | open | pm-frontend | feat-announcement-comments-discussion-web-ui-frontend | Coverage 6-3: implement/wire the announcement comments & discussion web UI in ppt-web (comment li... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-document-download-preview-mobile-slice | Coverage 7a-4: implement the mobile document download & preview slice (presigned download + inlin... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-folder-organization-mobile-implementation | Coverage 7a-2: implement the mobile (folder organization) slice for documents — folder tree/list ... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-home-and-search-screens-debounced-search-evidenced-mobile | debounced search (AC-2) not evidenced (82-3-home-search-screens Home and Search Screens) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | feat-home-and-search-screens-infinite-scroll-evidenced-mobile | Coverage 82-3: evidence infinite scroll (AC-4) on the Reality mobile (KMP) Search screen — add th... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-pinned-announcements-pin-unpin-web-ui-frontend | Coverage 6-4: add pin/unpin announcement controls to the ppt-web announcements UI wired to the ba... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| medium | open | pm-frontend | feat-swiftui-project-setup-no-epic-82-commits-git-mobile | no epic-82 commits in git log (82-1-swiftui-project-setup SwiftUI Project Setup) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | feat-swiftui-project-setup-no-screen-map-ppt-reality-mobile-docs-mobile | no screen-map for ppt-reality-mobile in docs/screens/ (82-1-swiftui-project-setup SwiftUI Project... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | feat-swiftui-project-setup-vs-implementation-mapping-mobile | story-vs-implementation mapping unclear (epic 82 in epics-007.md targets different scope) (82-1-s... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | fix-report-schedule-editing-cron-edits-round-trip-through-frontend | cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (... | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-frontend | verify-navigation-and-routing-deep-linking-url-schemes-confirmed-mobile | deep-linking with URL schemes not confirmed (82-2-navigation-routing Navigation and Routing) | none | gap-scan 2026-06-12 (buffer-low refill) |
-| medium | open | pm-qa | pm-qa-allowed-pet-types-enum-decode-audit | Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-canonical-seed-membership-helper | Migrate duplicated seed_membership in IDOR tests to canonical helper (#1373) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-cron-validator-drift-test | Add silent-regression test for cron validator to prevent #616 reintroduction (#1368) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-dispute-draft-autosave-coverage | Add dispute draft auto-save tests — i18n key presence + re-render race (#1360, #1364) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-ios-searchview-pagination-stale-guard | Add iOS UI test for SearchView stale-response guard preserving pagination (#1365) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-pre-push-fmt-clippy-gate | Add pre-push cargo fmt + clippy gate (#1375) — prevents unformatted re-lands | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-record-reserve-transaction-atomicity | Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1... | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-rls-write-download-coverage | Extend forms RLS write/download path coverage + tighten release() discipline (#1369) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-qa | pm-qa-tenant-aware-rls-helper | Introduce canonical tenant-aware request helper for RLS tests (#1370) | none | pm-analysis 2026-06-15 |
-| medium | open | pm-scrum-master | pm-qa-stale-draft-pr-decision | Decide on stale draft PRs #1316 (1.8d) and #1197 (5.9d) — promote, rebase or close | none | pm-analysis 2026-06-15 |
-| low | open | pm-backend | verify-document-folder-organization-backend-promote | Coverage 7a-2: verify the document folder-organization backend (CRUD + RLS + capability gates) ag... | none | dispatcher-tier1-refill 2026-06-11 (coverage.json gap) |
-| low | open | pm-backend | verify-document-upload-metadata-promote-to-done-backend | Coverage 7a-1: verify Document Upload with Metadata end-to-end and promote sprint-status ready-fo... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| low | open | pm-devops | pm-devops-app-tsx-merge-queue-confirm | Confirm `app-tsx-merge-queue.yml` is actively serializing App.tsx-touching PRs (carry-over from 2... | none | pm-analysis 2026-06-16 |
-| low | open | pm-frontend | feat-listing-detail-favorites-swiftui-polish-mobile | Coverage 82-4: complete the remaining SwiftUI listing-detail polish for the Reality mobile Listin... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| low | open | pm-frontend | refactor-churn-hotspot-mobile-announcements-test | Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy | none | dispatcher-tier1-refill 2026-06-07 (backlog.json promote) |
-| low | open | pm-frontend | verify-report-execution-history-presigned-download-retry-frontend | Coverage 81-2: confirm presigned download + retry end-to-end on the report execution-history surf... | none | dispatcher-tier1-refill 2026-06-15 (coverage.json gap) |
-| high | done | pm-backend | feat-airbnb-oauth-and-sync-no-oauth-token-exchange-backend | no OAuth token exchange route (models only) (83-1-airbnb-integration Airbnb OAuth and Sync) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-frontend | feat-navigation-and-routing-auth-guard-evidenced-mobile | auth guard (AC-5) not evidenced (82-2-navigation-routing Navigation and Routing) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-qa | pm-qa-booking-oauth-csrf-coverage | Add Booking.com OAuth handler / CSRF / secure-credential-replacement coverage (#1362, #1374) | none | pm-analysis 2026-06-15 | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-qa | pm-qa-document-download-preview-tests | Add presigned-URL minting/expiry/access-gate allow-path tests for document download/preview (#1377) | none | pm-analysis 2026-06-15 | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-qa | pm-qa-realtime-pref-sync-ci-coverage | Add CI-executable coverage for realtime preference-sync publish leg (#1376) | none | pm-analysis 2026-06-15 | dev-reconcile 2026-06-15T22:45:19Z |
-| high | done | pm-qa | pm-qa-vote-partial-cmp-nan-fuzz | Add NaN-weight fuzz test for /votes/{id}/results to guard partial_cmp().unwrap() panic (Phase 1.5... | none | pm-analysis 2026-06-15 | dev-reconcile 2026-06-16T02:20:29Z |
-| medium | done | pm-frontend | feat-home-and-search-screens-filtersheet-location-features-mobile | FilterSheet/location features missing (82-3-home-search-screens Home and Search Screens) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
-| medium | done | pm-frontend | feat-navigation-and-routing-navigation-state-preservation-mobile | navigation state preservation (AC-4) unverified (82-2-navigation-routing Navigation and Routing) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
-| medium | done | pm-frontend | feat-web-announcements-faults-api-hooks-wiring | [CLOSED: verified already shipped on dev (gap-79-1) — AnnouncementsPage+FaultsPage wired to TanSt... | none | dispatcher-tier1-refill 2026-06-11 (coverage.json gap) |
-| medium | done | pm-frontend | verify-home-and-search-screens-corelocation-integration-confirmed-mobile | CoreLocation integration not confirmed (82-3-home-search-screens Home and Search Screens) | none | gap-scan 2026-06-12 (buffer-low refill) | dev-reconcile 2026-06-15T22:45:19Z |
+## Open
+
+| Priority | Owner | Action | Source |
+|---|---|---|---|
+| high | pm-backend | Resolve story 7a-2 folder-organization (PR #1316) — promote or close; document.rs is hottest churn file (8 PRs this wave), rebase debt growi | pm-analysis 2026-06-18 |
+| high | pm-devops | Make backend `test` job required check on dev branch — close issue #1538 | pm-analysis 2026-06-18 |
+| high | pm-qa | Audit 8-PR churn cluster on rental.rs and document.rs for missing integration-test coverage; file follow-up issues for any gap | pm-analysis 2026-06-18 |
+| high | pm-scrum-master | Triage 6 new untriaged issues #1520, #1521, #1522, #1532, #1533, #1538 — assign labels, owner, severity, sprint/backlog decision | pm-analysis 2026-06-18 |
+| high | pm-security | Add 'backend / test' (cargo test) as a required status check on dev branch protection — currently only generic 'check' context (app_id 15368 | pm-analysis 2026-06-18 |
+| high | pm-security | Audit document.rs route handlers for use of deprecated legacy non-RLS methods after the 8-PR churn cluster; add clippy -D deprecated CI gate | pm-analysis 2026-06-18 |
+| high | pm-security | Close issue #480: migrate WebSocket auth from JWT-in-query to short-lived one-time token (OTT) exchange so JWT is never in URL/access logs | pm-analysis 2026-06-18 |
+| high | pm-security | Close issue #481: add integration test asserting revoked OAuth refresh tokens are rejected; verify revoked_at IS NULL guard still present in | pm-analysis 2026-06-18 |
+| medium | pm-backend | Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface | dispatcher-tier1-refill 2026-06-11 (cove |
+| medium | pm-frontend | Coverage 6-3 (re-spec of dropped feat-announcement-comments-discussion-web-ui-frontend; prior attempt failed sandbox-no-branch, not scope):  | dispatcher-tier1-refill 2026-06-18 (re-s |
+| medium | pm-frontend | Coverage 6-2 (re-spec of dropped feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend; prior attempt failed sandbox-no-branch, not | dispatcher-tier1-refill 2026-06-18 (re-s |
+| medium | pm-frontend | Coverage 79-1 (gap): fully wire AnnouncementsPage and FaultsPage in ppt-web to the generated @ppt/api-client TanStack Query hooks (list/deta | dispatcher-tier1-refill 2026-06-18 (cove |
+| medium | pm-backend | Coverage 83-2 (gap): implement OTA (OpenTravel) XML parsing + generation for the Booking.com integration — request/response models for avail | dispatcher-tier1-refill 2026-06-18 (cove |
+| medium | pm-backend | Coverage 83-2 AC-5 (gap): complete the rate/availability push flow to Booking.com — full outbound sync of price + availability changes throu | dispatcher-tier1-refill 2026-06-18 (cove |
+| medium | pm-frontend | Coverage 7a-4 (re-spec of dropped feat-document-download-preview-mobile-slice; prior attempt failed sandbox-no-branch, not scope): implement | dispatcher-tier1-refill 2026-06-18 (re-s |
+| medium | pm-backend | Coverage 84-2 (gap): add a webhook idempotency guard for the e-signature email integration so a terminal signing state (completed/declined/v | dispatcher-tier1-refill 2026-06-18 (cove |
+| medium | pm-frontend | Coverage 7a-2 (gap): implement the mobile (React Native) slice of Folder Organization for documents — create/rename/move folders + folder tr | dispatcher-tier1-refill 2026-06-18 (cove |
+| medium | pm-backend | Coverage 8a-3 (gap): wire mobile OS push delivery (FCM for Android, APNs for iOS) into the existing notification-preference sync. Backend de | dispatcher-tier1-refill 2026-06-18 (cove |
+| medium | pm-frontend | no epic-82 commits in git log (82-1-swiftui-project-setup SwiftUI Project Setup) | gap-scan 2026-06-12 (buffer-low refill) |
+| medium | pm-backend | Advance epic-10a (OAuth Provider Foundation): close/rebase stale draft #1197 (~7d); resolve gate issues #481/#482; assign owner for 10a-1 | pm-analysis 2026-06-18 |
+| medium | pm-qa | Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366) | pm-analysis 2026-06-15 |
+| medium | pm-security | Close issue #486: replace direct getToken() calls in announcement/fault frontend modules with axios-interceptor path to prevent auth bypass  | pm-analysis 2026-06-18 |
+| medium | pm-security | Re-audit five IDOR backlog signals (api-core-equipment-idor, api-core-voice-device-idor, api-core-llm-doc-idor, reality-server-inquiry-read- | pm-analysis 2026-06-18 |
+| low | pm-frontend | Coverage 85-2 (gap): generate app icons for all required sizes (Android mipmap densities + iOS AppIcon set) for the React Native Property Ma | dispatcher-tier1-refill 2026-06-18 (cove |
