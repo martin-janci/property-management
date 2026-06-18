@@ -1,0 +1,268 @@
+{
+  "date": "2026-06-18",
+  "run_iso": "2026-06-18T04:10:41Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "49h since last run (2026-06-16T03:25:00Z); >36h lag threshold"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 4829015b",
+      "score_delta": 0,
+      "evidence": [
+        "1031 lines changed in booking.rs (window 2026-06-16→2026-06-18); top-3 churn this run (runs_seen=1→2)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "local git numstat since 4829015b",
+      "score_delta": 1,
+      "evidence": [
+        "booking.rs hotspot fires in runs_seen=2 consecutive checks — instability proxy; primary churn drivers PR #1485 (Booking.com OTA push retry) + earlier PAP work"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-document-folder-tests-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 4829015b",
+      "score_delta": 1,
+      "evidence": [
+        "1002 lines changed in tests/document_folder_tests.rs — driven by PR #1316 (rescued orphan test bin + AC happy-path tests for folder CRUD)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-accounting-rls-repo-tests-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 4829015b",
+      "score_delta": 1,
+      "evidence": [
+        "823 lines changed in db/tests/accounting_rls_repo_tests.rs — driven by PR #1453+#1454 (native accounting MVP N1-N5: contact/invoice/invoice_item/bank_statement/payment_match RLS tests)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1454 (feat: native accounting MVP + @hey-api migration) touched ppt-web routes (App.tsx/AppRoutes.tsx, routes/groups/accounting.tsx, routes/groups/rentals.tsx, lazyRoutes.tsx) without updating docs/screens/ppt/*.md — real route surface change (new /accounting screen)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1454 touched reality-web app/accounting/ (layout.tsx + page.tsx) without updating docs/screens/reality/*.md — new /accounting public page"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1453 (N5 bank-statement upload + payment-matching) touched reality-web app/accounting/page.tsx without updating docs/screens/reality/*.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1469-document-form-user-enum-decode",
+      "type": "hotfix-no-test",
+      "source": "PR #1469",
+      "score_delta": 2,
+      "evidence": [
+        "fix(db) #1469 — document/form/user repo SELECT enum-decode + unit_number column drift; 3 files (db/repositories/{document,form,user}.rs), zero test diff. Schema-drift fixes are exactly the regression class that wants pinned tests."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1539-oauth-public-client",
+      "type": "hotfix-no-test",
+      "source": "PR #1539",
+      "score_delta": 2,
+      "evidence": [
+        "fix(oauth) #1539 — reject public client supplying a client_secret with invalid_client; 1 file (routes/oauth.rs), zero test diff. Spec-compliance / refusal-path fix without a test."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1551-document-category-cast",
+      "type": "hotfix-no-test",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "evidence": [
+        "fix(db) #1551 — cast document_category enum in count_accessible_rls (closes #1528); 1 file (db/repositories/document.rs), zero test diff. Enum-decode regression class (#1008 lineage)."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "risky-churn-pr-1485-booking-rs",
+      "type": "risky-churn",
+      "source": "PR #1485",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1485 (fix(integrations): Booking.com OTA push retry — timeout + Retry-After + RateLimited, BIT-110) modified backend/crates/integrations/src/booking.rs — a top-3 churn file this run (runs_seen=2) — with no test diff. Network/retry behavior change in a hotspot without a regression test."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-18.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor-change comparison",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative re-emit guard",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score>8 count",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "inline — 2 decay actions logged in brief, 2 drops at 0",
+      "observed": "ok",
+      "expected": "ok"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a (no promotion)"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A plans/ count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secret patterns",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures",
+      "observed": "no failures",
+      "expected": "no failures"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior-run plans accounted for (active or archived)",
+      "observed": "missing=0",
+      "expected": "missing=0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls archive count",
+      "observed": "now=8 head=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "0 actions, all caps respected",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management JSON parse + pm_cursor sane; Phase 1.6 SKIPPED this run so GC7 is no-op (pm_cursor unchanged)",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token patterns in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist this run"
+}
