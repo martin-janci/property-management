@@ -1,0 +1,193 @@
+{
+  "generated": "2026-06-18T18:00:00Z",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "last_pr_seen": 1439,
+  "last_issue_seen": 1437,
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-06-16T03:25:00Z → 62h since last run (>36h threshold)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1511",
+      "score_delta": 1,
+      "evidence": "PR #1511 (clippy fixes in accounting routes post-#1454) closed unmerged 2026-06-17 — superseded by #1512 which landed same day; benign supersession",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 4829015b",
+      "score_delta": 0,
+      "evidence": "booking.rs +/-=4057 lines this window (PRs #1577 OTA models, #1578 enum cast fix, #1579 reconcile tests); already in seen_signals (cumulative re-emit, score unchanged)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/document.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 4829015b",
+      "score_delta": 0,
+      "evidence": "document.rs +/-=3078 lines this window (PRs #1550 verify, #1551 cast fix #1528, #1565 read-path #1586); already in seen_signals (cumulative re-emit)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 4829015b",
+      "score_delta": 0,
+      "evidence": "rental.rs +/-=2853 lines this window (PRs #1537 enum cast #1008, #1578 booking enum cast #1535); already in seen_signals (cumulative re-emit)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "booking.rs runs_seen 1→2 — Story 83.2 OTA work + enum cast fixes touching the same file across consecutive runs",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/document.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "document.rs runs_seen 1→2 — Epic 7A document RLS + enum decode fixes (#1551, #1565, #1582) touching the same file across consecutive runs",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-18.md + head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative re-emit check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "≤2 new plans, adversarial pass each"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached plans/ count",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures vs cursor advance",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans converge (no silent delete)",
+      "observed": "no prior plans removed",
+      "expected": "all preserved"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap+idempotency",
+      "observed": "empty (no candidate)",
+      "expected": "≤3 and per-type ≤1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + coverage_cursor advanced",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret literal in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

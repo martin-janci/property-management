@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-16T00:00:00Z",
+  "generated": "2026-06-18T18:00:00Z",
   "items": [
     {
       "id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -55,6 +55,83 @@
       "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap 85-2)",
       "deadline": null,
       "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-web",
+      "action": "Coverage 6-4 (partial → done): complete the Pinned Announcements UI on ppt-web — surface pinned items above the announcement list, expose pin/unpin actions (manager role), and respect server-side ordering by pinnedAt. Frontend ppt-web; component + hook + integration tests against the pin_announcement route.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "gap-scan 2026-06-18 (coverage.json gap 6-4 — backend route + fields landed, web UI is the remaining slice)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-7a-2-folder-organization-web",
+      "action": "Coverage 7a-2 (partial): ship Folder Organization on ppt-web — folder tree view + create/rename/move actions with the 5-level depth + circular-link guards already enforced by the backend; reuse the @ppt/api-client folder hooks. Mobile UI just landed (#1557, #1582) — bring web to parity. Frontend ppt-web; documents feature; integration tests.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "gap-scan 2026-06-18 (coverage.json gap 7a-2 — mobile parity now web)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-80-2-dispute-filing-flow-evidence",
+      "action": "Coverage 80-2 (partial): finish the Dispute Filing flow on ppt-web — the FileDisputePage.tsx exists but evidence-upload integration with the EvidenceUploader churn-hotspot component and the resulting backend wiring (S3 presigned upload, evidence-id linkage to the dispute) is the remaining slice. Frontend ppt-web; disputes feature; component + integration tests.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "gap-scan 2026-06-18 (coverage.json gap 80-2 — backend exists, evidence-upload integration outstanding)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-81-1-report-schedule-editing-pause-resume-coverage",
+      "action": "Coverage 81-1 (partial): finalize Report Schedule Editing — EditScheduleModal.tsx + useUpdate/usePause/useResumeSchedule already merged (PR #93/#623). The remaining slice is wiring the pause/resume actions into the schedule list row UI + ensuring the cron-validator drift test (#1368) gates editing. Frontend ppt-web + a regression test pinning the cron-validator fixture.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "gap-scan 2026-06-18 (coverage.json gap 81-1)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-82-3-reality-mobile-home-search-screens",
+      "action": "Coverage 82-3 (partial): complete the Home + Search screens on reality-mobile (KMP) — listing grid, recent-searches, filter entry-point wiring, and the search-stale-response guard fix (paired with backlog code-review-mobile-native-kmp-search-stale-response-race). Mobile-native KMP shared module + iOS/Android UI; screen-map sync; unit + UI tests.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "gap-scan 2026-06-18 (coverage.json gap 82-3)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-85-1-environment-variables-mobile",
+      "action": "Coverage 85-1 (partial): land environment-variable scaffolding for the React Native PM mobile app — env-typed runtime config + dotenv-style wiring across dev/staging/prod, parity with the api-server URL switching the EAS workflow expects. Frontend mobile; config module + tests against env resolution.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "gap-scan 2026-06-18 (coverage.json gap 85-1)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": []
+    },
+    {
+      "id": "gap-84-2-esignature-email-template-wiring",
+      "action": "Coverage 84-2 (partial): close the e-signature email leg — terminal-state webhook idempotency just landed (#1558); remaining slice is the email-notification template wiring to actually fire on completed/voided events, with templates in en/sk/cs/de and a delivery test using the notification dispatch path. Backend api-server + notifications crate.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "gap-scan 2026-06-18 (coverage.json gap 84-2 — webhook idempotency now; email leg remaining)",
+      "deadline": null,
+      "dependency": "none",
       "depends_on": []
     }
   ]
