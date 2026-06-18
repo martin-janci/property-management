@@ -27,7 +27,7 @@ tokio = { version = "1.35", features = ["full"] }
 axum = { version = "0.8", features = ["macros", "ws"] }
 axum-extra = { version = "0.12", features = ["typed-header", "multipart"] }
 tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "trace", "compression-gzip"] }
+tower-http = { version = "0.7", features = ["cors", "trace", "compression-gzip"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
