@@ -1,0 +1,303 @@
+{
+  "date": "2026-06-18",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "Routine last ran 2026-06-16T03:25:00Z; now 2026-06-18T03:00Z (~47h). Exceeds 36h threshold \u2014 cloud cron slipping; no stale_routine_alert yet (LAG_DAYS=1)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-document-folder-tests-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-06-16\u21922026-06-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "1046 lines changed across 2 commits in backend/servers/api-server/tests/document_folder_tests.rs (window 2026-06-16\u21922026-06-18, Coverage 7a-2 mobile folder org + document upload metadata verify work \u2014 #1464, #1550)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-06-16\u21922026-06-18",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "Re-emit (cumulative): 1031 lines changed across 3 commits in backend/crates/integrations/src/booking.rs window 2026-06-16\u21922026-06-18; prior hotspot_history.runs_seen=1 (last 2026-06-12 PR #1294). Score not re-applied per cumulative rule."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-accounting-rls-repo-tests-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1454",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "823 lines added in backend/crates/db/tests/accounting_rls_repo_tests.rs from PR #1454 'native accounting MVP (N1-N4) + @hey-api migration'"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=1\u21922",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "booking.rs hits churn-hotspot 2nd time (prior last 2026-06-12 PR #1294 OTA retry +404/\u221229; now 2026-06-16\u219218 ~1031 lines). Instability proxy \u2014 Booking.com OAuth + contract surface still volatile."
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1503",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1503",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1503 'fix(tests): add missing role arg to seed_membership in booking_oauth_routes_tests' closed unmerged \u2014 dispatcher auto-impl pattern; functionally superseded by merged #1507 'fix(tests): restore user_memberships seed + fix platform principal for IDOR tests'"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1504",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1504",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1504 'fix(db): resolve duplicate migration 00181 \u2014 rename force_developer_oauth_rls to 00182' closed unmerged \u2014 dispatcher auto-impl outcompeted"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1505",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1505",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1505 'fix(db): cast rental enum columns to text across rental.rs queries (PAP-158)' closed; functionally superseded by merged #1492 'fix(db): cast remaining rental enum readers \u2014 GUEST/CALENDAR_BLOCK/ICAL_FEED_COLUMNS (BIT-118)'"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1506",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1506",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1506 'fix(api-server): pass role to seed_membership in booking-oauth non-manager test (unblocks backend check)' closed unmerged \u2014 superseded by merged #1507"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1511",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1511 'fix(api-server): resolve clippy lints blocking dev fmt-clippy gate (accounting routes)' closed unmerged \u2014 superseded by merged #1512 'fix(api-server): clippy fixes in accounting routes (post-#1454)'"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal this run met confidence=high + score>=3 + allowlist (closed-not-merged-pr items only stack to score 1)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "brief exists with correct H1",
+      "observed": "file_exists=True h1_match=True",
+      "expected": "true,true",
+      "hard": false
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true",
+      "hard": false
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "len=184 unique=184",
+      "expected": "equal",
+      "hard": false
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with non-zero score_delta",
+      "observed": "offenders=[]",
+      "expected": "[]",
+      "hard": false
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "scores <= 8",
+      "observed": "True",
+      "expected": "true",
+      "hard": false
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "decay applied to stale rows",
+      "observed": "applied",
+      "expected": "applied",
+      "hard": false
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans annotated with adversarial pass",
+      "observed": "missing=[] new_plans=0",
+      "expected": "[]",
+      "hard": false
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "<=2 new plans this run",
+      "observed": "new_plans=0",
+      "expected": "<=2",
+      "hard": false
+    },
+    {
+      "goal": "G7-metadata",
+      "passed": true,
+      "command": "metadata fields (vacuous \u2014 0 new plans)",
+      "observed": "vacuous",
+      "expected": "vacuous",
+      "hard": false
+    },
+    {
+      "goal": "G7-headings",
+      "passed": true,
+      "command": "headings (vacuous)",
+      "observed": "vacuous",
+      "expected": "vacuous",
+      "hard": false
+    },
+    {
+      "goal": "G7-capability",
+      "passed": true,
+      "command": "capability ticked (vacuous)",
+      "observed": "vacuous",
+      "expected": "vacuous",
+      "hard": false
+    },
+    {
+      "goal": "G7-mode",
+      "passed": true,
+      "command": "mode declared (vacuous)",
+      "observed": "vacuous",
+      "expected": "vacuous",
+      "hard": false
+    },
+    {
+      "goal": "G7-files-exist",
+      "passed": true,
+      "command": "files exist on disk (vacuous)",
+      "observed": "vacuous",
+      "expected": "vacuous",
+      "hard": false
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged paths all under .research/",
+      "observed": "non_research=[]",
+      "expected": "[]",
+      "hard": true
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged diff",
+      "observed": "matches=0",
+      "expected": "0",
+      "hard": true
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff_rc=0",
+      "expected": "0",
+      "hard": false
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty (1.5+1.6 skipped, documented)",
+      "observed": "documented as skip not fail",
+      "expected": "ok",
+      "hard": false
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plan silently deleted vs HEAD",
+      "observed": "missing=[]",
+      "expected": "[]",
+      "hard": false
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive >= HEAD count",
+      "observed": "now=7 head=7",
+      "expected": ">=",
+      "hard": false
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff_rc=0",
+      "expected": "0",
+      "hard": false
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no actions this run)",
+      "observed": "actions=0",
+      "expected": "0",
+      "hard": false
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op",
+      "hard": false
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value",
+      "observed": "matches=0",
+      "expected": "0",
+      "hard": true
+    }
+  ]
+}
