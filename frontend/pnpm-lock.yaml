@@ -159,8 +159,8 @@ importers:
         specifier: ~55.0.22
         version: 55.0.22(expo@56.0.12)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
       expo-secure-store:
-        specifier: ~55.0.14
-        version: 55.0.14(expo@56.0.12)
+        specifier: ~56.0.4
+        version: 56.0.4(expo@56.0.12)
       expo-sharing:
         specifier: ~55.0.20
         version: 55.0.20(expo@56.0.12)(react-native@0.86.0)(react@19.2.0)
@@ -6637,8 +6637,8 @@ packages:
       - typescript
     dev: false
 
-  /expo-secure-store@55.0.14(expo@56.0.12):
-    resolution: {integrity: sha512-OKp9pDiTa4kgChop8+pTRJGBPhkJUcAxP5c6JbivNr4bmx3I+gKmAj1ov4KOXkY95TpWdHO+GQ4+0BgSY2P3JQ==}
+  /expo-secure-store@56.0.4(expo@56.0.12):
+    resolution: {integrity: sha512-hjEi/gmpdFFJ9lYbdp3k3p/WchV7Gi0Qt8jt/m/0WJadqQrskafHAlDxbZkII1cN3Yd7zp9Lvkeq3UfGhSwirQ==}
     peerDependencies:
       expo: '*'
     dependencies:
