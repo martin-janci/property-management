@@ -13,7 +13,9 @@ import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
 import type { AccessScope } from './DocumentPermissionsScreen';
 import { MoveDocumentSheet } from './MoveDocumentSheet';
+import { MoveFolderSheet } from './MoveFolderSheet';
 import { NewFolderSheet } from './NewFolderSheet';
+import { RenameFolderSheet } from './RenameFolderSheet';
 
 export type DocumentType = 'folder' | 'pdf' | 'image' | 'document' | 'spreadsheet';
 export type DocumentStatus = 'published' | 'draft' | 'archived';
@@ -207,10 +209,14 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
   const [showNewFolder, setShowNewFolder] = useState(false);
   /** Document targeted for a move operation (gap-7a-2). Null = sheet closed. */
   const [moveTarget, setMoveTarget] = useState<Document | null>(null);
+  /** Folder targeted for rename. Null = sheet closed. */
+  const [renameTarget, setRenameTarget] = useState<Document | null>(null);
+  /** Folder targeted for move-to-new-parent. Null = sheet closed. */
+  const [moveFolderTarget, setMoveFolderTarget] = useState<Document | null>(null);
 
   const currentFolder = currentPath.length > 0 ? currentPath[currentPath.length - 1] : null;
 
-  // ── Live folder hierarchy (gap-7a-2) ──────────────────────────────────────
+  // ── Live folder hierarchy (gap-7a-2) ────────────────────────────────────────────
   // Drives the breadcrumb drill-down. Tenant scoping is enforced server-side
   // by the RLS connection behind GET /api/v1/documents/folders/tree.
   const {
@@ -229,7 +235,7 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
 
   const folderTree = folderData?.tree ?? [];
 
-  // ── Documents in the current folder ───────────────────────────────────────
+  // ── Documents in the current folder ───────────────────────────────────────────
   // When inside a folder we scope the list by `folder_id`. At the root we omit
   // it (the endpoint then returns every document) and filter client-side to
   // the ones with no parent, so the root view shows only top-level documents.
@@ -492,9 +498,28 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
                     {doc.accessScope ? <AudienceScopeBadge scope={doc.accessScope} /> : null}
                   </View>
                   <View style={styles.rowActions}>
-                    {/* Permissions detail button — documents only (folders
-                        have no per-document RLS scope to inspect). */}
-                    {doc.type !== 'folder' ? (
+                    {/* Folder actions: rename + move-to-new-parent */}
+                    {doc.type === 'folder' ? (
+                      <>
+                        <Pressable
+                          style={styles.folderActionButton}
+                          onPress={() => setRenameTarget(doc)}
+                          hitSlop={8}
+                        >
+                          <Text style={styles.folderActionIcon}>✎</Text>
+                        </Pressable>
+                        <Pressable
+                          style={styles.folderActionButton}
+                          onPress={() => setMoveFolderTarget(doc)}
+                          hitSlop={8}
+                        >
+                          <Text style={styles.folderActionIcon}>↗</Text>
+                        </Pressable>
+                        <Text style={styles.arrowIcon}>›</Text>
+                      </>
+                    ) : (
+                      /* Permissions detail button — documents only (folders
+                         have no per-document RLS scope to inspect). */
                       <>
                         <Pressable
                           style={styles.moveButton}
@@ -512,16 +537,14 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
                         >
                           <Text style={styles.permissionsIcon}>🔒</Text>
                         </Pressable>
+                        {downloading === doc.id ? (
+                          <View style={styles.downloadingIndicator}>
+                            <Text style={styles.downloadingText}>...</Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.downloadIcon}>⬇️</Text>
+                        )}
                       </>
-                    ) : null}
-                    {doc.type === 'folder' ? (
-                      <Text style={styles.arrowIcon}>›</Text>
-                    ) : downloading === doc.id ? (
-                      <View style={styles.downloadingIndicator}>
-                        <Text style={styles.downloadingText}>...</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.downloadIcon}>⬇️</Text>
                     )}
                   </View>
                 </Pressable>
@@ -554,6 +577,34 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
           onClose={() => setMoveTarget(null)}
           onMoved={() => {
             void onRefresh();
+          }}
+        />
+      )}
+
+      {/* Rename-folder sheet (feat-folder-organization-document-mobile) */}
+      {renameTarget !== null && (
+        <RenameFolderSheet
+          visible={renameTarget !== null}
+          folderId={renameTarget.id}
+          currentName={renameTarget.name}
+          onClose={() => setRenameTarget(null)}
+          onRenamed={() => {
+            void refetchFolders();
+          }}
+        />
+      )}
+
+      {/* Move-folder sheet (feat-folder-organization-document-mobile) */}
+      {moveFolderTarget !== null && (
+        <MoveFolderSheet
+          visible={moveFolderTarget !== null}
+          folderId={moveFolderTarget.id}
+          folderName={moveFolderTarget.name}
+          currentParentId={moveFolderTarget.parentId}
+          folderTree={folderTree}
+          onClose={() => setMoveFolderTarget(null)}
+          onMoved={() => {
+            void refetchFolders();
           }}
         />
       )}
@@ -702,7 +753,7 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: 100,
   },
-  // ── Header actions ──────────────────────────────────────────────────────
+  // ── Header actions ────────────────────────────────────────────────────────
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -719,7 +770,7 @@ const styles = StyleSheet.create({
   newFolderButtonText: {
     fontSize: 16,
   },
-  // ── Move button ──────────────────────────────────────────────────────────
+  // ── Move button ─────────────────────────────────────────────────────────────────
   moveButton: {
     padding: 4,
   },
@@ -727,7 +778,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textMuted,
   },
-  // ── Audience filter strip (gap-7a-3) ──────────────────────────────────────
+  // ── Audience filter strip (gap-7a-3) ────────────────────────────────────────────
   audienceFilterContainer: {
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -765,7 +816,7 @@ const styles = StyleSheet.create({
   audienceChipTextActive: {
     color: colors.white,
   },
-  // ── Row actions / permissions button ──────────────────────────────────────
+  // ── Row actions / permissions button ──────────────────────────────────────────
   rowActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -785,6 +836,14 @@ const styles = StyleSheet.create({
   },
   downloadingText: {
     fontSize: 14,
+    color: colors.textMuted,
+  },
+  // ── Folder action buttons (rename / move-folder) ───────────────────────────────────────
+  folderActionButton: {
+    padding: 4,
+  },
+  folderActionIcon: {
+    fontSize: 16,
     color: colors.textMuted,
   },
 });

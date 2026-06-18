@@ -44,6 +44,8 @@ interface FaultCardProps {
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onTriage?: (id: string) => void;
+  /** Delete the fault (only available for 'new' status faults). */
+  onDelete?: (id: string) => void;
 }
 
 const statusPillClass: Record<FaultStatus, string> = {
@@ -95,9 +97,10 @@ const priorityLabels: Record<FaultPriority, string> = {
   urgent: 'Urgent',
 };
 
-export function FaultCard({ fault, onView, onEdit, onTriage }: FaultCardProps) {
+export function FaultCard({ fault, onView, onEdit, onTriage, onDelete }: FaultCardProps) {
   const canEdit = fault.status === 'new';
   const canTriage = fault.status === 'new';
+  const canDelete = fault.status === 'new';
 
   return (
     <div className="fault-card">
@@ -151,6 +154,15 @@ export function FaultCard({ fault, onView, onEdit, onTriage }: FaultCardProps) {
         {canTriage && (
           <button type="button" onClick={() => onTriage?.(fault.id)} className="fault-card__action">
             Triage
+          </button>
+        )}
+        {canDelete && (
+          <button
+            type="button"
+            onClick={() => onDelete?.(fault.id)}
+            className="fault-card__action fault-card__action--delete"
+          >
+            Delete
           </button>
         )}
       </div>
