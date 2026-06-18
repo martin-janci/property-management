@@ -26,6 +26,8 @@ interface FaultListProps {
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onTriage: (id: string) => void;
+  /** Delete a fault (only shown for 'new' status faults). Wired to useDeleteFault in route wrapper. */
+  onDelete?: (id: string) => void;
   onCreate: () => void;
 }
 
@@ -79,6 +81,7 @@ export function FaultList({
   onView,
   onEdit,
   onTriage,
+  onDelete,
   onCreate,
 }: FaultListProps) {
   const { t } = useTranslation();
@@ -195,6 +198,7 @@ export function FaultList({
               onView={onView}
               onEdit={onEdit}
               onTriage={onTriage}
+              onDelete={onDelete}
             />
           ))}
         </div>
