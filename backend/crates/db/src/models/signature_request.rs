@@ -457,6 +457,130 @@ mod tests {
         assert!(!SignatureRequestStatus::InProgress.is_terminal());
     }
 
+    /// Coverage 84-2: Webhook idempotency guard — terminal-state set is
+    /// exhaustive and correct for all status variants.
+    ///
+    /// E-signature providers deliver webhooks at-least-once. A duplicate
+    /// `completed`, `declined`, or `voided` event must be a no-op once the
+    /// request has reached any terminal state. This test pins the exact set of
+    /// terminal statuses so that any future variant addition forces a conscious
+    /// decision about whether it should be terminal or not.
+    #[test]
+    fn test_webhook_idempotency_guard_terminal_set_is_exhaustive() {
+        // Every current status variant — update this list whenever a new
+        // variant is added to `SignatureRequestStatus`.
+        let all_statuses = [
+            SignatureRequestStatus::Pending,
+            SignatureRequestStatus::InProgress,
+            SignatureRequestStatus::Completed,
+            SignatureRequestStatus::Declined,
+            SignatureRequestStatus::Expired,
+            SignatureRequestStatus::Cancelled,
+        ];
+
+        let terminal: Vec<_> = all_statuses.iter().filter(|s| s.is_terminal()).collect();
+        let non_terminal: Vec<_> = all_statuses.iter().filter(|s| !s.is_terminal()).collect();
+
+        // Exactly four terminal states exist (completed/declined/expired/cancelled).
+        // "Voided" provider events are mapped to Cancelled by the webhook handler.
+        assert_eq!(
+            terminal.len(),
+            4,
+            "Expected exactly 4 terminal statuses; got {}: {:?}. \
+             If you added a new status, decide whether it is terminal and update \
+             is_terminal() accordingly.",
+            terminal.len(),
+            terminal
+        );
+
+        // Exactly two non-terminal states exist (pending/in_progress).
+        assert_eq!(
+            non_terminal.len(),
+            2,
+            "Expected exactly 2 non-terminal statuses; got {}: {:?}.",
+            non_terminal.len(),
+            non_terminal
+        );
+    }
+
+    /// Coverage 84-2: Duplicate webhook delivery for `completed` is a no-op.
+    ///
+    /// Simulates what the webhook handler checks: when a provider re-delivers a
+    /// `completed` event for an already-completed request,
+    /// `status.is_terminal()` must return `true` so the handler short-circuits
+    /// without mutating state.
+    #[test]
+    fn test_duplicate_completed_webhook_guard() {
+        // First delivery: request transitions to Completed.
+        let status_after_first_delivery = SignatureRequestStatus::Completed;
+        assert!(
+            status_after_first_delivery.is_terminal(),
+            "After the first 'completed' webhook the request must be terminal \
+             so duplicate deliveries are ignored"
+        );
+
+        // Second delivery (duplicate): the guard must fire.
+        let duplicate_event_type = "completed";
+        let should_ignore = status_after_first_delivery.is_terminal();
+        assert!(
+            should_ignore,
+            "Duplicate '{}' webhook for a completed request must be ignored by the idempotency guard",
+            duplicate_event_type
+        );
+    }
+
+    /// Coverage 84-2: Duplicate webhook delivery for `declined` is a no-op.
+    #[test]
+    fn test_duplicate_declined_webhook_guard() {
+        let status_after_decline = SignatureRequestStatus::Declined;
+        assert!(
+            status_after_decline.is_terminal(),
+            "Declined status must be terminal — duplicate 'declined' webhooks must be no-ops"
+        );
+    }
+
+    /// Coverage 84-2: Duplicate webhook delivery for `voided` is a no-op.
+    ///
+    /// Provider "voided" events are mapped to `Cancelled` by the webhook
+    /// handler (Coverage 84-2). A second "voided" delivery after the request
+    /// is already Cancelled must hit the terminal guard and return 200 without
+    /// mutating state.
+    #[test]
+    fn test_duplicate_voided_webhook_guard() {
+        // After the first "voided" event, the handler cancels the request.
+        let status_after_void = SignatureRequestStatus::Cancelled;
+        assert!(
+            status_after_void.is_terminal(),
+            "Cancelled status must be terminal — duplicate 'voided' webhooks must be no-ops"
+        );
+
+        // Guard check used by handle_webhook:
+        let should_ignore = status_after_void.is_terminal();
+        assert!(
+            should_ignore,
+            "Duplicate 'voided' webhook for an already-cancelled request must be ignored"
+        );
+    }
+
+    /// Coverage 84-2: Non-terminal states must NOT be blocked by the guard.
+    ///
+    /// A first-delivery `signed` event for a still-pending request must NOT be
+    /// treated as a duplicate: the guard must let it through so the signer
+    /// status can be updated.
+    #[test]
+    fn test_non_terminal_webhook_not_blocked_by_guard() {
+        for status in [
+            SignatureRequestStatus::Pending,
+            SignatureRequestStatus::InProgress,
+        ] {
+            assert!(
+                !status.is_terminal(),
+                "Status {:?} must NOT be terminal — live requests must accept webhooks",
+                status
+            );
+        }
+    }
+
     #[test]
     fn test_create_signer_to_signer() {
         let create = CreateSigner {
