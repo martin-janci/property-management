@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-18T16:26:11Z",
+  "generated": "2026-06-18T18:13:31Z",
   "assignments": [
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -222,7 +222,7 @@
       "branch": "auto-impl/feat-build-configuration-by-environ-app-",
       "status": "review",
       "claimed_at": "2026-06-18T04:13:36Z",
-      "last_updated": "2026-06-18T16:26:11Z",
+      "last_updated": "2026-06-18T18:13:31Z",
       "status_changed_at": "2026-06-18T05:08:02Z",
       "pr_number": 1554,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1554",
@@ -234,7 +234,7 @@
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": 1,
+      "rebase_attempts": 2,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
@@ -244,7 +244,7 @@
       "branch": "auto-impl/feat-booking-integration-rate-availabili",
       "status": "review",
       "claimed_at": "2026-06-18T06:11:27Z",
-      "last_updated": "2026-06-18T16:26:11Z",
+      "last_updated": "2026-06-18T18:13:31Z",
       "status_changed_at": "2026-06-18T06:24:54Z",
       "pr_number": 1560,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1560",
@@ -256,7 +256,7 @@
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": 1,
+      "rebase_attempts": 2,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
