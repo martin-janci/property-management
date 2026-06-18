@@ -940,20 +940,21 @@
       "title": "Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #963"
       ],
       "evidence": [
-        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response"
+        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response",
+        "decayed: -1 (no new signals in 14 days) on 2026-06-18"
       ],
       "files": [
         "backend/servers/api-server/src/main.rs",
         "backend/crates/api-core/src/middleware/security_headers.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -1010,20 +1011,21 @@
       "title": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #959",
         "issue #953"
       ],
       "evidence": [
-        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up"
+        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up",
+        "decayed: -1 (no new signals in 14 days) on 2026-06-18"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/listings.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -2297,8 +2299,8 @@
       "title": "Dispatcher action-list.json corruption when MCP push falls back from blocked git push",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1014"
       ],
@@ -2306,14 +2308,15 @@
         "Issue #1014 (no labels, OPEN): dispatcher Phase 6 push to dev hit HTTP-403 git proxy block, fell back to MCP push_files; ~92 KB action-list.json could not be transmitted inline → file truncated to 1-2 item stub on dev",
         "assignments.json (9 KB) and gc1-orphan-triage.md (1.5 KB) pushed byte-exact; only action-list.json corrupted",
         "recovery already performed via PRs #1024 (assignments-archive restore) and #1027 + 2efc885f (action-list restore from 704ea44); but the systemic issue remains: dispatcher's MCP fallback can corrupt files >~tens of KB",
-        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy"
+        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy",
+        "decayed: -1 → score 0, dropped on 2026-06-18 (no new signals in 14 days)"
       ],
       "files": [
         ".research/management/action-list.json",
         ".research/dispatcher-prompt.md"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -2321,17 +2324,18 @@
       "title": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#951"
       ],
       "evidence": [
-        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed"
+        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed",
+        "decayed: -1 → score 0, dropped on 2026-06-18 (no new signals in 14 days)"
       ],
       "files": [],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -3944,6 +3948,96 @@
       "files": [],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1539-oauth-public-client",
+      "title": "OAuth public-client client_secret reject hotfix (PR #1539) shipped without a regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1539"
+      ],
+      "evidence": [
+        "PR #1539 fix(oauth): reject public client supplying a client_secret with invalid_client — single-file change to backend/servers/api-server/src/routes/oauth.rs (+13/-8); no *test* file in the PR diff. Security-adjacent (OAuth client-auth boundary) — needs a regression test asserting (a) public client + client_secret -> 401 invalid_client, and (b) confidential client + matching secret -> success."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1545-reality-web-prerender",
+      "title": "Reality-web /accounting force-dynamic prerender hotfix (PR #1545) shipped without a prerender regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1545"
+      ],
+      "evidence": [
+        "PR #1545 fix(reality-web): unbreak production build — added frontend/apps/reality-web/src/app/accounting/layout.tsx with force-dynamic + provider tree + pl/hu i18n keys. No test file. Per-route prerender contract or build-smoke would have caught the SSG QueryClient crash before merge — add one (Vitest assertion that the segment exports dynamic = 'force-dynamic', or a build-time smoke that next build + grep the build manifest)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
+      "plan": null
+    },
+    {
+      "id": "dx-dispatcher-self-approve-gate-blocking-merges",
+      "title": "Dispatcher reviewer cannot self-approve own implementer PRs — verdict=approve lands as comment, auto-merge never fires (buffer wedge)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "trigger 2026-06-18 buffer-low",
+        ".research/management/assignments.json"
+      ],
+      "evidence": [
+        "Trigger payload: 'buffer-low: claimable=5/72 — refill planner (merge pipeline wedged: self-approve gate + dev-baseline CI red #1332 recurrence)'.",
+        "5 reviewed PRs in assignments.json (#1554, #1555, #1556, #1557, #1558) carry reviewer_summary verdict=approve note=... posted as comment (self-approve blocked). These PRs sit in draft with no APPROVED reviewDecision, so auto-merge never engages.",
+        "Root cause: GitHub blocks an author from approving their own PR; the dispatcher's reviewer agent runs under the same identity as the implementer. The reviewer falls back to posting a comment with verdict=approve, but no downstream automation converts that comment to an actual approval.",
+        "Mitigation candidates: (a) use a separate bot identity for the reviewer step (e.g. a GH App or PAT bound to a different user) so it can formally approve; (b) wire a self-managed approvals workflow that promotes 'verdict=approve' comments to PR approvals via a privileged GH App; (c) flip implementer PRs to ready-for-review and require human approval (kills the autonomy gain). Track decision under .research/management/decisions.md."
+      ],
+      "files": [
+        ".research/management/assignments.json",
+        ".github/workflows/auto-approve.yml"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
+      "plan": null
+    },
+    {
+      "id": "bug-dev-baseline-ci-test-job-red-1332-recurrence",
+      "title": "Backend `test` CI job red on dev baseline (#1332 recurrence) — blocks auto-merge across every open PR",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "trigger 2026-06-18",
+        "GH issue #1332",
+        "reviewer comments on PR #1556, #1558"
+      ],
+      "evidence": [
+        "Trigger payload names '#1332 recurrence' as one of two reasons the merge pipeline is wedged.",
+        "Issue #1332 (filed 2026-06-12, closed 2026-06-17) documented the same shared/systemic failure pattern: backend `test` job red on every open auto-impl PR at ~40min while every other job green; likely root cause runner /tmp disk exhaustion mid cargo test (Cargo target+Postgres data).",
+        "Reviewer comments on PR #1556 and #1558 (2026-06-18) explicitly attribute test-job red to 'dev-baseline #1332 not this PR' — the failure mode has returned.",
+        "Suggested actions (from #1332): (a) inspect a failing test job log directly to capture the failing test / OOM / disk error; (b) if disk, prune Cargo caches on the runner or shard the backend test job (`cargo test --test ... --no-default-features` per-crate matrix); (c) if a real test merged red, fix-forward on dev."
+      ],
+      "files": [
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
       "plan": null
     }
   ]

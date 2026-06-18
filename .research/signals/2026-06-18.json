@@ -1,0 +1,184 @@
+{
+  "generated_at": "2026-06-18T08:15:00Z",
+  "trigger_text": "buffer-low: claimable=5/72 — refill planner (merge pipeline wedged: self-approve gate + dev-baseline CI red #1332 recurrence)",
+  "lag_hours": 52,
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "Last run 2026-06-16T03:25:00Z → 52h lag; >36h warning, <72h stale-alert. Routine missed daily run for 2026-06-17 (no brief on disk).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "hotfix-no-test-pr-1539",
+      "type": "hotfix-no-test",
+      "source": "PR #1539",
+      "score_delta": 2,
+      "evidence": "PR #1539 `fix(oauth): reject public client supplying a client_secret with invalid_client` — single-file change to backend/servers/api-server/src/routes/oauth.rs (+13/-8); no *test* file in the PR diff. Hotfixes the public-client gate to short-circuit with invalid_client instead of routing into validate_client_credentials (which would surface server_error). Security-adjacent (OAuth client-auth boundary) but no regression test landed.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1545",
+      "type": "hotfix-no-test",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 `fix(reality-web): unbreak production build — /accounting QueryClient prerender + favorites pl/hu i18n` — adds frontend/apps/reality-web/src/app/accounting/layout.tsx with force-dynamic + provider tree, plus messages/{pl,hu}.json keys. No test file. A force-dynamic regression guard (e.g. build smoke or per-route prerender contract) would have caught the original SSG QueryClient crash before merge.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ]
+    },
+    {
+      "id": "dispatcher-self-approve-gate-blocking-merges-2026-06-18",
+      "type": "merge-pipeline-wedge",
+      "source": "trigger payload + .research/management/assignments.json",
+      "score_delta": 3,
+      "evidence": "Trigger payload: 'buffer-low: claimable=5/72 — refill planner (merge pipeline wedged: self-approve gate + dev-baseline CI red #1332 recurrence)'. 5 reviewed PRs in assignments.json (#1554, #1555, #1556, #1557, #1558) carry reviewer_summary 'verdict=approve … posted as comment (self-approve blocked)'. The dispatcher's reviewer cannot self-approve its own implementer PRs, so verdict=approve only lands as a comment — the GitHub PR never reaches reviewDecision=APPROVED and never enters auto-merge. With ≥5 PRs blocked, dispatcher buffer drops to 5/72 claimable.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dev-baseline-ci-test-red-1332-recurrence-2026-06-18",
+      "type": "ci-baseline-red",
+      "source": "trigger payload + GH issue #1332",
+      "score_delta": 3,
+      "evidence": "Trigger payload references #1332 recurrence. Issue #1332 (closed 2026-06-17) documented backend `test` job red on every open auto-impl PR — same shared/systemic failure pattern (test job ~40min, every other job green). Reviewer notes on #1556/#1558 cite 'test-job red is dev-baseline #1332 not this PR' as of 2026-06-18. Issue was closed but the failure mode has returned, blocking auto-merge of any PR that runs full CI. Per issue body the root cause is likely runner /tmp disk exhaustion mid cargo test.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        ".github/workflows/backend.yml"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no allowlist match — merge-pipeline-wedge + ci-baseline-red signals are not in the auto-fix allowlist (allowlist covers screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift dep-update, stalled-review). Both wedge issues require human/operator action, not a mechanical fix.",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-18.md && head -1 == # 2026-06-18",
+      "observed": "both true",
+      "expected": "both true"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "last_pr_seen 1439->1564, last_issue_seen 1437->1538, seen_signals 230->235",
+      "expected": "any cursor advanced"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true (180 unique)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no signal id in prior seen_signals re-scored",
+      "observed": "all 5 new signal ids are fresh",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8 AND decay applied to >=14d items",
+      "observed": "max score 6 (terminal); 4 items decayed/dropped",
+      "expected": "both"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no new plans",
+      "observed": "0 new",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "n/a — no new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-hostname grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phases failed",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "no deletions",
+      "expected": "all retained"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count >= HEAD count",
+      "observed": "6 == 6",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty + kill switch unset",
+      "observed": "[]",
+      "expected": "per cap"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "n/a — Phase 1.6 skipped this run",
+      "observed": "pm_cursor unchanged",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token literal grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
