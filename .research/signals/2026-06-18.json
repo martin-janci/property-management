@@ -1,0 +1,192 @@
+{
+  "date": "2026-06-18",
+  "generated_at": "2026-06-18T22:25:17Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Routine last ran 2026-06-16T03:25:00Z (~66h ago) — exceeds 36h threshold; one daily cycle missed."
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "rental.rs touched in 8 commits this run (enum cast fixes BIT-118, GUEST/CALENDAR_BLOCK/ICAL_FEED_COLUMNS, NULL-fee bookings); first hotspot appearance."
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-18",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "document.rs touched in 8 commits this run (u.name fix, ::text cast on category, get-by-id read path); cumulative re-emit — runs_seen 1→2 since 2026-06-10; score_delta=0 per dedup rule for cumulative signals."
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "document.rs runs_seen=1→2 (last 2026-06-10) — instability proxy."
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-18",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "booking.rs touched in 6 commits this run (Retry-After/timeout, encryption, OTA rate/availability push); cumulative re-emit — runs_seen 1→2 since 2026-06-12; score_delta=0 per dedup rule."
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "booking.rs runs_seen=1→2 (last 2026-06-12) — Booking.com integration is the most churned single file this run."
+    },
+    {
+      "id": "hotfix-no-test-pr-1582-mobile-folder-wiring",
+      "type": "hotfix-no-test",
+      "source": "PR #1582",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "fix(mobile) PR #1582 wired useFolderTree / FOLDER_TREE_QUERY_KEY into document screens (closes #1532) — 4 .ts/.tsx files changed, zero test files. Follow-up issue #1590 explicitly filed: 'pin-test asserts the constant, not the wiring; stale test comment' — confirms the test-gap (the pre-existing pin-test guards the constant, not that the screens actually call the hook)."
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/$today.md && head -1 ...",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq ... state advances vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] | (length == (unique | length))",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative seen id with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay verified",
+      "observed": "all open items > 14d either decayed or dropped; no score > 8",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; vacuous true",
+      "observed": "0 new plans",
+      "expected": "every new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A | grep plans | grep -c \\.md$",
+      "observed": "0 new plans <= 2",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "post-stage check",
+      "observed": "0 non-research files staged",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "post-stage check",
+      "observed": "0 secret matches",
+      "expected": "0 secrets"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists skipped Phase 1.5/1.6 with reasoning; review_cursor not advanced",
+      "observed": "honored",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all HEAD plans present in working tree (plans/ or _archive/)",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "[ archive_count >= HEAD_archive_count ]",
+      "observed": "7 >= 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (no auto-fix this run)",
+      "observed": "0 actions; allowlist not met",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "post-stage check",
+      "observed": "0 telegram tokens",
+      "expected": "0 telegram tokens"
+    }
+  ]
+}
