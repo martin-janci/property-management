@@ -1392,15 +1392,16 @@ pub mod ota_xml {
 <OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
   <AvailStatusMessages HotelCode="&inj;"/>
 </OTA_HotelAvailNotifRQ>"#;
-            // Whether the parser errors or drops the field, the sentinel must
-            // never appear — the entity is not expanded.
-            if let Ok(parsed) = parse_avail_notif_rq(xml) {
-                assert!(
-                    !parsed.hotel_code.contains("INJECTED_SENTINEL"),
-                    "internal entity was expanded into HotelCode: {:?}",
-                    parsed.hotel_code
-                );
-            }
+            // Pin the concrete safe outcome (not just "no sentinel", which is
+            // vacuously true for an empty/errored result): parsing must still
+            // SUCCEED and the poisoned attribute must be dropped to empty — the
+            // custom entity is never resolved/expanded. #1591
+            let parsed =
+                parse_avail_notif_rq(xml).expect("DTD input must still parse (entity dropped)");
+            assert_eq!(
+                parsed.hotel_code, "",
+                "internal entity must be dropped to empty, not expanded into HotelCode"
+            );
         }
 
         #[test]
@@ -1412,13 +1413,11 @@ pub mod ota_xml {
 <OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
   <AvailStatusMessages HotelCode="&xxe;"/>
 </OTA_HotelAvailNotifRQ>"#;
-            if let Ok(parsed) = parse_avail_notif_rq(xml) {
-                assert!(
-                    !parsed.hotel_code.contains("root:") && !parsed.hotel_code.contains('/'),
-                    "external entity disclosed file contents into HotelCode: {:?}",
-                    parsed.hotel_code
-                );
-            }
+            let parsed = parse_avail_notif_rq(xml).expect("DTD input must still parse");
+            assert_eq!(
+                parsed.hotel_code, "",
+                "external entity must yield no value (no file contents, no expansion)"
+            );
         }
 
         #[test]
@@ -1428,13 +1427,11 @@ pub mod ota_xml {
 <OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
   <RateAmountMessages HotelCode="&xxe;"/>
 </OTA_HotelRateAmountNotifRQ>"#;
-            if let Ok(parsed) = parse_rate_amount_notif_rq(xml) {
-                assert!(
-                    !parsed.hotel_code.contains("root:") && !parsed.hotel_code.contains('/'),
-                    "external entity disclosed file contents into HotelCode: {:?}",
-                    parsed.hotel_code
-                );
-            }
+            let parsed = parse_rate_amount_notif_rq(xml).expect("DTD input must still parse");
+            assert_eq!(
+                parsed.hotel_code, "",
+                "external entity must yield no value (no file contents, no expansion)"
+            );
         }
 
         #[test]
@@ -1452,18 +1449,11 @@ pub mod ota_xml {
 <OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
   <AvailStatusMessages HotelCode="&lol4;"/>
 </OTA_HotelAvailNotifRQ>"#;
-            if let Ok(parsed) = parse_avail_notif_rq(xml) {
-                assert!(
-                    parsed.hotel_code.len() < 64,
-                    "billion-laughs amplified HotelCode to {} bytes",
-                    parsed.hotel_code.len()
-                );
-                assert!(
-                    !parsed.hotel_code.contains("lollol"),
-                    "billion-laughs entity expanded: {:?}",
-                    parsed.hotel_code
-                );
-            }
+            let parsed = parse_avail_notif_rq(xml).expect("DTD input must still parse");
+            assert_eq!(
+                parsed.hotel_code, "",
+                "billion-laughs entity must not amplify (or appear at all) in HotelCode"
+            );
         }
 
         #[test]
