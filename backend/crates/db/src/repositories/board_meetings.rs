@@ -135,7 +135,7 @@ impl BoardMeetingRepository {
             r#"
             SELECT
                 bm.id, bm.user_id, bm.role, bm.title,
-                u.full_name as user_name, u.email as user_email,
+                u.name as user_name, u.email as user_email,
                 bm.term_start, bm.term_end, bm.is_active
             FROM board_members bm
             LEFT JOIN users u ON u.id = bm.user_id
@@ -892,7 +892,7 @@ impl BoardMeetingRepository {
             r#"
             SELECT
                 mm.id, mm.motion_number, mm.title, mm.status,
-                u.full_name as proposed_by_name,
+                u.name as proposed_by_name,
                 mm.votes_in_favor, mm.votes_opposed, mm.votes_abstain,
                 mm.created_at
             FROM meeting_motions mm

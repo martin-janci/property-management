@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { type ApiFolderTreeNode, useFolderTree } from '../../hooks/useFolderTree';
 import { colors } from '../shared/screenStyles';
 import type { AccessScope } from './DocumentPermissionsScreen';
 import { MoveDocumentSheet } from './MoveDocumentSheet';
@@ -82,23 +83,10 @@ interface ApiDocumentListResponse {
   total?: number;
 }
 
-/**
- * Node of `GET /api/v1/documents/folders/tree` (`FolderTreeNode` on the
- * server). The server nests children under each node; `parent_id` is the
- * id of the containing folder (null for root-level folders) and
- * `document_count` is the number of documents directly in the folder.
- */
-export interface ApiFolderTreeNode {
-  id: string;
-  name: string;
-  parent_id?: string | null;
-  document_count: number;
-  children?: ApiFolderTreeNode[] | null;
-}
-
-interface ApiFolderTreeResponse {
-  tree: ApiFolderTreeNode[];
-}
+// `ApiFolderTreeNode` is owned by the folder-tree hook (the data layer it
+// describes). Re-exported here so existing `./DocumentsScreen` importers
+// (index barrel, sheets, tests) keep working without a screen→hook coupling.
+export type { ApiFolderTreeNode };
 
 /** Lightweight breadcrumb entry: just enough to render + look up children. */
 interface FolderCrumb {
@@ -220,20 +208,12 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
   // Drives the breadcrumb drill-down. Tenant scoping is enforced server-side
   // by the RLS connection behind GET /api/v1/documents/folders/tree.
   const {
-    data: folderData,
+    folderTree,
     isLoading: foldersLoading,
     error: foldersError,
     refetch: refetchFolders,
     isFetching: foldersFetching,
-  } = useApiQuery<ApiFolderTreeResponse>(
-    ['documents', 'folders', 'tree'],
-    '/api/v1/documents/folders/tree',
-    {
-      staleTime: 60_000,
-    }
-  );
-
-  const folderTree = folderData?.tree ?? [];
+  } = useFolderTree();
 
   // ── Documents in the current folder ───────────────────────────────────────────
   // When inside a folder we scope the list by `folder_id`. At the root we omit

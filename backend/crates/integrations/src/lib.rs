@@ -56,9 +56,10 @@ pub use booking::{
     BookingAddress, BookingClient, BookingContact, BookingCredentials, BookingError, BookingGuest,
     BookingOAuthClient, BookingOAuthConfig, BookingOAuthTokens, BookingProperty,
     BookingReservation, BookingReservationStatus, BookingRoomType, LosRestrictions,
-    OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelResNotifRQ, OtaHotelResNotifRS, OtaReadRQ,
-    OtaReadRS, OtaReservationNotification, PropertyMapping, PushOutcome, RateUpdate,
-    RoomTypeMapping, BOOKING_OAUTH_AUTH_URL, BOOKING_OAUTH_TOKEN_URL,
+    OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelRateAmountNotifRQ,
+    OtaHotelRateAmountNotifRS, OtaHotelResNotifRQ, OtaHotelResNotifRS, OtaReadRQ, OtaReadRS,
+    OtaReservationNotification, PropertyMapping, PushOutcome, RateUpdate, RoomTypeMapping,
+    BOOKING_OAUTH_AUTH_URL, BOOKING_OAUTH_TOKEN_URL,
 };
 
 // Story 83.3: Portal Webhooks

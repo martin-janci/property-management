@@ -34,11 +34,8 @@ import {
   View,
 } from 'react-native';
 import { useApiMutation } from '../../hooks/useApi';
+import { type ApiFolderTreeNode, FOLDER_TREE_QUERY_KEY } from '../../hooks/useFolderTree';
 import { colors } from '../shared/screenStyles';
-// `ApiFolderTreeNode` is the canonical folder-tree node shape owned by
-// DocumentsScreen. This is a type-only import — erased at compile time, so it
-// does not introduce a runtime circular dependency.
-import type { ApiFolderTreeNode } from './DocumentsScreen';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
@@ -129,7 +126,7 @@ export function MoveDocumentSheet({
 
       // Invalidate both the document list and the folder tree so counts update
       await queryClient.invalidateQueries({ queryKey: ['documents', 'list'] });
-      await queryClient.invalidateQueries({ queryKey: ['documents', 'folders', 'tree'] });
+      await queryClient.invalidateQueries({ queryKey: FOLDER_TREE_QUERY_KEY });
 
       setSelectedId(currentFolderId);
       onMoved();

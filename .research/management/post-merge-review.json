@@ -1,9 +1,103 @@
 {
-  "generated": "2026-06-11T22:26:30Z",
+  "generated": "2026-06-18T16:21:42Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-06-18T16:21:42Z",
+      "prs_scanned": 15,
+      "clean": [
+        1578,
+        1579
+      ],
+      "with_issues": [
+        {
+          "pr": 1582,
+          "issue": 1590,
+          "findings": 2,
+          "specialist": "frontend",
+          "note": "correctness PASS (constant==old literal, no behavior change); test-only nits: pin-test asserts constant not wiring, stale comment"
+        },
+        {
+          "pr": 1557,
+          "issue": 1589,
+          "findings": 3,
+          "specialist": "frontend",
+          "note": "move-to-root no-op (backend COALESCE ignores null parent_id); flattenTree duplication; utils-only tests; i18n clean"
+        },
+        {
+          "pr": 1555,
+          "issue": 1588,
+          "findings": 4,
+          "specialist": "frontend",
+          "note": "delete needs confirm dialog; use API closed_count not derived; stats stale after delete; test gaps"
+        },
+        {
+          "pr": 1581,
+          "issue": 1592,
+          "findings": 1,
+          "specialist": "devops",
+          "note": "rustfmt-only no-op; CI-process gap: rustfmt lint not a blocking pre-merge gate (#1527/#1523 merged red)"
+        },
+        {
+          "pr": 1580,
+          "issue": 1583,
+          "findings": 3,
+          "specialist": "security",
+          "note": "limiter closes #1523; unbounded-HashMap leak (DoS), audit-action mislabel, test uses global static"
+        },
+        {
+          "pr": 1565,
+          "issue": 1586,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "fix correct but same u.full_name bug still live in board_meetings.rs:138/895; test gap; enum-cast boilerplate"
+        },
+        {
+          "pr": 1564,
+          "issue": 1593,
+          "findings": 1,
+          "specialist": "rust-backend",
+          "note": "key-case OK (non-vacuous); COALESCE-regression catch is timing-probabilistic, suggest deterministic seeded viewed_at"
+        },
+        {
+          "pr": 1561,
+          "issue": 1584,
+          "findings": 5,
+          "specialist": "security",
+          "note": "IDOR claim sound; follow-ups: agency_members bypass, agency_id/user_id mismatch, admit-any-kind untested, extractor dup, per-req users query"
+        },
+        {
+          "pr": 1563,
+          "issue": 1594,
+          "findings": 2,
+          "specialist": "security",
+          "note": "solid SELECT isolation but write-path (INSERT/UPDATE/DELETE WITH CHECK) untested despite grants; minor migration-number typo"
+        },
+        {
+          "pr": 1562,
+          "issue": 1591,
+          "findings": 3,
+          "specialist": "security",
+          "note": "entity/XXE guards pass vacuously (if-let-Ok skips assert); assert ==\"\"; namespace-parity solid"
+        },
+        {
+          "pr": 1552,
+          "issue": 1585,
+          "findings": 3,
+          "specialist": "security",
+          "note": "core fix sound (hole closed, active-membership-scoped, both endpoints); derive role set from TenantRole::is_manager, add airbnb cross-org test, clarify retained _tenant"
+        },
+        {
+          "pr": 1548,
+          "issue": 1587,
+          "findings": 3,
+          "specialist": "frontend",
+          "note": "Harness diverges from real route container; production onError/toast wiring untested; happy-path assertions solid"
+        }
+      ]
+    },
     {
       "run_at": "2026-06-11T22:26:30Z",
       "prs_scanned": 14,

@@ -402,9 +402,18 @@ export function ViewAnnouncementPageInner({ announcementId }: { announcementId: 
   };
 
   // Story 6.3: Comment handlers
+  const optimisticAuthorName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email;
   const handleAddComment = async (content: string, parentId?: string) => {
     try {
-      await createComment.mutateAsync({ announcementId, content, parentId });
+      await createComment.mutateAsync({
+        announcementId,
+        content,
+        parentId,
+        // Optimistic add: placeholder shows immediately, reconciled on settle.
+        optimisticAuthorName,
+        optimisticUserId: user?.id,
+      });
       showToast({
         type: 'success',
         title: t('announcements.commentPosted', { defaultValue: 'Comment posted' }),
