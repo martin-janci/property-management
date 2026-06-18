@@ -101,13 +101,19 @@ impl AccountingRepository {
         conn: &mut sqlx::PgConnection,
         data: CreateInvoice,
     ) -> Result<Invoice, sqlx::Error> {
-        // Calculate totals
+        // Single pass: resolve VAT, round each line to 2dp, and accumulate the
+        // header totals from the SAME rounded values. The invoice_item rows are
+        // stored as NUMERIC(18,2) (rounded by Postgres on insert), so summing
+        // full-precision lines into the header (the old two-loop approach) could
+        // diverge from the sum of the stored rows by up to a cent. Rounding once
+        // here makes the header always equal the sum of the line rows. (#1522)
         let mut total_amount = Decimal::ZERO;
         let mut base_amount = Decimal::ZERO;
         let mut vat_amount = Decimal::ZERO;
+        let mut lines = Vec::with_capacity(data.items.len());
 
-        for mut item in data.items.clone() {
-            // Resolve VAT rate from type if provided
+        for mut item in data.items {
+            // Resolve VAT rate from type if provided.
             if let Some(rate_type) = item.vat_rate_type {
                 item.vat_rate = match data.country.as_deref() {
                     Some("SK") => rate_type.sk_percentage(),
@@ -115,13 +121,15 @@ impl AccountingRepository {
                 };
             }
 
-            let line_base = item.qty * item.unit_price;
-            let line_vat = line_base * (item.vat_rate / Decimal::from(100));
+            let line_base = (item.qty * item.unit_price).round_dp(2);
+            let line_vat = (line_base * (item.vat_rate / Decimal::from(100))).round_dp(2);
             let line_total = line_base + line_vat;
 
             base_amount += line_base;
             vat_amount += line_vat;
             total_amount += line_total;
+
+            lines.push((item, line_base, line_vat, line_total));
         }
 
         let invoice = sqlx::query_as::<_, Invoice>(
@@ -151,19 +159,9 @@ impl AccountingRepository {
         .fetch_one(&mut *conn)
         .await?;
 
-        for mut item in data.items {
-            // Resolve VAT rate from type if provided (again for insertion)
-            if let Some(rate_type) = item.vat_rate_type {
-                item.vat_rate = match data.country.as_deref() {
-                    Some("SK") => rate_type.sk_percentage(),
-                    _ => rate_type.cz_percentage(), // Default to CZ
-                };
-            }
-
-            let line_base = item.qty * item.unit_price;
-            let line_vat = line_base * (item.vat_rate / Decimal::from(100));
-            let line_total = line_base + line_vat;
-
+        // Insert each line from the SAME rounded values used for the header
+        // totals above (single source of truth — no re-resolution, no drift).
+        for (item, line_base, line_vat, line_total) in lines {
             sqlx::query(
                 r#"
                 INSERT INTO invoice_item (
