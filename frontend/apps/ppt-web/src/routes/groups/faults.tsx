@@ -18,7 +18,9 @@ import {
   useConfirmFault,
   useCreateFault,
   useDeleteAttachment,
+  useDeleteFault,
   useFault,
+  useFaultStatistics,
   useFaults,
   useReopenFault,
   useResolveFault,
@@ -197,7 +199,11 @@ function mapApiFaultAttachmentToUi(att: FaultAttachment): UiFaultAttachment {
 /**
  * Route wrapper for faults list page (UC-03, gap-79-1).
  *
- * Wired to useFaults from @ppt/api-client (TanStack Query).
+ * Wired to @ppt/api-client TanStack Query hooks:
+ *   useFaults           — list + pagination + filters (with snake_case→camelCase mapping)
+ *   useDeleteFault      — DELETE /api/v1/faults/:id (new-status faults only)
+ *   useFaultStatistics  — GET /api/v1/faults/statistics (summary bar: total/open/closed)
+ *
  * API FaultSummary uses snake_case and a slightly different status enum;
  * transformApiFaultToUi() bridges the gap to the UI FaultCard type.
  */
@@ -208,6 +214,10 @@ function FaultsPageRoute() {
   const [faultQuery, setFaultQuery] = useState<FaultListQuery>({ page: 1, limit: 10 });
 
   const { data, isLoading, error, refetch } = useFaults(faultQuery);
+  const deleteFault = useDeleteFault();
+  // Statistics are building-wide (no building filter at list level yet); fetched
+  // unconditionally so the summary bar is always up-to-date alongside the list.
+  const { data: statsData } = useFaultStatistics();
 
   useEffect(() => {
     if (error) {
@@ -221,6 +231,23 @@ function FaultsPageRoute() {
 
   const faults = (data?.faults ?? []).map(transformApiFaultToUi);
   const total = data?.count ?? 0;
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteFault.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('faults.deleted', { defaultValue: 'Fault deleted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('faults.deleteFailed', { defaultValue: 'Failed to delete fault' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
 
   // useCallback so child FaultsPage doesn't re-render on every parent render
   // (#486). Status mapping uses the module-level UI_FAULT_STATUS_TO_API.
@@ -245,6 +272,10 @@ function FaultsPageRoute() {
     []
   );
 
+  const stats = statsData
+    ? { total_count: statsData.total_count, open_count: statsData.open_count }
+    : undefined;
+
   return (
     <FaultsPage
       faults={faults}
@@ -254,6 +285,8 @@ function FaultsPageRoute() {
       onRetry={() => {
         void refetch();
       }}
+      onDelete={handleDelete}
+      stats={stats}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
