@@ -44,8 +44,8 @@ importers:
         specifier: ^1.18.0
         version: 1.18.0
       i18next:
-        specifier: ^25.7.3
-        version: 25.10.10(typescript@5.9.3)
+        specifier: ^26.3.1
+        version: 26.3.1(typescript@5.9.3)
       i18next-browser-languagedetector:
         specifier: ^8.2.0
         version: 8.2.1
@@ -57,7 +57,7 @@ importers:
         version: 19.2.0(react@19.2.0)
       react-i18next:
         specifier: ^17.0.8
-        version: 17.0.8(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
+        version: 17.0.8(i18next@26.3.1)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
       react-router-dom:
         specifier: ^6.21.0
         version: 6.30.3(react-dom@19.2.0)(react@19.2.0)
@@ -168,14 +168,14 @@ importers:
         specifier: ~56.0.4
         version: 56.0.4(expo@56.0.12)(react-native@0.86.0)(react@19.2.0)
       i18next:
-        specifier: ^25.7.3
-        version: 25.10.10(typescript@5.9.3)
+        specifier: ^26.3.1
+        version: 26.3.1(typescript@5.9.3)
       react:
         specifier: 19.2.0
         version: 19.2.0
       react-i18next:
         specifier: ^17.0.8
-        version: 17.0.8(i18next@25.10.10)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
+        version: 17.0.8(i18next@26.3.1)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3)
       react-native:
         specifier: 0.86.0
         version: 0.86.0(@babel/core@8.0.1)(@react-native/jest-preset@0.86.0)(@types/react@19.2.14)(react@19.2.0)
@@ -250,8 +250,8 @@ importers:
         specifier: ^3.4.11
         version: 3.4.11
       i18next:
-        specifier: ^25.7.3
-        version: 25.10.10(typescript@5.9.3)
+        specifier: ^26.3.1
+        version: 26.3.1(typescript@5.9.3)
       i18next-browser-languagedetector:
         specifier: ^8.2.0
         version: 8.2.1
@@ -269,7 +269,7 @@ importers:
         version: 7.79.0(react@19.2.0)
       react-i18next:
         specifier: ^17.0.8
-        version: 17.0.8(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
+        version: 17.0.8(i18next@26.3.1)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
       react-pdf:
         specifier: ^10.4.1
         version: 10.4.1(@types/react@19.2.14)(react-dom@19.2.0)(react@19.2.0)
@@ -7144,15 +7144,14 @@ packages:
       '@babel/runtime': 7.29.2
     dev: false
 
-  /i18next@25.10.10(typescript@5.9.3):
-    resolution: {integrity: sha512-cqUW2Z3EkRx7NqSyywjkgCLK7KLCL6IFVFcONG7nVYIJ3ekZ1/N5jUsihHV6Bq37NfhgtczxJcxduELtjTwkuQ==}
+  /i18next@26.3.1(typescript@5.9.3):
+    resolution: {integrity: sha512-txQqd5EULsqEh9OJqRH15aCaOuy/nLJyhw5EHCSKLKJE1aBbb3Zve2+uQIxgWhPm1QqUQoWyQBm2kfmmIrzkcQ==}
     peerDependencies:
       typescript: ^5 || ^6
     peerDependenciesMeta:
       typescript:
         optional: true
     dependencies:
-      '@babel/runtime': 7.29.2
       typescript: 5.9.3
     dev: false
 
@@ -9345,7 +9344,7 @@ packages:
       react: 19.2.0
     dev: false
 
-  /react-i18next@17.0.8(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3):
+  /react-i18next@17.0.8(i18next@26.3.1)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3):
     resolution: {integrity: sha512-0ooKbGLU8JXhe1zwpQUWIeXSgLPOfwJmgheWRIUpcoA0CpyabpGhayjdG+/eA5esC1AQ8h2jWpXjJfzQzeDOCw==}
     peerDependencies:
       i18next: '>= 26.2.0'
@@ -9363,14 +9362,14 @@ packages:
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 3.0.1
-      i18next: 25.10.10(typescript@5.9.3)
+      i18next: 26.3.1(typescript@5.9.3)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
       typescript: 5.9.3
       use-sync-external-store: 1.6.0(react@19.2.0)
     dev: false
 
-  /react-i18next@17.0.8(i18next@25.10.10)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3):
+  /react-i18next@17.0.8(i18next@26.3.1)(react-native@0.86.0)(react@19.2.0)(typescript@5.9.3):
     resolution: {integrity: sha512-0ooKbGLU8JXhe1zwpQUWIeXSgLPOfwJmgheWRIUpcoA0CpyabpGhayjdG+/eA5esC1AQ8h2jWpXjJfzQzeDOCw==}
     peerDependencies:
       i18next: '>= 26.2.0'
@@ -9388,7 +9387,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 3.0.1
-      i18next: 25.10.10(typescript@5.9.3)
+      i18next: 26.3.1(typescript@5.9.3)
       react: 19.2.0
       react-native: 0.86.0(@babel/core@8.0.1)(@react-native/jest-preset@0.86.0)(@types/react@19.2.14)(react@19.2.0)
       typescript: 5.9.3
