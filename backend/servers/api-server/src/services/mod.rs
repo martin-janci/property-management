@@ -36,7 +36,10 @@ pub use notification_pipeline::{
 };
 pub use oauth::{OAuthService, OAuthServiceError};
 #[allow(unused_imports)]
-pub use push_fanout::{FcmConfig, FcmHttpAdapter, PushFanoutConfig, PushFanoutWorker};
+pub use push_fanout::{
+    ApnsConfig, ApnsHttpAdapter, CombinedPushAdapter, FcmConfig, FcmHttpAdapter, PushFanoutConfig,
+    PushFanoutWorker,
+};
 #[allow(unused_imports)]
 pub use quiet_hours_drain::{QuietHoursDrainConfig, QuietHoursDrainWorker};
 pub use scheduler::{Scheduler, SchedulerConfig};
