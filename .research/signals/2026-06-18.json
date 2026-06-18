@@ -1,0 +1,485 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "routine cron",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "Routine last ran 2026-06-16T03:25:00Z \u2014 46h gap; > 36h threshold.",
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-06-16..2026-06-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3714 lines churn in backend/crates/integrations/src/booking.rs this window; runs_seen 1\u21922.",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "backend/crates/integrations/src/booking.rs hit churn top-3 across runs (runs_seen=2); instability proxy.",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-06-16..2026-06-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "3095 lines churn in backend/crates/db/src/repositories/document.rs this window; runs_seen 1\u21922.",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "backend/crates/db/src/repositories/document.rs hit churn top-3 across runs (runs_seen=2); instability proxy.",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "churn analysis 2026-06-16..2026-06-18",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "2961 lines churn in backend/crates/db/src/repositories/rental.rs this window; runs_seen 0\u21921.",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1500",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1500",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "PR #1500 closed unmerged this window \u2014 fix(api-server) IDOR on dispute/violation add_evidence (superseded)",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1503",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1503",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "PR #1503 closed unmerged this window \u2014 fix(tests) seed_membership role arg (superseded by #1517)",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1504",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1504",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "PR #1504 closed unmerged this window \u2014 fix(db) duplicate migration 00181 rename (superseded by #1505)",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1505",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1505",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "PR #1505 closed unmerged this window \u2014 fix(db) rental enum text casts (superseded by #1486/#1492)",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1506",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1506",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "PR #1506 closed unmerged this window \u2014 fix(api-server) booking-oauth seed_membership role (superseded by #1517)",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1511",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "PR #1511 closed unmerged this window \u2014 fix(api-server) clippy lints accounting routes (superseded by #1512)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1538",
+      "type": "untriaged-issue",
+      "source": "issue #1538",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1538 (no labels, OPEN): Backend `test` job is not a required check on `dev` \u2014 red-test PRs merge freely",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1535",
+      "type": "untriaged-issue",
+      "source": "issue #1535",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1535 (no labels, OPEN): Follow-up: cover NULL-fee booking create round-trip + dedupe rental_bookings column projection (PR #1492)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1533",
+      "type": "untriaged-issue",
+      "source": "issue #1533",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1533 (no labels, OPEN): Follow-up: nextPageTriggerFlow in-flight race + missing multi-emission test coverage (PR #1447)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1532",
+      "type": "untriaged-issue",
+      "source": "issue #1532",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1532 (no labels, OPEN): Follow-up: wire useFolderTree / FOLDER_TREE_QUERY_KEY into the document screens (PR #1464)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1531",
+      "type": "untriaged-issue",
+      "source": "issue #1531",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1531 (no labels, OPEN): Follow-up: add regression tests for draft flush-on-unmount + watch-subscription cleanup (PR #1468)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1527",
+      "type": "untriaged-issue",
+      "source": "issue #1527",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1527 (no labels, OPEN): Follow-up: add behavioral cross-user RLS isolation test for developer_oauth_apps / developer_oauth_grants",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1524",
+      "type": "untriaged-issue",
+      "source": "issue #1524",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1524 (no labels, OPEN): Follow-up: strengthen idempotency test to assert preserved first-view timestamp (PR #1491)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1523",
+      "type": "untriaged-issue",
+      "source": "issue #1523",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1523 (no labels, OPEN): Follow-up: rate-limit / lockout on MFA recovery-code verify endpoint (PR #1467)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1522",
+      "type": "untriaged-issue",
+      "source": "issue #1522",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1522 (no labels, OPEN): Follow-up: accounting UI bypasses shared API auth interceptor after @hey-api migration (PR #1454)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1521",
+      "type": "untriaged-issue",
+      "source": "issue #1521",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1521 (no labels, OPEN): Follow-up: payment-matching UI shipped in wrong app, with broken auth + no i18n/tests (PR #1453)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1520",
+      "type": "untriaged-issue",
+      "source": "issue #1520",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1520 (no labels, OPEN): Follow-up: wire preference-aware push dispatch-target selection to real user preferences (PR #1450)",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1519",
+      "type": "untriaged-issue",
+      "source": "issue #1519",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": "Issue #1519 (no labels, OPEN): Follow-up: add XXE/DTD regression-guard test + namespace-prefix coverage for inbound OTA parsers",
+      "files": []
+    },
+    {
+      "id": "hotfix-no-test-pr-1539-oauth-public-client",
+      "type": "hotfix-no-test",
+      "source": "PR #1539",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1539 fix(oauth): reject public client supplying a client_secret \u2014 only touches `oauth.rs` (handler logic); no test added covering the public-client-with-secret rejection path.",
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1545-reality-web-build",
+      "type": "hotfix-no-test",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1545 fix(reality-web): unbreak production build (`/accounting` QueryClient prerender) \u2014 adds `accounting/layout.tsx`, edits two locale messages files; no test asserts build succeeds or the layout renders.",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1551-document-cast",
+      "type": "hotfix-no-test",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1551 fix(db): cast document_category in count_accessible_rls \u2014 1-line cast fix in `document.rs`, no regression test pins the enum-decode path under non-manager category-filter list.",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1551-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1551 + churn 2026-06-16..18",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "PR #1551 (fix) modified backend/crates/db/src/repositories/document.rs \u2014 a top-3 churn file \u2014 with no test diff.",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1545 touched `frontend/apps/reality-web/src/app/accounting/layout.tsx` (added new layout segment) without updating `docs/screens/reality/*.md`. Heuristic \u2014 accounting is a brand-new route segment.",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1453 touched `frontend/apps/reality-web/src/app/accounting/page.tsx` (PAP-210 payment-matching) without updating `docs/screens/reality/*.md`. Note: issue #1521 already filed about this being shipped in wrong app.",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #1454 touched `frontend/apps/ppt-web/src/routes/groups/accounting.tsx` (new accounting route group N1-N4) without updating `docs/screens/ppt/*.md`. New screens not yet documented.",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-error-messages-not-i18n",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 ppt-web-core review on 2026-06-18",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "errorHandler.ts:53-141 hard-codes user-facing error messages in English; app supports sk/cs/de/en but non-en users always see English. Returned directly from `getErrorMessage()` consumers.",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/errorHandler.ts"
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-storage-no-expiry",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 ppt-web-core review on 2026-06-18",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "AuthContext.tsx:112-192 stores access/refresh tokens in localStorage with no TTL guard or expiry check; tokens persist across sessions, and init-auth at line 377-412 accepts them without server-side validity check on first load.",
+      "files": [
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 brief",
+      "observed": "# 2026-06-18",
+      "expected": "# 2026-06-18"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "slurp prev state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-score guard",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap 8 + decay applied",
+      "observed": "cap=true; 2 decayed \u22121, 2 dropped to 0",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass",
+      "observed": "0 new plans \u2192 vacuously true",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached outside .research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private hostname grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "no phase failed",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs preserved",
+      "observed": "all present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count monotone",
+      "observed": "7 == 7",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix discipline",
+      "observed": "0 actions; ROUTINE_AUTOFIX_DISABLED unset; no candidate",
+      "expected": "empty actions[] OK"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors",
+      "observed": "action-list/risks parse; project-state non-empty; pm_cursor=6; coverage_cursor=0 (advanced)",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

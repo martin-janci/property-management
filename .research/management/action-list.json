@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "feat-airbnb-oauth-token-exchange-route-backend",
-      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
+      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code \u2192 access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -14,7 +14,7 @@
     },
     {
       "id": "feat-airbnb-realtime-webhook-handler-backend",
-      "action": "Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) — signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.",
+      "action": "Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) \u2014 signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "done",
@@ -106,7 +106,7 @@
     {
       "id": "feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend",
       "title": null,
-      "action": "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "action": "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) \u2014 not yet merged (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": null,
@@ -135,7 +135,7 @@
     {
       "id": "fix-report-schedule-editing-cron-edits-round-trip-through-frontend",
       "title": null,
-      "action": "cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616) (81-1-report-schedule-editing Report Schedule Editing)",
+      "action": "cron edits round-trip through the overloaded `time` field \u2014 no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616) (81-1-report-schedule-editing Report Schedule Editing)",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": null,
@@ -226,7 +226,7 @@
     },
     {
       "id": "bug-ios-searchview-uncompilable",
-      "action": "iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted",
+      "action": "iOS SearchView.swift does not compile \u2014 performSearch/scheduleSearch undefined, resultsGrid corrupted",
       "owner_role": "pm-frontend",
       "priority": "high",
       "status": "done",
@@ -306,7 +306,7 @@
     },
     {
       "id": "pm-qa-triage-followup-issues-2026-06-14",
-      "action": "Triage the 18 follow-up issues #1360-#1377 from 2026-06-14 post-merge review — assign owners or close",
+      "action": "Triage the 18 follow-up issues #1360-#1377 from 2026-06-14 post-merge review \u2014 assign owners or close",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": null,
@@ -328,7 +328,7 @@
     },
     {
       "id": "pm-qa-stale-draft-pr-decision",
-      "action": "Decide on stale draft PRs #1316 (1.8d) and #1197 (5.9d) — promote, rebase or close",
+      "action": "Decide on stale draft PRs #1316 (1.8d) and #1197 (5.9d) \u2014 promote, rebase or close",
       "owner_role": "pm-scrum-master",
       "priority": "medium",
       "dependency": null,
@@ -339,7 +339,7 @@
     },
     {
       "id": "pm-qa-record-payment-atomicity-test",
-      "action": "Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-pay scenario",
+      "action": "Add regression test for record_payment non-atomic check-then-insert (#1361) \u2014 concurrent double-pay scenario",
       "owner_role": "pm-qa",
       "priority": "high",
       "dependency": null,
@@ -479,7 +479,7 @@
     },
     {
       "id": "pm-devops-fix-dev-compile-1437",
-      "action": "URGENT: Fix `dev` backend compile break introduced by PR #1426 — land #1435 or #1436. Blocks ALL backend CI gates until resolved. (issue #1437)",
+      "action": "URGENT: Fix `dev` backend compile break introduced by PR #1426 \u2014 land #1435 or #1436. Blocks ALL backend CI gates until resolved. (issue #1437)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -490,7 +490,7 @@
     },
     {
       "id": "pm-devops-dev-push-compile-gate",
-      "action": "Add a `cargo check --workspace --tests` smoke gate on `dev` push (not just PR) — would have caught #1426 → #1437 before propagation. Currently backend.yml runs only on PR.",
+      "action": "Add a `cargo check --workspace --tests` smoke gate on `dev` push (not just PR) \u2014 would have caught #1426 \u2192 #1437 before propagation. Currently backend.yml runs only on PR.",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": null,
@@ -501,7 +501,7 @@
     },
     {
       "id": "pm-devops-confirm-eas-workflows-healthy",
-      "action": "Confirm `eas-build-android.yml` + `eas-build-ios.yml` (now in .github/workflows/) green on a no-op push — verify action pins resolve and eas-cli is available. Last DevOps run (2026-05-27) flagged these as broken @v6 pins.",
+      "action": "Confirm `eas-build-android.yml` + `eas-build-ios.yml` (now in .github/workflows/) green on a no-op push \u2014 verify action pins resolve and eas-cli is available. Last DevOps run (2026-05-27) flagged these as broken @v6 pins.",
       "owner_role": "pm-devops",
       "priority": "medium",
       "dependency": null,
@@ -546,6 +546,51 @@
         "by": "dispatcher-exact-id-reconcile",
         "evidence": "PR #1540 merged 2026-06-17T17:15:07Z"
       }
+    },
+    {
+      "id": "security-dev-test-gate-required-check",
+      "title": "Enforce cargo test as required status check on dev branch",
+      "owner": "pm-security",
+      "priority": "high",
+      "source_signal": "issue #1538 \u2014 red-test PRs merge freely; backend test job not required check",
+      "status": "open",
+      "created_at": "2026-06-18"
+    },
+    {
+      "id": "security-oauth-app-grant-rls-cross-user-test",
+      "title": "Add RLS behavioral cross-user isolation tests for developer_oauth_apps and developer_oauth_grants",
+      "owner": "pm-security",
+      "priority": "high",
+      "source_signal": "issue #1527 \u2014 follow-up from OAuth delivery; sqlx 42804 pattern makes missing-cast RLS failures indistinguishable from correct policy enforcement",
+      "status": "open",
+      "created_at": "2026-06-18"
+    },
+    {
+      "id": "security-mfa-recovery-rate-limit",
+      "title": "Add rate-limit / lockout on MFA recovery-code verify endpoint (PR #1467 follow-up)",
+      "owner": "pm-security",
+      "priority": "high",
+      "source_signal": "issue #1523 \u2014 recovery-code endpoint ships with no lockout; brute-force vector",
+      "status": "open",
+      "created_at": "2026-06-18"
+    },
+    {
+      "id": "security-ota-xxe-dtd-regression-guard",
+      "title": "Add XXE/DTD regression-guard test + namespace-prefix coverage for inbound OTA parsers",
+      "owner": "pm-security",
+      "priority": "medium",
+      "source_signal": "issue #1519 \u2014 booking.rs is top churn file (3714 lines); no DTD-rejection regression test",
+      "status": "open",
+      "created_at": "2026-06-18"
+    },
+    {
+      "id": "security-sqlx-42804-rls-cast-lint",
+      "title": "Add CI lint flagging enum/custom-domain columns in FORCE-RLS pool queries without explicit cast",
+      "owner": "pm-security",
+      "priority": "medium",
+      "source_signal": "systemic: PRs #1486 #1492 #1537 #1551 \u2014 four sqlx 42804 fixes in one sprint; pattern hides RLS policy correctness under cast failures",
+      "status": "open",
+      "created_at": "2026-06-18"
     }
   ]
 }

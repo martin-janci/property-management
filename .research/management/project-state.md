@@ -68,3 +68,7 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 - **epic-8a (rotation idx 11) refreshed** in `coverage.json`:
   - `8a-3-notification-preference-sync`: added evidence `PR #1395 added CI-executable coverage for realtime preference-sync publish leg (#1376) — closes the test-gap call-out from the #480-#487 cluster on this slice`; removed gap `backend tests for realtime sync tracked in follow-up issue (#480-#487 cluster)`; updated notes to reflect publish-leg tests cleared. Status stays `partial` (mobile-push FCM/APNs leg still the only open gap before promotion).
 - Next epic to refresh: **epic-9** (coverage_cursor idx 12).
+
+## 2026-06-18 — pm-security update
+
+Security snapshot for PR window #1447–#1552. Three security fixes shipped: OAuth public-client secret rejection (#1539), OTA token-exchange manager/PATH-org gate (#1552, closes #1525), and the fourth sqlx 42804 enum-cast RLS-mask fix this sprint (#1551 document_category; siblings #1486/#1492/#1537 on rental). The 42804 pattern is now systemic — four fixes in one sprint — and constitutes a structural risk to RLS policy-correctness signals (cast failures look identical to correct policy returning zero rows). Four open security issues remain untriaged: #1538 (test gate not required — release blocker), #1527 (developer_oauth_apps/grants cross-user RLS behavioral test missing), #1523 (MFA recovery-code rate-limit absent), #1519 (OTA XXE/DTD regression guard missing). Highest urgency: #1538 must be enforced before any security-regression test has value.
