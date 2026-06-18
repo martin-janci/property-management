@@ -412,11 +412,16 @@
       "action": "Coverage 7a-1: verify Document Upload with Metadata end-to-end and promote sprint-status ready-for-dev -> done (confirm upload + metadata persistence + RLS); add any missing handler test.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-15 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:28:55Z",
+        "by": "dispatcher-verify-noop",
+        "evidence": "reclaim respawn confirmed already shipped on dev; pr=none status=done"
+      }
     },
     {
       "id": "feat-document-download-preview-mobile-slice",
@@ -434,11 +439,16 @@
       "action": "Coverage 81-2: confirm presigned download + retry end-to-end on the report execution-history surface (ppt-web); add a component/integration test for the download + retry path.",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-15 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "reconciled": {
+        "at": "2026-06-18T00:28:55Z",
+        "by": "dispatcher-verify-noop",
+        "evidence": "reclaim respawn confirmed already shipped on dev; pr=none status=done"
+      }
     },
     {
       "id": "feat-listing-detail-favorites-swiftui-polish-mobile",
