@@ -553,6 +553,22 @@ async fn mark_invitation_viewed_is_idempotent(pool: PgPool) {
         "repeat view must be idempotent (200), not 404: {}",
         second.text()
     );
+
+    // Idempotency is more than 200/200: the load-bearing half of the #1301 fix
+    // is `SET viewed_at = COALESCE(viewed_at, NOW())`, which preserves the FIRST
+    // view's timestamp. A regression back to a plain `NOW()` would overwrite it
+    // on every call yet still return 200/200 — so assert the timestamp is both
+    // stamped and stable across the repeat view.
+    let first_viewed = first.json_value()["viewed_at"].clone();
+    let second_viewed = second.json_value()["viewed_at"].clone();
+    assert!(
+        !first_viewed.is_null(),
+        "first view must stamp viewed_at, got {first_viewed}"
+    );
+    assert_eq!(
+        first_viewed, second_viewed,
+        "repeat view must preserve the original viewed_at, not overwrite it",
+    );
 }
 
 // ---------------------------------------------------------------------------

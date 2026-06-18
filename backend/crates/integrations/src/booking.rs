@@ -1367,6 +1367,152 @@ pub mod ota_xml {
                 "bad amount must be InvalidMessage, got {err:?}"
             );
         }
+
+        // ----------------------------------------------------------------
+        // XXE / DTD / entity-expansion regression guards (#1519)
+        //
+        // Every inbound field is read via `attr_value`, which calls quick_xml's
+        // `normalized_value`. quick_xml (0.40) resolves only the five predefined
+        // XML entities; a custom `<!ENTITY>` from an internal DTD subset is NOT
+        // resolved, so `normalized_value` returns `Err` and `attr_value` yields
+        // `None` — the poisoned attribute is dropped, never expanded or fetched.
+        // `<!DOCTYPE>` itself is an inert `Event::DocType`.
+        //
+        // These tests lock that safe posture: a quick_xml config change, a switch
+        // to another XML library, or enabling custom-entity resolution would flip
+        // one of these assertions.
+        // ----------------------------------------------------------------
+
+        #[test]
+        fn test_parse_avail_notif_rq_does_not_expand_internal_entity() {
+            // If internal general entities were expanded, HotelCode would become
+            // "INJECTED_SENTINEL". They must not be.
+            let xml = r#"<?xml version="1.0"?>
+<!DOCTYPE OTA_HotelAvailNotifRQ [ <!ENTITY inj "INJECTED_SENTINEL"> ]>
+<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="&inj;"/>
+</OTA_HotelAvailNotifRQ>"#;
+            // Whether the parser errors or drops the field, the sentinel must
+            // never appear — the entity is not expanded.
+            if let Ok(parsed) = parse_avail_notif_rq(xml) {
+                assert!(
+                    !parsed.hotel_code.contains("INJECTED_SENTINEL"),
+                    "internal entity was expanded into HotelCode: {:?}",
+                    parsed.hotel_code
+                );
+            }
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_does_not_disclose_external_entity() {
+            // Classic XXE file-disclosure probe. quick_xml never fetches external
+            // entities, so /etc/passwd contents must never surface.
+            let xml = r#"<?xml version="1.0"?>
+<!DOCTYPE OTA_HotelAvailNotifRQ [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>
+<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="&xxe;"/>
+</OTA_HotelAvailNotifRQ>"#;
+            if let Ok(parsed) = parse_avail_notif_rq(xml) {
+                assert!(
+                    !parsed.hotel_code.contains("root:") && !parsed.hotel_code.contains('/'),
+                    "external entity disclosed file contents into HotelCode: {:?}",
+                    parsed.hotel_code
+                );
+            }
+        }
+
+        #[test]
+        fn test_parse_rate_amount_notif_rq_does_not_disclose_external_entity() {
+            let xml = r#"<?xml version="1.0"?>
+<!DOCTYPE OTA_HotelRateAmountNotifRQ [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>
+<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="&xxe;"/>
+</OTA_HotelRateAmountNotifRQ>"#;
+            if let Ok(parsed) = parse_rate_amount_notif_rq(xml) {
+                assert!(
+                    !parsed.hotel_code.contains("root:") && !parsed.hotel_code.contains('/'),
+                    "external entity disclosed file contents into HotelCode: {:?}",
+                    parsed.hotel_code
+                );
+            }
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_billion_laughs_does_not_amplify() {
+            // Nested-entity amplification ("billion laughs"). quick_xml does not
+            // expand custom entities, so this returns promptly without allocating
+            // an amplified string — never a multi-KB HotelCode.
+            let xml = r#"<?xml version="1.0"?>
+<!DOCTYPE OTA_HotelAvailNotifRQ [
+  <!ENTITY lol "lol">
+  <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+  <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+  <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
+]>
+<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="&lol4;"/>
+</OTA_HotelAvailNotifRQ>"#;
+            if let Ok(parsed) = parse_avail_notif_rq(xml) {
+                assert!(
+                    parsed.hotel_code.len() < 64,
+                    "billion-laughs amplified HotelCode to {} bytes",
+                    parsed.hotel_code.len()
+                );
+                assert!(
+                    !parsed.hotel_code.contains("lollol"),
+                    "billion-laughs entity expanded: {:?}",
+                    parsed.hotel_code
+                );
+            }
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_prefixed_namespace_parity() {
+            // A partner sending `ota:`-prefixed elements must parse identically
+            // to the default-namespace form (`local_name` strips the prefix).
+            let prefixed = r#"<?xml version="1.0"?>
+<ota:OTA_HotelAvailNotifRQ xmlns:ota="http://www.opentravel.org/OTA/2003/05">
+  <ota:AvailStatusMessages HotelCode="H-NS">
+    <ota:AvailStatusMessage BookingLimit="2">
+      <ota:StatusApplicationControl Start="2025-06-01" End="2025-06-05" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <ota:RestrictionStatus Status="Open"/>
+    </ota:AvailStatusMessage>
+  </ota:AvailStatusMessages>
+</ota:OTA_HotelAvailNotifRQ>"#;
+            let parsed = parse_avail_notif_rq(prefixed).unwrap();
+            assert_eq!(parsed.hotel_code, "H-NS");
+            assert_eq!(parsed.messages.len(), 1);
+            let m = &parsed.messages[0];
+            assert_eq!(m.room_type_code, "DBL");
+            assert_eq!(m.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(m.booking_limit, 2);
+            assert_eq!(m.status, "Open");
+            assert_eq!(m.start_date, NaiveDate::from_ymd_opt(2025, 6, 1).unwrap());
+            assert_eq!(m.end_date, NaiveDate::from_ymd_opt(2025, 6, 5).unwrap());
+        }
+
+        #[test]
+        fn test_parse_rate_amount_notif_rq_prefixed_namespace_parity() {
+            let prefixed = r#"<?xml version="1.0"?>
+<ota:OTA_HotelRateAmountNotifRQ xmlns:ota="http://www.opentravel.org/OTA/2003/05">
+  <ota:RateAmountMessages HotelCode="H-NS2">
+    <ota:RateAmountMessage>
+      <ota:StatusApplicationControl Start="2025-08-01" End="2025-08-31" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <ota:Rates><ota:Rate><ota:BaseByGuestAmts>
+        <ota:BaseByGuestAmt AmountAfterTax="120.50" CurrencyCode="EUR"/>
+      </ota:BaseByGuestAmts></ota:Rate></ota:Rates>
+    </ota:RateAmountMessage>
+  </ota:RateAmountMessages>
+</ota:OTA_HotelRateAmountNotifRQ>"#;
+            let parsed = parse_rate_amount_notif_rq(prefixed).unwrap();
+            assert_eq!(parsed.hotel_code, "H-NS2");
+            assert_eq!(parsed.rates.len(), 1);
+            let r = &parsed.rates[0];
+            assert_eq!(r.room_type_code, "DBL");
+            assert_eq!(r.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(r.amount, "120.50".parse::<Decimal>().unwrap());
+            assert_eq!(r.currency, "EUR");
+        }
     }
 }
 
