@@ -9,5 +9,9 @@ export { DocumentsScreen, folderNodeToDocument, subfoldersAtPath } from './Docum
 export { DocumentUploadScreen } from './DocumentUploadScreen';
 export type { FlatFolder, MoveDocumentSheetProps } from './MoveDocumentSheet';
 export { flattenTree, MoveDocumentSheet } from './MoveDocumentSheet';
+export type { MoveFolderSheetProps } from './MoveFolderSheet';
+export { collectDescendantIds, flattenTreeExcluding, MoveFolderSheet } from './MoveFolderSheet';
 export type { NewFolderSheetProps } from './NewFolderSheet';
 export { NewFolderSheet } from './NewFolderSheet';
+export type { RenameFolderSheetProps } from './RenameFolderSheet';
+export { RenameFolderSheet } from './RenameFolderSheet';
