@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-18T22:14:25Z",
+  "generated": "2026-06-18T22:22:38Z",
   "assignments": [
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -334,46 +334,50 @@
     {
       "task_id": "feat-airbnb-integration-webhook-handler-backend",
       "branch": "auto-impl/feat-airbnb-integration-webhook-handler-",
-      "status": "in-progress",
+      "status": "quarantined",
       "claimed_at": "2026-06-18T22:13:43Z",
-      "last_updated": "2026-06-18T22:13:43Z",
-      "status_changed_at": "2026-06-18T22:13:43Z",
+      "last_updated": "2026-06-18T22:22:38Z",
+      "status_changed_at": "2026-06-18T22:22:38Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=stale gap; airbnb inbound webhook handler+sig-verify+dedup+tests already shipped on dev (#538/#841/#1030/#1200/#1319)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": "2026-06-18T22:22:38Z",
+      "quarantine_reason": "completed-but-no-PR: gap-83-1 Airbnb inbound webhook handler already fully shipped on dev (handler+sig-verify+dedup ledger+route+integration tests via #538/#841/#1030/#1200/#1319). coverage.json (2026-06-16) is STALE on this story. Human action: close row + mark action-list item + refresh coverage.json 83-1."
     },
     {
       "task_id": "feat-api-client-integration-announcements-faults-pages-frontend",
       "branch": "auto-impl/feat-api-client-integration-announcement",
-      "status": "in-progress",
+      "status": "quarantined",
       "claimed_at": "2026-06-18T22:13:43Z",
-      "last_updated": "2026-06-18T22:13:43Z",
-      "status_changed_at": "2026-06-18T22:13:43Z",
+      "last_updated": "2026-06-18T22:22:09Z",
+      "status_changed_at": "2026-06-18T22:22:09Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-shipped: both pages wired to @ppt/api-client hooks on dev (#1555/#1559), no stub data, route-wiring tests present (faults.route.test.tsx, announcements.list.route.test.tsx)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": "2026-06-18T22:22:09Z",
+      "quarantine_reason": "completed-but-no-PR: gap-79-1 AnnouncementsPage/FaultsPage already fully wired to @ppt/api-client hooks on dev via #1555/#1559; verification produced zero diff. Quarantined (not failed) to block re-claim + avoid archive MCP push. Human action: close row + mark action-list item feat-api-client-integration-announcements-faults-pages-frontend done."
     }
   ]
 }
