@@ -1,8 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
+import { defaultLocale } from '@/i18n/config';
 import { AuthProvider } from '@/lib/auth-context';
 import { QueryProvider } from '@/lib/query-provider';
-import { defaultLocale } from '@/i18n/config';
 
 // The /accounting payment-matching review is auth-gated and entirely
 // data-driven (TanStack Query against the live API), so it must never be
@@ -14,11 +14,7 @@ import { defaultLocale } from '@/i18n/config';
 // NextIntl, and Auth providers here using the default locale's messages.
 export const dynamic = 'force-dynamic';
 
-export default async function AccountingLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AccountingLayout({ children }: { children: React.ReactNode }) {
   setRequestLocale(defaultLocale);
   const messages = await getMessages({ locale: defaultLocale });
 
