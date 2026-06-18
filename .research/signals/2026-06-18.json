@@ -1,0 +1,175 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine missed 2026-06-17; last_run_iso=2026-06-16T03:25:00Z; lag=~55h"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1511",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "PR #1511 'fix(api-server): resolve clippy lints blocking dev fmt-clippy gate' closed unmerged 2026-06-17; superseded by merged #1512 (same intent, narrower scope)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-forms-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1456 forms RLS write/create coverage extension",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "PR #1456 extended forms RLS write/create test coverage — repeated churn (runs_seen 2→3)"
+      ]
+    },
+    {
+      "id": "buffer-low-dispatcher-2026-06-18",
+      "type": "process",
+      "source": "routine-fire payload",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": [
+        "routine-fire payload reported claimable=0/72; all 13 open action-list items are in-flight (1 in-progress + 7 review + 11 quarantined in assignments.json)"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced",
+      "observed": "last_pr_seen 1439→1565; seen_signals +4",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "no duplicates",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-scored signals",
+      "observed": "all new ids or cumulative+zero-delta",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap+decay",
+      "observed": "4 items decayed; no score>8",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans annotated",
+      "observed": "0 new plans this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 plans",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no app code",
+      "observed": "only .research/ touched",
+      "expected": "true"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets",
+      "observed": "no leaks",
+      "expected": "true"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regenerated",
+      "observed": "fresh render",
+      "expected": "true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure honesty",
+      "observed": "Phase 1.5+1.6 skipped (documented)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence",
+      "observed": "no plan deletions",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows",
+      "observed": "no archive changes (6 files)",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE regenerated",
+      "observed": "fresh render",
+      "expected": "true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "Phase 5 skipped (no candidates met bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run",
+      "observed": "no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "no leaks",
+      "expected": "true"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score≥3 + allowlist this run",
+  "phase_notes": {
+    "phase_1_5": "skipped — token budget; will resume next run with ppt-web-core (oldest unreviewed, 13d)",
+    "phase_1_6": "skipped — token budget under buffer-low context; pm_cursor/coverage_cursor NOT advanced. Next run owes pm-security (overdue 22d)."
+  }
+}
