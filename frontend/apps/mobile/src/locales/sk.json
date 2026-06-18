@@ -203,7 +203,10 @@
       "nameRequired": "Nazov priecinku je povinny",
       "nameTooLong": "Nazov priecinku musi mat najviac 255 znakov",
       "createButton": "Vytvorit priecinok",
-      "createError": "Priecinok sa nepodarilo vytvorit"
+      "createError": "Priecinok sa nepodarilo vytvorit",
+      "renameTitle": "Premenovat priecinok",
+      "renameButton": "Ulozit nazov",
+      "renameError": "Priecinok sa nepodarilo premenovat"
     },
     "move": {
       "title": "Premiestnit dokument",
@@ -249,6 +252,14 @@
         "correspondence": "Korespondencia",
         "other": "Ine"
       }
+    },
+    "folderMove": {
+      "title": "Presun priecinku",
+      "destination": "CIEL",
+      "rootLabel": "Koren (najvyssia uroven)",
+      "noFolders": "Ziadne ine priecinky nie su k dispozicii",
+      "confirm": "Presun sem",
+      "errorTitle": "Priecinok sa nepodarilo presunout"
     }
   },
   "settings": {
