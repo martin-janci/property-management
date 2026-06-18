@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-16T00:00:00Z",
+  "generated": "2026-06-18T06:20:00Z",
   "sprint": null,
   "version": null,
   "scan_kind": "upkeep",
@@ -156,7 +156,7 @@
       "id": "7a-1-document-upload-metadata",
       "title": "Document Upload with Metadata",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend",
@@ -168,13 +168,14 @@
         "backend documents.rs ~3553 LOC",
         "DocumentUploadPage.tsx + API handler",
         "screen buildStatus shipped, apiStatus partial",
-        "mobile document upload UI with metadata shipped (PR #447, merged 2026-05-25)"
+        "mobile document upload UI with metadata shipped (PR #447, merged 2026-05-25)",
+        "PR #1550 (test(7A.1): add upload metadata round-trip test; promote 7a-1 to done) — round-trip test added, story promoted"
       ],
       "gaps": [
         "sprint-status ready-for-dev — promote to done after verify"
       ],
       "notes": "Document upload backend tests merged this window (PR #610) — upload test-coverage gap closing; multipart/RLS isolation tests landing. Remains partial pending full web+mobile verify sweep.",
-      "last_checked": "2026-05-27"
+      "last_checked": "2026-06-18"
     },
     {
       "epic": "epic-7a",
@@ -815,13 +816,14 @@
       "evidence": [
         "report_executions table + execution-history API (PR #611)",
         "execution-history table in ScheduleDetailPage + route (PR #547/#623)",
-        "docs/screens/ppt/reports.md updated to cover exec-history surface"
+        "docs/screens/ppt/reports.md updated to cover exec-history surface",
+        "PR #1548 (test(UC-81): cover presigned download + retry on report execution history) — coverage extended, still partial pending full UI shipment"
       ],
       "gaps": [
         "confirm presigned download + retry end-to-end on the execution-history surface"
       ],
       "notes": "Rotating-epic recheck (epic-81). Exec-history API (#611) + UI (#547/#623) present; verify download/retry e2e. Stays partial.",
-      "last_checked": "2026-05-29"
+      "last_checked": "2026-06-18"
     },
     {
       "epic": "epic-82",
@@ -838,14 +840,15 @@
         "story file Status: pending",
         "mobile-native/iosApp directory exists with xcodeproj + Swift sources",
         "ongoing iOS commits (Epic 111 i18n etc.)",
-        "core modules present (Home/Search/Listing/Favorites/Inquiries/Account)"
+        "core modules present (Home/Search/Listing/Favorites/Inquiries/Account)",
+        "PRs #1514/#1515/#1516 — story-vs-implementation mapping + screen-map + deep-linking confirmations"
       ],
       "gaps": [
         "no screen-map for ppt-reality-mobile in docs/screens/",
         "no epic-82 commits in git log",
         "story-vs-implementation mapping unclear (epic 82 in epics-007.md targets different scope)"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-06-18"
     },
     {
       "epic": "epic-82",
@@ -884,7 +887,8 @@
       "evidence": [
         "HomeView.swift carousel + grid",
         "SearchView.swift basic search",
-        "ListingCard components present"
+        "ListingCard components present",
+        "PR #1542 (test(UC-82): iOS SearchView stale-response guard preserves pagination)"
       ],
       "gaps": [
         "debounced search (AC-2) not evidenced",
@@ -892,7 +896,7 @@
         "CoreLocation integration not confirmed",
         "FilterSheet/location features missing"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-06-18"
     },
     {
       "epic": "epic-82",
@@ -908,12 +912,13 @@
       "evidence": [
         "SwiftUI ListingDetailView + FavoritesScreen wired to reality-server (PR #688)",
         "gesture-mask + sheet-env (LocationManager) fixes (PR #718, closes #618/#625)",
-        "draft PR #641 gap-82-4 SwiftUI listing detail in flight"
+        "draft PR #641 gap-82-4 SwiftUI listing detail in flight",
+        "PR #1541 (epic-82 story 82.4 - FavoritesService session-gating tests + screen-map sync)"
       ],
       "gaps": [
         "remaining SwiftUI listing-detail polish in draft #641; no docs/screens/ reality-mobile maps"
       ],
-      "last_checked": "2026-05-29",
+      "last_checked": "2026-06-18",
       "notes": "#718 fixed ZoomablePhoto DragGesture vs TabView swipe (#618) + FilterSheet LocationManager env (#625). Stays partial pending draft #641."
     },
     {

@@ -1,0 +1,176 @@
+{
+  "date": "2026-06-18",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "Routine has not run in 50h (last_run_iso=2026-06-16T03:25:00Z). Lag > 36h threshold; flag in brief Since last run.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log + per-PR file lists",
+      "score_delta": 1,
+      "evidence": "Top churn this run: 7 merged PRs touched backend/crates/db/src/repositories/rental.rs — #1473 (BIT-85 OAuth upsert), #1486 (platform::text cast), #1489 (nullable fees decode), #1492 (enum reader casts), #1495 (RLS grant + enum decode), #1507 (IDOR test seed restore), #1537 (enum write paths). ~1597 lines added/-233 deleted across the file.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/document.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history + per-PR file lists",
+      "score_delta": 1,
+      "evidence": "Repeat hotspot — last_seen=2026-06-10 (runs_seen=1). This run: 4 PRs touched (#1463 building/unit scope, #1469 schema-drift SQL, #1480 list scoped docs feature, #1551 document_category cast). Cumulative re-emit — score_delta applied once.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/models/mod.rs",
+      "type": "churn-hotspot",
+      "source": "git log + per-PR file lists",
+      "score_delta": 1,
+      "evidence": "Top-3 churn: 4 PRs touched backend/crates/db/src/models/mod.rs — #1481 (retire broken budget.rs reserve-fund duplicate, -942 lines), #1484 (registry tracker-id fix), #1485 (Booking.com client timeout), #1487 (rustfmt budget use-lists).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 (fix(reality-web): unbreak production build) touched frontend/apps/reality-web/src/app/accounting/layout.tsx without updating any docs/screens/reality/*.md. Best-effort heuristic — this is a prerender wrapper fix, not a route addition; review candidate, not a promotable plan.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met certainty bar (no high-confidence allowlist signal with score>=3 emitted this run)",
+  "phases_failed": [],
+  "phase_1_5_skipped": "yes — ppt-dev-review skill not invoked in this cloud routine run (no churn-aligned trigger that maps cleanly; review_cursor is current within ~3-13 days for all segments)",
+  "phase_1_6_mode": "upkeep — coverage_cursor advanced from epic-9 → epic-10a; pm_cursor advanced from pm-security (idx 5) → pm-data (idx 6); 1 story marked done from merged PRs; management/action-list and risks regeneration deferred to local skill",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test brief file + head match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative seen_signal re-emit with score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score >8; decay applied to 4 stale items",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run — gate is no-op",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans this run",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 non-research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "Phases-that-failed line honest",
+      "observed": "\"none\" with note",
+      "expected": "honest"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD archive count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps respected (all 0)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursor liveness (CC 12→0, PM 5→6, EPICS=13)",
+      "observed": "all pass",
+      "expected": "all pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in added lines",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
