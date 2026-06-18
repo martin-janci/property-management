@@ -940,20 +940,21 @@
       "title": "Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #963"
       ],
       "evidence": [
-        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response"
+        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response",
+        "decayed 2026-06-18: -1 (no new signals in 14 days), now 1"
       ],
       "files": [
         "backend/servers/api-server/src/main.rs",
         "backend/crates/api-core/src/middleware/security_headers.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -1010,20 +1011,21 @@
       "title": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #959",
         "issue #953"
       ],
       "evidence": [
-        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up"
+        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up",
+        "decayed 2026-06-18: -1 (no new signals in 14 days), now 1"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/listings.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -1476,19 +1478,22 @@
       "title": "Churn hotspot: 2940 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06-10 03:05Z→18:30Z)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "local git numstat since 2026-06-10T03:05:00Z"
+        "local git numstat since 2026-06-10T03:05:00Z",
+        "PR #1551",
+        "PR #1565"
       ],
       "evidence": [
-        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening"
+        "2940 lines changed in backend/crates/db/src/repositories/document.rs (incremental window 2026-06-10 03:05Z→18:30Z); top-3 churn this run — driven by PAP-110/PAP-112/PAP-67 RLS-routing sweeps that continued into the evening",
+        "Re-churned 2026-06-16..18 (2 PRs: #1551 cast document_category in count_accessible_rls; #1565 get-by-id u.name + enum decode) — repeated-churn signal fires (runs_seen=2)."
       ],
       "files": [
         "backend/crates/db/src/repositories/document.rs"
       ],
       "created_at": "2026-06-10",
-      "updated_at": "2026-06-10",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -2297,8 +2302,8 @@
       "title": "Dispatcher action-list.json corruption when MCP push falls back from blocked git push",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1014"
       ],
@@ -2306,14 +2311,15 @@
         "Issue #1014 (no labels, OPEN): dispatcher Phase 6 push to dev hit HTTP-403 git proxy block, fell back to MCP push_files; ~92 KB action-list.json could not be transmitted inline → file truncated to 1-2 item stub on dev",
         "assignments.json (9 KB) and gc1-orphan-triage.md (1.5 KB) pushed byte-exact; only action-list.json corrupted",
         "recovery already performed via PRs #1024 (assignments-archive restore) and #1027 + 2efc885f (action-list restore from 704ea44); but the systemic issue remains: dispatcher's MCP fallback can corrupt files >~tens of KB",
-        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy"
+        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         ".research/management/action-list.json",
         ".research/dispatcher-prompt.md"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -2321,17 +2327,18 @@
       "title": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#951"
       ],
       "evidence": [
-        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed"
+        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed",
+        "decayed: no new signals in 14 days"
       ],
       "files": [],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-18",
       "plan": null
     },
     {
@@ -3944,6 +3951,142 @@
       "files": [],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "test-gap-document-rs-regression-tests-pr-1551-1565",
+      "title": "Regression tests for document.rs fix PRs #1551 + #1565 (cast/decode bugs on top-churn repo)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 8,
+      "status": "open",
+      "sources": [
+        "PR #1551",
+        "PR #1565"
+      ],
+      "evidence": [
+        "PR #1551 (fix(db): cast document_category in count_accessible_rls filter) merged 2026-06-17 with NO test diff — fixed #1528.",
+        "PR #1565 (fix(db): correct document get-by-id read path; u.name + enum ::text decode) merged 2026-06-18 with NO test diff.",
+        "Both PRs touched backend/crates/db/src/repositories/document.rs which is a churn hotspot (recent_churn 2940; runs_seen=2 — repeated-churn fires this run).",
+        "Cumulative score: hotfix-no-test ×2 (+4) + risky-churn ×2 (+4) → +8, capped at 8."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
+      "plan": "plans/test-gap-document-rs-regression-tests-pr-1551-1565.md"
+    },
+    {
+      "id": "test-gap-rental-rs-enum-cast-regression-pr-1537",
+      "title": "Regression tests for rental.rs PR #1537 enum-cast write-paths on rental_guests + forms (#1008)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 4,
+      "status": "open",
+      "sources": [
+        "PR #1537"
+      ],
+      "evidence": [
+        "PR #1537 (fix(db): cast enum write paths on rental_guests + forms; #1008 encode/decode) merged 2026-06-17 with NO test diff for rental.rs.",
+        "backend/crates/db/src/repositories/rental.rs is a churn hotspot this run (2 changes in window; same file class as the persistent #1008 enum-encode bug family).",
+        "Cumulative score: +2 (hotfix-no-test) + +2 (risky-churn correlation)."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
+      "plan": "plans/test-gap-rental-rs-enum-cast-regression-pr-1537.md"
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1561-reality-imports-public-agency",
+      "title": "Regression test gap: PR #1561 admitted public agencies on imports via PortalPrincipal — no test (closes #1300)",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1561",
+        "issue #1300"
+      ],
+      "evidence": [
+        "PR #1561 (fix(reality-server): admit public agencies on imports via PortalPrincipal) merged 2026-06-18 with NO test file — touches backend/servers/reality-server/src/routes/imports.rs + backend/crates/api-core/src/extractors/principal.rs.",
+        "Behaviour change affects authn pathway for public-agency principals on the imports endpoint; lack of regression test means a future PortalPrincipal refactor can silently re-deny."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/imports.rs",
+        "backend/crates/api-core/src/extractors/principal.rs"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1539-oauth-public-client",
+      "title": "Regression test gap: PR #1539 rejects public OAuth client with client_secret (invalid_client) — no test",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1539"
+      ],
+      "evidence": [
+        "PR #1539 (fix(oauth): reject public client supplying a client_secret with invalid_client) merged 2026-06-17 with NO test file diff.",
+        "RFC 6749 §2.3.1 behaviour — a future OAuth refactor can silently re-accept the malformed request and the only failing artefact is interop with non-PPT clients.",
+        "Touches backend/servers/api-server/src/routes/oauth.rs (42 KB; high blast-radius file)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "title": "Screen-map drift: PR #1545 touched reality-web /accounting/layout.tsx with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1545"
+      ],
+      "evidence": [
+        "PR #1545 (fix(reality-web): unbreak production build — /accounting QueryClient prerender + favorites pl/hu i18n) introduced/modified frontend/apps/reality-web/src/app/accounting/layout.tsx but no docs/screens/reality/*.md row was touched in the PR.",
+        "Heuristic — slug `accounting` does not appear under docs/screens/reality/. The accounting flow on reality-web has no screen-map doc and PR-level routing is silent on it.",
+        "Same accounting layout was also touched by a follow-up un-PR'd commit 09065a1 (biome stylefix), still without a screen-map update."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-app-accounting-layout-tsx",
+      "title": "Churn hotspot: frontend/apps/reality-web/src/app/accounting/layout.tsx — 2 PRs in 48h (build + biome fixes post-#1454)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1545",
+        "commit 09065a1"
+      ],
+      "evidence": [
+        "Both touches were follow-up fixes to the original PR #1454 (native accounting MVP + @hey-api migration). Suggests the layout was shipped without prod-build & lint validation in CI on the reality-web stack.",
+        "Recent_churn this window: 2 (PR #1545 build/i18n; commit 09065a1 biome import-sort/signature format)."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ],
+      "created_at": "2026-06-18",
+      "updated_at": "2026-06-18",
       "plan": null
     }
   ]

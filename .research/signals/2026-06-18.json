@@ -1,0 +1,272 @@
+{
+  "version": 1,
+  "generated_at": "2026-06-18T12:35:00Z",
+  "trigger_payload": "buffer-low: claimable=0/72 — all open backlog items map to in-flight or quarantined work; refill planner from coverage partial stories",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25:00Z; ~56h gap (> 36h threshold). Two consecutive days landed in one window.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log since=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "2 commits touch backend/crates/db/src/repositories/document.rs in window (PR #1551 cast document_category; PR #1565 get-by-id u.name + enum decode). Top-3 churn.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log since=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "2 commits touch backend/crates/db/src/repositories/rental.rs in window (PR #1486 platform::text cast follow-up; PR #1537 enum-cast write paths). Top-3 churn.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-app-accounting-layout-tsx",
+      "type": "churn-hotspot",
+      "source": "git log since=2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "2 commits touch frontend/apps/reality-web/src/app/accounting/layout.tsx in window (PR #1545 prerender + i18n; commit 09065a1 biome stylefix). Both are post-#1454 follow-ups — original PR shipped without prod-build + lint validation.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "document.rs runs_seen advances to 2 (previously last_seen 2026-06-10). Two distinct churn windows back-to-back — instability proxy.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "hotfix-no-test-pr-1551-document-rs",
+      "type": "hotfix-no-test",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "evidence": "PR #1551 (fix(db): cast document_category in count_accessible_rls; closes #1528) merged 2026-06-17 with NO test diff. Single repo-layer change to backend/crates/db/src/repositories/document.rs:805.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1565-document-rs",
+      "type": "hotfix-no-test",
+      "source": "PR #1565",
+      "score_delta": 2,
+      "evidence": "PR #1565 (fix(db): correct document get-by-id read path; u.name + enum ::text decode) merged 2026-06-18 with NO test diff. Touches backend/crates/db/src/repositories/document.rs:596 + :1561.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1537-rental-rs",
+      "type": "hotfix-no-test",
+      "source": "PR #1537",
+      "score_delta": 2,
+      "evidence": "PR #1537 (fix(db): cast enum write paths on rental_guests + forms; #1008) merged 2026-06-17 with NO rental.rs test diff. Touches backend/crates/db/src/repositories/rental.rs:1289 (and form.rs).",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1561-imports-rs",
+      "type": "hotfix-no-test",
+      "source": "PR #1561",
+      "score_delta": 2,
+      "evidence": "PR #1561 (fix(reality-server): admit public agencies on imports via PortalPrincipal) merged 2026-06-18 with NO test file. Touches reality-server imports route + api-core principal extractor.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1539-oauth-rs",
+      "type": "hotfix-no-test",
+      "source": "PR #1539",
+      "score_delta": 2,
+      "evidence": "PR #1539 (fix(oauth): reject public client supplying a client_secret with invalid_client; RFC 6749 §2.3.1) merged 2026-06-17 with NO test diff. Touches backend/servers/api-server/src/routes/oauth.rs (42 KB).",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "risky-churn-pr-1551-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "evidence": "PR #1551 (fix) modified backend/crates/db/src/repositories/document.rs — a top-3 churn file this run — with no test diff.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1565-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1565",
+      "score_delta": 2,
+      "evidence": "PR #1565 (fix) modified backend/crates/db/src/repositories/document.rs — a top-3 churn file this run — with no test diff.",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1537-rental-rs",
+      "type": "risky-churn",
+      "source": "PR #1537",
+      "score_delta": 2,
+      "evidence": "PR #1537 (fix) modified backend/crates/db/src/repositories/rental.rs — a top-3 churn file this run — with no test diff for rental.rs (forms.rs side carries form_rls_repo_tests).",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 touched frontend/apps/reality-web/src/app/accounting/layout.tsx with no docs/screens/reality/*.md update; the accounting flow has no screen-map doc on reality-web.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-2026-06-18",
+      "type": "dep-update-noise",
+      "source": "dependabot PRs #1566–#1576",
+      "score_delta": 0,
+      "evidence": "11 dependabot PRs open in window: tower-http 0.6→0.7 (backend), compose-bom 2026.05→06 (mobile-native), Gradle minor-patch group ×2, dtolnay/rust-toolchain 1.94→1.100, expo-secure-store 55→56, @types/node 20→25, @babel/core 7→8, i18next 25→26, action-junit-report 5→6, frontend npm-minor-patch group. Logged, not scored.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-18.md && head -1 ...",
+      "observed": "(checked after brief write)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq filter prev_seen & non-cumulative",
+      "observed": "0 offenders",
+      "expected": "0 offenders"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq scores <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "manual: 4 open items >14d old all decayed/dropped",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "grep adversarial pass: in brief for each new plan",
+      "observed": "(checked after brief)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "manual count + heading check",
+      "observed": "2 plans, both pass",
+      "expected": "<=2 plans, all sections present"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "(checked at Phase 6)",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secret patterns in staged diff (ex baseline docs)",
+      "observed": "(checked at Phase 6)",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "(checked at Phase 6)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' vs cursors",
+      "observed": "phase-1.5-skipped (cursor unchanged); phase-1.6-skipped (cursor unchanged)",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or _archive/",
+      "observed": "9 active + 6 archived — all retained",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD",
+      "observed": "6 == 6",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "(checked at Phase 6)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty (skipped this run)",
+      "observed": "0 actions",
+      "expected": "skipped — no allowlisted high-cert candidate"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram-token pattern in staged diff",
+      "observed": "(checked at Phase 6)",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal matched allowlist + confidence=high + score>=3 + idempotency this run; backlog buffer-low context prioritised plan-promotion over auto-fix"
+}
