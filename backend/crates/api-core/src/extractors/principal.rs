@@ -306,3 +306,109 @@ where
         Ok(Self(Some(principal)))
     }
 }
+
+/// Authenticated principal for **reality-portal** endpoints (GH #1300).
+///
+/// `RequestPrincipal` is the api-server / tenant-scoped extractor: its only
+/// arm that admits a `public` principal requires an active `organization_members`
+/// row in the host-resolved org. Reality-portal agencies are `principal_kind =
+/// 'public'`, never have `organization_members` rows (their membership lives in
+/// `reality_agency_members`), and reach the portal on a `PlatformHost`. So
+/// `RequestPrincipal` 403s every real reality agency on its own resources.
+///
+/// `PortalPrincipal` is the "different extractor" the `RequestPrincipal` docs
+/// point callers at: it authenticates the JWT and re-derives `principal_kind`
+/// from the trusted `users` table (identical defense-in-depth to
+/// `RequestPrincipal`), but does **not** require a `ResolvedTenant` or any
+/// `organization_members` membership. It yields only `user_id` (+ the derived
+/// `kind`); per-resource authorization stays enforced because every reality
+/// repo call is keyed on `principal.user_id` (the IDOR fix from PR #1297).
+///
+/// It admits any authenticated, non-deleted principal kind (a platform admin
+/// may legitimately reach these endpoints); cross-user isolation is the
+/// repo-layer `user_id` keying, not a kind gate.
+#[derive(Debug, Clone, Copy)]
+#[must_use = "PortalPrincipal must be used for authz/scoping — see GH #1300"]
+pub struct PortalPrincipal {
+    pub user_id: Uuid,
+    pub kind: PrincipalKind,
+}
+
+impl<S> FromRequestParts<S> for PortalPrincipal
+where
+    S: TenantMembershipProvider,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // ----- (1) Decode JWT — sub is the only trustworthy claim. -----
+        let auth_header = parts
+            .headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|v| v.to_str().ok())
+            .ok_or((StatusCode::UNAUTHORIZED, "Missing Authorization header"))?;
+
+        let token = auth_header.strip_prefix("Bearer ").ok_or((
+            StatusCode::UNAUTHORIZED,
+            "Invalid Authorization header format",
+        ))?;
+
+        let secret = std::env::var("JWT_SECRET").map_err(|_| {
+            tracing::error!("JWT_SECRET environment variable not set");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Server configuration error",
+            )
+        })?;
+
+        let token_data = decode::<PrincipalClaims>(
+            token,
+            &DecodingKey::from_secret(secret.as_bytes()),
+            &Validation::default(),
+        )
+        .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid or expired token"))?;
+
+        // Reject refresh (and any non-access) tokens before touching the DB —
+        // mirrors `RequestPrincipal`.
+        if let Some(token_type) = token_data.claims.token_type.as_deref() {
+            if token_type != "access" {
+                tracing::warn!(
+                    token_type = %token_type,
+                    "PortalPrincipal: rejected non-access token on access-only route"
+                );
+                return Err((
+                    StatusCode::UNAUTHORIZED,
+                    "Invalid token type for this endpoint",
+                ));
+            }
+        }
+
+        let user_id = token_data.claims.sub;
+
+        // ----- (2) Re-derive principal_kind from the trusted users table. -----
+        let pool = state.db_pool();
+        let kind_str: Option<String> = sqlx::query_scalar(
+            r#"SELECT principal_kind FROM users WHERE id = $1 AND status != 'deleted'"#,
+        )
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, user_id = %user_id, "PortalPrincipal: principal_kind lookup failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to resolve principal",
+            )
+        })?;
+
+        let Some(kind_str) = kind_str else {
+            tracing::warn!(user_id = %user_id, "PortalPrincipal: user not found / deleted");
+            return Err((StatusCode::UNAUTHORIZED, "Unknown principal"));
+        };
+
+        Ok(PortalPrincipal {
+            user_id,
+            kind: PrincipalKind::parse(&kind_str),
+        })
+    }
+}
