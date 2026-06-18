@@ -1,0 +1,195 @@
+{
+  "date": "2026-06-18",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "(now - last_run_iso) = ~60h > 36h lag threshold; trigger payload arrived as buffer-low refill",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1583",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1583 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1580 mfa.rs:39 MFA_RECOVERY_RATE_LIMITER never evicts; denial emits success-variant audit action",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1584",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1584 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1561 PortalPrincipal bypasses reality_agency_members; rides on agency_id=user_id mismatch",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1585",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1585 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1552 verify_manager_role_in_org hand-rolls role string-set; should derive from TenantRole::is_manager",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1586",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1586 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1565 same u.full_name nonexistent-column bug still live in board_meetings.rs:138,:895",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1587",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1587 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1548 download/retry test harness diverges from real route container; toast wiring untested",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1588",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1588 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1555 fault delete + stats wiring thin on error/empty/refetch paths",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1589",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1589 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1557 mobile MoveFolderSheet Root no-ops; flatten util duplication",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1590",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1590 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1582 pin-test asserts the constant string not the wiring; stale comment",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1591",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1591 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1562 XXE regression-guard assertions are vacuous-pass",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1592",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1592 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1581 rustfmt lint job not a required pre-merge check on dev",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1593",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1593 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1564 mark_invitation_viewed COALESCE regression test is timing-dependent",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "fixme-in-merged-code-issue-1594",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #1594 (ppt-review-merged skill)",
+      "score_delta": 2,
+      "evidence": "PR #1563 developer-oauth RLS test asserts only SELECT side; INSERT/UPDATE/DELETE untested",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-06-16..2026-06-18",
+      "score_delta": 1,
+      "evidence": "4057 lines (additions+deletions) since 2026-06-16T03:25Z",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-06-16..2026-06-18",
+      "score_delta": 1,
+      "evidence": "3078 lines (additions+deletions) since 2026-06-16T03:25Z",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git churn 2026-06-16..2026-06-18",
+      "score_delta": 1,
+      "evidence": "2863 lines (additions+deletions) since 2026-06-16T03:25Z",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 .research/briefs/2026-06-18.md",
+      "observed": "# 2026-06-18",
+      "expected": "# 2026-06-18"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | unique compare",
+      "observed": "190 ids, 190 unique",
+      "expected": "equal"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq [.items[]|select(.score>8)]|length",
+      "observed": "6",
+      "expected": "<=8"
+    },
+    {
+      "goal": "G6-plans/bug-board-meetings-full-name-column.md",
+      "passed": true,
+      "command": "grep plans/bug-board-meetings-full-name-column.md brief + adversarial pass:",
+      "observed": "present",
+      "expected": "present"
+    },
+    {
+      "goal": "G6-plans/security-mfa-recovery-limiter-leak.md",
+      "passed": true,
+      "command": "grep plans/security-mfa-recovery-limiter-leak.md brief + adversarial pass:",
+      "observed": "present",
+      "expected": "present"
+    },
+    {
+      "goal": "G7-count",
+      "passed": true,
+      "command": "git diff --cached --name-only -- .research/plans/ | grep -c .md$",
+      "observed": "2 (board_meetings, mfa-limiter)",
+      "expected": "<=2"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched allowlist this run"
+}
