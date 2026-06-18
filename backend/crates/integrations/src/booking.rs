@@ -2478,6 +2478,51 @@ impl BookingRetryConfig {
     }
 }
 
+/// Outcome of a combined availability + rate *push* sync to Booking.com
+/// (AC-5).
+///
+/// The two OTA streams — `OTA_HotelAvailNotifRQ` (availability) and
+/// `OTA_HotelRateAmountNotifRQ` (rates) — are pushed independently and can
+/// succeed or fail independently. Collapsing them into a single
+/// `Result<(), _>` loses that distinction: a caller could not tell whether an
+/// error meant "nothing was applied" or "availability landed but rates were
+/// rejected", leaving the channel in a half-synced state with no signal.
+///
+/// [`BookingClient::push_availability_and_rates`] returns this struct so the
+/// caller sees exactly which stream applied, how many messages each carried,
+/// and the per-stream error text when one failed. Each stream still runs
+/// through [`BookingClient::post_ota_with_retry`], so transient failures are
+/// retried with the same bounded backoff + idempotency-token semantics as the
+/// single-stream pushes.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PushOutcome {
+    /// Number of availability messages sent (0 when none were supplied).
+    pub availability_pushed: usize,
+    /// Number of rate messages sent (0 when none were supplied).
+    pub rates_pushed: usize,
+    /// `Some(error)` if the availability push was attempted and failed;
+    /// `None` if it succeeded or was skipped (no availability updates).
+    pub availability_error: Option<String>,
+    /// `Some(error)` if the rate push was attempted and failed; `None` if it
+    /// succeeded or was skipped (no rate updates).
+    pub rates_error: Option<String>,
+}
+
+impl PushOutcome {
+    /// True when neither stream reported an error (a fully-applied or no-op
+    /// sync).
+    pub fn is_success(&self) -> bool {
+        self.availability_error.is_none() && self.rates_error.is_none()
+    }
+
+    /// True when exactly one of the two streams failed while the other
+    /// applied — the channel is now in a half-synced state the caller must
+    /// reconcile.
+    pub fn is_partial(&self) -> bool {
+        self.availability_error.is_some() != self.rates_error.is_some()
+    }
+}
+
 /// Whether an HTTP status code returned by the Booking.com endpoint is worth
 /// retrying. Transient server-side / throttling failures are retryable;
 /// client errors (4xx other than 408/429) are not — they indicate a bad
@@ -2914,6 +2959,64 @@ impl BookingClient {
         }
 
         Ok(())
+    }
+
+    /// Push availability *and* rates to Booking.com in one outbound sync,
+    /// reporting a per-stream [`PushOutcome`] (AC-5).
+    ///
+    /// This is the full rate/availability outbound sync entry point: it sends
+    /// the availability stream (`OTA_HotelAvailNotifRQ`) and the rate stream
+    /// (`OTA_HotelRateAmountNotifRQ`) for `hotel_id`, each through the bounded
+    /// retry / error-handling path of [`Self::post_ota_with_retry`].
+    ///
+    /// Unlike the single-stream [`Self::push_availability`] /
+    /// [`Self::push_rates`], a failure in one stream does **not** abort the
+    /// other: both are always attempted (when their input is non-empty) so a
+    /// rate rejection cannot silently discard a pending availability update.
+    /// The returned [`PushOutcome`] records which stream applied, how many
+    /// messages each sent, and the per-stream error text — letting the caller
+    /// distinguish a clean sync ([`PushOutcome::is_success`]) from a
+    /// half-applied one ([`PushOutcome::is_partial`]) that needs reconciling.
+    ///
+    /// Empty slices are treated as "nothing to push" for that stream (counted
+    /// as 0, no error). Pushing two empty slices yields a successful no-op
+    /// outcome.
+    pub async fn push_availability_and_rates(
+        &self,
+        hotel_id: &str,
+        availability: &[AvailabilityUpdate],
+        rates: &[RateUpdate],
+    ) -> PushOutcome {
+        tracing::info!(
+            hotel_id,
+            availability = availability.len(),
+            rates = rates.len(),
+            "Booking.com combined availability + rate push"
+        );
+
+        let mut outcome = PushOutcome::default();
+
+        if !availability.is_empty() {
+            match self.push_availability(hotel_id, availability).await {
+                Ok(()) => outcome.availability_pushed = availability.len(),
+                Err(e) => {
+                    tracing::error!(error = %e, "availability push failed in combined sync");
+                    outcome.availability_error = Some(e.to_string());
+                }
+            }
+        }
+
+        if !rates.is_empty() {
+            match self.push_rates(hotel_id, rates).await {
+                Ok(()) => outcome.rates_pushed = rates.len(),
+                Err(e) => {
+                    tracing::error!(error = %e, "rate push failed in combined sync");
+                    outcome.rates_error = Some(e.to_string());
+                }
+            }
+        }
+
+        outcome
     }
 
     // ==================== Webhook Handling ====================
@@ -3900,6 +4003,151 @@ mod tests {
         let t0 = echo_token_of(&bodies[0]).expect("attempt 0 token");
         let t1 = echo_token_of(&bodies[1]).expect("attempt 1 token");
         assert_eq!(t0, t1, "rate retry must reuse the same idempotency key");
+    }
+
+    // ==================== Combined push (PushOutcome, AC-5) ====================
+
+    const AVAIL_OK_BODY: &str = "<OTA_HotelAvailNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelAvailNotifRS>";
+    const RATE_OK_BODY: &str = "<OTA_HotelRateAmountNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelRateAmountNotifRS>";
+    const ERR_BODY: &str = "<OTA_HotelRateAmountNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Errors><Error Type=\"3\" Code=\"450\" ShortText=\"Rate rejected\"/></Errors></OTA_HotelRateAmountNotifRS>";
+
+    fn client_for(server: &MockOtaServer) -> BookingClient {
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        BookingClient::new(creds).with_retry(BookingRetryConfig::no_retry())
+    }
+
+    #[test]
+    fn test_push_outcome_success_and_partial_helpers() {
+        let clean = PushOutcome {
+            availability_pushed: 2,
+            rates_pushed: 1,
+            availability_error: None,
+            rates_error: None,
+        };
+        assert!(clean.is_success());
+        assert!(!clean.is_partial());
+
+        let half = PushOutcome {
+            availability_pushed: 2,
+            rates_pushed: 0,
+            availability_error: None,
+            rates_error: Some("Rate rejected".to_string()),
+        };
+        assert!(!half.is_success());
+        assert!(half.is_partial());
+
+        let both = PushOutcome {
+            availability_pushed: 0,
+            rates_pushed: 0,
+            availability_error: Some("a".to_string()),
+            rates_error: Some("b".to_string()),
+        };
+        assert!(!both.is_success());
+        // Both failed -> not partial (it's a total failure, nothing landed).
+        assert!(!both.is_partial());
+    }
+
+    #[tokio::test]
+    async fn test_combined_push_both_streams_succeed() {
+        // Availability push (1 HTTP call) then rate push (1 HTTP call).
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(200, AVAIL_OK_BODY),
+            MockResponse::status(200, RATE_OK_BODY),
+        ])
+        .await;
+        let client = client_for(&server);
+
+        let outcome = client
+            .push_availability_and_rates("H1", &[avail_update(4)], &[rate_update("120.00")])
+            .await;
+
+        assert!(
+            outcome.is_success(),
+            "both streams should apply: {outcome:?}"
+        );
+        assert!(!outcome.is_partial());
+        assert_eq!(outcome.availability_pushed, 1);
+        assert_eq!(outcome.rates_pushed, 1);
+        assert_eq!(server.hits(), 2, "one HTTP call per stream");
+    }
+
+    #[tokio::test]
+    async fn test_combined_push_availability_ok_rates_fail_is_partial() {
+        // Availability succeeds; rates come back with an OTA <Errors> body.
+        // The availability success must NOT be lost just because rates failed.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(200, AVAIL_OK_BODY),
+            MockResponse::status(200, ERR_BODY),
+        ])
+        .await;
+        let client = client_for(&server);
+
+        let outcome = client
+            .push_availability_and_rates("H1", &[avail_update(4)], &[rate_update("120.00")])
+            .await;
+
+        assert!(!outcome.is_success());
+        assert!(
+            outcome.is_partial(),
+            "exactly one stream failed: {outcome:?}"
+        );
+        assert_eq!(outcome.availability_pushed, 1, "availability still applied");
+        assert_eq!(outcome.rates_pushed, 0, "rates did not apply");
+        assert!(outcome.availability_error.is_none());
+        assert!(
+            outcome
+                .rates_error
+                .as_deref()
+                .is_some_and(|e| e.contains("Rate rejected")),
+            "rate error text must be surfaced: {outcome:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_combined_push_no_op_when_both_empty() {
+        // No availability and no rates: a successful no-op that makes zero
+        // HTTP calls.
+        let server = MockOtaServer::spawn(vec![]).await;
+        let client = client_for(&server);
+
+        let outcome = client.push_availability_and_rates("H1", &[], &[]).await;
+
+        assert!(outcome.is_success());
+        assert!(!outcome.is_partial());
+        assert_eq!(outcome.availability_pushed, 0);
+        assert_eq!(outcome.rates_pushed, 0);
+        assert_eq!(server.hits(), 0, "empty sync must not hit the network");
+    }
+
+    #[tokio::test]
+    async fn test_combined_push_continues_rates_after_availability_failure() {
+        // Availability fails (non-retryable 400) but rates must still be
+        // attempted — the failure of one stream cannot abort the other.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(400, "<bad-request/>"),
+            MockResponse::status(200, RATE_OK_BODY),
+        ])
+        .await;
+        let client = client_for(&server);
+
+        let outcome = client
+            .push_availability_and_rates("H1", &[avail_update(4)], &[rate_update("99.00")])
+            .await;
+
+        assert!(outcome.is_partial(), "one stream failed: {outcome:?}");
+        assert_eq!(outcome.availability_pushed, 0);
+        assert_eq!(
+            outcome.rates_pushed, 1,
+            "rates attempted despite avail failure"
+        );
+        assert!(outcome.availability_error.is_some());
+        assert!(outcome.rates_error.is_none());
+        assert_eq!(server.hits(), 2, "both streams hit the network");
     }
 
     #[test]
