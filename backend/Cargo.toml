@@ -75,7 +75,7 @@ urlencoding = "2.1"
 url = "2.5"
 
 # HTTP client (for integrations)
-reqwest = { version = "0.13", features = ["json", "form", "query"] }
+reqwest = { version = "0.13", features = ["json", "form", "query", "http2"] }
 
 # XML parsing/generation (for OTA/Booking.com integration)
 quick-xml = { version = "0.40", features = ["serialize"] }
