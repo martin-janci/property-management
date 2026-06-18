@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "date": "2026-06-18",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-18",
+      "type": "lag_warning",
+      "source": "routine self-check (since 2026-06-16T03:25:00Z)",
+      "score_delta": 0,
+      "evidence": [
+        "routine ran 2026-06-16 03:25Z, today 2026-06-18 00:30Z \u2192 ~45h lag (>36h)"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-06-16 \u2014 5 touches",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/repositories/rental.rs touched by 5 merged PRs (rental enum casts + Decimal decode work \u2014 #1422/#1486/#1492/#1537 + churn from #1454)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev --since=2026-06-16 \u2014 4 additional touches",
+      "score_delta": 0,
+      "evidence": [
+        "4 additional touches this run (booking OAuth test stabilization rounds)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1545 (fix(reality-web): unbreak production build \u2014 /accounting QueryClient prerender + favorites pl/hu i18n) touched frontend/apps/reality-web/src/app/accounting/layout.tsx without docs/screens/reality/ update \u2014 heuristic, basename match"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1453 (N5 \u2014 Bank-statement upload + payment-matching + match-review (PAP-210)) touched frontend/apps/reality-web/src/app/accounting/page.tsx without docs/screens/reality/ update \u2014 heuristic, basename match"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1454 (feat: native accounting MVP (N1-N4) + @hey-api migration) touched 4 ppt-web route files (AppRoutes, groups/accounting, groups/rentals) without docs/screens/ppt/ update \u2014 heuristic, basename match"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar (no screen-map-drift signal is high-confidence \u2014 all medium per heuristic; churn signals not in allowlist)",
+  "goal_checks": []
+}
