@@ -56,8 +56,9 @@ pub use booking::{
     BookingAddress, BookingClient, BookingContact, BookingCredentials, BookingError, BookingGuest,
     BookingOAuthClient, BookingOAuthConfig, BookingOAuthTokens, BookingProperty,
     BookingReservation, BookingReservationStatus, BookingRoomType, LosRestrictions,
-    OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelResNotifRQ, OtaHotelResNotifRS, OtaReadRQ,
-    OtaReadRS, OtaReservationNotification, PropertyMapping, RateUpdate, RoomTypeMapping,
+    OtaHotelAvailNotifRQ, OtaHotelAvailNotifRS, OtaHotelRateAmountNotifRQ,
+    OtaHotelRateAmountNotifRS, OtaHotelResNotifRQ, OtaHotelResNotifRS, OtaReadRQ, OtaReadRS,
+    OtaReservationNotification, PropertyMapping, RateUpdate, RoomTypeMapping,
     BOOKING_OAUTH_AUTH_URL, BOOKING_OAUTH_TOKEN_URL,
 };
 
