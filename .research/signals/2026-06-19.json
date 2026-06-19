@@ -1,0 +1,280 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "routine has not run since 2026-06-16T03:25:00Z (~68h ago, ~2d 20h)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-since-4829015b",
+      "score_delta": 0,
+      "evidence": "backend/crates/db/src/repositories/rental.rs touched by 8 merged PRs (rental enum cast PRs: #1486 #1492 #1495 #1505/#1494 #1507 #1537 + others); cumulative re-emit — id already in seen_signals from a prior run, no score applied",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/document.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-since-4829015b",
+      "score_delta": 0,
+      "evidence": "backend/crates/db/src/repositories/document.rs touched by 8 merged PRs (doc-RLS / schema-drift / get-by-id fixes: #1458 #1463 #1469 #1480 #1551 #1565); cumulative re-emit",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking.rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-since-4829015b",
+      "score_delta": 0,
+      "evidence": "backend/crates/integrations/src/booking.rs touched by 7 merged PRs (#1485 Retry-After / RateLimited, #1472 credential encryption, OTA stack); cumulative re-emit",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/db/src/repositories/document.rs",
+      "type": "repeated-churn",
+      "source": "hotspot-history",
+      "score_delta": 1,
+      "evidence": "document.rs hotspot for 2nd run in a row (runs_seen 1->2): instability proxy — 8 merged PRs this run on top of 2940-line churn previously",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking.rs",
+      "type": "repeated-churn",
+      "source": "hotspot-history",
+      "score_delta": 1,
+      "evidence": "booking.rs hotspot for 2nd run in a row (runs_seen 1->2): 7 merged PRs this run on top of 433-line churn previously",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "pr-1453",
+      "score_delta": 2,
+      "evidence": "PR #1453 (N5 bank-statement upload + payment-matching) added frontend/apps/reality-web/src/app/accounting/page.tsx — no docs/screens/reality/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-1454",
+      "score_delta": 2,
+      "evidence": "PR #1454 (native accounting MVP + @hey-api migration) modified frontend/apps/ppt-web/src/routes/{AppRoutes.tsx, groups/accounting.tsx, groups/rentals.tsx, lazyRoutes.tsx} — no docs/screens/ppt/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "pr-1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 (unbreak production build — /accounting QueryClient prerender) modified frontend/apps/reality-web/src/app/accounting/layout.tsx — no docs/screens/reality/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-1555",
+      "score_delta": 2,
+      "evidence": "PR #1555 (gap-79-1 wire useDeleteFault + useFaultStatistics) modified frontend/apps/ppt-web/src/routes/groups/faults.tsx — no docs/screens/ppt/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "pr-1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 (announcement-comments optimistic add) modified frontend/apps/ppt-web/src/routes/groups/announcements.tsx — no docs/screens/ppt/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "risky-churn-pr-1469-document-rs",
+      "type": "risky-churn",
+      "source": "pr-1469",
+      "score_delta": 2,
+      "evidence": "PR #1469 (fix(db): correct schema-drift SQL in document/form/user repos) modified document.rs — a top-churn file (8 PRs this run) — with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1485-booking-rs",
+      "type": "risky-churn",
+      "source": "pr-1485",
+      "score_delta": 2,
+      "evidence": "PR #1485 (fix(integrations): Booking.com client timeout + Retry-After + RateLimited) modified booking.rs — a top-churn file (7 PRs this run) — with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1537-rental-rs",
+      "type": "risky-churn",
+      "source": "pr-1537",
+      "score_delta": 2,
+      "evidence": "PR #1537 (fix(db): cast enum write paths on rental_guests + forms) modified rental.rs — a top-churn file (8 PRs this run) — with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1551-document-rs",
+      "type": "risky-churn",
+      "source": "pr-1551",
+      "score_delta": 2,
+      "evidence": "PR #1551 (fix(db): cast document_category in count_accessible_rls filter) modified document.rs — a top-churn file (8 PRs this run) — with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "risky-churn-pr-1565-document-rs",
+      "type": "risky-churn",
+      "source": "pr-1565",
+      "score_delta": 2,
+      "evidence": "PR #1565 (fix(db): correct document get-by-id read path — u.name + enum ::text decode) modified document.rs — a top-churn file (8 PRs this run) — with no test diff",
+      "confidence": "medium",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "buffer-low-2026-06-19",
+      "type": "buffer-low",
+      "source": "routine-fire-payload",
+      "score_delta": 0,
+      "evidence": "trigger payload signalled planner buffer depletion: claimable=2/72 (now 10 after dispatcher re-fill), 14 quarantined in assignments.json, 20 partial coverage stories — process signal, not a code vector",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": null,
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/<today>.md && head -1 ...",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev <(git show HEAD:state.json) ...",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | (length == (unique | length))",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq -s --slurpfile prev ... non-cumulative re-emit check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[] | select(.score > 8)] | length == 0; + decay check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "per new plan adversarial-pass annotation in brief",
+      "observed": "no new plans this run",
+      "expected": "vacuous pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count <= 2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached + secret/hostname grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed-phase cursor non-advance check",
+      "observed": "no failed phases",
+      "expected": "vacuous pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs still resolve to plans/ or _archive/",
+      "observed": "all 9 prior slugs resolve",
+      "expected": "all resolve"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files _archive count vs HEAD",
+      "observed": "now=7 head=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "0 of each",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor + coverage_cursor",
+      "observed": "valid; pm 5->6; cc 12->0 (mod 13)",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

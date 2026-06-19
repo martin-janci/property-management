@@ -773,20 +773,21 @@
       "title": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #1085"
       ],
       "evidence": [
-        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic"
+        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic",
+        "decayed: −1 (no new signals in 14 days)"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -794,20 +795,21 @@
       "title": "Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #1100"
       ],
       "evidence": [
-        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)"
+        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)",
+        "decayed: −1 (no new signals in 14 days)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx",
         "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -940,20 +942,21 @@
       "title": "Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #963"
       ],
       "evidence": [
-        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response"
+        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response",
+        "decayed: −1 (no new signals in 14 days)"
       ],
       "files": [
         "backend/servers/api-server/src/main.rs",
         "backend/crates/api-core/src/middleware/security_headers.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -1010,20 +1013,21 @@
       "title": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #959",
         "issue #953"
       ],
       "evidence": [
-        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up"
+        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up",
+        "decayed: −1 (no new signals in 14 days)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/listings.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -2208,21 +2212,23 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #1101",
         "PR #1077",
         "PR #1083",
-        "PR #1098"
+        "PR #1098",
+        "PR #1543"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework",
+        "resolved: PR #1543 — test-only TZ pin (jest.config + AnnouncementsScreen.test.ts) addressed the announcement churn surface; code patterns not independently verified"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -2231,21 +2237,23 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #1101",
         "PR #1077",
         "PR #1083",
-        "PR #1098"
+        "PR #1098",
+        "PR #1543"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)",
+        "resolved: PR #1543 — AnnouncementsScreen.test.ts directly stabilized via TZ=UTC pin"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -2253,21 +2261,22 @@
       "title": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1081",
         "PR #1082"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run"
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -2297,8 +2306,8 @@
       "title": "Dispatcher action-list.json corruption when MCP push falls back from blocked git push",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1014"
       ],
@@ -2306,14 +2315,15 @@
         "Issue #1014 (no labels, OPEN): dispatcher Phase 6 push to dev hit HTTP-403 git proxy block, fell back to MCP push_files; ~92 KB action-list.json could not be transmitted inline → file truncated to 1-2 item stub on dev",
         "assignments.json (9 KB) and gc1-orphan-triage.md (1.5 KB) pushed byte-exact; only action-list.json corrupted",
         "recovery already performed via PRs #1024 (assignments-archive restore) and #1027 + 2efc885f (action-list restore from 704ea44); but the systemic issue remains: dispatcher's MCP fallback can corrupt files >~tens of KB",
-        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy"
+        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         ".research/management/action-list.json",
         ".research/dispatcher-prompt.md"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -2321,17 +2331,18 @@
       "title": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#951"
       ],
       "evidence": [
-        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed"
+        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed",
+        "decayed: no new signals in 14 days"
       ],
       "files": [],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-19",
       "plan": null
     },
     {
@@ -3944,6 +3955,249 @@
       "files": [],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1453-reality",
+      "title": "Screen-map drift: PR #1453 added reality-web /accounting page without docs/screens/reality/ update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1453"
+      ],
+      "evidence": [
+        "PR #1453 (N5 bank-statement upload + payment-matching) added frontend/apps/reality-web/src/app/accounting/page.tsx — no docs/screens/reality/*.md update. Heuristic: route basename may not map to a screen slug — review candidate, not a promotable plan."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/page.tsx"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1454-ppt",
+      "title": "Screen-map drift: PR #1454 (native accounting MVP + @hey-api migration) modified ppt-web routes without docs/screens/ppt/ update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1454"
+      ],
+      "evidence": [
+        "PR #1454 modified frontend/apps/ppt-web/src/routes/{AppRoutes.tsx, groups/accounting.tsx, groups/rentals.tsx, lazyRoutes.tsx} — no docs/screens/ppt/*.md update. Big-ticket migration that probably warrants a real screen entry for accounting + a rentals review."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1545-reality",
+      "title": "Screen-map drift: PR #1545 modified reality-web /accounting layout without docs/screens/reality/ update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1545"
+      ],
+      "evidence": [
+        "PR #1545 (unbreak production build — /accounting QueryClient prerender) modified frontend/apps/reality-web/src/app/accounting/layout.tsx — no docs/screens/reality/*.md update."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1555-ppt",
+      "title": "Screen-map drift: PR #1555 (gap-79-1 FaultsPage wiring) modified ppt-web faults route without docs/screens/ppt/ update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1555"
+      ],
+      "evidence": [
+        "PR #1555 modified frontend/apps/ppt-web/src/routes/groups/faults.tsx — no docs/screens/ppt/*.md update. faults.md exists but was not bumped."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1559-ppt",
+      "title": "Screen-map drift: PR #1559 (announcement comments optimistic add) modified ppt-web announcements route without docs/screens/ppt/ update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1559"
+      ],
+      "evidence": [
+        "PR #1559 modified frontend/apps/ppt-web/src/routes/groups/announcements.tsx — no docs/screens/ppt/announcement*.md update."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-1469-document-rs",
+      "title": "Risky churn: PR #1469 schema-drift SQL fix in document.rs (top-churn file) shipped without a regression test",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1469"
+      ],
+      "evidence": [
+        "PR #1469 (fix(db): correct schema-drift SQL in document/form/user repos) modified document.rs — top-churn this run (8 PRs) — with no test diff. Followed shortly by PR #1551 and PR #1565 also patching document.rs reads — pattern strongly suggests missing test coverage for the schema-drift surface."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-1485-booking-rs",
+      "title": "Risky churn: PR #1485 Booking.com client timeout/Retry-After/RateLimited in booking.rs (top-churn file) shipped without a regression test",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1485"
+      ],
+      "evidence": [
+        "PR #1485 (fix(integrations): Booking.com client timeout + Retry-After + RateLimited) modified booking.rs — top-churn this run (7 PRs) — with no test diff. The new failure-mode wiring (retry/backoff + RateLimited variant) needs regression coverage to keep the next bookings integration change from regressing it."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-1537-rental-rs",
+      "title": "Risky churn: PR #1537 rental_guests/forms enum write-path fix in rental.rs (top-churn file) shipped without a regression test",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1537"
+      ],
+      "evidence": [
+        "PR #1537 (fix(db): cast enum write paths on rental_guests + forms — #1008 encode/decode) modified rental.rs — top-churn this run (8 PRs) — with no test diff."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-1551-document-rs",
+      "title": "Risky churn: PR #1551 document_category cast in count_accessible_rls (top-churn file) shipped without a regression test",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1551"
+      ],
+      "evidence": [
+        "PR #1551 (fix(db): cast document_category in count_accessible_rls filter, closes #1528) modified document.rs — top-churn this run (8 PRs) — with no test diff. Symptom was non-manager list total wrong on ?category= filter; needs a test guarding the count branch."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "bug-risky-churn-pr-1565-document-rs",
+      "title": "Risky churn: PR #1565 document get-by-id read path (top-churn file) shipped without a regression test",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1565"
+      ],
+      "evidence": [
+        "PR #1565 (fix(db): correct document get-by-id read path — u.name + enum ::text decode) modified document.rs — top-churn this run (8 PRs) — with no test diff. Bug was nonexistent column + missing enum cast on a hot read path."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-document-rs",
+      "title": "Instability proxy: db/repositories/document.rs hotspot 2 runs in a row — consider extraction or stabilization pass",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot-history"
+      ],
+      "evidence": [
+        "repeated-churn: document.rs runs_seen 1->2; 8 merged PRs this run on top of 2940-line prior churn. The hot churn is enum decode + schema-drift fixes — extract a typed projection / decode helper to stop the same surface from being re-patched."
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
+    },
+    {
+      "id": "refactor-repeated-churn-booking-rs",
+      "title": "Instability proxy: integrations/src/booking.rs hotspot 2 runs in a row — consolidate OTA error-handling surface",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "hotspot-history"
+      ],
+      "evidence": [
+        "repeated-churn: booking.rs runs_seen 1->2; 7 merged PRs this run on top of 433-line prior churn. Repeated rework around OTA error mapping, retries, idempotency, credentials — single-responsibility split would stop the file becoming a hot bus-line."
+      ],
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
       "plan": null
     }
   ]
