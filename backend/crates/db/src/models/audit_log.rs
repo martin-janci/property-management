@@ -70,6 +70,10 @@ pub enum AuditAction {
     // row is replayed; on emit, every active refresh token for the
     // affected user is revoked.
     RefreshTokenReplayDetected,
+    // GH #1583: emitted when a recovery-code verify attempt is rejected by the
+    // per-user brute-force throttle. A DENIAL, distinct from the success
+    // `MfaBackupCodeUsed`, so it does not pollute MFA-bypass success queries.
+    MfaRecoveryRateLimited,
 }
 
 impl AuditAction {
@@ -127,6 +131,7 @@ impl AuditAction {
             Self::OAuthClientSecretRegenerate => "OAuthClientSecretRegenerate",
             Self::OAuthTokenDeniedPrincipalKind => "OAuthTokenDeniedPrincipalKind",
             Self::RefreshTokenReplayDetected => "RefreshTokenReplayDetected",
+            Self::MfaRecoveryRateLimited => "MfaRecoveryRateLimited",
         }
     }
 }

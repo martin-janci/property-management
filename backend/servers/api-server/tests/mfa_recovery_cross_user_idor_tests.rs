@@ -248,6 +248,10 @@ async fn test_recovery_verify_is_rate_limited_per_user(pool: PgPool) {
     let (token, org) = create_authenticated_user_with_org(&app, &user, "rl").await;
     let id = user_id_for(&pool, &user.email).await;
 
+    // The limiter is a process-global static; clear this user's slot so the test
+    // is independent of any earlier attempt for the same id in the binary (#1583).
+    api_server::routes::mfa::recovery_attempts_reset(id);
+
     enroll_user_2fa(&pool, id).await;
     // Issue real codes so the handler reaches the comparison step (an empty set
     // short-circuits to 400 for a different reason).
