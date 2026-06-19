@@ -1,9 +1,10 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-06-19 04:15 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-19 04:30 UTC by routine</sub>
 
 | Score | Vector | Title | Status | Source | Updated | Plan |
 |-------|--------|-------|--------|--------|---------|------|
 | 6 | test-gap | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | PR #497 | 2026-05-26 | plans/_archive/test-gap-inquiry-idor-regression.md |
+| 3 | dx | Refill action-list — claimable=0, coverage.json stale (operator action required) | needs-human-judgement | research-routine fire-payload 2026-06-19 | 2026-06-19 | — |
 | 3 | bug | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend (App.tsx:126 wires this) | ready | Phase 1.5 review of mobile-rn segment (2026-06-16) | 2026-06-16 | plans/code-review-mobile-rn-report-fault-fake-submit.md |
 | 3 | bug | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | ready | rotating-expert-review reality-web 2026-06-14 | 2026-06-15 | plans/code-review-reality-web-realtor-mgmt-untranslated.md |
 | 3 | bug | Reality-web listing detail SSR crashes on partial 200 body — JSON-LD build deref of undefined fields | ready | rotating-expert-review reality-web 2026-06-14 | 2026-06-14 | plans/code-review-reality-web-listing-page-ssr-crash.md |

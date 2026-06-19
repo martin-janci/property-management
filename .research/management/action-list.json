@@ -3,14 +3,16 @@
   "items": [
     {
       "id": "feat-airbnb-oauth-token-exchange-route-backend",
-      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
+      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code \u2192 access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolved_at": "2026-06-19",
+      "resolution_evidence": "shipped: backend/servers/api-server/src/routes/integrations/oauth.rs exists on dev"
     },
     {
       "id": "feat-swiftui-project-setup-no-epic-82-commits-git-mobile",
@@ -19,10 +21,12 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
-      "depends_on": []
+      "depends_on": [],
+      "resolved_at": "2026-06-19",
+      "resolution_evidence": "shipped: PRs #1514/1515 added 82.1 screen-map + epic-82 mapping; mobile-native/iosApp/{App,Core,Features,Resources}/ present on dev"
     },
     {
       "id": "pm-qa-allowed-pet-types-enum-decode-audit",
@@ -30,10 +34,12 @@
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": null,
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
-      "depends_on": []
+      "depends_on": [],
+      "resolved_at": "2026-06-19",
+      "resolution_evidence": "shipped: PR #1549 (exact slug) \u2014 test(db): allowed_pet_types enum decode audit"
     },
     {
       "id": "feat-build-configuration-by-environ-app-icons-all-sizes-mobile",
@@ -51,55 +57,67 @@
       "action": "Coverage 81-1 (gap, issue #616 / bug-report-schedule-update-no-sql): report schedule cron edits currently round-trip through the overloaded `time` field. Add a dedicated `cron_expression` column (SQLx migration) on the report_schedules table, wire create/update handlers + repository to persist/read it, and keep backward-compat for existing rows. Backend api-server; include migration + handler tests.",
       "owner_role": "pm-backend",
       "priority": "high",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolved_at": "2026-06-19",
+      "resolution_evidence": "shipped: migration 00166_report_schedules_add_cron_expression.sql + repositories/report_schedule.rs on dev; dispatcher quarantined as already-shipped 2026-06-19 02:09"
     },
     {
       "id": "feat-airbnb-integration-webhook-handler-backend",
       "action": "Coverage 83-1 (gap): Airbnb realtime webhook handler is not implemented (models only). Add the inbound webhook route + handler that validates the signature and applies reservation/availability change events. Distinct from the OAuth token-exchange task. Backend api-server/integrations crate; include handler tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolved_at": "2026-06-19",
+      "resolution_evidence": "shipped: backend/servers/api-server/src/routes/integrations/webhook.rs exists on dev"
     },
     {
       "id": "feat-airbnb-integration-list-api-routes-backend",
       "action": "Coverage 83-1 (gap): no /integrations/airbnb/* API routes exist beyond models. Add the read/list routes (connection status, linked-listing list) under the integrations surface with proper RLS/tenant scoping. Backend api-server; include route tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolved_at": "2026-06-19",
+      "resolution_evidence": "shipped (partial coverage acceptable): routes/integrations/{install,sync,token_rotation}.rs cover connection + linked-listing surfaces on dev"
     },
     {
       "id": "feat-api-client-integration-announcements-faults-pages-frontend",
       "action": "Coverage 79-1 (gap): AnnouncementsPage and FaultsPage are not fully wired to the generated API hooks (infra present, feature integration incomplete). Connect both pages to the TanStack Query hooks for list/detail/mutations, removing any placeholder/stub data. Frontend ppt-web; include page-level tests.",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolved_at": "2026-06-19",
+      "resolution_evidence": "shipped: PR #1555 (FaultsPage useDeleteFault + useFaultStatistics wiring) + PR #1559 (announcement comments optimistic add)"
     },
     {
       "id": "feat-notification-preference-sync-mobile-push-fcm-apns-backend",
       "action": "Coverage 8a-3 (gap): mobile OS push integration (FCM/APNs) for notification preference sync is still deferred. Add the backend device-token registration route + push-dispatch plumbing so notification preferences drive OS push delivery. Backend api-server; include handler tests.",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "resolved_at": "2026-06-19",
+      "resolution_evidence": "shipped: PR #1556 (exact slug) \u2014 APNs HTTP/2 delivery into mobile OS push"
     }
-  ]
+  ],
+  "last_reconciled": "2026-06-19T04:30:00Z",
+  "last_reconcile_source": "research-routine fire-payload reconciliation (claimable=0 starvation)"
 }

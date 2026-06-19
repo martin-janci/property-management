@@ -607,7 +607,8 @@
     "screen-map-drift-pr-1545-reality",
     "screen-map-drift-pr-1453-reality",
     "screen-map-drift-pr-1454-ppt",
-    "dep-update-noise-window-2026-06-19"
+    "dep-update-noise-window-2026-06-19",
+    "dx-action-list-refill-needed-2026-06-19"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -651,6 +652,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

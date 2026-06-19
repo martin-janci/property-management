@@ -4105,6 +4105,31 @@
       "created_at": "2026-06-19",
       "updated_at": "2026-06-19",
       "plan": null
+    },
+    {
+      "id": "dx-action-list-refill-needed-2026-06-19",
+      "title": "Refill action-list \u2014 claimable=0, coverage.json stale (operator action required)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 3,
+      "status": "needs-human-judgement",
+      "sources": [
+        "research-routine fire-payload 2026-06-19",
+        ".research/management/coverage.json (generated 2026-06-16)",
+        ".research/management/action-list.json (post-reconciliation: 1 open, 8 done)"
+      ],
+      "evidence": [
+        "Dispatcher buffer reported claimable=0 because all 9 open action-list items were already shipped on dev (verified: 8 shipped, 1 in-flight via PR #1554). Routine reconciled the 8 shipped items in-place; only 1 open item remains.",
+        "Coverage.json scan_kind=upkeep generated=2026-06-16 \u2014 STALE. Cloud routine cannot run full scan (forbidden by routine prompt; authoritative full rebuild is `/ppt-project-management scan` locally).",
+        "Action required: run `/ppt-project-management scan` locally to regenerate coverage.json against current dev and surface new gaps for the dispatcher to claim."
+      ],
+      "files": [
+        ".research/management/coverage.json",
+        ".research/management/action-list.json"
+      ],
+      "created_at": "2026-06-19",
+      "updated_at": "2026-06-19",
+      "plan": null
     }
   ]
 }
