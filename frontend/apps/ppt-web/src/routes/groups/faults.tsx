@@ -233,6 +233,18 @@ function FaultsPageRoute() {
   const total = data?.count ?? 0;
 
   const handleDelete = async (id: string) => {
+    // Deleting a fault is destructive and irreversible — confirm first, matching
+    // the rest of the app's destructive actions (registry/news/accounting, and
+    // FaultDetailPage's own confirm). #1588 F1.
+    if (
+      !window.confirm(
+        t('faults.confirmDelete', {
+          defaultValue: 'Delete this fault? This action cannot be undone.',
+        })
+      )
+    ) {
+      return;
+    }
     try {
       await deleteFault.mutateAsync(id);
       showToast({
@@ -273,7 +285,14 @@ function FaultsPageRoute() {
   );
 
   const stats = statsData
-    ? { total_count: statsData.total_count, open_count: statsData.open_count }
+    ? {
+        total_count: statsData.total_count,
+        open_count: statsData.open_count,
+        // Use the API's first-class closed_count rather than re-deriving
+        // total - open, so the figure can't silently break if open/closed
+        // partition semantics change (#1588 F2).
+        closed_count: statsData.closed_count,
+      }
     : undefined;
 
   return (

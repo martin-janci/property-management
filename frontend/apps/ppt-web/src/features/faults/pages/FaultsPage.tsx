@@ -30,6 +30,7 @@ interface FaultListParams {
 export interface FaultStatsSummary {
   total_count: number;
   open_count: number;
+  closed_count: number;
 }
 
 interface FaultsPageProps {
@@ -119,9 +120,7 @@ export function FaultsPage({
             <p className="text-sm text-gray-500">Open</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-400">
-              {stats.total_count - stats.open_count}
-            </p>
+            <p className="text-2xl font-bold text-gray-400">{stats.closed_count}</p>
             <p className="text-sm text-gray-500">Closed</p>
           </div>
         </div>
