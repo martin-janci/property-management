@@ -293,6 +293,53 @@ async fn feed_cross_user_returns_404(pool: PgPool) {
     );
 }
 
+/// #1584 finding 3: `PortalPrincipal` deliberately admits ANY authenticated,
+/// non-deleted principal kind (including `platform`) and yields only `user_id`
+/// — it grants no kind-based bypass of the repo's per-user ownership scoping.
+/// Pin that contract: a `platform`-kind caller who is NOT the owner still gets
+/// 404 on another user's feed (the `WHERE agency_id = caller_user_id` scope
+/// finds no row), so the "admits any kind" decision can't silently become an
+/// escalation.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn feed_platform_principal_is_still_scoped_to_owner(pool: PgPool) {
+    let agency_a = seed_agency(&pool, "feed-plat-a").await;
+    // The feed owner, registered as a normal `public` portal user.
+    sqlx::query(
+        r#"INSERT INTO users (id, email, password_hash, name, status, email_verified_at, principal_kind)
+           VALUES ($1, $2, 'test_hash', 'Feed Owner', 'active', NOW(), 'public')"#,
+    )
+    .bind(agency_a)
+    .bind(format!("feed-plat-owner-{agency_a}@test"))
+    .execute(&pool)
+    .await
+    .expect("register feed owner as portal user");
+
+    let feed_id = seed_feed(&pool, agency_a).await;
+
+    // A platform-kind principal (seed_portal_user uses principal_kind='platform'),
+    // distinct from the owner, probes the feed by id.
+    let platform_user = seed_portal_user(&pool, "feed-plat-attacker").await;
+
+    let app = imports_router(pool);
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(format!("/api/v1/imports/feeds/{feed_id}"))
+        .header(
+            header::AUTHORIZATION,
+            format!("Bearer {}", mint_token(platform_user)),
+        )
+        .body(Body::empty())
+        .unwrap();
+
+    let status = app.oneshot(req).await.unwrap().status();
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "a platform-kind caller must NOT read another user's feed — PortalPrincipal \
+         admits the kind but the repo scopes by user_id; got {status}"
+    );
+}
+
 /// Happy path: feed owner reads their own feed → 200.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn feed_owner_returns_200(pool: PgPool) {
