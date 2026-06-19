@@ -1000,3 +1000,104 @@ async fn test_update_folder_into_descendant_is_rejected(pool: PgPool) {
         "rejected circular update must not mutate the folder's parent"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Move-to-root + tri-state parent_id — #1589 finding 1
+// ---------------------------------------------------------------------------
+
+/// PUT /folders/{id} with `{"parent_id": null}` must DETACH a nested folder to
+/// the top level. The old `parent_id = COALESCE($n, parent_id)` ignored an
+/// explicit null, so the move returned 200 while the folder stayed under its
+/// parent (a silent no-op). The tri-state fix makes null set parent_id = NULL.
+/// Fails-on-`dev` (the COALESCE leaves parent unchanged); passes with the fix.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_update_folder_move_to_root_detaches(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org = seed_org_f(&pool, "move-root").await;
+    let user = seed_user_f(&pool, "move-root-mgr").await;
+    common::seed_membership(&pool, org, user, "manager").await;
+    let token = mint_jwt_with_role(user, "manager");
+
+    let parent = seed_folder_f(&pool, org, None, "Parent", user).await;
+    let child = seed_folder_f(&pool, org, Some(parent), "Child", user).await;
+
+    let resp = app
+        .execute(
+            Request::builder()
+                .method(Method::PUT)
+                .uri(format!("/api/v1/documents/folders/{child}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header("X-Tenant-ID", org.to_string())
+                .body(Body::from(r#"{"parent_id":null}"#))
+                .unwrap(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "move-to-root must return 200; got {} body: {}",
+        resp.status,
+        resp.text()
+    );
+
+    let parent_after: Option<Uuid> =
+        sqlx::query_scalar("SELECT parent_id FROM document_folders WHERE id = $1")
+            .bind(child)
+            .fetch_one(&pool)
+            .await
+            .expect("post-move parent check");
+    assert_eq!(
+        parent_after, None,
+        "child must be detached to root (parent_id IS NULL), not silently left \
+         under its parent (#1589)"
+    );
+}
+
+/// Guards the tri-state's "absent" arm: a name-only update must NOT touch
+/// parent_id (the COALESCE→CASE change must not regress this).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_update_folder_name_only_preserves_parent(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org = seed_org_f(&pool, "name-only").await;
+    let user = seed_user_f(&pool, "name-only-mgr").await;
+    common::seed_membership(&pool, org, user, "manager").await;
+    let token = mint_jwt_with_role(user, "manager");
+
+    let parent = seed_folder_f(&pool, org, None, "Parent2", user).await;
+    let child = seed_folder_f(&pool, org, Some(parent), "Child2", user).await;
+
+    let resp = app
+        .execute(
+            Request::builder()
+                .method(Method::PUT)
+                .uri(format!("/api/v1/documents/folders/{child}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header("X-Tenant-ID", org.to_string())
+                .body(Body::from(r#"{"name":"Renamed"}"#))
+                .unwrap(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "name-only update must return 200; got {} body: {}",
+        resp.status,
+        resp.text()
+    );
+
+    let parent_after: Option<Uuid> =
+        sqlx::query_scalar("SELECT parent_id FROM document_folders WHERE id = $1")
+            .bind(child)
+            .fetch_one(&pool)
+            .await
+            .expect("post-rename parent check");
+    assert_eq!(
+        parent_after,
+        Some(parent),
+        "a name-only update must leave parent_id unchanged (absent != null)"
+    );
+}
