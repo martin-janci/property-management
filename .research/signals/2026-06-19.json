@@ -1,0 +1,264 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "last_run_iso=2026-06-16T03:25:00Z; now=2026-06-19",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25Z \u2014 80h ago (3d 8h); over 36h threshold. Stale-routine alert: cloud cron likely paused.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking.rs touched by 5 commits in this run window",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking.rs previously hot (runs_seen=1, last_seen=2026-06-12); now hot again with churn=5",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/mfa.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "backend/servers/api-server/src/routes/mfa.rs touched by 4 commits in this run window",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/api_ecosystem_developer_force_rls_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/tests/api_ecosystem_developer_force_rls_tests.rs touched by 4 commits in this run window",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 modified ppt-web routes (frontend/apps/ppt-web/src/routes/groups/announcements.tsx) without updating docs/screens/ppt/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": "PR #1555 modified ppt-web routes (frontend/apps/ppt-web/src/routes/groups/faults.tsx, frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx) without updating docs/screens/ppt/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-batch-2026-06-19",
+      "type": "closed-not-merged-pr",
+      "source": "PRs #[1511, 1273, 1505, 1506, 1504, 1503, 1500, 1479, 1475, 1474, 1462]",
+      "score_delta": 1,
+      "evidence": "11 PRs closed without merging on 2026-06-17 (dispatcher cleanup of superseded retries). Most have replacement merged PRs.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-2026-06-19",
+      "type": "dep-update-noise",
+      "source": "dependabot[bot] PRs #1566, #1570, #1572, #1576, #1573, #1575, #1571",
+      "score_delta": 0,
+      "evidence": "7 dependabot PRs merged; tracked only.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "unchecked-todo-pr-1507",
+      "type": "unchecked-todo",
+      "source": "PR #1507",
+      "score_delta": 0,
+      "evidence": "PR #1507 body has `- [ ]` near `non_reporter_non_manager_member_fails_manager_gate` \u2014 appears to be CI-verification checkbox left unticked post-merge (procedural, not real TODO).",
+      "confidence": "low",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1492",
+      "type": "unchecked-todo",
+      "source": "PR #1492",
+      "score_delta": 0,
+      "evidence": "PR #1492 body has `- [ ]` near `backend-fmt-clippy-gate` \u2014 appears to be CI-verification checkbox left unticked post-merge (procedural, not real TODO).",
+      "confidence": "low",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1501",
+      "type": "unchecked-todo",
+      "source": "PR #1501",
+      "score_delta": 0,
+      "evidence": "PR #1501 body has `- [ ]` near `imports_idor_tests` \u2014 appears to be CI-verification checkbox left unticked post-merge (procedural, not real TODO).",
+      "confidence": "low",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1460",
+      "type": "unchecked-todo",
+      "source": "PR #1460",
+      "score_delta": 0,
+      "evidence": "PR #1460 body has `- [ ]` near `api_ecosystem_catalog_and_dev` \u2014 appears to be CI-verification checkbox left unticked post-merge (procedural, not real TODO).",
+      "confidence": "low",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1476",
+      "type": "unchecked-todo",
+      "source": "PR #1476",
+      "score_delta": 0,
+      "evidence": "PR #1476 body has `- [ ]` near `backend.yml passes` \u2014 appears to be CI-verification checkbox left unticked post-merge (procedural, not real TODO).",
+      "confidence": "low",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1471",
+      "type": "unchecked-todo",
+      "source": "PR #1471",
+      "score_delta": 0,
+      "evidence": "PR #1471 body has `- [ ]` near `esg_force_rls_cross_tenant_tests` \u2014 appears to be CI-verification checkbox left unticked post-merge (procedural, not real TODO).",
+      "confidence": "low",
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 == # 2026-06-19",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state cursors vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counted non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap + decay",
+      "observed": "all decayed open items lost \u22651 or moved to dropped/done(score=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotations",
+      "observed": "no new plans this run; vacuous pass",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + readiness gates",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0 paths outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed-phases listed + cursors unchanged",
+      "observed": "Phase 1.5/1.6 skipped, both cursors unchanged vs HEAD",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run \u2265 HEAD",
+      "observed": "6 = 6",
+      "expected": "\u2265"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 auto-fix actions (no candidate met certainty bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + pm_cursor",
+      "observed": "Phase 1.6 skipped \u2192 no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar this run",
+  "phase_1_5_skipped": "context-budget catch-up run (80h lag)",
+  "phase_1_6_skipped": "context-budget catch-up run (80h lag)"
+}
