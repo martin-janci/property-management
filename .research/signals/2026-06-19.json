@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "generated_at": "2026-06-19",
+  "phase_1": {
+    "merged_prs_count": 84,
+    "merged_pr_range": "#1447–#1603",
+    "open_prs_touched": 5,
+    "closed_not_merged": 12,
+    "issues_new_or_updated": 81,
+    "issues_new_since_last_seen": 28,
+    "commits_on_dev": 100
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "(now - last_run_iso) = 3d 23h since 2026-06-16T03:25Z; cron likely missed 2026-06-17 + 2026-06-18 daily slots",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": "dependabot: androidx.compose:compose-bom 2026.05.01 → 2026.06.00 (mobile-native compose group)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": "dependabot: mikepenz/action-junit-report 5 → 6",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": "dependabot: npm-minor-patch group /frontend (6 updates)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": "dependabot: expo-secure-store 55.0.14 → 56.0.4",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": "dependabot: @types/node 20.19.40 → 25.9.3 (MAJOR)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": "dependabot: @babel/core 7.29.7 → 8.0.1 (MAJOR) — runtime-regression risk surface",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": "dependabot: i18next 25.10.10 → 26.3.1 (MAJOR) — runtime-regression risk surface (all 4 web/native apps depend on it)",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "phase_1_5_skipped_reason": "lag-recovery run (last_run 3d23h ago); deferred to next normal run. Next segment: ppt-web-core (oldest unreviewed, last 2026-06-05).",
+  "phase_1_6_skipped_reason": "lag-recovery run; G16 is no-op when 1.6 skipped. pm_cursor.next_index=5 (pm-security) held; coverage_cursor.next_index=12 held.",
+  "phase_3_5_adversarial_pass": "n/a (0 plans promoted)",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run; dep-update-noise signals are score 0 by table",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today + H1 match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq dedup non-cumulative",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "vacuous",
+      "expected": "adversarial pass annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2; sections+files",
+      "observed": "0 new",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen",
+      "observed": "diff 0",
+      "expected": "diff 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "now=7 head=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen",
+      "observed": "diff 0",
+      "expected": "diff 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions <=3 + per-type caps",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts when phase 1.6 ran",
+      "observed": "phase 1.6 skipped → no-op",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
