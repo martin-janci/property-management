@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-19T02:09:39Z",
+  "generated": "2026-06-19T22:09:53Z",
   "assignments": [
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -358,6 +358,50 @@
       "merge_attempted_at": null,
       "quarantined_at": "2026-06-18T22:22:09Z",
       "quarantine_reason": "completed-but-no-PR: gap-79-1 AnnouncementsPage/FaultsPage already fully wired to @ppt/api-client hooks on dev via #1555/#1559; verification produced zero diff. Quarantined (not failed) to block re-claim + avoid archive MCP push. Human action: close row + mark action-list item feat-api-client-integration-announcements-faults-pages-frontend done."
+    },
+    {
+      "task_id": "feat-airbnb-integration-list-api-routes-backend",
+      "branch": "auto-impl/feat-airbnb-integration-list-api-routes-",
+      "status": "in-progress",
+      "claimed_at": "2026-06-19T22:08:12Z",
+      "last_updated": "2026-06-19T22:08:12Z",
+      "status_changed_at": "2026-06-19T22:08:12Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "feat-notification-preference-sync-mobile-push-fcm-apns-backend",
+      "branch": "auto-impl/feat-notification-preference-sync-mobile",
+      "status": "in-progress",
+      "claimed_at": "2026-06-19T22:08:12Z",
+      "last_updated": "2026-06-19T22:08:12Z",
+      "status_changed_at": "2026-06-19T22:08:12Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
