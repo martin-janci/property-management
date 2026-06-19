@@ -1,0 +1,135 @@
+{
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-19.md && head -1 == # 2026-06-19",
+      "observed": "will be true after write",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json diff",
+      "observed": "last_pr_seen 1439→1613; last_issue_seen 1437→1614; seen_signals +1; stats updated",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog.json id uniqueness",
+      "observed": "unique",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "compare signals ids vs prior seen_signals",
+      "observed": "lag-warning-2026-06-19 not previously seen",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "decay + cap discipline",
+      "observed": "4 items decayed score-1; 5 items decayed to 0 → dropped; no cap exceeded",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans, no adversarial pass required",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run",
+      "observed": "0 ≤ 2",
+      "expected": "≤ 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "will verify before commit",
+      "expected": "0 lines outside .research/"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "clean",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "phases 1.5 and 1.6 skipped (deferred; not failures); cursors review_cursor/pm_cursor/coverage_cursor not advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs present in working tree",
+      "observed": "unchanged",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count >= HEAD count",
+      "observed": "same count (6)",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps",
+      "observed": "0 actions; under all caps",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is no-op",
+      "observed": "pm_cursor unchanged; gate not enforced this run",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram secret grep",
+      "observed": "clean",
+      "expected": "0 matches"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine has not run since 2026-06-16T03:25:00Z — lag ≈ 72h (3d 0h). Above the 36h threshold; also ≥3 days so stale_routine_alert flagged in brief. Cloud routine may be paused or the scheduler missed runs on 2026-06-17 and 2026-06-18.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": []
+}
