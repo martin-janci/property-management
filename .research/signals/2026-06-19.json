@@ -1,0 +1,57 @@
+{
+  "run_date": "2026-06-19",
+  "run_mode": "catchup",
+  "lag_hours": 84,
+  "phases_skipped": ["1.5", "1.6"],
+  "phase_skip_reason": "catchup-mode: 3.5d lag since last_run_iso=2026-06-16T03:25Z (cloud scheduler missed scheduled runs); focused this run on cursor advance + resolution-check + decay rather than deep review/PM rotation",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "84h since last_run_iso=2026-06-16T03:25Z (>36h threshold); cloud scheduler missed at least two daily slots",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-19",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "LAG_DAYS=3 (>=3d); cloud routine appears paused or running on a degraded cadence — dispatcher (separate planning branch) still ticking per merged dispatcher state PRs #1546/#1547/#1553/#1595/#1596",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "catchup-window-pr-1440-to-1609-2026-06-19",
+      "type": "catchup-summary",
+      "source": "Phase 1 observation",
+      "score_delta": 0,
+      "evidence": "79 merged + 11 closed-not-merged PRs in window #1440..#1609 (vs prior cursor last_pr_seen=1439); 8 dependabot, 71 author-merged; 0 reverts; 30+ follow-up,from-merged-review issues opened (all labeled — no untriaged-issue fires); detailed per-PR analysis deferred to next normal run",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — only lag/catchup synthetic signals this run (none score_delta>=2 + confidence=high); allowlist signal types (screen-map-drift, screen-map-orphan, fixme-in-merged-code, dep-update-noise lockfile-drift, stalled-review) were not derived this catchup run",
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-06-19.md && head -1 matches", "observed": "exit 0", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "state.json advanced vs HEAD", "observed": "last_pr_seen 1439→1609, last_issue_seen 1437→1607, last_commit_sha changed, seen_signals +3", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique | length))' backlog.json", "observed": "true", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "new signal ids absent from prior seen_signals", "observed": "3 new ids, none in prior 230-entry seen_signals", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "score cap 8 + 14d decay applied", "observed": "no score>8; 4 items −1 (score 2→1), 3 items −1→0 dropped, 2 items marked done from resolution check (skipped decay)", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "no new plans this run — vacuous pass", "observed": "0 new plans", "expected": "true"},
+    {"goal": "G7", "passed": true, "command": "≤2 new plans — vacuous pass", "observed": "0 new plans", "expected": "true"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached --name-only ⊆ .research/", "observed": "only .research/ paths staged", "expected": "0 outside"},
+    {"goal": "G9", "passed": true, "command": "no secrets/private-hostnames in staged diff", "observed": "no matches in diff", "expected": "0"},
+    {"goal": "G10", "passed": true, "command": "backlog.md byte-identical to regen", "observed": "regenerated from backlog.json this run", "expected": "exit 0"},
+    {"goal": "G11", "passed": true, "command": "no failed phases hidden", "observed": "Phase 1.5 + 1.6 explicitly skipped (catchup-mode), surfaced under 'Phases skipped' in brief; no phase failed", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or _archive/", "observed": "all 9 plans from HEAD still present in plans/ this run", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "archive count ≥ HEAD archive count", "observed": "no archive changes this run", "expected": "true"},
+    {"goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md byte-identical to regen", "observed": "regenerated from backlog.json triage rows this run", "expected": "exit 0"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions ≤3 with per-category cap 1", "observed": "auto_fix_actions=[] (no candidate)", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 skipped → gate is no-op", "observed": "pm_cursor.next_index unchanged at 5; coverage_cursor unchanged at 12", "expected": "true (no-op)"},
+    {"goal": "G17", "passed": true, "command": "no Telegram bot-token literal in staged diff", "observed": "no matches", "expected": "0"}
+  ]
+}
