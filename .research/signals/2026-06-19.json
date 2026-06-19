@@ -1,0 +1,238 @@
+{
+  "date": "2026-06-19",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "Routine last ran 2026-06-16T03:25:00Z \u2014 72h ago. Cloud cron likely paused or missed multiple slots; dispatcher branch is still ticking (last dispatcher commit 2026-06-19T02:09)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-package-json",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/package.json: 9 commits this run (window 2026-06-16\u21922026-06-19)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z origin/dev",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/src/repositories/rental.rs: 8 commits this run (window 2026-06-16\u21922026-06-19)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z origin/dev",
+      "score_delta": 0,
+      "evidence": [
+        "backend/crates/db/src/repositories/document.rs: 8 commits this run (window 2026-06-16\u21922026-06-19). Re-emit (cumulative type \u2014 score_delta not re-applied)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1559 touched ppt-web route files `frontend/apps/ppt-web/src/routes/groups/announcements.tsx` without updating any docs/screens/ppt/*.md. Best-effort heuristic \u2014 caveat applies."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1555 touched ppt-web route files `frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx`, `frontend/apps/ppt-web/src/routes/groups/faults.tsx` without updating any docs/screens/ppt/*.md. Best-effort heuristic \u2014 caveat applies."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1545 touched reality-web route files `frontend/apps/reality-web/src/app/accounting/layout.tsx` without updating any docs/screens/reality/*.md. Best-effort heuristic \u2014 caveat applies."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1453 touched reality-web route files `frontend/apps/reality-web/src/app/accounting/page.tsx` without updating any docs/screens/reality/*.md. Best-effort heuristic \u2014 caveat applies."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1454 touched ppt-web route files `frontend/apps/ppt-web/src/routes/AppRoutes.tsx`, `frontend/apps/ppt-web/src/routes/groups/accounting.tsx`, `frontend/apps/ppt-web/src/routes/groups/rentals.tsx` without updating any docs/screens/ppt/*.md. Best-effort heuristic \u2014 caveat applies."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-window-2026-06-19",
+      "type": "dep-update-noise",
+      "source": "merged-PRs window=2026-06-16T03:25:00Z..2026-06-19T04:15:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "7 dependabot/renovate PRs merged in window. Logged, not scored."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-19.md && head -1 == '# 2026-06-19'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json diff vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog.json unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup w/ carve-out",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score >8 + decay applied",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans have adversarial pass annotation",
+      "observed": "no new plans this run",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count + readiness gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private hostnames grep",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures recorded; cursors advanced appropriately",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans converge",
+      "observed": "no plans changed this run",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=7 head=7",
+      "expected": "now>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (Phase 5 skipped)",
+      "observed": "auto_fix_actions=[]",
+      "expected": "<=3 (cap)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 management artifacts validity",
+      "observed": "Phase 1.6 skipped \u2014 no-op",
+      "expected": "vacuous"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token leak grep",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "ROUTINE_AUTOFIX_DISABLED not set \u2014 Phase 5 skipped this run by routine choice (3-day catch-up; conservative pass)"
+}

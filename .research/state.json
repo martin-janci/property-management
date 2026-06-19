@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
+  "last_run_iso": "2026-06-19T04:15:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_pr_seen": 1603,
+  "last_issue_seen": 1594,
+  "last_commit_sha": "4324bfd",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -238,9 +238,9 @@
       "recent_churn": 709
     },
     "backend/crates/db/src/repositories/document.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-10",
-      "recent_churn": 2940
+      "runs_seen": 2,
+      "last_seen": "2026-06-19",
+      "recent_churn": 8
     },
     "backend/crates/db/src/repositories/subscription.rs": {
       "runs_seen": 1,
@@ -253,9 +253,9 @@
       "recent_churn": 2691
     },
     "backend/crates/integrations/src/booking.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 433
+      "runs_seen": 2,
+      "last_seen": "2026-06-19",
+      "recent_churn": 7
     },
     "backend/servers/api-server/src/routes/api_ecosystem.rs": {
       "runs_seen": 1,
@@ -318,9 +318,54 @@
       "recent_churn": 484
     },
     "backend/servers/api-server/tests/booking_oauth_routes_tests.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-06-19",
+      "recent_churn": 5
+    },
+    "frontend/apps/mobile/package.json": {
       "runs_seen": 1,
-      "last_seen": "2026-06-16",
-      "recent_churn": 381
+      "last_seen": "2026-06-19",
+      "recent_churn": 9
+    },
+    "backend/crates/db/src/repositories/rental.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-19",
+      "recent_churn": 8
+    },
+    "frontend/apps/ppt-web/package.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-19",
+      "recent_churn": 7
+    },
+    "backend/servers/api-server/tests/airbnb_oauth_routes_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-19",
+      "recent_churn": 5
+    },
+    "backend/crates/integrations/src/lib.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-19",
+      "recent_churn": 5
+    },
+    "frontend/apps/admin-web/package.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-19",
+      "recent_churn": 5
+    },
+    "backend/servers/api-server/src/routes/mfa.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-19",
+      "recent_churn": 4
+    },
+    "frontend/apps/reality-web/package.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-19",
+      "recent_churn": 4
+    },
+    "frontend/packages/screen-map/package.json": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-19",
+      "recent_churn": 4
     }
   },
   "seen_signals": [
@@ -553,7 +598,16 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-19",
+    "churn-hotspot-frontend-apps-mobile-package-json",
+    "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+    "screen-map-drift-pr-1559-ppt",
+    "screen-map-drift-pr-1555-ppt",
+    "screen-map-drift-pr-1545-reality",
+    "screen-map-drift-pr-1453-reality",
+    "screen-map-drift-pr-1454-ppt",
+    "dep-update-noise-window-2026-06-19"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,8 +621,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 180,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
