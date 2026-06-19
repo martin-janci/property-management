@@ -36,17 +36,6 @@
       "depends_on": []
     },
     {
-      "id": "feat-booking-integration-rate-availability-push-flow-backend",
-      "action": "Coverage 83-2 AC-5 (gap): complete the rate/availability push flow to Booking.com — full outbound sync of price + availability changes through the OTA channel with retry/error handling. Backend integrations crate; handler + tests.",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap 83-2 AC-5)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": []
-    },
-    {
       "id": "feat-build-configuration-by-environ-app-icons-all-sizes-mobile",
       "action": "Coverage 85-2 (gap): generate app icons for all required sizes (Android mipmap densities + iOS AppIcon set) for the React Native Property Management mobile app, and wire them into the build configs. Frontend mobile; icon assets + manifest/Info.plist references.",
       "owner_role": "pm-frontend",
