@@ -2307,6 +2307,36 @@ impl RentalRepository {
         Ok(conn)
     }
 
+    /// List all stored Airbnb connections (linked listings) for an organisation.
+    ///
+    /// Coverage 83-1: this is the DB-backed read of the org's *stored* Airbnb
+    /// connection rows, as opposed to the live-proxied `/airbnb/listings` route
+    /// which calls the Airbnb Partner API through the stored token. It returns
+    /// every `platform = 'airbnb'` row for the org (active or not) so the
+    /// management UI can render the linked-listing list without any external
+    /// network round-trip — including org-level (nil `unit_id`) connections that
+    /// the `units`-joined `get_connections_for_org` summary would drop.
+    ///
+    /// Scoped to `organization_id = $1`; rows are returned newest-first.
+    pub async fn list_airbnb_connections(
+        &self,
+        org_id: Uuid,
+    ) -> Result<Vec<RentalPlatformConnection>, SqlxError> {
+        let connections =
+            sqlx::query_as::<_, RentalPlatformConnection>(sqlx::AssertSqlSafe(format!(
+                r#"
+            SELECT {PLATFORM_CONNECTION_COLUMNS} FROM rental_platform_connections
+            WHERE organization_id = $1 AND platform = 'airbnb'
+            ORDER BY created_at DESC
+            "#
+            )))
+            .bind(org_id)
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(connections)
+    }
+
     /// Record an inbound Airbnb webhook delivery in the dedup ledger.
     ///
     /// Airbnb guarantees at-least-once delivery; this inserts the delivery's
