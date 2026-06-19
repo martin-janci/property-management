@@ -17,7 +17,7 @@
 
 /// <reference types="vitest/globals" />
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
@@ -108,6 +108,10 @@ describe('FaultsPageRoute API wiring (gap-79-1)', () => {
     vi.clearAllMocks();
     // Default stats: no data (stats bar hidden).
     mockUseFaultStatistics.mockReturnValue({ data: undefined });
+    // Delete is now confirmation-gated (#1588 F1); default to "confirmed" so
+    // the existing happy-path delete test still exercises the mutation. Tests
+    // that need the dismissed case override this.
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   it('(a) does not show empty state while loading', async () => {
@@ -229,5 +233,49 @@ describe('FaultsPageRoute API wiring (gap-79-1)', () => {
     expect(statsBar).toBeInTheDocument();
     expect(statsBar).toHaveTextContent('42');
     expect(statsBar).toHaveTextContent('30');
+    // Closed renders the API's first-class closed_count (not total - open). #1588 F2
+    expect(statsBar).toHaveTextContent('12');
+  });
+
+  it('(g) Delete does NOT call mutateAsync when the confirmation is dismissed', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    mockUseFaults.mockReturnValue({
+      data: {
+        faults: [makeApiFault({ id: 'f-del', title: 'Broken pipe', status: 'new' })],
+        count: 1,
+      },
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
+
+    renderFaultsRoute();
+    await screen.findByText('Broken pipe', {}, { timeout: 5000 });
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(window.confirm).toHaveBeenCalledTimes(1);
+    expect(mockDeleteFaultMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('(h) Delete shows an error toast when the mutation rejects', async () => {
+    mockDeleteFaultMutateAsync.mockRejectedValueOnce(new Error('boom'));
+    mockUseFaults.mockReturnValue({
+      data: {
+        faults: [makeApiFault({ id: 'f-del', title: 'Broken pipe', status: 'new' })],
+        count: 1,
+      },
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
+
+    renderFaultsRoute();
+    await screen.findByText('Broken pipe', {}, { timeout: 5000 });
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(mockDeleteFaultMutateAsync).toHaveBeenCalledWith('f-del');
+    await waitFor(() => {
+      expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    });
   });
 });
