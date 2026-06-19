@@ -1,0 +1,236 @@
+{
+  "date": "2026-06-19",
+  "lag_hours": 72,
+  "phase_1_5_skipped": true,
+  "phase_1_5_skip_reason": "Catch-up run after 3-day lag; rotating review deferred to next run for token discipline",
+  "phase_1_6_skipped": true,
+  "phase_1_6_skip_reason": "Catch-up run after 3-day lag; PM rotation deferred to next run",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "routine state.last_run_iso=2026-06-16T03:25:00Z vs now=2026-06-19T04:30:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16 03:25Z; current run is 2026-06-19 ~04:30Z — 72-hour gap (3 missed scheduled runs). Surface in brief.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git-log churn ranking 2026-06-16→2026-06-19",
+      "score_delta": 0,
+      "evidence": "2026-06-19 incremental window (last_run 2026-06-16Z → now): 4365 line-changes across 5 commits (PRs #1562 XXE/DTD guards, #1577 typed OTA RateAmountNotif, #1599 XXE non-vacuous tests, #1560 OTA rate/availability flow, #1578 booking enum-cast fix). Cumulative re-emit; score_delta=0.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ],
+      "churn_lines": 4365,
+      "commits_in_window": 5
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git-log churn ranking 2026-06-16→2026-06-19",
+      "score_delta": 0,
+      "evidence": "2026-06-19 incremental window: 3076 line-changes across 2 commits (PR #1565 fix u.name + enum decode, PR #1480 building/unit scoped docs list). Cumulative re-emit; score_delta=0.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "churn_lines": 3076,
+      "commits_in_window": 2
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git-log churn ranking 2026-06-16→2026-06-19",
+      "score_delta": 1,
+      "evidence": "2026-06-19 incremental window: 2853 line-changes across 2 commits (PR #1578 fix enum binds + dedupe BOOKING_COLUMNS + NULL-fee, PR #1505 cast rental enum columns PAP-158). Hotspot driven by the rental-enum-cast bug class.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "churn_lines": 2853,
+      "commits_in_window": 2
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 (feat-announcement-comments-web-thread-ui: optimistic add for announcement comments (Story ) touched frontend/apps/ppt-web/src/routes/groups/announcements.tsx without updating docs/screens/ppt/*. Heuristic — may be a false positive.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": "PR #1555 (gap-79-1: wire useDeleteFault + useFaultStatistics into FaultsPage) touched frontend/apps/ppt-web/src/routes/groups/faults.tsx without updating docs/screens/ppt/*. Heuristic — may be a false positive.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx"
+      ]
+    },
+    {
+      "id": "issue-1538-backend-test-not-required-check",
+      "type": "untriaged-issue",
+      "source": "Issue #1538",
+      "score_delta": 2,
+      "evidence": "Issue #1538 (OPEN, label=ci): Backend `test` job is not a required check on `dev` — red-test PRs merge freely and re-red the merge pipeline. Real CI gate gap.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "issue-1604-dispatcher-backlog-exhausted",
+      "type": "untriaged-issue",
+      "source": "Issue #1604",
+      "score_delta": 1,
+      "evidence": "Issue #1604 (OPEN, label=needs-human-review): Dispatcher backlog exhausted — coverage.json (2026-06-16) stale, producing only already-shipped no-op tasks. Process-layer visibility for the implementer loop.",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "dep-update-noise-2026-06-19",
+      "type": "dep-update-noise",
+      "source": "dependabot PRs merged: [1566, 1570, 1571, 1572, 1573, 1575, 1576]",
+      "score_delta": 0,
+      "evidence": "7 dependabot PRs merged in window: [1566, 1570, 1571, 1572, 1573, 1575, 1576]. Log only.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate this run — high-confidence allowlist signals (screen-map-drift) sit at heuristic-medium confidence; lag focus on observe/promote pipeline",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-19.md && head -1 == '# 2026-06-19'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "max_score=6; 4 decayed; 4 dropped",
+      "expected": "no >8; all stale decayed/dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans annotated",
+      "observed": "no new plans (vacuous)",
+      "expected": "all matched"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + sections",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in diff",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identity",
+      "observed": "diff -q PASS",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no failed phases this run",
+      "expected": "honest report"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "all prior plans present",
+      "expected": "no silent deletes"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "now=7 head=7",
+      "expected": "now ≥ head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identity",
+      "observed": "diff -q PASS",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (no actions this run)",
+      "observed": "0 actions",
+      "expected": "≤3 (≤1/type)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret committed",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}
