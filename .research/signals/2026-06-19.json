@@ -1,0 +1,401 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "now - last_run_iso = 2026-06-16T03:25:00Z → 70h ≈ 2d22h elapsed",
+      "score_delta": 0,
+      "evidence": "Routine ran ~70h ago (2026-06-16T03:25Z). Above 36h threshold → emit lag_warning. Below 3d (stale_routine_alert) so cloud cron likely still healthy; this catch-up sweep covers 104 real PRs + 9 dispatcher PRs in window.",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": []
+    },
+    {
+      "id": "risky-churn-pr-1565-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1565 (fix(db): correct document get-by-id read path)",
+      "score_delta": 2,
+      "evidence": "PR #1565 fix(db) modified backend/crates/db/src/repositories/document.rs (a top-3 churn-hotspot file this run, 3076 lines / runs_seen 1→2) with NO test diff. Cross-reference: hotspot set ∩ fix-no-test PR set yields this single intersection.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25Z",
+      "score_delta": 0,
+      "evidence": "booking.rs — 4365 churn lines across 5 commits (PRs #1485 client timeout/Retry-After, #1560 OTA rate/availability push, #1562 XXE/DTD-safe parser, #1577 typed OTA HotelRateAmountNotif, #1599 non-vacuous entity guards). Top-3 hotspot this run. CUMULATIVE re-emit — score_delta=0 (per Dedup rule).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25Z",
+      "score_delta": 0,
+      "evidence": "document.rs — 3076 churn lines across 2 commits (PR #1565 enum/name correction + dispatcher reflow). runs_seen 1→2. CUMULATIVE re-emit — score_delta=0.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 1→2 with new churn this run",
+      "score_delta": 1,
+      "evidence": "booking.rs runs_seen=2 across 2026-06-12 (PR #1395 secure-credential rotation) + 2026-06-19 (PR #1485/#1560/#1562/#1577/#1599 OTA buildout). Feature-driven instability; not regression-class but worth tracking.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen 1→2",
+      "score_delta": 1,
+      "evidence": "document.rs runs_seen=2 across 2026-06-10 (baseline 2940) + 2026-06-19 (PR #1565 fix without test). See companion risky-churn signal.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25Z",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/rental.rs — 2853 churn lines across 2 commits (PR #1578 fix(db): cast booking-create enum binds + dedupe BOOKING_COLUMNS — has test diff). Top-3 hotspot this run.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 (feat(UC-06): optimistic add for announcement comments — Story 6.3) modified frontend/apps/ppt-web/src/routes/groups/announcements.tsx but did not touch docs/screens/ppt/*.md. Heuristic caveat — feature optimistic-add inside an existing route.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "docs/screens/ppt/announcements.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": "PR #1555 (gap-79-1: wire useDeleteFault + useFaultStatistics into FaultsPage list) modified routes/groups/faults.tsx + features/faults/pages/FaultsPage.tsx without docs/screens/ppt/faults-list.md update. Heuristic caveat.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "docs/screens/ppt/faults-list.md"
+      ]
+    },
+    {
+      "id": "untriaged-issue-1520",
+      "type": "untriaged-issue",
+      "source": "issue #1520",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1520: preference-aware push dispatch-target (PR #1450). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1521",
+      "type": "untriaged-issue",
+      "source": "issue #1521",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1521: payment-matching UI shipped in wrong app + broken auth (PR #1453). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1522",
+      "type": "untriaged-issue",
+      "source": "issue #1522",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1522: accounting UI bypasses shared API auth interceptor (PR #1454). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1533",
+      "type": "untriaged-issue",
+      "source": "issue #1533",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1533: nextPageTriggerFlow in-flight race + multi-emission coverage (PR #1447). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1538",
+      "type": "untriaged-issue",
+      "source": "issue #1538",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1538: Backend `test` job not a required check on `dev`. No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1584",
+      "type": "untriaged-issue",
+      "source": "issue #1584",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1584: PortalPrincipal bypass via agency_id param (PR #1561). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1587",
+      "type": "untriaged-issue",
+      "source": "issue #1587",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1587: download/retry test harness diverges from real route container (PR #1548). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1588",
+      "type": "untriaged-issue",
+      "source": "issue #1588",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1588: harden fault delete + stats wiring on FaultsPage (PR #1555). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1589",
+      "type": "untriaged-issue",
+      "source": "issue #1589",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1589: mobile MoveFolderSheet 'Root (top level)' silent no-op. No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1590",
+      "type": "untriaged-issue",
+      "source": "issue #1590",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1590: pin-test asserts the constant, not the wiring (PR #1446). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1592",
+      "type": "untriaged-issue",
+      "source": "issue #1592",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1592: rustfmt `lint` job not a blocking pre-merge gate on `dev` (PR #1581). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "untriaged-issue-1593",
+      "type": "untriaged-issue",
+      "source": "issue #1593",
+      "score_delta": 1,
+      "evidence": "Open follow-up issue #1593: make mark_invitation_viewed COALESCE-regression catch deterministic (PR #1564). No labels — qualifies as untriaged; backlog row created.",
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1574",
+      "type": "dep-update-noise",
+      "source": "PR #1574",
+      "score_delta": 0,
+      "evidence": "Dependabot PR #1574 opened 2026-06-18, still open. No score; logged for brief.",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1569",
+      "type": "dep-update-noise",
+      "source": "PR #1569",
+      "score_delta": 0,
+      "evidence": "Dependabot PR #1569 opened 2026-06-18, still open. No score; logged for brief.",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "Dependabot PR #1568 opened 2026-06-18, still open. No score; logged for brief.",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": "Dependabot PR #1567 opened 2026-06-18, still open. No score; logged for brief.",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": []
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-19.md && head -1 matches",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev state.json compare",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog.json unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal idempotency",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq score<=8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "4 open items decayed -1, 5 dropped to 0",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run -> vacuously pass",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identity",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failed",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans accounted for",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count 7 -> 8",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md regen byte-identity",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (0 actions this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → no-op",
+      "observed": "skipped",
+      "expected": "skipped or pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
