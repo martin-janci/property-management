@@ -30,6 +30,9 @@ use crate::state::AppState;
 // the limit across instances — tracked as a follow-up.
 const MFA_RECOVERY_MAX_ATTEMPTS: u32 = 10;
 const MFA_RECOVERY_WINDOW: Duration = Duration::from_secs(900);
+/// Only sweep expired limiter entries once the map exceeds this size, so the
+/// `retain` walk is amortized rather than run on every request (GH #1583).
+const MFA_RECOVERY_SWEEP_THRESHOLD: usize = 1024;
 
 struct RecoveryRateLimitEntry {
     count: u32,
@@ -48,6 +51,17 @@ fn recovery_attempt_allowed(user_id: uuid::Uuid) -> bool {
         Err(poisoned) => poisoned.into_inner(),
     };
     let now = Instant::now();
+
+    // Evict entries whose window has fully elapsed (GH #1583). Unlike the
+    // loopback-only caddy_ask limiter this mirrors, this map is keyed on the
+    // whole user population on a PUBLIC auth path, so without eviction an
+    // attacker enumerating user_ids could grow it without bound (slow
+    // memory-exhaustion DoS). The sweep only runs once the map crosses a size
+    // threshold so it is not an O(n) walk on every request under normal load.
+    if map.len() > MFA_RECOVERY_SWEEP_THRESHOLD {
+        map.retain(|_, e| now.duration_since(e.window_start) < MFA_RECOVERY_WINDOW);
+    }
+
     let entry = map.entry(user_id).or_insert(RecoveryRateLimitEntry {
         count: 0,
         window_start: now,
@@ -61,8 +75,9 @@ fn recovery_attempt_allowed(user_id: uuid::Uuid) -> bool {
 }
 
 /// Clear a user's attempt counter after a successful verification, so a
-/// legitimate user is never penalised by earlier mistyped codes.
-fn recovery_attempts_reset(user_id: uuid::Uuid) {
+/// legitimate user is never penalised by earlier mistyped codes. Also used by
+/// tests to reset the process-global limiter for a given user (GH #1583).
+pub fn recovery_attempts_reset(user_id: uuid::Uuid) {
     if let Ok(mut map) = MFA_RECOVERY_RATE_LIMITER.lock() {
         map.remove(&user_id);
     }
@@ -1074,7 +1089,7 @@ pub async fn verify_recovery_code(
             .audit_log_repo
             .create(CreateAuditLog {
                 user_id: Some(user_id),
-                action: AuditAction::MfaBackupCodeUsed,
+                action: AuditAction::MfaRecoveryRateLimited,
                 resource_type: Some("mfa_recovery_rate_limited".to_string()),
                 resource_id: Some(user_id),
                 org_id: None,
