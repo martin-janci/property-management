@@ -11,6 +11,7 @@ import {
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { queryKeys } from '../../../lib/queryKeys';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
 import { useAccountingAuth } from '../hooks/useAccountingAuth';
@@ -21,7 +22,7 @@ export function AccountingInvoiceManagementPage() {
   const auth = useAccountingAuth();
 
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
-    queryKey: ['accounting', 'invoices'],
+    queryKey: queryKeys.accounting.invoices(),
     queryFn: () => {
       if (!auth) throw new Error('Not authenticated');
       return invoicesApiList({
@@ -32,7 +33,7 @@ export function AccountingInvoiceManagementPage() {
   });
 
   const { data: contacts, isLoading: contactsLoading } = useQuery({
-    queryKey: ['accounting', 'contacts'],
+    queryKey: queryKeys.accounting.contacts(),
     queryFn: () => {
       if (!auth) throw new Error('Not authenticated');
       return contactsApiList({
@@ -53,7 +54,7 @@ export function AccountingInvoiceManagementPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
       setIsCreating(false);
     },
   });
@@ -67,7 +68,7 @@ export function AccountingInvoiceManagementPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounting', 'invoices'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
     },
   });
 
@@ -103,7 +104,11 @@ export function AccountingInvoiceManagementPage() {
         <AccountingInvoiceList
           invoices={invoices?.data || []}
           isLoading={isLoading}
-          onViewInvoice={(id) => console.log('View', id)}
+          onViewInvoice={() => {
+            // TODO(#1522): wire invoice-detail navigation once the detail route
+            // exists. Intentionally a no-op (not console.log) so nothing logs in
+            // production.
+          }}
           onDeleteInvoice={(id) => {
             if (confirm('Are you sure you want to delete this invoice?')) {
               deleteMutation.mutate(id);

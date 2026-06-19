@@ -137,6 +137,15 @@ export interface FormSubmissionFilters extends PaginationParams {
  */
 export const queryKeys = {
   // ========================================================================
+  // Accounting (native accounting MVP — PAP-232)
+  // ========================================================================
+  accounting: {
+    all: ['accounting'] as const,
+    invoices: () => [...queryKeys.accounting.all, 'invoices'] as const,
+    contacts: () => [...queryKeys.accounting.all, 'contacts'] as const,
+  },
+
+  // ========================================================================
   // Announcements (UC-06)
   // ========================================================================
   announcements: {
