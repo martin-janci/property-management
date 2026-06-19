@@ -37,7 +37,7 @@ import { useApiMutation } from '../../hooks/useApi';
 import { FOLDER_TREE_QUERY_KEY } from '../../hooks/useFolderTree';
 import { colors } from '../shared/screenStyles';
 import type { ApiFolderTreeNode } from './DocumentsScreen';
-import type { FlatFolder } from './MoveDocumentSheet';
+import { collectDescendantIds, flattenTreeExcluding } from './folderTree';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
@@ -51,59 +51,11 @@ interface UpdateFolderResponse {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Collect all descendant folder ids of `targetId` within the tree (inclusive
- * of `targetId` itself). Used to exclude the subtree being moved from the
- * destination picker — prevents circular references on the client side before
- * the server validates them.
- *
- * Exported for unit-testing.
- */
-export function collectDescendantIds(nodes: ApiFolderTreeNode[], targetId: string): Set<string> {
-  const ids = new Set<string>();
-
-  function walk(current: ApiFolderTreeNode) {
-    ids.add(current.id);
-    for (const child of current.children ?? []) {
-      walk(child);
-    }
-  }
-
-  function findAndWalk(nodes: ApiFolderTreeNode[]): boolean {
-    for (const node of nodes) {
-      if (node.id === targetId) {
-        walk(node);
-        return true;
-      }
-      if (findAndWalk(node.children ?? [])) return true;
-    }
-    return false;
-  }
-
-  findAndWalk(nodes);
-  return ids;
-}
-
-/**
- * Flatten the full tree into a depth-first list, excluding the subtree rooted
- * at `excludeId` (which is the folder being moved — it cannot be its own
- * parent or a parent of its own ancestor).
- *
- * Exported for unit-testing.
- */
-export function flattenTreeExcluding(
-  nodes: ApiFolderTreeNode[],
-  excludeIds: Set<string>,
-  depth = 0
-): FlatFolder[] {
-  const result: FlatFolder[] = [];
-  for (const node of nodes) {
-    if (excludeIds.has(node.id)) continue;
-    result.push({ id: node.id, name: node.name, depth });
-    result.push(...flattenTreeExcluding(node.children ?? [], excludeIds, depth + 1));
-  }
-  return result;
-}
+// `collectDescendantIds` + `flattenTreeExcluding` now live in the shared
+// `folderTree` util (single source of truth, GH #1589). Re-exported here so
+// existing `./MoveFolderSheet` importers (incl. FolderManagement.test.ts) are
+// unaffected.
+export { collectDescendantIds, flattenTreeExcluding };
 
 // ─── Props ──────────────────────────────────────────────────────────────────────
 

@@ -36,6 +36,7 @@ import {
 import { useApiMutation } from '../../hooks/useApi';
 import { type ApiFolderTreeNode, FOLDER_TREE_QUERY_KEY } from '../../hooks/useFolderTree';
 import { colors } from '../shared/screenStyles';
+import { type FlatFolder, flattenTree } from './folderTree';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
@@ -43,31 +44,10 @@ interface MoveDocumentRequest {
   folder_id: string | null;
 }
 
-// ─── Flatten tree to a depth-first list for the scrollable folder picker ─────────
-
-/** Shape of a depth-first flattened folder entry. Exported for unit tests. */
-export interface FlatFolder {
-  id: string;
-  name: string;
-  depth: number;
-}
-
-/**
- * Depth-first flatten of the folder tree into a scrollable list. Each node
- * gets a `depth` field used for visual indentation in the picker.
- *
- * Exported for unit-testing (feat-mobile-document-folder-organization).
- */
-export function flattenTree(nodes: ApiFolderTreeNode[], depth = 0): FlatFolder[] {
-  const result: FlatFolder[] = [];
-  for (const node of nodes) {
-    result.push({ id: node.id, name: node.name, depth });
-    if (node.children && node.children.length > 0) {
-      result.push(...flattenTree(node.children, depth + 1));
-    }
-  }
-  return result;
-}
+// `FlatFolder` + `flattenTree` now live in the shared `folderTree` util (single
+// source of truth, GH #1589). Re-exported here so existing `./MoveDocumentSheet`
+// importers (incl. DocumentFolderOrganization.test.ts) are unaffected.
+export { type FlatFolder, flattenTree };
 
 // ─── Props ─────────────────────────────────────────────────────────────────────────
 
