@@ -1,0 +1,291 @@
+{
+  "generated_at": "2026-06-19T14:13:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "routine last_run_iso=2026-06-16T03:25:00Z — 82h ago (3d). cloud cron may have lagged."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-19",
+      "type": "stale_routine_alert",
+      "source": "routine-self",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 3d old; cloud routine may be paused. Dispatcher state on planning branch — check separately."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking.rs",
+      "type": "churn-hotspot",
+      "source": "git-log",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/integrations/src/booking.rs: 4330+/35- this run, 5 PRs touching"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking.rs",
+      "type": "repeated-churn",
+      "source": "git-log",
+      "score_delta": 1,
+      "evidence": [
+        "booking.rs hot for 2nd consecutive run (last_seen 2026-06-12, 433 LOC; now 4330 LOC). Possible instability."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/mfa.rs",
+      "type": "churn-hotspot",
+      "source": "git-log",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/routes/mfa.rs: 1377+/6- this run, 4 PRs (#1580, #1602 + rustfmt)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/tests/api_ecosystem_developer_force_rls_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git-log",
+      "score_delta": 1,
+      "evidence": [
+        "backend/crates/db/tests/api_ecosystem_developer_force_rls_tests.rs: 609+/13- this run, 4 PRs"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1559 'feat-announcement-comments-web-thread-ui' modified frontend/apps/ppt-web/src/routes/groups/announcements.tsx but did not update docs/screens/ppt/announcements.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1555 'gap-79-1: wire useDeleteFault + useFaultStatistics into FaultsPage' modified frontend/apps/ppt-web/src/routes/groups/faults.tsx but did not update docs/screens/ppt/faults-list.md"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1545 'fix(reality-web): unbreak production build — /accounting QueryClient prerender' modified frontend/apps/reality-web/src/app/accounting/layout.tsx but no docs/screens/reality/ doc exists for the accounting flow"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "triage-issue-1604",
+      "type": "untriaged-issue",
+      "source": "issue #1604",
+      "score_delta": 1,
+      "evidence": [
+        "Dispatcher backlog exhausted — coverage.json (2026-06-16) stale, producing only already-shipped no-op tasks. Tier-2 planner kick fired. Label: needs-human-review."
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "code-review-api-handlers-disable-mfa-no-ratelimit",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/mfa.rs:629-659 — disable_mfa accepts recovery code as proof but skips recovery_attempt_allowed(), bypassing the PR #1580 brute-force throttle; same MFA-bypass-on-success surface, unlimited attempts",
+        "verify_recovery_code (line 1087) calls recovery_attempt_allowed(user_id); disable_mfa (line 552) has no equivalent guard"
+      ],
+      "expert": "security",
+      "title": "Rate-limit recovery-code path in disable_mfa (mirrors verify_recovery_code throttle)",
+      "files": [
+        "backend/servers/api-server/src/routes/mfa.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-totp-verify-no-throttle",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "backend/servers/api-server/src/routes/mfa.rs:288-380 — verify_mfa_setup has no per-user attempt cap on the 6-digit TOTP (10^6 keyspace, ~30s window); a stolen access token could brute-force online to complete enrollment",
+        "backend/servers/api-server/src/routes/mfa.rs:942-965 — regenerate_backup_codes verifies TOTP with no throttle either; both should share the recovery_attempt_allowed-style limiter"
+      ],
+      "expert": "security",
+      "title": "Add brute-force throttle to /mfa/verify and /backup-codes/regenerate TOTP paths",
+      "files": [
+        "backend/servers/api-server/src/routes/mfa.rs"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-db-error-masked",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-handlers",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/mfa.rs:633-639 — sqlx::query_as for mfa_recovery_codes uses .unwrap_or_default(); a transient DB error silently masquerades as 'no recovery rows' and falls through to legacy JSONB path on 643-649 wrapped in unwrap_or_default() too. Map error to 500 / tracing::error! instead of fail-quiet."
+      ],
+      "expert": "rust",
+      "title": "Stop swallowing DB errors with unwrap_or_default in disable_mfa recovery-code path",
+      "files": [
+        "backend/servers/api-server/src/routes/mfa.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-19.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emits with score_delta > 0 == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass annotation",
+      "observed": "2/2 annotated",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <= 2, all sections + capability + mode + files-exist",
+      "observed": "2 new, both pass",
+      "expected": "<=2 + all"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret patterns in staged diff",
+      "observed": "0 hits",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief phases-failed honesty",
+      "observed": "none failed, brief says none",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs preserved",
+      "observed": "all preserved",
+      "expected": "all"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions size + per-type caps",
+      "observed": "0 actions",
+      "expected": "<=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "PM artifacts + cursors valid",
+      "observed": "pm=6 cc=0 epics=13",
+      "expected": "ranges OK"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0 hits",
+      "expected": "0"
+    }
+  ]
+}

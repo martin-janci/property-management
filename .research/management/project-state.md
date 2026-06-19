@@ -1,5 +1,7 @@
 # PPT Project State
 
+_Routine upkeep 2026-06-19 (3d lag): pm_cursor idx 5 → 6 (pm-security ran; pm-data next), coverage_cursor idx 12 → 0 (epic-9 → epic-10a; #9-1 TOTP-2FA still `done`). Coverage `scan_kind=upkeep`. **Blocker:** dispatcher backlog exhausted — issue #1604 flags `coverage.json` (2026-06-16) as stale; every open action-list row is verifiably already-shipped. Routine deferred full PM rotation; planner regeneration needed before next dispatcher run can claim real work. Phase 1.5 surfaced two high-confidence MFA brute-force gaps (`disable_mfa` + TOTP-verify) → both promoted to plans this run._
+
 _Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
 
 ## Executive summary
