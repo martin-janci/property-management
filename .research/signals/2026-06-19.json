@@ -1,0 +1,291 @@
+{
+  "version": 1,
+  "date": "2026-06-19",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-06-16T03:25Z; today 2026-06-19T04:00Z (~72h ago, >36h threshold)",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-push-fanout-rs",
+      "type": "churn-hotspot",
+      "source": "Phase 1 PR-file aggregation 2026-06-19",
+      "score_delta": 0,
+      "evidence": "1010 lines (push_fanout.rs across 2 merged PRs in window) \u2014 hotspot_history.runs_seen 1\u21922",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-accounting-rls-repo-tests-rs",
+      "type": "churn-hotspot",
+      "source": "Phase 1 PR-file aggregation 2026-06-19",
+      "score_delta": 1,
+      "evidence": "911 lines (accounting_rls_repo_tests.rs across 2 merged PRs) \u2014 fresh hotspot this run",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "Phase 1 PR-file aggregation 2026-06-19",
+      "score_delta": 0,
+      "evidence": "871 lines (booking.rs across 5 merged PRs in window) \u2014 hotspot_history.runs_seen 1\u21922",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-services-push-fanout-rs",
+      "type": "repeated-churn",
+      "source": "Phase 1 hotspot_history runs_seen 1\u21922",
+      "score_delta": 1,
+      "evidence": "push_fanout.rs runs_seen 1\u21922 \u2014 recurring instability in push fan-out service",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "Phase 1 hotspot_history runs_seen 1\u21922",
+      "score_delta": 1,
+      "evidence": "booking.rs runs_seen 1\u21922 \u2014 recurring rework in Booking.com integration crate",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-network-status-missing-deps",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-06-19",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts:170 \u2014 useEffect updating refs has empty dep array; should list onOnline, onOffline. Stale ref updates when callbacks change.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-callback-identity-thrash",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-06-19",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/hooks/useNetworkStatus.ts:175-191 \u2014 useCallback empty dep arrays referencing refs cause the cleanup effect (line 191) to re-run on every invocation.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-websocket-provider-refs-stable",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review ppt-web-core 2026-06-19",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/contexts/WebSocketContext.tsx:185-194 \u2014 three separate ref-update effects could be merged to reduce boilerplate.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": "PR #1555 touched routes/groups/faults.{tsx,route.test.tsx} (gap-79-1 fault-status wiring) without docs/screens/ppt/* update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1548-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1548",
+      "score_delta": 2,
+      "evidence": "PR #1548 touched frontend/apps/reality-web/src/app/accounting/layout.tsx without docs/screens/reality/* update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 touched frontend/apps/ppt-web/src/routes/groups/announcements.tsx (Story 6.3 optimistic add) without docs/screens/ppt/* update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": "PR #1453 touched frontend/apps/reality-web/src/app/accounting/page.tsx (PAP-210 bank-statement upload) without docs/screens/reality/* update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": "PR #1454 touched 4 ppt-web routes (AppRoutes.tsx + accounting.tsx + rentals.tsx + lazyRoutes.tsx, native accounting MVP) without docs/screens/ppt/* update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1582",
+      "type": "hotfix-no-test",
+      "source": "PR #1582",
+      "score_delta": 2,
+      "evidence": "fix(mobile): wire useFolderTree / FOLDER_TREE_QUERY_KEY into document screens (closes #1532) \u2014 4 files, no test diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1565",
+      "type": "hotfix-no-test",
+      "source": "PR #1565",
+      "score_delta": 2,
+      "evidence": "fix(db): correct document get-by-id read path (u.name + enum ::text decode) \u2014 repository fix, no test diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1561",
+      "type": "hotfix-no-test",
+      "source": "PR #1561",
+      "score_delta": 2,
+      "evidence": "fix(reality-server): admit public agencies on imports via PortalPrincipal (closes #1300) \u2014 2 files, no test diff in this PR (regression test landed separately as #1603)",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1551",
+      "type": "hotfix-no-test",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "evidence": "fix(db): cast document_category in count_accessible_rls filter (closes #1528) \u2014 1 file, no test diff",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched allowlist (high confidence + score>=3 + allowlist signal type)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-19.md && head -1 matches",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state cursors changed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-count",
+      "observed": "cumulative re-emits had score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score > 8, decay applied",
+      "observed": "4 decay-drops + 4 decay-1, no >8",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plans have adversarial pass",
+      "observed": "no new plans this run \u2014 vacuous",
+      "expected": "vacuous-pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/ == 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "diff -q PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans converge",
+      "observed": "all prior plans present in plans/ or _archive/",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "wt=8 head=7 \u2192 grew",
+      "expected": "wt \u2265 head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "diff -q PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "no auto-fix this run (no candidate)",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 cursor",
+      "observed": "jq -e OK + pm 5\u21926 + coverage 12\u21920 (mod 13)",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

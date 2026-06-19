@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-16T00:00:00Z",
+  "generated": "2026-06-19T00:00:00Z",
   "items": [
     {
       "id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -100,6 +100,70 @@
       "deadline": null,
       "dependency": null,
       "depends_on": []
+    },
+    {
+      "id": "pm-security-promote-security-test-gate-required-check",
+      "title": "Promote security-test-gate.yml + backend test job to required status checks on dev",
+      "action": "Verify `security-test-gate.yml` enforcement status via `gh api repos/.../branches/dev/protection`; add both `security-test-gate` and the backend `test` job as required status checks on `dev` branch protection. Issue #1538 tracks the `test` job gap.",
+      "owner_role": "pm-devops",
+      "severity": "high",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-security 2026-06-19 (issue #1538; advisory-gate incident class)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "evidence": "Issue #1538 open; PR #497 security IDOR fix merged with zero tests; security-test-gate enforcement unconfirmed since 2026-05-27",
+      "created_at": "2026-06-19T00:00:00Z",
+      "updated_at": "2026-06-19T00:00:00Z"
+    },
+    {
+      "id": "pm-security-fix-portal-principal-owner-scope-findings-1-2",
+      "title": "Fix PortalPrincipal owner-scope bypass — findings 1-2 from issue #1584",
+      "action": "Address open findings 1 and 2 from #1584: add `reality_agency_members` membership guard to the PortalPrincipal code paths in reality-server that bypass it via `agency_id = user_id` mismatch. PR #1603 only pinned finding 3. Add regression tests for both paths before the next reality-server production deploy.",
+      "owner_role": "pm-backend",
+      "severity": "high",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-security 2026-06-19 (issue #1584 open, PR #1561 follow-up)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "evidence": "Issue #1584 OPEN; PR #1603 closed finding 3 only; findings 1-2 unaddressed",
+      "created_at": "2026-06-19T00:00:00Z",
+      "updated_at": "2026-06-19T00:00:00Z"
+    },
+    {
+      "id": "pm-security-fix-accounting-ui-auth-interceptor-bypass",
+      "title": "Fix accounting UI bypassing shared auth interceptor after @hey-api migration",
+      "action": "Issue #1522: the accounting UI (PR #1454 @hey-api migration) lost the shared auth interceptor, meaning accounting API calls are sent without auth headers. Re-register the auth interceptor in the accounting module. Frontend ppt-web; include regression test confirming token is attached.",
+      "owner_role": "pm-frontend",
+      "severity": "high",
+      "priority": "high",
+      "status": "open",
+      "source": "pm-security 2026-06-19 (issue #1522 open)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "evidence": "Issue #1522 OPEN; PR #1454 @hey-api migration identified as root cause",
+      "created_at": "2026-06-19T00:00:00Z",
+      "updated_at": "2026-06-19T00:00:00Z"
+    },
+    {
+      "id": "pm-security-oauth-security-test-suite",
+      "title": "Write OAuth provider security test suite (revoked-token, family-reuse, PKCE S256)",
+      "action": "Add gap-10a-1-oauth-tests: integration tests covering revoked-token bypass, refresh-token family-reuse detection, and PKCE S256 verification. Risk pm-security-oauth-10a-untested-security-contract still open; no regression safety net for future oauth.rs refactors. Backend api-server; Rust integration tests.",
+      "owner_role": "pm-qa",
+      "severity": "medium",
+      "priority": "medium",
+      "status": "open",
+      "source": "pm-security 2026-06-19 (risks.json item pm-security-oauth-10a-untested-security-contract)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "evidence": "risk pm-security-oauth-10a-untested-security-contract open since 2026-05-25; draft PR #1197 stale ~6d",
+      "created_at": "2026-06-19T00:00:00Z",
+      "updated_at": "2026-06-19T00:00:00Z"
     }
   ]
 }

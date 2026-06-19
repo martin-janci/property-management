@@ -71,3 +71,6 @@ Mode: local-only (reason: C5 — iOS Simulator + `xcodebuild`/`xcrun swiftc` too
 ## After-merge
 - Move this file to `plans/_archive/bug-ios-searchview-uncompilable.md`
 - Mark the matching `backlog.json` row as `status: "done"`
+
+---
+_Archived 2026-06-19: PR #1465 fix(mobile-native) reclassified iOS deep-link/SearchView gaps; SearchView.swift now compiles (15 performSearch/scheduleSearch refs); issue #1266 CLOSED 2026-06-16._

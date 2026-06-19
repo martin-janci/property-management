@@ -68,3 +68,7 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 - **epic-8a (rotation idx 11) refreshed** in `coverage.json`:
   - `8a-3-notification-preference-sync`: added evidence `PR #1395 added CI-executable coverage for realtime preference-sync publish leg (#1376) — closes the test-gap call-out from the #480-#487 cluster on this slice`; removed gap `backend tests for realtime sync tracked in follow-up issue (#480-#487 cluster)`; updated notes to reflect publish-leg tests cleared. Status stays `partial` (mobile-push FCM/APNs leg still the only open gap before promotion).
 - Next epic to refresh: **epic-9** (coverage_cursor idx 12).
+
+## Security delta — 2026-06-19 (pm-security rotation, 23 days stale)
+
+RLS burndown continues: `FORCE RLS` on developer OAuth/usage tables (#1460, BIT-76), MFA recovery rate-limiting (#1580/#1602), OTA manager-gate privilege-desync fix (#1601), and public-client `client_secret` rejection (#1539) all merged. Three new open risks logged: (1) `PortalPrincipal` owner-scope bypass findings 1-2 (#1584, OPEN) unaddressed post-#1561; (2) accounting UI lost auth interceptor after @hey-api migration (#1522, OPEN); (3) `security-test-gate.yml` still advisory-only (#1538). OAuth provider security test suite (`gap-10a-1-oauth-tests`) remains unwritten — PR #1197 draft stale >6 days.
