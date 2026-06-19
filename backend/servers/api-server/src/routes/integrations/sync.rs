@@ -37,6 +37,7 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use common::errors::ErrorResponse;
+use common::tenant::TenantRole;
 use db::models::{
     accounting_system, calendar_provider, AccountingExport, AccountingExportSettings,
     CalendarConnection, CalendarSyncResult, CreateAccountingExport, CreateCalendarConnection,
@@ -155,7 +156,8 @@ pub(super) async fn verify_org_access(
 /// `verify_manager_role` passes on the A-role from the JWT). This reads the
 /// caller's `role_type` from `organization_members` for `org_id` itself — the
 /// same active-membership row `verify_org_access` checks — and rejects
-/// non-managers. The manager set mirrors `TenantRole::is_manager`.
+/// non-managers. The manager decision is derived from `TenantRole::is_manager`
+/// (the canonical predicate), not a hand-rolled mirror of the role strings.
 pub(super) async fn verify_manager_role_in_org(
     state: &AppState,
     user_id: uuid::Uuid,
@@ -173,10 +175,15 @@ pub(super) async fn verify_manager_role_in_org(
             )
         })?;
 
-    let is_manager = matches!(
-        role_type.as_deref(),
-        Some("super_admin" | "platform_admin" | "org_admin" | "manager" | "technical_manager")
-    );
+    // Derive the manager decision from the canonical `TenantRole::is_manager`
+    // predicate (single source of truth) rather than mirroring its variant
+    // strings here — so a future manager-tier role added to the enum is covered
+    // automatically and this authz gate cannot silently drift.
+    let is_manager = role_type
+        .as_deref()
+        .and_then(TenantRole::from_role_type)
+        .map(|role| role.is_manager())
+        .unwrap_or(false);
     if !is_manager {
         return Err((
             StatusCode::FORBIDDEN,
