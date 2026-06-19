@@ -1,0 +1,210 @@
+{
+  "date": "2026-06-19",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "merged_prs_in_window": 99,
+  "open_prs_touched": 5,
+  "new_issues": 30,
+  "commits_in_window_local": 51,
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score\u22653 + allowlist",
+  "phases_failed": [],
+  "phases_skipped": [
+    "phase-1.5-rotating-dev-review (routine lag deferred slice)",
+    "phase-1.6-pm (routine lag \u2014 pm_cursor untouched)"
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-19",
+      "type": "lag_warning",
+      "source": "routine state",
+      "score_delta": 0,
+      "evidence": "(now \u2212 last_run_iso) \u2248 90h; routine missed \u22652 daily runs; cloud cron may be intermittent",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-19",
+      "type": "stale_routine_alert",
+      "source": "routine state",
+      "score_delta": 0,
+      "evidence": "state.last_run_iso = 2026-06-16T03:25:00Z (3d old); cloud routine may be paused \u2014 operator notice",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "4365 lines churn (additions+deletions) since last run; signal id already in state.seen_signals (G4 cumulative re-emit; +0)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "3085 lines churn since last run; signal id already in state.seen_signals (G4 cumulative re-emit; +0)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "2853 lines churn since last run; dash-format id not yet in seen_signals",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "git log since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "hotspot_history.runs_seen advancing 1\u21922; instability proxy",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "git log since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "hotspot_history.runs_seen advancing 1\u21922; instability proxy",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-2026-06-19",
+      "type": "dep-update-noise",
+      "source": "merged PRs",
+      "score_delta": 0,
+      "evidence": "11 dependabot PRs merged since last run (#1566, #1570-#1573, #1575-#1576, #1278-#1279, #1313, #1276, #1277, #1449); routine logs for visibility only \u2014 no backlog impact",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-19.md && head -1 matches '# 2026-06-19'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative-type non-cumulative-id re-emit check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no scores > 8; decay applied to 6 open items > 14d",
+      "observed": "applied",
+      "expected": "applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 vacuous pass",
+      "observed": "0 new plans",
+      "expected": "all new plans have adversarial-pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run; \u22642 cap respected",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames scan (with baseline-doc exemptions)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run; skipped phases (1.5, 1.6) listed without cursor advance",
+      "observed": "consistent",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plan slug deleted vs HEAD",
+      "observed": "same set",
+      "expected": "\u2265 HEAD set"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7\u22657",
+      "expected": "now\u2265HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "Phase 5 ran with auto_fix_actions=[]; kill switch not relevant; idempotency vacuous",
+      "observed": "no actions",
+      "expected": "0 actions OK"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run \u2014 gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram-token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
