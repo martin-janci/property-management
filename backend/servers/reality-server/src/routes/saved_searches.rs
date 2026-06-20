@@ -10,7 +10,8 @@ use axum::{
     Json, Router,
 };
 use db::models::{
-    CreatePortalSavedSearch, PortalSavedSearch, PublicListingSummary, UpdatePortalSavedSearch,
+    CreatePortalSavedSearch, PortalSavedSearch, PublicListingSummary, SavedSearchAlert,
+    UpdatePortalSavedSearch,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -21,6 +22,11 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_saved_searches))
         .route("/", post(create_saved_search))
+        // Alert delivery (#983) — registered before the `/{id}` params; matchit
+        // prioritises the static `alerts` segment, but keep them adjacent for clarity.
+        .route("/alerts", get(list_search_alerts))
+        .route("/alerts/read-all", post(mark_all_alerts_read))
+        .route("/alerts/{alert_id}/read", post(mark_alert_read))
         .route("/{id}", get(get_saved_search))
         .route("/{id}", put(update_saved_search))
         .route("/{id}", delete(delete_saved_search))
@@ -247,4 +253,113 @@ pub async fn run_saved_search(
         count,
         listings: results,
     }))
+}
+
+// ============================================================================
+// Saved-search alert delivery (Story 16.3, issue #983)
+//
+// The background `SavedSearchAlertWorker` matches alert-enabled saved searches
+// against newly published listings and enqueues `search_alert_queue` rows. These
+// endpoints are the in-app delivery surface: the user lists their alerts and acks
+// them. (reality-server has no email transport; in-app is the delivery channel.)
+// ============================================================================
+
+/// Saved-search alerts list response.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct SearchAlertsResponse {
+    pub alerts: Vec<SavedSearchAlert>,
+    /// Number of still-undelivered (`pending`) alerts — drives an unread badge.
+    pub unread_count: i64,
+}
+
+/// Mark-all-read response.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MarkAllAlertsReadResponse {
+    pub marked_read: u64,
+}
+
+/// List the authenticated user's saved-search alerts (newest first).
+#[utoipa::path(
+    get,
+    path = "/api/v1/saved-searches/alerts",
+    tag = "SavedSearches",
+    responses(
+        (status = 200, description = "Saved-search alerts", body = SearchAlertsResponse),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+pub async fn list_search_alerts(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+) -> Result<Json<SearchAlertsResponse>, (axum::http::StatusCode, String)> {
+    let (alerts, unread_count) = tokio::try_join!(
+        state
+            .reality_portal_repo
+            .get_search_alerts(principal.user_id, 100),
+        state
+            .reality_portal_repo
+            .count_pending_search_alerts(principal.user_id),
+    )
+    .map_err(|e| crate::util::errors::db_error("list search alerts", e))?;
+
+    Ok(Json(SearchAlertsResponse {
+        alerts,
+        unread_count,
+    }))
+}
+
+/// Mark a single saved-search alert as read (delivered).
+#[utoipa::path(
+    post,
+    path = "/api/v1/saved-searches/alerts/{alert_id}/read",
+    tag = "SavedSearches",
+    params(("alert_id" = Uuid, Path, description = "Alert queue ID")),
+    responses(
+        (status = 204, description = "Alert marked read"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Alert not found")
+    )
+)]
+pub async fn mark_alert_read(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(alert_id): Path<Uuid>,
+) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    let marked = state
+        .reality_portal_repo
+        .mark_search_alert_read(alert_id, principal.user_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("mark alert read", e))?;
+
+    if marked {
+        Ok(axum::http::StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Alert not found".to_string(),
+        ))
+    }
+}
+
+/// Mark all of the authenticated user's pending alerts as read.
+#[utoipa::path(
+    post,
+    path = "/api/v1/saved-searches/alerts/read-all",
+    tag = "SavedSearches",
+    responses(
+        (status = 200, description = "Pending alerts marked read", body = MarkAllAlertsReadResponse),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+pub async fn mark_all_alerts_read(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+) -> Result<Json<MarkAllAlertsReadResponse>, (axum::http::StatusCode, String)> {
+    let marked_read = state
+        .reality_portal_repo
+        .mark_all_search_alerts_read(principal.user_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("mark all alerts read", e))?;
+
+    Ok(Json(MarkAllAlertsReadResponse { marked_read }))
 }

@@ -471,8 +471,8 @@ pub use reality_portal::{
     ListingPriceHistory, PortalFavorite, PortalFavoriteWithListing, PortalImportJob,
     PortalImportJobWithStats, PortalSavedSearch, PriceChangeAlert, PublicRealtorProfile,
     RealityAgency, RealityAgencyInvitation, RealityAgencyMember, RealityFeedSubscription,
-    RealtorListing, RealtorProfile, ScheduleViewing, SearchAlertQueueEntry, SendInquiryMessage,
-    UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
+    RealtorListing, RealtorProfile, SavedSearchAlert, ScheduleViewing, SearchAlertQueueEntry,
+    SendInquiryMessage, UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
     UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite, UpdatePortalSavedSearch,
     UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing, ViewingSchedule,
 };

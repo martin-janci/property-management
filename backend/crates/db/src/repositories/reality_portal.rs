@@ -158,6 +158,89 @@ impl RealityPortalRepository {
         Ok(())
     }
 
+    // ------------------------------------------------------------------------
+    // Saved-search alert delivery (in-app feed for the matching engine above).
+    //
+    // `search_alert_queue` is app-scoped by `user_id` (not RLS-gated), so these
+    // run on the request-path pool and scope every statement by the owning user
+    // — a portal user can only read/ack their own alerts (no IDOR).
+    // ------------------------------------------------------------------------
+
+    /// A portal user's saved-search alerts, newest first, each joined to the
+    /// originating saved search's name.
+    pub async fn get_search_alerts(
+        &self,
+        user_id: Uuid,
+        limit: i64,
+    ) -> Result<Vec<SavedSearchAlert>, SqlxError> {
+        sqlx::query_as::<_, SavedSearchAlert>(
+            r#"
+            SELECT
+                q.id,
+                q.saved_search_id,
+                s.name AS saved_search_name,
+                q.matching_listing_ids,
+                q.alert_type,
+                q.status,
+                q.created_at,
+                q.processed_at
+            FROM search_alert_queue q
+            JOIN portal_saved_searches s ON s.id = q.saved_search_id
+            WHERE q.user_id = $1
+            ORDER BY q.created_at DESC
+            LIMIT $2
+            "#,
+        )
+        .bind(user_id)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Count a user's undelivered (`pending`) alerts — for an unread badge.
+    pub async fn count_pending_search_alerts(&self, user_id: Uuid) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM search_alert_queue WHERE user_id = $1 AND status = 'pending'",
+        )
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Mark one alert delivered (`pending` → `sent`), scoped to the owner.
+    /// Returns `true` when a row was updated (owned and still pending); `false`
+    /// when not found / owned by another user — the route returns 404, so a
+    /// cross-user id is indistinguishable from "not found" (no IDOR).
+    pub async fn mark_search_alert_read(&self, id: Uuid, user_id: Uuid) -> Result<bool, SqlxError> {
+        let res = sqlx::query(
+            r#"
+            UPDATE search_alert_queue
+            SET status = 'sent', processed_at = NOW()
+            WHERE id = $1 AND user_id = $2 AND status = 'pending'
+            "#,
+        )
+        .bind(id)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(res.rows_affected() > 0)
+    }
+
+    /// Mark all of a user's pending alerts delivered. Returns the count updated.
+    pub async fn mark_all_search_alerts_read(&self, user_id: Uuid) -> Result<u64, SqlxError> {
+        let res = sqlx::query(
+            r#"
+            UPDATE search_alert_queue
+            SET status = 'sent', processed_at = NOW()
+            WHERE user_id = $1 AND status = 'pending'
+            "#,
+        )
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(res.rows_affected())
+    }
+
     // ========================================================================
     // Portal Favorites (Story 31.1, 31.4)
     // ========================================================================
