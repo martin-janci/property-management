@@ -93,18 +93,26 @@ fn mint_token(user_id: Uuid) -> String {
 // ============================================================================
 
 async fn seed_portal_user(pool: &PgPool, tag: &str) -> Uuid {
+    seed_portal_user_with_kind(pool, tag, "platform").await
+}
+
+/// Seed a portal user with an explicit `principal_kind` (`public` | `staff` |
+/// `platform`). `seed_portal_user` delegates here with `platform`; the explicit
+/// form lets a test pin the kind it exercises independently of that default.
+async fn seed_portal_user_with_kind(pool: &PgPool, tag: &str, principal_kind: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
-        VALUES ($1, 'test_hash', $2, 'active', NOW(), 'platform')
+        VALUES ($1, 'test_hash', $2, 'active', NOW(), $3)
         RETURNING id
         "#,
     )
     .bind(format!("{tag}@imports-idor.test"))
     .bind(format!("ImportsIDOR {tag}"))
+    .bind(principal_kind)
     .fetch_one(pool)
     .await
-    .unwrap_or_else(|e| panic!("seed_portal_user({tag}): {e}"))
+    .unwrap_or_else(|e| panic!("seed_portal_user_with_kind({tag}, {principal_kind}): {e}"))
 }
 
 async fn seed_import_job(pool: &PgPool, user_id: Uuid) -> Uuid {
@@ -216,6 +224,38 @@ async fn import_job_owner_returns_200(pool: PgPool) {
         status,
         StatusCode::OK,
         "owner must read own job with 200, got {status}"
+    );
+}
+
+/// Finding 3 (GH #1584): `PortalPrincipal` admits any authenticated, non-deleted
+/// principal kind — including the highest-privilege `platform` (super-admin)
+/// kind — but yields only `user_id` and applies no kind-based privilege. Pin the
+/// intended behavior explicitly (independently of the kind `seed_portal_user`
+/// happens to use): a `platform`-kind caller is still scoped to its own
+/// `user_id`, so it gets 404 — not 200 — on another user's import job. There is
+/// no admin bypass at this layer.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn import_job_platform_kind_caller_is_still_user_scoped_404(pool: PgPool) {
+    let owner = seed_portal_user(&pool, "job-plat-owner").await;
+    let platform_caller = seed_portal_user_with_kind(&pool, "job-plat-admin", "platform").await;
+    let job_id = seed_import_job(&pool, owner).await;
+
+    let app = imports_router(pool);
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(format!("/api/v1/imports/jobs/{job_id}"))
+        .header(
+            header::AUTHORIZATION,
+            format!("Bearer {}", mint_token(platform_caller)),
+        )
+        .body(Body::empty())
+        .unwrap();
+
+    let status = app.oneshot(req).await.unwrap().status();
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "platform-kind caller must stay user-scoped (no admin bypass), got {status}"
     );
 }
 
