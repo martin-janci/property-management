@@ -1,81 +1,60 @@
 /**
  * Data layer for the payment-matching screen (#1521).
  *
- * All calls go to the manager-only api-server accounting endpoints. JSON calls go
- * through the shared `@ppt/api-client` client, so the `Authorization` /
- * `X-Tenant-ID` headers are injected by the centralized request interceptor
- * (#1616). The multipart statement upload uses a raw fetch (the generated client
- * serialises JSON bodies) but draws auth from the SAME providers — never the
- * bespoke `auth_token` / `current_tenant_id` localStorage keys the original
+ * The JSON reads/decisions go through the generated `@ppt/api-client` functions
+ * now that the accounting bank-statement / payment-matching endpoints are modelled
+ * in TypeSpec (#1623) — so request/response types come from the contract and auth
+ * headers are injected by the centralized request interceptor (#1616). Only the
+ * multipart statement upload stays a raw fetch (the generated client serialises
+ * JSON bodies, and the upload isn't modelled), but it draws auth from the SAME
+ * token / active-org providers — never the bespoke localStorage keys the original
  * reality-web page invented (which sent `Bearer null`).
  */
 
-import { client, getOrg, getToken } from '@ppt/api-client';
+import {
+  type AccountingBankStatement,
+  type AccountingBankStatementLine,
+  type AccountingPaymentMatch,
+  getOrg,
+  getToken,
+  paymentMatchesApiConfirm,
+  paymentMatchesApiReject,
+  statementLinesApiListMatches,
+  statementsApiList,
+  statementsApiListLines,
+} from '@ppt/api-client';
 
-export interface BankStatement {
-  id: string;
-  source_filename: string;
-  imported_at: string;
-  account_iban: string;
+export type { AccountingBankStatement, AccountingBankStatementLine, AccountingPaymentMatch };
+
+export async function fetchStatements(): Promise<AccountingBankStatement[]> {
+  const { data } = await statementsApiList({ throwOnError: true });
+  return data ?? [];
 }
 
-export interface BankStatementLine {
-  id: string;
-  statement_id: string;
-  booking_date: string;
-  amount: string;
-  currency: string;
-  counterparty_iban?: string;
-  variable_symbol?: string;
-  raw_ref?: string;
-  match_state: 'unmatched' | 'suggested' | 'matched';
-}
-
-export interface PaymentMatch {
-  id: string;
-  statement_line_id: string;
-  invoice_id: string;
-  /** Decimal arrives as a string. */
-  confidence: string;
-  state: 'suggested' | 'confirmed' | 'rejected';
-}
-
-export async function fetchStatements(): Promise<BankStatement[]> {
-  const { data } = await client.get<BankStatement[], unknown, true>({
-    url: '/api/v1/accounting/statements',
+export async function fetchStatementLines(
+  statementId: string
+): Promise<AccountingBankStatementLine[]> {
+  const { data } = await statementsApiListLines({
+    path: { id: statementId },
     throwOnError: true,
   });
   return data ?? [];
 }
 
-export async function fetchStatementLines(statementId: string): Promise<BankStatementLine[]> {
-  const { data } = await client.get<BankStatementLine[], unknown, true>({
-    url: `/api/v1/accounting/statements/${statementId}/lines`,
-    throwOnError: true,
-  });
-  return data ?? [];
-}
-
-export async function fetchLineMatches(lineId: string): Promise<PaymentMatch[]> {
-  const { data } = await client.get<PaymentMatch[], unknown, true>({
-    url: `/api/v1/accounting/lines/${lineId}/matches`,
+export async function fetchLineMatches(lineId: string): Promise<AccountingPaymentMatch[]> {
+  const { data } = await statementLinesApiListMatches({
+    path: { id: lineId },
     throwOnError: true,
   });
   return data ?? [];
 }
 
 export async function confirmMatch(matchId: string): Promise<void> {
-  await client.post<unknown, unknown, true>({
-    url: `/api/v1/accounting/matches/${matchId}/confirm`,
-    throwOnError: true,
-  });
+  await paymentMatchesApiConfirm({ path: { id: matchId }, throwOnError: true });
 }
 
 export async function rejectMatch(matchId: string): Promise<void> {
-  await client.post<unknown, unknown, true>({
-    url: `/api/v1/accounting/matches/${matchId}/reject`,
-    throwOnError: true,
-  });
+  await paymentMatchesApiReject({ path: { id: matchId }, throwOnError: true });
 }
 
 export async function uploadStatement(file: File): Promise<void> {
