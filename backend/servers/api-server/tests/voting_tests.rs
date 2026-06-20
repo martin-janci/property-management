@@ -246,8 +246,8 @@ mod tenant_header {
 
 #[cfg(test)]
 mod pdf_report {
+    use super::common::{create_authenticated_user_with_org, TestUser};
     use super::*;
-    use common::{create_authenticated_user_with_org, TestUser};
 
     async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
         sqlx::query_scalar::<_, Uuid>(
@@ -297,7 +297,7 @@ mod pdf_report {
 
         let request = Request::builder()
             .method(Method::GET)
-            .uri(&format!("/api/v1/voting/{}/report.pdf", vote_id))
+            .uri(format!("/api/v1/voting/{}/report.pdf", vote_id))
             .header(header::AUTHORIZATION, format!("Bearer {token}"))
             .header("X-Tenant-ID", org_id.to_string())
             .body(Body::empty())
@@ -351,7 +351,7 @@ mod pdf_report {
         // Query parameter: ?format=pdf
         let request = Request::builder()
             .method(Method::GET)
-            .uri(&format!("/api/v1/voting/{}/report?format=pdf", vote_id))
+            .uri(format!("/api/v1/voting/{}/report?format=pdf", vote_id))
             .header(header::AUTHORIZATION, format!("Bearer {token}"))
             .header("X-Tenant-ID", org_id.to_string())
             .body(Body::empty())
@@ -370,7 +370,7 @@ mod pdf_report {
         // Accept header: Accept: application/pdf
         let request_accept = Request::builder()
             .method(Method::GET)
-            .uri(&format!("/api/v1/voting/{}/report", vote_id))
+            .uri(format!("/api/v1/voting/{}/report", vote_id))
             .header(header::AUTHORIZATION, format!("Bearer {token}"))
             .header("X-Tenant-ID", org_id.to_string())
             .header(header::ACCEPT, "application/pdf")
