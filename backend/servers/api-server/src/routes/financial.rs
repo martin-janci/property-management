@@ -14,7 +14,7 @@ use chrono::NaiveDate;
 use common::errors::ErrorResponse;
 use db::models::{
     CreateFeeSchedule, CreateFinancialAccount, CreateInvoice, CreateTransaction, InvoiceStatus,
-    RecordPayment,
+    Payment, PaymentAllocation, RecordPayment,
 };
 use rust_decimal::Decimal;
 use serde::Deserialize;
@@ -150,7 +150,12 @@ pub fn router() -> Router<AppState> {
         .route("/units/{unit_id}/invoices", get(list_unit_invoices))
         // Payments (Story 11.4)
         .route("/payments", post(record_payment))
+        .route("/payments", get(list_payments))
+        // Static segments before `/{id}` so they aren't captured as an id.
+        .route("/payments/unallocated", get(list_unallocated_payments))
+        .route("/payments/auto-match", post(auto_match_payments))
         .route("/payments/{id}", get(get_payment))
+        .route("/payments/{id}/allocate", post(allocate_payment))
         .route("/units/{unit_id}/payments", get(list_unit_payments))
         // Payment reminders (Story 11.6)
         .route("/reminder-schedules", get(get_reminder_schedules))
@@ -197,6 +202,69 @@ pub struct UnitPaymentsQuery {
     /// Page offset
     #[serde(default)]
     pub offset: i64,
+}
+
+/// Org-wide payments list query (Story 11.4 Payment Management).
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct ListPaymentsQuery {
+    /// Organization whose payments to list (membership is verified)
+    pub organization_id: Uuid,
+    /// Optional payment-status filter (pending|completed|failed|refunded|cancelled)
+    #[serde(default)]
+    pub status: Option<String>,
+    /// Page limit
+    #[serde(default = "default_limit")]
+    pub limit: i64,
+    /// Page offset
+    #[serde(default)]
+    pub offset: i64,
+}
+
+/// Unallocated-payments query.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct UnallocatedPaymentsQuery {
+    /// Organization whose unallocated payments to list (membership is verified)
+    pub organization_id: Uuid,
+    /// Page limit
+    #[serde(default = "default_limit")]
+    pub limit: i64,
+    /// Page offset
+    #[serde(default)]
+    pub offset: i64,
+}
+
+/// Paginated payments list response.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct PaymentListResponse {
+    pub payments: Vec<Payment>,
+    pub total: i64,
+}
+
+/// Request to allocate an existing payment to an invoice (the manual match).
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AllocatePaymentRequest {
+    /// Organization that owns both the payment and the invoice (verified)
+    pub organization_id: Uuid,
+    /// Invoice to allocate the payment against
+    pub invoice_id: Uuid,
+    /// Amount to allocate (defaults to the lesser of the payment's remaining
+    /// balance and the invoice's outstanding balance)
+    #[serde(default)]
+    pub amount: Option<Decimal>,
+}
+
+/// Request to bulk auto-match unallocated payments in an organization.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AutoMatchRequest {
+    /// Organization whose unallocated payments to auto-match (verified)
+    pub organization_id: Uuid,
+}
+
+/// Auto-match result.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct AutoMatchResponse {
+    /// Number of allocations created
+    pub matched: i64,
 }
 
 /// List invoices query parameters.
@@ -852,6 +920,123 @@ async fn list_unit_payments(
         .filter(|p| p.organization_id == query.organization_id)
         .collect::<Vec<_>>();
     Ok(Json(scoped))
+}
+
+/// List all payments for an organization (paginated, optional status filter).
+async fn list_payments(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<ListPaymentsQuery>,
+) -> Result<Json<PaymentListResponse>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    let limit = query.limit.min(MAX_LIST_LIMIT);
+    let (payments, total) = tokio::try_join!(
+        state.financial_repo.list_payments(
+            query.organization_id,
+            query.status.clone(),
+            limit,
+            query.offset,
+        ),
+        state
+            .financial_repo
+            .count_payments(query.organization_id, query.status.clone()),
+    )
+    .map_err(|e| {
+        tracing::error!("Failed to list payments: {:?}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", "Failed to list payments")),
+        )
+    })?;
+    Ok(Json(PaymentListResponse { payments, total }))
+}
+
+/// List payments with an unallocated balance (the reconciliation queue).
+async fn list_unallocated_payments(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<UnallocatedPaymentsQuery>,
+) -> Result<Json<Vec<Payment>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    let limit = query.limit.min(MAX_LIST_LIMIT);
+    let payments = state
+        .financial_repo
+        .list_unallocated_payments(query.organization_id, limit, query.offset)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list unallocated payments: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to list unallocated payments",
+                )),
+            )
+        })?;
+    Ok(Json(payments))
+}
+
+/// Allocate an existing payment to an invoice (manual match).
+async fn allocate_payment(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<AllocatePaymentRequest>,
+) -> Result<(StatusCode, Json<PaymentAllocation>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    let allocation = state
+        .financial_repo
+        .allocate_existing_payment(
+            payload.organization_id,
+            id,
+            payload.invoice_id,
+            payload.amount,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to allocate payment: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to allocate payment")),
+            )
+        })?;
+    match allocation {
+        Some(a) => Ok((StatusCode::CREATED, Json(a))),
+        // payment/invoice not in org, or nothing left to allocate.
+        None => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Payment or invoice not found, or nothing to allocate",
+            )),
+        )),
+    }
+}
+
+/// Bulk auto-match unallocated payments in an organization.
+async fn auto_match_payments(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Json(payload): Json<AutoMatchRequest>,
+) -> Result<Json<AutoMatchResponse>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    let matched = state
+        .financial_repo
+        .auto_match_payments(payload.organization_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to auto-match payments: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to auto-match payments",
+                )),
+            )
+        })?;
+    Ok(Json(AutoMatchResponse {
+        matched: matched as i64,
+    }))
 }
 
 // ==================== Reminder/Late Fee Handlers ====================
