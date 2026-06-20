@@ -1,0 +1,235 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-06-16T03:25Z → 4 days lag (104h). Cloud routine may have been paused.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "705 lines churn since 2026-06-16 (PR #1556 APNs HTTP/2 wiring); runs_seen advances to 2",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking.rs",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "523 lines churn since 2026-06-16 (PR #1485 Booking timeout/Retry-After, #1472 credential encrypt-at-rest)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/documents/MoveFolderSheet.tsx",
+      "type": "churn-hotspot",
+      "source": "git log churn since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "519 lines churn since 2026-06-16 (PR #1557 mobile folder rename/move UI)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": "PR #1454 touched frontend/apps/ppt-web/src/routes/AppRoutes.tsx with no matching docs/screens/ppt/* update (heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": "PR #1555 touched frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx with no matching docs/screens/ppt/* update (heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 touched frontend/apps/ppt-web/src/routes/groups/announcements.tsx with no matching docs/screens/ppt/* update (heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": "PR #1610 touched frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx with no matching docs/screens/ppt/* update (heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1611",
+      "score_delta": 2,
+      "evidence": "PR #1611 touched frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx with no matching docs/screens/ppt/* update (heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": "PR #1453 touched frontend/apps/reality-web/src/app/accounting/page.tsx with no matching docs/screens/reality/* update (heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 touched frontend/apps/reality-web/src/app/accounting/layout.tsx with no matching docs/screens/reality/* update (heuristic)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist (only screen-map-drifts which are medium-confidence)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff staged vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emitted non-cumulative with delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans annotated",
+      "observed": "vacuous (0 new plans)",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count + readiness",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached -- outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep on diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md and diff",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures honest",
+      "observed": "no failures reported",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs present",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md and diff",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions",
+      "expected": "≤1/type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "phase 1.6 skipped → no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "phases": {
+    "phase_1": "ok (lag=4d acknowledged)",
+    "phase_1_5": "skipped (catch-up run, dev-review skill not invoked)",
+    "phase_1_6": "skipped (catch-up run, pm skill not invoked)",
+    "phase_2": "ok",
+    "phase_3": "ok (no new plans — catch-up run kept lean)",
+    "phase_4": "ok",
+    "phase_5": "skipped (no allowlist match)"
+  }
+}
