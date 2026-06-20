@@ -1,0 +1,194 @@
+{
+  "date": "2026-06-20",
+  "generated": "2026-06-20T00:22:28.150967Z",
+  "lag_hours": 92,
+  "merged_prs_in_window": 50,
+  "open_prs_touched": 7,
+  "new_or_updated_issues": 6,
+  "commits_on_dev": 50,
+  "phases_failed": [],
+  "phases_skipped": [
+    "1.5-ppt-dev-review",
+    "1.6-ppt-project-management"
+  ],
+  "skip_reason": "4d catch-up run after stale cron — prioritise observe/decide/promote/write loop. Phase 1.5 next-segment=ppt-web-core (oldest unreviewed 2026-06-05). Phase 1.6 next-role=pm-security (last 2026-05-27, oldest).",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "state.json:last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25Z; lag ~92h (3d 20h). Cron likely paused.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-20",
+      "type": "stale_routine_alert",
+      "source": "state.json:last_run_iso",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-06-16T03:25:00Z is 3d old; cloud routine may be paused. Dispatcher state lives on .research/management/assignments.json on the planning branch — check separately. Two operator escalations already filed: issue #1604 (dispatcher backlog exhausted, stale coverage.json) and #1607 (14 quarantined rows).",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-mfa-rs",
+      "type": "churn-hotspot",
+      "source": "git log dev 2026-06-16..2026-06-20",
+      "score_delta": 1,
+      "evidence": "4 commits this run (PRs #1580 rate-limit + audit, #1602 stale-entry eviction, #1581 rustfmt fixup, #1605 ci enforce rustfmt knock-on)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git log dev 2026-06-16..2026-06-20",
+      "score_delta": 0,
+      "evidence": "Re-emit (cumulative): 4 more commits this run (PRs #1560 combined push + outcome, #1577 typed OTA HotelRateAmount RQ/RS, #1578 booking-create enum cast). Score_delta=0 per G4 cumulative carve-out (already in seen_signals from 2026-06-12).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "runs_seen reaches 2 (was 1, last_seen 2026-06-12 from PRs #1419/#1420 round). Booking integration crate continues to churn — instability proxy.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-faults-pages-FaultsPage-tsx",
+      "type": "churn-hotspot",
+      "source": "git log dev 2026-06-16..2026-06-20",
+      "score_delta": 1,
+      "evidence": "3 commits this run (PR #1555 wired useDeleteFault + useFaultStatistics + #1610 confirm-delete + closed_count + stat refresh). Plus 3 commits on the colocated faults.tsx/.route.test.tsx (separate signal class).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no high-confidence + score>=3 + allowlist signal this run)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "head -1 brief",
+      "observed": "matches",
+      "expected": "# 2026-06-20"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state-diff vs HEAD",
+      "observed": "advanced (last_pr, last_issue, last_commit, seen_signals+5, hotspot_history+3)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "seen-signal reuse with non-cumulative score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "all<=8; 14 items decayed (6 stayed open, 8 dropped)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans adversarial annotation",
+      "observed": "no new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans <=2",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-research staged paths",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases",
+      "observed": "phases 1.5 and 1.6 skipped (recorded), no failures",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence vs HEAD",
+      "observed": "all prior plans still present in plans/ or _archive/",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "working=7, head=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap + idempotency",
+      "observed": "0 actions (no candidate)",
+      "expected": "<=3 and unique vs history"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate no-op",
+      "observed": "pm_cursor unchanged",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram secret grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
