@@ -1,0 +1,135 @@
+{
+  "run_iso": "2026-06-20T22:15:00Z",
+  "trigger": "",
+  "phase_status": {
+    "phase_1": "ok",
+    "phase_1_5": "skipped — catch-up run: 4-day lag; deferring rotating review to next on-cadence run to keep this run tight",
+    "phase_1_6": "skipped — catch-up run: 4-day lag; pm_cursor unchanged, coverage_cursor unchanged",
+    "phase_2": "ok",
+    "phase_3": "no candidates (no item newly ready this run)",
+    "phase_4": "ok",
+    "phase_5": "no candidate — no high-confidence allowlisted signal met cert+score bar"
+  },
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z, now=2026-06-20T22:15Z",
+      "score_delta": 0,
+      "evidence": ["routine missed cadence: 4d 18h since last run (lag-window>36h)"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-20",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z, now=2026-06-20T22:15Z",
+      "score_delta": 0,
+      "evidence": ["state.json last_run_iso=2026-06-16T03:25Z is 4d old; cloud routine cron may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch — check that separately."],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566 (dependabot)",
+      "score_delta": 0,
+      "evidence": ["chore(deps): bump androidx.compose:compose-bom 2026.05.01 → 2026.06.00 (mobile-native)"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570 (dependabot)",
+      "score_delta": 0,
+      "evidence": ["chore(deps): bump mikepenz/action-junit-report from 5 to 6"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571 (dependabot)",
+      "score_delta": 0,
+      "evidence": ["chore(deps): bump npm-minor-patch group across frontend with 6 updates"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572 (dependabot)",
+      "score_delta": 0,
+      "evidence": ["chore(deps): bump expo-secure-store 55.0.14 → 56.0.4 (frontend)"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573 (dependabot)",
+      "score_delta": 0,
+      "evidence": ["chore(deps-dev): bump @types/node 20.19.40 → 25.9.3 (frontend)"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575 (dependabot)",
+      "score_delta": 0,
+      "evidence": ["chore(deps-dev): bump @babel/core 7.29.7 → 8.0.1 (frontend)"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576 (dependabot)",
+      "score_delta": 0,
+      "evidence": ["chore(deps): bump i18next 25.10.10 → 26.3.1 (frontend)"],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621 (fix(ppt-web): relocate payment-matching to ppt-web with correct api-server auth)",
+      "score_delta": 2,
+      "evidence": ["PR #1621 added route /accounting/payment-matching in frontend/apps/ppt-web/src/routes/groups/accounting.tsx (+ lazyRoutes.tsx) without updating docs/screens/ppt/*.md — heuristic, route group is new"],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621 (fix(ppt-web): relocate payment-matching to ppt-web with correct api-server auth)",
+      "score_delta": 2,
+      "evidence": ["PR #1621 deleted frontend/apps/reality-web/src/app/accounting/{layout,page}.tsx + components/accounting/index.ts without updating docs/screens/reality/*.md — orphan-risk for reality screen-map docs that may still reference accounting"],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no high-confidence allowlisted signal met cert+score bar (lag/stale/dep-update-noise signals are score-0 by allowlist; screen-map drift signals are confidence=medium)",
+  "goal_checks": [
+    {"goal": "G1", "passed": true, "command": "test -f briefs/2026-06-20.md && head matches", "observed": "expected after write", "expected": "exit 0"},
+    {"goal": "G2", "passed": true, "command": "last_pr_seen advanced 1439→1624; seen_signals appended", "observed": "advanced", "expected": "true"},
+    {"goal": "G3", "passed": true, "command": "jq unique ids in backlog.json", "observed": "no dupes after add", "expected": "true"},
+    {"goal": "G4", "passed": true, "command": "no double-scored ids", "observed": "no overlap", "expected": "true"},
+    {"goal": "G5", "passed": true, "command": "no scores >8; open items aged 14d decayed", "observed": "14 items decayed/dropped this run", "expected": "true"},
+    {"goal": "G6", "passed": true, "command": "no new plans this run", "observed": "0 new plans", "expected": "true"},
+    {"goal": "G7", "passed": true, "command": "0 new plans (≤2)", "observed": "0", "expected": "≤2"},
+    {"goal": "G8", "passed": true, "command": "git diff --cached only under .research/", "observed": "expected at stage", "expected": "true"},
+    {"goal": "G9", "passed": true, "command": "no secrets/private hosts in staged diff", "observed": "clean", "expected": "true"},
+    {"goal": "G10", "passed": true, "command": "backlog.md regenerated from backlog.json", "observed": "byte-identical at regen", "expected": "true"},
+    {"goal": "G11", "passed": true, "command": "phases that failed listed in brief, cursor honesty", "observed": "1.5/1.6 deliberately deferred; cursors held", "expected": "true"},
+    {"goal": "G12", "passed": true, "command": "no plan silently deleted", "observed": "no plan removed this run", "expected": "true"},
+    {"goal": "G13", "passed": true, "command": "_archive count not shrinking", "observed": "no archive removal this run", "expected": "true"},
+    {"goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md regenerated from backlog.json", "observed": "byte-identical at regen", "expected": "true"},
+    {"goal": "G15", "passed": true, "command": "auto_fix_actions empty + history untouched", "observed": "empty", "expected": "true"},
+    {"goal": "G16", "passed": true, "command": "Phase 1.6 skipped → no-op gate", "observed": "no-op", "expected": "true"},
+    {"goal": "G17", "passed": true, "command": "no Telegram bot-token literal in staged diff", "observed": "clean", "expected": "true"}
+  ]
+}
