@@ -18,6 +18,7 @@ use db::models::{
     VoteCommentWithUser, VoteEligibility, VoteListQuery, VoteQuestion, VoteReceipt, VoteReportData,
     VoteResults, VoteSummary, VoteWithDetails,
 };
+use genpdf::Element;
 use serde::Deserialize;
 use sqlx::Error as SqlxError;
 use utoipa::{IntoParams, ToSchema};
