@@ -1,9 +1,9 @@
 {
-  "generated": "2026-06-16T00:00:00Z",
+  "generated": "2026-06-20T20:25:00Z",
   "items": [
     {
       "id": "feat-airbnb-oauth-token-exchange-route-backend",
-      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
+      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code \u2192 access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "done",
@@ -11,7 +11,7 @@
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: POST /organizations/{org_id}/airbnb/token/exchange exists (api-server routes/integrations/oauth.rs, Story 83.1)"
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale \u2014 work already on dev: POST /organizations/{org_id}/airbnb/token/exchange exists (api-server routes/integrations/oauth.rs, Story 83.1)"
     },
     {
       "id": "feat-swiftui-project-setup-no-epic-82-commits-git-mobile",
@@ -24,7 +24,7 @@
       "deadline": null,
       "source": "gap-scan 2026-06-12 (buffer-low refill)",
       "depends_on": [],
-      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: mobile-native/iosApp SwiftUI project present (AuthManager/NavigationCoordinator/DeepLinkHandler/PushNotificationManager etc.)"
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale \u2014 work already on dev: mobile-native/iosApp SwiftUI project present (AuthManager/NavigationCoordinator/DeepLinkHandler/PushNotificationManager etc.)"
     },
     {
       "id": "pm-qa-allowed-pet-types-enum-decode-audit",
@@ -36,7 +36,7 @@
       "deadline": null,
       "source": "pm-analysis 2026-06-15",
       "depends_on": [],
-      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: backend/crates/db/tests/registry_rules_enum_decode_tests.rs (PAP-159, GH #1363/#1366) + explicit pet_type[] cast in registry.rs"
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale \u2014 work already on dev: backend/crates/db/tests/registry_rules_enum_decode_tests.rs (PAP-159, GH #1363/#1366) + explicit pet_type[] cast in registry.rs"
     },
     {
       "id": "feat-build-configuration-by-environ-app-icons-all-sizes-mobile",
@@ -59,7 +59,7 @@
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: migration 00166_report_schedules_add_cron_expression.sql + repo/handler wiring (report_schedule.rs)"
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale \u2014 work already on dev: migration 00166_report_schedules_add_cron_expression.sql + repo/handler wiring (report_schedule.rs)"
     },
     {
       "id": "feat-airbnb-integration-webhook-handler-backend",
@@ -71,7 +71,7 @@
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: POST /airbnb/webhook -> handle_airbnb_webhook (api-server routes/integrations/webhook.rs) + airbnb_webhook_routes_tests.rs"
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale \u2014 work already on dev: POST /airbnb/webhook -> handle_airbnb_webhook (api-server routes/integrations/webhook.rs) + airbnb_webhook_routes_tests.rs"
     },
     {
       "id": "feat-airbnb-integration-list-api-routes-backend",
@@ -100,7 +100,7 @@
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: AnnouncementsPage/FaultsPage wired to @ppt/api-client (ppt-web features/announcements,faults)"
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale \u2014 work already on dev: AnnouncementsPage/FaultsPage wired to @ppt/api-client (ppt-web features/announcements,faults)"
     },
     {
       "id": "feat-notification-preference-sync-mobile-push-fcm-apns-backend",
@@ -112,7 +112,8 @@
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: FCM/APNs push transport adapter in backend/crates/common/src/notifications/pipeline.rs"
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale \u2014 work already on dev: FCM/APNs push transport adapter in backend/crates/common/src/notifications/pipeline.rs"
     }
-  ]
+  ],
+  "scan_kind": "upkeep"
 }

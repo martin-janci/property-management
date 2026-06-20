@@ -1,5 +1,35 @@
 # PPT Project State
 
+_Generated: 2026-06-20 — daily PM rotation (catch-up run after 4-day gap; pm_cursor advanced 5 → 6 — pm-security marked rolled to today's slot but **deep role analysis deferred** given the 129-PR catch-up batch; coverage_cursor idx 12 → 0 — full rotation completed). Coverage `scan_kind=upkeep`._
+
+## Catch-up 2026-06-20 — 129 merged PRs in 4 days
+
+- **Window**: 2026-06-16 → 2026-06-20 (lag = 112h, the routine missed 3 daily slots — `lag_warning` + `stale_routine_alert` emitted).
+- **Activity**: 129 merged PRs (#1440–1622) on `dev`, 193 commits, 83 issues new/updated, 26 closed-not-merged PRs.
+- **Top-3 churn**: `backend/crates/integrations/src/booking.rs` (1700 lines — Booking.com refactor wave), `backend/servers/api-server/tests/document_folder_tests.rs` (1147), `backend/servers/api-server/src/services/push_fanout.rs` (1010). Two of three (`booking.rs`, `push_fanout.rs`) are now `repeated-churn`.
+- **Test-gap pattern**: 15 fix-class PRs landed with **zero test files** in their diffs (e.g. #1617 OTA availability+rate push, #1582 mobile FOLDER_TREE wiring, #1565 document-by-id u.name+enum cast, #1561 reality-server import principal, #1545 reality-web /accounting build unblock, #1539 OAuth public-client secret reject, #1537 enum-cast write paths, #1499 form-submission enum, #1469 schema-drift SQL, #1448 dispatcher depends_on, #1512 clippy fixes post-#1454). Two are security-adjacent (#1539, #1561). These all created `test-gap-hotfix-no-test-*` rows in backlog.
+- **Screen-map drift**: 9 signals across 8 PRs touching ppt-web routes / reality-web app/ without updating `docs/screens/<product>/*.md`. PR #1454 (accounting routes added — 4 ppt routes) and #1545 (reality-web /accounting layout) are the largest. The `accounting` feature now spans both products without any screen docs.
+- **Unchecked-TODO follow-ups**: 15 merged PRs left checkbox items unchecked in the PR body — 7 security-tagged (PR #1460/#1471/#1476/#1477/#1501/#1507/#1547), 4 bug-class, 4 completeness.
+- **Code review (Phase 1.5, ppt-web-core, 15 days unreviewed)**: 3 findings — WS stale-token bug after auth refresh (Medium, high confidence), errorHandler i18n bypass (Medium, high confidence), lib/api.ts dead default-export footgun (Low, high confidence).
+
+## Sprint progress (carried over)
+
+Last full PM analysis was 2026-06-16 (pm-devops). The catch-up batch is dominated by:
+
+- **Booking.com integration overhaul** — `booking.rs` churn (1700) + OAuth/CSRF/credential coverage closing through PRs.
+- **DB enum encode/decode hardening** — many fix-class PRs casting enum columns to ::text on read + write paths (PRs #1469, #1492, #1499, #1537, #1551, #1565). Several pile up unfinished — see `bug-unchecked-todo-pr-1492` (5 unchecked boxes).
+- **Accounting feature surface** — PR #1454 added 4 ppt-web routes for accounting; #1453 added reality-web accounting page; #1545 unbroke production build for it. Screen docs not yet seeded.
+- **Reality-server import principal hardening** — #1561 admits public agencies via PortalPrincipal.
+
+## Open issues / draft PRs to watch
+
+- Stale-review carry-overs: #1316 (3d → now ~7d, draft), #1197 (now ~11d), #988 (~17d).
+- Closed-not-merged batch (26) — many were superseded by squash variants (PR pairs like #1503/#1506, #1500); a few were rebased/replaced. Not all replacement PRs verified — left as `process` vector rows in backlog for the next rotation to triage.
+
+---
+
+# PPT Project State
+
 _Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
 
 ## Executive summary

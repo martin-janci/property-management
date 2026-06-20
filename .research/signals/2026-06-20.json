@@ -1,0 +1,854 @@
+{
+  "signals": [
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR#1621",
+      "score_delta": 2,
+      "evidence": "touched ppt-web routes (2) w/o docs/screens/ppt/*: frontend/apps/ppt-web/src/routes/groups/accounting.tsx, frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR#1621",
+      "score_delta": 2,
+      "evidence": "touched reality-web app/ routes (2) w/o docs/screens/reality/*: frontend/apps/reality-web/src/app/accounting/layout.tsx, frontend/apps/reality-web/src/app/accounting/page.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR#1606",
+      "score_delta": 2,
+      "evidence": "1 unchecked checkbox(es) in body: feat(accounting): manager-only role gate for list_contacts (PAP-281)",
+      "confidence": "medium",
+      "candidate_vector": "completeness"
+    },
+    {
+      "id": "hotfix-no-test-pr-1617",
+      "type": "hotfix-no-test",
+      "source": "PR#1617",
+      "score_delta": 2,
+      "evidence": "fix PR, 1 files, no test files: fix(integrations): wire combined OTA availability+rate push into listing-push ro",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1582",
+      "type": "hotfix-no-test",
+      "source": "PR#1582",
+      "score_delta": 2,
+      "evidence": "fix PR, 4 files, no test files: fix(mobile): wire useFolderTree / FOLDER_TREE_QUERY_KEY into document screens (c",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR#1610",
+      "score_delta": 2,
+      "evidence": "touched ppt-web routes (2) w/o docs/screens/ppt/*: frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx, frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR#1611",
+      "score_delta": 2,
+      "evidence": "touched ppt-web routes (1) w/o docs/screens/ppt/*: frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR#1566",
+      "score_delta": 0,
+      "evidence": "dependabot[bot]: chore(deps): bump androidx.compose:compose-bom from 2026.05.01 to 2026.06.00 in ",
+      "confidence": "high",
+      "candidate_vector": "dep-noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR#1570",
+      "score_delta": 0,
+      "evidence": "dependabot[bot]: chore(deps): bump mikepenz/action-junit-report from 5 to 6",
+      "confidence": "high",
+      "candidate_vector": "dep-noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR#1572",
+      "score_delta": 0,
+      "evidence": "dependabot[bot]: chore(deps): bump expo-secure-store from 55.0.14 to 56.0.4 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR#1576",
+      "score_delta": 0,
+      "evidence": "dependabot[bot]: chore(deps): bump i18next from 25.10.10 to 26.3.1 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR#1573",
+      "score_delta": 0,
+      "evidence": "dependabot[bot]: chore(deps-dev): bump @types/node from 20.19.40 to 25.9.3 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR#1575",
+      "score_delta": 0,
+      "evidence": "dependabot[bot]: chore(deps-dev): bump @babel/core from 7.29.7 to 8.0.1 in /frontend",
+      "confidence": "high",
+      "candidate_vector": "dep-noise"
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR#1571",
+      "score_delta": 0,
+      "evidence": "dependabot[bot]: chore(deps): bump the npm-minor-patch group in /frontend with 6 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-noise"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR#1555",
+      "score_delta": 2,
+      "evidence": "touched ppt-web routes (2) w/o docs/screens/ppt/*: frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx, frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1565",
+      "type": "hotfix-no-test",
+      "source": "PR#1565",
+      "score_delta": 2,
+      "evidence": "fix PR, 1 files, no test files: fix(db): correct document get-by-id read path (u.name + enum ::text decode)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1561",
+      "type": "hotfix-no-test",
+      "source": "PR#1561",
+      "score_delta": 2,
+      "evidence": "fix PR, 2 files, no test files: fix(reality-server): admit public agencies on imports via PortalPrincipal (close",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR#1559",
+      "score_delta": 2,
+      "evidence": "touched ppt-web routes (1) w/o docs/screens/ppt/*: frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1551",
+      "type": "hotfix-no-test",
+      "source": "PR#1551",
+      "score_delta": 2,
+      "evidence": "fix PR, 1 files, no test files: fix(db): cast document_category in count_accessible_rls filter (closes #1528)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1545",
+      "type": "hotfix-no-test",
+      "source": "PR#1545",
+      "score_delta": 2,
+      "evidence": "fix PR, 3 files, no test files: fix(reality-web): unbreak production build \u2014 /accounting QueryClient prerender +",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR#1545",
+      "score_delta": 2,
+      "evidence": "touched reality-web app/ routes (1) w/o docs/screens/reality/*: frontend/apps/reality-web/src/app/accounting/layout.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1539",
+      "type": "hotfix-no-test",
+      "source": "PR#1539",
+      "score_delta": 2,
+      "evidence": "fix PR, 1 files, no test files: fix(oauth): reject public client supplying a client_secret with invalid_client",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1537",
+      "type": "hotfix-no-test",
+      "source": "PR#1537",
+      "score_delta": 2,
+      "evidence": "fix PR, 2 files, no test files: fix(db): cast enum write paths on rental_guests + forms (#1008 encode/decode)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1536",
+      "type": "hotfix-no-test",
+      "source": "PR#1536",
+      "score_delta": 2,
+      "evidence": "fix PR, 1 files, no test files: fix(mobile-native): remove unused import failing spotless on dev (post-#1447)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1512",
+      "type": "hotfix-no-test",
+      "source": "PR#1512",
+      "score_delta": 2,
+      "evidence": "fix PR, 3 files, no test files: fix(api-server): clippy fixes in accounting routes (post-#1454)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR#1453",
+      "score_delta": 2,
+      "evidence": "touched reality-web app/ routes (1) w/o docs/screens/reality/*: frontend/apps/reality-web/src/app/accounting/page.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR#1454",
+      "score_delta": 2,
+      "evidence": "touched ppt-web routes (4) w/o docs/screens/ppt/*: frontend/apps/ppt-web/src/routes/AppRoutes.tsx, frontend/apps/ppt-web/src/routes/groups/accounting.tsx, frontend/apps/ppt-web/src/routes/groups/rentals.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1507",
+      "type": "unchecked-todo",
+      "source": "PR#1507",
+      "score_delta": 3,
+      "evidence": "5 unchecked checkbox(es) in body: fix(tests): restore user_memberships seed + fix platform principal for IDOR test",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1492",
+      "type": "unchecked-todo",
+      "source": "PR#1492",
+      "score_delta": 3,
+      "evidence": "5 unchecked checkbox(es) in body: fix(db): cast remaining rental enum readers \u2014 GUEST/CALENDAR_BLOCK/ICAL_FEED_COL",
+      "confidence": "medium",
+      "candidate_vector": "bug-fix"
+    },
+    {
+      "id": "unchecked-todo-pr-1501",
+      "type": "unchecked-todo",
+      "source": "PR#1501",
+      "score_delta": 3,
+      "evidence": "2 unchecked checkbox(es) in body: test(reality-server): handler-level IDOR regression for imports/feeds (GH #1300)",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1460",
+      "type": "unchecked-todo",
+      "source": "PR#1460",
+      "score_delta": 3,
+      "evidence": "3 unchecked checkbox(es) in body: fix(db): FORCE RLS on developer_oauth_apps/grants/api_key_usage_logs (BIT-76, #1",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1476",
+      "type": "unchecked-todo",
+      "source": "PR#1476",
+      "score_delta": 3,
+      "evidence": "3 unchecked checkbox(es) in body: chore(api-server): RLS dev-tooling + test-suite cleanup (GH #1340, #1341, #1366)",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1471",
+      "type": "unchecked-todo",
+      "source": "PR#1471",
+      "score_delta": 3,
+      "evidence": "5 unchecked checkbox(es) in body: test(db): RLS-routing test coverage \u2014 ESG FORCE policy, webhook repo, public pla",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "hotfix-no-test-pr-1499",
+      "type": "hotfix-no-test",
+      "source": "PR#1499",
+      "score_delta": 2,
+      "evidence": "fix PR, 1 files, no test files: fix(db): cast form_submission_status enum in submission-detail queries (#1331/#1",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1468",
+      "type": "unchecked-todo",
+      "source": "PR#1468",
+      "score_delta": 3,
+      "evidence": "6 unchecked checkbox(es) in body: fix(disputes): watch subscription + flush-on-unmount + i18n keys (GH #1364, #140",
+      "confidence": "medium",
+      "candidate_vector": "bug-fix"
+    },
+    {
+      "id": "hotfix-no-test-pr-1468",
+      "type": "hotfix-no-test",
+      "source": "PR#1468",
+      "score_delta": 2,
+      "evidence": "fix PR, 10 files, no test files: fix(disputes): watch subscription + flush-on-unmount + i18n keys (GH #1364, #140",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1477",
+      "type": "unchecked-todo",
+      "source": "PR#1477",
+      "score_delta": 3,
+      "evidence": "3 unchecked checkbox(es) in body: test(mobile): App.tsx auth-gate wiring test (GH #1411)",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1485",
+      "type": "unchecked-todo",
+      "source": "PR#1485",
+      "score_delta": 3,
+      "evidence": "2 unchecked checkbox(es) in body: fix(integrations): Booking.com client timeout + Retry-After + RateLimited (BIT-1",
+      "confidence": "medium",
+      "candidate_vector": "bug-fix"
+    },
+    {
+      "id": "unchecked-todo-pr-1484",
+      "type": "unchecked-todo",
+      "source": "PR#1484",
+      "score_delta": 2,
+      "evidence": "1 unchecked checkbox(es) in body: chore(db): fix tracker-id in registry_rules_enum_decode_tests (BIT-114, GH #1366",
+      "confidence": "medium",
+      "candidate_vector": "completeness"
+    },
+    {
+      "id": "hotfix-no-test-pr-1483",
+      "type": "hotfix-no-test",
+      "source": "PR#1483",
+      "score_delta": 2,
+      "evidence": "fix PR, 1 files, no test files: fix(research): correct dispatcher Tier-2 kick payload + anthropic-version header",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1465",
+      "type": "unchecked-todo",
+      "source": "PR#1465",
+      "score_delta": 3,
+      "evidence": "5 unchecked checkbox(es) in body: fix(mobile-native): iOS stale-response guard, staging deep-link host, orphaned p",
+      "confidence": "medium",
+      "candidate_vector": "bug-fix"
+    },
+    {
+      "id": "hotfix-no-test-pr-1469",
+      "type": "hotfix-no-test",
+      "source": "PR#1469",
+      "score_delta": 2,
+      "evidence": "fix PR, 3 files, no test files: fix(db): correct schema-drift SQL in document/form/user repos (backend test job ",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1443",
+      "type": "unchecked-todo",
+      "source": "PR#1443",
+      "score_delta": 2,
+      "evidence": "2 unchecked checkbox(es) in body: test(reports): add cron validator drift guard (GH #1368)",
+      "confidence": "medium",
+      "candidate_vector": "completeness"
+    },
+    {
+      "id": "dep-update-noise-pr-1449",
+      "type": "dep-update-noise",
+      "source": "PR#1449",
+      "score_delta": 0,
+      "evidence": "dependabot[bot]: chore(deps): bump the npm-minor-patch group across 1 directory with 25 updates",
+      "confidence": "high",
+      "candidate_vector": "dep-noise"
+    },
+    {
+      "id": "unchecked-todo-pr-1442",
+      "type": "unchecked-todo",
+      "source": "PR#1442",
+      "score_delta": 2,
+      "evidence": "3 unchecked checkbox(es) in body: refactor(tests): replace duplicate seed_membership with canonical common:: impor",
+      "confidence": "medium",
+      "candidate_vector": "completeness"
+    },
+    {
+      "id": "hotfix-no-test-pr-1448",
+      "type": "hotfix-no-test",
+      "source": "PR#1448",
+      "score_delta": 2,
+      "evidence": "fix PR, 3 files, no test files: fix(research): populate depends_on in pm-analysis/gap-scan emit + clear leaked r",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1441",
+      "type": "unchecked-todo",
+      "source": "PR#1441",
+      "score_delta": 2,
+      "evidence": "3 unchecked checkbox(es) in body: feat(gh-1375): add pre-push cargo fmt + clippy gate",
+      "confidence": "medium",
+      "candidate_vector": "completeness"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking.rs",
+      "type": "churn-hotspot",
+      "source": "window-churn",
+      "score_delta": 1,
+      "evidence": "top-3 churn this window: 1700 lines",
+      "confidence": "high",
+      "candidate_vector": "hotspot"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/document_folder_tests.rs",
+      "type": "churn-hotspot",
+      "source": "window-churn",
+      "score_delta": 1,
+      "evidence": "top-3 churn this window: 1147 lines",
+      "confidence": "high",
+      "candidate_vector": "hotspot"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "window-churn",
+      "score_delta": 1,
+      "evidence": "top-3 churn this window: 1010 lines",
+      "confidence": "high",
+      "candidate_vector": "hotspot"
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1511",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): resolve clippy lints blocking dev fmt-clippy gate (accounting routes)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1505",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1505",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): cast rental enum columns to text across rental.rs queries (PAP-158)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1506",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1506",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): pass role to seed_membership in booking-oauth non-manager test (unblocks backend ch",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1504",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1504",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): resolve duplicate migration 00181 \u2014 rename force_developer_oauth_rls to 00182",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1503",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1503",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(tests): add missing role arg to seed_membership in booking_oauth_routes_tests",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1500",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1500",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): org-scope IDOR gate on dispute/violation add_evidence and add_comment (BIT-73)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1479",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1479",
+      "score_delta": 1,
+      "evidence": "closed without merge: test(api-server): dedupe inline seed_membership onto common::seed_membership (GH #1341)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1475",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1475",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): decode nullable rental_bookings financial columns as Option (GH #1422)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1474",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1474",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): BIT-98 \u2014 encrypt Booking.com basic-auth credentials at rest",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1462",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1462",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): idempotent mark_invitation_viewed (GH #1301)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1498",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1498",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): cast form_submissions.status enum to text in form queries (fixes form_repo_force_rls_deny_a",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1497",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1497",
+      "score_delta": 1,
+      "evidence": "closed without merge: test(db): fail-on-main test for registry INSERT-branch NULL-boolean defaults (closes #1406)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1494",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1494",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): cast remaining rental enum readers \u2014 RentalGuest.status, CalendarBlock.source_platform, ICa",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1496",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1496",
+      "score_delta": 1,
+      "evidence": "closed without merge: test(db): grant SELECT on units/buildings to form RLS test role (fixes form_repo_force_rls_deny_all_",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1493",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1493",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): repair dev backend test failures from schema drift + remove broken duplicate reserve API",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1482",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1482",
+      "score_delta": 1,
+      "evidence": "closed without merge: chore(scripts): stale RLS baseline entries fail --strict (BIT-111, GH #1340)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1488",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1488",
+      "score_delta": 1,
+      "evidence": "closed without merge: style(db): rustfmt budget export line-wrap after #1481 reserve-fund removal",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1461",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1461",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): scope nil-unit_id Airbnb/Booking upserts to per-org conflict target (BIT-79, #1405)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1459",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1459",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): mfa.rs RLS correction \u2014 RlsConnection in verify_recovery_code, unified tx in disabl",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1318",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1318",
+      "score_delta": 1,
+      "evidence": "closed without merge: feat-airbnb-oauth-token-exchange-route-backend: inline unit tests for token-exchange request/respons",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1229",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1229",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): route sensor repo through RLS-context connection (PAP-78)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1224",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1224",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): route reserve_funds repo through RLS-context connection (PAP-79)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1220",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1220",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(db): route work_order repo through RLS-context connection (PAP-67)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "closed-not-merged-pr-1436",
+      "type": "closed-not-merged-pr",
+      "source": "PR#1436",
+      "score_delta": 1,
+      "evidence": "closed without merge: fix(api-server): repair dev compile break from #1426 (+ cargo-fmt)",
+      "confidence": "high",
+      "candidate_vector": "process"
+    },
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "routine-state",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25Z; missed ~112h / 3 days",
+      "confidence": "high",
+      "candidate_vector": "routine-health"
+    },
+    {
+      "id": "code-review-ppt-web-core-ws-stale-token-after-refresh",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 2,
+      "evidence": "WebSocketContext.tsx:246-256 calls service.connect() when auth.accessToken changes, but lib/websocket.ts:292-294 short-circuits if socket.readyState === OPEN \u2014 so a refreshed JWT is never propagated into the WS URL. Stale token remains until the server expires it and closes the socket. Fix: on token change, disconnect()+connect() (as reconnect() already does), or compare tokens.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 2,
+      "evidence": "lib/errorHandler.ts:53-133 ships hardcoded English titles/messages (\"Authentication Required\", \"Please log in to continue.\", etc.) and lib/errorHandler.ts:439-464 (formatValidationErrors, formatFieldName) produce English-only field labels. ppt-web is supposed to be i18n-enabled (react-i18next 16 in package.json); all user-visible error copy bypasses the translation layer.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-core-lib-api-dead-default-export",
+      "type": "code-review-finding",
+      "source": "code-review",
+      "score_delta": 1,
+      "evidence": "lib/api.ts:281 `export default getApiClient();` instantiates the axios client at module-import time with no token getter and no onUnauthorized callback. The whole module is currently only consumed by its own test file (no production import found), so it's dead code in app paths \u2014 but it's a live footgun: any future `import api from '../lib/api'` would silently use the unconfigured instance and bypass the AuthContext token interceptor. Either delete the module or remove the default export.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking.rs",
+      "type": "repeated-churn",
+      "source": "backend/crates/integrations/src/booking.rs",
+      "score_delta": 1,
+      "evidence": "repeated hotspot \u2014 runs_seen=2, this run churn=1700 lines",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "repeated-churn",
+      "source": "backend/servers/api-server/src/services/push_fanout.rs",
+      "score_delta": 1,
+      "evidence": "repeated hotspot \u2014 runs_seen=2, this run churn=1010 lines",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar (no high-confidence allowlisted signals \u2014 screen-map-drift is high but the 9 candidates need per-product slug picks; routine deferred to manual implementer this run)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-20.md && head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq dedup vs seen_signals (cumulative carve-out)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5(cap)",
+      "passed": true,
+      "command": "jq score>8 == 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5(decay)",
+      "passed": true,
+      "command": "jq decay-eligible all decayed",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 vacuous",
+      "observed": "0 new plans",
+      "expected": "each new plan has adversarial-pass note"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached -A plans/",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff secrets scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "render backlog.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failure log scan",
+      "observed": "no failures",
+      "expected": "each failed phase listed + cursor not advanced"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "render IDEAS_TRIAGE.md and diff",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions discipline",
+      "observed": "0 actions, kill switch not set, no candidate",
+      "expected": "<=1 PR / <=1 issue / <=1 comment, no replay"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + cursor ranges",
+      "observed": "action-list.items + risks.items present, project-state.md non-empty, pm_cursor=6 in [0,7], coverage_cursor=0 in [0,13)",
+      "expected": "all valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
