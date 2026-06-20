@@ -2,6 +2,7 @@
 
 use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{extract::State, http::StatusCode, Json};
+use common::TenantRole;
 use db::models::accounting::Contact;
 
 use crate::state::AppState;
@@ -13,6 +14,7 @@ use crate::state::AppState;
     responses(
         (status = 200, description = "List of contacts", body = [Contact]),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — manager role required"),
         (status = 500, description = "Internal server error")
     ),
     tag = "accounting"
@@ -22,6 +24,10 @@ pub async fn list_contacts(
     State(state): State<AppState>,
     AuthUser { user_id: _user, .. }: AuthUser,
 ) -> Result<Json<Vec<Contact>>, StatusCode> {
+    if !rls.is_super_admin() && !rls.has_role(TenantRole::Manager) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let contacts = state
         .accounting_repo
         .list_contacts_rls(&mut **rls)
