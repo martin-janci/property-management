@@ -5,6 +5,7 @@ use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
+    response::{IntoResponse, Response},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -53,6 +54,7 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/results", get(get_results))
         // Reports
         .route("/{id}/report", get(get_report_data))
+        .route("/{id}/report.pdf", get(get_report_pdf))
         // Audit
         .route("/{id}/audit", get(get_audit_log))
         // Building votes
@@ -1433,6 +1435,41 @@ async fn get_results(
 // Report Handlers
 // ============================================================================
 
+/// Request query for report formatting.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ReportQuery {
+    pub format: Option<String>,
+}
+
+/// Get vote report PDF.
+#[utoipa::path(
+    get,
+    path = "/api/v1/voting/{id}/report.pdf",
+    params(
+        ("id" = Uuid, Path, description = "Vote ID")
+    ),
+    responses(
+        (status = 200, description = "Report PDF", body = Vec<u8>),
+        (status = 404, description = "Vote not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "Voting"
+)]
+async fn get_report_pdf(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
+    let pdf_bytes = generate_and_archive_pdf(&state, &mut rls, id).await?;
+    rls.release().await;
+    
+    let headers = [
+        (axum::http::header::CONTENT_TYPE, "application/pdf"),
+        (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"report.pdf\""),
+    ];
+    Ok((StatusCode::OK, headers, pdf_bytes).into_response())
+}
+
 /// Get vote report data (stub - returns data for PDF generation).
 #[utoipa::path(
     get,
@@ -1451,7 +1488,9 @@ async fn get_report_data(
     State(state): State<AppState>,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
-) -> Result<Json<VoteReportData>, (StatusCode, Json<ErrorResponse>)> {
+    headers: axum::http::HeaderMap,
+    Query(query): Query<ReportQuery>,
+) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
     // Note: generate_report_data() doesn't have an RLS version yet
     let report = state
         .vote_repo
@@ -1471,8 +1510,321 @@ async fn get_report_data(
             ),
         })?;
 
-    rls.release().await;
-    Ok(Json(report))
+    // Secure by default: check organization matches RLS tenant context
+    if report.vote.organization_id != rls.tenant_id() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Vote not found")),
+        ));
+    }
+
+    // Check if PDF format is requested via query param or Accept header
+    let accept_header = headers
+        .get(axum::http::header::ACCEPT)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    let is_pdf = query.format.as_deref() == Some("pdf") || accept_header == "application/pdf";
+
+    if is_pdf {
+        let pdf_bytes = generate_and_archive_pdf_internal(&state, &mut rls, &report).await?;
+        rls.release().await;
+        let pdf_headers = [
+            (axum::http::header::CONTENT_TYPE, "application/pdf"),
+            (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"report.pdf\""),
+        ];
+        Ok((StatusCode::OK, pdf_headers, pdf_bytes).into_response())
+    } else {
+        rls.release().await;
+        Ok(Json(report).into_response())
+    }
+}
+
+async fn generate_and_archive_pdf(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    id: Uuid,
+) -> Result<Vec<u8>, (StatusCode, Json<ErrorResponse>)> {
+    let report = state
+        .vote_repo
+        .generate_report_data(id)
+        .await
+        .map_err(|e| match e {
+            SqlxError::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Vote not found")),
+            ),
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to generate report: {}", e),
+                )),
+            ),
+        })?;
+
+    // Secure by default: check organization matches RLS tenant context
+    if report.vote.organization_id != rls.tenant_id() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Vote not found")),
+        ));
+    }
+
+    generate_and_archive_pdf_internal(state, rls, &report).await
+}
+
+async fn generate_and_archive_pdf_internal(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    report: &VoteReportData,
+) -> Result<Vec<u8>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
+    let user_id = rls.user_id();
+
+    // Render the report to PDF
+    let pdf_bytes = render_pdf_report(report).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "PDF_GENERATION_ERROR",
+                format!("Failed to render PDF: {}", e),
+            )),
+        )
+    })?;
+
+    // Archive the PDF in the documents system
+    let file_name = format!("vote_report_{}.pdf", report.vote.id);
+    let file_key = integrations::generate_storage_key(org_id, &file_name);
+
+    if let Some(ref storage_service) = state.storage_service {
+        if storage_service.has_s3_client() {
+            storage_service
+                .upload(&file_key, pdf_bytes.clone(), "application/pdf")
+                .await
+                .map_err(|e| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new(
+                            "STORAGE_ERROR",
+                            format!("Failed to upload report to S3: {}", e),
+                        )),
+                    )
+                })?;
+        }
+    }
+
+    let create_doc = db::models::CreateDocument {
+        organization_id: org_id,
+        folder_id: None,
+        title: format!("Vote Report: {}", report.vote.title),
+        description: Some(format!("Auto-generated PDF report for vote: {}", report.vote.title)),
+        category: "reports".to_string(), // db::models::document_category::REPORTS
+        file_key: file_key.clone(),
+        file_name,
+        mime_type: "application/pdf".to_string(),
+        size_bytes: pdf_bytes.len() as i64,
+        access_scope: Some("organization".to_string()),
+        access_target_ids: None,
+        access_roles: None,
+        created_by: user_id,
+    };
+
+    state
+        .document_repo
+        .create_rls(&mut **rls.conn(), create_doc)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to create document record for report: {}", e),
+                )),
+            )
+        })?;
+
+    Ok(pdf_bytes)
+}
+
+fn render_pdf_report(report: &VoteReportData) -> Result<Vec<u8>, String> {
+    let font_family = genpdf::fonts::from_files("/usr/share/fonts/truetype/liberation", "LiberationSans", None)
+        .map_err(|e| format!("Failed to load font LiberationSans: {}", e))?;
+
+    let mut doc = genpdf::Document::new(font_family);
+    doc.set_title(format!("Vote Report: {}", report.vote.title));
+
+    let mut decorator = genpdf::SimplePageDecorator::new();
+    decorator.set_margins(15);
+    doc.set_page_decorator(decorator);
+
+    // Document Title
+    doc.push(
+        genpdf::elements::Paragraph::new(&report.vote.title)
+            .styled(genpdf::style::Style::new().bold().with_font_size(18)),
+    );
+
+    // Spacing
+    doc.push(genpdf::elements::Break::new(1));
+
+    // Metadata
+    let mut metadata_layout = genpdf::elements::LinearLayout::vertical();
+    
+    let generated_at_str = report.generated_at.format("%Y-%m-%d %H:%M:%S UTC").to_string();
+    
+    metadata_layout.push(
+        genpdf::elements::Paragraph::default()
+            .string("Vote ID: ")
+            .styled_string(report.vote.id.to_string(), genpdf::style::Style::new().bold())
+    );
+    metadata_layout.push(
+        genpdf::elements::Paragraph::default()
+            .string("Building ID: ")
+            .styled_string(report.vote.building_id.to_string(), genpdf::style::Style::new().bold())
+    );
+    metadata_layout.push(
+        genpdf::elements::Paragraph::default()
+            .string("Quorum Type: ")
+            .styled_string(report.vote.quorum_type.clone(), genpdf::style::Style::new().bold())
+    );
+    if let Some(qp) = report.vote.quorum_percentage {
+        metadata_layout.push(
+            genpdf::elements::Paragraph::default()
+                .string("Quorum Percentage: ")
+                .styled_string(format!("{}%", qp), genpdf::style::Style::new().bold())
+        );
+    }
+    
+    // Status
+    metadata_layout.push(
+        genpdf::elements::Paragraph::default()
+            .string("Status: ")
+            .styled_string(report.vote.status.clone(), genpdf::style::Style::new().bold())
+    );
+    
+    // Generated At Timestamp
+    metadata_layout.push(
+        genpdf::elements::Paragraph::default()
+            .string("Report Generated At: ")
+            .styled_string(generated_at_str, genpdf::style::Style::new().bold())
+    );
+    
+    doc.push(metadata_layout);
+    doc.push(genpdf::elements::Break::new(2));
+
+    // Description
+    if let Some(desc) = &report.vote.description {
+        doc.push(
+            genpdf::elements::Paragraph::new("Description")
+                .styled(genpdf::style::Style::new().bold().with_font_size(14)),
+        );
+        doc.push(genpdf::elements::Paragraph::new(desc));
+        doc.push(genpdf::elements::Break::new(2));
+    }
+
+    // Results section
+    doc.push(
+        genpdf::elements::Paragraph::new("Voting Results Summary")
+            .styled(genpdf::style::Style::new().bold().with_font_size(14)),
+    );
+    
+    if let Some(results) = &report.results {
+        let quorum_met_str = if results.quorum_met { "YES" } else { "NO" };
+        let part_rate = format!("{:.2}%", results.participation_rate * 100.0);
+        
+        let mut results_summary = genpdf::elements::LinearLayout::vertical();
+        results_summary.push(
+            genpdf::elements::Paragraph::default()
+                .string("Quorum Met: ")
+                .styled_string(quorum_met_str, genpdf::style::Style::new().bold())
+        );
+        results_summary.push(
+            genpdf::elements::Paragraph::default()
+                .string("Participation: ")
+                .styled_string(
+                    format!("{} of {} units (Rate: {})", results.participation_count, results.eligible_count, part_rate),
+                    genpdf::style::Style::new().bold()
+                )
+        );
+        doc.push(results_summary);
+        doc.push(genpdf::elements::Break::new(1));
+        
+        // Questions Results Detail
+        for (idx, q_res) in results.questions.iter().enumerate() {
+            doc.push(
+                genpdf::elements::Paragraph::new(format!("Question {}: {}", idx + 1, q_res.question_text))
+                    .styled(genpdf::style::Style::new().bold().with_font_size(12)),
+            );
+            doc.push(genpdf::elements::Paragraph::new(format!("Type: {}  |  Total Ballots: {}  |  Weighted Total: {}", q_res.question_type, q_res.total_votes, q_res.weighted_total)));
+            
+            doc.push(genpdf::elements::Break::new(1));
+            
+            // Results table
+            // Table header: Option, Votes, Weighted Count, Percentage
+            let mut table = genpdf::elements::TableLayout::new(vec![3, 1, 2, 2]);
+            let decorator = genpdf::elements::FrameCellDecorator::new(true, true, false);
+            table.set_cell_decorator(decorator);
+            
+            table.row()
+                .element(genpdf::elements::Paragraph::new("Option").styled(genpdf::style::Style::new().bold()))
+                .element(genpdf::elements::Paragraph::new("Count").styled(genpdf::style::Style::new().bold()))
+                .element(genpdf::elements::Paragraph::new("Weighted").styled(genpdf::style::Style::new().bold()))
+                .element(genpdf::elements::Paragraph::new("Percentage").styled(genpdf::style::Style::new().bold()))
+                .push()
+                .map_err(|e| format!("Failed to add table header: {}", e))?;
+            
+            for opt in &q_res.results {
+                table.row()
+                    .element(genpdf::elements::Paragraph::new(&opt.option_text))
+                    .element(genpdf::elements::Paragraph::new(opt.count.to_string()))
+                    .element(genpdf::elements::Paragraph::new(format!("{:.4}", opt.weighted_count)))
+                    .element(genpdf::elements::Paragraph::new(format!("{:.2}%", opt.percentage)))
+                    .push()
+                    .map_err(|e| format!("Failed to add table row: {}", e))?;
+            }
+            
+            doc.push(table);
+            doc.push(genpdf::elements::Break::new(2));
+        }
+    } else {
+        doc.push(genpdf::elements::Paragraph::new("No results calculated yet."));
+        doc.push(genpdf::elements::Break::new(2));
+    }
+
+    // Participation Details section
+    doc.push(
+        genpdf::elements::Paragraph::new("Participation Details")
+            .styled(genpdf::style::Style::new().bold().with_font_size(14)),
+    );
+    doc.push(genpdf::elements::Break::new(1));
+    
+    // Table header: Unit, Voted, Weight
+    let mut part_table = genpdf::elements::TableLayout::new(vec![4, 2, 2]);
+    let decorator = genpdf::elements::FrameCellDecorator::new(true, true, false);
+    part_table.set_cell_decorator(decorator);
+    
+    part_table.row()
+        .element(genpdf::elements::Paragraph::new("Unit Designation").styled(genpdf::style::Style::new().bold()))
+        .element(genpdf::elements::Paragraph::new("Voted").styled(genpdf::style::Style::new().bold()))
+        .element(genpdf::elements::Paragraph::new("Vote Weight").styled(genpdf::style::Style::new().bold()))
+        .push()
+        .map_err(|e| format!("Failed to add participation header: {}", e))?;
+    
+    for detail in &report.participation_details {
+        part_table.row()
+            .element(genpdf::elements::Paragraph::new(&detail.unit_designation))
+            .element(genpdf::elements::Paragraph::new(if detail.voted { "Yes" } else { "No" }))
+            .element(genpdf::elements::Paragraph::new(detail.vote_weight.to_string()))
+            .push()
+            .map_err(|e| format!("Failed to add participation row: {}", e))?;
+    }
+    
+    doc.push(part_table);
+
+    // Render to bytes
+    let mut bytes = Vec::new();
+    doc.render(&mut bytes).map_err(|e| format!("Failed to render PDF: {}", e))?;
+
+    Ok(bytes)
 }
 
 // ============================================================================
