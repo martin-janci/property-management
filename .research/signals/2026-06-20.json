@@ -1,0 +1,226 @@
+{
+  "date": "2026-06-20",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25:00Z; this run 2026-06-20T04:00:00Z = ~96h lag"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-2026-06-20",
+      "type": "stale_routine_alert",
+      "source": "state.json",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 4 days old; cloud routine cron may be paused. Dispatcher (separate flow) still ticking — see commit 8c598e8 from today."
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot] merged dependency bump PR #1566"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot] merged dependency bump PR #1570"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot] merged dependency bump PR #1571"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot] merged dependency bump PR #1572"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot] merged dependency bump PR #1573"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot] merged dependency bump PR #1575"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot[bot] merged dependency bump PR #1576"
+      ],
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-20.md && head -1 == '# 2026-06-20'",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state delta vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal dedup vs seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap & decay applied to 14 open>=14d items",
+      "observed": "6 decayed, 8 dropped, cap=8",
+      "expected": "all <= 8 and decay applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached grep secret patterns",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures",
+      "observed": "all phases ran (1.5+1.6 skipped by design — cloud token budget)",
+      "expected": "skipped phases listed in brief"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no plan promotions/archive changes",
+      "observed": "no changes",
+      "expected": "convergent"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD count",
+      "observed": "unchanged",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "byte-identical",
+      "expected": "byte-identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions (no candidate)",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm artifacts (skipped — Phase 1.6 not run)",
+      "observed": "no-op",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
