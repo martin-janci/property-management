@@ -1,8 +1,10 @@
 /**
- * Tests for the payment-matching data layer (#1521).
+ * Tests for the payment-matching data layer (#1521 / #1623).
  *
- * The headline regression: the upload must authenticate from the shared token /
- * active-org providers (api-server, real session) — not the never-written
+ * Reads/decisions now delegate to the generated `@ppt/api-client` functions (the
+ * accounting endpoints are modelled in TypeSpec), so those are mocked here. The
+ * headline regression remains the upload: it must authenticate from the shared
+ * token / active-org providers (real session) — not the never-written
  * `auth_token` / `current_tenant_id` localStorage keys the original reality-web
  * page used, which sent `Bearer null`.
  */
@@ -10,14 +12,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  get: vi.fn(),
-  post: vi.fn(),
+  statementsApiList: vi.fn(),
+  statementsApiListLines: vi.fn(),
+  statementLinesApiListMatches: vi.fn(),
+  paymentMatchesApiConfirm: vi.fn(),
+  paymentMatchesApiReject: vi.fn(),
   getToken: vi.fn(),
   getOrg: vi.fn(),
 }));
 
 vi.mock('@ppt/api-client', () => ({
-  client: { get: mocks.get, post: mocks.post },
+  statementsApiList: mocks.statementsApiList,
+  statementsApiListLines: mocks.statementsApiListLines,
+  statementLinesApiListMatches: mocks.statementLinesApiListMatches,
+  paymentMatchesApiConfirm: mocks.paymentMatchesApiConfirm,
+  paymentMatchesApiReject: mocks.paymentMatchesApiReject,
   getToken: mocks.getToken,
   getOrg: mocks.getOrg,
 }));
@@ -33,53 +42,56 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.get.mockResolvedValue({ data: [] });
-  mocks.post.mockResolvedValue({ data: undefined });
+  mocks.statementsApiList.mockResolvedValue({ data: [] });
+  mocks.statementsApiListLines.mockResolvedValue({ data: [] });
+  mocks.statementLinesApiListMatches.mockResolvedValue({ data: [] });
+  mocks.paymentMatchesApiConfirm.mockResolvedValue({ data: undefined });
+  mocks.paymentMatchesApiReject.mockResolvedValue({ data: undefined });
 });
 
 describe('payment-matching reads', () => {
-  it('fetchStatements queries the api-server statements endpoint and unwraps data', async () => {
-    mocks.get.mockResolvedValueOnce({ data: [{ id: 's1' }] });
+  it('fetchStatements calls statementsApiList (throwing) and unwraps data', async () => {
+    mocks.statementsApiList.mockResolvedValueOnce({ data: [{ id: 's1' }] });
     const result = await fetchStatements();
 
-    expect(mocks.get).toHaveBeenCalledWith(
-      expect.objectContaining({ url: '/api/v1/accounting/statements', throwOnError: true })
+    expect(mocks.statementsApiList).toHaveBeenCalledWith(
+      expect.objectContaining({ throwOnError: true })
     );
     expect(result).toEqual([{ id: 's1' }]);
   });
 
   it('fetchStatements falls back to [] when the body is empty', async () => {
-    mocks.get.mockResolvedValueOnce({ data: undefined });
+    mocks.statementsApiList.mockResolvedValueOnce({ data: undefined });
     expect(await fetchStatements()).toEqual([]);
   });
 
-  it('fetchStatementLines scopes by statement id', async () => {
+  it('fetchStatementLines scopes by statement id (path param)', async () => {
     await fetchStatementLines('stmt-9');
-    expect(mocks.get).toHaveBeenCalledWith(
-      expect.objectContaining({ url: '/api/v1/accounting/statements/stmt-9/lines' })
+    expect(mocks.statementsApiListLines).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { id: 'stmt-9' }, throwOnError: true })
     );
   });
 
-  it('fetchLineMatches scopes by line id', async () => {
+  it('fetchLineMatches scopes by line id (path param)', async () => {
     await fetchLineMatches('line-7');
-    expect(mocks.get).toHaveBeenCalledWith(
-      expect.objectContaining({ url: '/api/v1/accounting/lines/line-7/matches' })
+    expect(mocks.statementLinesApiListMatches).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { id: 'line-7' }, throwOnError: true })
     );
   });
 });
 
 describe('payment-matching mutations', () => {
-  it('confirmMatch posts to the confirm endpoint for the given match', async () => {
+  it('confirmMatch confirms the given match id', async () => {
     await confirmMatch('m-1');
-    expect(mocks.post).toHaveBeenCalledWith(
-      expect.objectContaining({ url: '/api/v1/accounting/matches/m-1/confirm', throwOnError: true })
+    expect(mocks.paymentMatchesApiConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { id: 'm-1' }, throwOnError: true })
     );
   });
 
-  it('rejectMatch posts to the reject endpoint for the given match', async () => {
+  it('rejectMatch rejects the given match id', async () => {
     await rejectMatch('m-2');
-    expect(mocks.post).toHaveBeenCalledWith(
-      expect.objectContaining({ url: '/api/v1/accounting/matches/m-2/reject', throwOnError: true })
+    expect(mocks.paymentMatchesApiReject).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { id: 'm-2' }, throwOnError: true })
     );
   });
 });
