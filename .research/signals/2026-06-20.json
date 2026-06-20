@@ -1,0 +1,227 @@
+{
+  "date": "2026-06-20",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-20.md && head -1 | grep '# 2026-06-20'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "compare state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] | length == unique|length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score <= 8 + decay applied",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial pass annotation",
+      "observed": "n/a — 0 new plans",
+      "expected": "n/a or pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<= 2 new plans (0 promoted)",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no app code touched",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed match cursor non-advance",
+      "observed": "no failures + cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plans persist or archive",
+      "observed": "no plans changed",
+      "expected": "no churn"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive grows",
+      "observed": "now=7 >= prev=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "diff -q exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap + idempotency",
+      "observed": "auto_fix_actions empty (no candidate)",
+      "expected": "<= caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op",
+      "observed": "n/a — pm_cursor unchanged",
+      "expected": "n/a when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — high-confidence allowlist not met this run; lag-mode catch-up takes precedence; only triage/issue signals fired",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "Routine last ran 2026-06-16T03:25Z; now 2026-06-20T14:18Z — ~103h ≈ 4d 7h lag (>36h threshold). Cloud cron likely paused while engineering team continued shipping (100 merged PRs in window). Stale-routine alert also fires (>=3d)."
+      ]
+    },
+    {
+      "id": "triage-issue-1538",
+      "type": "untriaged-issue",
+      "source": "issue #1538",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Issue #1538 (OPEN, labels: ci): 'Backend test job is not a required check on dev — red-test PRs merge freely and re-red the merge pipeline.' Governance gap surfaced during the 4d window — directly related to existing triage-issue-1331 (also CI-test required-check issue)."
+      ]
+    },
+    {
+      "id": "triage-issue-1521",
+      "type": "untriaged-issue",
+      "source": "issue #1521",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Issue #1521 (OPEN, labels: follow-up,from-merged-review): 'payment-matching UI shipped in wrong app, with broken auth + no i18n/tests' (PR #1453 follow-up). Architectural cross-app placement bug — needs human triage to decide which app should own the feature."
+      ]
+    },
+    {
+      "id": "triage-issue-1604",
+      "type": "untriaged-issue",
+      "source": "issue #1604",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Issue #1604 (OPEN, labels: needs-human-review): 'Dispatcher backlog exhausted — coverage.json (2026-06-16) stale, producing only already-shipped no-op tasks.' Dispatcher routine on planning branch is starving — same period the daily research routine was stale."
+      ]
+    },
+    {
+      "id": "triage-issue-1607",
+      "type": "untriaged-issue",
+      "source": "issue #1607",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Issue #1607 (OPEN, labels: research-routine): 'Research dispatcher stalled: stale coverage.json + 14 quarantined rows need cleanup.' Confirms #1604 cause — operational meta-issue."
+      ]
+    },
+    {
+      "id": "triage-issue-1584",
+      "type": "untriaged-issue",
+      "source": "issue #1584",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "triage",
+      "evidence": [
+        "Issue #1584 (OPEN, labels: follow-up,from-merged-review): 'PortalPrincipal bypasses reality_agency_members and rides on agency_id=user_id mismatch' (PR #1561 follow-up). Security/architecture follow-up — PR #1603 added partial coverage but the cross-table mismatch remains."
+      ]
+    },
+    {
+      "id": "resolved-stalled-review-pr-988",
+      "type": "stalled-review-resolved",
+      "source": "PR #988",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "PR #988 (Playwright E2E framework epic) merged 2026-06-16. dx-stalled-review-pr-988 row resolves to done."
+      ]
+    },
+    {
+      "id": "resolved-stalled-review-pr-1179",
+      "type": "stalled-review-resolved",
+      "source": "PR #1179",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "PR #1179 (epics docs backfill) merged 2026-06-16. dx-stalled-review-pr-1179 row resolves to done."
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-06-20",
+      "type": "dep-update-noise",
+      "source": "PRs #1566/#1567/#1568/#1569/#1570/#1571/#1572/#1573/#1574/#1575/#1576",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": null,
+      "evidence": [
+        "11 dependabot PRs in window: 5 merged (mobile-native compose-BOM, mikepenz/action-junit-report, frontend npm-minor-patch, expo-secure-store 55→56, frontend i18next 25→26, @types/node 20→25, @babel/core 7→8), 4 still open against dev (gradle-minor-patch, tower-http 0.6→0.7, dtolnay/rust-toolchain, cargo-minor-patch). Lockfile-drift sub-shape not detected — Phase 5 dep-update branch not eligible."
+      ]
+    }
+  ]
+}
