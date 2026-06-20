@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-20T00:14:53Z",
+  "generated": "2026-06-20T20:11:14Z",
   "assignments": [
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -309,7 +309,7 @@
       "fix_rounds": 0,
       "merge_attempted_at": null,
       "quarantined_at": "2026-06-18T22:26:01Z",
-      "quarantine_reason": "completed-but-no-PR: gap-81-1 / issue #616 dedicated cron_expression column already fully shipped on dev (migration 00166 + ReportSchedule model + repo update_schedule + PUT handler validation + roundtrip integration test). coverage.json (2026-06-16) is STALE. Human action: close row + mark action-list item + refresh coverage.json 81-1. NOTE: all 3 tasks claimed this run (79-1, 83-1-webhook, 81-1) were already-shipped — coverage.json is the systemic blocker."
+      "quarantine_reason": "completed-but-no-PR: gap-81-1 / issue #616 dedicated cron_expression column already fully shipped on dev (migration 00166 + ReportSchedule model + repo update_schedule + PUT handler validation + roundtrip integration test). coverage.json (2026-06-16) is STALE. Human action: close row + mark action-list item + refresh coverage.json 81-1. NOTE: all 3 tasks claimed this run (79-1, 83-1, 81-1) were already-shipped — coverage.json is the systemic blocker."
     },
     {
       "task_id": "feat-airbnb-integration-webhook-handler-backend",
@@ -362,13 +362,13 @@
     {
       "task_id": "feat-airbnb-integration-list-api-routes-backend",
       "branch": "auto-impl/feat-airbnb-integration-list-api-routes-",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-06-19T22:08:12Z",
-      "last_updated": "2026-06-20T00:13:24Z",
-      "status_changed_at": "2026-06-19T22:40:05Z",
+      "last_updated": "2026-06-20T20:11:14Z",
+      "status_changed_at": "2026-06-20T20:11:14Z",
       "pr_number": 1615,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1615",
-      "merged_at": null,
+      "merged_at": "2026-06-20T00:14:08Z",
       "specialist": "rust-backend",
       "implementer_summary": "pr=1615 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=premise partly stale (status/listings/reservations already exist); added DB-backed GET /airbnb/connections + RentalRepository::list_airbnb_connections w/ IDOR/tenant scoping + 3 unit tests; check/clippy green",
       "reviewer_summary": "verdict=approve note=clean-rls-scoped-list-route-tokenfree-tests-pass-ci-green-posted-as-comment-author-self-approve-blocked",
