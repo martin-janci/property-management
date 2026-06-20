@@ -130,9 +130,17 @@ fun SearchScreen(
         }
         val generation = searchGeneration[0].toLong()
 
+        // Flip the in-flight flag SYNCHRONOUSLY on the calling/collecting thread, before the
+        // fetch is launched. The infinite-scroll trigger snapshots `isLoading` on every emission
+        // (see the nextPageTriggerFlow LaunchedEffect below); if this flip lived only inside the
+        // launched coroutine body, two bottom-of-list emissions arriving back-to-back could both
+        // observe isLoading=false and re-emit the same next page — double-fetching, and for
+        // page > 1 (which reuses the search generation, so shouldApplyResponse can't discard the
+        // duplicate) double-appending via mergePage. Setting it here closes that window. (#1533)
+        isLoading = true
+
         searchJob[0] =
             scope.launch {
-                isLoading = true
                 errorMessage = null
 
                 val request =

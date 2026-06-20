@@ -327,6 +327,29 @@ class SearchStateTest {
         assertEquals(listOf(3), secondFlow.toList())
     }
 
+    @Test
+    fun nextPageTriggerFlow_inFlightSnapshotSuppressesDuplicateFetch() = runTest {
+        // In-flight-guard transition WITHIN a single collection — the gap the other cases miss:
+        // they each use a constant snapshot, so none exercise isLoading flipping *between*
+        // emissions of one flow, which is exactly the runtime contract that prevents a double
+        // page-2 fetch on rapid scroll. Two threshold-crossing indices (16 then 17) arrive
+        // back-to-back; the first fires page 2 and the screen flips isLoading=true synchronously
+        // when it dispatches that fetch (SearchScreen.performSearch, #1533), so the second index
+        // must observe a load in flight and emit nothing.
+        var snap = pageSnapshot(loadedCount = 20, total = 100, currentPage = 1)
+        val indices =
+            flow<Int?> {
+                emit(16)
+                // Screen flipped isLoading synchronously when page 2 was dispatched downstream.
+                snap = snap.copy(isLoading = true)
+                emit(17)
+            }
+
+        // Exactly one fetch — the in-flight snapshot on the second emission suppresses the dup.
+        val pages = SearchState.nextPageTriggerFlow(indices, snapshot = { snap }).toList()
+        assertEquals(listOf(2), pages)
+    }
+
     private fun pageSnapshot(
         loadedCount: Int,
         total: Int,
