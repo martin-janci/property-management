@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
+  "last_run_iso": "2026-06-20T03:25:00Z",
   "last_run_ms": 0,
-  "last_pr_seen": 1439,
+  "last_pr_seen": 1615,
   "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_commit_sha": "5ff7bf82",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -63,9 +63,9 @@
       "recent_churn": 869
     },
     "backend/servers/api-server/src/services/push_fanout.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-26",
-      "recent_churn": 689
+      "runs_seen": 2,
+      "last_seen": "2026-06-20",
+      "recent_churn": 1010
     },
     "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx": {
       "runs_seen": 1,
@@ -253,9 +253,9 @@
       "recent_churn": 2691
     },
     "backend/crates/integrations/src/booking.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 433
+      "runs_seen": 2,
+      "last_seen": "2026-06-20",
+      "recent_churn": 669
     },
     "backend/servers/api-server/src/routes/api_ecosystem.rs": {
       "runs_seen": 1,
@@ -321,6 +321,11 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "backend/crates/db/tests/accounting_rls_repo_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-20",
+      "recent_churn": 911
     }
   },
   "seen_signals": [
@@ -553,7 +558,45 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "repeated-churn-backend-servers-api-server-src-services-push_fanout-rs",
+    "churn-hotspot-backend-crates-db-tests-accounting_rls_repo_tests-rs",
+    "repeated-churn-backend-crates-integrations-src-booking-rs",
+    "hotfix-no-test-pr-1582",
+    "hotfix-no-test-pr-1565",
+    "hotfix-no-test-pr-1561",
+    "hotfix-no-test-pr-1551",
+    "hotfix-no-test-pr-1545",
+    "hotfix-no-test-pr-1539",
+    "hotfix-no-test-pr-1537",
+    "hotfix-no-test-pr-1536",
+    "hotfix-no-test-pr-1512",
+    "unchecked-todo-pr-1507",
+    "unchecked-todo-pr-1492",
+    "unchecked-todo-pr-1501",
+    "unchecked-todo-pr-1460",
+    "unchecked-todo-pr-1476",
+    "screen-map-drift-pr-1610-ppt",
+    "screen-map-drift-pr-1611-ppt",
+    "screen-map-drift-pr-1555-ppt",
+    "screen-map-drift-pr-1559-ppt",
+    "screen-map-drift-pr-1545-reality",
+    "screen-map-drift-pr-1453-reality",
+    "screen-map-drift-pr-1454-ppt",
+    "closed-not-merged-pr-1511",
+    "closed-not-merged-pr-1505",
+    "closed-not-merged-pr-1506",
+    "closed-not-merged-pr-1504",
+    "closed-not-merged-pr-1503",
+    "closed-not-merged-pr-1500",
+    "dep-update-noise-pr-1566",
+    "dep-update-noise-pr-1570",
+    "dep-update-noise-pr-1572",
+    "dep-update-noise-pr-1576",
+    "dep-update-noise-pr-1573",
+    "dep-update-noise-pr-1575",
+    "dep-update-noise-pr-1571",
+    "lag-warning-2026-06-20"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,8 +610,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 203,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
