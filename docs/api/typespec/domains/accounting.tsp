@@ -288,3 +288,154 @@ interface InvoicesApi {
     @path id: uuid
   ): InvoiceItem[] | UnauthorizedError | ForbiddenError | NotFoundError;
 }
+
+// ============================================================================
+// Bank statements & payment matching (booking-import → invoice reconciliation).
+//
+// NOTE: these models use snake_case field names to match what the api-server
+// actually serializes (the handlers return the `db::models::accounting` structs
+// directly, which have no `serde(rename_all)`). Decimal amounts are emitted as
+// strings (`rust_decimal` `serde-str`), so `amount`/`confidence` are `string`.
+// ============================================================================
+
+@doc("Imported bank statement metadata")
+model BankStatement {
+  @doc("Unique identifier")
+  id: uuid;
+
+  @doc("Tenant identifier")
+  tenant_id: uuid;
+
+  @doc("Original uploaded filename")
+  source_filename: string;
+
+  @doc("When the statement was imported")
+  imported_at: dateTime;
+
+  @doc("Statement period label, if parsed")
+  period?: string;
+
+  @doc("Account IBAN the statement belongs to")
+  account_iban: string;
+}
+
+@doc("A single transaction line parsed from a bank statement")
+model BankStatementLine {
+  @doc("Unique identifier")
+  id: uuid;
+
+  @doc("Parent statement identifier")
+  statement_id: uuid;
+
+  @doc("Tenant identifier")
+  tenant_id: uuid;
+
+  @doc("Booking date of the transaction")
+  booking_date: date;
+
+  @doc("Transaction amount (decimal serialized as string)")
+  amount: string;
+
+  @doc("Currency code")
+  currency: string;
+
+  @doc("Counterparty IBAN, if present")
+  counterparty_iban?: string;
+
+  @doc("Variable symbol used for payment identification")
+  variable_symbol?: string;
+
+  @doc("Raw reference text from the source row")
+  raw_ref?: string;
+
+  @doc("Match state: unmatched | suggested | matched")
+  match_state: string;
+}
+
+@doc("State of a payment-match decision")
+enum PaymentMatchState {
+  Suggested: "suggested",
+  Confirmed: "confirmed",
+  Rejected: "rejected",
+}
+
+@doc("A suggested or decided match between a statement line and an invoice")
+model PaymentMatch {
+  @doc("Unique identifier")
+  id: uuid;
+
+  @doc("Tenant identifier")
+  tenant_id: uuid;
+
+  @doc("Statement line being matched")
+  statement_line_id: uuid;
+
+  @doc("Invoice the line is matched to")
+  invoice_id: uuid;
+
+  @doc("Match confidence in 0..1 (decimal serialized as string)")
+  confidence: string;
+
+  @doc("User who decided the match, if decided")
+  decided_by?: uuid;
+
+  @doc("When the match was decided, if decided")
+  decided_at?: dateTime;
+
+  @doc("Current state of the match")
+  state: PaymentMatchState;
+}
+
+@route("/api/v1/accounting/statements")
+@tag("Accounting")
+interface StatementsApi {
+  @doc("List imported bank statements for the current tenant")
+  @get
+  list(
+    @header("Authorization") token?: string
+  ): BankStatement[] | UnauthorizedError | ForbiddenError;
+
+  @doc("List the parsed lines of a bank statement")
+  @get
+  @route("/{id}/lines")
+  listLines(
+    @header("Authorization") token?: string,
+    @path id: uuid
+  ): BankStatementLine[] | UnauthorizedError | ForbiddenError | NotFoundError;
+}
+
+@route("/api/v1/accounting/lines")
+@tag("Accounting")
+interface StatementLinesApi {
+  @doc("List payment-match suggestions/decisions for a statement line")
+  @get
+  @route("/{id}/matches")
+  listMatches(
+    @header("Authorization") token?: string,
+    @path id: uuid
+  ): PaymentMatch[] | UnauthorizedError | ForbiddenError | NotFoundError;
+}
+
+@route("/api/v1/accounting/matches")
+@tag("Accounting")
+interface PaymentMatchesApi {
+  @doc("Confirm a payment match (link the statement line to the invoice)")
+  @post
+  @route("/{id}/confirm")
+  confirm(
+    @header("Authorization") token?: string,
+    @path id: uuid
+  ): {
+    @statusCode statusCode: 200;
+  } | UnauthorizedError | ForbiddenError | NotFoundError;
+
+  @doc("Reject a payment match")
+  @post
+  @route("/{id}/reject")
+  reject(
+    @header("Authorization") token?: string,
+    @path id: uuid
+  ): {
+    @statusCode statusCode: 200;
+  } | UnauthorizedError | ForbiddenError | NotFoundError;
+}

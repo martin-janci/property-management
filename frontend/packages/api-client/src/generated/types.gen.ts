@@ -5,6 +5,82 @@ export type ClientOptions = {
 };
 
 /**
+ * Imported bank statement metadata
+ */
+export type AccountingBankStatement = {
+    /**
+     * Unique identifier
+     */
+    id: SharedUuid;
+    /**
+     * Tenant identifier
+     */
+    tenant_id: SharedUuid;
+    /**
+     * Original uploaded filename
+     */
+    source_filename: string;
+    /**
+     * When the statement was imported
+     */
+    imported_at: SharedDateTime;
+    /**
+     * Statement period label, if parsed
+     */
+    period?: string;
+    /**
+     * Account IBAN the statement belongs to
+     */
+    account_iban: string;
+};
+
+/**
+ * A single transaction line parsed from a bank statement
+ */
+export type AccountingBankStatementLine = {
+    /**
+     * Unique identifier
+     */
+    id: SharedUuid;
+    /**
+     * Parent statement identifier
+     */
+    statement_id: SharedUuid;
+    /**
+     * Tenant identifier
+     */
+    tenant_id: SharedUuid;
+    /**
+     * Booking date of the transaction
+     */
+    booking_date: SharedDate;
+    /**
+     * Transaction amount (decimal serialized as string)
+     */
+    amount: string;
+    /**
+     * Currency code
+     */
+    currency: string;
+    /**
+     * Counterparty IBAN, if present
+     */
+    counterparty_iban?: string;
+    /**
+     * Variable symbol used for payment identification
+     */
+    variable_symbol?: string;
+    /**
+     * Raw reference text from the source row
+     */
+    raw_ref?: string;
+    /**
+     * Match state: unmatched | suggested | matched
+     */
+    match_state: string;
+};
+
+/**
  * Native contact (CRM)
  */
 export type AccountingContact = {
@@ -262,6 +338,49 @@ export type AccountingInvoiceItem = {
  * Status of an issued invoice
  */
 export type AccountingInvoiceStatus = 'draft' | 'issued' | 'paid' | 'partially_paid' | 'overdue';
+
+/**
+ * A suggested or decided match between a statement line and an invoice
+ */
+export type AccountingPaymentMatch = {
+    /**
+     * Unique identifier
+     */
+    id: SharedUuid;
+    /**
+     * Tenant identifier
+     */
+    tenant_id: SharedUuid;
+    /**
+     * Statement line being matched
+     */
+    statement_line_id: SharedUuid;
+    /**
+     * Invoice the line is matched to
+     */
+    invoice_id: SharedUuid;
+    /**
+     * Match confidence in 0..1 (decimal serialized as string)
+     */
+    confidence: string;
+    /**
+     * User who decided the match, if decided
+     */
+    decided_by?: SharedUuid;
+    /**
+     * When the match was decided, if decided
+     */
+    decided_at?: SharedDateTime;
+    /**
+     * Current state of the match
+     */
+    state: AccountingPaymentMatchState;
+};
+
+/**
+ * State of a payment-match decision
+ */
+export type AccountingPaymentMatchState = 'suggested' | 'confirmed' | 'rejected';
 
 /**
  * Request to update an existing invoice
@@ -2510,6 +2629,186 @@ export type InvoicesApiListItemsResponses = {
 };
 
 export type InvoicesApiListItemsResponse = InvoicesApiListItemsResponses[keyof InvoicesApiListItemsResponses];
+
+export type StatementLinesApiListMatchesData = {
+    body?: never;
+    headers?: {
+        Authorization?: string;
+    };
+    path: {
+        id: SharedUuid;
+    };
+    query?: never;
+    url: '/api/v1/accounting/lines/{id}/matches';
+};
+
+export type StatementLinesApiListMatchesErrors = {
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: SharedErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: SharedErrorResponse;
+    /**
+     * Not Found - Resource does not exist
+     */
+    404: SharedErrorResponse;
+};
+
+export type StatementLinesApiListMatchesError = StatementLinesApiListMatchesErrors[keyof StatementLinesApiListMatchesErrors];
+
+export type StatementLinesApiListMatchesResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<AccountingPaymentMatch>;
+};
+
+export type StatementLinesApiListMatchesResponse = StatementLinesApiListMatchesResponses[keyof StatementLinesApiListMatchesResponses];
+
+export type PaymentMatchesApiConfirmData = {
+    body?: never;
+    headers?: {
+        Authorization?: string;
+    };
+    path: {
+        id: SharedUuid;
+    };
+    query?: never;
+    url: '/api/v1/accounting/matches/{id}/confirm';
+};
+
+export type PaymentMatchesApiConfirmErrors = {
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: SharedErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: SharedErrorResponse;
+    /**
+     * Not Found - Resource does not exist
+     */
+    404: SharedErrorResponse;
+};
+
+export type PaymentMatchesApiConfirmError = PaymentMatchesApiConfirmErrors[keyof PaymentMatchesApiConfirmErrors];
+
+export type PaymentMatchesApiConfirmResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: unknown;
+};
+
+export type PaymentMatchesApiRejectData = {
+    body?: never;
+    headers?: {
+        Authorization?: string;
+    };
+    path: {
+        id: SharedUuid;
+    };
+    query?: never;
+    url: '/api/v1/accounting/matches/{id}/reject';
+};
+
+export type PaymentMatchesApiRejectErrors = {
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: SharedErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: SharedErrorResponse;
+    /**
+     * Not Found - Resource does not exist
+     */
+    404: SharedErrorResponse;
+};
+
+export type PaymentMatchesApiRejectError = PaymentMatchesApiRejectErrors[keyof PaymentMatchesApiRejectErrors];
+
+export type PaymentMatchesApiRejectResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: unknown;
+};
+
+export type StatementsApiListData = {
+    body?: never;
+    headers?: {
+        Authorization?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/accounting/statements';
+};
+
+export type StatementsApiListErrors = {
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: SharedErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: SharedErrorResponse;
+};
+
+export type StatementsApiListError = StatementsApiListErrors[keyof StatementsApiListErrors];
+
+export type StatementsApiListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<AccountingBankStatement>;
+};
+
+export type StatementsApiListResponse = StatementsApiListResponses[keyof StatementsApiListResponses];
+
+export type StatementsApiListLinesData = {
+    body?: never;
+    headers?: {
+        Authorization?: string;
+    };
+    path: {
+        id: SharedUuid;
+    };
+    query?: never;
+    url: '/api/v1/accounting/statements/{id}/lines';
+};
+
+export type StatementsApiListLinesErrors = {
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: SharedErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: SharedErrorResponse;
+    /**
+     * Not Found - Resource does not exist
+     */
+    404: SharedErrorResponse;
+};
+
+export type StatementsApiListLinesError = StatementsApiListLinesErrors[keyof StatementsApiListLinesErrors];
+
+export type StatementsApiListLinesResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<AccountingBankStatementLine>;
+};
+
+export type StatementsApiListLinesResponse = StatementsApiListLinesResponses[keyof StatementsApiListLinesResponses];
 
 export type AnnouncementsApiListData = {
     body?: never;
