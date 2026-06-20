@@ -143,6 +143,11 @@ export const queryKeys = {
     all: ['accounting'] as const,
     invoices: () => [...queryKeys.accounting.all, 'invoices'] as const,
     contacts: () => [...queryKeys.accounting.all, 'contacts'] as const,
+    statements: () => [...queryKeys.accounting.all, 'statements'] as const,
+    statementLines: (statementId: string) =>
+      [...queryKeys.accounting.all, 'statements', statementId, 'lines'] as const,
+    lineMatches: (lineId: string) =>
+      [...queryKeys.accounting.all, 'lines', lineId, 'matches'] as const,
   },
 
   // ========================================================================
