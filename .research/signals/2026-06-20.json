@@ -1,0 +1,230 @@
+{
+  "date": "2026-06-20",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "routine did not run for 4d 14h — cloud cron likely slowed; catch-up sweep this run covers PRs #1514–#1621 (60 real + 12 chore/deps)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 (feat(UC-06) optimistic add for announcement comments) touched frontend/apps/ppt-web/src/routes/groups/announcements.tsx without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx"
+      ]
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": "PR #1610 (fix(faults) confirm delete + closed_count refresh) touched frontend/apps/ppt-web/src/routes/groups/faults.tsx without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx"
+      ]
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (fix(ppt-web) relocate payment-matching to ppt-web) touched routes/groups/accounting.tsx + routes/lazyRoutes.tsx without updating docs/screens/ppt/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "test-gap-screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (fix(ppt-web) relocate payment-matching) also touched reality-web frontend/apps/reality-web/src/app/accounting/{layout,page}.tsx without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx",
+        "frontend/apps/reality-web/src/app/accounting/page.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z (origin/dev)",
+      "score_delta": 0,
+      "evidence": "4 PRs touched booking.rs this window (OTA Booking.com push — PR #1577 typed RQ/RS models + PR #1560 combined push + PR #1617 listing-push wiring). Cumulative re-emit (already in seen_signals).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-lib-rs",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z (origin/dev)",
+      "score_delta": 1,
+      "evidence": "integrations crate root touched 3x — re-exports rippling with the OTA push epic; stability proxy",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/lib.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-queryKeys-ts",
+      "type": "churn-hotspot",
+      "source": "local git numstat since 2026-06-16T03:25:00Z (origin/dev)",
+      "score_delta": 1,
+      "evidence": "ppt-web queryKeys factory touched 3x — accounting (#1522/#1612), payment-matching relocate (#1621); centralising key drift",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar (new screen-map-drift rows at score 2 < 3; no stalled-review; no fixme-in-merged-code search this run; no lockfile-drift)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-20.md && head -1 == '# 2026-06-20'",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced (cursors+seen_signals+hotspot_history)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with non-zero score_delta",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no item with score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "all open items with updated_at<=2026-06-06 decayed or moved to dropped",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run -> vacuous",
+      "observed": "0 new plans",
+      "expected": "0 new plans"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count 0 <= 2; no new plans to validate further",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname grep on staged diff",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regenerated view",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run -> vacuous",
+      "observed": "all phases ran (Phase 1.5/1.6 explicitly skipped, cursor not advanced for unrun phases)",
+      "expected": "consistency"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs all present in plans/ or _archive/",
+      "observed": "true (archived 2 done plans this run; deleted 2 stranded duplicates whose _archive copies exist)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count: now=9 >= head=7",
+      "observed": "9>=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regenerated view",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty -> vacuous",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped (pm_cursor not advanced) -> no-op",
+      "observed": "pm_cursor.next_index=5 unchanged; coverage_cursor.next_index=12 unchanged",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal Telegram bot token in staged diff",
+      "observed": "0 hits",
+      "expected": "0 hits"
+    }
+  ]
+}
