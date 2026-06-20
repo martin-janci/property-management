@@ -9,7 +9,9 @@ import { client } from '../generated/client.gen';
 import type {
   AccountsReceivableReport,
   AccountTransaction,
+  AllocatePaymentRequest,
   ARReportParams,
+  AutoMatchResult,
   CreateFeeSchedule,
   CreateFinancialAccount,
   CreateInvoice,
@@ -24,8 +26,11 @@ import type {
   ListFeeSchedulesParams,
   ListInvoicesParams,
   ListInvoicesResponse,
+  ListPaymentsParams,
   ListTransactionsParams,
   Payment,
+  PaymentAllocation,
+  PaymentListResponse,
   PaymentResponse,
   RecordPayment,
   ReminderSchedule,
@@ -225,6 +230,42 @@ export async function recordPayment(
 
 export async function getPayment(id: string): Promise<PaymentResponse> {
   return fetchApi(`${API_BASE}/payments/${id}`);
+}
+
+/** List all payments for an organization (paginated, optional status filter). */
+export async function listPayments(params: ListPaymentsParams): Promise<PaymentListResponse> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('organization_id', params.organization_id);
+  if (params.status) searchParams.set('status', params.status);
+  if (params.limit) searchParams.set('limit', String(params.limit));
+  if (params.offset) searchParams.set('offset', String(params.offset));
+  return fetchApi(`${API_BASE}/payments?${searchParams}`);
+}
+
+/** List payments that still have an unallocated balance (reconciliation queue). */
+export async function listUnallocatedPayments(organizationId: string): Promise<Payment[]> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('organization_id', organizationId);
+  return fetchApi(`${API_BASE}/payments/unallocated?${searchParams}`);
+}
+
+/** Allocate an existing payment to an invoice (manual match). */
+export async function allocatePayment(
+  paymentId: string,
+  data: AllocatePaymentRequest
+): Promise<PaymentAllocation> {
+  return fetchApi(`${API_BASE}/payments/${paymentId}/allocate`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/** Bulk auto-match unallocated payments against outstanding invoices. */
+export async function autoMatchPayments(organizationId: string): Promise<AutoMatchResult> {
+  return fetchApi(`${API_BASE}/payments/auto-match`, {
+    method: 'POST',
+    body: JSON.stringify({ organization_id: organizationId }),
+  });
 }
 
 export async function listUnitPayments(
