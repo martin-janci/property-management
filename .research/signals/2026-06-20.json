@@ -1,0 +1,392 @@
+{
+  "date": "2026-06-20",
+  "generated_at": "2026-06-20T03:30:00Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "routine-run",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25:00Z; 4 days lag — surface in brief"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "unchecked-todo-pr-1441",
+      "type": "unchecked-todo",
+      "source": "PR #1441",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1441 (feat(gh-1375): add pre-push cargo fmt + clippy gate) merged with 3 unchecked TODO checkboxes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1442",
+      "type": "unchecked-todo",
+      "source": "PR #1442",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1442 (refactor(tests): replace duplicate seed_membership with canonical common:: import (GH #1373)) merged with 3 unchecked TODO checkboxes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "unchecked-todo-pr-1443",
+      "type": "unchecked-todo",
+      "source": "PR #1443",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1443 (test(reports): add cron validator drift guard (GH #1368)) merged with 2 unchecked TODO checkboxes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1460",
+      "type": "unchecked-todo",
+      "source": "PR #1460",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1460 (fix(db): FORCE RLS on developer_oauth_apps/grants/api_key_usage_logs (BIT-76, #1303)) merged with 3 unchecked TODO checkboxes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-pr-1465",
+      "type": "unchecked-todo",
+      "source": "PR #1465",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1465 (fix(mobile-native): iOS stale-response guard, staging deep-link host, orphaned plist, xcconfig drift) merged with 5 unchecked TODO checkboxes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1468",
+      "type": "unchecked-todo",
+      "source": "PR #1468",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1468 (fix(disputes): watch subscription + flush-on-unmount + i18n keys (GH #1364, #1404)) merged with 6 unchecked TODO checkboxes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 3,
+      "evidence": [
+        "PR #1606 (feat(accounting): manager-only role gate for list_contacts (PAP-281)) merged with 1 unchecked TODO checkboxes"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1621 touched frontend/apps/ppt-web/src/routes/groups/accounting.tsx + routes/lazyRoutes.tsx (added /accounting/payment-matching route) without updating docs/screens/ppt/*"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+        "docs/screens/ppt/payment-matching.md"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1621 removed frontend/apps/reality-web/src/app/accounting/page.tsx + layout.tsx without updating docs/screens/reality/*"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/page.tsx (removed)",
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx (removed)",
+        "docs/screens/reality/payment-matching.md"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1449",
+      "type": "dep-update-noise",
+      "source": "PR #1449",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot/renovate noise — PR #1449"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot/renovate noise — PR #1566"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot/renovate noise — PR #1570"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot/renovate noise — PR #1571"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot/renovate noise — PR #1572"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot/renovate noise — PR #1573"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot/renovate noise — PR #1575"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": [
+        "dependabot/renovate noise — PR #1576"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat 2026-06-16T03:25Z..2026-06-20T03:30Z",
+      "score_delta": 0,
+      "evidence": [
+        "4365 lines changed in backend/crates/integrations/src/booking.rs (window 2026-06-16→2026-06-20)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat 2026-06-16T03:25Z..2026-06-20T03:30Z",
+      "score_delta": 0,
+      "evidence": [
+        "3077 lines changed in backend/crates/db/src/repositories/document.rs (window 2026-06-16→2026-06-20)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat 2026-06-16T03:25Z..2026-06-20T03:30Z",
+      "score_delta": 1,
+      "evidence": [
+        "2837 lines changed in backend/crates/db/src/repositories/rental.rs (window 2026-06-16→2026-06-20)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-20.md && head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare prev vs current state.json cursors",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique ids in backlog.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id double-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8 & decay applied",
+      "observed": "6 decayed, 8 dropped",
+      "expected": "every open+stale row decremented or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass note in brief",
+      "observed": "0 new plans (vacuous)",
+      "expected": "every new plan has note"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all gated",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ paths staged",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secret/private-hostname leak in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen from backlog.json",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases cursor freeze",
+      "observed": "Phase 1.5 + Phase 1.6 skipped; review_cursor + pm_cursor untouched",
+      "expected": "untouched"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan still tracked (active or archived)",
+      "observed": "bug-ios-searchview-uncompilable moved to _archive",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count grows",
+      "observed": "7→8",
+      "expected": ">=7"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions; auto_fix_skipped_reason set",
+      "expected": "<=1 PR, <=1 issue, <=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (Phase 1.6 ran)",
+      "observed": "Phase 1.6 skipped this run — no-op",
+      "expected": "no-op when Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram bot token literals",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "kill switch not set; no candidate met certainty bar (no PR/issue/comment action this run)",
+  "summary": {
+    "new_signals_in_run": 21,
+    "new_signals_against_seen": 19,
+    "merged_prs_window": 75,
+    "pr_range": [
+      1440,
+      1621
+    ],
+    "decayed_items": 6,
+    "dropped_items": 8,
+    "resolved_items": 2,
+    "plan_archives": 1
+  }
+}
