@@ -114,7 +114,7 @@ interface ComplianceApi {
   @post
   @route("/gdpr/export")
   requestExport(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: { format?: ExportFormat; includeCategories?: DataCategory[]; }
   ): { @statusCode statusCode: 202; @body body: DataExportRequest; };
 
@@ -122,7 +122,7 @@ interface ComplianceApi {
   @get
   @route("/gdpr/export/{id}")
   getExportStatus(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): DataExportRequest | NotFoundError;
 
@@ -130,7 +130,7 @@ interface ComplianceApi {
   @get
   @route("/gdpr/export/{id}/download")
   downloadExport(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): { @header("Content-Type") contentType: string; @body body: bytes; } | NotFoundError;
 
@@ -138,7 +138,7 @@ interface ComplianceApi {
   @post
   @route("/gdpr/delete")
   requestDeletion(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: { reason?: string; retainedDataCategories?: DataCategory[]; }
   ): { @statusCode statusCode: 202; @body body: DataDeletionRequest; };
 
@@ -146,7 +146,7 @@ interface ComplianceApi {
   @post
   @route("/gdpr/delete/{id}/cancel")
   cancelDeletion(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): DataDeletionRequest | NotFoundError;
 
@@ -154,7 +154,7 @@ interface ComplianceApi {
   @get
   @route("/gdpr/delete/{id}")
   getDeletionStatus(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): DataDeletionRequest | NotFoundError;
 
@@ -162,14 +162,14 @@ interface ComplianceApi {
   @get
   @route("/consents")
   getConsents(
-    @header("Authorization") token: string
+    @header("Authorization") token?: string
   ): Consent[];
 
   @doc("Update consent")
   @post
   @route("/consents")
   updateConsent(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: { consentType: ConsentType; granted: boolean; }
   ): Consent;
 
@@ -177,8 +177,8 @@ interface ComplianceApi {
   @get
   @route("/audit-logs")
   getAuditLogs(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query userId?: uuid,
     @query action?: string,

@@ -23,7 +23,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -60,7 +60,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -96,7 +96,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -139,7 +139,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -180,7 +180,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -233,7 +233,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -271,7 +271,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -315,12 +315,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -392,12 +392,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -451,12 +451,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -493,12 +493,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -517,12 +517,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -547,12 +547,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -591,12 +591,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -650,12 +650,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -675,12 +675,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -700,12 +700,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -737,12 +737,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -767,12 +767,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -817,12 +817,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -847,12 +847,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -895,12 +895,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -932,12 +932,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -957,12 +957,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1031,7 +1031,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -1046,7 +1046,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -1070,7 +1070,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -1115,7 +1115,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -1153,7 +1153,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -1191,7 +1191,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -1216,7 +1216,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -1322,12 +1322,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -1387,12 +1387,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -1435,12 +1435,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1481,12 +1481,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1565,12 +1565,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1608,12 +1608,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1656,12 +1656,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1730,12 +1730,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1800,12 +1800,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1882,12 +1882,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1930,12 +1930,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -1997,12 +1997,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -2069,7 +2069,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -2089,7 +2089,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -2122,7 +2122,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -2154,7 +2154,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -2184,7 +2184,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -2214,7 +2214,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -2246,7 +2246,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -2276,7 +2276,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -2306,12 +2306,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -2368,12 +2368,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -2429,12 +2429,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: parentId
@@ -2459,12 +2459,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -2500,12 +2500,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2533,12 +2533,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2579,12 +2579,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2603,12 +2603,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2631,12 +2631,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2679,12 +2679,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2707,12 +2707,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -2771,12 +2771,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -2820,12 +2820,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2853,12 +2853,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2904,12 +2904,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2933,12 +2933,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -2974,12 +2974,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3019,12 +3019,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3060,12 +3060,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -3126,12 +3126,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -3178,12 +3178,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3219,12 +3219,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -3243,12 +3243,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -3286,12 +3286,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3319,12 +3319,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3362,12 +3362,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3407,12 +3407,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3456,12 +3456,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3501,12 +3501,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3529,12 +3529,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3568,12 +3568,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -3597,7 +3597,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -3651,7 +3651,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
       responses:
@@ -3688,7 +3688,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -3738,7 +3738,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -3773,7 +3773,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -3844,7 +3844,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -3882,7 +3882,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -3930,7 +3930,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -3990,7 +3990,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -4044,7 +4044,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -4103,7 +4103,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -4146,7 +4146,7 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: id
@@ -4209,12 +4209,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: unitId
@@ -4239,12 +4239,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -4280,12 +4280,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -4326,12 +4326,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -4388,12 +4388,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4416,12 +4416,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -4480,12 +4480,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -4537,12 +4537,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4571,12 +4571,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4599,12 +4599,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4627,12 +4627,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4663,12 +4663,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: unitId
@@ -4703,12 +4703,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -4755,12 +4755,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -4807,12 +4807,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4840,12 +4840,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4882,12 +4882,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4911,12 +4911,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4958,12 +4958,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -4987,12 +4987,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -5033,12 +5033,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - $ref: '#/components/parameters/Shared.PaginationQuery.page'
@@ -5085,12 +5085,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
       responses:
@@ -5153,12 +5153,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -5186,12 +5186,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -5229,12 +5229,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -5268,12 +5268,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -5309,12 +5309,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -5343,12 +5343,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id
@@ -5371,12 +5371,12 @@ paths:
       parameters:
         - name: Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
         - name: X-Tenant-ID
           in: header
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/Shared.uuid'
         - name: id

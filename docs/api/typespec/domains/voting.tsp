@@ -78,16 +78,16 @@ model Ballot {
 @tag("Voting")
 interface VotingApi {
   @get list(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query buildingId?: uuid,
     @query status?: VoteStatus
   ): PaginatedResponse<Vote>;
 
   @post create(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: {
       buildingId: uuid;
       title: string;
@@ -103,47 +103,47 @@ interface VotingApi {
   ): { @statusCode statusCode: 201; @body body: Vote; };
 
   @get @route("/{id}") get(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Vote | NotFoundError;
 
   @patch @route("/{id}") update(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { title?: string; description?: string; startDate?: dateTime; endDate?: dateTime; }
   ): Vote;
 
   @post @route("/{id}/publish") publish(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Vote;
 
   @post @route("/{id}/cancel") cancel(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { reason: string; }
   ): Vote;
 
   @post @route("/{id}/cast") castVote(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { selectedOptionIds: uuid[]; }
   ): { @statusCode statusCode: 201; @body body: Ballot; };
 
   @get @route("/{id}/results") getResults(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): VoteResult | NotFoundError;
 
   @get @route("/{id}/my-ballot") getMyBallot(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Ballot | NotFoundError;
 }

@@ -14,45 +14,27 @@ import { useState } from 'react';
 import { queryKeys } from '../../../lib/queryKeys';
 import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
-import { useAccountingAuth } from '../hooks/useAccountingAuth';
 
 export function AccountingInvoiceManagementPage() {
   const [isCreating, setIsCreating] = useState(false);
   const queryClient = useQueryClient();
-  const auth = useAccountingAuth();
 
+  // Auth (Authorization + X-Tenant-ID) is injected centrally by the api-client
+  // request interceptor (#1522) — no per-call headers / casts needed here.
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: queryKeys.accounting.invoices(),
-    queryFn: () => {
-      if (!auth) throw new Error('Not authenticated');
-      return invoicesApiList({
-        headers: auth.headers as unknown as { Authorization: string },
-      });
-    },
-    enabled: !!auth,
+    queryFn: () => invoicesApiList(),
   });
 
   const { data: contacts, isLoading: contactsLoading } = useQuery({
     queryKey: queryKeys.accounting.contacts(),
-    queryFn: () => {
-      if (!auth) throw new Error('Not authenticated');
-      return contactsApiList({
-        headers: auth.headers as unknown as { Authorization: string },
-      });
-    },
-    enabled: !!auth,
+    queryFn: () => contactsApiList(),
   });
 
   const isLoading = invoicesLoading || contactsLoading;
 
   const createMutation = useMutation({
-    mutationFn: (data: AccountingCreateInvoiceRequest) => {
-      if (!auth) throw new Error('Not authenticated');
-      return invoicesApiCreate({
-        body: data,
-        headers: auth.headers as unknown as { Authorization: string },
-      });
-    },
+    mutationFn: (data: AccountingCreateInvoiceRequest) => invoicesApiCreate({ body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
       setIsCreating(false);
@@ -60,13 +42,7 @@ export function AccountingInvoiceManagementPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      if (!auth) throw new Error('Not authenticated');
-      return invoicesApiDelete({
-        path: { id },
-        headers: auth.headers as unknown as { Authorization: string },
-      });
-    },
+    mutationFn: (id: string) => invoicesApiDelete({ path: { id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
     },

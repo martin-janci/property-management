@@ -2223,8 +2223,8 @@ export type SharedSearchQueryTo = SharedDateTime;
 
 export type ContactsApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: {
@@ -2272,8 +2272,8 @@ export type ContactsApiListResponse = ContactsApiListResponses[keyof ContactsApi
 
 export type InvoicesApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: {
@@ -2321,8 +2321,8 @@ export type InvoicesApiListResponse = InvoicesApiListResponses[keyof InvoicesApi
 
 export type InvoicesApiCreateData = {
     body: AccountingCreateInvoiceRequest;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -2357,8 +2357,8 @@ export type InvoicesApiCreateResponse = InvoicesApiCreateResponses[keyof Invoice
 
 export type InvoicesApiDeleteData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -2395,8 +2395,8 @@ export type InvoicesApiDeleteResponse = InvoicesApiDeleteResponses[keyof Invoice
 
 export type InvoicesApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -2433,8 +2433,8 @@ export type InvoicesApiGetResponse = InvoicesApiGetResponses[keyof InvoicesApiGe
 
 export type InvoicesApiUpdateData = {
     body: AccountingUpdateInvoiceRequest;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -2475,8 +2475,8 @@ export type InvoicesApiUpdateResponse = InvoicesApiUpdateResponses[keyof Invoice
 
 export type InvoicesApiListItemsData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -2513,9 +2513,9 @@ export type InvoicesApiListItemsResponse = InvoicesApiListItemsResponses[keyof I
 
 export type AnnouncementsApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -2573,9 +2573,9 @@ export type AnnouncementsApiCreateData = {
         commentsEnabled?: boolean;
         acknowledgmentRequired?: boolean;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -2596,9 +2596,9 @@ export type AnnouncementsApiCreateResponse = AnnouncementsApiCreateResponses[key
 
 export type AnnouncementsApiListPublishedData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -2642,9 +2642,9 @@ export type AnnouncementsApiListPublishedResponse = AnnouncementsApiListPublishe
 
 export type AnnouncementsApiGetStatisticsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -2662,9 +2662,9 @@ export type AnnouncementsApiGetStatisticsResponse = AnnouncementsApiGetStatistic
 
 export type AnnouncementsApiGetUnreadCountData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -2684,9 +2684,9 @@ export type AnnouncementsApiGetUnreadCountResponse = AnnouncementsApiGetUnreadCo
 
 export type AnnouncementsApiDeleteData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2706,9 +2706,9 @@ export type AnnouncementsApiDeleteResponse = AnnouncementsApiDeleteResponses[key
 
 export type AnnouncementsApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2748,9 +2748,9 @@ export type AnnouncementsApiUpdateData = {
         commentsEnabled?: boolean;
         acknowledgmentRequired?: boolean;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2773,9 +2773,9 @@ export type AnnouncementsApiUpdateResponse = AnnouncementsApiUpdateResponses[key
 
 export type AnnouncementsApiAcknowledgeData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2793,9 +2793,9 @@ export type AnnouncementsApiAcknowledgeResponses = {
 
 export type AnnouncementsApiArchiveData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2818,9 +2818,9 @@ export type AnnouncementsApiArchiveResponse = AnnouncementsApiArchiveResponses[k
 
 export type AnnouncementsApiListAttachmentsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2845,9 +2845,9 @@ export type AnnouncementsApiAddAttachmentData = {
         fileType: string;
         fileSize: number;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2867,9 +2867,9 @@ export type AnnouncementsApiAddAttachmentResponse = AnnouncementsApiAddAttachmen
 
 export type AnnouncementsApiDeleteAttachmentData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2892,9 +2892,9 @@ export type AnnouncementsApiPinData = {
     body: {
         pinned: boolean;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2917,9 +2917,9 @@ export type AnnouncementsApiPinResponse = AnnouncementsApiPinResponses[keyof Ann
 
 export type AnnouncementsApiPublishData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2942,9 +2942,9 @@ export type AnnouncementsApiPublishResponse = AnnouncementsApiPublishResponses[k
 
 export type AnnouncementsApiMarkReadData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -2964,9 +2964,9 @@ export type AnnouncementsApiScheduleData = {
     body: {
         scheduledAt: SharedDateTime;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3014,8 +3014,8 @@ export type AuthApiLoginResponse = AuthApiLoginResponses[keyof AuthApiLoginRespo
 
 export type AuthApiLogoutData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3033,8 +3033,8 @@ export type AuthApiLogoutResponse = AuthApiLogoutResponses[keyof AuthApiLogoutRe
 
 export type AuthApiGetMeData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3065,8 +3065,8 @@ export type AuthApiUpdateMeData = {
         phone?: SharedPhoneNumber;
         avatarUrl?: string;
     };
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3099,8 +3099,8 @@ export type AuthApiDisable2FaData = {
     body: {
         code: string;
     };
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3133,8 +3133,8 @@ export type AuthApiEnable2FaData = {
     body: {
         code: string;
     };
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3165,8 +3165,8 @@ export type AuthApiEnable2FaResponse = AuthApiEnable2FaResponses[keyof AuthApiEn
 
 export type AuthApiSetup2FaData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3193,8 +3193,8 @@ export type AuthApiSetup2FaResponse = AuthApiSetup2FaResponses[keyof AuthApiSetu
 
 export type AuthApiChangePasswordData = {
     body: AuthPasswordChangeRequest;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3296,9 +3296,9 @@ export type AuthApiRegisterResponse = AuthApiRegisterResponses[keyof AuthApiRegi
 
 export type BuildingsApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -3357,9 +3357,9 @@ export type BuildingsApiListResponse = BuildingsApiListResponses[keyof Buildings
 
 export type BuildingsApiCreateData = {
     body: BuildingsCreateBuildingRequest;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -3394,9 +3394,9 @@ export type BuildingsApiCreateResponse = BuildingsApiCreateResponses[keyof Build
 
 export type BuildingsApiDeleteData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3433,9 +3433,9 @@ export type BuildingsApiDeleteResponse = BuildingsApiDeleteResponses[keyof Build
 
 export type BuildingsApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3484,9 +3484,9 @@ export type BuildingsApiUpdateData = {
         managerId?: SharedUuid;
         technicalManagerId?: SharedUuid;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3527,9 +3527,9 @@ export type BuildingsApiUpdateResponse = BuildingsApiUpdateResponses[keyof Build
 
 export type BuildingsApiListCommonAreasData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3572,9 +3572,9 @@ export type BuildingsApiCreateCommonAreaData = {
         areaM2?: number;
         floorId?: SharedUuid;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3615,9 +3615,9 @@ export type BuildingsApiCreateCommonAreaResponse = BuildingsApiCreateCommonAreaR
 
 export type BuildingsApiListDocumentsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3692,9 +3692,9 @@ export type BuildingsApiUploadDocumentData = {
         fileName: string;
         mimeType: string;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3735,9 +3735,9 @@ export type BuildingsApiUploadDocumentResponse = BuildingsApiUploadDocumentRespo
 
 export type BuildingsApiListFloorsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3777,9 +3777,9 @@ export type BuildingsApiCreateFloorData = {
         number: number;
         name?: string;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -3820,9 +3820,9 @@ export type BuildingsApiCreateFloorResponse = BuildingsApiCreateFloorResponses[k
 
 export type ComplianceApiGetAuditLogsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -3871,8 +3871,8 @@ export type ComplianceApiGetAuditLogsResponse = ComplianceApiGetAuditLogsRespons
 
 export type ComplianceApiGetConsentsData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3893,8 +3893,8 @@ export type ComplianceApiUpdateConsentData = {
         consentType: ComplianceConsentType;
         granted: boolean;
     };
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3915,8 +3915,8 @@ export type ComplianceApiRequestDeletionData = {
         reason?: string;
         retainedDataCategories?: Array<ComplianceDataCategory>;
     };
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -3934,8 +3934,8 @@ export type ComplianceApiRequestDeletionResponse = ComplianceApiRequestDeletionR
 
 export type ComplianceApiGetDeletionStatusData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -3964,8 +3964,8 @@ export type ComplianceApiGetDeletionStatusResponse = ComplianceApiGetDeletionSta
 
 export type ComplianceApiCancelDeletionData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -3997,8 +3997,8 @@ export type ComplianceApiRequestExportData = {
         format?: ComplianceExportFormat;
         includeCategories?: Array<ComplianceDataCategory>;
     };
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -4016,8 +4016,8 @@ export type ComplianceApiRequestExportResponse = ComplianceApiRequestExportRespo
 
 export type ComplianceApiGetExportStatusData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -4046,8 +4046,8 @@ export type ComplianceApiGetExportStatusResponse = ComplianceApiGetExportStatusR
 
 export type ComplianceApiDownloadExportData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -4076,9 +4076,9 @@ export type ComplianceApiDownloadExportResponse = ComplianceApiDownloadExportRes
 
 export type DocumentsApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -4153,9 +4153,9 @@ export type DocumentsApiUploadData = {
         fileName: string;
         mimeType: string;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -4173,9 +4173,9 @@ export type DocumentsApiUploadResponse = DocumentsApiUploadResponses[keyof Docum
 
 export type DocumentsApiListFoldersData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -4200,9 +4200,9 @@ export type DocumentsApiCreateFolderData = {
         parentId?: SharedUuid;
         visibility: DocumentsDocumentVisibility;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -4220,9 +4220,9 @@ export type DocumentsApiCreateFolderResponse = DocumentsApiCreateFolderResponses
 
 export type DocumentsApiDeleteData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4242,9 +4242,9 @@ export type DocumentsApiDeleteResponse = DocumentsApiDeleteResponses[keyof Docum
 
 export type DocumentsApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4279,9 +4279,9 @@ export type DocumentsApiUpdateData = {
         visibility?: DocumentsDocumentVisibility;
         tags?: Array<string>;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4301,9 +4301,9 @@ export type DocumentsApiUpdateResponse = DocumentsApiUpdateResponses[keyof Docum
 
 export type DocumentsApiDownloadData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4323,9 +4323,9 @@ export type DocumentsApiDownloadResponse = DocumentsApiDownloadResponses[keyof D
 
 export type DocumentsApiListVersionsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4350,9 +4350,9 @@ export type DocumentsApiUploadVersionData = {
         mimeType: string;
         sizeBytes: number;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4372,9 +4372,9 @@ export type DocumentsApiUploadVersionResponse = DocumentsApiUploadVersionRespons
 
 export type FaultsApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -4430,9 +4430,9 @@ export type FaultsApiCreateData = {
         category: FaultsFaultCategory;
         priority?: FaultsFaultPriority;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -4450,9 +4450,9 @@ export type FaultsApiCreateResponse = FaultsApiCreateResponses[keyof FaultsApiCr
 
 export type FaultsApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4490,9 +4490,9 @@ export type FaultsApiUpdateData = {
         estimatedCost?: SharedMoney;
         scheduledDate?: SharedDateTime;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4512,9 +4512,9 @@ export type FaultsApiUpdateResponse = FaultsApiUpdateResponses[keyof FaultsApiUp
 
 export type FaultsApiListCommentsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4537,9 +4537,9 @@ export type FaultsApiAddCommentData = {
         content: string;
         isInternal?: boolean;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4563,9 +4563,9 @@ export type FaultsApiUploadPhotoData = {
         fileName: string;
         mimeType: string;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4588,9 +4588,9 @@ export type FaultsApiResolveData = {
         resolution: string;
         actualCost?: SharedMoney;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4610,9 +4610,9 @@ export type FaultsApiResolveResponse = FaultsApiResolveResponses[keyof FaultsApi
 
 export type ListingsApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -4668,9 +4668,9 @@ export type ListingsApiCreateData = {
         priceType: ListingsPriceType;
         features: ListingsListingFeatures;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -4692,9 +4692,9 @@ export type ListingsApiUpdateInquiryData = {
         scheduledViewingAt?: SharedDateTime;
         notes?: string;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4714,9 +4714,9 @@ export type ListingsApiUpdateInquiryResponse = ListingsApiUpdateInquiryResponses
 
 export type ListingsApiListPortalsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -4739,9 +4739,9 @@ export type ListingsApiConfigurePortalData = {
         apiKey: string;
         autoPublish?: boolean;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -4759,9 +4759,9 @@ export type ListingsApiConfigurePortalResponse = ListingsApiConfigurePortalRespo
 
 export type ListingsApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4795,9 +4795,9 @@ export type ListingsApiUpdateData = {
         price?: SharedMoney;
         features?: ListingsListingFeatures;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4817,9 +4817,9 @@ export type ListingsApiUpdateResponse = ListingsApiUpdateResponses[keyof Listing
 
 export type ListingsApiListInquiriesData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4871,9 +4871,9 @@ export type ListingsApiCreateInquiryData = {
         message: string;
         source?: ListingsInquirySource;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4897,9 +4897,9 @@ export type ListingsApiUploadPhotoData = {
         fileName: string;
         mimeType: string;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4919,9 +4919,9 @@ export type ListingsApiUploadPhotoResponse = ListingsApiUploadPhotoResponses[key
 
 export type ListingsApiPublishData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4943,9 +4943,9 @@ export type ListingsApiPublishToPortalData = {
     body: {
         portalId: SharedUuid;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4965,9 +4965,9 @@ export type ListingsApiPublishToPortalResponse = ListingsApiPublishToPortalRespo
 
 export type ListingsApiUnpublishData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -4987,8 +4987,8 @@ export type ListingsApiUnpublishResponse = ListingsApiUnpublishResponses[keyof L
 
 export type OrganizationsApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: {
@@ -5046,8 +5046,8 @@ export type OrganizationsApiListResponse = OrganizationsApiListResponses[keyof O
 
 export type OrganizationsApiCreateData = {
     body: OrganizationsCreateOrganizationRequest;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path?: never;
     query?: never;
@@ -5078,8 +5078,8 @@ export type OrganizationsApiCreateResponse = OrganizationsApiCreateResponses[key
 
 export type OrganizationsApiSwitchTenantData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5119,8 +5119,8 @@ export type OrganizationsApiSwitchTenantResponse = OrganizationsApiSwitchTenantR
 
 export type OrganizationsApiDeleteData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5157,8 +5157,8 @@ export type OrganizationsApiDeleteResponse = OrganizationsApiDeleteResponses[key
 
 export type OrganizationsApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5200,8 +5200,8 @@ export type OrganizationsApiUpdateData = {
         phone?: SharedPhoneNumber;
         website?: string;
     };
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5242,8 +5242,8 @@ export type OrganizationsApiUpdateResponse = OrganizationsApiUpdateResponses[key
 
 export type OrganizationsApiUpdateBrandingData = {
     body: OrganizationsOrganizationBranding;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5280,8 +5280,8 @@ export type OrganizationsApiUpdateBrandingResponse = OrganizationsApiUpdateBrand
 
 export type OrganizationsApiListMembersData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5344,8 +5344,8 @@ export type OrganizationsApiListMembersResponse = OrganizationsApiListMembersRes
 
 export type OrganizationsApiInviteMemberData = {
     body: OrganizationsInviteMemberRequest;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5386,8 +5386,8 @@ export type OrganizationsApiInviteMemberResponse = OrganizationsApiInviteMemberR
 
 export type OrganizationsApiRemoveMemberData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5428,8 +5428,8 @@ export type OrganizationsApiUpdateMemberData = {
         role?: SharedTenantRole;
         assignedBuildingIds?: Array<SharedUuid>;
     };
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5467,8 +5467,8 @@ export type OrganizationsApiUpdateMemberResponse = OrganizationsApiUpdateMemberR
 
 export type OrganizationsApiGetStatsData = {
     body?: never;
-    headers: {
-        Authorization: string;
+    headers?: {
+        Authorization?: string;
     };
     path: {
         id: SharedUuid;
@@ -5511,9 +5511,9 @@ export type OrganizationsApiGetStatsResponse = OrganizationsApiGetStatsResponses
 
 export type RentalsApiListConnectionsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -5538,9 +5538,9 @@ export type RentalsApiCreateConnectionData = {
         externalListingId?: string;
         apiKey?: string;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -5558,9 +5558,9 @@ export type RentalsApiCreateConnectionResponse = RentalsApiCreateConnectionRespo
 
 export type RentalsApiListGuestsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -5617,9 +5617,9 @@ export type RentalsApiRegisterGuestData = {
         arrivalDate: SharedDate;
         departureDate: SharedDate;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -5637,9 +5637,9 @@ export type RentalsApiRegisterGuestResponse = RentalsApiRegisterGuestResponses[k
 
 export type RentalsApiSubmitToAuthoritiesData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -5659,9 +5659,9 @@ export type RentalsApiSubmitToAuthoritiesResponse = RentalsApiSubmitToAuthoritie
 
 export type RentalsApiListReservationsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -5719,9 +5719,9 @@ export type RentalsApiCreateReservationData = {
         checkOut: SharedDateTime;
         totalPrice: SharedMoney;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -5739,9 +5739,9 @@ export type RentalsApiCreateReservationResponse = RentalsApiCreateReservationRes
 
 export type RentalsApiGetReservationData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -5770,9 +5770,9 @@ export type RentalsApiGetReservationResponse = RentalsApiGetReservationResponses
 
 export type RentalsApiCheckInData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -5792,9 +5792,9 @@ export type RentalsApiCheckInResponse = RentalsApiCheckInResponses[keyof Rentals
 
 export type RentalsApiCheckOutData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -5814,9 +5814,9 @@ export type RentalsApiCheckOutResponse = RentalsApiCheckOutResponses[keyof Renta
 
 export type RentalsApiGenerateAccessCodeData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -5839,9 +5839,9 @@ export type RentalsApiGenerateAccessCodeResponse = RentalsApiGenerateAccessCodeR
 
 export type RentalsApiSyncPlatformsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -5864,9 +5864,9 @@ export type RentalsApiSyncPlatformsResponse = RentalsApiSyncPlatformsResponses[k
 
 export type UnitsApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -5920,9 +5920,9 @@ export type UnitsApiCreateData = {
         roomCount?: number;
         bathroomCount?: number;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -5940,9 +5940,9 @@ export type UnitsApiCreateResponse = UnitsApiCreateResponses[keyof UnitsApiCreat
 
 export type UnitsApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -5975,9 +5975,9 @@ export type UnitsApiUpdateData = {
         areaM2?: number;
         status?: UnitsUnitStatus;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -5997,9 +5997,9 @@ export type UnitsApiUpdateResponse = UnitsApiUpdateResponses[keyof UnitsApiUpdat
 
 export type UnitsApiListOwnersData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6024,9 +6024,9 @@ export type UnitsApiAddOwnerData = {
         email?: SharedEmail;
         ownershipPercentage: number;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6046,9 +6046,9 @@ export type UnitsApiAddOwnerResponse = UnitsApiAddOwnerResponses[keyof UnitsApiA
 
 export type UnitsApiListResidentsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6073,9 +6073,9 @@ export type UnitsApiAddResidentData = {
         type: UnitsResidentType;
         moveInDate?: SharedDate;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6095,9 +6095,9 @@ export type UnitsApiAddResidentResponse = UnitsApiAddResidentResponses[keyof Uni
 
 export type VotingApiListData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: {
@@ -6157,9 +6157,9 @@ export type VotingApiCreateData = {
         allowDelegation?: boolean;
         isAnonymous?: boolean;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path?: never;
     query?: never;
@@ -6177,9 +6177,9 @@ export type VotingApiCreateResponse = VotingApiCreateResponses[keyof VotingApiCr
 
 export type VotingApiGetData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6213,9 +6213,9 @@ export type VotingApiUpdateData = {
         startDate?: SharedDateTime;
         endDate?: SharedDateTime;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6237,9 +6237,9 @@ export type VotingApiCancelData = {
     body: {
         reason: string;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6261,9 +6261,9 @@ export type VotingApiCastVoteData = {
     body: {
         selectedOptionIds: Array<SharedUuid>;
     };
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6283,9 +6283,9 @@ export type VotingApiCastVoteResponse = VotingApiCastVoteResponses[keyof VotingA
 
 export type VotingApiGetMyBallotData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6314,9 +6314,9 @@ export type VotingApiGetMyBallotResponse = VotingApiGetMyBallotResponses[keyof V
 
 export type VotingApiPublishData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
@@ -6336,9 +6336,9 @@ export type VotingApiPublishResponse = VotingApiPublishResponses[keyof VotingApi
 
 export type VotingApiGetResultsData = {
     body?: never;
-    headers: {
-        Authorization: string;
-        'X-Tenant-ID': SharedUuid;
+    headers?: {
+        Authorization?: string;
+        'X-Tenant-ID'?: SharedUuid;
     };
     path: {
         id: SharedUuid;
