@@ -283,15 +283,15 @@ mod pdf_report {
     async fn test_get_report_pdf_returns_application_pdf_and_archives_document(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        
+
         let (token, org_id) = create_authenticated_user_with_org(&app, &user, "test-org").await;
-        
+
         let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
             .bind(&user.email)
             .fetch_one(&app.pool)
             .await
             .expect("resolve user id");
-            
+
         let building_id = seed_building(&app.pool, org_id, "vote-building").await;
         let vote_id = seed_vote(&app.pool, org_id, building_id, user_id).await;
 
@@ -305,7 +305,7 @@ mod pdf_report {
 
         let response = app.execute(request).await;
         assert_eq!(response.status, StatusCode::OK);
-        
+
         // Assert content type is application/pdf
         let content_type = response
             .headers
@@ -313,9 +313,12 @@ mod pdf_report {
             .and_then(|v| v.to_str().ok())
             .unwrap_or("");
         assert_eq!(content_type, "application/pdf");
-        
+
         // Assert body is not empty
-        assert!(!response.body.is_empty(), "PDF response body should not be empty");
+        assert!(
+            !response.body.is_empty(),
+            "PDF response body should not be empty"
+        );
 
         // Assert that a document was archived in the database
         let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM documents WHERE organization_id = $1 AND category = 'reports'::document_category")
@@ -323,22 +326,25 @@ mod pdf_report {
             .fetch_one(&app.pool)
             .await
             .expect("query documents count");
-        assert_eq!(count, 1, "There should be exactly one archived document for the vote report");
+        assert_eq!(
+            count, 1,
+            "There should be exactly one archived document for the vote report"
+        );
     }
 
     #[sqlx::test]
     async fn test_get_report_json_with_format_pdf_returns_application_pdf(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
-        
+
         let (token, org_id) = create_authenticated_user_with_org(&app, &user, "test-org-2").await;
-        
+
         let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
             .bind(&user.email)
             .fetch_one(&app.pool)
             .await
             .expect("resolve user id");
-            
+
         let building_id = seed_building(&app.pool, org_id, "vote-building-2").await;
         let vote_id = seed_vote(&app.pool, org_id, building_id, user_id).await;
 
@@ -353,7 +359,7 @@ mod pdf_report {
 
         let response = app.execute(request).await;
         assert_eq!(response.status, StatusCode::OK);
-        
+
         let content_type = response
             .headers
             .get(header::CONTENT_TYPE)
@@ -373,7 +379,7 @@ mod pdf_report {
 
         let response_accept = app.execute(request_accept).await;
         assert_eq!(response_accept.status, StatusCode::OK);
-        
+
         let content_type_accept = response_accept
             .headers
             .get(header::CONTENT_TYPE)

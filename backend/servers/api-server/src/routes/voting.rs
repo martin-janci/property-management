@@ -1463,10 +1463,13 @@ async fn get_report_pdf(
 ) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
     let pdf_bytes = generate_and_archive_pdf(&state, &mut rls, id).await?;
     rls.release().await;
-    
+
     let headers = [
         (axum::http::header::CONTENT_TYPE, "application/pdf"),
-        (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"report.pdf\""),
+        (
+            axum::http::header::CONTENT_DISPOSITION,
+            "attachment; filename=\"report.pdf\"",
+        ),
     ];
     Ok((StatusCode::OK, headers, pdf_bytes).into_response())
 }
@@ -1531,7 +1534,10 @@ async fn get_report_data(
         rls.release().await;
         let pdf_headers = [
             (axum::http::header::CONTENT_TYPE, "application/pdf"),
-            (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"report.pdf\""),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                "attachment; filename=\"report.pdf\"",
+            ),
         ];
         Ok((StatusCode::OK, pdf_headers, pdf_bytes).into_response())
     } else {
@@ -1618,7 +1624,10 @@ async fn generate_and_archive_pdf_internal(
         organization_id: org_id,
         folder_id: None,
         title: format!("Vote Report: {}", report.vote.title),
-        description: Some(format!("Auto-generated PDF report for vote: {}", report.vote.title)),
+        description: Some(format!(
+            "Auto-generated PDF report for vote: {}",
+            report.vote.title
+        )),
         category: "reports".to_string(), // db::models::document_category::REPORTS
         file_key: file_key.clone(),
         file_name,
@@ -1648,8 +1657,12 @@ async fn generate_and_archive_pdf_internal(
 }
 
 fn render_pdf_report(report: &VoteReportData) -> Result<Vec<u8>, String> {
-    let font_family = genpdf::fonts::from_files("/usr/share/fonts/truetype/liberation", "LiberationSans", None)
-        .map_err(|e| format!("Failed to load font LiberationSans: {}", e))?;
+    let font_family = genpdf::fonts::from_files(
+        "/usr/share/fonts/truetype/liberation",
+        "LiberationSans",
+        None,
+    )
+    .map_err(|e| format!("Failed to load font LiberationSans: {}", e))?;
 
     let mut doc = genpdf::Document::new(font_family);
     doc.set_title(format!("Vote Report: {}", report.vote.title));
@@ -1669,46 +1682,61 @@ fn render_pdf_report(report: &VoteReportData) -> Result<Vec<u8>, String> {
 
     // Metadata
     let mut metadata_layout = genpdf::elements::LinearLayout::vertical();
-    
-    let generated_at_str = report.generated_at.format("%Y-%m-%d %H:%M:%S UTC").to_string();
-    
+
+    let generated_at_str = report
+        .generated_at
+        .format("%Y-%m-%d %H:%M:%S UTC")
+        .to_string();
+
     metadata_layout.push(
         genpdf::elements::Paragraph::default()
             .string("Vote ID: ")
-            .styled_string(report.vote.id.to_string(), genpdf::style::Style::new().bold())
+            .styled_string(
+                report.vote.id.to_string(),
+                genpdf::style::Style::new().bold(),
+            ),
     );
     metadata_layout.push(
         genpdf::elements::Paragraph::default()
             .string("Building ID: ")
-            .styled_string(report.vote.building_id.to_string(), genpdf::style::Style::new().bold())
+            .styled_string(
+                report.vote.building_id.to_string(),
+                genpdf::style::Style::new().bold(),
+            ),
     );
     metadata_layout.push(
         genpdf::elements::Paragraph::default()
             .string("Quorum Type: ")
-            .styled_string(report.vote.quorum_type.clone(), genpdf::style::Style::new().bold())
+            .styled_string(
+                report.vote.quorum_type.clone(),
+                genpdf::style::Style::new().bold(),
+            ),
     );
     if let Some(qp) = report.vote.quorum_percentage {
         metadata_layout.push(
             genpdf::elements::Paragraph::default()
                 .string("Quorum Percentage: ")
-                .styled_string(format!("{}%", qp), genpdf::style::Style::new().bold())
+                .styled_string(format!("{}%", qp), genpdf::style::Style::new().bold()),
         );
     }
-    
+
     // Status
     metadata_layout.push(
         genpdf::elements::Paragraph::default()
             .string("Status: ")
-            .styled_string(report.vote.status.clone(), genpdf::style::Style::new().bold())
+            .styled_string(
+                report.vote.status.clone(),
+                genpdf::style::Style::new().bold(),
+            ),
     );
-    
+
     // Generated At Timestamp
     metadata_layout.push(
         genpdf::elements::Paragraph::default()
             .string("Report Generated At: ")
-            .styled_string(generated_at_str, genpdf::style::Style::new().bold())
+            .styled_string(generated_at_str, genpdf::style::Style::new().bold()),
     );
-    
+
     doc.push(metadata_layout);
     doc.push(genpdf::elements::Break::new(2));
 
@@ -1727,67 +1755,99 @@ fn render_pdf_report(report: &VoteReportData) -> Result<Vec<u8>, String> {
         genpdf::elements::Paragraph::new("Voting Results Summary")
             .styled(genpdf::style::Style::new().bold().with_font_size(14)),
     );
-    
+
     if let Some(results) = &report.results {
         let quorum_met_str = if results.quorum_met { "YES" } else { "NO" };
         let part_rate = format!("{:.2}%", results.participation_rate * 100.0);
-        
+
         let mut results_summary = genpdf::elements::LinearLayout::vertical();
         results_summary.push(
             genpdf::elements::Paragraph::default()
                 .string("Quorum Met: ")
-                .styled_string(quorum_met_str, genpdf::style::Style::new().bold())
+                .styled_string(quorum_met_str, genpdf::style::Style::new().bold()),
         );
         results_summary.push(
             genpdf::elements::Paragraph::default()
                 .string("Participation: ")
                 .styled_string(
-                    format!("{} of {} units (Rate: {})", results.participation_count, results.eligible_count, part_rate),
-                    genpdf::style::Style::new().bold()
-                )
+                    format!(
+                        "{} of {} units (Rate: {})",
+                        results.participation_count, results.eligible_count, part_rate
+                    ),
+                    genpdf::style::Style::new().bold(),
+                ),
         );
         doc.push(results_summary);
         doc.push(genpdf::elements::Break::new(1));
-        
+
         // Questions Results Detail
         for (idx, q_res) in results.questions.iter().enumerate() {
             doc.push(
-                genpdf::elements::Paragraph::new(format!("Question {}: {}", idx + 1, q_res.question_text))
-                    .styled(genpdf::style::Style::new().bold().with_font_size(12)),
+                genpdf::elements::Paragraph::new(format!(
+                    "Question {}: {}",
+                    idx + 1,
+                    q_res.question_text
+                ))
+                .styled(genpdf::style::Style::new().bold().with_font_size(12)),
             );
-            doc.push(genpdf::elements::Paragraph::new(format!("Type: {}  |  Total Ballots: {}  |  Weighted Total: {}", q_res.question_type, q_res.total_votes, q_res.weighted_total)));
-            
+            doc.push(genpdf::elements::Paragraph::new(format!(
+                "Type: {}  |  Total Ballots: {}  |  Weighted Total: {}",
+                q_res.question_type, q_res.total_votes, q_res.weighted_total
+            )));
+
             doc.push(genpdf::elements::Break::new(1));
-            
+
             // Results table
             // Table header: Option, Votes, Weighted Count, Percentage
             let mut table = genpdf::elements::TableLayout::new(vec![3, 1, 2, 2]);
             let decorator = genpdf::elements::FrameCellDecorator::new(true, true, false);
             table.set_cell_decorator(decorator);
-            
-            table.row()
-                .element(genpdf::elements::Paragraph::new("Option").styled(genpdf::style::Style::new().bold()))
-                .element(genpdf::elements::Paragraph::new("Count").styled(genpdf::style::Style::new().bold()))
-                .element(genpdf::elements::Paragraph::new("Weighted").styled(genpdf::style::Style::new().bold()))
-                .element(genpdf::elements::Paragraph::new("Percentage").styled(genpdf::style::Style::new().bold()))
+
+            table
+                .row()
+                .element(
+                    genpdf::elements::Paragraph::new("Option")
+                        .styled(genpdf::style::Style::new().bold()),
+                )
+                .element(
+                    genpdf::elements::Paragraph::new("Count")
+                        .styled(genpdf::style::Style::new().bold()),
+                )
+                .element(
+                    genpdf::elements::Paragraph::new("Weighted")
+                        .styled(genpdf::style::Style::new().bold()),
+                )
+                .element(
+                    genpdf::elements::Paragraph::new("Percentage")
+                        .styled(genpdf::style::Style::new().bold()),
+                )
                 .push()
                 .map_err(|e| format!("Failed to add table header: {}", e))?;
-            
+
             for opt in &q_res.results {
-                table.row()
+                table
+                    .row()
                     .element(genpdf::elements::Paragraph::new(&opt.option_text))
                     .element(genpdf::elements::Paragraph::new(opt.count.to_string()))
-                    .element(genpdf::elements::Paragraph::new(format!("{:.4}", opt.weighted_count)))
-                    .element(genpdf::elements::Paragraph::new(format!("{:.2}%", opt.percentage)))
+                    .element(genpdf::elements::Paragraph::new(format!(
+                        "{:.4}",
+                        opt.weighted_count
+                    )))
+                    .element(genpdf::elements::Paragraph::new(format!(
+                        "{:.2}%",
+                        opt.percentage
+                    )))
                     .push()
                     .map_err(|e| format!("Failed to add table row: {}", e))?;
             }
-            
+
             doc.push(table);
             doc.push(genpdf::elements::Break::new(2));
         }
     } else {
-        doc.push(genpdf::elements::Paragraph::new("No results calculated yet."));
+        doc.push(genpdf::elements::Paragraph::new(
+            "No results calculated yet.",
+        ));
         doc.push(genpdf::elements::Break::new(2));
     }
 
@@ -1797,33 +1857,50 @@ fn render_pdf_report(report: &VoteReportData) -> Result<Vec<u8>, String> {
             .styled(genpdf::style::Style::new().bold().with_font_size(14)),
     );
     doc.push(genpdf::elements::Break::new(1));
-    
+
     // Table header: Unit, Voted, Weight
     let mut part_table = genpdf::elements::TableLayout::new(vec![4, 2, 2]);
     let decorator = genpdf::elements::FrameCellDecorator::new(true, true, false);
     part_table.set_cell_decorator(decorator);
-    
-    part_table.row()
-        .element(genpdf::elements::Paragraph::new("Unit Designation").styled(genpdf::style::Style::new().bold()))
-        .element(genpdf::elements::Paragraph::new("Voted").styled(genpdf::style::Style::new().bold()))
-        .element(genpdf::elements::Paragraph::new("Vote Weight").styled(genpdf::style::Style::new().bold()))
+
+    part_table
+        .row()
+        .element(
+            genpdf::elements::Paragraph::new("Unit Designation")
+                .styled(genpdf::style::Style::new().bold()),
+        )
+        .element(
+            genpdf::elements::Paragraph::new("Voted").styled(genpdf::style::Style::new().bold()),
+        )
+        .element(
+            genpdf::elements::Paragraph::new("Vote Weight")
+                .styled(genpdf::style::Style::new().bold()),
+        )
         .push()
         .map_err(|e| format!("Failed to add participation header: {}", e))?;
-    
+
     for detail in &report.participation_details {
-        part_table.row()
+        part_table
+            .row()
             .element(genpdf::elements::Paragraph::new(&detail.unit_designation))
-            .element(genpdf::elements::Paragraph::new(if detail.voted { "Yes" } else { "No" }))
-            .element(genpdf::elements::Paragraph::new(detail.vote_weight.to_string()))
+            .element(genpdf::elements::Paragraph::new(if detail.voted {
+                "Yes"
+            } else {
+                "No"
+            }))
+            .element(genpdf::elements::Paragraph::new(
+                detail.vote_weight.to_string(),
+            ))
             .push()
             .map_err(|e| format!("Failed to add participation row: {}", e))?;
     }
-    
+
     doc.push(part_table);
 
     // Render to bytes
     let mut bytes = Vec::new();
-    doc.render(&mut bytes).map_err(|e| format!("Failed to render PDF: {}", e))?;
+    doc.render(&mut bytes)
+        .map_err(|e| format!("Failed to render PDF: {}", e))?;
 
     Ok(bytes)
 }
