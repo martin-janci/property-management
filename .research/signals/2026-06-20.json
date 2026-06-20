@@ -1,0 +1,152 @@
+{
+  "date": "2026-06-20",
+  "run_iso": "2026-06-20T04:13:20Z",
+  "lag_hours": 96,
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "last_run_iso=2026-06-16T03:25:00Z \u2192 96h (4d) since last run; threshold is 36h",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-20",
+      "type": "stale_routine_alert",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso=2026-06-16T03:25:00Z is 4d old (>=3d threshold); cloud routine may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch \u2014 check that separately. Note: issue #1607 ('Research dispatcher stalled') and #1604 ('Dispatcher backlog exhausted') were filed during the lag window.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "phase_1_5_skipped_reason": "lag-catchup budget \u2014 routine 4d stale; expert-review pass deferred to next normal-cadence run",
+  "phase_1_6_skipped_reason": "lag-catchup budget \u2014 PM rotation deferred to next normal-cadence run; pm_cursor and coverage_cursor unchanged",
+  "churn_analysis_skipped_reason": "lag-catchup: 50 merged PRs in window, per-PR file fetches would exceed budget; churn-hotspot/repeated-churn/risky-churn signals deferred",
+  "screen_map_drift_skipped_reason": "lag-catchup: per-PR file fetches required; deferred to next normal-cadence run",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist (no churn/drift/orphan/fixme signals derived this run)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff state vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen-signals dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8; decay applied",
+      "observed": "0 above cap; 9 decay actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a \u2014 no new plans",
+      "observed": "0 new plans",
+      "expected": "true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets/hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists failed phases; cursors stayed for skipped phases",
+      "observed": "Phase 1.5 + 1.6 skipped, review_cursor + pm_cursor + coverage_cursor preserved",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "n/a \u2014 no new plans this run",
+      "observed": "convergent",
+      "expected": "convergent"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "ls archive count vs HEAD",
+      "observed": "7 >= 7",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length and idempotency",
+      "observed": "0 actions (no candidates)",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 no-op",
+      "observed": "pm_cursor + coverage_cursor preserved",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
