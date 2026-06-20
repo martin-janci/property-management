@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-19T22:40:05Z",
+  "generated": "2026-06-20T00:14:53Z",
   "assignments": [
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -222,7 +222,7 @@
       "branch": "auto-impl/feat-build-configuration-by-environ-app-",
       "status": "review",
       "claimed_at": "2026-06-18T04:13:36Z",
-      "last_updated": "2026-06-19T02:09:39Z",
+      "last_updated": "2026-06-20T00:13:24Z",
       "status_changed_at": "2026-06-18T05:08:02Z",
       "pr_number": 1554,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1554",
@@ -364,22 +364,22 @@
       "branch": "auto-impl/feat-airbnb-integration-list-api-routes-",
       "status": "review",
       "claimed_at": "2026-06-19T22:08:12Z",
-      "last_updated": "2026-06-19T22:40:05Z",
+      "last_updated": "2026-06-20T00:13:24Z",
       "status_changed_at": "2026-06-19T22:40:05Z",
       "pr_number": 1615,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1615",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=1615 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=premise partly stale (status/listings/reservations already exist); added DB-backed GET /airbnb/connections + RentalRepository::list_airbnb_connections w/ IDOR/tenant scoping + 3 unit tests; check/clippy green",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=clean-rls-scoped-list-route-tokenfree-tests-pass-ci-green-posted-as-comment-author-self-approve-blocked",
+      "last_reviewed_oid": "38d5ab3b183e01022fcfee7ea6c81b7bd4af7062",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-06-20T00:13:24Z"
     },
     {
       "task_id": "feat-notification-preference-sync-mobile-push-fcm-apns-backend",
