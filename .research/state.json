@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_run_iso": "2026-06-20T04:30:00Z",
+  "last_run_ms": 5000,
+  "last_pr_seen": 1615,
+  "last_issue_seen": 1614,
+  "last_commit_sha": "42c40e1",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -553,7 +553,29 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-20",
+    "stale-routine-alert-2026-06-20",
+    "code-review-followup-issue-1584",
+    "code-review-followup-issue-1522",
+    "code-review-followup-issue-1614",
+    "code-review-followup-issue-1538",
+    "untriaged-issue-1604",
+    "untriaged-issue-1607",
+    "closed-not-merged-pr-1273",
+    "closed-not-merged-pr-1500",
+    "closed-not-merged-pr-1503",
+    "closed-not-merged-pr-1504",
+    "closed-not-merged-pr-1505",
+    "closed-not-merged-pr-1506",
+    "closed-not-merged-pr-1511",
+    "dep-update-noise-pr-1566",
+    "dep-update-noise-pr-1570",
+    "dep-update-noise-pr-1571",
+    "dep-update-noise-pr-1572",
+    "dep-update-noise-pr-1573",
+    "dep-update-noise-pr-1575",
+    "dep-update-noise-pr-1576"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,9 +589,9 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
-    "plans_created": 12,
+    "runs": 41,
+    "vectors_created": 186,
+    "plans_created": 14,
     "quiet_days": 1,
     "auto_fix_count": 0
   },

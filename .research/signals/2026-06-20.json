@@ -1,0 +1,326 @@
+{
+  "date": "2026-06-20",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "routine has not run in 3d 22h (94h) — last_run_iso=2026-06-16T03:25:00Z",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-20",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "stale_routine_alert: state.json last_run_iso is 3d old; cloud routine may be paused. Dispatcher is still running (last dispatcher commit 2026-06-20 00:14 #42c40e1)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "code-review-followup-issue-1584",
+      "type": "code-review-finding",
+      "source": "Issue #1584 (PR #1561 post-merge review)",
+      "score_delta": 3,
+      "evidence": "PortalPrincipal in reality-server discards reality_agency_members membership check, only works because feed_subscriptions.agency_id stores a user id; legitimate second member of agency cannot see feeds. Two import surfaces have divergent authz. Severity: medium-high. Files: backend/servers/reality-server/src/routes/imports.rs, agency_imports.rs, backend/crates/db/src/repositories/reality_portal.rs, backend/crates/api-core/src/extractors/principal.rs",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-followup-issue-1522",
+      "type": "code-review-finding",
+      "source": "Issue #1522 (PR #1454 post-merge review)",
+      "score_delta": 2,
+      "evidence": "Accounting @hey-api migration bypasses the shared axios interceptor in lib/api.ts. Accounting added bespoke useAccountingAuth hook hand-assembling Authorization + X-Tenant-ID, threaded via `as unknown as` casts at 4 call sites. No 401-refresh on the accounting surface. Severity: medium. Files: frontend/apps/ppt-web/src/main.tsx, lib/api.ts, features/accounting/hooks/useAccountingAuth.ts, features/accounting/AccountingInvoiceManagementPage.tsx",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-followup-issue-1614",
+      "type": "code-review-finding",
+      "source": "Issue #1614 (PR #1560 post-merge review)",
+      "score_delta": 2,
+      "evidence": "BookingClient::push_availability_and_rates + PushOutcome (PR #1560 AC-5) shipped without any route/job wiring — combined entry point is dead code, live flow still pushes two streams independently. Severity: medium. Files: backend/crates/integrations/src/booking.rs, backend/servers/api-server/src/routes/integrations/install.rs, backend/servers/api-server/src/routes/integrations/booking_channel.rs",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-followup-issue-1538",
+      "type": "code-review-finding",
+      "source": "Issue #1538 (CI process)",
+      "score_delta": 1,
+      "evidence": "Backend `test` job is NOT a required status check on `dev` — branch protection only requires `check`. PRs whose `test` is red or pending can squash-merge. #1492 + #1456 each merged with their own `test` red. Multi-round cascade (~6 fix PRs). Severity: medium (process).",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "untriaged-issue-1604",
+      "type": "untriaged-issue",
+      "source": "Issue #1604 (label: needs-human-review)",
+      "score_delta": 1,
+      "evidence": "Dispatcher backlog exhausted — coverage.json (2026-06-16) stale, producing only already-shipped no-op tasks",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "untriaged-issue-1607",
+      "type": "untriaged-issue",
+      "source": "Issue #1607 (label: research-routine)",
+      "score_delta": 1,
+      "evidence": "Research dispatcher stalled: stale coverage.json + 14 quarantined rows need cleanup",
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "closed-not-merged-pr-1273",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1273 closed unmerged 2026-06-17",
+      "score_delta": 1,
+      "evidence": "dependabot dtolnay/rust-toolchain group — closed unmerged",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-1500",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1500 closed unmerged 2026-06-17",
+      "score_delta": 1,
+      "evidence": "fix(api-server) org-scope IDOR add_evidence/add_comment — closed unmerged (superseded by post-merge follow-up #1339/#1342)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1503",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1503 closed unmerged 2026-06-17",
+      "score_delta": 1,
+      "evidence": "fix(tests) missing role arg seed_membership — closed unmerged (subsumed by canonical helper #1373)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1504",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1504 closed unmerged 2026-06-17",
+      "score_delta": 1,
+      "evidence": "fix(db) duplicate migration 00181 rename — closed unmerged (likely merged via another path or abandoned)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1505",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1505 closed unmerged 2026-06-17",
+      "score_delta": 1,
+      "evidence": "fix(db) cast rental enum columns PAP-158 — closed unmerged (superseded by #1486/#1492 cast fixes)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1506",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1506 closed unmerged 2026-06-17",
+      "score_delta": 1,
+      "evidence": "fix(api-server) pass role to seed_membership booking-oauth — closed unmerged (subsumed)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1511 closed unmerged 2026-06-17",
+      "score_delta": 1,
+      "evidence": "fix(api-server) accounting clippy lints — closed unmerged (superseded by merged #1512)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566 (dependabot, merged)",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] PR #1566 merged on dev — logged, not scored",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570 (dependabot, merged)",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] PR #1570 merged on dev — logged, not scored",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571 (dependabot, merged)",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] PR #1571 merged on dev — logged, not scored",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572 (dependabot, merged)",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] PR #1572 merged on dev — logged, not scored",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573 (dependabot, merged)",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] PR #1573 merged on dev — logged, not scored",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575 (dependabot, merged)",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] PR #1575 merged on dev — logged, not scored",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576 (dependabot, merged)",
+      "score_delta": 0,
+      "evidence": "dependabot[bot] PR #1576 merged on dev — logged, not scored",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — Phase 5 selection: no allowlisted high-confidence + score>=3 + idempotent signal this run (security findings promoted to plans, not auto-fix; no screen-map-drift, no orphan, no fixme-in-merged-code, no lockfile-drift dep-update, no stalled-review)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == # <today>",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile vs HEAD state",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "id uniqueness",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-scored non-cumulative signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score<=8 + decay applied",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "brief annotations for new plans",
+      "observed": "2/2 OK",
+      "expected": "all OK"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 plans, 15 sections, paths exist, mode declared",
+      "observed": "2 plans, all sections, all paths exist, cloud-ok",
+      "expected": "all PASS"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret patterns in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed honesty",
+      "observed": "no failed phases (P1.5/P1.6 deferred but disclosed)",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "no missing",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap + idempotency",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts (skip when Phase 1.6 didn't advance)",
+      "observed": "pm_cursor unchanged — no-op",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token literal",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
