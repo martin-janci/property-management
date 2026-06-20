@@ -228,7 +228,7 @@ interface ContactsApi {
   @doc("List contacts for current tenant")
   @get
   list(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     ...PaginationQuery
   ): Contact[] | UnauthorizedError | ForbiddenError;
 }
@@ -239,14 +239,14 @@ interface InvoicesApi {
   @doc("List invoices for current tenant")
   @get
   list(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     ...PaginationQuery
   ): Invoice[] | UnauthorizedError | ForbiddenError;
 
   @doc("Create new invoice")
   @post
   create(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: CreateInvoiceRequest
   ): {
     @statusCode statusCode: 201;
@@ -257,7 +257,7 @@ interface InvoicesApi {
   @get
   @route("/{id}")
   get(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): Invoice | UnauthorizedError | ForbiddenError | NotFoundError;
 
@@ -265,7 +265,7 @@ interface InvoicesApi {
   @patch
   @route("/{id}")
   update(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid,
     @body body: UpdateInvoiceRequest
   ): Invoice | UnauthorizedError | ForbiddenError | NotFoundError | BadRequestError;
@@ -274,7 +274,7 @@ interface InvoicesApi {
   @delete
   @route("/{id}")
   delete(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): {
     @statusCode statusCode: 204;
@@ -284,7 +284,7 @@ interface InvoicesApi {
   @get
   @route("/{id}/items")
   listItems(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): InvoiceItem[] | UnauthorizedError | ForbiddenError | NotFoundError;
 }

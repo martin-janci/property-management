@@ -206,8 +206,8 @@ interface BuildingsApi {
   @doc("List buildings")
   @get
   list(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query status?: BuildingStatus,
     @query type?: BuildingType
@@ -216,8 +216,8 @@ interface BuildingsApi {
   @doc("Create new building")
   @post
   create(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: CreateBuildingRequest
   ): {
     @statusCode statusCode: 201;
@@ -228,8 +228,8 @@ interface BuildingsApi {
   @get
   @route("/{id}")
   get(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Building | UnauthorizedError | ForbiddenError | NotFoundError;
 
@@ -237,8 +237,8 @@ interface BuildingsApi {
   @patch
   @route("/{id}")
   update(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: {
       name?: string;
@@ -259,8 +259,8 @@ interface BuildingsApi {
   @delete
   @route("/{id}")
   delete(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): {
     @statusCode statusCode: 204;
@@ -270,8 +270,8 @@ interface BuildingsApi {
   @get
   @route("/{id}/floors")
   listFloors(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Floor[] | UnauthorizedError | ForbiddenError | NotFoundError;
 
@@ -279,8 +279,8 @@ interface BuildingsApi {
   @post
   @route("/{id}/floors")
   createFloor(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: {
       number: int32;
@@ -295,8 +295,8 @@ interface BuildingsApi {
   @get
   @route("/{id}/common-areas")
   listCommonAreas(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): CommonArea[] | UnauthorizedError | ForbiddenError | NotFoundError;
 
@@ -304,8 +304,8 @@ interface BuildingsApi {
   @post
   @route("/{id}/common-areas")
   createCommonArea(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: {
       name: string;
@@ -323,8 +323,8 @@ interface BuildingsApi {
   @get
   @route("/{id}/documents")
   listDocuments(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     ...PaginationQuery,
     @query category?: DocumentCategory
@@ -334,8 +334,8 @@ interface BuildingsApi {
   @post
   @route("/{id}/documents")
   uploadDocument(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: {
       title: string;

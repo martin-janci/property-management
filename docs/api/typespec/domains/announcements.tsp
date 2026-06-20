@@ -100,8 +100,8 @@ model AnnouncementStatistics {
 interface AnnouncementsApi {
   @doc("List announcements with filters (managers)")
   @get list(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query status?: string,
     @query targetType?: AnnouncementTargetType,
@@ -113,15 +113,15 @@ interface AnnouncementsApi {
 
   @doc("List published announcements (all users)")
   @get @route("/published") listPublished(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery
   ): PaginatedResponse<AnnouncementSummary>;
 
   @doc("Create a new announcement")
   @post create(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: {
       title: string;
       content: string;
@@ -135,15 +135,15 @@ interface AnnouncementsApi {
 
   @doc("Get announcement details")
   @get @route("/{id}") get(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): { announcement: AnnouncementWithDetails; attachments: AnnouncementAttachment[]; } | NotFoundError;
 
   @doc("Update an announcement (draft/scheduled only)")
   @put @route("/{id}") update(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: {
       title?: string;
@@ -158,52 +158,52 @@ interface AnnouncementsApi {
 
   @doc("Delete an announcement (draft only)")
   @delete @route("/{id}") delete(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): { @statusCode statusCode: 204; };
 
   @doc("Publish an announcement immediately")
   @post @route("/{id}/publish") publish(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): { message: string; announcement: Announcement; };
 
   @doc("Schedule an announcement for future publishing")
   @post @route("/{id}/schedule") schedule(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { scheduledAt: dateTime; }
   ): { message: string; announcement: Announcement; };
 
   @doc("Archive an announcement")
   @post @route("/{id}/archive") archive(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): { message: string; announcement: Announcement; };
 
   @doc("Pin or unpin an announcement")
   @post @route("/{id}/pin") pin(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { pinned: boolean; }
   ): { message: string; announcement: Announcement; };
 
   @doc("List announcement attachments")
   @get @route("/{id}/attachments") listAttachments(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): AnnouncementAttachment[];
 
   @doc("Add an attachment to an announcement")
   @post @route("/{id}/attachments") addAttachment(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: {
       fileKey: string;
@@ -215,35 +215,35 @@ interface AnnouncementsApi {
 
   @doc("Delete an attachment")
   @delete @route("/{id}/attachments/{attachmentId}") deleteAttachment(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @path attachmentId: uuid
   ): { @statusCode statusCode: 204; };
 
   @doc("Mark an announcement as read")
   @post @route("/{id}/read") markRead(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): { @statusCode statusCode: 200; };
 
   @doc("Acknowledge an announcement")
   @post @route("/{id}/acknowledge") acknowledge(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): { @statusCode statusCode: 200; };
 
   @doc("Get announcement statistics")
   @get @route("/statistics") getStatistics(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid
   ): AnnouncementStatistics;
 
   @doc("Get unread announcement count")
   @get @route("/unread-count") getUnreadCount(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid
   ): { unreadCount: int64; };
 }
