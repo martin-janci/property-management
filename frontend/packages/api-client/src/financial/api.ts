@@ -4,6 +4,8 @@
  * Client functions for financial management endpoints.
  */
 
+import { getOrg, getToken } from '../auth';
+import { client } from '../generated/client.gen';
 import type {
   AccountsReceivableReport,
   AccountTransaction,
@@ -33,10 +35,21 @@ import type {
 const API_BASE = '/api/v1/financial';
 
 async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  // These are raw `fetch` calls (not the generated @hey-api client), so they
+  // don't get the centralized auth interceptor (#1616). Without this, every
+  // financial request went out with no Authorization / X-Tenant-ID and 401'd
+  // against the api-server. Draw auth from the same token / active-org providers
+  // and prefix the same configured base URL the generated client uses.
+  const token = getToken();
+  const org = getOrg();
+  const baseUrl = client.getConfig().baseUrl ?? '';
+
+  const response = await fetch(`${baseUrl}${url}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(org ? { 'X-Tenant-ID': org } : {}),
       ...options?.headers,
     },
   });
