@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "run_iso": "2026-06-20T08:18:00Z",
+  "trigger_text": "",
+  "lag_hours": 100,
+  "lag_days": 4,
+  "stale_routine_alert": true,
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-20",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25:00Z; ~100h (~4d) gap. Stale routine alert fired (>=3d). Catch-up window covers PRs #1440-#1615 (89 merged) and issues #1438-#1615 (30 new).",
+      "confidence": "high",
+      "candidate_vector": null,
+      "files": []
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-mfa-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "3 PRs this window touched routes/mfa.rs (#1467 verify_recovery_code RLS + cross-user IDOR test, #1580 rate-limit MFA verify, #1602 evict stale entries + dedicated audit action) — 1383 lines (1377+/6-). Hardening churn — security area concentrated.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/mfa.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "3 PRs this window touched integrations/booking.rs (#1577 typed OTA HotelRateAmountNotif models, #1560 combined OTA rate/availability push, #1599 XXE/entity guards non-vacuous) — ~4365 lines (4330+/35-). Re-emit (already in seen_signals from 2026-06-12); cumulative — score_delta=0. Bulk additions = healthy feature churn.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=1→2 across 2026-06-12/2026-06-20",
+      "score_delta": 1,
+      "evidence": "booking.rs has now been a churn hotspot in 2 routine runs (2026-06-12 433 lines; 2026-06-20 ~4365 lines). Instability proxy — Story 83.2 OTA integrations are still in active scaffolding; expect more cycles.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git numstat since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": "2 PRs touched repositories/rental.rs (#1486 explicit platform::text cast across 4 readers, #1492 cast remaining rental enum readers GUEST/CALENDAR_BLOCK/ICAL_FEED_COL) — 2883 lines (2860+/23-). Repeated enum-cast fixes; PR #1578 + #1505 (closed-unmerged, superseded) extend the cluster — pattern looks like a missing enum-cast helper rather than per-call-site fixes.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1611 (test(reports): cover ScheduleDetailPageRoute download/retry toast wiring)",
+      "score_delta": 2,
+      "evidence": "PR #1611 touched frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx without updating docs/screens/ppt/*.md. Heuristic caveat — test-file only; review candidate, not a route surface change.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610 (fix(faults): confirm delete + use closed_count + refresh stats on delete)",
+      "score_delta": 2,
+      "evidence": "PR #1610 touched frontend/apps/ppt-web/src/routes/groups/faults.tsx (real route surface change — confirm-delete UX + closed_count wiring) without updating docs/screens/ppt/faults*.md. Drift candidate.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559 (feat(UC-06): announcement comments optimistic add)",
+      "score_delta": 2,
+      "evidence": "PR #1559 touched frontend/apps/ppt-web/src/routes/groups/announcements.tsx (UC-06 Story 6.3 announcement comments) without updating docs/screens/ppt/announcement*.md. Real route behavior change.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555 (feat(UC-03) gap-79-1: wire useDeleteFault + useFaultStatistics into FaultsPage)",
+      "score_delta": 2,
+      "evidence": "PR #1555 touched frontend/apps/ppt-web/src/routes/groups/faults.tsx without updating docs/screens/ppt/faults*.md. Real route surface change — UC-03 fault delete + stats wiring.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist this run; screen-map-drift signals are medium-confidence heuristic; churn-hotspots are analytical not actionable",
+  "phase_1_5_skipped_reason": "catch-up run (4d lag) — Phase 1.5 expert review deferred to next run to keep this catch-up brief focused; review_cursor unchanged",
+  "phase_1_6_skipped_reason": "catch-up run (4d lag) — Phase 1.6 PM rotation deferred to next run; pm_cursor + coverage_cursor unchanged",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-20.md && head -1 == '# 2026-06-20'",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced (last_pr_seen + cursors + seen_signals)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative duplicate signals with score_delta != 0",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap=8 and decay applied to >=14d open items",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "0 new plans this run — no adversarial-pass check needed",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "0 new plans this run — under cap of 2",
+      "observed": "0",
+      "expected": "0..2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets / private hostnames in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity vs regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases this run; cursors correctly advanced for phases that ran",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plan slugs converge — none silently deleted",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "ge",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity vs regen",
+      "observed": "diff exit 0",
+      "expected": "diff exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions[] cap respected (0 actions this run)",
+      "observed": "0<=3, 0<=1, 0<=1, 0<=1",
+      "expected": "<=3, <=1, <=1, <=1"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate is no-op",
+      "observed": "PM_NOW=PM_HEAD=5; CC_NOW=CC_HEAD=12",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token value in added diff lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
