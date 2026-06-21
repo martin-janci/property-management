@@ -6,25 +6,32 @@
 
 export {
   acknowledgeSensorAlert,
+  createSensor,
+  deleteSensor,
   getIotDashboard,
   getSensor,
   listSensorAlerts,
   listSensorReadings,
   listSensors,
   resolveSensorAlert,
+  updateSensor,
 } from './api';
 export {
   iotKeys,
   useAcknowledgeSensorAlert,
+  useCreateSensor,
+  useDeleteSensor,
   useIotDashboard,
   useResolveSensorAlert,
   useSensor,
   useSensorAlerts,
   useSensorReadings,
   useSensors,
+  useUpdateSensor,
 } from './hooks';
 export type {
   AggregatedReading,
+  CreateSensorRequest,
   ListAlertsParams,
   ListAlertsResponse,
   ListReadingsParams,
@@ -37,4 +44,5 @@ export type {
   SensorDashboard,
   SensorReading,
   SensorTypeCount,
+  UpdateSensorRequest,
 } from './types';
