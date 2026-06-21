@@ -283,6 +283,18 @@ export const AiChatPage = lazy(() =>
   import('../features/ai-chat').then((m) => ({ default: m.AiChatPage }))
 );
 
+// Sentiment Dashboard (Epic 13, Story 13.2) — gap-sweep
+export const SentimentDashboardPage = lazy(() =>
+  import('../features/sentiment').then((m) => ({ default: m.SentimentDashboardPage }))
+);
+
+// Predictive Maintenance Dashboard (Epic 13, Story 13.3) — gap-sweep
+export const PredictiveMaintenancePage = lazy(() =>
+  import('../features/predictive-maintenance').then((m) => ({
+    default: m.PredictiveMaintenancePage,
+  }))
+);
+
 // Workflow Automation (Epic 13) — built + API-wired, now routed (gap-sweep)
 export const AutomationRulesPage = lazy(() =>
   import('../features/workflow-automation').then((m) => ({ default: m.AutomationRulesPage }))
