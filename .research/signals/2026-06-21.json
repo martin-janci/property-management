@@ -1,0 +1,296 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "routine last ran 2026-06-16T03:25Z (5d / 125h since last run) — missed daily runs 2026-06-17, 06-18, 06-19, 06-20",
+        "100 PRs merged in window (#1483 → #1631), 7 currently-open issues, dispatcher claimed-0 multiple days running"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-21",
+      "type": "stale_routine_alert",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25Z is 5d old — cloud routine cron likely broken or paused",
+        "operator should verify the cloud scheduler is firing; dispatcher state lives separately on planning branch"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16",
+      "score_delta": 0,
+      "evidence": [
+        "2026-06-21: 4365 lines (4330+/35-) — driven by #1560 combined OTA rate/availability push, #1599 XXE non-vacuous guards"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16",
+      "score_delta": 0,
+      "evidence": [
+        "2026-06-21: 3077 lines (3075+/2-) — driven by #1613 detach-folder-to-root + #1598 board_meetings u.name fix scope"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16",
+      "score_delta": 1,
+      "evidence": [
+        "2026-06-21: 2837 lines (2837+/0-) — enum cast cascades (#1486, #1492, #1505, #1537, #1578) + booking NULL-fee write path"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "triage-issue-1538",
+      "type": "untriaged-issue",
+      "source": "issue #1538",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1538 (ci label): dev branch protection requires only 'check' context — backend 'test' job not in required_status_checks, so red-test PRs merge freely",
+        "Multi-round #1331/#1332/#1008 backend-test cascade traces directly to this gap"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "triage-issue-1604",
+      "type": "untriaged-issue",
+      "source": "issue #1604",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1604 (needs-human-review): dispatcher backlog exhausted — 9 open action-list items either active or verifiably already shipped on dev; coverage.json dated 2026-06-16 keeps re-emitting gaps for shipped features"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "triage-issue-1607",
+      "type": "untriaged-issue",
+      "source": "issue #1607",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1607 (research-routine): autonomous delivery pipeline stalled — coverage.json 3d stale + 14 quarantined rows clogging backlog. Operator action required: refresh coverage via local `/ppt-project-management scan`"
+      ],
+      "confidence": "high",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "security-airbnb-listings-readable-by-residents",
+      "type": "unchecked-todo",
+      "source": "issue #1626 + PR #1615",
+      "score_delta": 2,
+      "evidence": [
+        "Issue #1626 (security follow-up, severity:low): GET /api/v1/integrations/organizations/{org_id}/airbnb/connections gates only on verify_org_access which admits any active member including residents — exposes external_property_id, external_listing_url, is_active, last_sync_at",
+        "Recommended fix: tighten gate to manager/owner roles via TenantRole check (same pattern as #1552 OTA token-exchange)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/sync.rs"
+      ]
+    },
+    {
+      "id": "bug-saved-search-alerts-truncation",
+      "type": "unchecked-todo",
+      "source": "issue #1627 + PR #1622",
+      "score_delta": 1,
+      "evidence": [
+        "Issue #1627 (correctness follow-up, severity:low-medium): list_search_alerts() calls get_search_alerts(user_id, 100) with hardcoded LIMIT 100 and no offset/cursor — users with >100 alerts silently never see oldest entries via this surface"
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/reality-server/src/routes/saved_searches.rs",
+        "backend/servers/reality-server/src/routes/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1545 (unbreak reality-web production build /accounting + favorites pl/hu i18n) touched frontend/apps/reality-web/src/app/accounting/layout.tsx without docs/screens/reality/* update (heuristic — production-fix scope)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1555 (gap-79-1 wire useDeleteFault + useFaultStatistics) touched frontend/apps/ppt-web/src/routes/groups/faults.tsx + faults.route.test.tsx without docs/screens/ppt/* update (heuristic — feature-wiring change)"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1621 (relocate payment-matching to ppt-web with correct api-server auth) touched frontend/apps/ppt-web/src/routes/groups/accounting.tsx + lazyRoutes.tsx + reality-web/src/app/accounting/layout.tsx without docs/screens/{ppt,reality}/* update — biggest legitimate route surface change this run"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-21.md && head -1 match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq cursor advance check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] | unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal dedup check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "max score <= 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "6 items decayed, 9 dropped — manual script verified",
+      "observed": "applied",
+      "expected": "applied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A plans/ count",
+      "observed": "0",
+      "expected": "<= 2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secret patterns in cached diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regen backlog.md matches staged",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phase failures to disclose",
+      "observed": "none",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plan slugs present in plans/ or _archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count >= HEAD count",
+      "observed": "equal (no new archives)",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regen IDEAS_TRIAGE.md matches staged",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length 0 (Phase 5 no-op)",
+      "observed": "0",
+      "expected": "<= 3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — no-op gate",
+      "observed": "skipped",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for Telegram token pattern in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
