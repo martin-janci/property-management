@@ -13,10 +13,4 @@ export {
   type IotSensorListPageProps,
   IotSensorRegisterPage,
   type IotSensorRegisterPageProps,
-  SensorFormPage,
-  type SensorFormBuildingOption,
-  type SensorFormPageProps,
-  type SensorFormValues,
-  SensorListPage,
-  type SensorListPageProps,
 } from './pages';

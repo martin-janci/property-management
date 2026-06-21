@@ -33,9 +33,8 @@ export function IotSensorEditPage({
         manufacturer: sensor.manufacturer ?? '',
         model: sensor.model ?? '',
         serial_number: sensor.serial_number ?? '',
-        data_interval_seconds: sensor.data_interval_seconds != null
-          ? String(sensor.data_interval_seconds)
-          : '',
+        data_interval_seconds:
+          sensor.data_interval_seconds != null ? String(sensor.data_interval_seconds) : '',
       }
     : undefined;
 

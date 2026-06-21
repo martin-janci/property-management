@@ -117,9 +117,18 @@ function IotSensorListPageRoute() {
       filterStatus={filterStatus}
       filterSearch={filterSearch}
       onPageChange={setPage}
-      onFilterTypeChange={(t: string) => { setFilterType(t); setPage(1); }}
-      onFilterStatusChange={(s: string) => { setFilterStatus(s); setPage(1); }}
-      onFilterSearchChange={(s: string) => { setFilterSearch(s); setPage(1); }}
+      onFilterTypeChange={(t: string) => {
+        setFilterType(t);
+        setPage(1);
+      }}
+      onFilterStatusChange={(s: string) => {
+        setFilterStatus(s);
+        setPage(1);
+      }}
+      onFilterSearchChange={(s: string) => {
+        setFilterSearch(s);
+        setPage(1);
+      }}
       onRegister={() => navigate('/iot/sensors/new')}
       onEdit={(id: string) => navigate(`/iot/sensors/${id}/edit`)}
     />
@@ -147,7 +156,7 @@ function IotSensorRegisterPageRoute() {
       connection_type: data.connection_type || null,
       unit_of_measurement: data.unit_of_measurement.trim() || null,
       data_interval_seconds: data.data_interval_seconds
-        ? (parseInt(data.data_interval_seconds, 10) || null)
+        ? parseInt(data.data_interval_seconds, 10) || null
         : null,
       manufacturer: data.manufacturer.trim() || null,
       model: data.model.trim() || null,
@@ -201,7 +210,7 @@ function IotSensorEditPageRoute() {
       connection_type: data.connection_type || null,
       unit_of_measurement: data.unit_of_measurement.trim() || null,
       data_interval_seconds: data.data_interval_seconds
-        ? (parseInt(data.data_interval_seconds, 10) || null)
+        ? parseInt(data.data_interval_seconds, 10) || null
         : null,
       manufacturer: data.manufacturer.trim() || null,
       model: data.model.trim() || null,

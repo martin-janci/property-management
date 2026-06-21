@@ -53,9 +53,6 @@ export const IotDashboardPage = lazy(() =>
 export const IotSensorListPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.IotSensorListPage }))
 );
-export const IotSensorFormPage = lazy(() =>
-  import('../features/iot').then((m) => ({ default: m.SensorFormPage }))
-);
 export const IotSensorRegisterPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.IotSensorRegisterPage }))
 );
