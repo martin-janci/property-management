@@ -5,6 +5,34 @@
 //! and reach the portal on a `PlatformHost`, so `RequestPrincipal` 403s them.
 //! `PortalPrincipal` authenticates the JWT + re-derives kind without requiring
 //! a tenant/membership; IDOR stays closed via `user_id` repo keying (PR #1297).
+//!
+//! # Authorization model — intentionally **per-user** (GH #1584 finding 1)
+//!
+//! This portal surface and its sibling [`super::agency_imports`] deliberately
+//! use *different* authorization models; they are NOT an accidental divergence
+//! to collapse onto one helper:
+//!
+//! * **`imports.rs` (this file) — per-user, owner-keyed.** Every job/feed is
+//!   owned by the authenticating portal user (`portal_import_jobs.user_id`;
+//!   `feed_subscriptions` owner column — see the repo note below). There is no
+//!   `agency_id` in any route path here, and a portal user need not belong to
+//!   any `reality_agency`. Authorization is the repo-layer `user_id`/owner
+//!   keying: a caller can only ever see or mutate rows they own (cross-user →
+//!   404). Routing this through `assert_agency_member` was considered and
+//!   **rejected**: it would break the individual-portal-user case (those users
+//!   have no `reality_agency_members` row) and force a tenant that does not
+//!   exist on a `PlatformHost`.
+//! * **`agency_imports.rs` — agency-membership, mounted under
+//!   `/api/v1/agencies/{id}/imports`.** It gates every handler on
+//!   `reality_agency_members` membership via `check_agency_membership`, because
+//!   that surface IS agency-scoped (the agency id is in the path and rows are
+//!   shared across an agency's members).
+//!
+//! One residual wart from this split is tracked separately: the
+//! `feed_subscriptions` owner column is still physically named `agency_id`
+//! while it stores the owner `user_id`. The column/FK rename (and a non-owning
+//! same-agency-member guard test) is the schema-migration follow-up to this
+//! issue — see the child issue linked on GH #1584 / BIT-130.
 
 use crate::state::AppState;
 use api_core::extractors::PortalPrincipal;

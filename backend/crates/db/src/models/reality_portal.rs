@@ -693,6 +693,11 @@ pub type RealityFeedSubscription = FeedSubscription;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct FeedSubscription {
     pub id: Uuid,
+    /// Owner key. Legacy-named `agency_id` (and still FK'd to `reality_agencies`
+    /// in the schema), but the reality-portal import surface is per-user, so
+    /// this physically stores the owning portal user's `user_id`. The
+    /// column/FK rename is tracked as the BIT-130 schema-migration follow-up
+    /// (GH #1584 finding 2).
     pub agency_id: Uuid,
     pub name: String,
     pub feed_url: String,

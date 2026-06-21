@@ -1342,35 +1342,48 @@ impl RealityPortalRepository {
 
     // ========================================================================
     // Feed Subscriptions (Story 34.2)
+    //
+    // OWNERSHIP NOTE (GH #1584 finding 1/2): these feeds are owned **per portal
+    // user**, not per agency — the reality-portal import surface
+    // (`reality-server/src/routes/imports.rs`) is intentionally per-user (see
+    // its module docs). The owner key is therefore the caller's `user_id`. The
+    // physical `feed_subscriptions` column is still legacy-named `agency_id`
+    // (and FK'd to `reality_agencies`) even though it stores a `user_id`; the
+    // column/FK rename is the schema-migration follow-up tracked on the BIT-130
+    // child issue. Until then the SQL below references the real column name
+    // `agency_id` while the Rust parameter is named `user_id` to make the
+    // owner-keyed intent unambiguous at every call site.
     // ========================================================================
 
-    /// List feed subscriptions for an agency.
+    /// List feed subscriptions owned by `user_id`.
     pub async fn list_feed_subscriptions(
         &self,
-        agency_id: Uuid,
+        user_id: Uuid,
     ) -> Result<Vec<RealityFeedSubscription>, SqlxError> {
         sqlx::query_as::<_, RealityFeedSubscription>(
+            // `agency_id` column physically stores the owner `user_id` (see note).
             "SELECT * FROM feed_subscriptions WHERE agency_id = $1 ORDER BY created_at DESC",
         )
-        .bind(agency_id)
+        .bind(user_id)
         .fetch_all(&self.pool)
         .await
     }
 
-    /// Create feed subscription.
+    /// Create a feed subscription owned by `user_id`.
     pub async fn create_feed_subscription(
         &self,
-        agency_id: Uuid,
+        user_id: Uuid,
         data: CreateFeedSubscription,
     ) -> Result<RealityFeedSubscription, SqlxError> {
         sqlx::query_as::<_, RealityFeedSubscription>(
+            // `agency_id` column physically stores the owner `user_id` (see note).
             r#"
             INSERT INTO feed_subscriptions (agency_id, name, feed_url, feed_type, sync_interval)
             VALUES ($1, $2, $3, COALESCE($4, 'xml'), COALESCE($5, 'daily'))
             RETURNING *
             "#,
         )
-        .bind(agency_id)
+        .bind(user_id)
         .bind(&data.name)
         .bind(&data.feed_url)
         .bind(&data.feed_type)
@@ -1379,30 +1392,32 @@ impl RealityPortalRepository {
         .await
     }
 
-    /// Get feed subscription by ID. Scoped to the owning `agency_id` so an
-    /// agency cannot read another agency's feed by id (IDOR, PAP-142).
+    /// Get feed subscription by ID. Scoped to the owning `user_id` so a portal
+    /// user cannot read another user's feed by id (IDOR, PAP-142).
     pub async fn get_feed_subscription(
         &self,
         id: Uuid,
-        agency_id: Uuid,
+        user_id: Uuid,
     ) -> Result<Option<RealityFeedSubscription>, SqlxError> {
         sqlx::query_as::<_, RealityFeedSubscription>(
+            // `agency_id` column physically stores the owner `user_id` (see note).
             "SELECT * FROM feed_subscriptions WHERE id = $1 AND agency_id = $2",
         )
         .bind(id)
-        .bind(agency_id)
+        .bind(user_id)
         .fetch_optional(&self.pool)
         .await
     }
 
-    /// Update feed subscription. Scoped to the owning `agency_id` (IDOR, PAP-142).
+    /// Update feed subscription. Scoped to the owning `user_id` (IDOR, PAP-142).
     pub async fn update_feed_subscription(
         &self,
         id: Uuid,
-        agency_id: Uuid,
+        user_id: Uuid,
         data: UpdateFeedSubscription,
     ) -> Result<RealityFeedSubscription, SqlxError> {
         sqlx::query_as::<_, RealityFeedSubscription>(
+            // `agency_id` column physically stores the owner `user_id` (see note).
             r#"
             UPDATE feed_subscriptions SET
                 name = COALESCE($3, name),
@@ -1416,7 +1431,7 @@ impl RealityPortalRepository {
             "#,
         )
         .bind(id)
-        .bind(agency_id)
+        .bind(user_id)
         .bind(&data.name)
         .bind(&data.feed_url)
         .bind(&data.feed_type)
@@ -1426,14 +1441,15 @@ impl RealityPortalRepository {
         .await
     }
 
-    /// Trigger immediate feed sync. Scoped to the owning `agency_id` (IDOR, PAP-142).
+    /// Trigger immediate feed sync. Scoped to the owning `user_id` (IDOR, PAP-142).
     pub async fn trigger_feed_sync(
         &self,
         id: Uuid,
-        agency_id: Uuid,
+        user_id: Uuid,
     ) -> Result<RealityFeedSubscription, SqlxError> {
-        // Mark as syncing and update last sync time
+        // Mark as syncing and update last sync time.
         sqlx::query_as::<_, RealityFeedSubscription>(
+            // `agency_id` column physically stores the owner `user_id` (see note).
             r#"
             UPDATE feed_subscriptions SET
                 last_sync_at = NOW()
@@ -1442,7 +1458,7 @@ impl RealityPortalRepository {
             "#,
         )
         .bind(id)
-        .bind(agency_id)
+        .bind(user_id)
         .fetch_one(&self.pool)
         .await
     }

@@ -60,6 +60,97 @@ pub struct PrincipalClaims {
     pub token_type: Option<String>,
 }
 
+/// Shared bearer-token decode for the request extractors (GH #1584 finding 4).
+///
+/// Both [`RequestPrincipal`] and [`PortalPrincipal`] authenticate a request the
+/// same way: pull the bearer token, decode it with the default HS256 validation
+/// (so `exp`/`nbf` are enforced), reject any non-`access` `token_type`, and
+/// trust ONLY the `sub` claim. Keeping that security-critical sequence in a
+/// single place means a future change (enforcing `aud`/`iss`, a new token
+/// discriminator, a key rotation) cannot be applied to one extractor and
+/// silently missed on the other.
+fn decode_bearer_subject(parts: &Parts) -> Result<Uuid, (StatusCode, &'static str)> {
+    let auth_header = parts
+        .headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Missing Authorization header"))?;
+
+    let token = auth_header.strip_prefix("Bearer ").ok_or((
+        StatusCode::UNAUTHORIZED,
+        "Invalid Authorization header format",
+    ))?;
+
+    let secret = std::env::var("JWT_SECRET").map_err(|_| {
+        tracing::error!("JWT_SECRET environment variable not set");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Server configuration error",
+        )
+    })?;
+
+    // We deliberately use the default `Validation` (HS256, exp+nbf checked).
+    // We do NOT enforce any audience/issuer here — those are issuance concerns
+    // that a future hardening pass can layer on (in this one place).
+    let token_data = decode::<PrincipalClaims>(
+        token,
+        &DecodingKey::from_secret(secret.as_bytes()),
+        &Validation::default(),
+    )
+    .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid or expired token"))?;
+
+    // Reject refresh tokens (and any other non-access discriminator) BEFORE
+    // touching the DB. A token that omits `token_type` is treated as access for
+    // backward-compat; an explicit non-access value is denied so a refresh token
+    // cannot be replayed against an access-only route (mirrors `auth.rs`
+    // RUST-002).
+    if let Some(token_type) = token_data.claims.token_type.as_deref() {
+        if token_type != "access" {
+            tracing::warn!(
+                token_type = %token_type,
+                "principal: rejected non-access token on access-only route"
+            );
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "Invalid token type for this endpoint",
+            ));
+        }
+    }
+
+    Ok(token_data.claims.sub)
+}
+
+/// Re-derive `principal_kind` from the trusted `users` table (GH #1584 finding 4).
+///
+/// The `kind` claim in the JWT is informational only; both extractors re-derive
+/// it server-side (defense in depth — never trust the token's copy). A deleted
+/// or unknown user is rejected as `401`.
+async fn resolve_principal_kind(
+    pool: &sqlx::PgPool,
+    user_id: Uuid,
+) -> Result<PrincipalKind, (StatusCode, &'static str)> {
+    let kind_str: Option<String> = sqlx::query_scalar(
+        r#"SELECT principal_kind FROM users WHERE id = $1 AND status != 'deleted'"#,
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, user_id = %user_id, "principal_kind lookup failed");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to resolve principal",
+        )
+    })?;
+
+    let Some(kind_str) = kind_str else {
+        tracing::warn!(user_id = %user_id, "principal: user not found / deleted");
+        return Err((StatusCode::UNAUTHORIZED, "Unknown principal"));
+    };
+
+    Ok(PrincipalKind::parse(&kind_str))
+}
+
 /// The authoritative per-request principal. Built fresh on every request from
 /// trusted server-side state.
 ///
@@ -93,75 +184,13 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         // ----- (1) Decode JWT — sub is the only trustworthy claim. -----
-        let auth_header = parts
-            .headers
-            .get(axum::http::header::AUTHORIZATION)
-            .and_then(|v| v.to_str().ok())
-            .ok_or((StatusCode::UNAUTHORIZED, "Missing Authorization header"))?;
-
-        let token = auth_header.strip_prefix("Bearer ").ok_or((
-            StatusCode::UNAUTHORIZED,
-            "Invalid Authorization header format",
-        ))?;
-
-        let secret = std::env::var("JWT_SECRET").map_err(|_| {
-            tracing::error!("JWT_SECRET environment variable not set");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Server configuration error",
-            )
-        })?;
-
-        // We deliberately use the default `Validation` (HS256, exp+nbf checked).
-        // We do NOT enforce any audience/issuer here — those are issuance
-        // concerns that a future hardening pass can layer on.
-        let token_data = decode::<PrincipalClaims>(
-            token,
-            &DecodingKey::from_secret(secret.as_bytes()),
-            &Validation::default(),
-        )
-        .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid or expired token"))?;
-
-        // Reject refresh tokens (and any other non-access discriminator)
-        // BEFORE touching the DB. A token that omits `token_type` is treated
-        // as access for backward-compat; an explicit "refresh" is denied so
-        // a refresh token cannot be replayed against an access-only route.
-        if let Some(token_type) = token_data.claims.token_type.as_deref() {
-            if token_type != "access" {
-                tracing::warn!(
-                    token_type = %token_type,
-                    "RequestPrincipal: rejected non-access token on access-only route"
-                );
-                return Err((
-                    StatusCode::UNAUTHORIZED,
-                    "Invalid token type for this endpoint",
-                ));
-            }
-        }
-
-        let user_id = token_data.claims.sub;
-
-        // ----- (2) Lookup the principal_kind from the trusted users table. -----
+        // ----- (2) Re-derive the principal_kind from the trusted users table. -----
+        // Both steps live in shared helpers so the security-critical JWT +
+        // kind-derivation path is identical to `PortalPrincipal` (GH #1584
+        // finding 4).
+        let user_id = decode_bearer_subject(parts)?;
         let pool = state.db_pool();
-        let kind_str: Option<String> = sqlx::query_scalar(
-            r#"SELECT principal_kind FROM users WHERE id = $1 AND status != 'deleted'"#,
-        )
-        .bind(user_id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, user_id = %user_id, "principal_kind lookup failed");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to resolve principal",
-            )
-        })?;
-
-        let Some(kind_str) = kind_str else {
-            tracing::warn!(user_id = %user_id, "RequestPrincipal: user not found / deleted");
-            return Err((StatusCode::UNAUTHORIZED, "Unknown principal"));
-        };
-        let kind = PrincipalKind::parse(&kind_str);
+        let kind = resolve_principal_kind(pool, user_id).await?;
 
         // ----- (3) Read host-resolved tenant (may be absent on platform host). -----
         let resolved = parts.extensions.get::<ResolvedTenant>().copied();
@@ -183,7 +212,7 @@ where
             (Some(rt), _) if rt.source == TenantSource::PlatformHost => {
                 tracing::warn!(
                     user_id = %user_id,
-                    kind = %kind_str,
+                    kind = ?kind,
                     "RequestPrincipal: non-platform principal on platform host"
                 );
                 return Err((
@@ -230,7 +259,7 @@ where
                 // do not need a tenant should use a different extractor.
                 tracing::warn!(
                     user_id = %user_id,
-                    kind = %kind_str,
+                    kind = ?kind,
                     "RequestPrincipal: no ResolvedTenant for non-platform principal"
                 );
                 return Err((StatusCode::FORBIDDEN, "tenant not resolved"));
@@ -341,74 +370,17 @@ where
     type Rejection = (StatusCode, &'static str);
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        // ----- (1) Decode JWT — sub is the only trustworthy claim. -----
-        let auth_header = parts
-            .headers
-            .get(axum::http::header::AUTHORIZATION)
-            .and_then(|v| v.to_str().ok())
-            .ok_or((StatusCode::UNAUTHORIZED, "Missing Authorization header"))?;
-
-        let token = auth_header.strip_prefix("Bearer ").ok_or((
-            StatusCode::UNAUTHORIZED,
-            "Invalid Authorization header format",
-        ))?;
-
-        let secret = std::env::var("JWT_SECRET").map_err(|_| {
-            tracing::error!("JWT_SECRET environment variable not set");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Server configuration error",
-            )
-        })?;
-
-        let token_data = decode::<PrincipalClaims>(
-            token,
-            &DecodingKey::from_secret(secret.as_bytes()),
-            &Validation::default(),
-        )
-        .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid or expired token"))?;
-
-        // Reject refresh (and any non-access) tokens before touching the DB —
-        // mirrors `RequestPrincipal`.
-        if let Some(token_type) = token_data.claims.token_type.as_deref() {
-            if token_type != "access" {
-                tracing::warn!(
-                    token_type = %token_type,
-                    "PortalPrincipal: rejected non-access token on access-only route"
-                );
-                return Err((
-                    StatusCode::UNAUTHORIZED,
-                    "Invalid token type for this endpoint",
-                ));
-            }
-        }
-
-        let user_id = token_data.claims.sub;
-
-        // ----- (2) Re-derive principal_kind from the trusted users table. -----
+        // (1) Decode JWT (sub only) and (2) re-derive principal_kind from the
+        // trusted users table — both via the shared helpers so this
+        // security-critical path is byte-for-byte identical to
+        // `RequestPrincipal` (GH #1584 finding 4). `PortalPrincipal`
+        // deliberately stops here: it requires NO `ResolvedTenant` and NO
+        // membership, because per-resource authorization is enforced at the
+        // repo layer by `user_id` keying (see the type docs above).
+        let user_id = decode_bearer_subject(parts)?;
         let pool = state.db_pool();
-        let kind_str: Option<String> = sqlx::query_scalar(
-            r#"SELECT principal_kind FROM users WHERE id = $1 AND status != 'deleted'"#,
-        )
-        .bind(user_id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, user_id = %user_id, "PortalPrincipal: principal_kind lookup failed");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to resolve principal",
-            )
-        })?;
+        let kind = resolve_principal_kind(pool, user_id).await?;
 
-        let Some(kind_str) = kind_str else {
-            tracing::warn!(user_id = %user_id, "PortalPrincipal: user not found / deleted");
-            return Err((StatusCode::UNAUTHORIZED, "Unknown principal"));
-        };
-
-        Ok(PortalPrincipal {
-            user_id,
-            kind: PrincipalKind::parse(&kind_str),
-        })
+        Ok(PortalPrincipal { user_id, kind })
     }
 }
