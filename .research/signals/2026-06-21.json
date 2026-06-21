@@ -1,0 +1,277 @@
+{
+  "date": "2026-06-21",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z; now=2026-06-21T16:00:00Z",
+      "score_delta": 0,
+      "evidence": "Routine has not run for 5d 12h (132h) since 2026-06-16 \u2014 exceeds 36h threshold. Stale-routine alert: cloud cron likely paused. Dispatcher (separate loop on planning branch) was active during the gap (PRs #1546/1547/1553/1595/1596/1637) and 86 application-code PRs landed on dev during the silent window.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "stale-routine-alert-2026-06-21",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso 5d stale; on-disk dispatcher state still ticking on planning branch",
+      "score_delta": 0,
+      "evidence": "Daily routine gap of 5d 12h on the routine branch. Cloud cron for the research routine (cf. dispatcher) should be re-armed.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": "dependabot/renovate merged \u2014 androidx.compose:compose-bom 2026.05.01\u21922026.06.00 (mobile-native)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": "dependabot/renovate merged \u2014 mikepenz/action-junit-report 5\u21926 (ci)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": "dependabot/renovate merged \u2014 npm-minor-patch group, 6 updates (/frontend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": "dependabot/renovate merged \u2014 expo-secure-store 55.0.14\u219256.0.4 (/frontend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": "dependabot/renovate merged \u2014 @types/node 20.19.40\u219225.9.3 (/frontend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1574",
+      "type": "dep-update-noise",
+      "source": "PR #1574",
+      "score_delta": 0,
+      "evidence": "dependabot/renovate merged \u2014 cargo-minor-patch group, 3 updates (/backend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": "dependabot/renovate merged \u2014 @babel/core 7.29.7\u21928.0.1 (/frontend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": "dependabot/renovate merged \u2014 i18next 25.10.10\u219226.3.1 (/frontend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1567",
+      "type": "dep-update-noise",
+      "source": "PR #1567",
+      "score_delta": 0,
+      "evidence": "dependabot PR open \u2014 gradle-minor-patch group (mobile-native) \u2014 open, no reviewDecision",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1568",
+      "type": "dep-update-noise",
+      "source": "PR #1568",
+      "score_delta": 0,
+      "evidence": "dependabot PR open \u2014 tower-http 0.6.11\u21920.7.0 axum group (/backend) \u2014 open, no reviewDecision",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1569",
+      "type": "dep-update-noise",
+      "source": "PR #1569",
+      "score_delta": 0,
+      "evidence": "dependabot PR open \u2014 dtolnay/rust-toolchain 1.94.1\u21921.100.0 actions-minor-patch \u2014 open, no reviewDecision",
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "evidence": "PR #1636 (fix(reality-server): reconcile portal import authz + dedup principal extractor) closed unmerged 2026-06-21; split/superseded by merged #1632 + #1638",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "evidence": "PR #1647 (feat(iot): sensor register + edit + standalone list [BIT-147]) closed unmerged 2026-06-21; superseded by merged #1646 per BIT-153 CEO reconciliation",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/today + head -1 match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advance vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq seen-signal dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap+decay",
+      "observed": "no score>8; 6 decays applied",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "plan promotions annotated",
+      "observed": "no new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans + readiness",
+      "observed": "0 new plans",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged set within .research/",
+      "observed": "0 outside",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/private-host scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure cursor honesty",
+      "observed": "no phase failed (Phase 1.5/1.6 skipped \u2014 cursors NOT advanced)",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "no prior-run plan deleted",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count \u2265 HEAD",
+      "observed": "7=7",
+      "expected": "staged \u2265 HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "no auto_fix_actions",
+      "expected": "\u22641 PR + \u22641 issue + \u22641 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts (no-op when Phase 1.6 skipped)",
+      "observed": "Phase 1.6 skipped this run",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
