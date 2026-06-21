@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-21T14:14:50Z",
+  "generated": "2026-06-21T14:32:57Z",
   "assignments": [
     {
       "task_id": "feat-build-configuration-by-environ-app-icons-all-sizes-mobile",
@@ -48,15 +48,15 @@
     {
       "task_id": "feat-booking-com-ota-xml-rate-availability-backend",
       "branch": "auto-impl/feat-booking-com-ota-xml-rate-availabili",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-06-21T08:16:24Z",
-      "last_updated": "2026-06-21T14:14:50Z",
-      "status_changed_at": "2026-06-21T14:14:50Z",
+      "last_updated": "2026-06-21T14:32:57Z",
+      "status_changed_at": "2026-06-21T14:32:57Z",
       "pr_number": 1633,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1633",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=1633 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=83-2 OTA parse/gen+AC-5 push flow already in dev (stale coverage); added route-boundary map fns + 6 tests; api-server check + 20 booking_channel + 67 integrations tests green [dispatcher 2026-06-21: CI test job FAILURE on approved PR; Phase 5.5 ci-fail -> 5.7 respawn round 1 to fix build]",
+      "implementer_summary": "pr=1633 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=83-2 OTA parse/gen+AC-5 push flow already in dev (stale coverage); added route-boundary map fns + 6 tests; api-server check + 20 booking_channel + 67 integrations tests green [dispatcher 2026-06-21: CI test job FAILURE on approved PR; Phase 5.5 ci-fail -> 5.7 respawn round 1 to fix build] [followup r1: failure was unrelated flake voting_tests::pdf_report (register 500); rebased clean onto dev + re-triggered CI run 27907486551]",
       "reviewer_summary": "verdict=approve note=clean behavior-preserving refactor+6 AC-5 tests; no drift/reuse/hot-path issues; approve posted as comment (cannot approve own PR)",
       "last_reviewed_oid": "050175c791080e694313eca60ddb5e23e7e409bd",
       "scope_drift": false,
@@ -65,28 +65,6 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
-    },
-    {
-      "task_id": "feat-folder-organization-mobile-slice-frontend",
-      "branch": "auto-impl/feat-folder-organization-mobile-slice-fr",
-      "status": "in-progress",
-      "claimed_at": "2026-06-21T14:14:50Z",
-      "last_updated": "2026-06-21T14:14:50Z",
-      "status_changed_at": "2026-06-21T14:14:50Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
       "merge_attempted_at": null
     }
   ]
