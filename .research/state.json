@@ -5,7 +5,7 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-21T12:30:00Z",
+  "last_run_iso": "2026-06-21T12:45:00Z",
   "last_run_ms": 0,
   "last_pr_seen": 1654,
   "last_issue_seen": 1645,
@@ -586,7 +586,9 @@
     "dep-update-noise-pr-1572",
     "dep-update-noise-pr-1573",
     "dep-update-noise-pr-1575",
-    "dep-update-noise-pr-1576"
+    "dep-update-noise-pr-1576",
+    "infra-dev-ci-outage-2026-06-21",
+    "infra-dispatcher-buffer-low-2026-06-21"
   ],
   "auto_fix_history": {},
   "review_cursor": {

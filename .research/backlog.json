@@ -4349,6 +4349,46 @@
       "created_at": "2026-06-21",
       "updated_at": "2026-06-21",
       "plan": null
+    },
+    {
+      "id": "infra-dev-ci-outage-2026-06-21",
+      "title": "dev CI outage: backend.yml has failed 6 consecutive runs on dev (merge gate bypassed ~14h)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "open",
+      "sources": [
+        "fire-payload + backend.yml runs on dev"
+      ],
+      "evidence": [
+        "backend.yml on dev failed 6 consecutive runs 2026-06-20T22:24Z → 2026-06-21T10:08Z (sha 3c63a6d3..b37ef0c1); 4 queued (851aeaeb, 39714177, 2e3b8e8a, 16c4bd7c). frontend.yml healthy. Merge gate effectively bypassed for ~14h."
+      ],
+      "files": [
+        ".github/workflows/backend.yml"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "infra-dispatcher-buffer-low-2026-06-21",
+      "title": "Dispatcher buffer-low: claimable=7/72 (GC3 FAIL) — refill coverage backlog (Phase 1.6 next run)",
+      "vector": "dx",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "fire-payload (dispatcher GC3)"
+      ],
+      "evidence": [
+        "Dispatcher reports claimable=7/72 (GC3 FAIL); coverage backlog needs refill. Phase 1.6 coverage upkeep deferred this run — next run should run it."
+      ],
+      "files": [
+        ".research/management/coverage.json"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
     }
   ]
 }

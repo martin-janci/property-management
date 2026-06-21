@@ -1,9 +1,10 @@
 # Backlog of vectors
-<sub>Last regenerated: 2026-06-21 12:30 UTC by routine</sub>
+<sub>Last regenerated: 2026-06-21 12:45 UTC by routine</sub>
 
 | Score | Vector | ID | Title | Status | Updated | Plan |
 |-------|--------|----|----|--------|---------|------|
 | 6 | test-gap | `test-gap-inquiry-idor-regression` | Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497) | done | 2026-05-26 | [plan](plans/_archive/test-gap-inquiry-idor-regression.md) |
+| 3 | bug | `infra-dev-ci-outage-2026-06-21` | dev CI outage: backend.yml has failed 6 consecutive runs on dev (merge gate bypassed ~14h) | open | 2026-06-21 |  |
 | 3 | bug | `code-review-mobile-rn-report-fault-fake-submit` | ReportFaultScreen.tsx handleSubmit() fakes API call with setTimeout(1500) — fault reports never reach backend  | ready | 2026-06-16 | [plan](plans/code-review-mobile-rn-report-fault-fake-submit.md) |
 | 3 | bug | `code-review-reality-web-realtor-mgmt-untranslated` | Reality-web RealtorManagement.tsx hardcoded English strings — agency flow not localized to sk/cs/de | ready | 2026-06-15 | [plan](plans/code-review-reality-web-realtor-mgmt-untranslated.md) |
 | 3 | bug | `code-review-reality-web-share-comparison-404` | Reality-web ComparisonUrlHandler hits non-existent /api/listings/${id} — every shared comparison URL 404s | ready | 2026-06-14 | [plan](plans/code-review-reality-web-share-comparison-404.md) |
@@ -34,6 +35,7 @@
 | 2 | test-gap | `screen-map-drift-pr-1545-reality` | PR #1545 touched routes without updating docs/screens/reality — heuristic | open | 2026-06-21 |  |
 | 2 | test-gap | `screen-map-drift-pr-1453-reality` | PR #1453 touched routes without updating docs/screens/reality — heuristic | open | 2026-06-21 |  |
 | 2 | test-gap | `screen-map-drift-pr-1454-ppt` | PR #1454 touched routes without updating docs/screens/ppt — heuristic | open | 2026-06-21 |  |
+| 2 | dx | `infra-dispatcher-buffer-low-2026-06-21` | Dispatcher buffer-low: claimable=7/72 (GC3 FAIL) — refill coverage backlog (Phase 1.6 next run) | open | 2026-06-21 |  |
 | 2 | bug | `code-review-api-core-vote-partial-cmp-panic` | vote.rs:1765 calculate_question_result() uses partial_cmp().unwrap() on f64 — NaN/Inf weights panic /votes/{id | done | 2026-06-16 |  |
 | 2 | test-gap | `screen-map-drift-pr-1418-ppt` | PR #1418 touched routes/** (faults.route.test.tsx) without updating docs/screens/ppt/* — heuristic, test-file  | open | 2026-06-16 |  |
 | 2 | bug | `code-review-mobile-rn-screens-mock-data` | Mobile RN production screens (Buildings/Meters/Leases/PersonMonths/Notifications/Threads/Forms) render hardcod | open | 2026-06-16 |  |
