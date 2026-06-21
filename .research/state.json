@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_run_iso": "2026-06-21T22:07:09Z",
+  "last_run_ms": 12000,
+  "last_pr_seen": 1659,
+  "last_issue_seen": 1645,
+  "last_commit_sha": "a7167f4c99ceeafc6824695f8cd9f8ec4d6a28dc",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -253,9 +253,9 @@
       "recent_churn": 2691
     },
     "backend/crates/integrations/src/booking.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 433
+      "runs_seen": 2,
+      "last_seen": "2026-06-21",
+      "recent_churn": 4
     },
     "backend/servers/api-server/src/routes/api_ecosystem.rs": {
       "runs_seen": 1,
@@ -263,9 +263,9 @@
       "recent_churn": 133
     },
     "backend/crates/db/src/repositories/reality_portal.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 87
+      "runs_seen": 2,
+      "last_seen": "2026-06-21",
+      "recent_churn": 4
     },
     "backend/servers/api-server/src/routes/iot.rs": {
       "runs_seen": 1,
@@ -321,6 +321,26 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "backend/servers/api-server/tests/voting_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-21",
+      "recent_churn": 7
+    },
+    "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-21",
+      "recent_churn": 5
+    },
+    "frontend/packages/api-client/src/financial/api.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-21",
+      "recent_churn": 4
+    },
+    "backend/crates/api-core/src/extractors/principal.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-21",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -553,7 +573,34 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-21",
+    "stale-routine-2026-06-21",
+    "churn-hotspot-backend-servers-api-server-tests-voting_tests-rs",
+    "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyRoutes-tsx",
+    "churn-hotspot-frontend-packages-api-client-src-financial-api-ts",
+    "churn-hotspot-backend-crates-api-core-src-extractors-principal-rs",
+    "repeated-churn-backend-crates-integrations-src-booking-rs",
+    "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs",
+    "screen-map-drift-pr-1559-ppt",
+    "screen-map-drift-pr-1610-ppt",
+    "screen-map-drift-pr-1621-ppt",
+    "screen-map-drift-pr-1621-reality",
+    "screen-map-drift-pr-1630-ppt",
+    "screen-map-drift-pr-1641-ppt",
+    "screen-map-drift-pr-1642-reality",
+    "screen-map-drift-pr-1654-ppt",
+    "closed-not-merged-pr-1647",
+    "closed-not-merged-pr-1636",
+    "dep-update-noise-pr-1566",
+    "dep-update-noise-pr-1569",
+    "dep-update-noise-pr-1570",
+    "dep-update-noise-pr-1571",
+    "dep-update-noise-pr-1572",
+    "dep-update-noise-pr-1573",
+    "dep-update-noise-pr-1574",
+    "dep-update-noise-pr-1575",
+    "dep-update-noise-pr-1576"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,8 +614,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 187,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0

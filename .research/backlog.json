@@ -266,7 +266,7 @@
       "title": "DeepLinkRouter skips URL-decoding while Android Uri.getQueryParameter decodes — SSO tokens diverge per platform",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06"
@@ -274,14 +274,15 @@
       "evidence": [
         "DeepLinkRouter.kt:103-114 queryParam returns substring after '=' with no percent-decoding",
         "MainActivity.kt:84 uses android.net.Uri.getQueryParameter which DOES URL-decode — Android and shared/iOS paths produce different token strings for the same deep link",
-        "DeepLinkRouter.kt:85 'sso' branch passes raw encoded value into DeepLinkTarget.Sso(token); iOS attempts SSO validation with the wrong string"
+        "DeepLinkRouter.kt:85 'sso' branch passes raw encoded value into DeepLinkTarget.Sso(token); iOS attempts SSO validation with the wrong string",
+        "decayed: -1 on 2026-06-21 (no new signals in 14d)"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt",
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -289,7 +290,7 @@
       "title": "SearchScreen stale-response race — overlapping searches can clobber newer results",
       "vector": "bug",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06",
@@ -298,13 +299,14 @@
       "evidence": [
         "SearchScreen.kt:111-142 — performSearch() launches a coroutine on rememberCoroutineScope() with no Job tracking or cancellation",
         "SearchScreen.kt:144/150/205/214/242 — initial load, debounce, FilterSheet apply/reset, RoomsChipStrip onSelect all fire performSearch() with no overlap guard",
-        "onSuccess overwrites searchResults/totalResults/currentPage unconditionally; older slower response can clobber newer one (no request-token / sequence guard)"
+        "onSuccess overwrites searchResults/totalResults/currentPage unconditionally; older slower response can clobber newer one (no request-token / sequence guard)",
+        "decayed: -1 on 2026-06-21 (no new signals in 14d)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -773,20 +775,21 @@
       "title": "Screen-map drift: PR #1085 modified reality-web listing detail metadata + page without screen-doc update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #1085"
       ],
       "evidence": [
-        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic"
+        "PR #1085 changed frontend/apps/reality-web/src/app/[locale]/listings/[slug]/{metadata.ts,page.tsx} but did not touch docs/screens/reality/*.md — best-effort heuristic",
+        "decayed: -1 on 2026-06-21 (no new signals in 14d)"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -794,20 +797,21 @@
       "title": "Screen-map drift: PR #1100 modified ppt-web App.tsx (FileDisputePageRoute extraction) without screen-doc update",
       "vector": "test-gap",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #1100"
       ],
       "evidence": [
-        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)"
+        "PR #1100 changed frontend/apps/ppt-web/src/App.tsx and FileDisputePageRoute.tsx but did not touch any docs/screens/ppt/*.md — best-effort drift heuristic (file-basename match)",
+        "decayed: -1 on 2026-06-21 (no new signals in 14d)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx",
         "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePageRoute.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -940,20 +944,21 @@
       "title": "Risky churn: api-server main.rs security-headers wiring shipped without a middleware smoke test",
       "vector": "bug",
       "confidence": "medium",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #963"
       ],
       "evidence": [
-        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response"
+        "PR #963 (fix) modified backend/servers/api-server/src/main.rs — a top-churn file this run — with no test diff; the security_headers middleware is now mounted into the api-server tower stack (and reality-server) without a smoke test asserting the middleware actually fires on a sample handler response",
+        "decayed: -1 on 2026-06-21 (no new signals in 14d)"
       ],
       "files": [
         "backend/servers/api-server/src/main.rs",
         "backend/crates/api-core/src/middleware/security_headers.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -1010,20 +1015,21 @@
       "title": "Reality-server listings pagination clamp (PR #959) shipped without a regression test for limit=-1",
       "vector": "test-gap",
       "confidence": "high",
-      "score": 2,
+      "score": 1,
       "status": "open",
       "sources": [
         "PR #959",
         "issue #953"
       ],
       "evidence": [
-        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up"
+        "fix(reality-server): clamp listings pagination before SQL (#953) — 1 file changed (backend/servers/reality-server/src/routes/listings.rs, +74/-3), no *test* file in diff; the original bug (limit=-1 → 500 with raw DB error) was caught in staging without a regression test — adding one is a high-value cheap follow-up",
+        "decayed: -1 on 2026-06-21 (no new signals in 14d)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/listings.rs"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -1670,21 +1676,22 @@
       "title": "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1151"
       ],
       "evidence": [
         "Issue #1151 (no labels, OPEN): Research dispatcher: claimable buffer is stale — true claimable work = 0 despite metric=53",
-        "filed 2026-06-06 18:17Z; root causes: (1) gc1-reconcile.sh stem-join misses flat ids — ~44 open items share exact id with archived done; (2) tier-1 refill re-adds previously-failed archived task_ids; (3) DISPATCHER_URL misconfigured (Anthropic API URL instead of planner webhook returns HTTP 400)"
+        "filed 2026-06-06 18:17Z; root causes: (1) gc1-reconcile.sh stem-join misses flat ids — ~44 open items share exact id with archived done; (2) tier-1 refill re-adds previously-failed archived task_ids; (3) DISPATCHER_URL misconfigured (Anthropic API URL instead of planner webhook returns HTTP 400)",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [
         ".research/gc1-reconcile.sh",
         ".research/management/action-list.json"
       ],
       "created_at": "2026-06-07",
-      "updated_at": "2026-06-07",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -1692,20 +1699,21 @@
       "title": "Churn hotspot: ListingDetailScreen.kt — +1279 LOC this run (gap-82-4 reality mobile favorite toggle)",
       "vector": "refactor",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1121"
       ],
       "evidence": [
         "+1279 LOC churn 2026-06-05..2026-06-06 (PR #1121 gap-82-4-reality-mobile-listing-detail-favorites)",
-        "optimistic favorite-toggle wiring; rollback logic looks correct (captured prior + isFavoriteLoading gate)"
+        "optimistic favorite-toggle wiring; rollback logic looks correct (captured prior + isFavoriteLoading gate)",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/listing/ListingDetailScreen.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -1713,20 +1721,21 @@
       "title": "Churn hotspot: SearchScreen.kt — +1293 LOC this run (gap-82-3 reality mobile search/filters)",
       "vector": "refactor",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1125"
       ],
       "evidence": [
         "+1293 LOC churn 2026-06-05..2026-06-06 (PR #1125 gap-82-3-reality-mobile-search-filters)",
-        "instability proxy; the stale-response race finding lives in the same file"
+        "instability proxy; the stale-response race finding lives in the same file",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/ui/search/SearchScreen.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -1734,22 +1743,23 @@
       "title": "MainActivity reimplements deep-link dispatch instead of calling shared DeepLinkRouter — drift trap",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "mobile-native-kmp segment review 2026-06-06"
       ],
       "evidence": [
         "MainActivity.kt:76-109 handleDeepLink reimplements scheme/host dispatch with android.net.Uri",
         "MainActivity.kt:113-121 a second Android-only DeepLinkTarget sealed class lacks Sso — adding a new shared target silently no-ops on Android until both classes are updated",
-        "DeepLinkRouter.kt:36 documents itself as the single source of truth; Android entry point ignores it"
+        "DeepLinkRouter.kt:36 documents itself as the single source of truth; Android entry point ignores it",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [
         "mobile-native/androidApp/src/main/java/three/two/bit/ppt/reality/MainActivity.kt",
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/navigation/DeepLinkRouter.kt"
       ],
       "created_at": "2026-06-06",
-      "updated_at": "2026-06-06",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -2207,8 +2217,8 @@
       "title": "Churn hotspot: AnnouncementsScreen.tsx — 4 PRs this run, instability proxy",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1077",
@@ -2216,13 +2226,14 @@
         "PR #1098"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx touched by 4 merged PRs in this run — repeated rework",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -2230,8 +2241,8 @@
       "title": "Churn hotspot: AnnouncementsScreen.test.ts — 4 PRs this run, instability proxy",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1077",
@@ -2239,13 +2250,14 @@
         "PR #1098"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)"
+        "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts touched by 4 merged PRs in this run (announcement category cleanup, locale rework, ack flow)",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.test.ts"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -2253,21 +2265,22 @@
       "title": "Churn hotspot: DocumentsScreen.tsx — 3 PRs this run",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "PR #1101",
         "PR #1081",
         "PR #1082"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run"
+        "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx touched by 3 merged PRs in this run",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/documents/DocumentsScreen.tsx"
       ],
       "created_at": "2026-06-05",
-      "updated_at": "2026-06-05",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -2297,8 +2310,8 @@
       "title": "Dispatcher action-list.json corruption when MCP push falls back from blocked git push",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#1014"
       ],
@@ -2306,14 +2319,15 @@
         "Issue #1014 (no labels, OPEN): dispatcher Phase 6 push to dev hit HTTP-403 git proxy block, fell back to MCP push_files; ~92 KB action-list.json could not be transmitted inline → file truncated to 1-2 item stub on dev",
         "assignments.json (9 KB) and gc1-orphan-triage.md (1.5 KB) pushed byte-exact; only action-list.json corrupted",
         "recovery already performed via PRs #1024 (assignments-archive restore) and #1027 + 2efc885f (action-list restore from 704ea44); but the systemic issue remains: dispatcher's MCP fallback can corrupt files >~tens of KB",
-        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy"
+        "proposed systemic fixes: (1) provision GITHUB_TOKEN for curl-based Contents API uploads, (2) actually move done/dropped items to action-list-archive.json each run to keep file small, (3) whitelist git push for .research/ paths through proxy",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [
         ".research/management/action-list.json",
         ".research/dispatcher-prompt.md"
       ],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -2321,17 +2335,18 @@
       "title": "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod)",
       "vector": "triage",
       "confidence": "high",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "#951"
       ],
       "evidence": [
-        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed"
+        "Issue #951 (no labels, OPEN): Deploy blocker: api-server requires ESIGN_TOKEN_SECRET + ESIGN_WEBHOOK_SECRET not injected by deploy-server (staging/prod) — likely resolved by PR #991 (fix(deploy-server): require ESIGN secrets in preflight), keep open until issue closed",
+        "decayed: no new signals in 14 days (cutoff 2026-06-07)"
       ],
       "files": [],
       "created_at": "2026-06-03",
-      "updated_at": "2026-06-03",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -3334,19 +3349,21 @@
       "title": "Churn hotspot: backend/crates/integrations/src/booking.rs (+404/−29 in PR #1294 Booking.com OTA retry)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "PR #1294 commit 7ccce8a"
+        "PR #1294 commit 7ccce8a",
+        "PR #1633"
       ],
       "evidence": [
-        "backend/crates/integrations/src/booking.rs +404/-29 (433 line-changes) in PR #1294 (feat-booking-rate-availability-push-v2, epic-83 story 83.2). Hotspot due to Booking.com OTA retry/error handling — adds BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP server. First runs_seen entry."
+        "backend/crates/integrations/src/booking.rs +404/-29 (433 line-changes) in PR #1294 (feat-booking-rate-availability-push-v2, epic-83 story 83.2). Hotspot due to Booking.com OTA retry/error handling — adds BookingRetryConfig + post_ota_with_retry + 3 retry tests with mock TCP server. First runs_seen entry.",
+        "repeated-churn 2026-06-21: hotspot fired again (runs_seen=2). New evidence: PRs #1560/#1577/#1617/#1633 all touched this file."
       ],
       "files": [
         "backend/crates/integrations/src/booking.rs"
       ],
       "created_at": "2026-06-12",
-      "updated_at": "2026-06-12",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -3374,19 +3391,21 @@
       "title": "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs (+59/−28 in PR #1297 PAP-142 IDOR scoping)",
       "vector": "refactor",
       "confidence": "high",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "sources": [
-        "PR #1297 commit 8c711c6"
+        "PR #1297 commit 8c711c6",
+        "PR #1632"
       ],
       "evidence": [
-        "backend/crates/db/src/repositories/reality_portal.rs +59/-28 (87 line-changes) in PR #1297 (PAP-142 IDOR scoping for import jobs + feed subscriptions). 7 repo methods now require user_id/agency_id second-arg + WHERE-clause scoping. Paired with reality-server/src/routes/imports.rs +38/-19 in same PR."
+        "backend/crates/db/src/repositories/reality_portal.rs +59/-28 (87 line-changes) in PR #1297 (PAP-142 IDOR scoping for import jobs + feed subscriptions). 7 repo methods now require user_id/agency_id second-arg + WHERE-clause scoping. Paired with reality-server/src/routes/imports.rs +38/-19 in same PR.",
+        "repeated-churn 2026-06-21: hotspot fired again (runs_seen=2). New evidence: PRs #1561/#1603/#1620/#1632 touched portal authz path."
       ],
       "files": [
         "backend/crates/db/src/repositories/reality_portal.rs"
       ],
       "created_at": "2026-06-12",
-      "updated_at": "2026-06-12",
+      "updated_at": "2026-06-21",
       "plan": null
     },
     {
@@ -3944,6 +3963,313 @@
       "files": [],
       "created_at": "2026-06-16",
       "updated_at": "2026-06-16",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-voting_tests-rs",
+      "title": "Churn hotspot: voting_tests.rs — 7 PRs this window, root of red dev trunk (#1645/#1656)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1625",
+        "PR #1656",
+        "issue #1645"
+      ],
+      "evidence": [
+        "voting_tests.rs touched in 7 merged PRs across the 5-day window (top of the file-occurrence count).",
+        "PR #1656 root-cause: the file mixed schema-less #[sqlx::test] with #[sqlx::test(migrator = db::MIGRATOR)] tests, leaving the migrator tests against an un-migrated DB → register 500 → red dev trunk.",
+        "Workaround landed (split PDF-report tests into a new uniform binary), but the underlying \"no mixed-migrator binaries\" invariant is not enforced anywhere — any future test in any binary can re-create this class."
+      ],
+      "files": [
+        "backend/servers/api-server/tests/voting_tests.rs",
+        "backend/servers/api-server/tests/voting_report_tests.rs",
+        "backend/servers/api-server/tests/common/mod.rs"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyRoutes-tsx",
+      "title": "Churn hotspot: ppt-web lazyRoutes.tsx — 5 PRs in 5 days, central route registry",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1621",
+        "PR #1641",
+        "PR #1646",
+        "PR #1652",
+        "PR #1653"
+      ],
+      "evidence": [
+        "lazyRoutes.tsx changed in 5 merged PRs this window — accounting/payment-matching, AI dashboards, IoT (3×), invoice download.",
+        "Single-file central route registry is a structural bottleneck: every new feature lands here, every merge conflict starts here."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-api-client-src-financial-api-ts",
+      "title": "Churn hotspot: generated financial/api.ts — 4 PRs touching the @hey-api generated client",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1616",
+        "PR #1623",
+        "PR #1624",
+        "PR #1629"
+      ],
+      "evidence": [
+        "4 merged PRs touched the generated financial/api.ts: optional-auth interceptor refactor (#1616), typespec accounting model (#1623), payment-matching SDK adoption (#1624), financial-client auth wiring fix (#1629).",
+        "Generated file but the *contract* keeps moving — every typespec/auth change re-emits the bundle."
+      ],
+      "files": [
+        "frontend/packages/api-client/src/financial/api.ts",
+        "docs/api/typespec/accounting.tsp"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-api-core-src-extractors-principal-rs",
+      "title": "Churn hotspot: api-core principal extractor — 2 PRs, dedup landing in this window",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1632",
+        "PR #1638"
+      ],
+      "evidence": [
+        "PR #1638 deduped principal-extractor JWT path (per-tenant role lookup) and #1632 hardened portal-import scoping — both rewrote the same extractor.",
+        "Single auth bottleneck — every regression here is cross-cutting (multi-tenant isolation)."
+      ],
+      "files": [
+        "backend/crates/api-core/src/extractors/principal.rs"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "title": "Screen-map drift: PR #1559 modified ppt-web announcements route (Story 6.3 optimistic add) with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1559"
+      ],
+      "evidence": [
+        "PR #1559 modified ppt route file(s) (frontend/apps/ppt-web/src/routes/groups/announcements.tsx) without touching docs/screens/ppt/*.md — heuristic, may be benign if the route was a pure refactor of an existing screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "title": "Screen-map drift: PR #1610 modified ppt-web faults route (confirm-delete + stats refresh) with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1610"
+      ],
+      "evidence": [
+        "PR #1610 modified ppt route file(s) (frontend/apps/ppt-web/src/routes/groups/faults.tsx) without touching docs/screens/ppt/*.md — heuristic, may be benign if the route was a pure refactor of an existing screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "title": "Screen-map drift: PR #1621 relocated payment-matching to ppt-web with no docs/screens/ppt/accounting update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1621"
+      ],
+      "evidence": [
+        "PR #1621 modified ppt route file(s) (frontend/apps/ppt-web/src/routes/groups/accounting.tsx) without touching docs/screens/ppt/*.md — heuristic, may be benign if the route was a pure refactor of an existing screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "title": "Screen-map drift: PR #1621 removed payment-matching from reality-web with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1621"
+      ],
+      "evidence": [
+        "PR #1621 modified reality route file(s) (frontend/apps/reality-web/src/app/accounting/page.tsx) without touching docs/screens/reality/*.md — heuristic, may be benign if the route was a pure refactor of an existing screen."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/page.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "title": "Screen-map drift: PR #1630 wired Payment Management page to org-wide endpoints with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1630"
+      ],
+      "evidence": [
+        "PR #1630 modified ppt route file(s) (frontend/apps/ppt-web/src/routes/groups/financial.tsx) without touching docs/screens/ppt/*.md — heuristic, may be benign if the route was a pure refactor of an existing screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "title": "Screen-map drift: PR #1641 added Sentiment & Predictive Maintenance dashboards (new route group) with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1641"
+      ],
+      "evidence": [
+        "PR #1641 modified ppt route file(s) (frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx) without touching docs/screens/ppt/*.md — heuristic, may be benign if the route was a pure refactor of an existing screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1642-reality",
+      "title": "Screen-map drift: PR #1642 added portal-user listing CRUD edit pages (account + realtor) with no docs/screens/reality update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1642"
+      ],
+      "evidence": [
+        "PR #1642 modified reality route file(s) (frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx) without touching docs/screens/reality/*.md — heuristic, may be benign if the route was a pure refactor of an existing screen."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "title": "Screen-map drift: PR #1654 added invoice PDF download button to financial route with no docs/screens/ppt update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #1654"
+      ],
+      "evidence": [
+        "PR #1654 modified ppt route file(s) (frontend/apps/ppt-web/src/routes/groups/financial.tsx) without touching docs/screens/ppt/*.md — heuristic, may be benign if the route was a pure refactor of an existing screen."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "title": "PR #1647 (feat(iot) sensor register+edit BIT-147) closed unmerged — investigate why iteration didn't land",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1647"
+      ],
+      "evidence": [
+        "PR #1647 was closed without merge while the IoT-sensor work shipped via #1646/#1649/#1650/#1652/#1653 — suggests this PR was superseded.",
+        "Likely benign (split into smaller PRs) but warrants a one-line confirmation note in the brief."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/iot.tsx"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
+      "plan": null
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "title": "PR #1636 (fix(reality-server) portal authz + principal dedup) closed unmerged — landed via #1632 + #1638",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #1636"
+      ],
+      "evidence": [
+        "PR #1636 closed unmerged after being split into #1632 (portal authz scoping) and #1638 (principal extractor dedup) — both landed cleanly. Process trace only."
+      ],
+      "files": [
+        "backend/crates/api-core/src/extractors/principal.rs"
+      ],
+      "created_at": "2026-06-21",
+      "updated_at": "2026-06-21",
       "plan": null
     }
   ]

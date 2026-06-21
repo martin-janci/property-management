@@ -1,0 +1,281 @@
+{
+  "generated_at": "2026-06-21T22:07:09Z",
+  "trigger_text": "",
+  "phase_results": {
+    "phase_1_observe": "ok",
+    "phase_1_5_review": "skipped (catch-up run: 80 merged PRs to process; rotating expert review deferred to next incremental run)",
+    "phase_1_6_management": "skipped (catch-up run: cursor advance deferred; pm_cursor unchanged at index 5 → pm-security)",
+    "phase_2_decide": "ok",
+    "phase_3_promote": "no candidates (no open items at score >= 3 outside the 6 already-ready plans)",
+    "phase_3_5_adversarial": "n/a (no new plans)",
+    "phase_4_write": "ok",
+    "phase_5_autofix": "skipped — no candidate matched the certainty bar (confidence=high + score>=3 + allowlist)",
+    "phase_6_commit": "pending"
+  },
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible signals (no high-confidence drift / orphan / fixme / dep-lockfile / stalled-review at the certainty bar)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso = 2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "Routine has not run in 5d 18h — well past the 36h threshold. Cloud cron likely paused/broken.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-2026-06-21",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso = 2026-06-16T03:25:00Z (5 days ago)",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 5d old; cloud routine has not ticked. Dispatcher (separate loop on planning branch) is still active per recent .research/management/assignments.json commits.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-voting_tests-rs",
+      "type": "churn-hotspot",
+      "source": "merged-PR file-occurrence count (7 PRs in 5-day window)",
+      "score_delta": 1,
+      "evidence": "voting_tests.rs touched in 7 PRs; root of red-dev incident #1645 — sqlx::test migrator/no-migrator mix → register 500 → red trunk. PR #1656 isolated the offending tests but the structural invariant isn't enforced.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyRoutes-tsx",
+      "type": "churn-hotspot",
+      "source": "merged-PR file-occurrence count (5 PRs in 5-day window)",
+      "score_delta": 1,
+      "evidence": "lazyRoutes.tsx central route registry changed in PRs #1621/#1641/#1646/#1652/#1653 — structural merge-conflict bottleneck.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-api-client-src-financial-api-ts",
+      "type": "churn-hotspot",
+      "source": "merged-PR file-occurrence count (4 PRs in 5-day window)",
+      "score_delta": 1,
+      "evidence": "Generated @hey-api financial client regenerated 4× via PRs #1616/#1623/#1624/#1629; contract churn signals model-layer flux.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-api-core-src-extractors-principal-rs",
+      "type": "churn-hotspot",
+      "source": "merged-PR file-occurrence count (2 PRs in 5-day window)",
+      "score_delta": 1,
+      "evidence": "principal.rs touched in PRs #1632 (portal-import scoping fix) and #1638 (extractor dedup) — cross-cutting auth code under active rewrite.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=2 after this run",
+      "score_delta": 1,
+      "evidence": "booking.rs hot again (PRs #1560/#1577/#1617/#1633); previously hot 2026-06-12. Mapped to existing item churn-hotspot-backend-crates-integrations-src-booking-rs; +1 → score 2.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history.runs_seen=2 after this run",
+      "score_delta": 1,
+      "evidence": "reality_portal.rs hot again (PRs #1561/#1603/#1620/#1632 portal-authz path); previously hot 2026-06-12. Mapped to existing item; +1 → score 2.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 (announcement-comments optimistic add, Story 6.3) touched ppt-web/src/routes/groups/announcements.tsx without updating docs/screens/ppt/*.md.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": "PR #1610 (faults confirm-delete + stats refresh) touched ppt-web/src/routes/groups/faults.tsx without updating docs/screens/ppt/*.md.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (relocate payment-matching to ppt-web) touched ppt-web/src/routes/groups/accounting.tsx + lazyRoutes.tsx without updating docs/screens/ppt/accounting/*.md.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 also removed payment-matching from reality-web/src/app/accounting/ without updating docs/screens/reality/*.md.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": "PR #1630 (Payment Management page wired to org-wide endpoints, #975.5) touched ppt-web/src/routes/groups/financial.tsx without updating docs/screens/ppt/financial.md.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "PR #1641 (Sentiment + Predictive Maintenance dashboards, Epic 13/Story 13.2-3) added ppt-web/src/routes/groups/ai-dashboards.tsx + AppRoutes.tsx + lazyRoutes.tsx without updating docs/screens/ppt/*.md.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1642-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1642",
+      "score_delta": 2,
+      "evidence": "PR #1642 (portal-user listing CRUD owner/realtor edit, Epic 15) added reality-web/.../account/listings/[id]/edit/page.tsx + realtor/.../edit/page.tsx without updating docs/screens/reality/*.md.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": "PR #1654 (invoice PDF download button) touched ppt-web/src/routes/groups/financial.tsx without updating docs/screens/ppt/financial.md.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "evidence": "PR #1647 (feat(iot) sensor register/edit BIT-147) closed unmerged; IoT work shipped via #1646/#1649/#1650/#1652/#1653 — superseded by smaller PRs.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "evidence": "PR #1636 (reality-server portal authz + principal dedup, #1584 findings 1/4) closed unmerged after being split into #1632 + #1638 — both landed.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": "dependabot: androidx.compose-bom 2026.05.01 → 2026.06.00 (mobile-native compose group).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1569",
+      "type": "dep-update-noise",
+      "source": "PR #1569",
+      "score_delta": 0,
+      "evidence": "dependabot: dtolnay/rust-toolchain 1.94.1 → 1.100.0 (actions-minor-patch).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": "dependabot: mikepenz/action-junit-report 5 → 6 (github_actions).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": "dependabot: npm-minor-patch group in /frontend (6 updates).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": "dependabot: expo-secure-store 55.0.14 → 56.0.4 in /frontend.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": "dependabot-dev: @types/node 20.19.40 → 25.9.3 in /frontend.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1574",
+      "type": "dep-update-noise",
+      "source": "PR #1574",
+      "score_delta": 0,
+      "evidence": "dependabot: cargo-minor-patch group (3 updates).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": "dependabot-dev: @babel/core 7.29.7 → 8.0.1 in /frontend (major bump, +583/-226 lines).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": "dependabot: i18next 25.10.10 → 26.3.1 (major bump) in /frontend.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-06-21.md && first line == # 2026-06-21", "observed": "pass", "expected": "pass" },
+    { "goal": "G2", "passed": true, "command": "jq state advance check", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique-ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq signals-not-double-counted", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "score cap + decay applied", "observed": "all <= 8; 6 decayed -1, 9 dropped to 0", "expected": "all <= 8; decayed or dropped" },
+    { "goal": "G6", "passed": true, "command": "new plans w/ adversarial annotation", "observed": "0 new plans", "expected": "n/a" },
+    { "goal": "G7", "passed": true, "command": "≤2 new plans, all readiness gates", "observed": "0 new plans", "expected": "≤2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only outside .research/", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secret/host scan in staged diff", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md regen byte-identity", "observed": "diff -q OK", "expected": "diff -q OK" },
+    { "goal": "G11", "passed": true, "command": "phase-failure honesty: phases that failed listed and cursor unchanged", "observed": "Phase 1.5 + 1.6 skipped (deliberate, not failure); cursors unchanged for those", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still in plans/ or _archive/", "observed": "9 active + 7 archived; no missing", "expected": "no missing" },
+    { "goal": "G13", "passed": true, "command": "archive count >= HEAD archive count", "observed": "7 >= 7", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md regen byte-identity", "observed": "diff -q OK", "expected": "diff -q OK" },
+    { "goal": "G15", "passed": true, "command": "auto_fix discipline (cap + kill switch + idempotency)", "observed": "0 actions; kill switch not set; no prior-history clash", "expected": "all sub-checks pass" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid + pm_cursor in 0..7 + coverage_cursor in [0, #epics)", "observed": "pm_cursor=5, coverage_cursor=12 (epics=13); Phase 1.6 skipped this run → GC7 advance clause not triggered", "expected": "all valid" },
+    { "goal": "G17", "passed": true, "command": "Telegram token scan in staged diff", "observed": "0", "expected": "0" }
+  ]
+}
