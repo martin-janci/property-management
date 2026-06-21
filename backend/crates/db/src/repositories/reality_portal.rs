@@ -172,6 +172,7 @@ impl RealityPortalRepository {
         &self,
         user_id: Uuid,
         limit: i64,
+        offset: i64,
     ) -> Result<Vec<SavedSearchAlert>, SqlxError> {
         sqlx::query_as::<_, SavedSearchAlert>(
             r#"
@@ -188,11 +189,12 @@ impl RealityPortalRepository {
             JOIN portal_saved_searches s ON s.id = q.saved_search_id
             WHERE q.user_id = $1
             ORDER BY q.created_at DESC
-            LIMIT $2
+            LIMIT $2 OFFSET $3
             "#,
         )
         .bind(user_id)
         .bind(limit)
+        .bind(offset)
         .fetch_all(&self.pool)
         .await
     }

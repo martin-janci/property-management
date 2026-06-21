@@ -5,7 +5,7 @@
 use crate::state::AppState;
 use api_core::extractors::RequestPrincipal;
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -264,12 +264,33 @@ pub async fn run_saved_search(
 // them. (reality-server has no email transport; in-app is the delivery channel.)
 // ============================================================================
 
+/// Default and maximum page size for the alerts list (#1627).
+const ALERTS_DEFAULT_LIMIT: i64 = 100;
+const ALERTS_MAX_LIMIT: i64 = 200;
+
+/// Pagination query for the saved-search alerts list.
+#[derive(Debug, Deserialize)]
+pub struct SearchAlertsQuery {
+    /// Page size (default 100, capped at 200).
+    #[serde(default)]
+    pub limit: Option<i64>,
+    /// Number of newest alerts to skip (default 0).
+    #[serde(default)]
+    pub offset: Option<i64>,
+}
+
 /// Saved-search alerts list response.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SearchAlertsResponse {
     pub alerts: Vec<SavedSearchAlert>,
     /// Number of still-undelivered (`pending`) alerts — drives an unread badge.
+    /// This is the total across all pages, so it can legitimately exceed the
+    /// number of `alerts` rows returned for the current page.
     pub unread_count: i64,
+    /// Page size applied (after clamping).
+    pub limit: i64,
+    /// Offset applied.
+    pub offset: i64,
 }
 
 /// Mark-all-read response.
@@ -291,11 +312,18 @@ pub struct MarkAllAlertsReadResponse {
 pub async fn list_search_alerts(
     State(state): State<AppState>,
     principal: RequestPrincipal,
+    Query(query): Query<SearchAlertsQuery>,
 ) -> Result<Json<SearchAlertsResponse>, (axum::http::StatusCode, String)> {
+    let limit = query
+        .limit
+        .unwrap_or(ALERTS_DEFAULT_LIMIT)
+        .clamp(1, ALERTS_MAX_LIMIT);
+    let offset = query.offset.unwrap_or(0).max(0);
+
     let (alerts, unread_count) = tokio::try_join!(
         state
             .reality_portal_repo
-            .get_search_alerts(principal.user_id, 100),
+            .get_search_alerts(principal.user_id, limit, offset),
         state
             .reality_portal_repo
             .count_pending_search_alerts(principal.user_id),
@@ -305,6 +333,8 @@ pub async fn list_search_alerts(
     Ok(Json(SearchAlertsResponse {
         alerts,
         unread_count,
+        limit,
+        offset,
     }))
 }
 
