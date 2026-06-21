@@ -1,0 +1,410 @@
+{
+  "generated": "2026-06-21T14:15:00Z",
+  "stats": {
+    "merged_prs": 96,
+    "closed_unmerged": 3,
+    "dep_update_noise_count": 7,
+    "revert_count": 0,
+    "hotfix_no_test_count": 2,
+    "screen_map_drift_count": 7,
+    "risky_churn_count": 0,
+    "unchecked_todo_count": 3,
+    "fixme_in_merged_code_count": 0,
+    "closed_unmerged_count": 3,
+    "analysed_with_diffs": 39,
+    "no_diff_available": 57,
+    "new_items_added": 19,
+    "decayed": 6,
+    "dropped": 9,
+    "resolved": 0,
+    "bumped": 0
+  },
+  "summary": "5-day window shipped 96 PRs: heavy focus on accounting/payment matching (#975 series), voting PDF reports (#1622-#1625), IoT sensor stories (Epic 14: #1646/#1649/#1653/#1655), and Sentiment+Predictive-Maintenance AI dashboards (Epic 13). Significant security follow-up: MFA recovery limiter (#1580/#1602), OTA manager-gating (#1552/#1601/#1639), portal-import scoping (#1561/#1620/#1632). 25 hotfix PRs (high churn around documents, RLS, OAuth). 7 dep PRs. Notable: 3 PRs merged with unchecked TODO checkboxes (#1606, #1625, #1641).",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "routine",
+      "score_delta": 0,
+      "evidence": "Routine has not run for ~5 days (since 2026-06-16T03:25:00Z). Cloud cron may be paused.",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "evidence": "PR closed without merging since cursor (likely superseded)",
+      "confidence": "medium",
+      "candidate_vector": "process",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "evidence": "PR closed without merging since cursor (likely superseded)",
+      "confidence": "medium",
+      "candidate_vector": "process",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1511",
+      "score_delta": 1,
+      "evidence": "PR closed without merging since cursor (likely superseded)",
+      "confidence": "medium",
+      "candidate_vector": "process",
+      "files": []
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 3,
+      "evidence": "1 unchecked checklist item(s) post-merge: `cargo test -p api-server accounting_contacts_authz` against real PG (CI backend",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": "Touched ppt-web routes without updating docs/screens/ppt/: frontend/apps/ppt-web/src/features/faults/pages/FaultsPage.tsx, frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx, frontend/apps/ppt-web/src/routes/groups/faults.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/features/faults/pages/FaultsPage.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1611",
+      "score_delta": 2,
+      "evidence": "Touched ppt-web routes without updating docs/screens/ppt/: frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1617",
+      "type": "hotfix-no-test",
+      "source": "PR #1617",
+      "score_delta": 2,
+      "evidence": "Fix PR with no test files in diff: fix(integrations): wire combined OTA availability+rate push into listing-push route (close",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/booking_channel.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "Touched ppt-web routes without updating docs/screens/ppt/: frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx, frontend/apps/ppt-web/src/routes/groups/accounting.tsx, frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/PaymentMatchingPage.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "Touched reality-web app/* without updating docs/screens/reality/: frontend/apps/reality-web/src/app/accounting/layout.tsx, frontend/apps/reality-web/src/app/accounting/page.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx",
+        "frontend/apps/reality-web/src/app/accounting/page.tsx"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1625",
+      "type": "unchecked-todo",
+      "source": "PR #1625",
+      "score_delta": 3,
+      "evidence": "4 unchecked checklist item(s) post-merge: `cargo build -p api-server` clean",
+      "confidence": "high",
+      "candidate_vector": "security",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": "Touched ppt-web routes without updating docs/screens/ppt/: frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1639",
+      "type": "hotfix-no-test",
+      "source": "PR #1639",
+      "score_delta": 2,
+      "evidence": "Fix PR with no test files in diff: fix(api-server): manager-gate Airbnb linked-listing config reads (closes #1626)",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/airbnb_connections.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1641",
+      "type": "unchecked-todo",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "5 unchecked checklist item(s) post-merge: `GET /ai/sentiment` renders KPI cards, SVG trend line, alert list",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": []
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "Touched ppt-web routes without updating docs/screens/ppt/: frontend/apps/ppt-web/src/features/predictive-maintenance/pages/PredictiveMaintenancePage.tsx, frontend/apps/ppt-web/src/features/predictive-maintenance/pages/index.ts, frontend/apps/ppt-web/src/features/sentiment/pages/SentimentDashboardPage.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/pages/PredictiveMaintenancePage.tsx",
+        "frontend/apps/ppt-web/src/features/predictive-maintenance/pages/index.ts",
+        "frontend/apps/ppt-web/src/features/sentiment/pages/SentimentDashboardPage.tsx",
+        "frontend/apps/ppt-web/src/features/sentiment/pages/index.ts",
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": "Touched ppt-web routes without updating docs/screens/ppt/: frontend/apps/ppt-web/src/features/financial/pages/InvoiceManagementPage.tsx, frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/features/financial/pages/InvoiceManagementPage.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "5-day churn",
+      "score_delta": 0,
+      "evidence": "backend/crates/integrations/src/booking.rs \u2014 4295 lines this run (top-1 hotspot); runs_seen 1\u21922",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "booking.rs hotspot runs_seen 1\u21922 across 2026-06-12 + 2026-06-21",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "5-day churn",
+      "score_delta": 0,
+      "evidence": "backend/crates/db/src/repositories/document.rs \u2014 3077 lines this run (top-2 hotspot); runs_seen 1\u21922",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "document.rs hotspot runs_seen 1\u21922 across 2026-06-10 + 2026-06-21",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "5-day churn",
+      "score_delta": 0,
+      "evidence": "backend/crates/db/src/repositories/rental.rs \u2014 2837 lines this run (top-3 hotspot); cumulative re-emit",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "bug-ci-red-voting-pdf-1645",
+      "type": "code-review-finding",
+      "source": "Issue #1645",
+      "score_delta": 3,
+      "evidence": "backend.yml red on dev since 2026-06-20 22:24 UTC (PR #1625, commit 3c63a6d3). pdf_report tests panic at tests/common/mod.rs:507 (setup 500\u2260201). Blocks ALL backend PR merges.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/voting.rs",
+        "backend/servers/api-server/tests/voting_tests.rs",
+        "backend/servers/api-server/tests/common/mod.rs"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar (confidence=high + score\u22653 + allowlist)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-21.md && head -1 == '# 2026-06-21'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emits with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "no scores > 8; 6 decayed; 9 dropped",
+      "expected": "cap held"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial annotation",
+      "observed": "passed for bug-ci-red-voting-pdf-1645",
+      "expected": "annotation present"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all metadata + headings + capability + Mode + files-exist",
+      "observed": "1 new plan, all checks OK",
+      "expected": "<=2 with all gates"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty \u2014 Phase 1.5/1.6 skipped, cursors not advanced",
+      "observed": "review_cursor + pm_cursor + coverage_cursor untouched",
+      "expected": "match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "promoted plans converge \u2014 N/A; only new plan this run",
+      "observed": "no prior plans removed",
+      "expected": "no thrashing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "7 now, 7 HEAD (>=)",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to regen",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline \u2014 0 actions this run, allowlist not triggered",
+      "observed": "auto_fix_actions empty; kill switch not set",
+      "expected": "discipline held"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid (Phase 1.6 skipped)",
+      "observed": "no-op (skipped)",
+      "expected": "no-op when skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret in diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}
