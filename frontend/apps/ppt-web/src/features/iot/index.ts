@@ -4,4 +4,13 @@
  * Manager-web front door for the IoT sensor backend.
  */
 export * from './components';
-export { IotDashboardPage, type IotDashboardPageProps } from './pages';
+export {
+  IotDashboardPage,
+  type IotDashboardPageProps,
+  type SensorFormBuildingOption,
+  SensorFormPage,
+  type SensorFormPageProps,
+  type SensorFormValues,
+  SensorListPage,
+  type SensorListPageProps,
+} from './pages';

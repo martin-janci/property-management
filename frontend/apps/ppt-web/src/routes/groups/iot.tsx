@@ -5,18 +5,42 @@
  * Wires `@ppt/api-client` IoT hooks to the presentational dashboard page,
  * mirroring the outages/faults route-group convention.
  */
+import type { CreateSensorRequest, Sensor, UpdateSensorRequest } from '@ppt/api-client';
 import {
   useAcknowledgeSensorAlert,
+  useBuildings,
+  useCreateSensor,
+  useDeleteSensor,
   useIotDashboard,
   useResolveSensorAlert,
+  useSensor,
   useSensorReadings,
   useSensors,
+  useUpdateSensor,
 } from '@ppt/api-client';
 import { useMemo, useState } from 'react';
-import { Route } from 'react-router-dom';
-import { AuthRequiredGate } from '../../components';
+import { Route, useNavigate, useParams } from 'react-router-dom';
+import { AuthRequiredGate, useToast } from '../../components';
 import { useAuth } from '../../contexts';
-import { IotDashboardPage } from '../lazyRoutes';
+import type { SensorFormValues } from '../../features/iot';
+import { IotDashboardPage, IotSensorFormPage, IotSensorListPage } from '../lazyRoutes';
+import { transformBuildingForUI } from '../shared';
+
+/** Map a numeric-string form field to a number, or null when blank. */
+function toIntOrNull(value: string): number | null {
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return null;
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** Empty-string → null helper for optional text fields. */
+function orNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
 
 /**
  * Route wrapper for the IoT dashboard (Epic 14 / FR71-75).
@@ -71,11 +95,205 @@ function IotDashboardPageRoute() {
   );
 }
 
+/**
+ * Route wrapper for the standalone sensor registry / management list (FR71).
+ * Wires list + delete and navigation to register/edit.
+ */
+function SensorListPageRoute() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  const { data: sensorsData, isLoading } = useSensors();
+  const deleteSensor = useDeleteSensor();
+
+  const sensors = useMemo(() => sensorsData?.sensors ?? [], [sensorsData]);
+
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
+
+  const handleDelete = async (sensor: Sensor) => {
+    if (
+      !window.confirm(
+        `Delete sensor "${sensor.name}"? This removes its readings and alerts and cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      await deleteSensor.mutateAsync(sensor.id);
+      showToast({ type: 'success', title: 'Sensor deleted', message: sensor.name });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Failed to delete sensor',
+        message: error instanceof Error ? error.message : 'Unexpected error',
+      });
+    }
+  };
+
+  return (
+    <IotSensorListPage
+      sensors={sensors}
+      isLoading={isLoading}
+      deletingSensorId={deleteSensor.isPending ? (deleteSensor.variables ?? null) : null}
+      onNavigateToDashboard={() => navigate('/iot')}
+      onNavigateToRegister={() => navigate('/iot/sensors/new')}
+      onNavigateToEdit={(id) => navigate(`/iot/sensors/${id}/edit`)}
+      onDelete={handleDelete}
+    />
+  );
+}
+
+/** Route wrapper for registering a new sensor (FR71). */
+function RegisterSensorPageRoute() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  const { data: buildingsData, isLoading: buildingsLoading } = useBuildings();
+  const createSensor = useCreateSensor();
+
+  if (!user?.organizationId || !user.id) {
+    return <AuthRequiredGate />;
+  }
+
+  const organizationId = user.organizationId;
+  const createdBy = user.id;
+
+  const buildings = (buildingsData?.items ?? []).map(transformBuildingForUI);
+
+  const handleSubmit = async (values: SensorFormValues) => {
+    const payload: CreateSensorRequest = {
+      organization_id: organizationId,
+      building_id: values.buildingId,
+      name: values.name.trim(),
+      sensor_type: values.sensorType.trim(),
+      location: orNull(values.location),
+      location_description: orNull(values.locationDescription),
+      connection_type: orNull(values.connectionType),
+      unit_of_measurement: orNull(values.unitOfMeasurement),
+      data_interval_seconds: toIntOrNull(values.dataIntervalSeconds),
+      manufacturer: orNull(values.manufacturer),
+      model: orNull(values.model),
+      firmware_version: orNull(values.firmwareVersion),
+      serial_number: orNull(values.serialNumber),
+      created_by: createdBy,
+    };
+    try {
+      await createSensor.mutateAsync(payload);
+      showToast({ type: 'success', title: 'Sensor registered', message: payload.name });
+      navigate('/iot/sensors');
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Failed to register sensor',
+        message: error instanceof Error ? error.message : 'Unexpected error',
+      });
+    }
+  };
+
+  return (
+    <IotSensorFormPage
+      mode="create"
+      buildings={buildings}
+      buildingsLoading={buildingsLoading}
+      isSaving={createSensor.isPending}
+      onSubmit={handleSubmit}
+      onCancel={() => navigate('/iot/sensors')}
+    />
+  );
+}
+
+/** Map a loaded sensor onto the editable form value shape. */
+function sensorToFormValues(sensor: Sensor): Partial<SensorFormValues> {
+  return {
+    buildingId: sensor.building_id,
+    name: sensor.name,
+    sensorType: sensor.sensor_type,
+    location: sensor.location ?? '',
+    locationDescription: sensor.location_description ?? '',
+    connectionType: sensor.connection_type ?? '',
+    unitOfMeasurement: sensor.unit_of_measurement ?? '',
+    dataIntervalSeconds:
+      sensor.data_interval_seconds != null ? String(sensor.data_interval_seconds) : '',
+    manufacturer: sensor.manufacturer ?? '',
+    model: sensor.model ?? '',
+    firmwareVersion: sensor.firmware_version ?? '',
+    serialNumber: sensor.serial_number ?? '',
+    status: sensor.status,
+  };
+}
+
+/** Route wrapper for editing an existing sensor (FR71). */
+function EditSensorPageRoute() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { sensorId } = useParams<{ sensorId: string }>();
+
+  const { data: sensor, isLoading } = useSensor(sensorId ?? '');
+  const { data: buildingsData, isLoading: buildingsLoading } = useBuildings();
+  const updateSensor = useUpdateSensor();
+
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
+
+  const buildings = (buildingsData?.items ?? []).map(transformBuildingForUI);
+
+  const handleSubmit = async (values: SensorFormValues) => {
+    if (!sensorId) {
+      return;
+    }
+    const payload: UpdateSensorRequest = {
+      name: values.name.trim(),
+      location: orNull(values.location),
+      location_description: orNull(values.locationDescription),
+      connection_type: orNull(values.connectionType),
+      unit_of_measurement: orNull(values.unitOfMeasurement),
+      data_interval_seconds: toIntOrNull(values.dataIntervalSeconds),
+      status: values.status,
+      manufacturer: orNull(values.manufacturer),
+      model: orNull(values.model),
+      firmware_version: orNull(values.firmwareVersion),
+    };
+    try {
+      await updateSensor.mutateAsync({ id: sensorId, data: payload });
+      showToast({ type: 'success', title: 'Sensor updated', message: payload.name ?? '' });
+      navigate('/iot/sensors');
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Failed to update sensor',
+        message: error instanceof Error ? error.message : 'Unexpected error',
+      });
+    }
+  };
+
+  return (
+    <IotSensorFormPage
+      mode="edit"
+      buildings={buildings}
+      buildingsLoading={buildingsLoading}
+      isLoading={isLoading}
+      initialValues={sensor ? sensorToFormValues(sensor) : undefined}
+      isSaving={updateSensor.isPending}
+      onSubmit={handleSubmit}
+      onCancel={() => navigate('/iot/sensors')}
+    />
+  );
+}
+
 /** IoT / Smart-Building routes (Epic 14 / FR71-75). */
 export function iotRoutes() {
   return (
     <>
       <Route path="/iot" element={<IotDashboardPageRoute />} />
+      <Route path="/iot/sensors" element={<SensorListPageRoute />} />
+      <Route path="/iot/sensors/new" element={<RegisterSensorPageRoute />} />
+      <Route path="/iot/sensors/:sensorId/edit" element={<EditSensorPageRoute />} />
     </>
   );
 }

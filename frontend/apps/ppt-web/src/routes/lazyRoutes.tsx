@@ -50,6 +50,12 @@ export const VoteDetailPage = lazy(() =>
 export const IotDashboardPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.IotDashboardPage }))
 );
+export const IotSensorListPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.SensorListPage }))
+);
+export const IotSensorFormPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.SensorFormPage }))
+);
 
 // Disputes feature (Epic 77)
 export const DisputesPage = lazy(() =>

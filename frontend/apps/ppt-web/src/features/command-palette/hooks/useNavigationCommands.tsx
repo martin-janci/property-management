@@ -76,6 +76,28 @@ export function useNavigationCommands() {
         icon: '⚡',
         action: () => navigate('/outages'),
       },
+      {
+        id: 'nav-iot',
+        label: t('commandPalette.commands.goToIot', { defaultValue: 'Go to Smart Building' }),
+        description: t('commandPalette.descriptions.goToIot', {
+          defaultValue: 'IoT sensors, telemetry and alerts',
+        }),
+        category: 'navigation',
+        keywords: ['iot', 'smart building', 'sensors', 'devices', 'telemetry', 'alerts'],
+        icon: '📡',
+        action: () => navigate('/iot'),
+      },
+      {
+        id: 'nav-iot-sensors',
+        label: t('commandPalette.commands.goToSensors', { defaultValue: 'Go to Sensors' }),
+        description: t('commandPalette.descriptions.goToSensors', {
+          defaultValue: 'Manage registered IoT devices',
+        }),
+        category: 'navigation',
+        keywords: ['sensors', 'devices', 'iot', 'registry'],
+        icon: '📡',
+        action: () => navigate('/iot/sensors'),
+      },
       // Create commands
       {
         id: 'create-dispute',
