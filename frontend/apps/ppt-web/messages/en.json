@@ -80,7 +80,8 @@
     "privacy": "Privacy",
     "neighbors": "Neighbors",
     "aiChat": "AI Assistant",
-    "admin": "Admin"
+    "admin": "Admin",
+    "iotAlerts": "Sensor Alerts"
   },
   "auth": {
     "signIn": "Sign In",
@@ -3472,6 +3473,40 @@
     "fieldModel": "Model",
     "fieldFirmware": "Firmware version",
     "fieldSerial": "Serial number",
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve",
+    "resolved": "resolved",
+    "triggered": "Triggered",
+    "thresholdBreach": "Threshold breach",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "alerts": {
+      "title": "Sensor Alerts",
+      "subtitle": "Threshold breaches across your buildings.",
+      "backToDashboard": "Back to dashboard",
+      "empty": "No alerts match these filters. All clear.",
+      "filter": {
+        "allStates": "All states",
+        "allSeverities": "All severities"
+      },
+      "state": {
+        "open": "Open",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "columns": {
+        "severity": "Severity",
+        "sensor": "Sensor",
+        "message": "Message",
+        "value": "Value / Threshold",
+        "triggered": "Triggered",
+        "state": "State",
+        "actions": "Actions"
+      }
+    },
     "thresholds": "Thresholds",
     "thresholdsTitle": "Thresholds",
     "thresholdConfigTitle": "Threshold configuration",
@@ -3515,5 +3550,13 @@
     "thresholdDeleteFailed": "Failed to delete threshold",
     "templateApplied": "Template applied",
     "templateApplyFailed": "Failed to apply template"
+  },
+  "commandPalette": {
+    "commands": {
+      "goToIotAlerts": "Go to Sensor Alerts"
+    },
+    "descriptions": {
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+    }
   }
 }

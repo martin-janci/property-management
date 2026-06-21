@@ -5,6 +5,9 @@
  */
 export * from './components';
 export {
+  type AlertStateFilter,
+  IotAlertsPage,
+  type IotAlertsPageProps,
   IotDashboardPage,
   type IotDashboardPageProps,
   IotThresholdConfigPage,
