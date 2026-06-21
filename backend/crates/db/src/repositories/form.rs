@@ -74,8 +74,12 @@ impl FormRepository {
                 allow_multiple_submissions, submission_deadline, confirmation_message,
                 created_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6::form_status, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING id, organization_id, building_id, title, description, category,
+                status::text AS status, version, target_type, target_ids, require_signatures,
+                allow_multiple_submissions, submission_deadline, confirmation_message,
+                pdf_template_settings, created_by, updated_by, published_by, published_at,
+                archived_at, created_at, updated_at, deleted_at
             "#,
         )
         .bind(org_id)
@@ -432,7 +436,11 @@ impl FormRepository {
                 updated_by = $11,
                 updated_at = NOW()
             WHERE id = $12 AND organization_id = $13 AND deleted_at IS NULL
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, category,
+                status::text AS status, version, target_type, target_ids, require_signatures,
+                allow_multiple_submissions, submission_deadline, confirmation_message,
+                pdf_template_settings, created_by, updated_by, published_by, published_at,
+                archived_at, created_at, updated_at, deleted_at
             "#,
         )
         .bind(&data.title)
@@ -490,12 +498,16 @@ impl FormRepository {
         sqlx::query_as::<_, Form>(
             r#"
             UPDATE forms SET
-                status = $1,
+                status = $1::form_status,
                 published_by = $2,
                 published_at = NOW(),
                 updated_at = NOW()
-            WHERE id = $3 AND organization_id = $4 AND status = $5 AND deleted_at IS NULL
-            RETURNING *
+            WHERE id = $3 AND organization_id = $4 AND status = $5::form_status AND deleted_at IS NULL
+            RETURNING id, organization_id, building_id, title, description, category,
+                status::text AS status, version, target_type, target_ids, require_signatures,
+                allow_multiple_submissions, submission_deadline, confirmation_message,
+                pdf_template_settings, created_by, updated_by, published_by, published_at,
+                archived_at, created_at, updated_at, deleted_at
             "#,
         )
         .bind(form_status::PUBLISHED)
@@ -520,11 +532,15 @@ impl FormRepository {
         sqlx::query_as::<_, Form>(
             r#"
             UPDATE forms SET
-                status = $1,
+                status = $1::form_status,
                 archived_at = NOW(),
                 updated_at = NOW()
             WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL
-            RETURNING *
+            RETURNING id, organization_id, building_id, title, description, category,
+                status::text AS status, version, target_type, target_ids, require_signatures,
+                allow_multiple_submissions, submission_deadline, confirmation_message,
+                pdf_template_settings, created_by, updated_by, published_by, published_at,
+                archived_at, created_at, updated_at, deleted_at
             "#,
         )
         .bind(form_status::ARCHIVED)
@@ -570,8 +586,10 @@ impl FormRepository {
                 help_text, placeholder, default_value, validation_rules,
                 options, field_order, width, section, conditional_display
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-            RETURNING *
+            VALUES ($1, $2, $3, $4::form_field_type, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            RETURNING id, form_id, field_key, label, field_type::text AS field_type, required,
+                help_text, placeholder, default_value, validation_rules, options, field_order,
+                width, section, conditional_display, created_at, updated_at
             "#,
         )
         .bind(form_id)
@@ -607,7 +625,10 @@ impl FormRepository {
     {
         sqlx::query_as::<_, FormField>(
             r#"
-            SELECT * FROM form_fields
+            SELECT id, form_id, field_key, label, field_type::text AS field_type, required,
+                help_text, placeholder, default_value, validation_rules, options, field_order,
+                width, section, conditional_display, created_at, updated_at
+            FROM form_fields
             WHERE form_id = $1
             ORDER BY field_order ASC
             "#,
@@ -644,7 +665,7 @@ impl FormRepository {
             r#"
             UPDATE form_fields SET
                 label = COALESCE($1, label),
-                field_type = COALESCE($2, field_type),
+                field_type = COALESCE($2::form_field_type, field_type),
                 required = COALESCE($3, required),
                 help_text = COALESCE($4, help_text),
                 placeholder = COALESCE($5, placeholder),
@@ -657,7 +678,9 @@ impl FormRepository {
                 conditional_display = COALESCE($12, conditional_display),
                 updated_at = NOW()
             WHERE id = $13 AND form_id = $14
-            RETURNING *
+            RETURNING id, form_id, field_key, label, field_type::text AS field_type, required,
+                help_text, placeholder, default_value, validation_rules, options, field_order,
+                width, section, conditional_display, created_at, updated_at
             "#,
         )
         .bind(&data.label)
@@ -770,8 +793,14 @@ impl FormRepository {
                 submitted_by, data, attachments, signature_data,
                 status, ip_address, user_agent
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::form_submission_status, $10::inet, $11)
+            RETURNING
+                id, form_id, organization_id, building_id, unit_id,
+                submitted_by, submitted_at, data, attachments, signature_data,
+                status::text AS status,
+                reviewed_by, reviewed_at, review_notes,
+                ip_address::text AS ip_address,
+                user_agent, created_at, updated_at
             "#,
         )
         .bind(params.form_id)
@@ -803,10 +832,14 @@ impl FormRepository {
             r#"
             SELECT
                 s.*,
+                -- `s.*` returns `status` as the `form_submission_status` ENUM,
+                -- which the model reads into a `String` (ColumnDecode). Re-expose
+                -- it as text under a distinct name and read that below.
+                s.status::text AS submission_status,
                 f.title as form_title,
                 u.name as submitted_by_name,
                 r.name as reviewed_by_name,
-                un.unit_number,
+                un.designation AS unit_number,
                 b.name as building_name
             FROM form_submissions s
             JOIN forms f ON f.id = s.form_id
@@ -834,7 +867,7 @@ impl FormRepository {
                 data: r.get("data"),
                 attachments: r.get("attachments"),
                 signature_data: r.get("signature_data"),
-                status: r.get("status"),
+                status: r.get("submission_status"),
                 reviewed_by: r.get("reviewed_by"),
                 reviewed_at: r.get("reviewed_at"),
                 review_notes: r.get("review_notes"),
@@ -868,7 +901,7 @@ impl FormRepository {
             count_conditions.push("s.form_id = $2");
         }
         if query.status.is_some() {
-            count_conditions.push("s.status = $3");
+            count_conditions.push("s.status::text = $3");
         }
 
         let count_where = count_conditions.join(" AND ");
@@ -898,9 +931,9 @@ impl FormRepository {
                 s.submitted_by,
                 u.name as submitted_by_name,
                 s.submitted_at,
-                s.status,
+                s.status::text AS status,
                 s.signature_data IS NOT NULL as has_signature,
-                un.unit_number,
+                un.designation AS unit_number,
                 b.name as building_name
             FROM form_submissions s
             JOIN forms f ON f.id = s.form_id
@@ -909,7 +942,7 @@ impl FormRepository {
             LEFT JOIN buildings b ON b.id = s.building_id
             WHERE s.organization_id = $1
                 AND ($2::uuid IS NULL OR s.form_id = $2)
-                AND ($3::text IS NULL OR s.status = $3)
+                AND ($3::text IS NULL OR s.status::text = $3)
                 AND ($4::uuid IS NULL OR s.building_id = $4)
                 AND ($5::uuid IS NULL OR s.unit_id = $5)
                 AND ($6::uuid IS NULL OR s.submitted_by = $6)
@@ -966,13 +999,19 @@ impl FormRepository {
         sqlx::query_as::<_, FormSubmission>(
             r#"
             UPDATE form_submissions SET
-                status = $1,
+                status = $1::form_submission_status,
                 reviewed_by = $2,
                 reviewed_at = NOW(),
                 review_notes = $3,
                 updated_at = NOW()
             WHERE id = $4 AND organization_id = $5
-            RETURNING *
+            RETURNING
+                id, form_id, organization_id, building_id, unit_id,
+                submitted_by, submitted_at, data, attachments, signature_data,
+                status::text AS status,
+                reviewed_by, reviewed_at, review_notes,
+                ip_address::text AS ip_address,
+                user_agent, created_at, updated_at
             "#,
         )
         .bind(&data.status)
@@ -1034,28 +1073,35 @@ impl FormRepository {
     pub async fn record_download<'e, E>(
         &self,
         executor: E,
+        org_id: Uuid,
         form_id: Uuid,
         user_id: Uuid,
         ip_address: Option<String>,
         user_agent: Option<String>,
-    ) -> Result<(), sqlx::Error>
+    ) -> Result<bool, sqlx::Error>
     where
         E: Executor<'e, Database = Postgres>,
     {
-        sqlx::query(
+        let inserted = sqlx::query_scalar::<_, Uuid>(
             r#"
             INSERT INTO form_downloads (form_id, downloaded_by, ip_address, user_agent)
-            VALUES ($1, $2, $3::inet, $4)
+            SELECT f.id, $3, $4::inet, $5
+            FROM forms f
+            WHERE f.id = $1
+              AND f.organization_id = $2
+              AND f.deleted_at IS NULL
+            RETURNING form_id
             "#,
         )
         .bind(form_id)
+        .bind(org_id)
         .bind(user_id)
         .bind(&ip_address)
         .bind(&user_agent)
-        .execute(executor)
+        .fetch_optional(executor)
         .await?;
 
-        Ok(())
+        Ok(inserted.is_some())
     }
 
     /// Gets download count for a form.

@@ -1,5 +1,5 @@
 /**
- * Faults route group — FaultsPageRoute API wiring tests.
+ * Faults route group — FaultsPageRoute API wiring tests (gap-79-1).
  *
  * Verifies that the route wrapper correctly threads the live @ppt/api-client
  * hooks into the FaultsPage component — specifically:
@@ -8,6 +8,8 @@
  *  (c) successful data (snake_case API shapes) is mapped to camelCase UI props
  *      (fault title reaches FaultCard)
  *  (d) empty list → empty state rendered
+ *  (e) useDeleteFault mutateAsync called when Delete button clicked on a 'new' fault
+ *  (f) useFaultStatistics summary bar rendered when stats are available
  *
  * Uses MemoryRouter + Routes + TanStack QueryClientProvider so the
  * route component renders exactly as in production.
@@ -15,11 +17,11 @@
 
 /// <reference types="vitest/globals" />
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Suspense } from 'react';
 import { MemoryRouter, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── i18n ──
 vi.mock('react-i18next', () => ({
@@ -41,8 +43,13 @@ vi.mock('../../contexts', () => ({
 
 // ── api-client stubs ──
 const mockUseFaults = vi.fn();
+const mockDeleteFaultMutateAsync = vi.fn().mockResolvedValue(undefined);
+const mockUseFaultStatistics = vi.fn();
+
 vi.mock('@ppt/api-client', () => ({
   useFaults: (...args: unknown[]) => mockUseFaults(...args),
+  useDeleteFault: () => ({ mutateAsync: mockDeleteFaultMutateAsync }),
+  useFaultStatistics: (...args: unknown[]) => mockUseFaultStatistics(...args),
   useBuildings: () => ({ data: undefined }),
   useCreateFault: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useFault: () => ({ data: undefined, isLoading: true, error: null }),
@@ -81,9 +88,30 @@ function renderFaultsRoute() {
   );
 }
 
-describe('FaultsPageRoute API wiring', () => {
+/** Minimal API fault summary fixture for reuse. */
+function makeApiFault(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'f-1',
+    building_id: 'b-1',
+    unit_id: null,
+    title: 'Dripping tap in unit 3B',
+    category: 'plumbing',
+    priority: 'medium',
+    status: 'new',
+    created_at: '2026-06-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
+describe('FaultsPageRoute API wiring (gap-79-1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default stats: no data (stats bar hidden).
+    mockUseFaultStatistics.mockReturnValue({ data: undefined });
+    // Delete is now confirmation-gated (#1588 F1); default to "confirmed" so
+    // the existing happy-path delete test still exercises the mutation. Tests
+    // that need the dismissed case override this.
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   it('(a) does not show empty state while loading', async () => {
@@ -127,21 +155,7 @@ describe('FaultsPageRoute API wiring', () => {
 
   it('(c) renders fault title when useFaults returns data', async () => {
     mockUseFaults.mockReturnValue({
-      data: {
-        faults: [
-          {
-            id: 'f-1',
-            building_id: 'b-1',
-            unit_id: null,
-            title: 'Dripping tap in unit 3B',
-            category: 'plumbing',
-            priority: 'medium',
-            status: 'new',
-            created_at: '2026-06-01T00:00:00Z',
-          },
-        ],
-        count: 1,
-      },
+      data: { faults: [makeApiFault()], count: 1 },
       isLoading: false,
       error: null,
       refetch: noopRefetch,
@@ -165,5 +179,103 @@ describe('FaultsPageRoute API wiring', () => {
     renderFaultsRoute();
 
     expect(await screen.findByText('No faults found.', {}, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it('(e) Delete button on a new-status fault calls useDeleteFault mutateAsync', async () => {
+    mockUseFaults.mockReturnValue({
+      data: {
+        faults: [makeApiFault({ id: 'f-del', title: 'Broken pipe', status: 'new' })],
+        count: 1,
+      },
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
+
+    renderFaultsRoute();
+
+    // Wait for fault title to appear (Suspense resolved).
+    await screen.findByText('Broken pipe', {}, { timeout: 5000 });
+
+    // Click the Delete button wired to handleDelete → useDeleteFault.mutateAsync.
+    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    await userEvent.click(deleteButton);
+
+    expect(mockDeleteFaultMutateAsync).toHaveBeenCalledTimes(1);
+    expect(mockDeleteFaultMutateAsync).toHaveBeenCalledWith('f-del');
+  });
+
+  it('(f) statistics summary bar renders when useFaultStatistics returns data', async () => {
+    mockUseFaults.mockReturnValue({
+      data: { faults: [], count: 0 },
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
+    mockUseFaultStatistics.mockReturnValue({
+      data: {
+        total_count: 42,
+        open_count: 30,
+        closed_count: 12,
+        by_status: [],
+        by_category: [],
+        by_priority: [],
+        average_resolution_time_hours: null,
+        average_rating: null,
+      },
+    });
+
+    renderFaultsRoute();
+
+    // The stats bar is rendered as a div with aria-label="Fault statistics".
+    // Use findByLabelText to locate the container by its accessible label.
+    const statsBar = await screen.findByLabelText('Fault statistics', {}, { timeout: 5000 });
+    expect(statsBar).toBeInTheDocument();
+    expect(statsBar).toHaveTextContent('42');
+    expect(statsBar).toHaveTextContent('30');
+    // Closed renders the API's first-class closed_count (not total - open). #1588 F2
+    expect(statsBar).toHaveTextContent('12');
+  });
+
+  it('(g) Delete does NOT call mutateAsync when the confirmation is dismissed', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    mockUseFaults.mockReturnValue({
+      data: {
+        faults: [makeApiFault({ id: 'f-del', title: 'Broken pipe', status: 'new' })],
+        count: 1,
+      },
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
+
+    renderFaultsRoute();
+    await screen.findByText('Broken pipe', {}, { timeout: 5000 });
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(window.confirm).toHaveBeenCalledTimes(1);
+    expect(mockDeleteFaultMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('(h) Delete shows an error toast when the mutation rejects', async () => {
+    mockDeleteFaultMutateAsync.mockRejectedValueOnce(new Error('boom'));
+    mockUseFaults.mockReturnValue({
+      data: {
+        faults: [makeApiFault({ id: 'f-del', title: 'Broken pipe', status: 'new' })],
+        count: 1,
+      },
+      isLoading: false,
+      error: null,
+      refetch: noopRefetch,
+    });
+
+    renderFaultsRoute();
+    await screen.findByText('Broken pipe', {}, { timeout: 5000 });
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(mockDeleteFaultMutateAsync).toHaveBeenCalledWith('f-del');
+    await waitFor(() => {
+      expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    });
   });
 });

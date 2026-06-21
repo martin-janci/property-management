@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.201"
+version = "0.3.218"
 edition = "2021"
 rust-version = "1.75"
 license = "MIT"
@@ -75,9 +75,13 @@ urlencoding = "2.1"
 url = "2.5"
 
 # HTTP client (for integrations)
-reqwest = { version = "0.13", features = ["json", "form", "query"] }
+reqwest = { version = "0.13", features = ["json", "form", "query", "http2"] }
 
 # XML parsing/generation (for OTA/Booking.com integration)
+# NOTE: the inbound OTA parsers rely on quick-xml NOT resolving custom DTD
+# entities (XXE / billion-laughs safety). That posture is load-bearing and pinned
+# by the entity guards in integrations `booking.rs` (`ota_xml::tests`) — a bump
+# that changes entity normalization will turn those tests red. See GH #1519/#1591.
 quick-xml = { version = "0.40", features = ["serialize"] }
 
 # Observability (Epic 95)
@@ -102,6 +106,7 @@ redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 # CLI (Epic 110)
 clap = { version = "4.4", features = ["derive", "env"] }
 dialoguer = "0.12"
+genpdf = "0.2.0"
 
 # i18n (Epic 111)
 fluent = "0.16"

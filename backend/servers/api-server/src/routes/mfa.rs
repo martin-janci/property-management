@@ -11,9 +11,77 @@ use axum::{
 use common::errors::ErrorResponse;
 use db::models::{AuditAction, CreateAuditLog, CreateTwoFactorAuth};
 use serde::{Deserialize, Serialize};
+use sqlx::Acquire;
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
+use std::time::{Duration, Instant};
 use utoipa::ToSchema;
 
 use crate::state::AppState;
+
+// ── Brute-force throttle for recovery-code verification (GH #1523) ──────────
+//
+// `verify_recovery_code` is a full MFA-bypass surface on success, so repeated
+// guesses must be throttled. This mirrors the per-key in-process sliding-window
+// limiter in `routes/caddy_ask.rs`, keyed on `user_id` (the authenticated
+// subject) so one user's attempts can never lock out another. A successful
+// verification clears the user's window. NOTE: this counter is per-process; a
+// Redis-backed counter (the sessions Redis is already in the stack) would hold
+// the limit across instances — tracked as a follow-up.
+const MFA_RECOVERY_MAX_ATTEMPTS: u32 = 10;
+const MFA_RECOVERY_WINDOW: Duration = Duration::from_secs(900);
+/// Only sweep expired limiter entries once the map exceeds this size, so the
+/// `retain` walk is amortized rather than run on every request (GH #1583).
+const MFA_RECOVERY_SWEEP_THRESHOLD: usize = 1024;
+
+struct RecoveryRateLimitEntry {
+    count: u32,
+    window_start: Instant,
+}
+
+static MFA_RECOVERY_RATE_LIMITER: LazyLock<Mutex<HashMap<uuid::Uuid, RecoveryRateLimitEntry>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Record an attempt for `user_id` and report whether it is within the limit.
+/// Returns `false` once more than `MFA_RECOVERY_MAX_ATTEMPTS` attempts occur in
+/// a rolling `MFA_RECOVERY_WINDOW`.
+fn recovery_attempt_allowed(user_id: uuid::Uuid) -> bool {
+    let mut map = match MFA_RECOVERY_RATE_LIMITER.lock() {
+        Ok(m) => m,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    let now = Instant::now();
+
+    // Evict entries whose window has fully elapsed (GH #1583). Unlike the
+    // loopback-only caddy_ask limiter this mirrors, this map is keyed on the
+    // whole user population on a PUBLIC auth path, so without eviction an
+    // attacker enumerating user_ids could grow it without bound (slow
+    // memory-exhaustion DoS). The sweep only runs once the map crosses a size
+    // threshold so it is not an O(n) walk on every request under normal load.
+    if map.len() > MFA_RECOVERY_SWEEP_THRESHOLD {
+        map.retain(|_, e| now.duration_since(e.window_start) < MFA_RECOVERY_WINDOW);
+    }
+
+    let entry = map.entry(user_id).or_insert(RecoveryRateLimitEntry {
+        count: 0,
+        window_start: now,
+    });
+    if now.duration_since(entry.window_start) >= MFA_RECOVERY_WINDOW {
+        entry.count = 0;
+        entry.window_start = now;
+    }
+    entry.count += 1;
+    entry.count <= MFA_RECOVERY_MAX_ATTEMPTS
+}
+
+/// Clear a user's attempt counter after a successful verification, so a
+/// legitimate user is never penalised by earlier mistyped codes. Also used by
+/// tests to reset the process-global limiter for a given user (GH #1583).
+pub fn recovery_attempts_reset(user_id: uuid::Uuid) {
+    if let Ok(mut map) = MFA_RECOVERY_RATE_LIMITER.lock() {
+        map.remove(&user_id);
+    }
+}
 
 /// Create MFA router (mounted at `/api/v1/auth/mfa`).
 ///
@@ -326,11 +394,13 @@ pub async fn verify_mfa_setup(
     // Enable MFA and issue recovery codes in a single transaction so a crash
     // between the two steps cannot leave MFA enabled with zero recovery codes.
     //
-    // state.db (raw pool) is used rather than the RlsConnection because the
-    // mfa_recovery_codes and user_2fa tables both allow application-role writes
-    // without a per-session RLS context — the WHERE user_id = $1 clause scoped
-    // to the verified JWT subject provides the equivalent tenant isolation.
-    let mut tx = state.db.begin().await.map_err(|e| {
+    // The transaction runs on the SAME RLS connection used above (not a second
+    // `state.db.begin()` raw-pool connection), so `app.current_user_id` is set
+    // and the self-policies on `user_2fa` / `mfa_recovery_codes` (migrations
+    // 00024 / 00149) enforce — the `WHERE user_id = $1` clause scoped to the
+    // verified JWT subject is then defense-in-depth rather than the sole
+    // isolation, and the handler stays on one connection / one RLS context.
+    let mut tx = (&mut **rls.conn()).begin().await.map_err(|e| {
         tracing::error!(error = %e, "Failed to begin recovery codes transaction");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -599,11 +669,16 @@ pub async fn disable_mfa(
         ));
     }
 
-    // Disable MFA and invalidate all recovery codes atomically.
-    // mfa_recovery_codes is user-scoped (no org_id, no FORCE RLS) — raw pool transaction
-    // is equivalent to RLS here; WHERE user_id = $1 from the JWT subject provides the
-    // required isolation (P4 sanctioned, same rationale as confirm_mfa above).
-    let mut tx = state.db.begin().await.map_err(|e| {
+    // Disable MFA and invalidate all recovery codes atomically, on the SAME
+    // RLS connection used above — not a second `state.db.begin()` raw-pool
+    // connection. Keeping the whole auth-critical handler on one connection
+    // means one RLS context: `app.current_user_id` is set, so the self-policies
+    // on `mfa_recovery_codes` / `user_2fa` (migrations 00149 / 00024) enforce,
+    // and the `WHERE user_id = $1` literal is defense-in-depth rather than the
+    // sole isolation (same rationale as verify_mfa_setup above). Both writes
+    // share one transaction so a crash between them cannot leave MFA enabled
+    // with live recovery codes (or recovery codes wiped with MFA still on).
+    let mut tx = (&mut **rls.conn()).begin().await.map_err(|e| {
         tracing::error!(error = %e, "Failed to begin disable transaction");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -632,21 +707,10 @@ pub async fn disable_mfa(
         )
     })?;
 
-    tx.commit().await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to commit disable transaction");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new(
-                "DATABASE_ERROR",
-                "Failed to disable MFA",
-            )),
-        )
-    })?;
-
-    // Disable in user_2fa (via RLS connection).
+    // Disable in user_2fa within the SAME transaction.
     state
         .two_factor_repo
-        .disable_rls(&mut **rls.conn(), user_id)
+        .disable_rls(&mut *tx, user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to disable MFA");
@@ -658,6 +722,17 @@ pub async fn disable_mfa(
                 )),
             )
         })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to commit disable transaction");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to disable MFA",
+            )),
+        )
+    })?;
 
     // Log MFA disabled (Story 9.6 - Audit logging)
     if let Err(e) = state
@@ -992,6 +1067,7 @@ pub struct VerifyRecoveryCodeResponse {
 pub async fn verify_recovery_code(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    mut rls: RlsConnection,
     Json(req): Json<VerifyRecoveryCodeRequest>,
 ) -> Result<Json<VerifyRecoveryCodeResponse>, (StatusCode, Json<ErrorResponse>)> {
     let token = extract_bearer_token(&headers)?;
@@ -1004,25 +1080,55 @@ pub async fn verify_recovery_code(
         )
     })?;
 
-    // Acquire a connection for the user-scoped MFA tables (user_2fa,
-    // mfa_recovery_codes have no org_id and no FORCE RLS). acquire_public clears
-    // any stale RLS context left by a previous request on the pooled connection.
-    let mut conn = db::RlsPool::new(state.db.clone())
-        .acquire_public()
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "recovery/verify: pool acquire failed");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to connect")),
-            )
-        })?;
+    // Brute-force throttle (GH #1523): this endpoint is a full MFA bypass on
+    // success, so cap attempts per user within a rolling window before doing any
+    // work. The (N+1)th attempt in the window is rejected with 429; a successful
+    // verification later clears the counter.
+    if !recovery_attempt_allowed(user_id) {
+        if let Err(e) = state
+            .audit_log_repo
+            .create(CreateAuditLog {
+                user_id: Some(user_id),
+                action: AuditAction::MfaRecoveryRateLimited,
+                resource_type: Some("mfa_recovery_rate_limited".to_string()),
+                resource_id: Some(user_id),
+                org_id: None,
+                details: Some(serde_json::json!({ "outcome": "denied", "reason": "rate_limited" })),
+                old_values: None,
+                new_values: None,
+                ip_address: None,
+                user_agent: None,
+            })
+            .await
+        {
+            tracing::error!(error = %e, "Failed to write audit log for rate-limited recovery verify");
+        }
+        rls.release().await;
+        return Err((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse::new(
+                "RATE_LIMITED",
+                "Too many recovery-code attempts. Please try again later.",
+            )),
+        ));
+    }
+
+    // Run every query on the RLS connection so `app.current_user_id` is set for
+    // the duration of the handler. The self-policies on `user_2fa` /
+    // `mfa_recovery_codes` (migrations 00024 / 00149) gate on
+    // `app.current_user_id`, so this is what makes them enforce — the
+    // `WHERE user_id = $1` literal is then defense-in-depth, not the sole
+    // isolation. (Previously this acquired `acquire_public()`, which *clears*
+    // the GUC — leaving 100% of the isolation on the literal and silently
+    // turning into deny-all the moment these tables get FORCE RLS.)
+    // `rls.release()` is called before every return so the context is cleared
+    // before the connection returns to the pool.
 
     // Verify MFA is enabled for this user.
     let enrolled: Option<bool> =
         sqlx::query_scalar("SELECT enabled FROM user_2fa WHERE user_id = $1")
             .bind(user_id)
-            .fetch_optional(&mut **conn)
+            .fetch_optional(&mut **rls.conn())
             .await
             .map_err(|e| {
                 tracing::error!(error = %e, "recovery/verify: fetch enrollment failed");
@@ -1036,6 +1142,7 @@ pub async fn verify_recovery_code(
             })?;
 
     if !matches!(enrolled, Some(true)) {
+        rls.release().await;
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new(
@@ -1050,7 +1157,7 @@ pub async fn verify_recovery_code(
         "SELECT id, code_hash FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
     )
     .bind(user_id)
-    .fetch_all(&mut **conn)
+    .fetch_all(&mut **rls.conn())
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "recovery/verify: fetch codes failed");
@@ -1084,6 +1191,7 @@ pub async fn verify_recovery_code(
         {
             tracing::error!(error = %e, "Failed to write audit log for exhausted recovery codes");
         }
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1129,6 +1237,7 @@ pub async fn verify_recovery_code(
         {
             tracing::error!(error = %e, "Failed to write audit log for invalid recovery code");
         }
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1146,7 +1255,7 @@ pub async fn verify_recovery_code(
         "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL",
     )
     .bind(matched_id)
-    .execute(&mut **conn)
+    .execute(&mut **rls.conn())
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "recovery/verify: mark used failed");
@@ -1161,6 +1270,7 @@ pub async fn verify_recovery_code(
 
     if upd.rows_affected() == 0 {
         // Lost race to a concurrent caller — fail closed.
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1175,7 +1285,7 @@ pub async fn verify_recovery_code(
         "SELECT COUNT(*) FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
     )
     .bind(user_id)
-    .fetch_one(&mut **conn)
+    .fetch_one(&mut **rls.conn())
     .await
     .unwrap_or(0);
 
@@ -1202,6 +1312,11 @@ pub async fn verify_recovery_code(
     }
 
     tracing::info!(user_id = %user_id, remaining, "MFA recovery code consumed");
+
+    // Successful verification clears the brute-force counter (GH #1523).
+    recovery_attempts_reset(user_id);
+
+    rls.release().await;
 
     Ok(Json(VerifyRecoveryCodeResponse {
         message: "Recovery code accepted.".to_string(),

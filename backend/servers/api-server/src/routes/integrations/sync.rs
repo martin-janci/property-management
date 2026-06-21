@@ -27,7 +27,6 @@
 //! AFTER release so pool connections are not pinned on network calls.
 
 use api_core::extractors::RlsConnection;
-use api_core::TenantExtractor;
 use axum::{
     body::Body,
     extract::{Path, Query, State},
@@ -38,6 +37,7 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use common::errors::ErrorResponse;
+use common::tenant::TenantRole;
 use db::models::{
     accounting_system, calendar_provider, AccountingExport, AccountingExportSettings,
     CalendarConnection, CalendarSyncResult, CreateAccountingExport, CreateCalendarConnection,
@@ -145,15 +145,51 @@ pub(super) async fn verify_org_access(
     Ok(())
 }
 
-pub(super) fn verify_manager_role(
-    tenant: &TenantExtractor,
+/// Verify the caller holds a manager-level role **in `org_id`** — the org being
+/// mutated (the path org), not the JWT/`X-Tenant-ID` tenant.
+///
+/// SECURITY (#1525): the previous `verify_manager_role(&tenant)` read
+/// `tenant.role`, which `TenantExtractor` populates from JWT claims tied to the
+/// `X-Tenant-ID` header and never cross-checks against the path org. A user who
+/// is manager in org A (JWT) but only a plain member of org B could mutate org
+/// B's OTA integration (`verify_org_access(B)` passes on membership;
+/// `verify_manager_role` passes on the A-role from the JWT). This reads the
+/// caller's `role_type` from `organization_members` for `org_id` itself — the
+/// same active-membership row `verify_org_access` checks — and rejects
+/// non-managers. The manager decision is derived from `TenantRole::is_manager`
+/// (the canonical predicate), not a hand-rolled mirror of the role strings.
+pub(super) async fn verify_manager_role_in_org(
+    state: &AppState,
+    user_id: uuid::Uuid,
+    org_id: uuid::Uuid,
 ) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
-    if !tenant.role.is_manager() {
+    let role_type = state
+        .org_member_repo
+        .get_user_role_type(org_id, user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to look up org role for manager gate");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
+
+    // Derive the manager decision from the canonical `TenantRole::is_manager`
+    // predicate (single source of truth) rather than mirroring its variant
+    // strings here — so a future manager-tier role added to the enum is covered
+    // automatically and this authz gate cannot silently drift.
+    let is_manager = role_type
+        .as_deref()
+        .and_then(TenantRole::from_role_type)
+        .map(|role| role.is_manager())
+        .unwrap_or(false);
+    if !is_manager {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
                 "FORBIDDEN",
-                "Manager-level access required",
+                "Manager-level access required for this organization",
             )),
         ));
     }

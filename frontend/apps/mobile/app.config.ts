@@ -43,7 +43,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-
+// gap-85-2 (iOS build config): injects the per-environment iOS .xcconfig
+// (ios/xcconfig/{Development,Staging,Production}.xcconfig) into the generated
+// `ios/` project at prebuild and wires it as the baseConfigurationReference of
+// every Xcode build configuration. See plugins/withIosBuildConfig.ts.
+import withIosBuildConfig from './plugins/withIosBuildConfig';
 // Custom Expo config plugin -- re-adds legacy storage perms with
 // maxSdkVersion=32 so they apply only on API <= 32. Issue #626.
 import withLegacyStoragePermissions from './plugins/withLegacyStoragePermissions';
@@ -408,6 +412,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // devices (API <= 32) keep working while API 33+ uses the granular
       // READ_MEDIA_* permissions declared in `android.permissions` above.
       withLegacyStoragePermissions,
+      // gap-85-2: inject the per-environment iOS .xcconfig into the generated
+      // `ios/` project at prebuild (selected by APP_ENV) and wire it as the
+      // baseConfigurationReference of every Xcode build configuration.
+      withIosBuildConfig,
     ],
 
     extra: {

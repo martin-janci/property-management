@@ -19,7 +19,7 @@ use axum::{
 };
 use chrono::NaiveDate;
 use db::models::BookingListQuery;
-use integrations::{AvailabilityUpdate, BookingClient, RateUpdate};
+use integrations::{AvailabilityUpdate, BookingClient, PushOutcome, RateUpdate};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -335,93 +335,152 @@ pub async fn push_booking_listing(
         ));
     }
 
+    // BIT-99: credentials are stored encrypted; decrypt for OTA API use.
+    // decrypt_if_available tolerates legacy plaintext rows (no "enc:" prefix).
+    let crypto = integrations::IntegrationCrypto::try_from_env();
+    let username = integrations::decrypt_if_available(crypto.as_ref(), &username);
+    let password = integrations::decrypt_if_available(crypto.as_ref(), &password);
+
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
-    let mut avail_pushed = 0i32;
-    let mut rates_pushed = 0i32;
+    // Map the request into the OTA push payloads. The combined push skips an
+    // empty stream internally, so we build both unconditionally.
+    let avail_updates: Vec<AvailabilityUpdate> = request
+        .availability
+        .iter()
+        .map(|a| AvailabilityUpdate {
+            room_type_id: a.room_type_id.clone(),
+            date: a.date,
+            available_count: a.available_count,
+            stop_sell: a.stop_sell,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        })
+        .collect();
 
-    // ---- Push availability (OTA_HotelAvailNotifRQ) ----
-    if !request.availability.is_empty() {
-        let avail_updates: Vec<AvailabilityUpdate> = request
-            .availability
-            .iter()
-            .map(|a| AvailabilityUpdate {
-                room_type_id: a.room_type_id.clone(),
-                date: a.date,
-                available_count: a.available_count,
-                stop_sell: a.stop_sell,
-                cta: false,
-                ctd: false,
-                min_los: None,
-                max_los: None,
-            })
-            .collect();
+    let rate_updates: Vec<RateUpdate> = request
+        .rates
+        .iter()
+        .map(|r| RateUpdate {
+            room_type_id: r.room_type_id.clone(),
+            rate_plan_code: r.rate_plan_code.clone(),
+            date: r.date,
+            base_rate: r.base_rate,
+            currency: r.currency.clone(),
+            extra_person_rate: None,
+            extra_child_rate: None,
+        })
+        .collect();
 
-        let count = avail_updates.len() as i32;
-        client
-            .push_availability(&hotel_id, &avail_updates)
-            .await
-            .map_err(|e| {
-                tracing::error!(error = %e, "Failed to push availability to Booking.com");
-                (
-                    StatusCode::BAD_REQUEST,
-                    Json(ErrorResponse::new(
-                        "PUSH_ERROR",
-                        format!("Availability push failed: {}", e),
-                    )),
-                )
-            })?;
-        avail_pushed = count;
+    // Push both OTA streams (OTA_HotelAvailNotifRQ + OTA_HotelRateAmountNotifRQ)
+    // in one call so a partial failure is surfaced instead of silently losing
+    // the half that already applied (AC-5).
+    let outcome = client
+        .push_availability_and_rates(&hotel_id, &avail_updates, &rate_updates)
+        .await;
+
+    let avail_pushed = outcome.availability_pushed as i32;
+    let rates_pushed = outcome.rates_pushed as i32;
+
+    match classify_listing_push(&outcome) {
+        ListingPushResult::Success => {
+            tracing::info!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                avail_pushed,
+                rates_pushed,
+                "Booking.com listing push completed"
+            );
+
+            Ok(Json(ListingPushResponse {
+                success: true,
+                availability_pushed: avail_pushed,
+                rates_pushed,
+                pushed_at: chrono::Utc::now(),
+                error: None,
+            }))
+        }
+        // Total failure — nothing applied — keeps the loud 4xx contract callers
+        // already rely on (no half-synced state to report).
+        ListingPushResult::TotalFailure(message) => {
+            tracing::error!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                error = %message,
+                "Booking.com listing push failed (nothing applied)"
+            );
+            Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "PUSH_ERROR",
+                    format!("Listing push failed: {message}"),
+                )),
+            ))
+        }
+        // Genuine partial sync — one stream landed, the other failed. Report 200
+        // with success=false + accurate per-stream counts so the caller can
+        // reconcile the half-synced channel instead of seeing a bare error that
+        // hides the applied half.
+        ListingPushResult::Partial(message) => {
+            tracing::warn!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                avail_pushed,
+                rates_pushed,
+                error = %message,
+                "Booking.com listing push partially applied — channel is half-synced"
+            );
+
+            Ok(Json(ListingPushResponse {
+                success: false,
+                availability_pushed: avail_pushed,
+                rates_pushed,
+                pushed_at: chrono::Utc::now(),
+                error: Some(format!("partial sync: {message}")),
+            }))
+        }
     }
+}
 
-    // ---- Push rates (OTA_HotelRateAmountNotifRQ) ----
-    if !request.rates.is_empty() {
-        let rate_updates: Vec<RateUpdate> = request
-            .rates
-            .iter()
-            .map(|r| RateUpdate {
-                room_type_id: r.room_type_id.clone(),
-                rate_plan_code: r.rate_plan_code.clone(),
-                date: r.date,
-                base_rate: r.base_rate,
-                currency: r.currency.clone(),
-                extra_person_rate: None,
-                extra_child_rate: None,
-            })
-            .collect();
+/// HTTP-mapping classification of a combined [`PushOutcome`].
+///
+/// Distinguishes a *genuine* partial sync (one stream applied, the other
+/// failed → caller must reconcile a half-synced channel) from a total failure
+/// (nothing applied). [`PushOutcome::is_partial`] alone is insufficient: it is
+/// also true when one stream was *skipped* (empty) and the only attempted
+/// stream failed — which is a total failure, not a half-sync.
+#[derive(Debug)]
+enum ListingPushResult {
+    Success,
+    Partial(String),
+    TotalFailure(String),
+}
 
-        rates_pushed = rate_updates.len() as i32;
-        client
-            .push_rates(&hotel_id, &rate_updates)
-            .await
-            .map_err(|e| {
-                tracing::error!(error = %e, "Failed to push rates to Booking.com");
-                (
-                    StatusCode::BAD_REQUEST,
-                    Json(ErrorResponse::new(
-                        "PUSH_ERROR",
-                        format!("Rate push failed: {}", e),
-                    )),
-                )
-            })?;
+/// Build a `"availability: …; rates: …"` summary of whichever stream(s) failed.
+fn push_stream_errors(outcome: &PushOutcome) -> String {
+    let mut parts = Vec::new();
+    if let Some(e) = &outcome.availability_error {
+        parts.push(format!("availability: {e}"));
     }
+    if let Some(e) = &outcome.rates_error {
+        parts.push(format!("rates: {e}"));
+    }
+    parts.join("; ")
+}
 
-    tracing::info!(
-        org_id = %path.org_id,
-        hotel_id = %hotel_id,
-        avail_pushed = avail_pushed,
-        rates_pushed = rates_pushed,
-        "Booking.com listing push completed"
-    );
-
-    Ok(Json(ListingPushResponse {
-        success: true,
-        availability_pushed: avail_pushed,
-        rates_pushed,
-        pushed_at: chrono::Utc::now(),
-        error: None,
-    }))
+fn classify_listing_push(outcome: &PushOutcome) -> ListingPushResult {
+    if outcome.is_success() {
+        return ListingPushResult::Success;
+    }
+    let message = push_stream_errors(outcome);
+    if outcome.availability_pushed == 0 && outcome.rates_pushed == 0 {
+        ListingPushResult::TotalFailure(message)
+    } else {
+        ListingPushResult::Partial(message)
+    }
 }
 
 /// Detect conflicts between Booking.com reservations and other-platform bookings.
@@ -636,6 +695,70 @@ pub async fn get_booking_conflicts(
 mod tests {
     use super::*;
     use chrono::NaiveDate;
+
+    // ---- classify_listing_push (PushOutcome → HTTP mapping) ----
+
+    #[test]
+    fn classify_success_when_no_stream_errored() {
+        let outcome = PushOutcome {
+            availability_pushed: 3,
+            rates_pushed: 2,
+            availability_error: None,
+            rates_error: None,
+        };
+        assert!(matches!(
+            classify_listing_push(&outcome),
+            ListingPushResult::Success
+        ));
+    }
+
+    #[test]
+    fn classify_partial_when_one_stream_landed_and_other_failed() {
+        // Availability applied, rates rejected → half-synced channel.
+        let outcome = PushOutcome {
+            availability_pushed: 3,
+            rates_pushed: 0,
+            availability_error: None,
+            rates_error: Some("rate plan not found".to_string()),
+        };
+        match classify_listing_push(&outcome) {
+            ListingPushResult::Partial(msg) => assert!(msg.contains("rates:")),
+            other => panic!("expected Partial, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn classify_total_failure_when_only_attempted_stream_failed() {
+        // Rates were skipped (empty); availability was the only stream and it
+        // failed → nothing applied. is_partial() is true here, so this guards
+        // against treating a single-stream failure as a half-sync.
+        let outcome = PushOutcome {
+            availability_pushed: 0,
+            rates_pushed: 0,
+            availability_error: Some("auth rejected".to_string()),
+            rates_error: None,
+        };
+        match classify_listing_push(&outcome) {
+            ListingPushResult::TotalFailure(msg) => assert!(msg.contains("availability:")),
+            other => panic!("expected TotalFailure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn classify_total_failure_when_both_streams_failed() {
+        let outcome = PushOutcome {
+            availability_pushed: 0,
+            rates_pushed: 0,
+            availability_error: Some("a".to_string()),
+            rates_error: Some("b".to_string()),
+        };
+        match classify_listing_push(&outcome) {
+            ListingPushResult::TotalFailure(msg) => {
+                assert!(msg.contains("availability:") && msg.contains("rates:"));
+            }
+            other => panic!("expected TotalFailure, got {other:?}"),
+        }
+    }
 
     #[test]
     fn test_listing_push_request_deserializes() {

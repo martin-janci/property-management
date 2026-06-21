@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-14T03:12:18Z",
-  "last_run_ms": 90237,
-  "last_pr_seen": 1359,
-  "last_issue_seen": 1356,
-  "last_commit_sha": "48efccc7",
+  "last_run_iso": "2026-06-16T03:25:00Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 1439,
+  "last_issue_seen": 1437,
+  "last_commit_sha": "4829015b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -283,9 +283,9 @@
       "recent_churn": 334
     },
     "backend/servers/api-server/src/routes/forms.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-13",
-      "recent_churn": 2
+      "runs_seen": 2,
+      "last_seen": "2026-06-16",
+      "recent_churn": 334
     },
     "backend/servers/api-server/tests/reserve_funds_cross_org_idor_tests.rs": {
       "runs_seen": 1,
@@ -296,6 +296,31 @@
       "runs_seen": 1,
       "last_seen": "2026-06-13",
       "recent_churn": 2
+    },
+    "frontend/apps/mobile/app.config.icon.test.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-15",
+      "recent_churn": 124
+    },
+    "frontend/apps/mobile/app.config.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-15",
+      "recent_churn": 94
+    },
+    "backend/crates/db/src/repositories/form.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-15",
+      "recent_churn": 53
+    },
+    "backend/servers/api-server/tests/booking_oauth_csrf_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-16",
+      "recent_churn": 484
+    },
+    "backend/servers/api-server/tests/booking_oauth_routes_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-16",
+      "recent_churn": 381
     }
   },
   "seen_signals": [
@@ -510,23 +535,41 @@
     "churn-hotspot-backend-crates-db-tests-form-rls-repo-tests-rs",
     "code-review-reality-web-share-comparison-404",
     "code-review-reality-web-listing-page-ssr-crash",
-    "code-review-reality-web-realtor-mgmt-untranslated"
+    "code-review-reality-web-realtor-mgmt-untranslated",
+    "untriaged-issue-1380",
+    "closed-not-merged-pr-1378",
+    "churn-hotspot-frontend-apps-mobile-app-config-icon-test-ts",
+    "churn-hotspot-frontend-apps-mobile-app-config-ts",
+    "churn-hotspot-backend-crates-db-src-repositories-form-rs",
+    "code-review-api-core-vote-partial-cmp-panic",
+    "code-review-api-core-osrng-expect",
+    "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
+    "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
+    "dep-update-noise-pr-1390",
+    "dep-update-noise-pr-1414",
+    "closed-not-merged-pr-1425",
+    "screen-map-drift-pr-1418-ppt",
+    "code-review-mobile-rn-report-fault-fake-submit",
+    "code-review-mobile-rn-screens-mock-data",
+    "code-review-mobile-rn-deeplink-init-unhandled",
+    "stalled-review-pr-1179"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-06-10",
-    "api-core": "2026-05-29",
+    "api-core": "2026-06-15",
     "reality-server": "2026-06-11",
     "ppt-web-ui": "2026-06-11",
     "ppt-web-core": "2026-06-05",
     "reality-web": "2026-06-14",
-    "mobile-rn": "2026-06-03",
+    "mobile-rn": "2026-06-16",
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 38,
-    "vectors_created": 157,
-    "plans_created": 10,
+    "runs": 40,
+    "vectors_created": 173,
+    "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0
   },
@@ -541,19 +584,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 3,
+    "next_index": 5,
     "role_last_run": {
       "pm-tech-lead": "2026-06-05",
       "pm-backend": "2026-06-06",
       "pm-frontend": "2026-06-10",
-      "pm-qa": "2026-05-25",
-      "pm-devops": "2026-05-27",
+      "pm-qa": "2026-06-15",
+      "pm-devops": "2026-06-16",
       "pm-security": "2026-05-27",
       "pm-data": "2026-05-28",
       "pm-integration": "2026-05-29"
     }
   },
   "coverage_cursor": {
-    "next_index": 10
+    "next_index": 12
   }
 }

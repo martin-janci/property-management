@@ -1,4 +1,5 @@
 name: Backend
+# PAP-250: retrigger after stuck queue slot
 
 on:
   push:
@@ -28,9 +29,8 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  check:
+  lint:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v6
 
@@ -57,6 +57,28 @@ jobs:
         env:
           SQLX_OFFLINE: true
         run: cargo clippy --workspace --all-targets -- -D warnings
+
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.94.1
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      # Formatting is enforced here in the REQUIRED `check` job, not only in the
+      # non-blocking `lint` job — so a rustfmt violation blocks merge into dev
+      # instead of landing and needing a fixup PR. This recurred on #1563/#1580
+      # (merged red-`lint` on green `check`) → #1581; tracked as GH #1592.
+      - name: Check formatting
+        working-directory: backend
+        run: cargo fmt --all -- --check
 
       # check-rls-enforcement.sh is ripgrep-based and now hard-fails when rg
       # is missing — without this install the gate was a silent no-op for the
@@ -307,9 +329,10 @@ jobs:
         run: cargo test --test rls_smoke_tests -- --ignored --skip smoke_test_phase0_rls_cross_tenant_isolation --nocapture --test-threads=1
 
   # Story 80.1: RLS Security Penetration Tests (full suite)
-  # NOTE: Security tests depend on 'check' job to ensure code quality before running
-  # expensive security tests. This is intentional - we want to catch basic issues first.
-  # For scheduled runs, both jobs run in sequence.
+  # NOTE: Security tests depend on the 'check' job (RLS scripts + cargo check)
+  # to ensure code and security-enforcement quality before running expensive
+  # penetration tests. They are deliberately NOT gated by 'lint' (fmt/clippy)
+  # to ensure security verification runs even on cosmetic failures (PAP-247).
   security-tests:
     runs-on: ubuntu-latest
     needs: check

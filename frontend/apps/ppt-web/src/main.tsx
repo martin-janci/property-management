@@ -1,6 +1,6 @@
 import '@ppt/ui-kit/tokens.css'; // Design system tokens (colors, spacing, type, dark mode)
 import './index.css'; // Tailwind base + components + utilities + minimal app shell styles
-import { OpenAPI } from '@ppt/api-client';
+import { client, registerAuthInterceptors } from '@ppt/api-client';
 import { type ApiMode, DevPanel, getMode, parseMode } from '@ppt/dev-panel';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -8,13 +8,22 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './i18n'; // Initialize i18n
+
 // MSW is intentionally NOT imported at the top — it's loaded via dynamic import only
 // when bootstrap detects mode === 'mock' AND DEV. Keeps the production bundle MSW-free.
 
 // Override the generated client's hardcoded BASE with the configured API URL.
 // VITE_API_URL is set in .env.* files; falls back to empty string so that
 // Vite's dev-server proxy handles /api/* requests without a host prefix.
-OpenAPI.BASE = import.meta.env.VITE_API_URL || '';
+client.setConfig({
+  baseUrl: import.meta.env.VITE_API_URL || '',
+});
+
+// Centralize auth on the generated client (#1522): inject Authorization +
+// X-Tenant-ID from the providers AuthContext registers, now that the TypeSpec
+// auth headers are optional. Features call the client directly without
+// hand-rolling auth.
+registerAuthInterceptors(client);
 
 const queryClient = new QueryClient({
   defaultOptions: {

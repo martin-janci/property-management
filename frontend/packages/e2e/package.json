@@ -1,0 +1,26 @@
+{
+  "name": "@ppt/e2e",
+  "private": true,
+  "description": "Shared object-oriented Playwright E2E framework for the PPT monorepo",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.55.0",
+    "@ppt/sitemap": "workspace:*",
+    "@types/node": "^25.9.3",
+    "typescript": "^5.3.0"
+  },
+  "version": "0.3.11"
+}

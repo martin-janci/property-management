@@ -1,9 +1,13 @@
 //! Property Import routes (Epic 34: Property Import).
 //!
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal`, not `RequestPrincipal`. Reality
+//! agencies are `principal_kind = 'public'` with no `organization_members` row
+//! and reach the portal on a `PlatformHost`, so `RequestPrincipal` 403s them.
+//! `PortalPrincipal` authenticates the JWT + re-derives kind without requiring
+//! a tenant/membership; IDOR stays closed via `user_id` repo keying (PR #1297).
 
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post, put},
@@ -36,6 +40,36 @@ pub fn router() -> Router<AppState> {
         .route("/feeds/{id}", get(get_feed))
         .route("/feeds/{id}", put(update_feed))
         .route("/feeds/{id}/sync", post(sync_feed))
+}
+
+/// Resolve the agency the calling portal user belongs to (#1584).
+///
+/// Feed subscriptions are agency-scoped: they belong to the realtor's agency and
+/// are shared across the agency's members, not keyed on the individual user.
+/// Returns 403 when the caller is a member of no agency (they cannot own feeds).
+/// Previously the feed handlers passed `principal.user_id` straight into the
+/// `agency_id`-keyed repo methods, which (a) only worked because tests registered
+/// agency UUIDs as users and (b) hid an agency's feeds from its other members.
+async fn resolve_agency(
+    state: &AppState,
+    user_id: Uuid,
+) -> Result<Uuid, (axum::http::StatusCode, String)> {
+    state
+        .reality_portal_repo
+        .get_active_agency_for_user(user_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to resolve agency: {}", e),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::FORBIDDEN,
+                "You are not a member of any agency".to_string(),
+            )
+        })
 }
 
 /// Import jobs list response.
@@ -85,7 +119,7 @@ pub struct FeedResponse {
 )]
 pub async fn list_import_jobs(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Query(query): Query<ImportJobsQuery>,
 ) -> Result<Json<ImportJobsResponse>, (axum::http::StatusCode, String)> {
     let jobs = state
@@ -123,7 +157,7 @@ pub async fn list_import_jobs(
 )]
 pub async fn create_import_job(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Json(data): Json<CreatePortalImportJob>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
@@ -153,7 +187,7 @@ pub async fn create_import_job(
 )]
 pub async fn get_import_job(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
@@ -191,7 +225,7 @@ pub async fn get_import_job(
 )]
 pub async fn update_import_job(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePortalImportJob>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
@@ -228,7 +262,7 @@ pub async fn update_import_job(
 )]
 pub async fn start_import_job(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
@@ -263,7 +297,7 @@ pub async fn start_import_job(
 )]
 pub async fn cancel_import_job(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
@@ -296,11 +330,12 @@ pub async fn cancel_import_job(
 )]
 pub async fn list_feeds(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<FeedsResponse>, (axum::http::StatusCode, String)> {
+    let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feeds = state
         .reality_portal_repo
-        .list_feed_subscriptions(principal.user_id)
+        .list_feed_subscriptions(agency_id)
         .await
         .map_err(|e| {
             (
@@ -328,12 +363,13 @@ pub async fn list_feeds(
 )]
 pub async fn create_feed(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Json(data): Json<CreateFeedSubscription>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
+    let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feed = state
         .reality_portal_repo
-        .create_feed_subscription(principal.user_id, data)
+        .create_feed_subscription(agency_id, data)
         .await
         .map_err(|e| {
             (
@@ -358,12 +394,13 @@ pub async fn create_feed(
 )]
 pub async fn get_feed(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
+    let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feed = state
         .reality_portal_repo
-        .get_feed_subscription(id, principal.user_id)
+        .get_feed_subscription(id, agency_id)
         .await
         .map_err(|e| {
             (
@@ -396,13 +433,14 @@ pub async fn get_feed(
 )]
 pub async fn update_feed(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateFeedSubscription>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
+    let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feed = state
         .reality_portal_repo
-        .update_feed_subscription(id, principal.user_id, data)
+        .update_feed_subscription(id, agency_id, data)
         .await
         .map_err(|e| match e {
             SqlxError::RowNotFound => (
@@ -432,12 +470,13 @@ pub async fn update_feed(
 )]
 pub async fn sync_feed(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
+    let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feed = state
         .reality_portal_repo
-        .trigger_feed_sync(id, principal.user_id)
+        .trigger_feed_sync(id, agency_id)
         .await
         .map_err(|e| match e {
             SqlxError::RowNotFound => (

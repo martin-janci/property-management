@@ -1,0 +1,112 @@
+name: Frontend E2E
+
+on:
+  push:
+    paths:
+      - 'frontend/**'
+  pull_request:
+    paths:
+      - 'frontend/**'
+
+# The JUnit summary step (mikepenz/action-junit-report) creates a check run,
+# which requires `checks: write`. Same-repo pushes/PRs get a write token; fork
+# PRs fall back to read-only and the step degrades to an annotation.
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  e2e:
+    name: E2E (${{ matrix.app }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - ppt-web
+          - reality-web
+          - admin-web
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      # Run from the app dir so pnpm resolves the `playwright` binary from the
+      # app's @playwright/test devDependency (it is not hoisted to the
+      # workspace root, so `pnpm exec` at frontend/ fails with "not found").
+      - name: Install Playwright browsers
+        working-directory: frontend/apps/${{ matrix.app }}
+        run: pnpm exec playwright install --with-deps chromium
+
+      # Each app's `e2e` script is `playwright test`, which delegates to the
+      # shared @ppt/e2e factory. The factory manages its own dev `webServer`
+      # (`pnpm dev`) and resolves the base URL from E2E_ENV (default `local`).
+      # Backend-dependent flow steps are tagged `@requires-backend` and
+      # `test.skip()` cleanly unless E2E_WITH_BACKEND=1, so this run is
+      # green-by-default without a live backend.
+      - name: Run ${{ matrix.app }} E2E
+        working-directory: frontend/apps/${{ matrix.app }}
+        run: pnpm e2e
+        env:
+          CI: 'true'
+          E2E_ENV: local
+
+      # The shared config emits an HTML report, JUnit XML, and traces/videos
+      # into the app's working directory. Upload on every run so failures are
+      # debuggable; JUnit is surfaced separately below.
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-${{ matrix.app }}
+          path: |
+            frontend/apps/${{ matrix.app }}/playwright-report
+            frontend/apps/${{ matrix.app }}/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload JUnit results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-${{ matrix.app }}
+          path: frontend/apps/${{ matrix.app }}/test-results/junit.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Surface JUnit test summary
+        if: always()
+        uses: mikepenz/action-junit-report@v6
+        with:
+          report_paths: frontend/apps/${{ matrix.app }}/test-results/junit.xml
+          check_name: E2E Results (${{ matrix.app }})
+          fail_on_failure: true
+          require_tests: false

@@ -5,6 +5,9 @@
  * - Mock implementations for React Native APIs
  * - Mock implementations for Expo modules
  * - i18next mock for translation testing
+ *
+ * The process timezone is pinned to UTC in `jest.config.js` (it must be set
+ * before the worker's ICU data is initialised, which is too late from here).
  */
 
 // matchers are auto-registered in @testing-library/react-native >= 13

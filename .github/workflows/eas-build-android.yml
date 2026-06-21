@@ -2,6 +2,18 @@ name: EAS Android Build
 
 # Epic 85 - Story 85.2: Android Release Build Configuration
 #
+# Health confirmation (2026-06-17, pm-devops):
+#   A prior DevOps run (2026-05-27) flagged the action pins below as broken
+#   `@v6`. Re-verified against upstream tag listings: all pins resolve to real
+#   major-version tags and the workflow YAML parses cleanly.
+#     - actions/checkout@v6        -> v6.0.3 (v6 major tag exists)
+#     - actions/setup-node@v6      -> v6.4.0 (v6 major tag exists)
+#     - pnpm/action-setup@v6       -> v6.0.9 (v6 major tag exists)
+#     - actions/cache@v5           -> v5.0.5 (v5 major tag exists)
+#     - expo/expo-github-action@v9 -> 9.0.0  (v9 major tag exists)
+#   eas-cli is provisioned by expo/expo-github-action with `eas-version: latest`
+#   (no separate pin required). No fix needed — pins are valid as of this date.
+#
 # Triggers:
 #   - Manual dispatch (all profiles)
 #   - Push to dev touching mobile code => staging APK build (internal distribution)

@@ -35,9 +35,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.listing.*
@@ -103,6 +100,13 @@ fun SearchScreen(
     var maxPrice by remember { mutableStateOf("") }
     var minRooms by remember { mutableStateOf<Int?>(null) }
     var selectedSort by remember { mutableStateOf(ListingSortOption.NEWEST) }
+    // "Near Me" location filter (epic-82 story 82.3 FilterSheet). radiusKm drives the toggle;
+    // nearLat/nearLng are filled once the device coordinate resolves. The shared SearchState
+    // only sends a radius once a centre point is known (see buildSearchRequest).
+    var nearLat by remember { mutableStateOf<Double?>(null) }
+    var nearLng by remember { mutableStateOf<Double?>(null) }
+    var radiusKm by remember { mutableStateOf<Double?>(null) }
+    val nearMeRequester = rememberNearMeLocationRequester()
 
     val networkErrorMsg = stringResource(R.string.error_network)
     val searchFailedMsg = stringResource(R.string.error_generic)
@@ -126,9 +130,17 @@ fun SearchScreen(
         }
         val generation = searchGeneration[0].toLong()
 
+        // Flip the in-flight flag SYNCHRONOUSLY on the calling/collecting thread, before the
+        // fetch is launched. The infinite-scroll trigger snapshots `isLoading` on every emission
+        // (see the nextPageTriggerFlow LaunchedEffect below); if this flip lived only inside the
+        // launched coroutine body, two bottom-of-list emissions arriving back-to-back could both
+        // observe isLoading=false and re-emit the same next page — double-fetching, and for
+        // page > 1 (which reuses the search generation, so shouldApplyResponse can't discard the
+        // duplicate) double-appending via mergePage. Setting it here closes that window. (#1533)
+        isLoading = true
+
         searchJob[0] =
             scope.launch {
-                isLoading = true
                 errorMessage = null
 
                 val request =
@@ -141,6 +153,9 @@ fun SearchScreen(
                         minRooms = minRooms,
                         sort = selectedSort,
                         page = page,
+                        nearLat = nearLat,
+                        nearLng = nearLng,
+                        radiusKm = radiusKm,
                     )
                 val result = repository.searchListings(request)
 
@@ -172,45 +187,56 @@ fun SearchScreen(
 
     LaunchedEffect(Unit) { performSearch() }
 
-    // AC-2: debounced search. A 300ms debounce on free-text query changes mirrors the
-    // iOS SearchView (Task.sleep 300ms). drop(1) skips the initial empty emission so the
-    // LaunchedEffect(Unit) above owns the first load; distinctUntilChanged avoids re-firing
-    // when the same text settles.
+    // AC-2: debounced search. The pipeline (drop initial emission, 300ms debounce,
+    // distinctUntilChanged) lives in SearchState.debouncedQueryFlow so the timing behaviour is
+    // unit-tested with virtual time; here we just feed it the query snapshot and search on each
+    // settled value.
     LaunchedEffect(Unit) {
-        snapshotFlow { searchQuery }
-            .drop(1)
-            .debounce(SearchState.SEARCH_DEBOUNCE_MS)
-            .distinctUntilChanged()
-            .collect { performSearch() }
+        SearchState.debouncedQueryFlow(snapshotFlow { searchQuery }).collect { performSearch() }
     }
 
-    // AC-4: infinite scroll. When the user scrolls within PREFETCH_THRESHOLD of the end and
-    // more results exist, fetch the next page automatically.
-    LaunchedEffect(listState, searchResults.size, totalResults, isLoading) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .distinctUntilChanged()
-            .collect { lastVisible ->
-                if (
-                    SearchState.shouldLoadNextPage(
-                        lastVisibleIndex = lastVisible,
+    // AC-4: infinite scroll. The trigger pipeline (de-duplicate the last-visible index, snapshot
+    // the pagination state, apply the shouldLoadNextPage threshold) lives in
+    // SearchState.nextPageTriggerFlow so the trigger behaviour is unit-tested with virtual time;
+    // here we feed it the scroll-position snapshot and load each page it emits. The snapshot lambda
+    // reads the live pagination state at the moment an index change is processed, so this effect
+    // does not need to re-key on searchResults.size / totalResults / isLoading.
+    LaunchedEffect(listState) {
+        SearchState.nextPageTriggerFlow(
+                lastVisibleIndex =
+                    snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index },
+                snapshot = {
+                    SearchState.PageSnapshot(
                         loadedCount = searchResults.size,
                         total = totalResults,
                         isLoading = isLoading,
+                        currentPage = currentPage,
                     )
-                ) {
-                    performSearch(currentPage + 1)
-                }
-            }
+                },
+            )
+            .collect { page -> performSearch(page) }
     }
 
     val activeFilterCount =
-        remember(selectedType, selectedCategory, minRooms, minPrice, maxPrice) {
+        remember(
+            selectedType,
+            selectedCategory,
+            minRooms,
+            minPrice,
+            maxPrice,
+            nearLat,
+            nearLng,
+            radiusKm,
+        ) {
             SearchState.activeFilterCount(
                 type = selectedType,
                 category = selectedCategory,
                 minRooms = minRooms,
                 minPrice = minPrice,
                 maxPrice = maxPrice,
+                nearLat = nearLat,
+                nearLng = nearLng,
+                radiusKm = radiusKm,
             )
         }
 
@@ -223,13 +249,25 @@ fun SearchScreen(
             minPrice = minPrice,
             maxPrice = maxPrice,
             selectedSort = selectedSort,
+            radiusKm = radiusKm,
+            hasLocation = nearLat != null && nearLng != null,
+            locationRequester = nearMeRequester,
             onDismiss = { showFilters = false },
-            onApply = { type, category, minP, maxP, sort ->
+            onApply = { type, category, minP, maxP, sort, draftRadiusKm, coordinate ->
                 selectedType = type
                 selectedCategory = category
                 minPrice = minP
                 maxPrice = maxP
                 selectedSort = sort
+                radiusKm = draftRadiusKm
+                // A resolved coordinate overwrites the previous one; clearing the radius drops it.
+                if (draftRadiusKm == null) {
+                    nearLat = null
+                    nearLng = null
+                } else if (coordinate != null) {
+                    nearLat = coordinate.latitude
+                    nearLng = coordinate.longitude
+                }
                 showFilters = false
                 performSearch()
             },
@@ -239,6 +277,9 @@ fun SearchScreen(
                 minPrice = ""
                 maxPrice = ""
                 selectedSort = ListingSortOption.NEWEST
+                radiusKm = null
+                nearLat = null
+                nearLng = null
                 showFilters = false
                 performSearch()
             },
@@ -353,7 +394,7 @@ private enum class ViewMode {
     MAP,
 }
 
-// ─── Top bar ───────────────────────────────────────────────────────────
+// ─── Top bar ────────────────────────────────────────────────────────
 
 @Composable
 private fun ListingsTopBar(
@@ -452,7 +493,7 @@ private fun SegmentChip(icon: ImageVector, label: String, selected: Boolean, onC
     }
 }
 
-// ─── Search input ──────────────────────────────────────────────────────
+// ─── Search input ────────────────────────────────────────────────────
 
 @Composable
 private fun SearchInputRow(
@@ -486,7 +527,7 @@ private fun SearchInputRow(
     )
 }
 
-// ─── Rooms chip strip ──────────────────────────────────────────────
+// ─── Rooms chip strip ─────────────────────────────────────────
 
 @Composable
 private fun RoomsChipStrip(selected: Int?, onSelect: (Int?) -> Unit, totalResults: Int) {
@@ -536,7 +577,7 @@ private fun RoomsChipStrip(selected: Int?, onSelect: (Int?) -> Unit, totalResult
     }
 }
 
-// ─── Filter sheet (modal bottom sheet) ───────────────────────────────
+// ─── Filter sheet (modal bottom sheet) ──────────────────────
 //
 // AC-4: advanced filters are presented as a Material 3 ModalBottomSheet, named
 // `FilterSheet` to match the iOS shared component (docs/screens/reality-mobile/search.md
@@ -552,8 +593,20 @@ private fun FilterSheet(
     minPrice: String,
     maxPrice: String,
     selectedSort: ListingSortOption,
+    radiusKm: Double?,
+    hasLocation: Boolean,
+    locationRequester: NearMeLocationRequester,
     onDismiss: () -> Unit,
-    onApply: (ListingType?, PropertyCategory?, String, String, ListingSortOption) -> Unit,
+    onApply:
+        (
+            ListingType?,
+            PropertyCategory?,
+            String,
+            String,
+            ListingSortOption,
+            Double?,
+            NearMeCoordinate?,
+        ) -> Unit,
     onReset: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -564,6 +617,17 @@ private fun FilterSheet(
     var draftMinPrice by remember { mutableStateOf(minPrice) }
     var draftMaxPrice by remember { mutableStateOf(maxPrice) }
     var draftSort by remember { mutableStateOf(selectedSort) }
+    // Near Me draft. draftRadiusKm null = toggle off. draftCoordinate is filled once the device
+    // location resolves; isLocating tracks the in-flight permission/fetch so the UI can show a
+    // spinner. If the filter was already active (hasLocation), the previously-committed coordinate
+    // is reused unless a fresh one is fetched.
+    var draftRadiusKm by remember { mutableStateOf(radiusKm) }
+    var draftCoordinate by remember { mutableStateOf<NearMeCoordinate?>(null) }
+    var isLocating by remember { mutableStateOf(false) }
+    // The toggle is "on" while a radius is selected; it stays on optimistically while locating.
+    val nearMeEnabled = draftRadiusKm != null
+    // Whether we have (or had) a usable centre point for the search.
+    val hasCoordinate = draftCoordinate != null || (hasLocation && radiusKm != null)
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -683,6 +747,87 @@ private fun FilterSheet(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
+            // Near Me — location-radius filter (mirrors iOS FilterSheet.nearMeSection).
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.filter_near_me),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Switch(
+                    checked = nearMeEnabled,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            draftRadiusKm = SearchState.DEFAULT_NEAR_ME_RADIUS_KM
+                            if (!hasCoordinate) {
+                                isLocating = true
+                                locationRequester.acquire { coord ->
+                                    isLocating = false
+                                    if (coord != null) {
+                                        draftCoordinate = coord
+                                    } else {
+                                        // Permission denied / unavailable — revert the toggle.
+                                        draftRadiusKm = null
+                                    }
+                                }
+                            }
+                        } else {
+                            draftRadiusKm = null
+                            draftCoordinate = null
+                        }
+                    },
+                )
+            }
+            if (nearMeEnabled) {
+                when {
+                    isLocating ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.locating),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    hasCoordinate -> {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.filter_radius),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(SearchState.RADIUS_OPTIONS_KM) { km ->
+                                FilterChip(
+                                    selected = draftRadiusKm == km,
+                                    onClick = { draftRadiusKm = km },
+                                    label = {
+                                        Text(stringResource(R.string.radius_km_format, km.toInt()))
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(20.dp))
             // Action row — Reset (text) + Apply (filled).
             Row(
@@ -695,7 +840,15 @@ private fun FilterSheet(
                 }
                 Button(
                     onClick = {
-                        onApply(draftType, draftCategory, draftMinPrice, draftMaxPrice, draftSort)
+                        onApply(
+                            draftType,
+                            draftCategory,
+                            draftMinPrice,
+                            draftMaxPrice,
+                            draftSort,
+                            draftRadiusKm,
+                            draftCoordinate,
+                        )
                     },
                     modifier = Modifier.weight(1f),
                 ) {
@@ -706,7 +859,7 @@ private fun FilterSheet(
     }
 }
 
-// ─── Empty / error / map placeholder ─────────────────────────────────
+// ─── Empty / error / map placeholder ──────────────────────
 
 @Composable
 private fun ErrorBanner(error: String) {

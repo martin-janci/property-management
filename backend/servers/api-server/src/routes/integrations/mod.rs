@@ -8,7 +8,9 @@
 //! | webhook | `webhook` | inbound webhook receivers (subscription CRUD unmounted, PAP-122) |
 //! | booking_channel | `booking_channel` | Booking.com listing push + conflict detection (Gap 83-2) |
 //! | token_rotation | `token_rotation` | Airbnb OAuth token refresh, rotation, revocation (Gap 83-1) |
+//! | airbnb_connections | `airbnb_connections` | DB-backed Airbnb linked-listing list (Coverage 83-1) |
 
+pub mod airbnb_connections;
 pub mod booking_channel;
 pub mod install;
 pub mod oauth;
@@ -34,4 +36,5 @@ pub fn router() -> Router<AppState> {
         .merge(webhook::router())
         .merge(booking_channel::router())
         .merge(token_rotation::router())
+        .merge(airbnb_connections::router())
 }

@@ -31,7 +31,9 @@ import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.AuthState
+import three.two.bit.ppt.reality.auth.GuardDecision
 import three.two.bit.ppt.reality.auth.SsoService
+import three.two.bit.ppt.reality.auth.authGuardDecision
 import three.two.bit.ppt.reality.favorites.*
 import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.listing.ListingSummary
@@ -113,15 +115,14 @@ fun FavoritesScreen(
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        when (authState) {
-            is AuthState.Unauthenticated,
-            is AuthState.Error -> NotSignedInContent(onSignInClick = onSignInClick)
-            is AuthState.Loading -> {
+        when (authGuardDecision(authState)) {
+            GuardDecision.NOT_SIGNED_IN -> NotSignedInContent(onSignInClick = onSignInClick)
+            GuardDecision.LOADING -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
-            is AuthState.Authenticated -> {
+            GuardDecision.CONTENT -> {
                 Column(modifier = Modifier.fillMaxSize()) {
                     FavoritesHeader(
                         favoriteCount = favorites.size,

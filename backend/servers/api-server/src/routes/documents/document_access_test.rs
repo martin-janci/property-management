@@ -1,4 +1,4 @@
-use super::document_access_allowed;
+use super::{document_access_allowed, scope_membership_allows};
 use chrono::Utc;
 use db::models::Document;
 use serde_json::json;
@@ -167,4 +167,51 @@ fn building_and_unit_scope_denied_by_in_memory_gate() {
     let creator = Uuid::new_v4();
     let creator_doc = make_doc("building", creator, json!([]), json!([]));
     assert!(document_access_allowed(&creator_doc, creator, "tenant"));
+}
+
+// ----------------------------------------------------------------------------
+// GH #1413 — building/unit scope resolved from caller membership.
+//
+// `document_access_allowed` (above) stays membership-free; building/unit
+// resolution lives in `scope_membership_allows`, OR'd into the download/preview
+// handlers so a building/unit member is no longer 404'd. These pin that helper.
+// ----------------------------------------------------------------------------
+
+#[test]
+fn building_scope_granted_to_building_member() {
+    let b = Uuid::new_v4();
+    let doc = make_doc(
+        "building",
+        Uuid::new_v4(),
+        json!([]),
+        json!([b.to_string()]),
+    );
+    // Member of the targeted building is granted.
+    assert!(scope_membership_allows(&doc, &[b], &[]));
+    // No membership → denied.
+    assert!(!scope_membership_allows(&doc, &[], &[]));
+    // Membership in a different building → denied.
+    assert!(!scope_membership_allows(&doc, &[Uuid::new_v4()], &[]));
+}
+
+#[test]
+fn unit_scope_granted_to_unit_member() {
+    let u = Uuid::new_v4();
+    let doc = make_doc("unit", Uuid::new_v4(), json!([]), json!([u.to_string()]));
+    // Resident/owner of the targeted unit is granted.
+    assert!(scope_membership_allows(&doc, &[], &[u]));
+    // Building membership does not grant unit scope.
+    assert!(!scope_membership_allows(&doc, &[Uuid::new_v4()], &[]));
+}
+
+#[test]
+fn membership_never_grants_non_building_unit_scopes() {
+    for scope in ["organization", "role", "users", "private"] {
+        let doc = make_doc(scope, Uuid::new_v4(), json!([]), json!([]));
+        assert!(!scope_membership_allows(
+            &doc,
+            &[Uuid::new_v4()],
+            &[Uuid::new_v4()]
+        ));
+    }
 }

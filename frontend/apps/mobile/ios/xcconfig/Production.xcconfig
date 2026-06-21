@@ -1,0 +1,21 @@
+// Production.xcconfig
+// Epic 85 - Story 85.2: Build Configuration by Environment (iOS)
+//
+// Per-environment iOS build settings for the Property Management app
+// (three.two.bit.ppt.management). Selected at `expo prebuild` time by the
+// `withIosBuildConfig` config plugin (plugins/withIosBuildConfig.ts) based on
+// APP_ENV=production and copied into the generated `ios/` project as
+// `PPTEnv.xcconfig`, then wired as the baseConfigurationReference of every
+// build configuration.
+//
+// SOURCE OF TRUTH
+// ---------------
+// Runtime config (API_BASE_URL, etc.) is owned by `.env.production` ->
+// app.config.ts -> ios.infoPlist, with CI overriding API_BASE_URL via EAS
+// secret before building (app.config.ts rejects the __SET_BY_CI__ sentinel
+// if it reaches the build unchanged). This xcconfig carries only the native
+// build-layer marker (PPT_APP_ENV) and the bundle identifier.
+
+PPT_APP_ENV = production
+
+PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.management

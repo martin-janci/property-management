@@ -53,12 +53,13 @@
 mod common;
 
 use axum::http::StatusCode;
+use chrono::{DateTime, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -91,21 +92,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed user")
-}
-
-/// Make `user_id` an active member of `org_id`.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
 }
 
 async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
@@ -322,8 +308,8 @@ async fn get_rfq_from_other_org_is_rejected(pool: PgPool) {
     let org_b = seed_org(&pool, "rfq-b").await;
     let user_a = seed_user(&pool, "rfq-a@mvi-idor.test").await;
     let user_b = seed_user(&pool, "rfq-b@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let rfq_a = seed_rfq(&pool, org_a, user_a).await;
 
     let token_b = mint_token(user_b, "rfq-b@mvi-idor.test", Some(org_b));
@@ -338,7 +324,7 @@ async fn get_rfq_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "rfq-own-a").await;
     let user_a = seed_user(&pool, "rfq-own-a@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let rfq_a = seed_rfq(&pool, org_a, user_a).await;
 
     let token_a = mint_token(user_a, "rfq-own-a@mvi-idor.test", Some(org_a));
@@ -364,8 +350,8 @@ async fn get_vote_from_other_org_is_rejected(pool: PgPool) {
     let org_b = seed_org(&pool, "vote-b").await;
     let user_a = seed_user(&pool, "vote-a@mvi-idor.test").await;
     let user_b = seed_user(&pool, "vote-b@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "VoteA").await;
     let vote_a = seed_vote(&pool, org_a, building_a, user_a).await;
 
@@ -392,7 +378,7 @@ async fn get_vote_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "vote-own-a").await;
     let user_a = seed_user(&pool, "vote-own-a@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let building_a = seed_building(&pool, org_a, "VoteOwnA").await;
     let vote_a = seed_vote(&pool, org_a, building_a, user_a).await;
 
@@ -427,7 +413,7 @@ async fn list_portfolio_properties_from_other_org_is_rejected(pool: PgPool) {
     let org_a = seed_org(&pool, "pf-a").await;
     let org_b = seed_org(&pool, "pf-b").await;
     let user_b = seed_user(&pool, "pf-b@mvi-idor.test").await;
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let portfolio_a = seed_portfolio(&pool, org_a).await;
 
     let token_b = mint_token(user_b, "pf-b@mvi-idor.test", Some(org_b));
@@ -442,7 +428,7 @@ async fn list_portfolio_properties_for_own_org_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_a = seed_org(&pool, "pf-own-a").await;
     let user_a = seed_user(&pool, "pf-own-a@mvi-idor.test").await;
-    seed_membership(&pool, org_a, user_a).await;
+    seed_membership(&pool, org_a, user_a, "org_admin").await;
     let portfolio_a = seed_portfolio(&pool, org_a).await;
 
     let token_a = mint_token(user_a, "pf-own-a@mvi-idor.test", Some(org_a));
@@ -536,6 +522,99 @@ async fn mark_invitation_viewed_for_other_provider_is_rejected(pool: PgPool) {
     let resp = app.execute(app.post(&uri).bearer(&token_b).build()).await;
 
     assert_not_ok(resp.status, "mark_invitation_viewed cross-provider");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mark_invitation_viewed_is_idempotent(pool: PgPool) {
+    // #1301: a provider viewing its OWN invitation a second time must get 200
+    // (idempotent), not 404. The old `AND viewed_at IS NULL` guard returned no
+    // row on the repeat view, so the handler 404'd a legitimate re-view.
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "inv-idem-org").await;
+    let user_a = seed_user(&pool, "inv-idem-a@provider-idor.test").await;
+    let provider_a = seed_provider(&pool, user_a, "inv-idem-a").await;
+    let rfq = seed_rfq(&pool, org, user_a).await;
+    let invitation = seed_invitation(&pool, rfq, provider_a).await;
+
+    let token = mint_token(user_a, "inv-idem-a@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/invitations/{invitation}/view");
+
+    let first = app.execute(app.post(&uri).bearer(&token).build()).await;
+    assert_eq!(
+        first.status,
+        StatusCode::OK,
+        "first view must succeed: {}",
+        first.text()
+    );
+
+    let second = app.execute(app.post(&uri).bearer(&token).build()).await;
+    assert_eq!(
+        second.status,
+        StatusCode::OK,
+        "repeat view must be idempotent (200), not 404: {}",
+        second.text()
+    );
+
+    // Idempotency is more than 200/200: the load-bearing half of the #1301 fix
+    // is `SET viewed_at = COALESCE(viewed_at, NOW())`, which preserves the FIRST
+    // view's timestamp. A regression back to a plain `NOW()` would overwrite it
+    // on every call yet still return 200/200 — so assert the timestamp is both
+    // stamped and stable across the repeat view.
+    let first_viewed = first.json_value()["viewed_at"].clone();
+    let second_viewed = second.json_value()["viewed_at"].clone();
+    assert!(
+        !first_viewed.is_null(),
+        "first view must stamp viewed_at, got {first_viewed}"
+    );
+    assert_eq!(
+        first_viewed, second_viewed,
+        "repeat view must preserve the original viewed_at, not overwrite it",
+    );
+}
+
+/// #1593: deterministic guard for the COALESCE half of the #1301 fix. The
+/// sibling test above proves the two views return the *same* timestamp, but only
+/// because two sequential `NOW()` transactions happen to differ — a regression to
+/// plain `NOW()` could in principle pass it if both shared a microsecond. Seed a
+/// known, deliberately-old `viewed_at` and assert a view preserves it exactly:
+/// `COALESCE(viewed_at, NOW())` keeps the old value; a plain `NOW()` would
+/// replace it with a fresh (much later) timestamp — caught regardless of timing.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mark_invitation_viewed_preserves_seeded_timestamp(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org = seed_org(&pool, "inv-seed-ts-org").await;
+    let user = seed_user(&pool, "inv-seed-ts@provider-idor.test").await;
+    let provider = seed_provider(&pool, user, "inv-seed-ts").await;
+    let rfq = seed_rfq(&pool, org, user).await;
+    let invitation = seed_invitation(&pool, rfq, provider).await;
+
+    // Pin a known-old viewed_at; capture the exact stored value to compare back.
+    let seeded: DateTime<Utc> = sqlx::query_scalar(
+        "UPDATE rfq_invitations SET viewed_at = NOW() - INTERVAL '1 hour' \
+         WHERE id = $1 RETURNING viewed_at",
+    )
+    .bind(invitation)
+    .fetch_one(&pool)
+    .await
+    .expect("seed an old viewed_at");
+
+    let token = mint_token(user, "inv-seed-ts@provider-idor.test", None);
+    let uri = format!("/api/v1/marketplace/invitations/{invitation}/view");
+    let resp = app.execute(app.post(&uri).bearer(&token).build()).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "view of an already-viewed invitation must be idempotent (200): {}",
+        resp.text()
+    );
+
+    // COALESCE keeps the seeded timestamp; a regression to plain NOW() would
+    // replace it with a fresh value ~1h later. Compare exactly.
+    assert_eq!(
+        resp.json_value()["viewed_at"],
+        serde_json::json!(seeded),
+        "viewed_at must be the preserved seeded value, not a fresh NOW()"
+    );
 }
 
 // ---------------------------------------------------------------------------

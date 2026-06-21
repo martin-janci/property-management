@@ -1,5 +1,7 @@
 //! Database models.
 
+pub mod accounting;
+pub mod accounting_provider;
 pub mod agency_branding;
 pub mod agency_domain;
 pub mod announcement;
@@ -101,6 +103,17 @@ pub use agency_domain::{
     AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
 };
 
+pub use accounting::{
+    BankStatement, BankStatementLine, Contact, CreateInvoice as CreateAccountingInvoice,
+    CreateInvoiceItem as CreateAccountingInvoiceItem, Invoice as AccountingInvoice,
+    InvoiceItem as AccountingInvoiceItem, InvoiceStatus as AccountingInvoiceStatus, PaymentMatch,
+    PaymentMatchState, UpdateInvoice, UpdateInvoiceItem, VatRate,
+};
+pub use accounting_provider::{
+    AccountingProviderAuthFlow, AccountingProviderConnection, AccountingProviderContact,
+    AccountingProviderIssuedInvoice, AccountingProviderPaymentMatchSnapshot,
+    AccountingProviderSyncCursor,
+};
 pub use announcement::{
     announcement_status, target_type, AcknowledgeAnnouncement, AcknowledgmentStats, Announcement,
     AnnouncementAttachment, AnnouncementComment, AnnouncementListQuery, AnnouncementRead,
@@ -393,14 +406,12 @@ pub mod budget;
 
 pub use budget::{
     budget_status, capital_plan_status, forecast_type, funding_source, priority,
-    reserve_transaction_type, variance_alert_type, AcknowledgeVarianceAlert, Budget, BudgetActual,
-    BudgetCategory, BudgetDashboard, BudgetItem, BudgetQuery, BudgetSummary, BudgetVarianceAlert,
-    CapitalPlan, CapitalPlanQuery, CategoryVariance, CreateBudget, CreateBudgetCategory,
-    CreateBudgetItem, CreateCapitalPlan, CreateFinancialForecast, CreateReserveFund,
-    FinancialForecast, ForecastQuery, RecordBudgetActual, RecordReserveTransaction, ReserveFund,
-    ReserveFundProjection, ReserveFundTransaction, UpdateBudget, UpdateBudgetCategory,
-    UpdateBudgetItem, UpdateCapitalPlan, UpdateFinancialForecast, UpdateReserveFund,
-    YearlyCapitalSummary,
+    variance_alert_type, AcknowledgeVarianceAlert, Budget, BudgetActual, BudgetCategory,
+    BudgetDashboard, BudgetItem, BudgetQuery, BudgetSummary, BudgetVarianceAlert, CapitalPlan,
+    CapitalPlanQuery, CategoryVariance, CreateBudget, CreateBudgetCategory, CreateBudgetItem,
+    CreateCapitalPlan, CreateFinancialForecast, FinancialForecast, ForecastQuery,
+    RecordBudgetActual, UpdateBudget, UpdateBudgetCategory, UpdateBudgetItem, UpdateCapitalPlan,
+    UpdateFinancialForecast, YearlyCapitalSummary,
 };
 
 // Epic 25: Legal Document & Compliance
@@ -460,8 +471,8 @@ pub use reality_portal::{
     ListingPriceHistory, PortalFavorite, PortalFavoriteWithListing, PortalImportJob,
     PortalImportJobWithStats, PortalSavedSearch, PriceChangeAlert, PublicRealtorProfile,
     RealityAgency, RealityAgencyInvitation, RealityAgencyMember, RealityFeedSubscription,
-    RealtorListing, RealtorProfile, ScheduleViewing, SearchAlertQueueEntry, SendInquiryMessage,
-    UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
+    RealtorListing, RealtorProfile, SavedSearchAlert, ScheduleViewing, SearchAlertQueueEntry,
+    SendInquiryMessage, UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
     UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite, UpdatePortalSavedSearch,
     UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing, ViewingSchedule,
 };

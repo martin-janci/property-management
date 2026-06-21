@@ -18,9 +18,11 @@
 //! read.
 //!
 //! Unlike the host-derived-tenant suites (dispute / equipment), reserve-fund
-//! tenancy comes straight from the JWT `tenant_id` claim, which `AuthUser`
-//! reads without a DB membership lookup. That lets these tests mint a real
-//! access token per org and drive the handlers end-to-end:
+//! tenancy is resolved via the `RlsConnection` / `ValidatedTenantExtractor`
+//! path, which performs a DB membership lookup (`OrganizationMemberRepository::
+//! is_member`, `api-core/src/extractors/tenant.rs`) before any handler runs.
+//! These tests therefore seed a membership row per user+org pair and mint a
+//! real access token per org to drive the handlers end-to-end:
 //!   - Org A's token reading Org A's fund -> 200 (same-org succeeds).
 //!   - Org B's token reading Org A's fund -> 404 (cross-org is blocked).
 
@@ -33,7 +35,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{TestApp, TestConfig};
+use common::{seed_membership, TestApp, TestConfig};
 
 // ---------------------------------------------------------------------------
 // JWT minting (matches api_core::extractors::auth::Claims)
@@ -107,26 +109,6 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .expect("seed user")
 }
 
-/// Make `user_id` an active member of `org_id`. Required because the
-/// reserve-fund handlers now run through the `RlsConnection` extractor
-/// (PAP-79 / #1321), which validates tenant membership via
-/// `OrganizationMemberRepository::is_member` before any handler executes.
-/// Without a membership row the extractor returns 403 ("not a member of this
-/// tenant") before the org-scoped query can surface the 404 these tests assert.
-async fn seed_membership(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        r#"
-        INSERT INTO organization_members (organization_id, user_id, role_type, status, joined_at)
-        VALUES ($1, $2, 'org_admin', 'active', NOW())
-        "#,
-    )
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("seed membership");
-}
-
 async fn seed_fund(pool: &PgPool, org_id: Uuid, created_by: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
@@ -153,7 +135,7 @@ async fn get_fund_same_org_succeeds(pool: PgPool) {
 
     let user = seed_user(&pool, "same-org@reserve-idor.test").await;
     let org_a = seed_org(&pool, "same-a").await;
-    seed_membership(&pool, org_a, user).await;
+    seed_membership(&pool, org_a, user, "org_admin").await;
     let fund_id = seed_fund(&pool, org_a, user).await;
 
     let token = access_token(user, org_a);
@@ -189,7 +171,7 @@ async fn get_fund_cross_org_is_not_found(pool: PgPool) {
     let org_b = seed_org(&pool, "x-b").await;
     // The attacker (user_b) is a legitimate member of their own org_b; the
     // org-scoped query, not the membership gate, is what must block the read.
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let fund_id = seed_fund(&pool, org_a, user_a).await;
 
     // Org B token targeting Org A's fund.
@@ -224,7 +206,7 @@ async fn update_fund_cross_org_does_not_mutate(pool: PgPool) {
     let org_a = seed_org(&pool, "u-a").await;
     let org_b = seed_org(&pool, "u-b").await;
     // user_b is a member of org_b; the org-scoped UPDATE must still 404.
-    seed_membership(&pool, org_b, user_b).await;
+    seed_membership(&pool, org_b, user_b, "org_admin").await;
     let fund_id = seed_fund(&pool, org_a, user_a).await;
 
     let token = access_token(user_b, org_b);

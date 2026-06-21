@@ -15,9 +15,11 @@ import {
   AuthError,
   type AuthErrorCode,
   type AuthUser,
+  clearOrgProvider,
   clearTokenProvider,
   createAuthApi,
   type SsoCallbackRequest,
+  setOrgProvider,
   setTokenProvider,
   type TenantMembership,
   type TenantRole,
@@ -327,6 +329,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       clearTokenProvider();
     };
   }, [getAccessToken]);
+
+  // Register the active-org provider so the api-client's auth interceptor can
+  // send X-Tenant-ID (#1522). Re-registered when the user/org changes so the
+  // provider always reports the current organization.
+  useEffect(() => {
+    setOrgProvider(() => user?.organizationId ?? null);
+    return () => {
+      clearOrgProvider();
+    };
+  }, [user]);
 
   /**
    * Internal token refresh implementation using the API client.

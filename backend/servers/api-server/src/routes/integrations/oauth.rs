@@ -24,9 +24,11 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use api_core::TenantExtractor;
+
 use super::{
     install::{AirbnbCallbackResponse, OAuthCallbackQuery},
-    sync::{verify_org_access, OrgIdPath},
+    sync::{verify_manager_role_in_org, verify_org_access, OrgIdPath},
     token_rotation::with_token_refresh,
 };
 use crate::state::AppState;
@@ -107,6 +109,10 @@ pub struct BookingTokenExchangeResponse {
 )]
 pub async fn booking_token_exchange(
     State(state): State<AppState>,
+    // Retained for its side effect: TenantExtractor rejects requests without a
+    // valid tenant header before the handler runs. Not read directly — org-scope
+    // authz is enforced by verify_manager_role_in_org(path.org_id) below.
+    _tenant: TenantExtractor,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(body): Json<BookingTokenExchangeRequest>,
@@ -129,6 +135,9 @@ pub async fn booking_token_exchange(
 
     // IDOR guard — caller must belong to the target org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Manager-level gate: binding a paid OTA integration is an org-wide action.
+    // Role is read from membership of the PATH org (#1525), not the JWT tenant.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let client_id = state.booking_config.client_id.clone();
     let client_secret = state.booking_config.client_secret.clone();
@@ -270,6 +279,10 @@ pub struct AirbnbTokenExchangeResponse {
 )]
 pub async fn airbnb_token_exchange(
     State(state): State<AppState>,
+    // Retained for its side effect: TenantExtractor rejects requests without a
+    // valid tenant header before the handler runs. Not read directly — org-scope
+    // authz is enforced by verify_manager_role_in_org(path.org_id) below.
+    _tenant: TenantExtractor,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(body): Json<AirbnbTokenExchangeRequest>,
@@ -292,6 +305,9 @@ pub async fn airbnb_token_exchange(
 
     // IDOR guard — caller must belong to the target org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Manager-level gate: binding a paid OTA integration is an org-wide action.
+    // Role is read from membership of the PATH org (#1525), not the JWT tenant.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let client_id = state.airbnb_config.client_id.clone();
     let client_secret = state.airbnb_config.client_secret.clone();
@@ -920,5 +936,86 @@ mod tests {
         let value: serde_json::Value = serde_json::to_value(&resp).unwrap();
         assert_eq!(value["success"], serde_json::json!(false));
         assert!(value["connection_id"].is_null());
+    }
+
+    // ---- Airbnb token-exchange serde (Story 83.1 / Coverage 83-1) ----
+    //
+    // Mirrors the Booking.com coverage above for the primary Airbnb flow.
+    // These are pure (de)serialization checks of the request/response wire
+    // contract for `POST /organizations/{org_id}/airbnb/token/exchange`; they
+    // do not touch the network or a DB. See `tests/airbnb_oauth_routes_tests.rs`
+    // for the auth/IDOR integration coverage of the same endpoint.
+
+    #[test]
+    fn test_airbnb_token_exchange_request_deserialization_full() {
+        let json = r#"{"code":"airbnb-auth-code-123","redirect_uri":"https://app.example.com/airbnb/callback"}"#;
+        let req: AirbnbTokenExchangeRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "airbnb-auth-code-123");
+        assert_eq!(
+            req.redirect_uri.as_deref(),
+            Some("https://app.example.com/airbnb/callback")
+        );
+    }
+
+    #[test]
+    fn test_airbnb_token_exchange_request_minimal() {
+        // Only `code` is required; `redirect_uri` falls back to the
+        // server-configured AIRBNB_REDIRECT_URI when omitted.
+        let json = r#"{"code":"airbnb-auth-code-only"}"#;
+        let req: AirbnbTokenExchangeRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "airbnb-auth-code-only");
+        assert!(req.redirect_uri.is_none());
+    }
+
+    #[test]
+    fn test_airbnb_token_exchange_request_missing_code_fails() {
+        // A body without `code` must be rejected at deserialization so the
+        // handler never forwards an empty authorization code to Airbnb.
+        let json = r#"{"redirect_uri":"https://example.com/cb"}"#;
+        let parsed: Result<AirbnbTokenExchangeRequest, _> = serde_json::from_str(json);
+        assert!(parsed.is_err(), "missing code must fail to deserialize");
+    }
+
+    #[test]
+    fn test_airbnb_token_exchange_request_rejects_null_code() {
+        // `code` is a non-optional String — an explicit JSON null must fail.
+        let json = r#"{"code":null}"#;
+        let parsed: Result<AirbnbTokenExchangeRequest, _> = serde_json::from_str(json);
+        assert!(parsed.is_err(), "null code must fail to deserialize");
+    }
+
+    #[test]
+    fn test_airbnb_token_exchange_response_serialization() {
+        let id = Uuid::new_v4();
+        let resp = AirbnbTokenExchangeResponse {
+            success: true,
+            connection_id: Some(id),
+            message: "Airbnb connected successfully".to_string(),
+            listings_count: Some(3),
+        };
+        let value: serde_json::Value = serde_json::to_value(&resp).unwrap();
+        assert_eq!(value["success"], serde_json::json!(true));
+        assert_eq!(value["connection_id"], serde_json::json!(id.to_string()));
+        assert_eq!(
+            value["message"],
+            serde_json::json!("Airbnb connected successfully")
+        );
+        assert_eq!(value["listings_count"], serde_json::json!(3));
+    }
+
+    #[test]
+    fn test_airbnb_token_exchange_response_failure_shape() {
+        // On failure the optional fields must serialize to JSON null rather
+        // than being dropped, so the frontend can distinguish "not set" cleanly.
+        let resp = AirbnbTokenExchangeResponse {
+            success: false,
+            connection_id: None,
+            message: "failed".to_string(),
+            listings_count: None,
+        };
+        let value: serde_json::Value = serde_json::to_value(&resp).unwrap();
+        assert_eq!(value["success"], serde_json::json!(false));
+        assert!(value["connection_id"].is_null());
+        assert!(value["listings_count"].is_null());
     }
 }

@@ -69,6 +69,17 @@ VIOLATION_PATTERNS=(
     'self\.db\.acquire'
     'self\.db\.pool'
     '&self\.db[^_]'
+    # BIT-78 (GH #1302/#1304): two evasions the patterns above missed.
+    # `state.db.begin()` opens a raw-pool transaction with NO RLS context (the
+    # mfa.rs disable_mfa / verify_recovery_code defect). `state.db.clone()` hands
+    # the raw pool to ad-hoc code. The constructor idiom
+    # (`Repo::new(state.db.clone())`) and struct-field init (`db: self.db.clone(),`)
+    # are allow-listed in is_sanctioned(); a *bare* `let x = state.db.clone();`
+    # raw-pool extraction is flagged.
+    'state\.db\.begin'
+    'self\.db\.begin'
+    'state\.db\.clone'
+    'self\.db\.clone'
 )
 
 # Directories to check (request-handling code that should use RLS).
@@ -123,6 +134,20 @@ is_sanctioned() {
     # Line directly calls the sanctioned helper.
     if [[ "$content" == *"$SANCTIONED_HELPER"* ]]; then
         return 0
+    fi
+
+    # BIT-78: `.clone()` of the raw pool is the canonical way to construct a
+    # repository / service / RlsPool (`Repo::new(state.db.clone())`) or to seed
+    # a struct field (`db: self.db.clone(),`). Those hand the pool to an
+    # RLS-aware abstraction, so they are sanctioned. The evasion this guards
+    # against is *binding the raw pool to a local* and querying it directly
+    # (`let pool = state.db.clone();`). Sanction the wrapped/arg/field form;
+    # flag a bare binding whose entire right-hand side is the clone.
+    if [[ "$content" == *".db.clone("* ]]; then
+        if [[ "$content" =~ =[[:space:]]*(state|self)\.db\.clone\(\)[[:space:]]*\;?[[:space:]]*$ ]]; then
+            return 1   # bare `let x = state.db.clone();` → not sanctioned
+        fi
+        return 0       # passed into a constructor/call or a struct field
     fi
 
     # RLS plumbing implementations are allowed to touch the raw pool.
@@ -218,6 +243,7 @@ sort -u "$TMP_PREFIX/handler_hits" > "$TMP_PREFIX/handler_hits_sorted"
 while IFS= read -r stale; do
     [[ -n "$stale" ]] || continue
     ((WARNINGS+=1))
+    if $STRICT_MODE; then ((VIOLATIONS+=1)); fi
     echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — file no longer flagged; remove it from $(basename "$HANDLER_BASELINE_FILE")"
     echo ""
 done < <(comm -23 "$TMP_PREFIX/handler_baseline" "$TMP_PREFIX/handler_hits_sorted")
@@ -353,6 +379,7 @@ if [[ -d "$REPO_DIR" && -d "$MIGRATIONS_DIR" ]]; then
     while IFS= read -r stale; do
         [[ -n "$stale" ]] || continue
         ((WARNINGS+=1))
+        if $STRICT_MODE; then ((VIOLATIONS+=1)); fi
         echo -e "${YELLOW}WARNING${NC} stale baseline entry '$stale' — repo no longer flagged; remove it from $(basename "$BASELINE_FILE")"
         echo ""
     done < <(comm -23 "$TMP_PREFIX/baseline" "$TMP_PREFIX/hit_names_sorted")

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "epic_prefix": "NONE",
-  "selected_at": "2026-06-14T16:19:14Z",
+  "epic_prefix": "feat-booking-com-ota-xml-rate-availability-backend",
+  "selected_at": "2026-06-21T08:10:31Z",
   "last_action": "repick",
-  "reason": "targets exhausted: closest-to-done candidates (feat-airbnb-oauth-and-sync-*, feat-announcement-viewing-acknowled-apistatus-stub-*) verified already-implemented on dev (airbnb route/crate via PR #1177; announcement ack routes via Story 6.2) — gap-scan 2026-06-12 false-positives, dropped/non-actionable. No valid gap-N/pm-role epic with claimable real work this run.",
+  "reason": "prior target 'feat-airbnb-oauth-token-exchange-route-backend' exhausted; closest-to-done is 'feat-booking-com-ota-xml-rate-availability-backend' (open=1 claimable=1)",
   "stats_at_selection": {
     "open": 1,
     "claimable": 1

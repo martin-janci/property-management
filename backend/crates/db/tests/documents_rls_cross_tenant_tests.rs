@@ -25,32 +25,8 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-/// Set the request context (mirrors `db::tenant_context::set_request_context`).
-async fn set_ctx(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, is_super_admin: bool) {
-    sqlx::query("SELECT set_request_context($1, $2, $3)")
-        .bind(org_id)
-        .bind(user_id)
-        .bind(is_super_admin)
-        .execute(pool)
-        .await
-        .expect("set_request_context");
-}
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Docs {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@docs.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
+mod common;
+use common::{seed_org, set_ctx};
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(

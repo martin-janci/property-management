@@ -1,3 +1,11 @@
+// Pin the timezone before Jest forks its workers, so they inherit it via the
+// environment and ICU initialises against UTC. Date formatters such as
+// `toLocaleDateString` (used by AnnouncementsScreen's relative-date label)
+// otherwise render in the host TZ, making absolute "Mon D" assertions flip
+// between e.g. "May 1" and "May 2" across CI runners — a recurring flaky-test
+// churn source. Setting TZ from a setupFile is too late (ICU is already cached).
+process.env.TZ = 'UTC';
+
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'jest-expo',

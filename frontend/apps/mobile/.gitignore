@@ -23,3 +23,10 @@ store-metadata/android/google-play-service-account.json
 # Local env overrides (never commit)
 .env.local
 .env.*.local
+
+# gap-85-2: Expo prebuild generates the native iOS project under ios/.
+# Keep ONLY the committed source-of-truth xcconfig templates (ios/xcconfig/),
+# ignore everything else the prebuild emits (incl. the generated PPTEnv.xcconfig
+# the withIosBuildConfig plugin writes there).
+/ios/*
+!/ios/xcconfig/

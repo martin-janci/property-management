@@ -502,7 +502,8 @@
     },
     "favorites": {
       "title": "Moje ulubione",
-      "description": "Nieruchomości, które zapisałeś."
+      "description": "Nieruchomości, które zapisałeś.",
+      "h1": "Moje ulubione"
     },
     "login": {
       "title": "Sign in",

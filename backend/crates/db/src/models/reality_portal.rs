@@ -101,6 +101,27 @@ pub struct PortalSavedSearch {
     pub updated_at: DateTime<Utc>,
 }
 
+/// A queued saved-search alert as surfaced to the owning portal user — the
+/// in-app delivery view of a `search_alert_queue` row joined to its saved
+/// search's name (Story 16.3, issue #983). The background matching engine
+/// (`SavedSearchAlertWorker`) enqueues these; this is how the user retrieves
+/// them.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct SavedSearchAlert {
+    pub id: Uuid,
+    pub saved_search_id: Uuid,
+    /// Name of the saved search that produced the alert (joined).
+    pub saved_search_name: String,
+    /// Listings that newly matched the saved search.
+    pub matching_listing_ids: Vec<Uuid>,
+    /// `new_listing` (today); `price_change` is reserved for the favorites path.
+    pub alert_type: String,
+    /// `pending` (undelivered) | `sent` (read) | `failed`.
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub processed_at: Option<DateTime<Utc>>,
+}
+
 /// Create portal saved search.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreatePortalSavedSearch {

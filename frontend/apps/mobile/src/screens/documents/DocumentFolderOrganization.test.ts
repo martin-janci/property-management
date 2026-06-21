@@ -228,10 +228,10 @@ describe('flattenTree', () => {
   it('assigns correct depth for three-level nesting', () => {
     const result = flattenTree(SAMPLE_TREE);
     const byId = Object.fromEntries(result.map((f) => [f.id, f.depth]));
-    expect(byId['f1']).toBe(0); // root
-    expect(byId['f1a']).toBe(1); // child of f1
-    expect(byId['f1a1']).toBe(2); // grandchild of f1
-    expect(byId['f3a']).toBe(1); // child of f3
+    expect(byId.f1).toBe(0); // root
+    expect(byId.f1a).toBe(1); // child of f1
+    expect(byId.f1a1).toBe(2); // grandchild of f1
+    expect(byId.f3a).toBe(1); // child of f3
   });
 
   it('handles nodes with null children gracefully', () => {

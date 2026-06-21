@@ -37,7 +37,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use common::{cleanup_test_user, create_authenticated_user, TestApp, TestUser};
+use common::{cleanup_test_user, create_authenticated_user, seed_membership, TestApp, TestUser};
 
 // ============================================================================
 // Seed helpers
@@ -54,20 +54,6 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
     .fetch_one(pool)
     .await
     .expect("seed_org")
-}
-
-async fn add_org_member(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
-    sqlx::query(
-        "INSERT INTO organization_members \
-             (id, organization_id, user_id, role_type, status, created_at) \
-         VALUES ($1, $2, $3, 'admin', 'active', NOW()) ON CONFLICT DO NOTHING",
-    )
-    .bind(Uuid::new_v4())
-    .bind(org_id)
-    .bind(user_id)
-    .execute(pool)
-    .await
-    .expect("add_org_member");
 }
 
 async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
@@ -144,7 +130,7 @@ async fn setup(app: &TestApp, pool: &PgPool, user: &TestUser, title: &str) -> (U
     let (_token, _) = create_authenticated_user(app, user).await;
     let user_id = user_id_for(pool, &user.email).await;
     let org_id = seed_org(pool, &Uuid::new_v4().to_string()[..8]).await;
-    add_org_member(pool, org_id, user_id).await;
+    seed_membership(pool, org_id, user_id, "admin").await;
     let doc_id = seed_document(pool, org_id, user_id, title).await;
     (org_id, user_id, doc_id)
 }

@@ -51,6 +51,55 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertEqual(Environment.production.urlScheme, "realityportal")
     }
 
+    func testInfoPlistRegistersDeepLinkScheme() throws {
+        // Verification evidence for Coverage 82-2 (Navigation & Routing —
+        // deep-link URL schemes). `DeepLinkHandler.parse(_:)` only ever fires
+        // if iOS actually delivers `realityportal://` URLs to `onOpenURL`, and
+        // iOS only does that when the scheme is declared in the app's
+        // `Info.plist` under `CFBundleURLTypes` → `CFBundleURLSchemes`. That
+        // registration was historically missing (flagged GAP in
+        // docs/screens/reality-mobile/navigation.md) and is now present —
+        // this test pins it so a future plist edit cannot silently break
+        // runtime deep-linking again, and keeps the declared scheme in lockstep
+        // with `Environment.urlScheme`.
+        //
+        // Read the source-tree `Info.plist` directly (computed from this test
+        // file's path) so the check is a pure static assertion that does not
+        // depend on the app bundle being loaded into the test host.
+        let testFileURL = URL(fileURLWithPath: #filePath)
+        let infoPlistURL = testFileURL
+            .deletingLastPathComponent()      // iosAppTests/
+            .deletingLastPathComponent()      // iosApp/
+            .appendingPathComponent("iosApp/Resources/Info.plist")
+
+        let data = try Data(contentsOf: infoPlistURL)
+        let plist = try XCTUnwrap(
+            try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
+                as? [String: Any],
+            "Info.plist did not deserialise into a dictionary"
+        )
+
+        let urlTypes = try XCTUnwrap(
+            plist["CFBundleURLTypes"] as? [[String: Any]],
+            "Info.plist is missing CFBundleURLTypes — iOS will not deliver realityportal:// URLs to onOpenURL"
+        )
+
+        let registeredSchemes = urlTypes
+            .compactMap { $0["CFBundleURLSchemes"] as? [String] }
+            .flatMap { $0 }
+
+        // The custom scheme the DeepLinkHandler / Configuration expect must be
+        // declared, and it must match Environment.urlScheme exactly.
+        XCTAssertTrue(
+            registeredSchemes.contains(Environment.development.urlScheme),
+            "CFBundleURLSchemes \(registeredSchemes) does not contain the configured scheme '\(Environment.development.urlScheme)'"
+        )
+        XCTAssertTrue(
+            registeredSchemes.contains("realityportal"),
+            "CFBundleURLSchemes \(registeredSchemes) does not register 'realityportal'"
+        )
+    }
+
     func testWebBaseUrlsAreEnvironmentSpecific() throws {
         XCTAssertNotEqual(Environment.development.webBaseUrl, Environment.staging.webBaseUrl)
         XCTAssertNotEqual(Environment.staging.webBaseUrl, Environment.production.webBaseUrl)
@@ -438,6 +487,28 @@ final class DeepLinkHandlerTests: XCTestCase {
         let url = try XCTUnwrap(URL(string: "realityportal://unknown/path"))
         guard case .unrecognized = handler.parse(url) else {
             return XCTFail("Expected unrecognized for unknown host")
+        }
+    }
+
+    // MARK: Universal-link host consistency (GH #1408)
+
+    /// Every Environment.universalLinkDomain must be in DeepLinkHandler.allowedUniversalLinkHosts
+    /// so staging/production universal links are not silently dropped by the parser.
+    func testEveryEnvironmentUniversalLinkDomainIsAllowed() {
+        let allowed = DeepLinkHandler.allowedUniversalLinkHosts
+        for env in [Environment.staging, Environment.production] {
+            XCTAssertTrue(
+                allowed.contains(env.universalLinkDomain),
+                "\(env) universalLinkDomain '\(env.universalLinkDomain)' missing from allowedUniversalLinkHosts"
+            )
+        }
+    }
+
+    /// A URL from an out-of-allow-list host must not be routed to the app.
+    func testOutOfAllowlistUniversalLinkIsUnrecognised() throws {
+        let url = try XCTUnwrap(URL(string: "https://attacker.example/listing/lst-1"))
+        guard case .unrecognized = handler.parse(url) else {
+            return XCTFail("Expected unrecognized for non-allow-listed universal-link host")
         }
     }
 }

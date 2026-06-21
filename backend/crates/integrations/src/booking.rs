@@ -64,6 +64,24 @@ pub mod ota_xml {
         tag: &str,
         version: &str,
     ) -> Result<(), BookingError> {
+        write_root_start_with_echo_token(writer, tag, version, None)
+    }
+
+    /// Like [`write_root_start`] but additionally stamps an OTA `EchoToken`
+    /// attribute on the root element when `echo_token` is `Some`.
+    ///
+    /// The `EchoToken` is the OTA-standard idempotency / correlation key: the
+    /// supplier (Booking.com) echoes it back on the response and uses it to
+    /// deduplicate retried requests, so the same logical push that is re-sent
+    /// (e.g. by [`BookingClient::post_ota_with_retry`] after a transient 5xx)
+    /// must carry the *same* token to be recognised as a duplicate rather than
+    /// applied twice.
+    pub fn write_root_start_with_echo_token(
+        writer: &mut Writer<Cursor<Vec<u8>>>,
+        tag: &str,
+        version: &str,
+        echo_token: Option<&str>,
+    ) -> Result<(), BookingError> {
         // <?xml version="1.0" encoding="UTF-8"?>
         writer
             .write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))
@@ -72,11 +90,41 @@ pub mod ota_xml {
         let mut start = BytesStart::new(tag);
         start.push_attribute(("xmlns", OTA_NAMESPACE));
         start.push_attribute(("Version", version));
+        if let Some(token) = echo_token {
+            start.push_attribute(("EchoToken", token));
+        }
         writer
             .write_event(Event::Start(start))
             .map_err(|e| BookingError::Xml(e.to_string()))?;
 
         Ok(())
+    }
+
+    /// Compute a deterministic OTA `EchoToken` (idempotency key) for a push.
+    ///
+    /// The token is a stable, content-derived digest: identical logical
+    /// payloads (same hotel + same ordered set of update lines) always produce
+    /// the same token, while any change to the payload produces a different
+    /// one. This gives the upstream a key to deduplicate idempotent retries on
+    /// while still distinguishing genuinely different pushes.
+    ///
+    /// `kind` namespaces the digest per message type so an availability push and
+    /// a rate push with coincidentally-equal canonical bodies never collide.
+    pub fn compute_echo_token(kind: &str, canonical: &str) -> String {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(kind.as_bytes());
+        hasher.update(b"\x1f");
+        hasher.update(canonical.as_bytes());
+        let digest = hasher.finalize();
+        // 128-bit hex prefix is ample for dedup keying and keeps the attribute
+        // short in the on-wire XML.
+        let mut out = String::with_capacity(32);
+        for byte in &digest[..16] {
+            use std::fmt::Write as _;
+            let _ = write!(out, "{byte:02x}");
+        }
+        out
     }
 
     /// Write a closing tag for `tag`.
@@ -96,7 +144,34 @@ pub mod ota_xml {
     ) -> Result<String, BookingError> {
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
 
-        write_root_start(&mut writer, "OTA_HotelAvailNotifRQ", "1.0")?;
+        // Deterministic idempotency key: stamp an OTA EchoToken derived from the
+        // canonical (hotel + ordered messages) payload so retries of the same
+        // push carry the same token and the upstream can deduplicate them.
+        let mut canonical = String::new();
+        canonical.push_str(hotel_code);
+        for msg in messages {
+            use std::fmt::Write as _;
+            let _ = write!(
+                canonical,
+                "|{}:{}:{}:{}:{}:{}:{:?}:{:?}",
+                msg.room_type_code,
+                msg.rate_plan_code.as_deref().unwrap_or("STD"),
+                msg.start_date,
+                msg.end_date,
+                msg.booking_limit,
+                msg.status,
+                msg.los_restrictions.as_ref().and_then(|l| l.min_los),
+                msg.los_restrictions.as_ref().and_then(|l| l.max_los),
+            );
+        }
+        let echo_token = compute_echo_token("avail", &canonical);
+
+        write_root_start_with_echo_token(
+            &mut writer,
+            "OTA_HotelAvailNotifRQ",
+            "1.0",
+            Some(&echo_token),
+        )?;
 
         // <AvailStatusMessages HotelCode="...">
         let mut avail_msgs = BytesStart::new("AvailStatusMessages");
@@ -166,7 +241,25 @@ pub mod ota_xml {
         // updates: (start, end, room_type_id, rate_plan_code, base_rate, currency)
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
 
-        write_root_start(&mut writer, "OTA_HotelRateAmountNotifRQ", "1.0")?;
+        // Deterministic idempotency key (see build_avail_notif_rq): stamp an OTA
+        // EchoToken derived from the canonical payload so retries are dedupable.
+        let mut canonical = String::new();
+        canonical.push_str(hotel_id);
+        for (start, end, room_type, rate_plan, rate, currency) in updates {
+            use std::fmt::Write as _;
+            let _ = write!(
+                canonical,
+                "|{start}:{end}:{room_type}:{rate_plan}:{rate}:{currency}"
+            );
+        }
+        let echo_token = compute_echo_token("rate", &canonical);
+
+        write_root_start_with_echo_token(
+            &mut writer,
+            "OTA_HotelRateAmountNotifRQ",
+            "1.0",
+            Some(&echo_token),
+        )?;
 
         let mut rate_msgs = BytesStart::new("RateAmountMessages");
         rate_msgs.push_attribute(("HotelCode", hotel_id));
@@ -425,6 +518,301 @@ pub mod ota_xml {
                 Ok(Event::Eof) => return None,
                 Err(_) => return None,
                 _ => {}
+            }
+        }
+    }
+
+    /// A single availability instruction parsed from an inbound
+    /// `OTA_HotelAvailNotifRQ` document.
+    ///
+    /// This is the inbound counterpart to [`build_avail_notif_rq`]: it reads a
+    /// channel-manager / partner push and reconstructs the typed
+    /// [`AvailStatusMessage`] values so the application can apply them. The
+    /// `hotel_code` is read from the enclosing `<AvailStatusMessages>` element.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct ParsedAvailNotif {
+        /// Hotel code from the `<AvailStatusMessages HotelCode="...">` wrapper.
+        pub hotel_code: String,
+        /// The availability instructions in document order.
+        pub messages: Vec<AvailStatusMessage>,
+    }
+
+    /// A single rate instruction parsed from an inbound
+    /// `OTA_HotelRateAmountNotifRQ` document.
+    ///
+    /// Inbound counterpart to [`build_rate_amount_notif_rq`].
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct ParsedRateAmount {
+        /// Room type / inventory code (`InvTypeCode`).
+        pub room_type_code: String,
+        /// Rate plan code (`RatePlanCode`); `None` when the tag omits it.
+        pub rate_plan_code: Option<String>,
+        /// Effective start date (`Start`).
+        pub start_date: NaiveDate,
+        /// Effective end date (`End`).
+        pub end_date: NaiveDate,
+        /// Amount after tax (`AmountAfterTax`).
+        pub amount: Decimal,
+        /// ISO-4217 currency code (`CurrencyCode`).
+        pub currency: String,
+    }
+
+    /// A `<RateAmountMessage>` list parsed from an inbound
+    /// `OTA_HotelRateAmountNotifRQ` document.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct ParsedRateNotif {
+        /// Hotel code from the `<RateAmountMessages HotelCode="...">` wrapper.
+        pub hotel_code: String,
+        /// The rate instructions in document order.
+        pub rates: Vec<ParsedRateAmount>,
+    }
+
+    /// Parse an inbound `OTA_HotelAvailNotifRQ` document into typed
+    /// [`AvailStatusMessage`] values.
+    ///
+    /// This is the streaming, namespace-aware inverse of
+    /// [`build_avail_notif_rq`]. Each `<AvailStatusMessage>` contributes one
+    /// [`AvailStatusMessage`]:
+    /// - `BookingLimit` attribute → `booking_limit` (defaults to `0`).
+    /// - `<StatusApplicationControl>` → `start_date`/`end_date`/`room_type_code`/
+    ///   `rate_plan_code`. A missing/blank `RatePlanCode` parses to `None`.
+    /// - `<RestrictionStatus Status="...">` → `status` (defaults to `"Open"`).
+    /// - `<LengthsOfStay MinStay=".." MaxStay="..">` → `los_restrictions`
+    ///   (only present when at least one of the bounds is given).
+    ///
+    /// Returns [`BookingError::InvalidMessage`] when a `Start`/`End` date is
+    /// present but not a valid `YYYY-MM-DD` value.
+    pub fn parse_avail_notif_rq(xml: &str) -> Result<ParsedAvailNotif, BookingError> {
+        let mut reader = Reader::from_str(xml);
+        reader.config_mut().trim_text(true);
+
+        let mut hotel_code = String::new();
+        let mut messages = Vec::new();
+
+        // Fields accumulated for the message currently being built.
+        let mut cur: Option<PartialAvail> = None;
+
+        loop {
+            match reader.read_event() {
+                Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
+                    let name = e.name().into_inner().to_vec();
+                    match local_name(&name) {
+                        "AvailStatusMessages" => {
+                            if let Some(v) = attr_value(e, "HotelCode") {
+                                hotel_code = v;
+                            }
+                        }
+                        "AvailStatusMessage" => {
+                            cur = Some(PartialAvail {
+                                booking_limit: attr_value(e, "BookingLimit")
+                                    .and_then(|s| s.parse().ok())
+                                    .unwrap_or(0),
+                                ..PartialAvail::default()
+                            });
+                        }
+                        "StatusApplicationControl" => {
+                            if let Some(c) = cur.as_mut() {
+                                c.start_date = Some(parse_ota_date(e, "Start")?);
+                                c.end_date = Some(parse_ota_date(e, "End")?);
+                                c.room_type_code = attr_value(e, "InvTypeCode").unwrap_or_default();
+                                c.rate_plan_code =
+                                    attr_value(e, "RatePlanCode").filter(|s| !s.is_empty());
+                            }
+                        }
+                        "RestrictionStatus" => {
+                            if let Some(c) = cur.as_mut() {
+                                if let Some(s) = attr_value(e, "Status") {
+                                    c.status = s;
+                                }
+                            }
+                        }
+                        "LengthsOfStay" => {
+                            if let Some(c) = cur.as_mut() {
+                                let min = attr_value(e, "MinStay").and_then(|s| s.parse().ok());
+                                let max = attr_value(e, "MaxStay").and_then(|s| s.parse().ok());
+                                if min.is_some() || max.is_some() {
+                                    c.los = Some(super::LosRestrictions {
+                                        min_los: min,
+                                        max_los: max,
+                                    });
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                Ok(Event::End(ref e)) => {
+                    let name = e.name().into_inner().to_vec();
+                    if local_name(&name) == "AvailStatusMessage" {
+                        if let Some(c) = cur.take() {
+                            messages.push(c.into_message());
+                        }
+                    }
+                }
+                Ok(Event::Eof) => break,
+                Err(e) => return Err(BookingError::Xml(e.to_string())),
+                _ => {}
+            }
+        }
+
+        Ok(ParsedAvailNotif {
+            hotel_code,
+            messages,
+        })
+    }
+
+    /// Parse an inbound `OTA_HotelRateAmountNotifRQ` document into typed
+    /// [`ParsedRateAmount`] values.
+    ///
+    /// Streaming, namespace-aware inverse of [`build_rate_amount_notif_rq`].
+    /// Each `<RateAmountMessage>` contributes one [`ParsedRateAmount`] built
+    /// from its `<StatusApplicationControl>` (dates + codes) and the first
+    /// `<BaseByGuestAmt>` (`AmountAfterTax` + `CurrencyCode`).
+    ///
+    /// Returns [`BookingError::InvalidMessage`] when a `Start`/`End` date is
+    /// malformed, or when `AmountAfterTax` is present but not a valid decimal.
+    pub fn parse_rate_amount_notif_rq(xml: &str) -> Result<ParsedRateNotif, BookingError> {
+        let mut reader = Reader::from_str(xml);
+        reader.config_mut().trim_text(true);
+
+        let mut hotel_code = String::new();
+        let mut rates = Vec::new();
+        let mut cur: Option<PartialRate> = None;
+
+        loop {
+            match reader.read_event() {
+                Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
+                    let name = e.name().into_inner().to_vec();
+                    match local_name(&name) {
+                        "RateAmountMessages" => {
+                            if let Some(v) = attr_value(e, "HotelCode") {
+                                hotel_code = v;
+                            }
+                        }
+                        "RateAmountMessage" => {
+                            cur = Some(PartialRate::default());
+                        }
+                        "StatusApplicationControl" => {
+                            if let Some(c) = cur.as_mut() {
+                                c.start_date = Some(parse_ota_date(e, "Start")?);
+                                c.end_date = Some(parse_ota_date(e, "End")?);
+                                c.room_type_code = attr_value(e, "InvTypeCode").unwrap_or_default();
+                                c.rate_plan_code =
+                                    attr_value(e, "RatePlanCode").filter(|s| !s.is_empty());
+                            }
+                        }
+                        "BaseByGuestAmt" => {
+                            if let Some(c) = cur.as_mut() {
+                                // Only the first BaseByGuestAmt seeds the amount.
+                                if c.amount.is_none() {
+                                    if let Some(raw) = attr_value(e, "AmountAfterTax")
+                                        .or_else(|| attr_value(e, "AmountBeforeTax"))
+                                    {
+                                        let amt = raw.parse::<Decimal>().map_err(|_| {
+                                            BookingError::InvalidMessage(format!(
+                                                "invalid rate amount: {raw}"
+                                            ))
+                                        })?;
+                                        c.amount = Some(amt);
+                                    }
+                                    if let Some(cc) = attr_value(e, "CurrencyCode") {
+                                        c.currency = cc;
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                Ok(Event::End(ref e)) => {
+                    let name = e.name().into_inner().to_vec();
+                    if local_name(&name) == "RateAmountMessage" {
+                        if let Some(c) = cur.take() {
+                            rates.push(c.into_rate());
+                        }
+                    }
+                }
+                Ok(Event::Eof) => break,
+                Err(e) => return Err(BookingError::Xml(e.to_string())),
+                _ => {}
+            }
+        }
+
+        Ok(ParsedRateNotif { hotel_code, rates })
+    }
+
+    /// Read an OTA date attribute (`YYYY-MM-DD`) from a start/empty tag.
+    ///
+    /// A missing attribute yields the Unix epoch (`1970-01-01`) so partial
+    /// documents still parse; a *present but malformed* value is a hard error.
+    fn parse_ota_date(
+        e: &quick_xml::events::BytesStart<'_>,
+        attr: &str,
+    ) -> Result<NaiveDate, BookingError> {
+        match attr_value(e, attr) {
+            Some(s) => NaiveDate::parse_from_str(&s, "%Y-%m-%d").map_err(|_| {
+                BookingError::InvalidMessage(format!("invalid OTA date in {attr}: {s}"))
+            }),
+            None => Ok(NaiveDate::from_ymd_opt(1970, 1, 1).expect("epoch is a valid date")),
+        }
+    }
+
+    /// Mutable accumulator for one `<AvailStatusMessage>` while streaming.
+    #[derive(Default)]
+    struct PartialAvail {
+        booking_limit: i32,
+        room_type_code: String,
+        rate_plan_code: Option<String>,
+        start_date: Option<NaiveDate>,
+        end_date: Option<NaiveDate>,
+        status: String,
+        los: Option<super::LosRestrictions>,
+    }
+
+    impl PartialAvail {
+        fn into_message(self) -> AvailStatusMessage {
+            let epoch = NaiveDate::from_ymd_opt(1970, 1, 1).expect("epoch is a valid date");
+            AvailStatusMessage {
+                room_type_code: self.room_type_code,
+                rate_plan_code: self.rate_plan_code,
+                start_date: self.start_date.unwrap_or(epoch),
+                end_date: self.end_date.unwrap_or(epoch),
+                booking_limit: self.booking_limit,
+                status: if self.status.is_empty() {
+                    "Open".to_string()
+                } else {
+                    self.status
+                },
+                los_restrictions: self.los,
+            }
+        }
+    }
+
+    /// Mutable accumulator for one `<RateAmountMessage>` while streaming.
+    #[derive(Default)]
+    struct PartialRate {
+        room_type_code: String,
+        rate_plan_code: Option<String>,
+        start_date: Option<NaiveDate>,
+        end_date: Option<NaiveDate>,
+        amount: Option<Decimal>,
+        currency: String,
+    }
+
+    impl PartialRate {
+        fn into_rate(self) -> ParsedRateAmount {
+            let epoch = NaiveDate::from_ymd_opt(1970, 1, 1).expect("epoch is a valid date");
+            ParsedRateAmount {
+                room_type_code: self.room_type_code,
+                rate_plan_code: self.rate_plan_code,
+                start_date: self.start_date.unwrap_or(epoch),
+                end_date: self.end_date.unwrap_or(epoch),
+                amount: self.amount.unwrap_or(Decimal::ZERO),
+                currency: if self.currency.is_empty() {
+                    "EUR".to_string()
+                } else {
+                    self.currency
+                },
             }
         }
     }
@@ -752,6 +1140,368 @@ pub mod ota_xml {
             let xml = r#"<HotelReservationFoo ResStatus="Cancel"></HotelReservationFoo>"#;
             let notifs = parse_res_notif_rq_raw(xml).unwrap();
             assert_eq!(notifs.len(), 0, "must not match the longer element name");
+        }
+
+        // ----------------------------------------------------------------
+        // Inbound OTA_HotelAvailNotifRQ parsing
+        // ----------------------------------------------------------------
+
+        const SAMPLE_AVAIL_RQ: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <AvailStatusMessages HotelCode="H-12345">
+    <AvailStatusMessage BookingLimit="3" BookingLimitMessageType="SetLimit">
+      <StatusApplicationControl Start="2025-06-01" End="2025-06-05" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <RestrictionStatus Status="Open" Restriction="Master"/>
+    </AvailStatusMessage>
+    <AvailStatusMessage BookingLimit="0" BookingLimitMessageType="SetLimit">
+      <StatusApplicationControl Start="2025-07-01" End="2025-07-07" InvTypeCode="SGL"/>
+      <RestrictionStatus Status="Close" Restriction="Master"/>
+      <LengthsOfStay MinMaxMessageType="SetMinLOS" MinStay="2" MaxStay="14"/>
+    </AvailStatusMessage>
+  </AvailStatusMessages>
+</OTA_HotelAvailNotifRQ>"#;
+
+        #[test]
+        fn test_parse_avail_notif_rq_two_messages() {
+            let parsed = parse_avail_notif_rq(SAMPLE_AVAIL_RQ).unwrap();
+            assert_eq!(parsed.hotel_code, "H-12345");
+            assert_eq!(parsed.messages.len(), 2);
+
+            let first = &parsed.messages[0];
+            assert_eq!(first.room_type_code, "DBL");
+            assert_eq!(first.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(
+                first.start_date,
+                NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
+            );
+            assert_eq!(first.end_date, NaiveDate::from_ymd_opt(2025, 6, 5).unwrap());
+            assert_eq!(first.booking_limit, 3);
+            assert_eq!(first.status, "Open");
+            assert!(first.los_restrictions.is_none());
+
+            let second = &parsed.messages[1];
+            assert_eq!(second.room_type_code, "SGL");
+            // No RatePlanCode on the second message -> None.
+            assert_eq!(second.rate_plan_code, None);
+            assert_eq!(second.status, "Close");
+            assert_eq!(second.booking_limit, 0);
+            let los = second.los_restrictions.as_ref().expect("LOS present");
+            assert_eq!(los.min_los, Some(2));
+            assert_eq!(los.max_los, Some(14));
+        }
+
+        #[test]
+        fn test_avail_round_trip() {
+            // Build with the generator, parse with the new parser, expect the
+            // same logical content back.
+            let msgs = vec![
+                AvailStatusMessage {
+                    room_type_code: "DBL".to_string(),
+                    rate_plan_code: Some("STD".to_string()),
+                    start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                    end_date: NaiveDate::from_ymd_opt(2025, 6, 10).unwrap(),
+                    booking_limit: 5,
+                    status: "Open".to_string(),
+                    los_restrictions: None,
+                },
+                AvailStatusMessage {
+                    room_type_code: "SUITE".to_string(),
+                    // Use an explicit rate plan: build_avail_notif_rq defaults a
+                    // `None` rate_plan_code to "STD" on the wire, so only an
+                    // explicit code can round-trip losslessly. (The lossy-None
+                    // case is asserted separately below.)
+                    rate_plan_code: Some("NONREF".to_string()),
+                    start_date: NaiveDate::from_ymd_opt(2025, 8, 1).unwrap(),
+                    end_date: NaiveDate::from_ymd_opt(2025, 8, 3).unwrap(),
+                    booking_limit: 0,
+                    status: "Close".to_string(),
+                    los_restrictions: Some(LosRestrictions {
+                        min_los: Some(3),
+                        max_los: None,
+                    }),
+                },
+            ];
+            let xml = build_avail_notif_rq("H-RT", &msgs).unwrap();
+            let parsed = parse_avail_notif_rq(&xml).unwrap();
+            assert_eq!(parsed.hotel_code, "H-RT");
+            assert_eq!(parsed.messages, msgs, "round-trip must preserve messages");
+        }
+
+        #[test]
+        fn test_avail_none_rate_plan_defaults_to_std_on_wire() {
+            // Documents the generator's lossy default: a `None` rate_plan_code
+            // is serialized as RatePlanCode="STD", so it parses back as
+            // Some("STD") rather than None.
+            let msgs = vec![AvailStatusMessage {
+                room_type_code: "DBL".to_string(),
+                rate_plan_code: None,
+                start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                end_date: NaiveDate::from_ymd_opt(2025, 6, 2).unwrap(),
+                booking_limit: 1,
+                status: "Open".to_string(),
+                los_restrictions: None,
+            }];
+            let xml = build_avail_notif_rq("H-DEF", &msgs).unwrap();
+            let parsed = parse_avail_notif_rq(&xml).unwrap();
+            assert_eq!(parsed.messages[0].rate_plan_code.as_deref(), Some("STD"));
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_malformed_date_errors() {
+            let xml = r#"<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="H1">
+    <AvailStatusMessage BookingLimit="1">
+      <StatusApplicationControl Start="not-a-date" End="2025-06-05" InvTypeCode="DBL"/>
+      <RestrictionStatus Status="Open"/>
+    </AvailStatusMessage>
+  </AvailStatusMessages>
+</OTA_HotelAvailNotifRQ>"#;
+            let err = parse_avail_notif_rq(xml).unwrap_err();
+            assert!(
+                matches!(err, BookingError::InvalidMessage(_)),
+                "malformed Start date must be InvalidMessage, got {err:?}"
+            );
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_empty_is_ok() {
+            let xml = r#"<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="H-EMPTY"/>
+</OTA_HotelAvailNotifRQ>"#;
+            let parsed = parse_avail_notif_rq(xml).unwrap();
+            assert_eq!(parsed.hotel_code, "H-EMPTY");
+            assert!(parsed.messages.is_empty());
+        }
+
+        // ----------------------------------------------------------------
+        // Inbound OTA_HotelRateAmountNotifRQ parsing
+        // ----------------------------------------------------------------
+
+        const SAMPLE_RATE_RQ: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <RateAmountMessages HotelCode="H-999">
+    <RateAmountMessage>
+      <StatusApplicationControl Start="2025-08-01" End="2025-08-31" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <Rates>
+        <Rate>
+          <BaseByGuestAmts>
+            <BaseByGuestAmt AmountAfterTax="120.50" CurrencyCode="EUR"/>
+          </BaseByGuestAmts>
+        </Rate>
+      </Rates>
+    </RateAmountMessage>
+    <RateAmountMessage>
+      <StatusApplicationControl Start="2025-09-01" End="2025-09-30" InvTypeCode="SGL" RatePlanCode="NONREF"/>
+      <Rates>
+        <Rate>
+          <BaseByGuestAmts>
+            <BaseByGuestAmt AmountAfterTax="89.00" CurrencyCode="USD"/>
+          </BaseByGuestAmts>
+        </Rate>
+      </Rates>
+    </RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+
+        #[test]
+        fn test_parse_rate_amount_notif_rq_two_messages() {
+            let parsed = parse_rate_amount_notif_rq(SAMPLE_RATE_RQ).unwrap();
+            assert_eq!(parsed.hotel_code, "H-999");
+            assert_eq!(parsed.rates.len(), 2);
+
+            let first = &parsed.rates[0];
+            assert_eq!(first.room_type_code, "DBL");
+            assert_eq!(first.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(
+                first.start_date,
+                NaiveDate::from_ymd_opt(2025, 8, 1).unwrap()
+            );
+            assert_eq!(
+                first.end_date,
+                NaiveDate::from_ymd_opt(2025, 8, 31).unwrap()
+            );
+            assert_eq!(first.amount, "120.50".parse::<Decimal>().unwrap());
+            assert_eq!(first.currency, "EUR");
+
+            let second = &parsed.rates[1];
+            assert_eq!(second.room_type_code, "SGL");
+            assert_eq!(second.amount, "89.00".parse::<Decimal>().unwrap());
+            assert_eq!(second.currency, "USD");
+        }
+
+        #[test]
+        fn test_rate_round_trip() {
+            let d1 = NaiveDate::from_ymd_opt(2025, 8, 1).unwrap();
+            let d2 = NaiveDate::from_ymd_opt(2025, 8, 31).unwrap();
+            let rate: Decimal = "199.99".parse().unwrap();
+            let updates = vec![(d1, d2, "DBL", "STD", &rate, "EUR")];
+            let xml = build_rate_amount_notif_rq("H-RT2", &updates).unwrap();
+
+            let parsed = parse_rate_amount_notif_rq(&xml).unwrap();
+            assert_eq!(parsed.hotel_code, "H-RT2");
+            assert_eq!(parsed.rates.len(), 1);
+            let r = &parsed.rates[0];
+            assert_eq!(r.room_type_code, "DBL");
+            assert_eq!(r.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(r.start_date, d1);
+            assert_eq!(r.end_date, d2);
+            assert_eq!(r.amount, rate);
+            assert_eq!(r.currency, "EUR");
+        }
+
+        #[test]
+        fn test_parse_rate_amount_notif_rq_bad_amount_errors() {
+            let xml = r#"<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="H1">
+    <RateAmountMessage>
+      <StatusApplicationControl Start="2025-08-01" End="2025-08-02" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <Rates><Rate><BaseByGuestAmts>
+        <BaseByGuestAmt AmountAfterTax="not-a-number" CurrencyCode="EUR"/>
+      </BaseByGuestAmts></Rate></Rates>
+    </RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+            let err = parse_rate_amount_notif_rq(xml).unwrap_err();
+            assert!(
+                matches!(err, BookingError::InvalidMessage(_)),
+                "bad amount must be InvalidMessage, got {err:?}"
+            );
+        }
+
+        // ----------------------------------------------------------------
+        // XXE / DTD / entity-expansion regression guards (#1519)
+        //
+        // Every inbound field is read via `attr_value`, which calls quick_xml's
+        // `normalized_value`. quick_xml (0.40) resolves only the five predefined
+        // XML entities; a custom `<!ENTITY>` from an internal DTD subset is NOT
+        // resolved, so `normalized_value` returns `Err` and `attr_value` yields
+        // `None` — the poisoned attribute is dropped, never expanded or fetched.
+        // `<!DOCTYPE>` itself is an inert `Event::DocType`.
+        //
+        // These tests lock that safe posture: a quick_xml config change, a switch
+        // to another XML library, or enabling custom-entity resolution would flip
+        // one of these assertions.
+        // ----------------------------------------------------------------
+
+        #[test]
+        fn test_parse_avail_notif_rq_does_not_expand_internal_entity() {
+            // If internal general entities were expanded, HotelCode would become
+            // "INJECTED_SENTINEL". They must not be.
+            let xml = r#"<?xml version="1.0"?>
+<!DOCTYPE OTA_HotelAvailNotifRQ [ <!ENTITY inj "INJECTED_SENTINEL"> ]>
+<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="&inj;"/>
+</OTA_HotelAvailNotifRQ>"#;
+            // Pin the concrete safe outcome (not just "no sentinel", which is
+            // vacuously true for an empty/errored result): parsing must still
+            // SUCCEED and the poisoned attribute must be dropped to empty — the
+            // custom entity is never resolved/expanded. #1591
+            let parsed =
+                parse_avail_notif_rq(xml).expect("DTD input must still parse (entity dropped)");
+            assert_eq!(
+                parsed.hotel_code, "",
+                "internal entity must be dropped to empty, not expanded into HotelCode"
+            );
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_does_not_disclose_external_entity() {
+            // Classic XXE file-disclosure probe. quick_xml never fetches external
+            // entities, so /etc/passwd contents must never surface.
+            let xml = r#"<?xml version="1.0"?>
+<!DOCTYPE OTA_HotelAvailNotifRQ [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>
+<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="&xxe;"/>
+</OTA_HotelAvailNotifRQ>"#;
+            let parsed = parse_avail_notif_rq(xml).expect("DTD input must still parse");
+            assert_eq!(
+                parsed.hotel_code, "",
+                "external entity must yield no value (no file contents, no expansion)"
+            );
+        }
+
+        #[test]
+        fn test_parse_rate_amount_notif_rq_does_not_disclose_external_entity() {
+            let xml = r#"<?xml version="1.0"?>
+<!DOCTYPE OTA_HotelRateAmountNotifRQ [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>
+<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="&xxe;"/>
+</OTA_HotelRateAmountNotifRQ>"#;
+            let parsed = parse_rate_amount_notif_rq(xml).expect("DTD input must still parse");
+            assert_eq!(
+                parsed.hotel_code, "",
+                "external entity must yield no value (no file contents, no expansion)"
+            );
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_billion_laughs_does_not_amplify() {
+            // Nested-entity amplification ("billion laughs"). quick_xml does not
+            // expand custom entities, so this returns promptly without allocating
+            // an amplified string — never a multi-KB HotelCode.
+            let xml = r#"<?xml version="1.0"?>
+<!DOCTYPE OTA_HotelAvailNotifRQ [
+  <!ENTITY lol "lol">
+  <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+  <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+  <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
+]>
+<OTA_HotelAvailNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <AvailStatusMessages HotelCode="&lol4;"/>
+</OTA_HotelAvailNotifRQ>"#;
+            let parsed = parse_avail_notif_rq(xml).expect("DTD input must still parse");
+            assert_eq!(
+                parsed.hotel_code, "",
+                "billion-laughs entity must not amplify (or appear at all) in HotelCode"
+            );
+        }
+
+        #[test]
+        fn test_parse_avail_notif_rq_prefixed_namespace_parity() {
+            // A partner sending `ota:`-prefixed elements must parse identically
+            // to the default-namespace form (`local_name` strips the prefix).
+            let prefixed = r#"<?xml version="1.0"?>
+<ota:OTA_HotelAvailNotifRQ xmlns:ota="http://www.opentravel.org/OTA/2003/05">
+  <ota:AvailStatusMessages HotelCode="H-NS">
+    <ota:AvailStatusMessage BookingLimit="2">
+      <ota:StatusApplicationControl Start="2025-06-01" End="2025-06-05" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <ota:RestrictionStatus Status="Open"/>
+    </ota:AvailStatusMessage>
+  </ota:AvailStatusMessages>
+</ota:OTA_HotelAvailNotifRQ>"#;
+            let parsed = parse_avail_notif_rq(prefixed).unwrap();
+            assert_eq!(parsed.hotel_code, "H-NS");
+            assert_eq!(parsed.messages.len(), 1);
+            let m = &parsed.messages[0];
+            assert_eq!(m.room_type_code, "DBL");
+            assert_eq!(m.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(m.booking_limit, 2);
+            assert_eq!(m.status, "Open");
+            assert_eq!(m.start_date, NaiveDate::from_ymd_opt(2025, 6, 1).unwrap());
+            assert_eq!(m.end_date, NaiveDate::from_ymd_opt(2025, 6, 5).unwrap());
+        }
+
+        #[test]
+        fn test_parse_rate_amount_notif_rq_prefixed_namespace_parity() {
+            let prefixed = r#"<?xml version="1.0"?>
+<ota:OTA_HotelRateAmountNotifRQ xmlns:ota="http://www.opentravel.org/OTA/2003/05">
+  <ota:RateAmountMessages HotelCode="H-NS2">
+    <ota:RateAmountMessage>
+      <ota:StatusApplicationControl Start="2025-08-01" End="2025-08-31" InvTypeCode="DBL" RatePlanCode="STD"/>
+      <ota:Rates><ota:Rate><ota:BaseByGuestAmts>
+        <ota:BaseByGuestAmt AmountAfterTax="120.50" CurrencyCode="EUR"/>
+      </ota:BaseByGuestAmts></ota:Rate></ota:Rates>
+    </ota:RateAmountMessage>
+  </ota:RateAmountMessages>
+</ota:OTA_HotelRateAmountNotifRQ>"#;
+            let parsed = parse_rate_amount_notif_rq(prefixed).unwrap();
+            assert_eq!(parsed.hotel_code, "H-NS2");
+            assert_eq!(parsed.rates.len(), 1);
+            let r = &parsed.rates[0];
+            assert_eq!(r.room_type_code, "DBL");
+            assert_eq!(r.rate_plan_code.as_deref(), Some("STD"));
+            assert_eq!(r.amount, "120.50".parse::<Decimal>().unwrap());
+            assert_eq!(r.currency, "EUR");
         }
     }
 }
@@ -1433,7 +2183,7 @@ pub struct OtaHotelAvailNotifRQ {
 }
 
 /// Availability status message.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AvailStatusMessage {
     /// Room type code.
     pub room_type_code: String,
@@ -1452,7 +2202,7 @@ pub struct AvailStatusMessage {
 }
 
 /// Length of stay restrictions.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LosRestrictions {
     /// Minimum stay.
     pub min_los: Option<i32>,
@@ -1532,6 +2282,95 @@ pub struct RateUpdate {
     pub extra_person_rate: Option<Decimal>,
     /// Extra child rate.
     pub extra_child_rate: Option<Decimal>,
+}
+
+/// OTA Hotel Rate Amount Notification Request (`OTA_HotelRateAmountNotifRQ`).
+///
+/// Typed request model for outbound rate messages, mirroring
+/// [`OtaHotelAvailNotifRQ`] on the availability side. Serialisation delegates
+/// to [`ota_xml::build_rate_amount_notif_rq`] so the wire format stays in one
+/// place; [`from_xml`](OtaHotelRateAmountNotifRQ::from_xml) is the inbound
+/// inverse built on [`ota_xml::parse_rate_amount_notif_rq`].
+#[derive(Debug, Clone)]
+pub struct OtaHotelRateAmountNotifRQ {
+    /// Hotel code (`<RateAmountMessages HotelCode="...">`).
+    pub hotel_code: String,
+    /// Rate updates, one per `<RateAmountMessage>`.
+    pub rate_amount_messages: Vec<RateUpdate>,
+}
+
+impl OtaHotelRateAmountNotifRQ {
+    /// Serialise to an `OTA_HotelRateAmountNotifRQ` document.
+    ///
+    /// Each [`RateUpdate`] applies to a single day (`date` used for both the
+    /// `Start` and `End` of the `<StatusApplicationControl>`), matching the
+    /// push flow's grouping in `BookingClient::push_rates`.
+    pub fn to_xml(&self) -> Result<String, BookingError> {
+        let update_tuples: Vec<(NaiveDate, NaiveDate, &str, &str, &Decimal, &str)> = self
+            .rate_amount_messages
+            .iter()
+            .map(|u| {
+                (
+                    u.date,
+                    u.date,
+                    u.room_type_id.as_str(),
+                    u.rate_plan_code.as_str(),
+                    &u.base_rate,
+                    u.currency.as_str(),
+                )
+            })
+            .collect();
+        ota_xml::build_rate_amount_notif_rq(&self.hotel_code, &update_tuples)
+    }
+
+    /// Parse an inbound `OTA_HotelRateAmountNotifRQ` document into the typed
+    /// model. Wraps [`ota_xml::parse_rate_amount_notif_rq`], mapping each
+    /// parsed `<RateAmountMessage>` to a [`RateUpdate`]. Per-message rates are
+    /// single-day, so `date` is taken from the parsed `start_date`. Optional
+    /// extra-person/child rates are not carried on the OTA wire and default to
+    /// `None`.
+    pub fn from_xml(xml: &str) -> Result<Self, BookingError> {
+        tracing::info!("Parsing OTA_HotelRateAmountNotifRQ XML");
+        let parsed = ota_xml::parse_rate_amount_notif_rq(xml)?;
+        let rate_amount_messages = parsed
+            .rates
+            .into_iter()
+            .map(|r| RateUpdate {
+                room_type_id: r.room_type_code,
+                rate_plan_code: r.rate_plan_code.unwrap_or_default(),
+                date: r.start_date,
+                base_rate: r.amount,
+                currency: r.currency,
+                extra_person_rate: None,
+                extra_child_rate: None,
+            })
+            .collect();
+        Ok(Self {
+            hotel_code: parsed.hotel_code,
+            rate_amount_messages,
+        })
+    }
+}
+
+/// OTA Hotel Rate Amount Notification Response (`OTA_HotelRateAmountNotifRS`).
+///
+/// Typed response model mirroring [`OtaHotelAvailNotifRS`]; parsing delegates
+/// to [`ota_xml::parse_response_status`].
+#[derive(Debug, Clone)]
+pub struct OtaHotelRateAmountNotifRS {
+    /// Whether the rate update was accepted.
+    pub success: bool,
+    /// Error message when `success` is `false`.
+    pub error: Option<String>,
+}
+
+impl OtaHotelRateAmountNotifRS {
+    /// Parse from an `OTA_HotelRateAmountNotifRS` document.
+    pub fn from_xml(xml: &str) -> Result<Self, BookingError> {
+        tracing::info!("Parsing OTA_HotelRateAmountNotifRS XML");
+        let (success, error) = ota_xml::parse_response_status(xml);
+        Ok(Self { success, error })
+    }
 }
 
 // ============================================
@@ -1618,6 +2457,16 @@ impl BookingRetryConfig {
         }
     }
 
+    /// Return a copy of this policy with `max_attempts` overridden, keeping the
+    /// other (delay/backoff) parameters. Handy for zero-delay multi-attempt
+    /// retry configs in tests (`no_retry().clone_with_attempts(3)`).
+    pub fn clone_with_attempts(&self, max_attempts: u32) -> Self {
+        Self {
+            max_attempts: max_attempts.max(1),
+            ..self.clone()
+        }
+    }
+
     /// Backoff delay (ms) before the retry that follows `attempt` (0-based:
     /// `attempt = 0` is the delay after the first attempt failed). Capped at
     /// [`Self::max_delay_ms`].
@@ -1626,6 +2475,51 @@ impl BookingRetryConfig {
         self.initial_delay_ms
             .saturating_mul(factor as u64)
             .min(self.max_delay_ms)
+    }
+}
+
+/// Outcome of a combined availability + rate *push* sync to Booking.com
+/// (AC-5).
+///
+/// The two OTA streams — `OTA_HotelAvailNotifRQ` (availability) and
+/// `OTA_HotelRateAmountNotifRQ` (rates) — are pushed independently and can
+/// succeed or fail independently. Collapsing them into a single
+/// `Result<(), _>` loses that distinction: a caller could not tell whether an
+/// error meant "nothing was applied" or "availability landed but rates were
+/// rejected", leaving the channel in a half-synced state with no signal.
+///
+/// [`BookingClient::push_availability_and_rates`] returns this struct so the
+/// caller sees exactly which stream applied, how many messages each carried,
+/// and the per-stream error text when one failed. Each stream still runs
+/// through [`BookingClient::post_ota_with_retry`], so transient failures are
+/// retried with the same bounded backoff + idempotency-token semantics as the
+/// single-stream pushes.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PushOutcome {
+    /// Number of availability messages sent (0 when none were supplied).
+    pub availability_pushed: usize,
+    /// Number of rate messages sent (0 when none were supplied).
+    pub rates_pushed: usize,
+    /// `Some(error)` if the availability push was attempted and failed;
+    /// `None` if it succeeded or was skipped (no availability updates).
+    pub availability_error: Option<String>,
+    /// `Some(error)` if the rate push was attempted and failed; `None` if it
+    /// succeeded or was skipped (no rate updates).
+    pub rates_error: Option<String>,
+}
+
+impl PushOutcome {
+    /// True when neither stream reported an error (a fully-applied or no-op
+    /// sync).
+    pub fn is_success(&self) -> bool {
+        self.availability_error.is_none() && self.rates_error.is_none()
+    }
+
+    /// True when exactly one of the two streams failed while the other
+    /// applied — the channel is now in a half-synced state the caller must
+    /// reconcile.
+    pub fn is_partial(&self) -> bool {
+        self.availability_error.is_some() != self.rates_error.is_some()
     }
 }
 
@@ -1649,10 +2543,18 @@ pub struct BookingClient {
 }
 
 impl BookingClient {
+    fn build_http_client() -> reqwest::Client {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .connect_timeout(std::time::Duration::from_secs(10))
+            .build()
+            .unwrap_or_default()
+    }
+
     /// Create a new Booking.com client.
     pub fn new(credentials: BookingCredentials) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: Self::build_http_client(),
             credentials,
             retry: BookingRetryConfig::default(),
         }
@@ -1661,7 +2563,7 @@ impl BookingClient {
     /// Create a new client with simple API key (for basic usage).
     pub fn with_api_key(api_key: String) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: Self::build_http_client(),
             credentials: BookingCredentials {
                 hotel_id: String::new(),
                 username: api_key.clone(),
@@ -1704,10 +2606,16 @@ impl BookingClient {
     async fn post_ota_with_retry(&self, op: &str, body: String) -> Result<String, BookingError> {
         let attempts = self.retry.max_attempts.max(1);
         let mut last_err: Option<BookingError> = None;
+        // Retry-After hint (ms) from the last 429/503 response.
+        let mut retry_after_ms: Option<u64> = None;
 
         for attempt in 0..attempts {
             if attempt > 0 {
-                let delay = self.retry.delay_for_attempt(attempt - 1);
+                let base_delay = self.retry.delay_for_attempt(attempt - 1);
+                let delay = retry_after_ms
+                    .map(|ra| ra.max(base_delay))
+                    .unwrap_or(base_delay);
+                retry_after_ms = None;
                 tracing::warn!(
                     op,
                     attempt = attempt + 1,
@@ -1745,15 +2653,37 @@ impl BookingClient {
             }
 
             let code = status.as_u16();
+
+            // Parse Retry-After before consuming the body (response is moved by .text()).
+            let ra_hint_secs = if code == 429 || code == 503 {
+                response
+                    .headers()
+                    .get(reqwest::header::RETRY_AFTER)
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|s| s.trim().parse::<u64>().ok())
+            } else {
+                None
+            };
+
             let error_body = response.text().await.unwrap_or_default();
 
             if is_retryable_status(code) {
                 tracing::warn!(
                     op,
                     status = code,
+                    retry_after_secs = ra_hint_secs,
                     "Booking.com OTA push returned retryable HTTP status"
                 );
-                last_err = Some(BookingError::Api(format!("HTTP {code}: {error_body}")));
+                if let Some(secs) = ra_hint_secs {
+                    retry_after_ms = Some(secs.saturating_mul(1000).min(self.retry.max_delay_ms));
+                }
+                // 429 always maps to RateLimited (with or without Retry-After);
+                // other retryable codes map to Api unless they carried Retry-After.
+                last_err = if code == 429 {
+                    Some(BookingError::RateLimited(ra_hint_secs.unwrap_or(0)))
+                } else {
+                    Some(BookingError::Api(format!("HTTP {code}: {error_body}")))
+                };
                 continue;
             }
 
@@ -2029,6 +2959,64 @@ impl BookingClient {
         }
 
         Ok(())
+    }
+
+    /// Push availability *and* rates to Booking.com in one outbound sync,
+    /// reporting a per-stream [`PushOutcome`] (AC-5).
+    ///
+    /// This is the full rate/availability outbound sync entry point: it sends
+    /// the availability stream (`OTA_HotelAvailNotifRQ`) and the rate stream
+    /// (`OTA_HotelRateAmountNotifRQ`) for `hotel_id`, each through the bounded
+    /// retry / error-handling path of [`Self::post_ota_with_retry`].
+    ///
+    /// Unlike the single-stream [`Self::push_availability`] /
+    /// [`Self::push_rates`], a failure in one stream does **not** abort the
+    /// other: both are always attempted (when their input is non-empty) so a
+    /// rate rejection cannot silently discard a pending availability update.
+    /// The returned [`PushOutcome`] records which stream applied, how many
+    /// messages each sent, and the per-stream error text — letting the caller
+    /// distinguish a clean sync ([`PushOutcome::is_success`]) from a
+    /// half-applied one ([`PushOutcome::is_partial`]) that needs reconciling.
+    ///
+    /// Empty slices are treated as "nothing to push" for that stream (counted
+    /// as 0, no error). Pushing two empty slices yields a successful no-op
+    /// outcome.
+    pub async fn push_availability_and_rates(
+        &self,
+        hotel_id: &str,
+        availability: &[AvailabilityUpdate],
+        rates: &[RateUpdate],
+    ) -> PushOutcome {
+        tracing::info!(
+            hotel_id,
+            availability = availability.len(),
+            rates = rates.len(),
+            "Booking.com combined availability + rate push"
+        );
+
+        let mut outcome = PushOutcome::default();
+
+        if !availability.is_empty() {
+            match self.push_availability(hotel_id, availability).await {
+                Ok(()) => outcome.availability_pushed = availability.len(),
+                Err(e) => {
+                    tracing::error!(error = %e, "availability push failed in combined sync");
+                    outcome.availability_error = Some(e.to_string());
+                }
+            }
+        }
+
+        if !rates.is_empty() {
+            match self.push_rates(hotel_id, rates).await {
+                Ok(()) => outcome.rates_pushed = rates.len(),
+                Err(e) => {
+                    tracing::error!(error = %e, "rate push failed in combined sync");
+                    outcome.rates_error = Some(e.to_string());
+                }
+            }
+        }
+
+        outcome
     }
 
     // ==================== Webhook Handling ====================
@@ -2371,6 +3359,7 @@ mod tests {
     struct MockResponse {
         status: u16,
         body: String,
+        extra_headers: Vec<(String, String)>,
     }
 
     impl MockResponse {
@@ -2378,7 +3367,14 @@ mod tests {
             Self {
                 status,
                 body: body.to_string(),
+                extra_headers: vec![],
             }
+        }
+
+        fn with_header(mut self, name: &str, value: &str) -> Self {
+            self.extra_headers
+                .push((name.to_string(), value.to_string()));
+            self
         }
     }
 
@@ -2390,6 +3386,7 @@ mod tests {
     struct MockOtaServer {
         addr: std::net::SocketAddr,
         hits: Arc<AtomicUsize>,
+        bodies: Arc<Mutex<Vec<String>>>,
     }
 
     impl MockOtaServer {
@@ -2398,6 +3395,8 @@ mod tests {
             let addr = listener.local_addr().unwrap();
             let hits = Arc::new(AtomicUsize::new(0));
             let hits_task = hits.clone();
+            let bodies: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+            let bodies_task = bodies.clone();
             let script = Arc::new(Mutex::new(responses.into_iter()));
 
             tokio::spawn(async move {
@@ -2407,31 +3406,43 @@ mod tests {
                         Err(_) => break,
                     };
                     let hits_inner = hits_task.clone();
+                    let bodies_inner = bodies_task.clone();
                     let script_inner = script.clone();
                     tokio::spawn(async move {
                         use tokio::io::{AsyncReadExt, AsyncWriteExt};
-                        // Drain the request (we don't assert on its content
-                        // here; the OTA-body shape is covered by builder tests).
-                        let mut buf = [0u8; 4096];
-                        let _ = socket.read(&mut buf).await;
+                        // Read the full request and capture the body so tests can
+                        // assert on idempotency tokens / OTA payload shape.
+                        let mut buf = [0u8; 8192];
+                        let n = socket.read(&mut buf).await.unwrap_or(0);
+                        let raw = String::from_utf8_lossy(&buf[..n]).to_string();
+                        let body = raw
+                            .split_once("\r\n\r\n")
+                            .map(|(_, b)| b.to_string())
+                            .unwrap_or_default();
+                        bodies_inner.lock().unwrap().push(body);
 
                         hits_inner.fetch_add(1, Ordering::SeqCst);
                         let resp = {
                             let mut it = script_inner.lock().unwrap();
                             it.next()
                         };
-                        let (status, body) = match resp {
-                            Some(r) => (r.status, r.body),
-                            None => (500, "<exhausted/>".to_string()),
+                        let (status, body, extra_headers) = match resp {
+                            Some(r) => (r.status, r.body, r.extra_headers),
+                            None => (500, "<exhausted/>".to_string(), vec![]),
                         };
                         let reason = match status {
                             200 => "OK",
                             400 => "Bad Request",
+                            429 => "Too Many Requests",
                             503 => "Service Unavailable",
                             _ => "Status",
                         };
+                        let extra = extra_headers
+                            .iter()
+                            .map(|(k, v)| format!("{k}: {v}\r\n"))
+                            .collect::<String>();
                         let response = format!(
-                            "HTTP/1.1 {status} {reason}\r\nContent-Type: application/xml\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                            "HTTP/1.1 {status} {reason}\r\nContent-Type: application/xml\r\nContent-Length: {}\r\nConnection: close\r\n{extra}\r\n{body}",
                             body.len()
                         );
                         let _ = socket.write_all(response.as_bytes()).await;
@@ -2440,7 +3451,7 @@ mod tests {
                 }
             });
 
-            Self { addr, hits }
+            Self { addr, hits, bodies }
         }
 
         fn url(&self) -> String {
@@ -2450,6 +3461,21 @@ mod tests {
         fn hits(&self) -> usize {
             self.hits.load(Ordering::SeqCst)
         }
+
+        /// Snapshot of the request bodies captured so far, in arrival order.
+        fn bodies(&self) -> Vec<String> {
+            self.bodies.lock().unwrap().clone()
+        }
+    }
+
+    /// Extract the value of the `EchoToken` attribute from an OTA RQ root, if
+    /// present. Test-only helper.
+    fn echo_token_of(xml: &str) -> Option<String> {
+        let marker = "EchoToken=\"";
+        let start = xml.find(marker)? + marker.len();
+        let rest = &xml[start..];
+        let end = rest.find('"')?;
+        Some(rest[..end].to_string())
     }
 
     #[test]
@@ -2680,6 +3706,450 @@ mod tests {
         assert_eq!(server.hits(), 2, "should exhaust exactly max_attempts");
     }
 
+    #[tokio::test]
+    async fn test_push_429_with_retry_after_returns_rate_limited() {
+        // Both attempts return 429 with Retry-After: 0 so the test stays fast
+        // (delay capped to 0 via max_delay_ms=0). Verify:
+        //   a) all attempts are consumed, and
+        //   b) the final error is RateLimited, not a generic Api error.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(429, "<rate-limited/>").with_header("Retry-After", "0"),
+            MockResponse::status(429, "<rate-limited/>").with_header("Retry-After", "0"),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 2,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: 2,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }];
+
+        let result = client.push_availability("H1", &updates).await;
+        assert!(
+            matches!(result, Err(BookingError::RateLimited(_))),
+            "429 with Retry-After must surface as RateLimited, got: {result:?}"
+        );
+        assert_eq!(server.hits(), 2, "should exhaust exactly max_attempts");
+    }
+
+    #[tokio::test]
+    async fn test_push_429_without_retry_after_returns_rate_limited_zero() {
+        // Naked 429 with no Retry-After header must also surface as
+        // RateLimited(0), not Api("HTTP 429: …").
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(429, "<too-many/>"),
+            MockResponse::status(429, "<too-many/>"),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 2,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: 2,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }];
+
+        let result = client.push_availability("H1", &updates).await;
+        assert_eq!(
+            server.hits(),
+            2,
+            "should exhaust max_attempts on persistent 429"
+        );
+        match result {
+            Err(BookingError::RateLimited(secs)) => {
+                assert_eq!(secs, 0, "no Retry-After header → RateLimited(0)");
+            }
+            other => panic!("expected RateLimited(0), got: {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_push_429_retry_after_secs_propagated_to_error() {
+        // Retry-After: 5 must propagate into RateLimited(5).
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(429, "<too-many/>").with_header("Retry-After", "5"),
+            MockResponse::status(429, "<too-many/>").with_header("Retry-After", "5"),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        // max_delay_ms = 0 clamps the Retry-After sleep to 0 so the test
+        // stays fast; the important assertion is the error value, not the timing.
+        let client = BookingClient::new(creds).with_retry(BookingRetryConfig {
+            max_attempts: 2,
+            initial_delay_ms: 0,
+            max_delay_ms: 0,
+            backoff_multiplier: 1,
+        });
+
+        let updates = vec![AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: 2,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }];
+
+        let result = client.push_availability("H1", &updates).await;
+        assert_eq!(server.hits(), 2, "should exhaust max_attempts");
+        match result {
+            Err(BookingError::RateLimited(secs)) => {
+                assert_eq!(secs, 5, "Retry-After: 5 → RateLimited(5)");
+            }
+            other => panic!("expected RateLimited(5), got: {other:?}"),
+        }
+    }
+
+    // ==================== Idempotency (AC-5) ====================
+
+    fn avail_update(count: i32) -> AvailabilityUpdate {
+        AvailabilityUpdate {
+            room_type_id: "DBL".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            available_count: count,
+            stop_sell: false,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        }
+    }
+
+    fn rate_update(rate: &str) -> RateUpdate {
+        RateUpdate {
+            room_type_id: "DBL".to_string(),
+            rate_plan_code: "STD".to_string(),
+            date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+            base_rate: rate.parse().unwrap(),
+            currency: "EUR".to_string(),
+            extra_person_rate: None,
+            extra_child_rate: None,
+        }
+    }
+
+    #[test]
+    fn test_echo_token_is_deterministic_for_identical_payload() {
+        let a = ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01");
+        let b = ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01");
+        assert_eq!(
+            a, b,
+            "identical payload must yield identical idempotency key"
+        );
+        assert_eq!(a.len(), 32, "token is a 128-bit hex digest");
+    }
+
+    #[test]
+    fn test_echo_token_differs_for_different_payload_and_kind() {
+        let base = ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01:4");
+        // Different content -> different token.
+        assert_ne!(
+            base,
+            ota_xml::compute_echo_token("avail", "H1|DBL:STD:2025-06-01:5")
+        );
+        // Same content, different message kind -> different token (no collision
+        // between an availability push and a rate push).
+        assert_ne!(
+            base,
+            ota_xml::compute_echo_token("rate", "H1|DBL:STD:2025-06-01:4")
+        );
+    }
+
+    #[test]
+    fn test_avail_xml_stamps_deterministic_echo_token() {
+        let rq = OtaHotelAvailNotifRQ {
+            hotel_code: "H1".to_string(),
+            avail_status_messages: vec![AvailStatusMessage {
+                room_type_code: "DBL".to_string(),
+                rate_plan_code: Some("STD".to_string()),
+                start_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                end_date: NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                booking_limit: 4,
+                status: "Open".to_string(),
+                los_restrictions: None,
+            }],
+        };
+        let first = rq.to_xml();
+        let second = rq.to_xml();
+        let t1 = echo_token_of(&first).expect("avail RQ must carry an EchoToken");
+        let t2 = echo_token_of(&second).expect("avail RQ must carry an EchoToken");
+        assert_eq!(t1, t2, "rebuilding the same push must reuse the same token");
+    }
+
+    #[test]
+    fn test_rate_xml_stamps_echo_token_and_changes_with_content() {
+        let token_for = |rate: &str| {
+            let xml = ota_xml::build_rate_amount_notif_rq(
+                "H1",
+                &[(
+                    NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                    NaiveDate::from_ymd_opt(2025, 6, 1).unwrap(),
+                    "DBL",
+                    "STD",
+                    &rate.parse::<Decimal>().unwrap(),
+                    "EUR",
+                )],
+            )
+            .unwrap();
+            echo_token_of(&xml).expect("rate RQ must carry an EchoToken")
+        };
+        assert_eq!(token_for("120.00"), token_for("120.00"));
+        assert_ne!(token_for("120.00"), token_for("130.00"));
+    }
+
+    #[tokio::test]
+    async fn test_push_availability_reuses_echo_token_across_retries() {
+        // 503 then 200: the push retries. Both requests must carry the SAME
+        // EchoToken so the upstream can deduplicate the retried delivery.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(503, "<busy/>"),
+            MockResponse::status(
+                200,
+                "<OTA_HotelAvailNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelAvailNotifRS>",
+            ),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds)
+            .with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
+
+        let result = client.push_availability("H1", &[avail_update(4)]).await;
+        assert!(result.is_ok(), "expected success after retry: {result:?}");
+        assert_eq!(server.hits(), 2, "expected exactly one retry");
+
+        let bodies = server.bodies();
+        assert_eq!(bodies.len(), 2, "both delivery attempts captured");
+        let t0 = echo_token_of(&bodies[0]).expect("attempt 0 must carry a token");
+        let t1 = echo_token_of(&bodies[1]).expect("attempt 1 must carry a token");
+        assert_eq!(
+            t0, t1,
+            "retried delivery must reuse the same idempotency key"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_push_rates_reuses_echo_token_across_retries() {
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(503, "<busy/>"),
+            MockResponse::status(
+                200,
+                "<OTA_HotelRateAmountNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelRateAmountNotifRS>",
+            ),
+        ])
+        .await;
+
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        let client = BookingClient::new(creds)
+            .with_retry(BookingRetryConfig::no_retry().clone_with_attempts(3));
+
+        let result = client.push_rates("H1", &[rate_update("120.00")]).await;
+        assert!(result.is_ok(), "expected success after retry: {result:?}");
+        assert_eq!(server.hits(), 2);
+
+        let bodies = server.bodies();
+        let t0 = echo_token_of(&bodies[0]).expect("attempt 0 token");
+        let t1 = echo_token_of(&bodies[1]).expect("attempt 1 token");
+        assert_eq!(t0, t1, "rate retry must reuse the same idempotency key");
+    }
+
+    // ==================== Combined push (PushOutcome, AC-5) ====================
+
+    const AVAIL_OK_BODY: &str = "<OTA_HotelAvailNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelAvailNotifRS>";
+    const RATE_OK_BODY: &str = "<OTA_HotelRateAmountNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelRateAmountNotifRS>";
+    const ERR_BODY: &str = "<OTA_HotelRateAmountNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Errors><Error Type=\"3\" Code=\"450\" ShortText=\"Rate rejected\"/></Errors></OTA_HotelRateAmountNotifRS>";
+
+    fn client_for(server: &MockOtaServer) -> BookingClient {
+        let creds = BookingCredentials::with_url(
+            "H1".to_string(),
+            "u".to_string(),
+            "p".to_string(),
+            server.url(),
+        );
+        BookingClient::new(creds).with_retry(BookingRetryConfig::no_retry())
+    }
+
+    #[test]
+    fn test_push_outcome_success_and_partial_helpers() {
+        let clean = PushOutcome {
+            availability_pushed: 2,
+            rates_pushed: 1,
+            availability_error: None,
+            rates_error: None,
+        };
+        assert!(clean.is_success());
+        assert!(!clean.is_partial());
+
+        let half = PushOutcome {
+            availability_pushed: 2,
+            rates_pushed: 0,
+            availability_error: None,
+            rates_error: Some("Rate rejected".to_string()),
+        };
+        assert!(!half.is_success());
+        assert!(half.is_partial());
+
+        let both = PushOutcome {
+            availability_pushed: 0,
+            rates_pushed: 0,
+            availability_error: Some("a".to_string()),
+            rates_error: Some("b".to_string()),
+        };
+        assert!(!both.is_success());
+        // Both failed -> not partial (it's a total failure, nothing landed).
+        assert!(!both.is_partial());
+    }
+
+    #[tokio::test]
+    async fn test_combined_push_both_streams_succeed() {
+        // Availability push (1 HTTP call) then rate push (1 HTTP call).
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(200, AVAIL_OK_BODY),
+            MockResponse::status(200, RATE_OK_BODY),
+        ])
+        .await;
+        let client = client_for(&server);
+
+        let outcome = client
+            .push_availability_and_rates("H1", &[avail_update(4)], &[rate_update("120.00")])
+            .await;
+
+        assert!(
+            outcome.is_success(),
+            "both streams should apply: {outcome:?}"
+        );
+        assert!(!outcome.is_partial());
+        assert_eq!(outcome.availability_pushed, 1);
+        assert_eq!(outcome.rates_pushed, 1);
+        assert_eq!(server.hits(), 2, "one HTTP call per stream");
+    }
+
+    #[tokio::test]
+    async fn test_combined_push_availability_ok_rates_fail_is_partial() {
+        // Availability succeeds; rates come back with an OTA <Errors> body.
+        // The availability success must NOT be lost just because rates failed.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(200, AVAIL_OK_BODY),
+            MockResponse::status(200, ERR_BODY),
+        ])
+        .await;
+        let client = client_for(&server);
+
+        let outcome = client
+            .push_availability_and_rates("H1", &[avail_update(4)], &[rate_update("120.00")])
+            .await;
+
+        assert!(!outcome.is_success());
+        assert!(
+            outcome.is_partial(),
+            "exactly one stream failed: {outcome:?}"
+        );
+        assert_eq!(outcome.availability_pushed, 1, "availability still applied");
+        assert_eq!(outcome.rates_pushed, 0, "rates did not apply");
+        assert!(outcome.availability_error.is_none());
+        assert!(
+            outcome
+                .rates_error
+                .as_deref()
+                .is_some_and(|e| e.contains("Rate rejected")),
+            "rate error text must be surfaced: {outcome:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_combined_push_no_op_when_both_empty() {
+        // No availability and no rates: a successful no-op that makes zero
+        // HTTP calls.
+        let server = MockOtaServer::spawn(vec![]).await;
+        let client = client_for(&server);
+
+        let outcome = client.push_availability_and_rates("H1", &[], &[]).await;
+
+        assert!(outcome.is_success());
+        assert!(!outcome.is_partial());
+        assert_eq!(outcome.availability_pushed, 0);
+        assert_eq!(outcome.rates_pushed, 0);
+        assert_eq!(server.hits(), 0, "empty sync must not hit the network");
+    }
+
+    #[tokio::test]
+    async fn test_combined_push_continues_rates_after_availability_failure() {
+        // Availability fails (non-retryable 400) but rates must still be
+        // attempted — the failure of one stream cannot abort the other.
+        let server = MockOtaServer::spawn(vec![
+            MockResponse::status(400, "<bad-request/>"),
+            MockResponse::status(200, RATE_OK_BODY),
+        ])
+        .await;
+        let client = client_for(&server);
+
+        let outcome = client
+            .push_availability_and_rates("H1", &[avail_update(4)], &[rate_update("99.00")])
+            .await;
+
+        assert!(outcome.is_partial(), "one stream failed: {outcome:?}");
+        assert_eq!(outcome.availability_pushed, 0);
+        assert_eq!(
+            outcome.rates_pushed, 1,
+            "rates attempted despite avail failure"
+        );
+        assert!(outcome.availability_error.is_some());
+        assert!(outcome.rates_error.is_none());
+        assert_eq!(server.hits(), 2, "both streams hit the network");
+    }
+
     #[test]
     fn test_map_reservation_status() {
         // Commit -> Confirmed
@@ -2695,5 +4165,131 @@ mod tests {
         assert!(result.is_ok());
         let res = result.unwrap();
         assert_eq!(res.status, BookingReservationStatus::Cancelled);
+    }
+
+    // ----------------------------------------------------------------------
+    // OtaHotelRateAmountNotifRQ / RS typed request/response models (Story 83.2)
+    // ----------------------------------------------------------------------
+
+    fn rate_update_on(room: &str, rate: &str, date: NaiveDate) -> RateUpdate {
+        RateUpdate {
+            room_type_id: room.to_string(),
+            rate_plan_code: "STD".to_string(),
+            date,
+            base_rate: rate.parse::<Decimal>().unwrap(),
+            currency: "EUR".to_string(),
+            extra_person_rate: None,
+            extra_child_rate: None,
+        }
+    }
+
+    #[test]
+    fn test_rate_amount_notif_rq_to_xml_shape() {
+        let rq = OtaHotelRateAmountNotifRQ {
+            hotel_code: "H-RT-99".to_string(),
+            rate_amount_messages: vec![rate_update_on(
+                "DBL",
+                "120.50",
+                NaiveDate::from_ymd_opt(2025, 7, 1).unwrap(),
+            )],
+        };
+        let xml = rq.to_xml().expect("serialisation must succeed");
+        assert!(xml.contains("OTA_HotelRateAmountNotifRQ"));
+        assert!(xml.contains(&format!("xmlns=\"{OTA_NAMESPACE}\"")));
+        assert!(xml.contains("HotelCode=\"H-RT-99\""));
+        assert!(xml.contains("InvTypeCode=\"DBL\""));
+        assert!(xml.contains("RatePlanCode=\"STD\""));
+        assert!(xml.contains("AmountAfterTax=\"120.50\""));
+        assert!(xml.contains("CurrencyCode=\"EUR\""));
+        // Single-day update: Start == End.
+        assert!(xml.contains("Start=\"2025-07-01\""));
+        assert!(xml.contains("End=\"2025-07-01\""));
+    }
+
+    #[test]
+    fn test_rate_amount_notif_rq_from_xml_parses_typed_model() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <RateAmountMessages HotelCode="H-IN-7">
+    <RateAmountMessage>
+      <StatusApplicationControl Start="2025-08-10" End="2025-08-10" InvTypeCode="STE" RatePlanCode="FLEX"/>
+      <Rates><Rate><BaseByGuestAmts>
+        <BaseByGuestAmt AmountAfterTax="250.00" CurrencyCode="EUR"/>
+      </BaseByGuestAmts></Rate></Rates>
+    </RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+        let rq = OtaHotelRateAmountNotifRQ::from_xml(xml).expect("parse must succeed");
+        assert_eq!(rq.hotel_code, "H-IN-7");
+        assert_eq!(rq.rate_amount_messages.len(), 1);
+        let m = &rq.rate_amount_messages[0];
+        assert_eq!(m.room_type_id, "STE");
+        assert_eq!(m.rate_plan_code, "FLEX");
+        assert_eq!(m.date, NaiveDate::from_ymd_opt(2025, 8, 10).unwrap());
+        assert_eq!(m.base_rate, "250.00".parse::<Decimal>().unwrap());
+        assert_eq!(m.currency, "EUR");
+        assert_eq!(m.extra_person_rate, None);
+    }
+
+    #[test]
+    fn test_rate_amount_notif_rq_round_trip() {
+        let original = OtaHotelRateAmountNotifRQ {
+            hotel_code: "H-RT-RT".to_string(),
+            rate_amount_messages: vec![
+                rate_update_on("DBL", "99.00", NaiveDate::from_ymd_opt(2025, 9, 1).unwrap()),
+                rate_update_on(
+                    "STE",
+                    "180.00",
+                    NaiveDate::from_ymd_opt(2025, 9, 2).unwrap(),
+                ),
+            ],
+        };
+        let xml = original.to_xml().unwrap();
+        let parsed = OtaHotelRateAmountNotifRQ::from_xml(&xml).unwrap();
+        assert_eq!(parsed.hotel_code, original.hotel_code);
+        assert_eq!(parsed.rate_amount_messages.len(), 2);
+        for (got, want) in parsed
+            .rate_amount_messages
+            .iter()
+            .zip(original.rate_amount_messages.iter())
+        {
+            assert_eq!(got.room_type_id, want.room_type_id);
+            assert_eq!(got.rate_plan_code, want.rate_plan_code);
+            assert_eq!(got.date, want.date);
+            assert_eq!(got.base_rate, want.base_rate);
+            assert_eq!(got.currency, want.currency);
+        }
+    }
+
+    #[test]
+    fn test_rate_amount_notif_rq_from_xml_bad_amount_errors() {
+        let xml = r#"<OTA_HotelRateAmountNotifRQ xmlns="http://www.opentravel.org/OTA/2003/05">
+  <RateAmountMessages HotelCode="H">
+    <RateAmountMessage>
+      <StatusApplicationControl Start="2025-08-10" End="2025-08-10" InvTypeCode="STE" RatePlanCode="FLEX"/>
+      <Rates><Rate><BaseByGuestAmts>
+        <BaseByGuestAmt AmountAfterTax="not-a-number" CurrencyCode="EUR"/>
+      </BaseByGuestAmts></Rate></Rates>
+    </RateAmountMessage>
+  </RateAmountMessages>
+</OTA_HotelRateAmountNotifRQ>"#;
+        assert!(OtaHotelRateAmountNotifRQ::from_xml(xml).is_err());
+    }
+
+    #[test]
+    fn test_rate_amount_notif_rs_success_and_error() {
+        let ok = OtaHotelRateAmountNotifRS::from_xml(
+            "<OTA_HotelRateAmountNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Success/></OTA_HotelRateAmountNotifRS>",
+        )
+        .unwrap();
+        assert!(ok.success);
+        assert!(ok.error.is_none());
+
+        let err = OtaHotelRateAmountNotifRS::from_xml(
+            "<OTA_HotelRateAmountNotifRS xmlns=\"http://www.opentravel.org/OTA/2003/05\"><Errors><Error ShortText=\"rate rejected\"/></Errors></OTA_HotelRateAmountNotifRS>",
+        )
+        .unwrap();
+        assert!(!err.success);
+        assert_eq!(err.error.as_deref(), Some("rate rejected"));
     }
 }

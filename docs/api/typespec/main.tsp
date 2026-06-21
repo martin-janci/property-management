@@ -20,6 +20,7 @@ import "./domains/documents.tsp";
 import "./domains/rentals.tsp";
 import "./domains/listings.tsp";
 import "./domains/compliance.tsp";
+import "./domains/accounting.tsp";
 
 using TypeSpec.Http;
 using TypeSpec.OpenAPI;

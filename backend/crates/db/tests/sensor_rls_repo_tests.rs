@@ -19,36 +19,13 @@
 //! it. `FORCE` binds that role, so the org-scoped policy is enforced. The org
 //! context (`app.current_org_id`) is a session GUC and survives `SET ROLE`.
 
+use db::models::ReadingQuery;
 use db::repositories::SensorRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-/// Set the request context (mirrors `db::tenant_context::set_request_context`).
-async fn set_ctx(pool: &PgPool, org_id: Option<Uuid>, user_id: Option<Uuid>, is_super_admin: bool) {
-    sqlx::query("SELECT set_request_context($1, $2, $3)")
-        .bind(org_id)
-        .bind(user_id)
-        .bind(is_super_admin)
-        .execute(pool)
-        .await
-        .expect("set_request_context");
-}
-
-async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO organizations (name, slug, contact_email, status)
-        VALUES ($1, $2, $3, 'active')
-        RETURNING id
-        "#,
-    )
-    .bind(format!("Sensors {slug}"))
-    .bind(slug)
-    .bind(format!("{slug}@sensors.test"))
-    .fetch_one(pool)
-    .await
-    .expect("seed org")
-}
+mod common;
+use common::{seed_org, set_ctx};
 
 async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
@@ -128,7 +105,7 @@ async fn sensors_force_rls_requires_context_and_blocks_cross_tenant(pool: PgPool
     let sensor_a = seed_sensor(&pool, org_a, bldg_a, user_a, "alpha-temp").await;
     let sensor_b = seed_sensor(&pool, org_b, bldg_b, user_b, "bravo-temp").await;
 
-    let repo = SensorRepository::new(pool.clone());
+    let repo = SensorRepository::new();
 
     // --- Create a NOSUPERUSER NOBYPASSRLS role so FORCE actually binds. ---
     // Random suffix keeps the role name unique across parallel test DBs.
@@ -255,4 +232,100 @@ async fn sensors_force_rls_requires_context_and_blocks_cross_tenant(pool: PgPool
     .execute(&pool)
     .await
     .ok();
+}
+
+/// Child-table IDOR: org-A caller must not see org-B's `sensor_readings` via
+/// `SensorRepository::list_readings`, even when they supply org-B's sensor_id.
+///
+/// The RLS policy on `sensor_readings` propagates the owning sensor's
+/// `organization_id` via a JOIN. Under org-A context, org-B's child rows
+/// collapse to empty — the same cross-tenant isolation guarantee as the parent
+/// table test above.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn sensor_readings_child_table_idor_blocked(pool: PgPool) {
+    set_ctx(&pool, None, None, true).await;
+
+    let org_a = seed_org(&pool, "child-idor-a").await;
+    let org_b = seed_org(&pool, "child-idor-b").await;
+    let user_a = seed_user(&pool, "a@child-idor.test").await;
+    let user_b = seed_user(&pool, "b@child-idor.test").await;
+    let bldg_b = seed_building(&pool, org_b, "1 Bravo Ave").await;
+    let sensor_b = seed_sensor(&pool, org_b, bldg_b, user_b, "bravo-child").await;
+    let _ = (org_a, user_a); // seeded for symmetry
+
+    // Seed a reading for org-B's sensor as superuser (RLS-exempt).
+    sqlx::query(
+        "INSERT INTO sensor_readings (sensor_id, value, unit, quality, timestamp)          VALUES ($1, 23.5, 'C', 'good', NOW())",
+    )
+    .bind(sensor_b)
+    .execute(&pool)
+    .await
+    .expect("seed reading for org-B sensor");
+
+    let repo = SensorRepository::new();
+
+    let role = format!("ppt_rls_child_{}", Uuid::new_v4().simple());
+    for stmt in [
+        format!("CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"),
+        format!("GRANT SELECT ON sensors, sensor_readings TO \"{role}\""),
+        format!(
+            "GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin(),              get_current_org_not_deleted() TO \"{role}\""
+        ),
+        format!("GRANT SELECT ON organizations TO \"{role}\""),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .expect("grant");
+    }
+
+    {
+        let mut conn = pool.acquire().await.expect("acquire");
+
+        // Org-A context — cross-tenant sensor_readings must be empty.
+        sqlx::query("SELECT set_request_context($1, $2, false)")
+            .bind(org_a)
+            .bind(user_a)
+            .execute(&mut *conn)
+            .await
+            .expect("set org-A ctx");
+        sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
+            .execute(&mut *conn)
+            .await
+            .expect("set role");
+
+        let readings = repo
+            .list_readings(
+                &mut *conn,
+                sensor_b,
+                ReadingQuery {
+                    from_time: None,
+                    to_time: None,
+                    limit: None,
+                    aggregation: None,
+                },
+            )
+            .await
+            .expect("list_readings must not error (just return empty)");
+
+        assert!(
+            readings.is_empty(),
+            "org-A must not see org-B\'s sensor_readings via list_readings              (child-table IDOR blocked by RLS)"
+        );
+
+        sqlx::query("RESET ROLE").execute(&mut *conn).await.ok();
+    }
+
+    // Cleanup.
+    set_ctx(&pool, None, None, true).await;
+    for stmt in [
+        format!("REVOKE ALL ON sensors, sensor_readings FROM \"{role}\""),
+        format!("REVOKE ALL ON organizations FROM \"{role}\""),
+        format!("DROP ROLE IF EXISTS \"{role}\""),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .ok();
+    }
 }

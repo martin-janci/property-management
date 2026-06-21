@@ -227,9 +227,10 @@ async fn get_folder(
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FolderDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let org_id = rls.tenant_id();
     match state
         .document_repo
-        .find_folder_by_id_rls(&mut **rls.conn(), id)
+        .find_folder_by_id_rls(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(folder)) => {
@@ -285,10 +286,12 @@ async fn update_folder(
         ));
     }
 
-    // Check folder exists
+    // Check folder exists (org-scoped: cross-org rows are invisible even under
+    // a superuser connection that bypasses RLS — see find_folder_by_id_rls).
+    let org_id = rls.tenant_id();
     match state
         .document_repo
-        .find_folder_by_id_rls(&mut **rls.conn(), id)
+        .find_folder_by_id_rls(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(_)) => {}
@@ -326,8 +329,10 @@ async fn update_folder(
         }
     }
 
-    // Validate parent_id to prevent circular references
-    if let Some(new_parent_id) = req.parent_id {
+    // Validate parent_id to prevent circular references. Only a move under a
+    // concrete parent (Some(Some)) needs the check; Some(None) detaches to root
+    // and None leaves the parent unchanged (#1589).
+    if let Some(Some(new_parent_id)) = req.parent_id {
         // Cannot set a folder as its own parent
         if new_parent_id == id {
             return Err((
@@ -434,10 +439,12 @@ async fn delete_folder(
         ));
     }
 
-    // Check folder exists
+    // Check folder exists (org-scoped: cross-org rows are invisible even under
+    // a superuser connection that bypasses RLS — see find_folder_by_id_rls).
+    let org_id = rls.tenant_id();
     match state
         .document_repo
-        .find_folder_by_id_rls(&mut **rls.conn(), id)
+        .find_folder_by_id_rls(&mut **rls.conn(), id, org_id)
         .await
     {
         Ok(Some(_)) => {}

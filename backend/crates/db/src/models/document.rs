@@ -124,11 +124,14 @@ pub struct CreateFolder {
 }
 
 /// Data for updating a folder.
+///
+/// `parent_id` is tri-state (#1589): `None` = leave unchanged, `Some(None)` =
+/// detach to root (set NULL), `Some(Some(id))` = move under `id`.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateFolder {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub parent_id: Option<Uuid>,
+    pub parent_id: Option<Option<Uuid>>,
 }
 
 // ============================================================================
@@ -171,11 +174,13 @@ impl Document {
     }
 
     /// Check if MIME type supports inline preview.
+    ///
+    /// Delegates to [`common::supports_inline_preview`] — the single source of
+    /// truth shared with the storage presigner
+    /// (`integrations::storage::supports_inline_preview`) so the preview gate
+    /// and the `Content-Disposition: inline` decision cannot diverge (GH #1413).
     pub fn supports_preview(&self) -> bool {
-        matches!(
-            self.mime_type.as_str(),
-            "application/pdf" | "image/png" | "image/jpeg" | "image/gif" | "image/webp"
-        )
+        common::supports_inline_preview(&self.mime_type)
     }
 
     /// Check if this is an image file.
