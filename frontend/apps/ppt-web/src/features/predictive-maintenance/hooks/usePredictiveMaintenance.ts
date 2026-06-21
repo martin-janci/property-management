@@ -36,8 +36,7 @@ export function useEquipmentList(query?: EquipmentQuery) {
 
   return useQuery({
     queryKey: predictiveKeys.equipment(query),
-    queryFn: () =>
-      apiFetch<{ equipment: Equipment[] }>(`${EQUIPMENT_API}${qs ? `?${qs}` : ''}`),
+    queryFn: () => apiFetch<{ equipment: Equipment[] }>(`${EQUIPMENT_API}${qs ? `?${qs}` : ''}`),
     staleTime: 60 * 1000,
   });
 }
@@ -72,10 +71,10 @@ export function useAcknowledgeMaintenancePrediction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (predictionId: string) =>
-      apiFetch<MaintenancePrediction>(
-        `${EQUIPMENT_API}/predictions/${predictionId}/acknowledge`,
-        { method: 'POST', body: JSON.stringify({}) }
-      ),
+      apiFetch<MaintenancePrediction>(`${EQUIPMENT_API}/predictions/${predictionId}/acknowledge`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: predictiveKeys.all });
     },

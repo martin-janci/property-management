@@ -7,16 +7,16 @@
 import { useState } from 'react';
 import { Route } from 'react-router-dom';
 import {
+  useAcknowledgeMaintenancePrediction,
+  useEquipmentList,
+  useMaintenancePredictions,
+} from '../../features/predictive-maintenance/hooks';
+import {
   useAcknowledgeSentimentAlert,
   useSentimentAlerts,
   useSentimentDashboard,
   useSentimentTrends,
 } from '../../features/sentiment/hooks';
-import {
-  useAcknowledgeMaintenancePrediction,
-  useEquipmentList,
-  useMaintenancePredictions,
-} from '../../features/predictive-maintenance/hooks';
 import { PredictiveMaintenancePage, SentimentDashboardPage } from '../lazyRoutes';
 
 // ── Sentiment ──────────────────────────────────────────────────────────────

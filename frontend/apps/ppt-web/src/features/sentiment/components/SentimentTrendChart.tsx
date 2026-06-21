@@ -13,9 +13,7 @@ interface SentimentTrendChartProps {
 
 function SentimentLine({ trends }: { trends: SentimentTrend[] }): JSX.Element {
   if (trends.length < 2) {
-    return (
-      <p className="py-8 text-center text-sm text-gray-400">Not enough data to draw trend.</p>
-    );
+    return <p className="py-8 text-center text-sm text-gray-400">Not enough data to draw trend.</p>;
   }
 
   const W = 600;

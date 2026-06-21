@@ -15,7 +15,11 @@ interface SentimentStatCardProps {
   tone?: Tone;
 }
 
-export function SentimentStatCard({ label, value, tone = 'default' }: SentimentStatCardProps): JSX.Element {
+export function SentimentStatCard({
+  label,
+  value,
+  tone = 'default',
+}: SentimentStatCardProps): JSX.Element {
   return (
     <div className={`rounded-lg border p-4 shadow-sm ${toneClasses[tone]}`}>
       <p className="text-sm font-medium opacity-70">{label}</p>

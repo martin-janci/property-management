@@ -36,7 +36,13 @@ export function SentimentDashboardPage({
   const unacknowledged = alerts.filter((a) => !a.acknowledged).length;
 
   const scoreTone =
-    avgScore === null ? 'default' : avgScore >= 0.6 ? 'success' : avgScore >= 0.4 ? 'warning' : 'danger';
+    avgScore === null
+      ? 'default'
+      : avgScore >= 0.6
+        ? 'success'
+        : avgScore >= 0.4
+          ? 'warning'
+          : 'danger';
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">

@@ -16,7 +16,12 @@ interface EquipmentListProps {
   onSelect: (id: string) => void;
 }
 
-export function EquipmentList({ equipment, isLoading, selectedId, onSelect }: EquipmentListProps): JSX.Element {
+export function EquipmentList({
+  equipment,
+  isLoading,
+  selectedId,
+  onSelect,
+}: EquipmentListProps): JSX.Element {
   const { t } = useTranslation();
 
   return (
