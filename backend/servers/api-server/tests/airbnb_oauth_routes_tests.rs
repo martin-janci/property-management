@@ -422,6 +422,31 @@ async fn listings_idor_guard_rejects_non_member(pool: PgPool) {
     );
 }
 
+/// Manager gate (#1626): a member whose org role is `resident` must be rejected
+/// with 403 even though they pass the membership IDOR check — live Airbnb
+/// listings are manager-level operational data. The role is read from
+/// `organization_members.role_type` for the PATH org, not the JWT (#1525/#1585):
+/// the resident is rejected despite `mint_token` minting a `manager` claim, and
+/// the 403 short-circuits before any Airbnb connection lookup or external call.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn listings_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "ls-resident").await;
+    let user_id = seed_user(&pool, "ls-resident@test.local").await;
+    seed_membership(&pool, org_id, user_id, "resident").await;
+
+    let token = mint_token(user_id, org_id);
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/listings");
+    let resp = app.execute(authed_get(&uri, &token)).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "resident member must be 403 (manager-level read); got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
 /// When no Airbnb connection exists for an org, the listings endpoint returns 404.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn listings_returns_404_when_no_connection(pool: PgPool) {
