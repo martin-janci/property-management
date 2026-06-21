@@ -3,6 +3,7 @@
 //! Repository for agencies, realtors, inquiries, and property import.
 
 use crate::models::reality_portal::*;
+use crate::models::Listing;
 use crate::models::PublicListingQuery;
 use crate::DbPool;
 use chrono::{DateTime, NaiveDate, Utc};
@@ -156,6 +157,91 @@ impl RealityPortalRepository {
         .execute(executor)
         .await?;
         Ok(())
+    }
+
+    // ------------------------------------------------------------------------
+    // Saved-search alert delivery (in-app feed for the matching engine above).
+    //
+    // `search_alert_queue` is app-scoped by `user_id` (not RLS-gated), so these
+    // run on the request-path pool and scope every statement by the owning user
+    // — a portal user can only read/ack their own alerts (no IDOR).
+    // ------------------------------------------------------------------------
+
+    /// A portal user's saved-search alerts, newest first, each joined to the
+    /// originating saved search's name.
+    pub async fn get_search_alerts(
+        &self,
+        user_id: Uuid,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<SavedSearchAlert>, SqlxError> {
+        sqlx::query_as::<_, SavedSearchAlert>(
+            r#"
+            SELECT
+                q.id,
+                q.saved_search_id,
+                s.name AS saved_search_name,
+                q.matching_listing_ids,
+                q.alert_type,
+                q.status,
+                q.created_at,
+                q.processed_at
+            FROM search_alert_queue q
+            JOIN portal_saved_searches s ON s.id = q.saved_search_id
+            WHERE q.user_id = $1
+            ORDER BY q.created_at DESC
+            LIMIT $2 OFFSET $3
+            "#,
+        )
+        .bind(user_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Count a user's undelivered (`pending`) alerts — for an unread badge.
+    pub async fn count_pending_search_alerts(&self, user_id: Uuid) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM search_alert_queue WHERE user_id = $1 AND status = 'pending'",
+        )
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Mark one alert delivered (`pending` → `sent`), scoped to the owner.
+    /// Returns `true` when a row was updated (owned and still pending); `false`
+    /// when not found / owned by another user — the route returns 404, so a
+    /// cross-user id is indistinguishable from "not found" (no IDOR).
+    pub async fn mark_search_alert_read(&self, id: Uuid, user_id: Uuid) -> Result<bool, SqlxError> {
+        let res = sqlx::query(
+            r#"
+            UPDATE search_alert_queue
+            SET status = 'sent', processed_at = NOW()
+            WHERE id = $1 AND user_id = $2 AND status = 'pending'
+            "#,
+        )
+        .bind(id)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(res.rows_affected() > 0)
+    }
+
+    /// Mark all of a user's pending alerts delivered. Returns the count updated.
+    pub async fn mark_all_search_alerts_read(&self, user_id: Uuid) -> Result<u64, SqlxError> {
+        let res = sqlx::query(
+            r#"
+            UPDATE search_alert_queue
+            SET status = 'sent', processed_at = NOW()
+            WHERE user_id = $1 AND status = 'pending'
+            "#,
+        )
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(res.rows_affected())
     }
 
     // ========================================================================
@@ -1049,6 +1135,122 @@ impl RealityPortalRepository {
     }
 
     // ========================================================================
+    // Portal Listing CRUD (Epic 15.1/15.2 — owner/realtor edit flow)
+    // ========================================================================
+
+    /// Create a portal-user-owned listing (no PPT org required).
+    ///
+    /// Uses the SECURITY DEFINER `portal_create_listing` function (migration 00186)
+    /// so the operation bypasses the org-scoped RLS on the `listings` table.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_portal_listing(
+        &self,
+        user_id: Uuid,
+        title: &str,
+        description: Option<&str>,
+        property_type: &str,
+        transaction_type: &str,
+        price: rust_decimal::Decimal,
+        currency: &str,
+        street: &str,
+        city: &str,
+        postal_code: &str,
+        country: &str,
+        size_sqm: Option<rust_decimal::Decimal>,
+        rooms: Option<i32>,
+        floor: Option<i32>,
+        total_floors: Option<i32>,
+    ) -> Result<Listing, SqlxError> {
+        sqlx::query_as::<_, Listing>(
+            r#"SELECT * FROM portal_create_listing($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)"#,
+        )
+        .bind(user_id)
+        .bind(title)
+        .bind(description)
+        .bind(property_type)
+        .bind(transaction_type)
+        .bind(price)
+        .bind(currency)
+        .bind(street)
+        .bind(city)
+        .bind(postal_code)
+        .bind(country)
+        .bind(size_sqm)
+        .bind(rooms)
+        .bind(floor)
+        .bind(total_floors)
+        .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Get a portal-user-owned listing for editing.
+    ///
+    /// Uses SECURITY DEFINER `portal_get_listing` (migration 00186); ownership
+    /// checked via `portal_owner_id = user_id OR created_by = user_id`.
+    pub async fn get_portal_listing(
+        &self,
+        listing_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<Option<Listing>, SqlxError> {
+        sqlx::query_as::<_, Listing>(r#"SELECT * FROM portal_get_listing($1, $2)"#)
+            .bind(listing_id)
+            .bind(user_id)
+            .fetch_optional(&self.pool)
+            .await
+    }
+
+    /// Patch a portal-user-owned listing. None fields are left unchanged.
+    ///
+    /// Uses SECURITY DEFINER `portal_update_listing` (migration 00186); ownership
+    /// is enforced inside the function. Returns None when not found / not owned.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn update_portal_listing(
+        &self,
+        listing_id: Uuid,
+        user_id: Uuid,
+        title: Option<&str>,
+        description: Option<&str>,
+        property_type: Option<&str>,
+        transaction_type: Option<&str>,
+        price: Option<rust_decimal::Decimal>,
+        currency: Option<&str>,
+        street: Option<&str>,
+        city: Option<&str>,
+        postal_code: Option<&str>,
+        country: Option<&str>,
+        size_sqm: Option<rust_decimal::Decimal>,
+        rooms: Option<i32>,
+        floor: Option<i32>,
+        total_floors: Option<i32>,
+        status: Option<&str>,
+        is_negotiable: Option<bool>,
+    ) -> Result<Option<Listing>, SqlxError> {
+        sqlx::query_as::<_, Listing>(
+            r#"SELECT * FROM portal_update_listing($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)"#,
+        )
+        .bind(listing_id)
+        .bind(user_id)
+        .bind(title)
+        .bind(description)
+        .bind(property_type)
+        .bind(transaction_type)
+        .bind(price)
+        .bind(currency)
+        .bind(street)
+        .bind(city)
+        .bind(postal_code)
+        .bind(country)
+        .bind(size_sqm)
+        .bind(rooms)
+        .bind(floor)
+        .bind(total_floors)
+        .bind(status)
+        .bind(is_negotiable)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    // ========================================================================
     // Listing Analytics (Story 33.4)
     // ========================================================================
 
@@ -1260,6 +1462,30 @@ impl RealityPortalRepository {
     // ========================================================================
     // Feed Subscriptions (Story 34.2)
     // ========================================================================
+
+    /// Resolve the agency a portal user belongs to (earliest active membership).
+    ///
+    /// Feed subscriptions are agency-scoped (#1584): a realtor's feeds belong to
+    /// their agency and are shared with the agency's members, not keyed on the
+    /// individual user. Returns `None` when the user has no active membership (the
+    /// route then 403s — a user with no agency cannot own feeds). Multi-agency
+    /// users resolve to their earliest-joined active agency.
+    pub async fn get_active_agency_for_user(
+        &self,
+        user_id: Uuid,
+    ) -> Result<Option<Uuid>, SqlxError> {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            SELECT agency_id FROM reality_agency_members
+            WHERE user_id = $1 AND is_active = TRUE
+            ORDER BY joined_at ASC
+            LIMIT 1
+            "#,
+        )
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
 
     /// List feed subscriptions for an agency.
     pub async fn list_feed_subscriptions(

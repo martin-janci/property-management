@@ -231,3 +231,57 @@ async fn test_user_a_consumption_does_not_affect_user_b_codes(pool: PgPool) {
     cleanup_test_user(&pool, &user_a.email).await;
     cleanup_test_user(&pool, &user_b.email).await;
 }
+
+// ─── brute-force throttle (GH #1523) ─────────────────────────────────────────
+
+/// The recovery-verify endpoint is a full MFA bypass on success, so repeated
+/// guesses must be throttled. After `MFA_RECOVERY_MAX_ATTEMPTS` (10) attempts in
+/// the rolling window, the next attempt is rejected with `429` instead of doing
+/// the hash comparison. The limiter is keyed on `user_id`, so this user's
+/// lockout does not affect the other tests' (distinct) users.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_recovery_verify_is_rate_limited_per_user(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, org) = create_authenticated_user_with_org(&app, &user, "rl").await;
+    let id = user_id_for(&pool, &user.email).await;
+
+    // The limiter is a process-global static; clear this user's slot so the test
+    // is independent of any earlier attempt for the same id in the binary (#1583).
+    api_server::routes::mfa::recovery_attempts_reset(id);
+
+    enroll_user_2fa(&pool, id).await;
+    // Issue real codes so the handler reaches the comparison step (an empty set
+    // short-circuits to 400 for a different reason).
+    let _codes = issue_recovery_codes(&pool, id, 10).await;
+
+    // The first 10 wrong attempts are each rejected as an invalid code (400) —
+    // within the window, not yet throttled.
+    for i in 0..10 {
+        let (status, body) = post_recovery_verify(&app, &token, org, "WRONGCODE").await;
+        assert_eq!(
+            status,
+            StatusCode::BAD_REQUEST,
+            "attempt {i} (within the limit) must be a normal 400 invalid-code; body: {body}"
+        );
+    }
+
+    // The 11th attempt in the window is throttled with 429 before any work.
+    let (status, body) = post_recovery_verify(&app, &token, org, "WRONGCODE").await;
+    assert_eq!(
+        status,
+        StatusCode::TOO_MANY_REQUESTS,
+        "the (N+1)th recovery-code attempt must be rate-limited (429); body: {body}"
+    );
+
+    // None of the user's codes were consumed by the failed/throttled attempts.
+    assert_eq!(
+        unused_code_count(&pool, id).await,
+        10,
+        "failed and throttled attempts must not consume any recovery codes"
+    );
+
+    cleanup_test_user(&pool, &user.email).await;
+}

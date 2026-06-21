@@ -316,6 +316,42 @@ async fn token_exchange_idor_guard_rejects_non_member(pool: PgPool) {
     );
 }
 
+/// #1585: the manager gate must read the caller's role for the PATH org, not
+/// trust the JWT role / X-Tenant-ID. A user who is a manager in org A but only a
+/// plain member of org B must NOT be able to bind org B's Airbnb integration.
+/// Mirrors `token_exchange_rejects_manager_of_a_different_org` in the booking
+/// suite — the gate is shared (`verify_manager_role_in_org`), but this pins that
+/// the airbnb handler actually invokes it before exchanging.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn token_exchange_rejects_manager_of_a_different_org(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_a = seed_org(&pool, "te-mgr-desync-a").await;
+    let org_b = seed_org(&pool, "te-mgr-desync-b").await;
+    let user_id = seed_user(&pool, "te-mgr-desync@test.local").await;
+    seed_membership(&pool, org_a, user_id, "manager").await; // manager in A
+    seed_membership(&pool, org_b, user_id, "tenant").await; //  plain member in B
+
+    // JWT carries role=manager + tenant_id = A (X-Tenant-ID = A), but the path
+    // org being mutated is B, where the caller is only a plain member.
+    let token = mint_token(user_id, org_a);
+    let uri = format!("/api/v1/integrations/organizations/{org_b}/airbnb/token/exchange");
+    let resp = app
+        .execute(authed_post_with_tenant(
+            &uri,
+            &token,
+            org_a, // X-Tenant-ID = A (where the caller is a manager)
+            json!({"code": "valid-looking-code"}),
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "manager of org A must not bind org B's Airbnb integration as a plain member; got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
 /// When Airbnb credentials are not configured (empty `AIRBNB_CLIENT_ID`), the
 /// endpoint must return 503 SERVICE_UNAVAILABLE rather than forwarding a bad
 /// request to Airbnb.  This test relies on the fact that no `AIRBNB_CLIENT_ID`

@@ -9,15 +9,11 @@
  */
 
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
-import {
-  EDIT_STEPS,
-  type ListingEditFormData,
-  MOCK_LISTING_DATA,
-  PROPERTY_TYPE_OPTIONS,
-} from './_mock';
+import { getMyListing, RealtorApiError, updateListing } from '@/lib/realtor-api';
+import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPE_OPTIONS } from './_mock';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
 // TODO: replace file upload with @ppt/ui-kit/FileUpload once available
@@ -88,19 +84,115 @@ function StepIndicator({ current }: { current: number }) {
   );
 }
 
+const EMPTY_FORM: ListingEditFormData = {
+  transactionType: 'sale',
+  propertyType: 'apartment',
+  address: '',
+  city: '',
+  area: '',
+  rooms: '',
+  floor: '',
+  totalFloors: '',
+  yearBuilt: '',
+  description: '',
+  existingPhotoUrls: [],
+  newPhotos: [],
+  price: '',
+  currency: 'EUR',
+  priceNegotiable: false,
+  status: 'draft',
+};
+
 function EditWizardContent() {
   const params = useParams<{ id: string }>();
   const listingId = params?.id ?? '';
 
   const [step, setStep] = useState(1);
-  // Pre-populate with mock listing data (would be fetched from API in production)
-  const [form, setForm] = useState<ListingEditFormData>(MOCK_LISTING_DATA);
+  const [form, setForm] = useState<ListingEditFormData>(EMPTY_FORM);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [removedPhotos, setRemovedPhotos] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!listingId) return;
+    setLoading(true);
+    getMyListing(listingId)
+      .then((listing) => {
+        setForm({
+          transactionType: (listing.transactionType as 'sale' | 'rent') ?? 'sale',
+          propertyType:
+            (listing.propertyType as ListingEditFormData['propertyType']) ?? 'apartment',
+          address: listing.street ?? '',
+          city: listing.city ?? '',
+          area: listing.area ?? '',
+          rooms: listing.rooms ?? '',
+          floor: listing.floor ?? '',
+          totalFloors: listing.totalFloors ?? '',
+          yearBuilt: '',
+          description: listing.description ?? '',
+          existingPhotoUrls: [],
+          newPhotos: [],
+          price: listing.price ?? '',
+          currency: listing.currency ?? 'EUR',
+          priceNegotiable: listing.isNegotiable ?? false,
+          status: (listing.status as ListingEditFormData['status']) ?? 'draft',
+        });
+      })
+      .catch((err) => {
+        setLoadError(err instanceof RealtorApiError ? err.message : 'Načítanie inzerátu zlyhalo.');
+      })
+      .finally(() => setLoading(false));
+  }, [listingId]);
 
   const update = (patch: Partial<ListingEditFormData>) => setForm((f) => ({ ...f, ...patch }));
 
-  const handleSave = () => setSaved(true);
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateListing(listingId, {
+        title: form.description?.slice(0, 80) || `${form.propertyType} ${form.city}`,
+        description: form.description,
+        propertyType: form.propertyType,
+        transactionType: form.transactionType,
+        price: typeof form.price === 'number' ? form.price : Number(form.price) || 0,
+        currency: form.currency,
+        street: form.address,
+        city: form.city,
+        area: typeof form.area === 'number' ? form.area : Number(form.area) || undefined,
+        rooms: typeof form.rooms === 'number' ? form.rooms : Number(form.rooms) || undefined,
+      });
+      setSaved(true);
+    } catch (err) {
+      setSaveError(
+        err instanceof RealtorApiError ? err.message : 'Uloženie zlyhalo, skúste znova.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
+        <p style={{ color: 'var(--ppt-fg-secondary)' }}>Načítavam inzerát…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
+        <p style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>{loadError}</p>
+        <a href="/account" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+          ← Späť na účet
+        </a>
+      </div>
+    );
+  }
 
   if (saved) {
     return (
@@ -660,21 +752,39 @@ function EditWizardContent() {
                 Ďalej →
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleSave}
-                style={{
-                  padding: '11px 28px',
-                  background: 'var(--ppt-color-success, #10b981)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+              <div
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}
               >
-                Uložiť zmeny
-              </button>
+                {saveError && (
+                  <p
+                    style={{
+                      color: 'var(--ppt-color-danger, #ef4444)',
+                      fontSize: '0.875rem',
+                      margin: 0,
+                    }}
+                  >
+                    {saveError}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  style={{
+                    padding: '11px 28px',
+                    background: saving
+                      ? 'var(--ppt-border-default, #e5e7eb)'
+                      : 'var(--ppt-color-success, #10b981)',
+                    color: saving ? 'var(--ppt-fg-muted, #9ca3af)' : '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {saving ? 'Ukladám…' : 'Uložiť zmeny'}
+                </button>
+              </div>
             )}
           </div>
         </div>

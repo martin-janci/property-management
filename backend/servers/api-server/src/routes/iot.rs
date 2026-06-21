@@ -276,14 +276,30 @@ async fn add_reading(
     Json(mut req): Json<CreateSensorReading>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     req.sensor_id = id;
-    let out = state
+    let org_id = rls.tenant_id();
+    let result = state
         .sensor_repo
         .create_reading(rls.conn(), req)
         .await
-        .map(|reading| (StatusCode::CREATED, Json(serde_json::json!(reading))))
         .map_err(|e| insert_child_error("Failed to add reading", "Sensor not found", e));
     rls.release().await;
-    out
+    let reading = result?;
+    // Publish real-time fanout (Epic 14, Story 14.3) — non-fatal.
+    if let Some(ref pubsub) = state.pubsub_service {
+        let channel = format!("sensors:{org_id}");
+        if let Err(e) = pubsub
+            .publish_event(&channel, "sensor.reading", serde_json::json!(reading))
+            .await
+        {
+            tracing::warn!(
+                sensor_id = %id,
+                channel = %channel,
+                error = %e,
+                "[IoT 14.3] Failed to publish sensor.reading to WebSocket channel (non-fatal)"
+            );
+        }
+    }
+    Ok((StatusCode::CREATED, Json(serde_json::json!(reading))))
 }
 
 async fn add_batch_readings(
@@ -292,19 +308,37 @@ async fn add_batch_readings(
     Path(id): Path<Uuid>,
     Json(req): Json<BatchSensorReadings>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let out = state
+    let org_id = rls.tenant_id();
+    let result = state
         .sensor_repo
         .create_batch_readings(rls.conn(), id, req.readings)
         .await
-        .map(|count| {
-            (
-                StatusCode::CREATED,
-                Json(serde_json::json!({ "inserted": count })),
-            )
-        })
         .map_err(|e| insert_child_error("Failed to add batch readings", "Sensor not found", e));
     rls.release().await;
-    out
+    let count = result?;
+    // Publish real-time fanout (Epic 14, Story 14.3) — non-fatal.
+    if let Some(ref pubsub) = state.pubsub_service {
+        let channel = format!("sensors:{org_id}");
+        if let Err(e) = pubsub
+            .publish_event(
+                &channel,
+                "sensor.batch_readings",
+                serde_json::json!({ "sensor_id": id, "inserted": count }),
+            )
+            .await
+        {
+            tracing::warn!(
+                sensor_id = %id,
+                channel = %channel,
+                error = %e,
+                "[IoT 14.3] Failed to publish sensor.batch_readings to WebSocket channel (non-fatal)"
+            );
+        }
+    }
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "inserted": count })),
+    ))
 }
 
 async fn get_aggregated_readings(

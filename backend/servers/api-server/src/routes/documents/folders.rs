@@ -329,8 +329,10 @@ async fn update_folder(
         }
     }
 
-    // Validate parent_id to prevent circular references
-    if let Some(new_parent_id) = req.parent_id {
+    // Validate parent_id to prevent circular references. Only a move under a
+    // concrete parent (Some(Some)) needs the check; Some(None) detaches to root
+    // and None leaves the parent unchanged (#1589).
+    if let Some(Some(new_parent_id)) = req.parent_id {
         // Cannot set a folder as its own parent
         if new_parent_id == id {
             return Err((

@@ -12,9 +12,76 @@ use common::errors::ErrorResponse;
 use db::models::{AuditAction, CreateAuditLog, CreateTwoFactorAuth};
 use serde::{Deserialize, Serialize};
 use sqlx::Acquire;
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
+use std::time::{Duration, Instant};
 use utoipa::ToSchema;
 
 use crate::state::AppState;
+
+// ── Brute-force throttle for recovery-code verification (GH #1523) ──────────
+//
+// `verify_recovery_code` is a full MFA-bypass surface on success, so repeated
+// guesses must be throttled. This mirrors the per-key in-process sliding-window
+// limiter in `routes/caddy_ask.rs`, keyed on `user_id` (the authenticated
+// subject) so one user's attempts can never lock out another. A successful
+// verification clears the user's window. NOTE: this counter is per-process; a
+// Redis-backed counter (the sessions Redis is already in the stack) would hold
+// the limit across instances — tracked as a follow-up.
+const MFA_RECOVERY_MAX_ATTEMPTS: u32 = 10;
+const MFA_RECOVERY_WINDOW: Duration = Duration::from_secs(900);
+/// Only sweep expired limiter entries once the map exceeds this size, so the
+/// `retain` walk is amortized rather than run on every request (GH #1583).
+const MFA_RECOVERY_SWEEP_THRESHOLD: usize = 1024;
+
+struct RecoveryRateLimitEntry {
+    count: u32,
+    window_start: Instant,
+}
+
+static MFA_RECOVERY_RATE_LIMITER: LazyLock<Mutex<HashMap<uuid::Uuid, RecoveryRateLimitEntry>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Record an attempt for `user_id` and report whether it is within the limit.
+/// Returns `false` once more than `MFA_RECOVERY_MAX_ATTEMPTS` attempts occur in
+/// a rolling `MFA_RECOVERY_WINDOW`.
+fn recovery_attempt_allowed(user_id: uuid::Uuid) -> bool {
+    let mut map = match MFA_RECOVERY_RATE_LIMITER.lock() {
+        Ok(m) => m,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    let now = Instant::now();
+
+    // Evict entries whose window has fully elapsed (GH #1583). Unlike the
+    // loopback-only caddy_ask limiter this mirrors, this map is keyed on the
+    // whole user population on a PUBLIC auth path, so without eviction an
+    // attacker enumerating user_ids could grow it without bound (slow
+    // memory-exhaustion DoS). The sweep only runs once the map crosses a size
+    // threshold so it is not an O(n) walk on every request under normal load.
+    if map.len() > MFA_RECOVERY_SWEEP_THRESHOLD {
+        map.retain(|_, e| now.duration_since(e.window_start) < MFA_RECOVERY_WINDOW);
+    }
+
+    let entry = map.entry(user_id).or_insert(RecoveryRateLimitEntry {
+        count: 0,
+        window_start: now,
+    });
+    if now.duration_since(entry.window_start) >= MFA_RECOVERY_WINDOW {
+        entry.count = 0;
+        entry.window_start = now;
+    }
+    entry.count += 1;
+    entry.count <= MFA_RECOVERY_MAX_ATTEMPTS
+}
+
+/// Clear a user's attempt counter after a successful verification, so a
+/// legitimate user is never penalised by earlier mistyped codes. Also used by
+/// tests to reset the process-global limiter for a given user (GH #1583).
+pub fn recovery_attempts_reset(user_id: uuid::Uuid) {
+    if let Ok(mut map) = MFA_RECOVERY_RATE_LIMITER.lock() {
+        map.remove(&user_id);
+    }
+}
 
 /// Create MFA router (mounted at `/api/v1/auth/mfa`).
 ///
@@ -1013,6 +1080,39 @@ pub async fn verify_recovery_code(
         )
     })?;
 
+    // Brute-force throttle (GH #1523): this endpoint is a full MFA bypass on
+    // success, so cap attempts per user within a rolling window before doing any
+    // work. The (N+1)th attempt in the window is rejected with 429; a successful
+    // verification later clears the counter.
+    if !recovery_attempt_allowed(user_id) {
+        if let Err(e) = state
+            .audit_log_repo
+            .create(CreateAuditLog {
+                user_id: Some(user_id),
+                action: AuditAction::MfaRecoveryRateLimited,
+                resource_type: Some("mfa_recovery_rate_limited".to_string()),
+                resource_id: Some(user_id),
+                org_id: None,
+                details: Some(serde_json::json!({ "outcome": "denied", "reason": "rate_limited" })),
+                old_values: None,
+                new_values: None,
+                ip_address: None,
+                user_agent: None,
+            })
+            .await
+        {
+            tracing::error!(error = %e, "Failed to write audit log for rate-limited recovery verify");
+        }
+        rls.release().await;
+        return Err((
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse::new(
+                "RATE_LIMITED",
+                "Too many recovery-code attempts. Please try again later.",
+            )),
+        ));
+    }
+
     // Run every query on the RLS connection so `app.current_user_id` is set for
     // the duration of the handler. The self-policies on `user_2fa` /
     // `mfa_recovery_codes` (migrations 00024 / 00149) gate on
@@ -1212,6 +1312,9 @@ pub async fn verify_recovery_code(
     }
 
     tracing::info!(user_id = %user_id, remaining, "MFA recovery code consumed");
+
+    // Successful verification clears the brute-force counter (GH #1523).
+    recovery_attempts_reset(user_id);
 
     rls.release().await;
 

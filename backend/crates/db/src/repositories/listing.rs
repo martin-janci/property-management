@@ -18,7 +18,7 @@ use uuid::Uuid;
 #[derive(Debug, FromRow)]
 struct ListingSummaryRow {
     pub id: Uuid,
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub title: String,
     pub property_type: String,
     pub transaction_type: String,

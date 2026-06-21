@@ -109,6 +109,9 @@ pub struct BookingTokenExchangeResponse {
 )]
 pub async fn booking_token_exchange(
     State(state): State<AppState>,
+    // Retained for its side effect: TenantExtractor rejects requests without a
+    // valid tenant header before the handler runs. Not read directly — org-scope
+    // authz is enforced by verify_manager_role_in_org(path.org_id) below.
     _tenant: TenantExtractor,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,
@@ -276,6 +279,9 @@ pub struct AirbnbTokenExchangeResponse {
 )]
 pub async fn airbnb_token_exchange(
     State(state): State<AppState>,
+    // Retained for its side effect: TenantExtractor rejects requests without a
+    // valid tenant header before the handler runs. Not read directly — org-scope
+    // authz is enforced by verify_manager_role_in_org(path.org_id) below.
     _tenant: TenantExtractor,
     auth: api_core::AuthUser,
     Path(path): Path<OrgIdPath>,

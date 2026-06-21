@@ -16,11 +16,13 @@
 //! On a search's first sighting (no watermark) it only sets the watermark — it
 //! does not alert on the entire back-catalogue.
 //!
-//! Out of scope (documented follow-ups, blocked on missing infrastructure):
-//! - **Delivery**: turning queued `search_alert_queue` rows into emails/in-app
-//!   notifications. reality-server has no notification/email transport today;
-//!   delivery needs either a cross-server call to api-server's notification
-//!   pipeline or a dedicated drainer. The queue is the hand-off point.
+//! Delivery (#983): queued rows are surfaced to the owning portal user as an
+//! in-app feed via `GET /api/v1/saved-searches/alerts` (+ `…/{id}/read` and
+//! `…/read-all`) — see `routes::saved_searches`. reality-server has no email
+//! transport, so in-app pull is the delivery channel; an email/push drainer off
+//! the same queue remains a future follow-up.
+//!
+//! Out of scope (documented follow-up, blocked on a privilege decision):
 //! - **Favorite price-drop alerts (16.2)**: `portal_favorites` and
 //!   `listing_price_history` are `FORCE ROW LEVEL SECURITY` org-isolated, so a
 //!   context-less worker reads nothing; that half needs per-org / super-admin

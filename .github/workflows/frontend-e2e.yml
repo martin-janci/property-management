@@ -104,7 +104,7 @@ jobs:
 
       - name: Surface JUnit test summary
         if: always()
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         with:
           report_paths: frontend/apps/${{ matrix.app }}/test-results/junit.xml
           check_name: E2E Results (${{ matrix.app }})

@@ -161,7 +161,7 @@ interface OrganizationsApi {
   @doc("List organizations (Super Admin only)")
   @get
   list(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     ...PaginationQuery,
     @query status?: OrganizationStatus
   ): PaginatedResponse<Organization> | UnauthorizedError | ForbiddenError;
@@ -169,7 +169,7 @@ interface OrganizationsApi {
   @doc("Create new organization")
   @post
   create(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: CreateOrganizationRequest
   ): {
     @statusCode statusCode: 201;
@@ -180,7 +180,7 @@ interface OrganizationsApi {
   @get
   @route("/{id}")
   get(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): Organization | UnauthorizedError | NotFoundError;
 
@@ -188,7 +188,7 @@ interface OrganizationsApi {
   @patch
   @route("/{id}")
   update(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid,
     @body body: {
       name?: string;
@@ -206,7 +206,7 @@ interface OrganizationsApi {
   @delete
   @route("/{id}")
   delete(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): {
     @statusCode statusCode: 204;
@@ -216,7 +216,7 @@ interface OrganizationsApi {
   @put
   @route("/{id}/branding")
   updateBranding(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid,
     @body body: OrganizationBranding
   ): Organization | UnauthorizedError | ForbiddenError | NotFoundError;
@@ -225,7 +225,7 @@ interface OrganizationsApi {
   @get
   @route("/{id}/stats")
   getStats(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): {
     buildingCount: int32;
@@ -239,7 +239,7 @@ interface OrganizationsApi {
   @get
   @route("/{id}/members")
   listMembers(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid,
     ...PaginationQuery
   ): PaginatedResponse<OrganizationMember> | UnauthorizedError | ForbiddenError | NotFoundError;
@@ -248,7 +248,7 @@ interface OrganizationsApi {
   @post
   @route("/{id}/members/invite")
   inviteMember(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid,
     @body body: InviteMemberRequest
   ): {
@@ -260,7 +260,7 @@ interface OrganizationsApi {
   @patch
   @route("/{id}/members/{userId}")
   updateMember(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid,
     @path userId: uuid,
     @body body: {
@@ -273,7 +273,7 @@ interface OrganizationsApi {
   @delete
   @route("/{id}/members/{userId}")
   removeMember(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid,
     @path userId: uuid
   ): {
@@ -284,7 +284,7 @@ interface OrganizationsApi {
   @post
   @route("/switch/{id}")
   switchTenant(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @path id: uuid
   ): {
     accessToken: string;

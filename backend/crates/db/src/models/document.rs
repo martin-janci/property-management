@@ -124,11 +124,14 @@ pub struct CreateFolder {
 }
 
 /// Data for updating a folder.
+///
+/// `parent_id` is tri-state (#1589): `None` = leave unchanged, `Some(None)` =
+/// detach to root (set NULL), `Some(Some(id))` = move under `id`.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateFolder {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub parent_id: Option<Uuid>,
+    pub parent_id: Option<Option<Uuid>>,
 }
 
 // ============================================================================

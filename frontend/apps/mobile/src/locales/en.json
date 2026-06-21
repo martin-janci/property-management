@@ -203,7 +203,18 @@
       "nameRequired": "Folder name is required",
       "nameTooLong": "Folder name must be 255 characters or less",
       "createButton": "Create Folder",
-      "createError": "Could not create folder"
+      "createError": "Could not create folder",
+      "renameTitle": "Rename Folder",
+      "renameButton": "Save Name",
+      "renameError": "Could not rename folder"
+    },
+    "folderMove": {
+      "title": "Move Folder",
+      "destination": "DESTINATION",
+      "rootLabel": "Root (top level)",
+      "noFolders": "No other folders available",
+      "confirm": "Move Here",
+      "errorTitle": "Could not move folder"
     },
     "move": {
       "title": "Move Document",

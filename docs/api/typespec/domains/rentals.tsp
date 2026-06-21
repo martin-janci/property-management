@@ -99,8 +99,8 @@ enum SyncStatus {
 @tag("Short-term Rentals")
 interface RentalsApi {
   @get @route("/reservations") listReservations(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query unitId?: uuid,
     @query status?: ReservationStatus,
@@ -109,8 +109,8 @@ interface RentalsApi {
   ): PaginatedResponse<Reservation>;
 
   @post @route("/reservations") createReservation(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: {
       unitId: uuid;
       platform: RentalPlatform;
@@ -125,39 +125,39 @@ interface RentalsApi {
   ): { @statusCode statusCode: 201; @body body: Reservation; };
 
   @get @route("/reservations/{id}") getReservation(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Reservation | NotFoundError;
 
   @post @route("/reservations/{id}/check-in") checkIn(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Reservation;
 
   @post @route("/reservations/{id}/check-out") checkOut(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Reservation;
 
   @post @route("/reservations/{id}/generate-access-code") generateAccessCode(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): { accessCode: string; expiresAt: dateTime; };
 
   @get @route("/guests") listGuests(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     @query unitId?: uuid
   ): PaginatedResponse<GuestRegistration>;
 
   @post @route("/guests") registerGuest(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: {
       reservationId?: uuid;
       unitId: uuid;
@@ -174,26 +174,26 @@ interface RentalsApi {
   ): { @statusCode statusCode: 201; @body body: GuestRegistration; };
 
   @post @route("/guests/{id}/submit-to-authorities") submitToAuthorities(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): GuestRegistration;
 
   @post @route("/sync") syncPlatforms(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @query unitId?: uuid
   ): { syncedCount: int32; errors: string[]; };
 
   @get @route("/connections") listConnections(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @query unitId?: uuid
   ): PlatformConnection[];
 
   @post @route("/connections") createConnection(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: { unitId: uuid; platform: RentalPlatform; externalListingId?: string; apiKey?: string; }
   ): { @statusCode statusCode: 201; @body body: PlatformConnection; };
 }

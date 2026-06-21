@@ -1,1 +1,206 @@
-{"generated":"2026-06-16T00:00:00Z","items":[{"id":"feat-airbnb-oauth-token-exchange-route-backend","action":"Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.","owner_role":"pm-backend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-11 (coverage.json gap)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-airbnb-realtime-webhook-handler-backend","action":"Coverage 83-1 (AC): implement the Airbnb realtime webhook handler (reservation/availability notifications) — signature verification, idempotent processing, and persistence. Backend api-server/integrations; include handler + idempotency unit tests.","owner_role":"pm-backend","priority":"medium","status":"done","source":"dispatcher-tier1-refill 2026-06-11 (coverage.json gap)","deadline":null,"dependency":null,"depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1319 merged 2026-06-15T02:24:30Z"}},{"id":"feat-build-configuration-by-environ-build-scripts-created-mobile","title":null,"action":"[DISPATCHER-RECONCILE 2026-06-18T02:14:47Z: work already on dev; assignment terminal in archive] build scripts (scripts/build-mobile|android|ios.sh) not created (85-2-build-configuration Build Configuration by Environment)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[]},{"id":"feat-build-configuration-by-environ-ios-xcconfig-files-mobile","title":null,"action":"iOS xcconfig files + schemes not created (85-2-build-configuration Build Configuration by Environment)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1387 merged 2026-06-15T06:19:07Z"}},{"id":"feat-environment-variable-setup-env-setup-documentation-mobile","title":null,"action":"env setup documentation missing (85-1-environment-variables Environment Variable Setup)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1385 merged 2026-06-15T06:18:54Z"}},{"id":"feat-environment-variable-setup-ios-info-lacks-api-base-url-mobile","title":null,"action":"iOS Info.plist lacks API_BASE_URL/ENVIRONMENT keys (85-1-environment-variables Environment Variable Setup)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1389 merged 2026-06-15T06:24:15Z"}},{"id":"feat-environment-variable-setup-react-native-config-metro-bundler-mobile","title":null,"action":"[DISPATCHER-RECONCILE 2026-06-18T02:14:47Z: work already on dev; assignment terminal in archive] react-native-config + Metro bundler setup not done (Expo Constants used) (85-1-environment-variables Environment Variable Setup)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[]},{"id":"feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend","title":null,"action":"[DISPATCHER-DROP 2026-06-18T02:14:47Z: assignment terminal-failed (sandbox no-branch); un-reclaimable under same stem — needs human re-spec under fresh id or infra fix] web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"dropped","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[]},{"id":"feat-dispute-filing-flow-task-checklist-unchecked-frontend","title":null,"action":"task checklist unchecked (80-2-dispute-filing-flow Dispute Filing Flow)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1359 merged 2026-06-13T20:14:40Z"}},{"id":"fix-report-schedule-editing-cron-edits-round-trip-through-frontend","title":null,"action":"cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616) (81-1-report-schedule-editing Report Schedule Editing)","owner_role":"pm-frontend","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1358 merged 2026-06-13T20:13:58Z"}},{"id":"feat-swiftui-project-setup-no-epic-82-commits-git-mobile","title":null,"action":"no epic-82 commits in git log (82-1-swiftui-project-setup SwiftUI Project Setup)","owner_role":"pm-frontend","priority":"medium","dependency":null,"status":"open","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[]},{"id":"feat-swiftui-project-setup-no-screen-map-ppt-reality-mobile-docs-mobile","title":null,"action":"no screen-map for ppt-reality-mobile in docs/screens/ (82-1-swiftui-project-setup SwiftUI Project Setup)","owner_role":"pm-frontend","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1514 merged 2026-06-17T14:34:26Z"}},{"id":"feat-swiftui-project-setup-vs-implementation-mapping-mobile","title":null,"action":"story-vs-implementation mapping unclear (epic 82 in epics-007.md targets different scope) (82-1-swiftui-project-setup SwiftUI Project Setup)","owner_role":"pm-frontend","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1515 merged 2026-06-17T14:34:33Z"}},{"id":"verify-navigation-and-routing-deep-linking-url-schemes-confirmed-mobile","title":null,"action":"deep-linking with URL schemes not confirmed (82-2-navigation-routing Navigation and Routing)","owner_role":"pm-frontend","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1516 merged 2026-06-17T14:40:24Z"}},{"id":"feat-airbnb-oauth-and-sync-no-integrations-airbnb-backend","title":null,"action":"[DISPATCHER-RECONCILE 2026-06-18T02:14:47Z: work already on dev; assignment terminal in archive] no /integrations/airbnb/* API routes (83-1-airbnb-integration Airbnb OAuth and Sync)","owner_role":"pm-backend","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"gap-scan 2026-06-12 (buffer-low refill)","depends_on":[]},{"id":"bug-ios-searchview-uncompilable","action":"iOS SearchView.swift does not compile — performSearch/scheduleSearch undefined, resultsGrid corrupted","owner_role":"pm-frontend","priority":"high","status":"done","source":"dispatcher-tier1-refill 2026-06-12 (backlog.json promote)","deadline":null,"dependency":null,"depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1357 merged 2026-06-14T04:22:00Z"}},{"id":"pm-qa-service-history-cross-org-idor","action":"Add cross-org IDOR test coverage to service-history endpoints (#1372)","owner_role":"pm-qa","priority":"high","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1399 merged 2026-06-15T14:17:40Z"}},{"id":"pm-qa-tenant-aware-rls-helper","action":"Introduce canonical tenant-aware request helper for RLS tests (#1370)","owner_role":"pm-qa","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1510 merged 2026-06-17T12:30:47Z"}},{"id":"pm-qa-canonical-seed-membership-helper","action":"Migrate duplicated seed_membership in IDOR tests to canonical helper (#1373)","owner_role":"pm-qa","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1517 merged 2026-06-17T14:38:28Z"}},{"id":"pm-qa-cron-validator-drift-test","action":"Add silent-regression test for cron validator to prevent #616 reintroduction (#1368)","owner_role":"pm-qa","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1400 merged 2026-06-15T14:20:37Z"}},{"id":"pm-qa-triage-followup-issues-2026-06-14","action":"[DISPATCHER-RECONCILE 2026-06-18T02:15:19Z: quarantined assignment notes objective met (completed-but-no-PR / no-op already on dev); closing per quarantine instruction] Triage the 18 follow-up issues #1360-#1377 from 2026-06-14 post-merge review — assign owners or close","owner_role":"pm-scrum-master","priority":"high","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[]},{"id":"pm-qa-close-issue-1332-if-ci-green","action":"[DISPATCHER-RECONCILE 2026-06-18T02:14:47Z: work already on dev; assignment terminal in archive] Close issue #1332 if dev CI now green after PR #1379 unblock","owner_role":"pm-scrum-master","priority":"high","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[]},{"id":"pm-qa-stale-draft-pr-decision","action":"[DISPATCHER-RECONCILE 2026-06-18T02:15:19Z: quarantined assignment notes objective met (completed-but-no-PR / no-op already on dev); closing per quarantine instruction] Decide on stale draft PRs #1316 (1.8d) and #1197 (5.9d) — promote, rebase or close","owner_role":"pm-scrum-master","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[]},{"id":"pm-qa-record-payment-atomicity-test","action":"Add regression test for record_payment non-atomic check-then-insert (#1361) — concurrent double-pay scenario","owner_role":"pm-qa","priority":"high","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1398 merged 2026-06-15T14:17:28Z"}},{"id":"pm-qa-allowed-pet-types-enum-decode-audit","action":"Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366)","owner_role":"pm-qa","priority":"medium","dependency":null,"status":"open","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[]},{"id":"pm-qa-ios-searchview-pagination-stale-guard","action":"Add iOS UI test for SearchView stale-response guard preserving pagination (#1365)","owner_role":"pm-qa","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1542 merged 2026-06-17T17:17:04Z"}},{"id":"pm-qa-record-reserve-transaction-atomicity","action":"Add concurrency test for record_reserve_transaction atomicity + COALESCE on budget aggregates (#1371)","owner_role":"pm-qa","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-15","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1416 merged 2026-06-15T21:16:38Z"}},{"id":"feat-announcement-comments-discussion-web-ui-frontend","action":"[DISPATCHER-DROP 2026-06-18T02:14:47Z: assignment terminal-failed (sandbox no-branch); un-reclaimable under same stem — needs human re-spec under fresh id or infra fix] Coverage 6-3: implement/wire the announcement comments & discussion web UI in ppt-web (comment list + threaded reply composer) consuming the existing backend comment endpoints; include loading/error states + component tests.","owner_role":"pm-frontend","priority":"medium","status":"dropped","source":"dispatcher-tier1-refill 2026-06-15 (coverage.json gap)","deadline":null,"dependency":null,"depends_on":[]},{"id":"verify-document-upload-metadata-promote-to-done-backend","action":"Coverage 7a-1: verify Document Upload with Metadata end-to-end and promote sprint-status ready-for-dev -> done (confirm upload + metadata persistence + RLS); add any missing handler test.","owner_role":"pm-backend","priority":"low","status":"done","source":"dispatcher-tier1-refill 2026-06-15 (coverage.json gap)","deadline":null,"dependency":null,"depends_on":[],"reconciled":{"at":"2026-06-18T00:28:55Z","by":"dispatcher-verify-noop","evidence":"reclaim respawn confirmed already shipped on dev; pr=none status=done"}},{"id":"feat-document-download-preview-mobile-slice","action":"[DISPATCHER-DROP 2026-06-18T02:14:47Z: assignment terminal-failed (sandbox no-branch); un-reclaimable under same stem — needs human re-spec under fresh id or infra fix] Coverage 7a-4: implement the mobile document download & preview slice (presigned download + inline preview) on the mobile app; include tests.","owner_role":"pm-frontend","priority":"medium","status":"dropped","source":"dispatcher-tier1-refill 2026-06-15 (coverage.json gap)","deadline":null,"dependency":null,"depends_on":[]},{"id":"verify-report-execution-history-presigned-download-retry-frontend","action":"Coverage 81-2: confirm presigned download + retry end-to-end on the report execution-history surface (ppt-web); add a component/integration test for the download + retry path.","owner_role":"pm-frontend","priority":"low","status":"done","source":"dispatcher-tier1-refill 2026-06-15 (coverage.json gap)","deadline":null,"dependency":null,"depends_on":[],"reconciled":{"at":"2026-06-18T00:28:55Z","by":"dispatcher-verify-noop","evidence":"reclaim respawn confirmed already shipped on dev; pr=none status=done"}},{"id":"feat-listing-detail-favorites-swiftui-polish-mobile","action":"Coverage 82-4: complete the remaining SwiftUI listing-detail polish for the Reality mobile Listing Detail & Favorites screen (draft #641 follow-through); add docs/screens reality-mobile map entry + tests where runnable.","owner_role":"pm-frontend","priority":"low","status":"done","source":"dispatcher-tier1-refill 2026-06-15 (coverage.json gap)","deadline":null,"dependency":null,"depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1541 merged 2026-06-17T17:15:58Z"}},{"id":"feat-esignature-email-webhook-idempotency-guard-backend","action":"[DISPATCHER-DROP 2026-06-18T02:14:47Z: assignment terminal-failed (sandbox no-branch); un-reclaimable under same stem — needs human re-spec under fresh id or infra fix] Coverage 84-2: add the missing e-signature email webhook idempotency guard (terminal-state dedup) so duplicate provider webhooks don't double-apply; include idempotency unit tests.","owner_role":"pm-backend","priority":"medium","status":"dropped","source":"dispatcher-tier1-refill 2026-06-15 (coverage.json gap)","deadline":null,"dependency":null,"depends_on":[]},{"id":"pm-devops-fix-dev-compile-1437","action":"[DISPATCHER-RECONCILE 2026-06-18T02:15:19Z: quarantined assignment notes objective met (completed-but-no-PR / no-op already on dev); closing per quarantine instruction] URGENT: Fix `dev` backend compile break introduced by PR #1426 — land #1435 or #1436. Blocks ALL backend CI gates until resolved. (issue #1437)","owner_role":"pm-devops","priority":"high","dependency":"none","status":"done","deadline":null,"source":"pm-analysis 2026-06-16","depends_on":[]},{"id":"pm-devops-dev-push-compile-gate","action":"[DISPATCHER-RECONCILE 2026-06-18T02:15:19Z: quarantined assignment notes objective met (completed-but-no-PR / no-op already on dev); closing per quarantine instruction] Add a `cargo check --workspace --tests` smoke gate on `dev` push (not just PR) — would have caught #1426 → #1437 before propagation. Currently backend.yml runs only on PR.","owner_role":"pm-devops","priority":"high","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-16","depends_on":[]},{"id":"pm-devops-confirm-eas-workflows-healthy","action":"Confirm `eas-build-android.yml` + `eas-build-ios.yml` (now in .github/workflows/) green on a no-op push — verify action pins resolve and eas-cli is available. Last DevOps run (2026-05-27) flagged these as broken @v6 pins.","owner_role":"pm-devops","priority":"medium","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-16","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1526 merged 2026-06-17T14:39:26Z"}},{"id":"pm-devops-security-test-gate-required-check","action":"Confirm `security-test-gate.yml` is configured as a required status check on `dev` branch protection (`gh api repos/.../branches/dev/protection`). Still unconfirmed from 2026-05-27 run.","owner_role":"pm-devops","priority":"medium","dependency":"none","status":"done","deadline":null,"source":"pm-analysis 2026-06-16","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1530 merged 2026-06-17T14:39:41Z"}},{"id":"pm-devops-app-tsx-merge-queue-confirm","action":"Confirm `app-tsx-merge-queue.yml` is actively serializing App.tsx-touching PRs (carry-over from 2026-05-27). Verify it's wired to the PR ruleset.","owner_role":"pm-devops","priority":"low","dependency":null,"status":"done","deadline":null,"source":"pm-analysis 2026-06-16","depends_on":[],"reconciled":{"at":"2026-06-18T00:19:59Z","by":"dispatcher-exact-id-reconcile","evidence":"PR #1540 merged 2026-06-17T17:15:07Z"}},{"id":"feat-folder-organization-document-mobile-implementation-mobile","action":"Coverage 7a-2 (gap): implement the mobile (React Native) slice of Folder Organization for documents — create/rename/move folders + folder tree navigation wired to the existing backend folder API. Backend + web are done; only mobile remains. App under frontend/mobile.","owner_role":"pm-frontend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (coverage.json gap 7a-2)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-notification-preference-sync-mobile-os-push-fcm-apns-backend","action":"Coverage 8a-3 (gap): wire mobile OS push delivery (FCM for Android, APNs for iOS) into the existing notification-preference sync. Backend device-token registration + push dispatch path; preferences already sync. Add token registration route + provider send. Backend api-server; mobile registers token.","owner_role":"pm-backend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (coverage.json gap 8a-3)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-api-client-integration-announcements-faults-page-wiring-frontend","action":"Coverage 79-1 (gap): fully wire AnnouncementsPage and FaultsPage in ppt-web to the generated @ppt/api-client TanStack Query hooks (list/detail/mutations). Infra exists but these pages are not fully connected. Frontend ppt-web; include hook usage + loading/error states.","owner_role":"pm-frontend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (coverage.json gap 79-1)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-booking-integration-ota-xml-parsing-generation-backend","action":"Coverage 83-2 (gap): implement OTA (OpenTravel) XML parsing + generation for the Booking.com integration — request/response models for availability + rate messages. Backend integrations crate; include parse/generate unit tests against sample OTA payloads.","owner_role":"pm-backend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (coverage.json gap 83-2)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-booking-integration-rate-availability-push-flow-backend","action":"Coverage 83-2 AC-5 (gap): complete the rate/availability push flow to Booking.com — full outbound sync of price + availability changes through the OTA channel with retry/error handling. Backend integrations crate; handler + tests.","owner_role":"pm-backend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (coverage.json gap 83-2 AC-5)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-build-configuration-by-environ-app-icons-all-sizes-mobile","action":"Coverage 85-2 (gap): generate app icons for all required sizes (Android mipmap densities + iOS AppIcon set) for the React Native Property Management mobile app, and wire them into the build configs. Frontend mobile; icon assets + manifest/Info.plist references.","owner_role":"pm-frontend","priority":"low","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (coverage.json gap 85-2)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-esignature-email-webhook-idempotency-terminal-state-guard-backend","action":"Coverage 84-2 (gap): add a webhook idempotency guard for the e-signature email integration so a terminal signing state (completed/declined/voided) is never reprocessed or overwritten by a late/duplicate provider webhook. Backend api-server; idempotency check keyed on envelope id + state, with a test for duplicate delivery.","owner_role":"pm-backend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (coverage.json gap 84-2)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-announcement-viewing-acknowledgment-web-respec-frontend","action":"Coverage 6-2 (re-spec of dropped feat-announcement-viewing-acknowled-web-viewing-ack-ui-backend; prior attempt failed sandbox-no-branch, not scope): implement the announcement viewing + acknowledgment web UI in ppt-web — announcement detail view, read-tracking, and an Acknowledge action wired to the existing backend reads/ack endpoints. Frontend ppt-web; loading/error states + ack mutation.","owner_role":"pm-frontend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (re-spec of dropped 6-2)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-announcement-comments-web-thread-ui-respec-frontend","action":"Coverage 6-3 (re-spec of dropped feat-announcement-comments-discussion-web-ui-frontend; prior attempt failed sandbox-no-branch, not scope): implement the announcement comments/discussion web UI in ppt-web — comment list, post-comment form, and reply threading wired to the backend comments API. Frontend ppt-web; include optimistic add + error handling.","owner_role":"pm-frontend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (re-spec of dropped 6-3)","deadline":null,"dependency":null,"depends_on":[]},{"id":"feat-document-download-preview-mobile-viewer-respec-mobile","action":"Coverage 7a-4 (re-spec of dropped feat-document-download-preview-mobile-slice; prior attempt failed sandbox-no-branch, not scope): implement the document download + in-app preview slice for the React Native mobile app — presigned-URL fetch, download, and preview for supported types. Frontend mobile; wire to the existing document download endpoint.","owner_role":"pm-frontend","priority":"medium","status":"open","source":"dispatcher-tier1-refill 2026-06-18 (re-spec of dropped 7a-4)","deadline":null,"dependency":null,"depends_on":[]}]}
+{
+  "generated": "2026-06-16T00:00:00Z",
+  "items": [
+    {
+      "id": "feat-airbnb-oauth-token-exchange-route-backend",
+      "action": "Coverage 83-1 (AC): implement the Airbnb OAuth token-exchange route (authorization-code → access/refresh token) for the integrations surface. Models exist; add the POST /integrations/airbnb/oauth/token (or equiv) route + handler with token storage and refresh. Backend api-server/integrations crate; include handler tests.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-11 (coverage.json gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: POST /organizations/{org_id}/airbnb/token/exchange exists (api-server routes/integrations/oauth.rs, Story 83.1)"
+    },
+    {
+      "id": "feat-swiftui-project-setup-no-epic-82-commits-git-mobile",
+      "title": null,
+      "action": "no epic-82 commits in git log (82-1-swiftui-project-setup SwiftUI Project Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "gap-scan 2026-06-12 (buffer-low refill)",
+      "depends_on": [],
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: mobile-native/iosApp SwiftUI project present (AuthManager/NavigationCoordinator/DeepLinkHandler/PushNotificationManager etc.)"
+    },
+    {
+      "id": "pm-qa-allowed-pet-types-enum-decode-audit",
+      "action": "Audit allowed_pet_types enum decode paths + add unit test for unknown variants (#1363, #1366)",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": null,
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-06-15",
+      "depends_on": [],
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: backend/crates/db/tests/registry_rules_enum_decode_tests.rs (PAP-159, GH #1363/#1366) + explicit pet_type[] cast in registry.rs"
+    },
+    {
+      "id": "feat-build-configuration-by-environ-app-icons-all-sizes-mobile",
+      "action": "Coverage 85-2 (gap): generate app icons for all required sizes (Android mipmap densities + iOS AppIcon set) for the React Native Property Management mobile app, and wire them into the build configs. Frontend mobile; icon assets + manifest/Info.plist references.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap 85-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-report-schedule-editing-cron-expression-column-backend",
+      "action": "Coverage 81-1 (gap, issue #616 / bug-report-schedule-update-no-sql): report schedule cron edits currently round-trip through the overloaded `time` field. Add a dedicated `cron_expression` column (SQLx migration) on the report_schedules table, wire create/update handlers + repository to persist/read it, and keep backward-compat for existing rows. Backend api-server; include migration + handler tests.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: migration 00166_report_schedules_add_cron_expression.sql + repo/handler wiring (report_schedule.rs)"
+    },
+    {
+      "id": "feat-airbnb-integration-webhook-handler-backend",
+      "action": "Coverage 83-1 (gap): Airbnb realtime webhook handler is not implemented (models only). Add the inbound webhook route + handler that validates the signature and applies reservation/availability change events. Distinct from the OAuth token-exchange task. Backend api-server/integrations crate; include handler tests.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: POST /airbnb/webhook -> handle_airbnb_webhook (api-server routes/integrations/webhook.rs) + airbnb_webhook_routes_tests.rs"
+    },
+    {
+      "id": "feat-airbnb-integration-list-api-routes-backend",
+      "action": "Coverage 83-1 (gap): no /integrations/airbnb/* API routes exist beyond models. Add the read/list routes (connection status, linked-listing list) under the integrations surface with proper RLS/tenant scoping. Backend api-server; include route tests.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0) | dev-reconcile 2026-06-20T06:07:15Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "c5c4e6b307bf45933a8f3a7388fcc158326033a7",
+        "subject": "feat-airbnb-integration-list-api-routes-backend: DB-backed Airbnb linked-listing list route (#1615)",
+        "at": "2026-06-20T06:07:15Z"
+      }
+    },
+    {
+      "id": "feat-api-client-integration-announcements-faults-pages-frontend",
+      "action": "Coverage 79-1 (gap): AnnouncementsPage and FaultsPage are not fully wired to the generated API hooks (infra present, feature integration incomplete). Connect both pages to the TanStack Query hooks for list/detail/mutations, removing any placeholder/stub data. Frontend ppt-web; include page-level tests.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: AnnouncementsPage/FaultsPage wired to @ppt/api-client (ppt-web features/announcements,faults)"
+    },
+    {
+      "id": "feat-notification-preference-sync-mobile-push-fcm-apns-backend",
+      "action": "Coverage 8a-3 (gap): mobile OS push integration (FCM/APNs) for notification preference sync is still deferred. Add the backend device-token registration route + push-dispatch plumbing so notification preferences drive OS push delivery. Backend api-server; include handler tests.",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap; buffer claimable=0)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: FCM/APNs push transport adapter in backend/crates/common/src/notifications/pipeline.rs"
+    },
+    {
+      "id": "feat-esignature-email-webhook-idempotency-guard-backend",
+      "action": "Coverage 84-2 (gap): add a webhook idempotency guard so e-signature provider status callbacks are safe on retries — drop/no-op events for envelopes already in a terminal state (completed/declined/voided). Backend api-server; include route tests for duplicate + terminal-state callbacks.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 84-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-booking-com-ota-xml-rate-availability-backend",
+      "action": "Coverage 83-2 (gap): implement Booking.com OTA XML parsing/generation and the rate/availability push flow (AC-5) for the Booking.com integration surface. Backend api-server; include parser unit tests and a push-flow test.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 83-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-mobile-env-config-info-plist-keys-mobile",
+      "action": "Coverage 85-1 (gap): finish mobile environment-variable setup — document the Expo Constants env workflow and add API_BASE_URL/ENVIRONMENT keys to the iOS Info.plist (xcconfig-driven) for the React Native Property Management app. Frontend mobile; config + docs, no binary assets.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 85-1)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-mobile-ios-xcconfig-schemes-build-scripts-mobile",
+      "action": "Coverage 85-2 (gap): create the iOS xcconfig files + build schemes and the build scripts (scripts/build-mobile|android|ios.sh) for per-environment React Native builds. Frontend mobile + scripts; text config only (app-icon binary generation is tracked separately in PR #1554).",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 85-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "verify-dispute-filing-flow-ac-coverage-frontend",
+      "action": "Coverage 80-2 (gap): verify the Dispute Filing Flow against its acceptance criteria, tick the task checklist, and promote story status from pending to done (or file precise follow-ups for any uncovered AC). Frontend ppt-web; add/extend tests covering the filing flow ACs.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 80-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-folder-organization-mobile-slice-frontend",
+      "action": "[NO-OP/STALE-COVERAGE: already implemented on dev (PR #1609) — create/rename/move sheets + useFolderTree + 51 tests green; dispatcher 2026-06-21 verified] Coverage 7a-2 (gap): implement the pending mobile slice of Folder Organization (create/rename/move document folders) in the React Native app, wired to the existing folders API. Frontend mobile; include component/hook tests.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 7a-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-announcement-comments-web-ui-frontend",
+      "action": "Coverage 6-3 (gap): implement the announcement comments/discussion web UI (list + add comment, basic threading) in ppt-web, wired to the existing comments API. Frontend ppt-web; include component tests. (Note: partially explored in draft PRs #474/#475/#479 — reconcile rather than duplicate.)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 6-3)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-pinned-announcements-web-ui-frontend",
+      "action": "Coverage 6-4 (gap): implement the pin/unpin announcements web UI in ppt-web, wired to the existing pin API, with pinned items surfaced at the top of the list. Frontend ppt-web; include component tests. (Note: partially explored in draft PRs #474/#475/#479 — reconcile rather than duplicate.)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 6-4)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    }
+  ]
+}
