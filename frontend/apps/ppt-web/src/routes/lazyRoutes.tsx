@@ -59,6 +59,9 @@ export const IotSensorFormPage = lazy(() =>
 export const IotAlertsPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.IotAlertsPage }))
 );
+export const IotThresholdConfigPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.IotThresholdConfigPage }))
+);
 
 // Disputes feature (Epic 77)
 export const DisputesPage = lazy(() =>

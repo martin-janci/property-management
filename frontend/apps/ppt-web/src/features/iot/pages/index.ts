@@ -5,6 +5,10 @@ export {
 } from './IotAlertsPage';
 export { IotDashboardPage, type IotDashboardPageProps } from './IotDashboardPage';
 export {
+  IotThresholdConfigPage,
+  type IotThresholdConfigPageProps,
+} from './IotThresholdConfigPage';
+export {
   type SensorFormBuildingOption,
   SensorFormPage,
   type SensorFormPageProps,
