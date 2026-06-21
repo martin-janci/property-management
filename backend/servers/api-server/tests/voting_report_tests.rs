@@ -1,17 +1,25 @@
 //! Voting **report** integration tests (UC-04, Story 5.6/5.8).
 //!
 //! These exercise the full PDF-report flow (register → seed building/vote →
-//! `GET /report.pdf`), so every test needs the complete schema and therefore
-//! uses `#[sqlx::test(migrator = "db::MIGRATOR")]`.
+//! `GET /report.pdf`), so every test needs the complete schema.
 //!
-//! They live in their own test binary (separate from `voting_tests.rs`) on
-//! purpose: `voting_tests.rs` mixes schema-less `#[sqlx::test]` auth-rejection
-//! tests with these schema-full ones, and under sqlx 0.9 mixing
-//! migrator/no-migrator tests in a single test binary makes the `db::MIGRATOR`
-//! tests come up on an un-migrated database (register 500s with
-//! `relation "users" does not exist`). Keeping every test in this binary on the
-//! same `db::MIGRATOR` setup mirrors the proven-good `auth_enumeration_tests`
-//! and keeps the suite green. (BIT-158)
+//! As originally written (in #1625) inside `voting_tests.rs`, these used
+//! `#[sqlx::test(migrator = "db::MIGRATOR")]`, but on `dev` they failed
+//! deterministically: register 500'd with `relation "users" does not exist`,
+//! i.e. the macro-supplied migrator never applied the schema for this binary
+//! (the failing binary returned in ~3s, far too fast for the 185-file
+//! migrator to have run). The identical attribute applies the schema in 600+
+//! other usages, so the trigger is binary-specific and could not be pinned
+//! without a local Rust run (none available — mercury offload).
+//!
+//! Rather than depend on the macro doing the right thing here, we run the
+//! migrations **explicitly** on the per-test pool via `db::run_migrations`
+//! (the exact production path; idempotent + advisory-locked). This guarantees
+//! the schema regardless of the macro behaviour, and turns any migration
+//! failure into a loud, attributable panic instead of a downstream
+//! `users does not exist`. Kept in a dedicated binary to isolate the heavy
+//! schema-full E2E flow from `voting_tests.rs`'s schema-less auth tests.
+//! (BIT-158)
 
 #[allow(dead_code)]
 mod common;
@@ -55,8 +63,11 @@ async fn seed_vote(pool: &PgPool, org_id: Uuid, building_id: Uuid, created_by: U
     .expect("seed vote")
 }
 
-#[sqlx::test(migrator = "db::MIGRATOR")]
+#[sqlx::test]
 async fn test_get_report_pdf_returns_application_pdf_and_archives_document(pool: PgPool) {
+    db::run_migrations(&pool)
+        .await
+        .expect("apply full schema migrations");
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
 
@@ -108,8 +119,11 @@ async fn test_get_report_pdf_returns_application_pdf_and_archives_document(pool:
     );
 }
 
-#[sqlx::test(migrator = "db::MIGRATOR")]
+#[sqlx::test]
 async fn test_get_report_json_with_format_pdf_returns_application_pdf(pool: PgPool) {
+    db::run_migrations(&pool)
+        .await
+        .expect("apply full schema migrations");
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
 
