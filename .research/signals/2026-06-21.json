@@ -1,0 +1,196 @@
+{
+  "date": "2026-06-21",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "Routine last ran 2026-06-16T03:25:00Z — 5d 14h ago (lag > 36h). 95 merged PRs accumulated in window. stale_routine_alert: cloud cron may be paused."
+      ],
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyroutes-tsx",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z (6 commits)",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "6 commits touched frontend/apps/ppt-web/src/routes/lazyRoutes.tsx since last run — IoT + Sentiment + Predictive Maintenance + Payment Management lazy-route registration churn across #1641 #1642 #1646 #1652 #1654 #1630."
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-api-client-src-financial-api-ts",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z (5 commits)",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "5 commits in frontend/packages/api-client/src/financial/api.ts since last run — repeated patching of payment-matching/financial client (#1621 #1629 #1631 + Payment Management wiring). Decimal coercion, auth header, org-wide endpoints all churned the same file in <72h."
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25:00Z (5 commits)",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "Re-emit (cumulative carve-out): +5 commits this run (#1632 per-agency portal-import scoping, #1561 PortalPrincipal public-agency admit, #1620 #1603 tests). 2nd consecutive run as a hotspot — runs_seen becomes 2."
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen>=2",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "Hotspot recurrence: previously a hotspot 2026-06-12 (runs_seen=1), +5 more commits this run — runs_seen=2. Instability proxy: reality_portal.rs repository keeps being patched for authz/scoping (PortalPrincipal, per-agency scoping, IDOR follow-ups)."
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-batch-2026-06-21",
+      "type": "dep-update-noise",
+      "source": "merged PRs 1566,1569,1570,1571,1572,1573,1574,1575,1576",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "9 dependabot merges (compose-bom 2026.05→2026.06, gradle-minor-patch, npm-minor-patch, expo-secure-store 55→56, @types/node 20→25, @babel/core 7→8, i18next 25→26, mikepenz/action-junit-report 5→6, dtolnay/rust-toolchain 1.94→1.100, cargo-minor-patch). Open dependabot: #1567 gradle-minor-patch, #1568 tower-http 0.6.11→0.7.0 (axum major bump with new CSRF middleware — review carefully)."
+      ],
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "closed-not-merged-pr-1647",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1647",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "#1647 'feat(iot): sensor register + edit + standalone list [BIT-147]' closed unmerged 2026-06-21 — author cancelled IoT mega-PR; split into #1646 (registry+edit), #1652 (alerts/standalone), #1653 (threshold UI). Clean split, not a regression."
+      ],
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "#1636 'fix(reality-server): reconcile portal import authz + dedup principal extractor (#1584 findings 1,4)' closed unmerged 2026-06-21 — superseded by #1638 (principal extractor dedup) + #1632 (per-agency scoping)."
+      ],
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "desc": "brief exists with today H1"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "desc": "state advanced"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "desc": "backlog ids unique"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "desc": "no double-count for non-cumulative signals"
+    },
+    {
+      "goal": "G5cap",
+      "passed": true,
+      "desc": "no scores > 8"
+    },
+    {
+      "goal": "G5decay",
+      "passed": true,
+      "desc": "decay applied to ≥14d-old open items"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "desc": "0 new plans → vacuous pass"
+    },
+    {
+      "goal": "G7count",
+      "passed": true,
+      "desc": "≤2 new plans"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "desc": "staged diff only .research/"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "desc": "no secrets/private hostnames"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "desc": "backlog.md byte-identical to regen"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "desc": "IDEAS_TRIAGE.md byte-identical to regen"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "desc": "phase-failure honesty (none failed)"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "desc": "promoted plans converge"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "desc": "archive only grows"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "desc": "auto-fix discipline (0 actions)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "desc": "management artifacts valid (Phase 1.6 skipped no-op cursor)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "desc": "no Telegram secret"
+    }
+  ],
+  "auto_fix_actions": [],
+  "phase_results": {
+    "phase_1_observe": "ok (95 merged PRs, 33 issues, 100 commits, 3 hotspots)",
+    "phase_1_5_review": "skipped — lag-recovery run + budget; review_cursor unchanged. To resume normal rotation: next run.",
+    "phase_1_6_pm": "skipped — lag-recovery run + budget; pm_cursor + coverage_cursor unchanged. Management artifacts re-render deferred to next run.",
+    "phase_2_decide": "ok",
+    "phase_3_promote": "ok (0 new plans — no items >=3 score; security fast-track inapplicable)",
+    "phase_4_write": "ok",
+    "phase_5_autofix": "no candidate",
+    "phase_6_commit": "pending"
+  }
+}
