@@ -113,6 +113,94 @@
       "dependency": null,
       "depends_on": [],
       "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: FCM/APNs push transport adapter in backend/crates/common/src/notifications/pipeline.rs"
+    },
+    {
+      "id": "feat-esignature-email-webhook-idempotency-guard-backend",
+      "action": "Coverage 84-2 (gap): add a webhook idempotency guard so e-signature provider status callbacks are safe on retries — drop/no-op events for envelopes already in a terminal state (completed/declined/voided). Backend api-server; include route tests for duplicate + terminal-state callbacks.",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 84-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-booking-com-ota-xml-rate-availability-backend",
+      "action": "Coverage 83-2 (gap): implement Booking.com OTA XML parsing/generation and the rate/availability push flow (AC-5) for the Booking.com integration surface. Backend api-server; include parser unit tests and a push-flow test.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 83-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-mobile-env-config-info-plist-keys-mobile",
+      "action": "Coverage 85-1 (gap): finish mobile environment-variable setup — document the Expo Constants env workflow and add API_BASE_URL/ENVIRONMENT keys to the iOS Info.plist (xcconfig-driven) for the React Native Property Management app. Frontend mobile; config + docs, no binary assets.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 85-1)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-mobile-ios-xcconfig-schemes-build-scripts-mobile",
+      "action": "Coverage 85-2 (gap): create the iOS xcconfig files + build schemes and the build scripts (scripts/build-mobile|android|ios.sh) for per-environment React Native builds. Frontend mobile + scripts; text config only (app-icon binary generation is tracked separately in PR #1554).",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 85-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "verify-dispute-filing-flow-ac-coverage-frontend",
+      "action": "Coverage 80-2 (gap): verify the Dispute Filing Flow against its acceptance criteria, tick the task checklist, and promote story status from pending to done (or file precise follow-ups for any uncovered AC). Frontend ppt-web; add/extend tests covering the filing flow ACs.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 80-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-folder-organization-mobile-slice-frontend",
+      "action": "Coverage 7a-2 (gap): implement the pending mobile slice of Folder Organization (create/rename/move document folders) in the React Native app, wired to the existing folders API. Frontend mobile; include component/hook tests.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 7a-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-announcement-comments-web-ui-frontend",
+      "action": "Coverage 6-3 (gap): implement the announcement comments/discussion web UI (list + add comment, basic threading) in ppt-web, wired to the existing comments API. Frontend ppt-web; include component tests. (Note: partially explored in draft PRs #474/#475/#479 — reconcile rather than duplicate.)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 6-3)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-pinned-announcements-web-ui-frontend",
+      "action": "Coverage 6-4 (gap): implement the pin/unpin announcements web UI in ppt-web, wired to the existing pin API, with pinned items surfaced at the top of the list. Frontend ppt-web; include component tests. (Note: partially explored in draft PRs #474/#475/#479 — reconcile rather than duplicate.)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 6-4)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
     }
   ]
 }

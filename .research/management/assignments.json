@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-20T20:11:14Z",
+  "generated": "2026-06-21T08:16:24Z",
   "assignments": [
     {
       "task_id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -404,6 +404,28 @@
       "merge_attempted_at": null,
       "quarantined_at": "2026-06-19T22:40:05Z",
       "quarantine_reason": "completed-but-no-PR: coverage 8a-3 already fully shipped on dev via PR #1556 (push-token registration route + FcmHttpAdapter/ApnsHttpAdapter/CombinedPushAdapter + PushFanoutWorker + PreferenceRouter pref-gating + handler tests). coverage.json (2026-06-16) is STALE. Quarantined (not failed) to block re-claim + avoid 430KB archive MCP push (git push 403 by proxy). Human action: close row + mark action-list item done + refresh coverage.json 8a-3."
+    },
+    {
+      "task_id": "feat-booking-com-ota-xml-rate-availability-backend",
+      "branch": "auto-impl/feat-booking-com-ota-xml-rate-availabili",
+      "status": "in-progress",
+      "claimed_at": "2026-06-21T08:16:24Z",
+      "last_updated": "2026-06-21T08:16:24Z",
+      "status_changed_at": "2026-06-21T08:16:24Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ]
 }
