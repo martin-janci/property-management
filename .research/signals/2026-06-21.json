@@ -1,0 +1,307 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "state.json last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": "~5 days (119h) since last run \u2014 over 36h threshold; cloud routine missed daily ticks.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "stale-routine-alert-2026-06-21",
+      "type": "stale_routine_alert",
+      "source": "state.json last_run_iso=2026-06-16T03:25:00Z (5d stale)",
+      "score_delta": 0,
+      "evidence": "state.json last_run_iso is 5d old; cloud routine likely paused. Dispatcher (separate loop on planning branch) clearly still ticking \u2014 assignments/action-list updated 2026-06-21.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-21",
+      "score_delta": 0,
+      "evidence": "backend/crates/db/src/repositories/document.rs: 9 commits this run (top-3 application-code churn after lockfile/dispatcher/package.json exclusions).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ],
+      "recent_churn": 9
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history[backend/crates/db/src/repositories/document.rs] runs_seen=1 last_seen=2026-06-10, recurring this run",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/document.rs also flagged on 2026-06-10 (1x). This run brings runs_seen to 2.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-21",
+      "score_delta": 0,
+      "evidence": "backend/crates/db/src/repositories/rental.rs: 9 commits this run (top-3 application-code churn after lockfile/dispatcher/package.json exclusions).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ],
+      "recent_churn": 9
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "commit log 2026-06-16..2026-06-21",
+      "score_delta": 0,
+      "evidence": "backend/crates/integrations/src/booking.rs: 7 commits this run (top-3 application-code churn after lockfile/dispatcher/package.json exclusions).",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ],
+      "recent_churn": 7
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history[backend/crates/integrations/src/booking.rs] runs_seen=1 last_seen=2026-06-12, recurring this run",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking.rs also flagged on 2026-06-12 (1x). This run brings runs_seen to 2.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": "PR #1630 (feat(ppt-web): wire Payment Management page to org-wide endpoints (#975.5)) touched ppt route file(s) frontend/apps/ppt-web/src/routes/groups/financial.tsx without updating docs/screens/ppt/*.md (heuristic \u2014 review candidate).",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx",
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (fix(ppt-web): relocate payment-matching to ppt-web (closes #1521)) touched ppt route file(s) frontend/apps/ppt-web/src/routes/groups/accounting.tsx, frontend/apps/ppt-web/src/routes/lazyRoutes.tsx without updating docs/screens/ppt/*.md (heuristic \u2014 review candidate).",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (fix(ppt-web): relocate payment-matching to ppt-web (closes #1521)) touched reality route file(s) frontend/apps/reality-web/src/app/accounting/layout.tsx, frontend/apps/reality-web/src/app/accounting/page.tsx without updating docs/screens/reality/*.md (heuristic \u2014 review candidate).",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx",
+        "frontend/apps/reality-web/src/app/accounting/page.tsx",
+        "docs/screens/reality/"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 (feat-announcement-comments-web-thread-ui: optimistic add (Story 6.3)) touched ppt route file(s) frontend/apps/ppt-web/src/routes/groups/announcements.tsx without updating docs/screens/ppt/*.md (heuristic \u2014 review candidate).",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx",
+        "docs/screens/ppt/"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1565-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1565",
+      "score_delta": 2,
+      "evidence": "PR #1565 (fix(db): correct document get-by-id read path (u.name + enum ::text decode)) modified backend/crates/db/src/repositories/document.rs \u2014 a top-3 churn file this run \u2014 without a test file in the diff.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1551-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "evidence": "PR #1551 (fix(db): cast document_category in count_accessible_rls filter (closes #1528)) modified backend/crates/db/src/repositories/document.rs \u2014 a top-3 churn file this run \u2014 without a test file in the diff.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1537-rental-rs",
+      "type": "risky-churn",
+      "source": "PR #1537",
+      "score_delta": 2,
+      "evidence": "PR #1537 (fix(db): cast enum write paths on rental_guests + forms) modified backend/crates/db/src/repositories/rental.rs \u2014 a top-3 churn file this run \u2014 without a test file in the diff.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-batch-2026-06-21",
+      "type": "dep-update-noise",
+      "source": "merged: PRs #1449, #1566, #1570, #1571, #1572, #1573, #1575, #1576; open: #1567, #1568, #1569, #1574",
+      "score_delta": 0,
+      "evidence": "8 dependabot merged this run: expo-secure-store 55\u219256, i18next 25\u219226, @types/node 20\u219225, @babel/core 7\u21928, npm-minor-patch (\u00d76), compose-bom, junit-report. Open: cargo minor-patch, tower-http 0.6\u21920.7, gradle minor-patch.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-06-21.md && head -1 | grep ^# 2026-06-21$",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] | length == unique | length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with delta > 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run \u2014 no-op",
+      "observed": "no new plans",
+      "expected": "each new plan annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "no new plans \u2014 cap of 2 not breached",
+      "observed": "0 new",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in staged",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists skipped phases + cursors unchanged for skipped",
+      "observed": "review_cursor + pm_cursor + coverage_cursor unchanged; brief mentions 1.5+1.6 skipped",
+      "expected": "cursors unchanged for failed/skipped"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all 9 prior plans present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count: staged 7 >= HEAD 7",
+      "observed": "staged=7 head=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty + counts ok",
+      "observed": "length=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped \u2014 pm_cursor unchanged \u2192 G16 short-circuits to pass",
+      "observed": "pm_cursor.next_index unchanged from HEAD (still 5)",
+      "expected": "pm_cursor unchanged OR coverage_cursor advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate this run \u2014 no signal met confidence=high + score\u22653 + allowlist (drift heuristic-caveat only, no high-confidence fixme-in-merged-code, no lockfile-drift, no stalled-review long enough)"
+}
