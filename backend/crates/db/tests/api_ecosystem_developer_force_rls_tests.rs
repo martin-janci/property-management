@@ -287,12 +287,11 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
             ("developer_oauth_grants", "OAuth grants"),
             ("api_key_usage_logs", "API key usage logs"),
         ] {
-            let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-                "SELECT COUNT(*) FROM {table}"
-            )))
-            .fetch_one(&mut *conn)
-            .await
-            .unwrap_or_else(|e| panic!("count {table} (no ctx): {e}"));
+            let n: i64 =
+                sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {table}")))
+                    .fetch_one(&mut *conn)
+                    .await
+                    .unwrap_or_else(|e| panic!("count {table} (no ctx): {e}"));
             assert_eq!(
                 n, 0,
                 "without RLS context `{label}` ({table}) must be deny-all under FORCE"
@@ -351,12 +350,11 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
             ("developer_oauth_grants", "OAuth grant"),
             ("api_key_usage_logs", "API key usage log"),
         ] {
-            let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-                "SELECT COUNT(*) FROM {table}"
-            )))
-            .fetch_one(&mut *conn)
-            .await
-            .unwrap_or_else(|e| panic!("count {table} under A: {e}"));
+            let n: i64 =
+                sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {table}")))
+                    .fetch_one(&mut *conn)
+                    .await
+                    .unwrap_or_else(|e| panic!("count {table} under A: {e}"));
             assert_eq!(n, 1, "user A must see only their own {label} ({table})");
         }
 
