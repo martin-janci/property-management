@@ -60,7 +60,7 @@ async fn search_alert_delivery_lifecycle(pool: PgPool) {
 
     // List: one pending alert, joined to its search name, carrying the matches.
     let alerts = repo
-        .get_search_alerts(user, 100)
+        .get_search_alerts(user, 100, 0)
         .await
         .expect("list alerts");
     assert_eq!(alerts.len(), 1, "expected exactly one alert");
@@ -86,7 +86,7 @@ async fn search_alert_delivery_lifecycle(pool: PgPool) {
         0,
         "no unread alerts after ack"
     );
-    let after = repo.get_search_alerts(user, 100).await.unwrap();
+    let after = repo.get_search_alerts(user, 100, 0).await.unwrap();
     assert_eq!(after[0].status, "sent");
     assert!(after[0].processed_at.is_some());
 
@@ -106,7 +106,7 @@ async fn search_alert_read_is_owner_scoped(pool: PgPool) {
     repo.enqueue_search_alert(&pool, search_id, owner, &[Uuid::new_v4()], "new_listing")
         .await
         .expect("enqueue alert");
-    let alert_id = repo.get_search_alerts(owner, 100).await.unwrap()[0].id;
+    let alert_id = repo.get_search_alerts(owner, 100, 0).await.unwrap()[0].id;
 
     // The attacker cannot ack the owner's alert (no IDOR) and sees none of it.
     assert!(
@@ -117,7 +117,7 @@ async fn search_alert_read_is_owner_scoped(pool: PgPool) {
         "a non-owner must not be able to mark another user's alert read"
     );
     assert!(
-        repo.get_search_alerts(attacker, 100)
+        repo.get_search_alerts(attacker, 100, 0)
             .await
             .unwrap()
             .is_empty(),
@@ -141,4 +141,40 @@ async fn search_alert_read_is_owner_scoped(pool: PgPool) {
         "mark-all clears the owner's pending alert"
     );
     assert_eq!(repo.count_pending_search_alerts(owner).await.unwrap(), 0);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn search_alerts_paginate_with_limit_and_offset(pool: PgPool) {
+    let repo = RealityPortalRepository::new(pool.clone());
+    let user = seed_portal_user(&pool, "alerts-pagination@test.sk").await;
+    let search_id = seed_saved_search(&repo, user, "Paged search").await;
+
+    // Three alerts for the same user.
+    for _ in 0..3 {
+        repo.enqueue_search_alert(&pool, search_id, user, &[Uuid::new_v4()], "new_listing")
+            .await
+            .expect("enqueue alert");
+    }
+
+    // Without paging, all three are visible.
+    assert_eq!(repo.get_search_alerts(user, 100, 0).await.unwrap().len(), 3);
+
+    // limit/offset page the list (sizes are deterministic regardless of tie order).
+    assert_eq!(
+        repo.get_search_alerts(user, 2, 0).await.unwrap().len(),
+        2,
+        "first page returns the page-size rows"
+    );
+    assert_eq!(
+        repo.get_search_alerts(user, 2, 2).await.unwrap().len(),
+        1,
+        "second page returns the remainder"
+    );
+    assert!(
+        repo.get_search_alerts(user, 2, 10)
+            .await
+            .unwrap()
+            .is_empty(),
+        "an offset past the end yields no rows"
+    );
 }

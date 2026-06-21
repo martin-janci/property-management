@@ -22,6 +22,7 @@ export interface InvoiceManagementPageProps {
   onNavigateToCreate: () => void;
   onNavigateToDetail: (invoiceId: string) => void;
   onSendInvoice: (invoiceId: string) => void;
+  onDownloadPdf?: (invoiceId: string) => void;
   onFilterChange: (params: {
     page: number;
     pageSize: number;
@@ -39,6 +40,7 @@ export function InvoiceManagementPage({
   onNavigateToCreate,
   onNavigateToDetail,
   onSendInvoice,
+  onDownloadPdf,
   onFilterChange,
 }: InvoiceManagementPageProps) {
   const { t } = useTranslation();
@@ -135,6 +137,7 @@ export function InvoiceManagementPage({
           onPageChange={handlePageChange}
           onViewInvoice={onNavigateToDetail}
           onSendInvoice={onSendInvoice}
+          onDownloadPdf={onDownloadPdf}
           onStatusFilter={handleStatusFilter}
           onSearch={handleSearch}
         />

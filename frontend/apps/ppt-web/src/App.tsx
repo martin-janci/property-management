@@ -120,6 +120,7 @@ function AppNavigation() {
       <Link to="/emergency">{t('nav.emergency')}</Link>
       <Link to="/disputes">{t('nav.disputes')}</Link>
       <Link to="/outages">{t('nav.outages')}</Link>
+      <Link to="/iot">{t('nav.iot', { defaultValue: 'Smart Building' })}</Link>
       <Link to="/rentals">{t('nav.rentals', { defaultValue: 'Rentals' })}</Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>

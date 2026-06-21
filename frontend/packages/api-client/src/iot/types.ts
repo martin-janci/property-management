@@ -131,3 +131,119 @@ export interface ListAlertsResponse {
 export interface ResolveSensorAlertRequest {
   resolved_value?: number | null;
 }
+
+/**
+ * Register-sensor request (FR71). Mirrors `CreateSensor` in the api-server.
+ * `organization_id` is pinned to the caller's tenant server-side, but the
+ * field is still required on the wire — send the authenticated org id.
+ */
+export interface CreateSensorRequest {
+  organization_id: string;
+  building_id: string;
+  unit_id?: string | null;
+  name: string;
+  sensor_type: string;
+  location?: string | null;
+  location_description?: string | null;
+  connection_type?: string | null;
+  connection_config?: unknown;
+  unit_of_measurement?: string | null;
+  data_interval_seconds?: number | null;
+  manufacturer?: string | null;
+  model?: string | null;
+  firmware_version?: string | null;
+  serial_number?: string | null;
+  installed_at?: string | null;
+  metadata?: unknown;
+  created_by: string;
+}
+
+/** Edit-sensor request (FR71). Mirrors `UpdateSensor`; all fields optional. */
+export interface UpdateSensorRequest {
+  name?: string | null;
+  location?: string | null;
+  location_description?: string | null;
+  connection_type?: string | null;
+  connection_config?: unknown;
+  unit_of_measurement?: string | null;
+  data_interval_seconds?: number | null;
+  status?: string | null;
+  manufacturer?: string | null;
+  model?: string | null;
+  firmware_version?: string | null;
+  metadata?: unknown;
+}
+
+// ============================================================================
+// Thresholds (FR73) — mirror `backend/crates/db/src/models/sensor.rs` SensorThreshold
+// ============================================================================
+
+/** Threshold rule for a sensor metric (FR73). */
+export interface SensorThreshold {
+  id: string;
+  sensor_id: string;
+  metric: string;
+  comparison: string;
+  warning_value: number | null;
+  warning_high: number | null;
+  critical_value: number | null;
+  critical_high: number | null;
+  enabled: boolean;
+  alert_cooldown_minutes: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Response shape for `GET /{id}/thresholds`. */
+export interface ListThresholdsResponse {
+  thresholds: SensorThreshold[];
+}
+
+/** Create-threshold request (FR73). Mirrors `CreateSensorThreshold`. */
+export interface CreateSensorThresholdRequest {
+  sensor_id: string;
+  metric?: string | null;
+  comparison: string;
+  warning_value?: number | null;
+  warning_high?: number | null;
+  critical_value?: number | null;
+  critical_high?: number | null;
+  alert_cooldown_minutes?: number | null;
+}
+
+/** Update-threshold request (FR73). Mirrors `UpdateSensorThreshold`; all optional. */
+export interface UpdateSensorThresholdRequest {
+  comparison?: string | null;
+  warning_value?: number | null;
+  warning_high?: number | null;
+  critical_value?: number | null;
+  critical_high?: number | null;
+  enabled?: boolean | null;
+  alert_cooldown_minutes?: number | null;
+}
+
+/** Reusable threshold template (FR73). Mirrors `SensorThresholdTemplate`. */
+export interface ThresholdTemplate {
+  id: string;
+  organization_id: string | null;
+  sensor_type: string;
+  name: string;
+  description: string | null;
+  comparison: string;
+  warning_value: number | null;
+  warning_high: number | null;
+  critical_value: number | null;
+  critical_high: number | null;
+  is_default: boolean;
+  created_at: string;
+}
+
+/** Response shape for `GET /templates`. */
+export interface ListThresholdTemplatesResponse {
+  templates: ThresholdTemplate[];
+}
+
+/** Query params for `GET /templates` — filter by sensor type. */
+export interface ListThresholdTemplatesParams {
+  sensor_type?: string;
+}
