@@ -21,6 +21,7 @@
     "submit:android": "eas submit --platform android --profile production",
     "build:ios:staging": "eas build --platform ios --profile staging",
     "build:ios:production": "eas build --platform ios --profile production",
+    "build:mobile": "./scripts/build-mobile.sh",
     "submit:ios": "eas submit --platform ios --profile production"
   },
   "dependencies": {
