@@ -1140,6 +1140,7 @@ impl RealityPortalRepository {
     ///
     /// Uses the SECURITY DEFINER `portal_create_listing` function (migration 00186)
     /// so the operation bypasses the org-scoped RLS on the `listings` table.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_portal_listing(
         &self,
         user_id: Uuid,
