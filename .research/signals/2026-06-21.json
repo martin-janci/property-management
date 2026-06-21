@@ -1,0 +1,358 @@
+{
+  "run_date": "2026-06-21",
+  "run_iso": "2026-06-21T04:20:10Z",
+  "lag_days": 5,
+  "phases_succeeded": [
+    "pr_list",
+    "issue_list",
+    "commit_list",
+    "diff_stats",
+    "churn_calc",
+    "phase2_decide",
+    "phase4_writes"
+  ],
+  "phases_failed": [],
+  "phases_skipped": [
+    "phase_1_5_rotating_expert_review",
+    "phase_1_6_role_subagent_spawn"
+  ],
+  "phase_skip_reason": "5-day lag-recovery focus; observation + reconciliation prioritized over discovery & role-deep analysis",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "routine_cursor",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-06-16T03:25:00Z — 5d 0h gap; emits per Phase 1 lag check (>36h)",
+      "confidence": "high",
+      "candidate_vector": "meta"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-21",
+      "type": "stale_routine_alert",
+      "source": "routine_cursor",
+      "score_delta": 0,
+      "evidence": "lag_days=5 (≥3) — cloud cron likely paused. Dispatcher state on planning branch should be checked separately. Also: closed-PR fetch hit 50-row cap; PRs #1440–#1547 may exist between cursor and lowest observed merge (#1548).",
+      "confidence": "high",
+      "candidate_vector": "meta"
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1561-portal-principal",
+      "type": "hotfix-no-test",
+      "source": "PR #1561",
+      "score_delta": 2,
+      "evidence": "fix(reality-server) PortalPrincipal admit-public-agencies (#1300) — 136 lines added but no test file in diff (test pinned later in #1603/#1620)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/reality-server/src/middleware/portal_principal.rs"
+      ]
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1565-document-get-by-id",
+      "type": "hotfix-no-test",
+      "source": "PR #1565",
+      "score_delta": 2,
+      "evidence": "fix(db) document get-by-id — u.name reference + enum ::text decode fix without a regression test",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1582-folder-tree-mobile",
+      "type": "hotfix-no-test",
+      "source": "PR #1582",
+      "score_delta": 2,
+      "evidence": "fix(mobile) wire useFolderTree / FOLDER_TREE_QUERY_KEY (#1532) shipped without test; test pinned later in #1618 — likely resolved",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/MoveFolderSheet.tsx"
+      ]
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-1617-ota-push-wire",
+      "type": "hotfix-no-test",
+      "source": "PR #1617",
+      "score_delta": 2,
+      "evidence": "fix(integrations) combined OTA push wire to listing-push route (closes #1614) — classifier helper tests may live in same file but no /tests/ path matched",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/listing_push.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (closes #1521) relocates /accounting/payment-matching to ppt-web; no docs/screens/ppt/payment-matching.md present — high-confidence: a real new route surface, not a test-file fix",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1606-list-contacts",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 3,
+      "evidence": "PR #1606 (feat(accounting) PAP-281 list_contacts manager-only) body contains unchecked checkboxes (\"- [ ]\"); +1 bonus for bug vector",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/routes/accounting.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1625-voting-pdf",
+      "type": "unchecked-todo",
+      "source": "PR #1625",
+      "score_delta": 2,
+      "evidence": "PR #1625 (Story 5.6/5.8 voting PDF + archive PAP-288) body contains unchecked checkboxes (\"- [ ]\")",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/voting.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-screens-documents-movefoldersheet-tsx",
+      "type": "churn-hotspot",
+      "source": "PR #1557, PR #1609",
+      "score_delta": 1,
+      "evidence": "mobile MoveFolderSheet.tsx — 519 lines across 2 merged PRs (#1557 add + #1609 refactor flatten utils); runs_seen=1",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/mobile/src/screens/documents/MoveFolderSheet.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voting-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1625",
+      "score_delta": 1,
+      "evidence": "voting.rs — 436 lines from PR #1625 (PDF gen + archive Story 5.6/5.8); runs_seen=1",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/src/routes/voting.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "PR #1560, PR #1562, PR #1599",
+      "score_delta": 1,
+      "evidence": "booking.rs runs_seen=2 (prior 2026-06-12 @ 433 lines, this run +454 across 3 PRs combined OTA push + XXE guards)",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "PR #1560, PR #1562, PR #1599",
+      "score_delta": 0,
+      "evidence": "re-emit (cumulative): runs_seen=2, +454 lines this run; score_delta=0 per Phase 1 dedup rule for cumulative types",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": "dependabot: androidx.compose:compose-bom 2026.05.01 → 2026.06.00",
+      "confidence": "high",
+      "candidate_vector": "log"
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": "dependabot: mikepenz/action-junit-report 5 → 6",
+      "confidence": "high",
+      "candidate_vector": "log"
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": "dependabot: npm-minor-patch group in /frontend (6 updates)",
+      "confidence": "high",
+      "candidate_vector": "log"
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": "dependabot: expo-secure-store 55.0.14 → 56.0.4 (major)",
+      "confidence": "high",
+      "candidate_vector": "log"
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": "dependabot: @types/node 20.19.40 → 25.9.3 (major)",
+      "confidence": "high",
+      "candidate_vector": "log"
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": "dependabot: @babel/core 7.29.7 → 8.0.1 (major, +809 lockfile churn)",
+      "confidence": "high",
+      "candidate_vector": "log"
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": "dependabot: i18next 25.10.10 → 26.3.1 (major)",
+      "confidence": "high",
+      "candidate_vector": "log"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no signal met confidence=high + score>=3 + allowlist; screen-map-drift-pr-1621-ppt is high-confidence + allowlist-eligible but score=2 (below threshold)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-21.md && head -1 == '# 2026-06-21'",
+      "observed": "exists, header matches",
+      "expected": "exists"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq diff state.json HEAD vs staged",
+      "observed": "true (cursors + seen_signals + hotspot_history all advanced)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == unique | length'",
+      "observed": "true (186 unique)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id in prev seen_signals re-emitted with score_delta != 0",
+      "observed": "true (only churn-hotspot-booking-rs re-emitted; score_delta=0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay applied",
+      "observed": "0 items > 8; 15 items decayed this run (9 dropped to 0, 6 demoted)",
+      "expected": "all open >14d either decayed or dropped"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial-pass note in brief",
+      "observed": "0 new plans this run (vacuous)",
+      "expected": "all plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans, each meets readiness",
+      "observed": "0 new plans (vacuous)",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/'",
+      "observed": "0 non-research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff (excluding baseline doc files)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "Phase 1.5 + Phase 1.6-role skipped; logged in brief; cursors NOT advanced for skipped phases (review_cursor untouched)",
+      "expected": "skipped phases noted in brief"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still present in plans/ or _archive/",
+      "observed": "all 6 prior plans intact",
+      "expected": "all preserved"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD count",
+      "observed": "7 >= 7",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/triage.regen.md",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill switch + caps + idempotency)",
+      "observed": "auto_fix_actions=[]; no PRs/issues/comments opened",
+      "expected": "0/0/0"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors advanced",
+      "observed": "action-list/risks parse, project-state non-empty, pm_cursor 5->6, coverage_cursor 12->0 (wraparound at 13 epics)",
+      "expected": "valid + advanced"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token in staged diff",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ]
+}

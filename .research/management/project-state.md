@@ -1,6 +1,18 @@
 # PPT Project State
 
-_Generated: 2026-06-16 — daily PM rotation (Scrum Master + pm-devops; routine refresh). Coverage `scan_kind=upkeep`; pm_cursor idx 4 → 5 (pm-security next), coverage_cursor idx 11 → 12 (epic-8a → epic-9)._
+_Generated: 2026-06-21 — daily PM rotation (Scrum Master + pm-security lite; routine refresh after 5-day lag). Coverage `scan_kind=upkeep`; pm_cursor idx 5 → 6 (pm-data next), coverage_cursor idx 12 → 0 (epic-9 → wraparound to epic-10a). Buffer-low signalled (claimable=0/72, 15 quarantined-shipped) — coverage.json needs an on-demand `/ppt-project-management scan` to rebuild the planner; routine forbids in-cloud scan._
+
+## Update 2026-06-21 (post 5-day lag)
+
+- **Routine lag: 5 days.** Cloud cron last ran 2026-06-16 and missed days 17–20 entirely; ran today (2026-06-21). 50 merged PRs swept in one window (#1548–#1630). The closed-PR fetch hit a 50-row cap so PRs between #1440–#1547 may exist but are unobserved; the brief flags `stale_routine_alert`.
+- **dev backend RED → GREEN.** Issue #1437 was resolved (the fix PRs #1435/#1436/#1438 merged or superseded by #1605 enforcing rustfmt as a required check). #1581 explicitly rustfmt-swept the #1527/#1523 breakage.
+- **Big workstreams landed:** payment management end-to-end (#1521/#975 → #1606 list_contacts, #1621 ppt-web relocate, #1628 backend org-wide, #1629 auth client fix, #1630 ppt-web wire); voting PDF + archive (#1625, Story 5.6/5.8 PAP-288); saved-search in-app alerts (#1622, story 16.3 / #983); mobile folder org UI (#1557/#1582/#1609/#1613/#1618); Airbnb OAuth gate hardening (#1552 → #1601); document folder-tree fixes (#1565/#1589/#1613); RLS cross-tenant probes (#1563/#1600); XXE guards (#1562/#1599).
+- **Buffer-low — action-list dominated by `done` rows.** 8 of 9 action-list items are `dev_reconciled` (status=done) — only `feat-build-configuration-by-environ-app-icons-all-sizes-mobile` (gap 85-2 app icons) remains open. Refilling the planner buffer requires an authoritative coverage scan that the routine isn't allowed to run in cloud; operator should invoke `/ppt-project-management scan` locally.
+- **Code review slice skipped this run** due to lag-recovery focus; next run picks `ppt-web-core` (oldest unreviewed at 16d).
+
+---
+
+
 
 ## Executive summary
 
