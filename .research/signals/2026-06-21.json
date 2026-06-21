@@ -1,0 +1,428 @@
+{
+  "generated_at": "2026-06-21T10:13:07Z",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate matched certainty bar (only #1645 regression met severity, but the action shape — voting code fix — isn't in the allowlist)",
+  "review_segment_reviewed": "ppt-web-core",
+  "review_findings": 0,
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "Routine last ran 2026-06-16T03:25:00Z; 123h ago (>36h threshold). Catch-up incremental run."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "stale-routine-alert-2026-06-21",
+      "type": "stale_routine_alert",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "state.json last_run_iso=2026-06-16T03:25:00Z is 5d old; cloud routine may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch — check that separately."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-reality_portal-rs",
+      "type": "churn-hotspot",
+      "source": "diff window since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "Churn hotspot: backend/crates/db/src/repositories/reality_portal.rs — 3 commits this run (3 commits this window (saved-search alerts + portal feed agency-scoping))."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-tests-imports_idor_tests-rs",
+      "type": "churn-hotspot",
+      "source": "diff window since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "Churn hotspot: backend/servers/reality-server/tests/imports_idor_tests.rs — 3 commits this run (3 commits this window (#1584 series: F1/F2/F3 follow-ups))."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/tests/imports_idor_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-api-client-src-financial-api-ts",
+      "type": "churn-hotspot",
+      "source": "diff window since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "Churn hotspot: frontend/packages/api-client/src/financial/api.ts — 3 commits this run (3 commits this window (#975 auth + decimal coercion + payment-mgmt wire))."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/packages/api-client/src/financial/api.ts"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-tests-search_alert_delivery_tests-rs",
+      "type": "churn-hotspot",
+      "source": "diff window since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "Churn hotspot: backend/crates/db/tests/search_alert_delivery_tests.rs — 2 commits this run (2 commits this window (delivery surface + pagination))."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/tests/search_alert_delivery_tests.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-saved_searches-rs",
+      "type": "churn-hotspot",
+      "source": "diff window since 2026-06-16T03:25:00Z",
+      "score_delta": 1,
+      "evidence": [
+        "Churn hotspot: backend/servers/reality-server/src/routes/saved_searches.rs — 2 commits this run (2 commits this window (delivery + pagination))."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/reality-server/src/routes/saved_searches.rs"
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-reality-portal-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history[reality_portal.rs].runs_seen 1→2",
+      "score_delta": 1,
+      "evidence": [
+        "reality_portal.rs repeated-churn — runs_seen=2 across 2026-06-12 + 2026-06-21 windows; saved-search alerts + portal feed agency-scoping reworks."
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1639-airbnb-manager-gate",
+      "type": "hotfix-no-test",
+      "source": "PR #1639",
+      "score_delta": 2,
+      "evidence": [
+        "PR #1639 'fix(api-server): manager-gate Airbnb linked-listing config reads (closes #1626)' — single-file authz fix; no airbnb_connections_routes_tests.rs update in diff."
+      ],
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/airbnb_connections.rs"
+      ]
+    },
+    {
+      "id": "closed-not-merged-pr-1636",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1636",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1636 'fix(reality-server): reconcile portal import authz + dedup principal extractor (#1584 findings 1,4)' closed unmerged: Superseded by #1638 same-day; structural-rebase blocker."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1511",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1511",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1511 'fix(api-server): resolve clippy lints blocking dev fmt-clippy gate (accounting routes)' closed unmerged: Superseded after #1435 broad-repair landed; 5 clippy lints elsewhere covered."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1505",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1505",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1505 'fix(db): cast rental enum columns to text across rental.rs queries (PAP-158)' closed unmerged: Superseded by #1494 (RentalGuest.status/CalendarBlock.source_platform/ICalFeed.import_platform enum-text cast sweep)."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "closed-not-merged-pr-1493",
+      "type": "closed-not-merged-pr",
+      "source": "PR #1493",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1493 'fix(db): repair dev backend test failures from schema drift + remove broken duplicate reserve API' closed unmerged: Superseded — schema-drift repair pulled into #1494 + #1497 reserve-fund removal sweep."
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1449",
+      "type": "dep-update-noise",
+      "source": "PR #1449",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot/renovate PR #1449: npm-minor-patch group across 1 directory with 25 updates (/frontend)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot/renovate PR #1566: androidx.compose:compose-bom 2026.05.01→2026.06.00 in /mobile-native"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot/renovate PR #1570: mikepenz/action-junit-report 5→6 (github-actions)"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot/renovate PR #1571: npm-minor-patch group in /frontend with 6 updates"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot/renovate PR #1572: expo-secure-store 55.0.14→56.0.4 in /frontend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot/renovate PR #1573: @types/node 20.19.40→25.9.3 in /frontend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot/renovate PR #1575: @babel/core 7.29.7→8.0.1 in /frontend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": [
+        "Dependabot/renovate PR #1576: i18next 25.10.10→26.3.1 in /frontend"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "files": []
+    },
+    {
+      "id": "merged-pr-broke-dev-ci-pr-1625-issue-1645",
+      "type": "regression-in-merged-pr",
+      "source": "issue #1645, PR #1625",
+      "score_delta": 3,
+      "evidence": [
+        "Issue #1645 (OPEN bug, 2026-06-21 10:12Z): dev backend CI red since #1625 (voting PDF) — pdf_report tests 500, blocking all backend merges.",
+        "Two new tests added by #1625 in voting_tests.rs (pdf_report mod) panic at tests/common/mod.rs:507 (assertion left:500 right:201) during test setup — create_authenticated_user_with_org returns 500.",
+        "Dispatcher PR #1633 (Booking.com OTA, unrelated) failed CI on the exact same tests. Every backend PR blocks until repaired or reverted.",
+        "Suggested fix per issue: repair or revert #1625's voting/documents/report migration interaction with create_authenticated_user_with_org."
+      ],
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/tests/voting_tests.rs",
+        "backend/servers/api-server/tests/common/mod.rs"
+      ]
+    },
+    {
+      "id": "screen-map-seed-gap-ppt-accounting-financial",
+      "type": "screen-map-drift",
+      "source": "PRs #1621 + #1630",
+      "score_delta": 1,
+      "evidence": [
+        "PR #1621 added /accounting/payment-matching route in ppt-web; PR #1630 wired /accounting/payment-management route in ppt-web/routes/groups/accounting.tsx — no docs/screens/ppt/payment-{matching,management}.md exists.",
+        "Heuristic caveat: seed gap, not regression — ppt-web docs/screens/ has no accounting subtree yet. Add as review candidate, not a promotable drift."
+      ],
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-21.md && first line matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json cursors advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "[.items[].id] unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit dedup",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + 14d decay applied to all eligible open items",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "every new plan has adversarial-pass annotation",
+      "observed": "n/a (0 new plans)",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hostnames in diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical to fresh regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed match cursor non-advance",
+      "observed": "none failed",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present or archived",
+      "observed": "9 prior plans accounted for",
+      "expected": "all accounted"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive only grows (count >= HEAD)",
+      "observed": "6 == 6",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical to fresh regen",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline (kill switch off; 0 actions taken; idempotent)",
+      "observed": "0 actions",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 coverage_cursor advance",
+      "observed": "OK; PM 5→6, CC 12→0",
+      "expected": "OK"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret committed",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

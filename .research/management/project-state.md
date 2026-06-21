@@ -68,3 +68,5 @@ Current sprint: **"Epic 6, 7A, 8A & 10A — Announcements, Documents, Notificati
 - **epic-8a (rotation idx 11) refreshed** in `coverage.json`:
   - `8a-3-notification-preference-sync`: added evidence `PR #1395 added CI-executable coverage for realtime preference-sync publish leg (#1376) — closes the test-gap call-out from the #480-#487 cluster on this slice`; removed gap `backend tests for realtime sync tracked in follow-up issue (#480-#487 cluster)`; updated notes to reflect publish-leg tests cleared. Status stays `partial` (mobile-push FCM/APNs leg still the only open gap before promotion).
 - Next epic to refresh: **epic-9** (coverage_cursor idx 12).
+
+<!-- routine upkeep refresh 2026-06-21T10:13:07Z — coverage_cursor advanced, pm-security daily slot ran -->
