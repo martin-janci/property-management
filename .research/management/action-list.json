@@ -43,11 +43,12 @@
       "action": "Coverage 85-2 (gap): generate app icons for all required sizes (Android mipmap densities + iOS AppIcon set) for the React Native Property Management mobile app, and wire them into the build configs. Frontend mobile; icon assets + manifest/Info.plist references.",
       "owner_role": "pm-frontend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-18 (coverage.json gap 85-2)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "dev_reconciled": "merged via PR #1554 (commit 1899b260) — dispatcher 2026-06-21"
     },
     {
       "id": "feat-report-schedule-editing-cron-expression-column-backend",
@@ -130,29 +131,31 @@
       "action": "Coverage 83-2 (gap): implement Booking.com OTA XML parsing/generation and the rate/availability push flow (AC-5) for the Booking.com integration surface. Backend api-server; include parser unit tests and a push-flow test.",
       "owner_role": "pm-backend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 83-2)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "dev_reconciled": "merged via PR #1633 (commit 76159c8) — dispatcher 2026-06-21"
     },
     {
       "id": "feat-mobile-env-config-info-plist-keys-mobile",
       "action": "Coverage 85-1 (gap): finish mobile environment-variable setup — document the Expo Constants env workflow and add API_BASE_URL/ENVIRONMENT keys to the iOS Info.plist (xcconfig-driven) for the React Native Property Management app. Frontend mobile; config + docs, no binary assets.",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 85-1)",
       "deadline": null,
       "dependency": null,
-      "depends_on": []
+      "depends_on": [],
+      "dev_reconciled": "merged via PR #1658 (commit 7246396 'fix(UC-85): route mobile API_BASE_URL through Constants single source') — dispatcher 2026-06-21"
     },
     {
       "id": "feat-mobile-ios-xcconfig-schemes-build-scripts-mobile",
       "action": "Coverage 85-2 (gap): create the iOS xcconfig files + build schemes and the build scripts (scripts/build-mobile|android|ios.sh) for per-environment React Native builds. Frontend mobile + scripts; text config only (app-icon binary generation is tracked separately in PR #1554).",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 85-2)",
       "deadline": null,
       "dependency": null,
@@ -198,6 +201,28 @@
       "priority": "low",
       "status": "open",
       "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 6-4)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "feat-announcement-viewing-acknowledgment-web-ui-frontend",
+      "action": "Coverage 6-2 (gap): implement the announcement viewing + acknowledgment web UI in ppt-web (mark-as-read / acknowledge action wired to the existing reads/ack API, with read-state indication in the announcement list/detail). Frontend ppt-web; include component tests. (Note: earlier drafts #474/#475/#479 are stale — implement fresh, reconcile rather than duplicate.)",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 6-2)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": []
+    },
+    {
+      "id": "verify-report-execution-history-presigned-download-retry-frontend",
+      "action": "Coverage 81-2 (gap): verify the report execution-history surface end-to-end in ppt-web — presigned artifact download + retry-on-expiry flow — tick the AC, and add/adjust frontend tests covering the download + retry paths. Frontend ppt-web.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 81-2)",
       "deadline": null,
       "dependency": null,
       "depends_on": []
