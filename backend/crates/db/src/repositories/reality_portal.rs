@@ -1344,6 +1344,30 @@ impl RealityPortalRepository {
     // Feed Subscriptions (Story 34.2)
     // ========================================================================
 
+    /// Resolve the agency a portal user belongs to (earliest active membership).
+    ///
+    /// Feed subscriptions are agency-scoped (#1584): a realtor's feeds belong to
+    /// their agency and are shared with the agency's members, not keyed on the
+    /// individual user. Returns `None` when the user has no active membership (the
+    /// route then 403s — a user with no agency cannot own feeds). Multi-agency
+    /// users resolve to their earliest-joined active agency.
+    pub async fn get_active_agency_for_user(
+        &self,
+        user_id: Uuid,
+    ) -> Result<Option<Uuid>, SqlxError> {
+        sqlx::query_scalar::<_, Uuid>(
+            r#"
+            SELECT agency_id FROM reality_agency_members
+            WHERE user_id = $1 AND is_active = TRUE
+            ORDER BY joined_at ASC
+            LIMIT 1
+            "#,
+        )
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
     /// List feed subscriptions for an agency.
     pub async fn list_feed_subscriptions(
         &self,
