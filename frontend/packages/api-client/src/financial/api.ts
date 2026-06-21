@@ -308,6 +308,26 @@ export async function sendInvoice(id: string): Promise<Invoice> {
   );
 }
 
+/**
+ * Fetch an invoice rendered as a PDF (#975.6). Returns the raw `Blob` so the
+ * caller can trigger a browser download — `fetchApi` can't be used because it
+ * parses JSON. Auth + base URL come from the same providers as every other call.
+ */
+export async function downloadInvoicePdf(invoiceId: string): Promise<Blob> {
+  const token = getToken();
+  const org = getOrg();
+  const baseUrl = client.getConfig().baseUrl ?? '';
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (org) headers['X-Tenant-ID'] = org;
+
+  const response = await fetch(`${baseUrl}${API_BASE}/invoices/${invoiceId}/pdf`, { headers });
+  if (!response.ok) {
+    throw new Error(`Failed to download invoice PDF (HTTP ${response.status})`);
+  }
+  return response.blob();
+}
+
 export async function listUnitInvoices(
   unitId: string,
   params?: Omit<ListInvoicesParams, 'organization_id' | 'unit_id'>

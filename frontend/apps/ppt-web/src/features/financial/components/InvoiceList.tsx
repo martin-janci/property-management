@@ -16,6 +16,7 @@ interface InvoiceListProps {
   onPageChange: (page: number) => void;
   onViewInvoice: (invoiceId: string) => void;
   onSendInvoice?: (invoiceId: string) => void;
+  onDownloadPdf?: (invoiceId: string) => void;
   onStatusFilter?: (status?: InvoiceStatus) => void;
   onSearch?: (query: string) => void;
 }
@@ -29,6 +30,7 @@ export function InvoiceList({
   onPageChange,
   onViewInvoice,
   onSendInvoice,
+  onDownloadPdf,
   onStatusFilter,
   onSearch,
 }: InvoiceListProps) {
@@ -201,6 +203,18 @@ export function InvoiceList({
                           className="text-blue-600 hover:text-blue-800"
                         >
                           Send
+                        </button>
+                      )}
+                      {onDownloadPdf && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDownloadPdf(invoice.id);
+                          }}
+                          className="text-gray-600 hover:text-gray-800"
+                        >
+                          PDF
                         </button>
                       )}
                       <button
