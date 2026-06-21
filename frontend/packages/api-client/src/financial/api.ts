@@ -11,6 +11,7 @@ import type {
   AccountTransaction,
   AllocatePaymentRequest,
   ARReportParams,
+  ARReportTotals,
   AutoMatchResult,
   CreateFeeSchedule,
   CreateFinancialAccount,
@@ -20,6 +21,7 @@ import type {
   FinancialAccount,
   FinancialAccountResponse,
   Invoice,
+  InvoiceItem,
   InvoiceResponse,
   LateFeeConfig,
   ListAccountsParams,
@@ -67,6 +69,93 @@ async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
+// ---------------------------------------------------------------------------
+// Decimal coercion (#975).
+//
+// The api-server serialises `rust_decimal` money fields as JSON STRINGS
+// (serde-str), but these client types expose them as `number` for ergonomic
+// arithmetic and formatting. Normalise the known decimal fields from the wire
+// here — at the single client boundary — so callers get real numbers and don't,
+// e.g., string-concatenate balances. Genuine integer fields (counts, limits,
+// page sizes) are left untouched.
+// ---------------------------------------------------------------------------
+const toNum = (v: number | string | null | undefined): number =>
+  typeof v === 'string' ? Number(v) : (v ?? 0);
+const toNumOpt = (v: number | string | null | undefined): number | undefined =>
+  v === null || v === undefined ? undefined : toNum(v);
+
+function coerceAccount(a: FinancialAccount): FinancialAccount {
+  return { ...a, balance: toNum(a.balance), opening_balance: toNum(a.opening_balance) };
+}
+function coerceTransaction(t: AccountTransaction): AccountTransaction {
+  return { ...t, amount: toNum(t.amount), balance_after: toNum(t.balance_after) };
+}
+function coerceFeeSchedule(f: FeeSchedule): FeeSchedule {
+  return { ...f, amount: toNum(f.amount) };
+}
+function coerceUnitFee(u: UnitFee): UnitFee {
+  return { ...u, override_amount: toNumOpt(u.override_amount) };
+}
+function coerceInvoice(i: Invoice): Invoice {
+  return {
+    ...i,
+    subtotal: toNum(i.subtotal),
+    tax_amount: toNum(i.tax_amount),
+    total: toNum(i.total),
+    amount_paid: toNum(i.amount_paid),
+    balance_due: toNum(i.balance_due),
+  };
+}
+function coerceInvoiceItem(it: InvoiceItem): InvoiceItem {
+  return {
+    ...it,
+    quantity: toNum(it.quantity),
+    unit_price: toNum(it.unit_price),
+    amount: toNum(it.amount),
+    tax_rate: toNumOpt(it.tax_rate),
+    tax_amount: toNumOpt(it.tax_amount),
+  };
+}
+function coercePayment(p: Payment): Payment {
+  return { ...p, amount: toNum(p.amount) };
+}
+function coerceAllocation(a: PaymentAllocation): PaymentAllocation {
+  return { ...a, amount: toNum(a.amount) };
+}
+function coerceLateFee(l: LateFeeConfig): LateFeeConfig {
+  return { ...l, fee_amount: toNumOpt(l.fee_amount), max_fee_amount: toNumOpt(l.max_fee_amount) };
+}
+/** Coerce the five aging-bucket money fields shared by entries and totals. */
+function coerceArBuckets<T extends ARReportTotals>(b: T): T {
+  return {
+    ...b,
+    current: toNum(b.current),
+    days_30: toNum(b.days_30),
+    days_60: toNum(b.days_60),
+    days_90_plus: toNum(b.days_90_plus),
+    total: toNum(b.total),
+  };
+}
+function coerceAccountResponse(r: FinancialAccountResponse): FinancialAccountResponse {
+  return {
+    account: coerceAccount(r.account),
+    recent_transactions: r.recent_transactions.map(coerceTransaction),
+  };
+}
+function coerceInvoiceResponse(r: InvoiceResponse): InvoiceResponse {
+  return {
+    invoice: coerceInvoice(r.invoice),
+    items: r.items.map(coerceInvoiceItem),
+    payments: r.payments.map(coerceAllocation),
+  };
+}
+function coercePaymentResponse(r: PaymentResponse): PaymentResponse {
+  return {
+    payment: coercePayment(r.payment),
+    allocations: r.allocations.map(coerceAllocation),
+  };
+}
+
 // ============================================================================
 // ACCOUNTS
 // ============================================================================
@@ -75,10 +164,10 @@ export async function createAccount(
   organizationId: string,
   data: CreateFinancialAccount
 ): Promise<FinancialAccount> {
-  return fetchApi(`${API_BASE}/accounts`, {
+  return fetchApi<FinancialAccount>(`${API_BASE}/accounts`, {
     method: 'POST',
     body: JSON.stringify({ organization_id: organizationId, ...data }),
-  });
+  }).then(coerceAccount);
 }
 
 export async function listAccounts(params: ListAccountsParams): Promise<FinancialAccount[]> {
@@ -87,11 +176,15 @@ export async function listAccounts(params: ListAccountsParams): Promise<Financia
   if (params.building_id) {
     searchParams.set('building_id', params.building_id);
   }
-  return fetchApi(`${API_BASE}/accounts?${searchParams}`);
+  return fetchApi<FinancialAccount[]>(`${API_BASE}/accounts?${searchParams}`).then((a) =>
+    a.map(coerceAccount)
+  );
 }
 
 export async function getAccount(id: string): Promise<FinancialAccountResponse> {
-  return fetchApi(`${API_BASE}/accounts/${id}`);
+  return fetchApi<FinancialAccountResponse>(`${API_BASE}/accounts/${id}`).then(
+    coerceAccountResponse
+  );
 }
 
 export async function listTransactions(
@@ -103,21 +196,25 @@ export async function listTransactions(
   if (params?.to) searchParams.set('to', params.to);
   if (params?.limit) searchParams.set('limit', String(params.limit));
   if (params?.offset) searchParams.set('offset', String(params.offset));
-  return fetchApi(`${API_BASE}/accounts/${accountId}/transactions?${searchParams}`);
+  return fetchApi<AccountTransaction[]>(
+    `${API_BASE}/accounts/${accountId}/transactions?${searchParams}`
+  ).then((t) => t.map(coerceTransaction));
 }
 
 export async function createTransaction(
   accountId: string,
   data: Omit<CreateTransaction, 'account_id'>
 ): Promise<AccountTransaction> {
-  return fetchApi(`${API_BASE}/accounts/${accountId}/transactions`, {
+  return fetchApi<AccountTransaction>(`${API_BASE}/accounts/${accountId}/transactions`, {
     method: 'POST',
     body: JSON.stringify({ account_id: accountId, ...data }),
-  });
+  }).then(coerceTransaction);
 }
 
 export async function getUnitLedger(unitId: string): Promise<FinancialAccountResponse> {
-  return fetchApi(`${API_BASE}/units/${unitId}/ledger`);
+  return fetchApi<FinancialAccountResponse>(`${API_BASE}/units/${unitId}/ledger`).then(
+    coerceAccountResponse
+  );
 }
 
 // ============================================================================
@@ -129,10 +226,10 @@ export async function createFeeSchedule(
   userId: string,
   data: CreateFeeSchedule
 ): Promise<FeeSchedule> {
-  return fetchApi(`${API_BASE}/fee-schedules`, {
+  return fetchApi<FeeSchedule>(`${API_BASE}/fee-schedules`, {
     method: 'POST',
     body: JSON.stringify({ organization_id: organizationId, user_id: userId, ...data }),
-  });
+  }).then(coerceFeeSchedule);
 }
 
 export async function listFeeSchedules(params: ListFeeSchedulesParams): Promise<FeeSchedule[]> {
@@ -141,17 +238,21 @@ export async function listFeeSchedules(params: ListFeeSchedulesParams): Promise<
   if (params.active_only !== undefined) {
     searchParams.set('active_only', String(params.active_only));
   }
-  return fetchApi(`${API_BASE}/fee-schedules?${searchParams}`);
+  return fetchApi<FeeSchedule[]>(`${API_BASE}/fee-schedules?${searchParams}`).then((f) =>
+    f.map(coerceFeeSchedule)
+  );
 }
 
 export async function getFeeSchedule(id: string): Promise<FeeSchedule> {
-  return fetchApi(`${API_BASE}/fee-schedules/${id}`);
+  return fetchApi<FeeSchedule>(`${API_BASE}/fee-schedules/${id}`).then(coerceFeeSchedule);
 }
 
 export async function getUnitFees(unitId: string, asOf?: string): Promise<UnitFee[]> {
   const searchParams = new URLSearchParams();
   if (asOf) searchParams.set('as_of', asOf);
-  return fetchApi(`${API_BASE}/units/${unitId}/fees?${searchParams}`);
+  return fetchApi<UnitFee[]>(`${API_BASE}/units/${unitId}/fees?${searchParams}`).then((u) =>
+    u.map(coerceUnitFee)
+  );
 }
 
 export async function assignUnitFee(
@@ -163,10 +264,10 @@ export async function assignUnitFee(
     effective_to?: string;
   }
 ): Promise<UnitFee> {
-  return fetchApi(`${API_BASE}/units/${unitId}/fees`, {
+  return fetchApi<UnitFee>(`${API_BASE}/units/${unitId}/fees`, {
     method: 'POST',
     body: JSON.stringify({ fee_schedule_id: feeScheduleId, ...data }),
-  });
+  }).then(coerceUnitFee);
 }
 
 // ============================================================================
@@ -178,10 +279,10 @@ export async function createInvoice(
   userId: string,
   data: CreateInvoice
 ): Promise<InvoiceResponse> {
-  return fetchApi(`${API_BASE}/invoices`, {
+  return fetchApi<InvoiceResponse>(`${API_BASE}/invoices`, {
     method: 'POST',
     body: JSON.stringify({ organization_id: organizationId, user_id: userId, ...data }),
-  });
+  }).then(coerceInvoiceResponse);
 }
 
 export async function listInvoices(params: ListInvoicesParams): Promise<ListInvoicesResponse> {
@@ -191,15 +292,20 @@ export async function listInvoices(params: ListInvoicesParams): Promise<ListInvo
   if (params.unit_id) searchParams.set('unit_id', params.unit_id);
   if (params.limit) searchParams.set('limit', String(params.limit));
   if (params.offset) searchParams.set('offset', String(params.offset));
-  return fetchApi(`${API_BASE}/invoices?${searchParams}`);
+  return fetchApi<ListInvoicesResponse>(`${API_BASE}/invoices?${searchParams}`).then((r) => ({
+    ...r,
+    invoices: r.invoices.map(coerceInvoice),
+  }));
 }
 
 export async function getInvoice(id: string): Promise<InvoiceResponse> {
-  return fetchApi(`${API_BASE}/invoices/${id}`);
+  return fetchApi<InvoiceResponse>(`${API_BASE}/invoices/${id}`).then(coerceInvoiceResponse);
 }
 
 export async function sendInvoice(id: string): Promise<Invoice> {
-  return fetchApi(`${API_BASE}/invoices/${id}/send`, { method: 'POST' });
+  return fetchApi<Invoice>(`${API_BASE}/invoices/${id}/send`, { method: 'POST' }).then(
+    coerceInvoice
+  );
 }
 
 export async function listUnitInvoices(
@@ -210,7 +316,9 @@ export async function listUnitInvoices(
   if (params?.status) searchParams.set('status', params.status);
   if (params?.limit) searchParams.set('limit', String(params.limit));
   if (params?.offset) searchParams.set('offset', String(params.offset));
-  return fetchApi(`${API_BASE}/units/${unitId}/invoices?${searchParams}`);
+  return fetchApi<ListInvoicesResponse>(
+    `${API_BASE}/units/${unitId}/invoices?${searchParams}`
+  ).then((r) => ({ ...r, invoices: r.invoices.map(coerceInvoice) }));
 }
 
 // ============================================================================
@@ -222,14 +330,14 @@ export async function recordPayment(
   userId: string,
   data: RecordPayment
 ): Promise<PaymentResponse> {
-  return fetchApi(`${API_BASE}/payments`, {
+  return fetchApi<PaymentResponse>(`${API_BASE}/payments`, {
     method: 'POST',
     body: JSON.stringify({ organization_id: organizationId, user_id: userId, ...data }),
-  });
+  }).then(coercePaymentResponse);
 }
 
 export async function getPayment(id: string): Promise<PaymentResponse> {
-  return fetchApi(`${API_BASE}/payments/${id}`);
+  return fetchApi<PaymentResponse>(`${API_BASE}/payments/${id}`).then(coercePaymentResponse);
 }
 
 /** List all payments for an organization (paginated, optional status filter). */
@@ -239,14 +347,19 @@ export async function listPayments(params: ListPaymentsParams): Promise<PaymentL
   if (params.status) searchParams.set('status', params.status);
   if (params.limit) searchParams.set('limit', String(params.limit));
   if (params.offset) searchParams.set('offset', String(params.offset));
-  return fetchApi(`${API_BASE}/payments?${searchParams}`);
+  return fetchApi<PaymentListResponse>(`${API_BASE}/payments?${searchParams}`).then((r) => ({
+    ...r,
+    payments: r.payments.map(coercePayment),
+  }));
 }
 
 /** List payments that still have an unallocated balance (reconciliation queue). */
 export async function listUnallocatedPayments(organizationId: string): Promise<Payment[]> {
   const searchParams = new URLSearchParams();
   searchParams.set('organization_id', organizationId);
-  return fetchApi(`${API_BASE}/payments/unallocated?${searchParams}`);
+  return fetchApi<Payment[]>(`${API_BASE}/payments/unallocated?${searchParams}`).then((p) =>
+    p.map(coercePayment)
+  );
 }
 
 /** Allocate an existing payment to an invoice (manual match). */
@@ -254,10 +367,10 @@ export async function allocatePayment(
   paymentId: string,
   data: AllocatePaymentRequest
 ): Promise<PaymentAllocation> {
-  return fetchApi(`${API_BASE}/payments/${paymentId}/allocate`, {
+  return fetchApi<PaymentAllocation>(`${API_BASE}/payments/${paymentId}/allocate`, {
     method: 'POST',
     body: JSON.stringify(data),
-  });
+  }).then(coerceAllocation);
 }
 
 /** Bulk auto-match unallocated payments against outstanding invoices. */
@@ -277,7 +390,9 @@ export async function listUnitPayments(
   if (params?.to) searchParams.set('to', params.to);
   if (params?.limit) searchParams.set('limit', String(params.limit));
   if (params?.offset) searchParams.set('offset', String(params.offset));
-  return fetchApi(`${API_BASE}/units/${unitId}/payments?${searchParams}`);
+  return fetchApi<Payment[]>(`${API_BASE}/units/${unitId}/payments?${searchParams}`).then((p) =>
+    p.map(coercePayment)
+  );
 }
 
 // ============================================================================
@@ -289,11 +404,15 @@ export async function getReminderSchedules(organizationId: string): Promise<Remi
 }
 
 export async function getLateFeeConfig(organizationId: string): Promise<LateFeeConfig> {
-  return fetchApi(`${API_BASE}/late-fee-config?organization_id=${organizationId}`);
+  return fetchApi<LateFeeConfig>(
+    `${API_BASE}/late-fee-config?organization_id=${organizationId}`
+  ).then(coerceLateFee);
 }
 
 export async function getOverdueInvoices(organizationId: string): Promise<Invoice[]> {
-  return fetchApi(`${API_BASE}/overdue-invoices?organization_id=${organizationId}`);
+  return fetchApi<Invoice[]>(`${API_BASE}/overdue-invoices?organization_id=${organizationId}`).then(
+    (i) => i.map(coerceInvoice)
+  );
 }
 
 // ============================================================================
@@ -304,5 +423,11 @@ export async function getARAgingReport(params: ARReportParams): Promise<Accounts
   const searchParams = new URLSearchParams();
   searchParams.set('organization_id', params.organization_id);
   if (params.building_id) searchParams.set('building_id', params.building_id);
-  return fetchApi(`${API_BASE}/reports/ar-aging?${searchParams}`);
+  return fetchApi<AccountsReceivableReport>(`${API_BASE}/reports/ar-aging?${searchParams}`).then(
+    (r) => ({
+      ...r,
+      entries: r.entries.map(coerceArBuckets),
+      totals: coerceArBuckets(r.totals),
+    })
+  );
 }

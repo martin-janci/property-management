@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../auth', () => ({ getToken: mocks.getToken, getOrg: mocks.getOrg }));
 vi.mock('../generated/client.gen', () => ({ client: { getConfig: mocks.getConfig } }));
 
-import { listAccounts } from './api';
+import { getOverdueInvoices, listAccounts } from './api';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -56,6 +56,49 @@ describe('financial fetchApi auth wiring', () => {
     const [, init] = fetchMock.mock.calls[0];
     expect(init.headers.Authorization).toBeUndefined();
     expect(init.headers['X-Tenant-ID']).toBeUndefined();
+
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('financial decimal coercion', () => {
+  beforeEach(() => {
+    mocks.getToken.mockReturnValue('t');
+    mocks.getOrg.mockReturnValue('o');
+  });
+
+  it('coerces wire decimal STRINGS to numbers (list of accounts)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [{ id: 'a', balance: '100.50', opening_balance: '0.00' }],
+      })
+    );
+
+    const accounts = await listAccounts({ organization_id: 'o' });
+    expect(accounts[0].balance).toBe(100.5);
+    expect(typeof accounts[0].balance).toBe('number');
+    expect(accounts[0].opening_balance).toBe(0);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('coerces invoice money fields so arithmetic works (no string concat)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [
+          { id: 'i1', total: '60.00', balance_due: '60.00', amount_paid: '0.00' },
+          { id: 'i2', total: '40.00', balance_due: '40.00', amount_paid: '0.00' },
+        ],
+      })
+    );
+
+    const invoices = await getOverdueInvoices('o');
+    const outstanding = invoices.reduce((sum, inv) => sum + inv.balance_due, 0);
+    expect(outstanding).toBe(100); // 60 + 40, not "060.0040.00"
 
     vi.unstubAllGlobals();
   });
