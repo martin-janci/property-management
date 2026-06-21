@@ -9,21 +9,28 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   acknowledgeSensorAlert,
   createSensor,
+  createThreshold,
   deleteSensor,
+  deleteThreshold,
   getIotDashboard,
   getSensor,
+  listAllAlerts,
   listSensorAlerts,
   listSensorReadings,
   listSensors,
+  listThresholds,
   resolveSensorAlert,
   updateSensor,
+  updateThreshold,
 } from './api';
 import type {
   CreateSensorRequest,
+  CreateSensorThresholdRequest,
   ListAlertsParams,
   ListReadingsParams,
   ListSensorsParams,
   UpdateSensorRequest,
+  UpdateSensorThresholdRequest,
 } from './types';
 
 // ============================================
@@ -40,6 +47,8 @@ export const iotKeys = {
     [...iotKeys.sensor(sensorId), 'readings', params] as const,
   alerts: (sensorId: string, params?: ListAlertsParams) =>
     [...iotKeys.sensor(sensorId), 'alerts', params] as const,
+  allAlerts: (params?: ListAlertsParams) => [...iotKeys.all, 'alerts', params] as const,
+  thresholds: (sensorId: string) => [...iotKeys.sensor(sensorId), 'thresholds'] as const,
 };
 
 // ============================================
@@ -153,5 +162,66 @@ export function useDeleteSensor() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: iotKeys.all });
     },
+  });
+}
+
+// ============================================
+// Thresholds (FR73)
+// ============================================
+
+/** Thresholds for a sensor (FR73). */
+export function useThresholds(sensorId: string) {
+  return useQuery({
+    queryKey: iotKeys.thresholds(sensorId),
+    queryFn: ({ signal }) => listThresholds(sensorId, signal),
+    enabled: !!sensorId,
+    staleTime: 30_000,
+  });
+}
+
+/** Create a threshold rule (FR73). */
+export function useCreateThreshold(sensorId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (req: CreateSensorThresholdRequest) => createThreshold(sensorId, req),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.thresholds(sensorId) });
+    },
+  });
+}
+
+/** Update a threshold rule (FR73). */
+export function useUpdateThreshold(sensorId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateSensorThresholdRequest }) =>
+      updateThreshold(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.thresholds(sensorId) });
+    },
+  });
+}
+
+/** Delete a threshold rule (FR73). */
+export function useDeleteThreshold(sensorId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteThreshold(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.thresholds(sensorId) });
+    },
+  });
+}
+
+// ============================================
+// All-org alerts (FR74)
+// ============================================
+
+/** All alerts across the org (FR74). */
+export function useAllAlerts(params?: ListAlertsParams) {
+  return useQuery({
+    queryKey: iotKeys.allAlerts(params),
+    queryFn: ({ signal }) => listAllAlerts(params, signal),
+    staleTime: 15_000,
   });
 }

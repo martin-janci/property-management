@@ -20,6 +20,8 @@ export interface SensorListPageProps {
   onNavigateToDashboard: () => void;
   onNavigateToRegister: () => void;
   onNavigateToEdit: (id: string) => void;
+  onNavigateToThresholds: (id: string) => void;
+  onNavigateToAlerts: () => void;
   onDelete: (sensor: Sensor) => void;
 }
 
@@ -38,6 +40,8 @@ export function SensorListPage({
   onNavigateToDashboard,
   onNavigateToRegister,
   onNavigateToEdit,
+  onNavigateToThresholds,
+  onNavigateToAlerts,
   onDelete,
 }: SensorListPageProps): JSX.Element {
   const { t } = useTranslation();
@@ -62,6 +66,13 @@ export function SensorListPage({
             className="btn-outline-token rounded-lg px-3 py-1.5 text-sm font-medium"
           >
             {t('iot.openDashboard', { defaultValue: 'Dashboard' })}
+          </button>
+          <button
+            type="button"
+            onClick={onNavigateToAlerts}
+            className="btn-outline-token rounded-lg px-3 py-1.5 text-sm font-medium"
+          >
+            {t('iot.viewAlerts', { defaultValue: 'Alerts' })}
           </button>
           <button
             type="button"
@@ -128,6 +139,13 @@ export function SensorListPage({
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onNavigateToThresholds(sensor.id)}
+                            className="rounded px-2 py-1 text-xs font-medium text-purple-600 hover:bg-purple-50"
+                          >
+                            {t('iot.thresholds', { defaultValue: 'Thresholds' })}
+                          </button>
                           <button
                             type="button"
                             onClick={() => onNavigateToEdit(sensor.id)}

@@ -9,16 +9,20 @@
 import { getToken } from '../auth';
 import type {
   CreateSensorRequest,
+  CreateSensorThresholdRequest,
   ListAlertsParams,
   ListAlertsResponse,
   ListReadingsParams,
   ListReadingsResponse,
   ListSensorsParams,
   ListSensorsResponse,
+  ListThresholdsResponse,
   Sensor,
   SensorAlert,
   SensorDashboard,
+  SensorThreshold,
   UpdateSensorRequest,
+  UpdateSensorThresholdRequest,
 } from './types';
 
 const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
@@ -142,4 +146,56 @@ export async function resolveSensorAlert(
     method: 'POST',
     body: JSON.stringify({ resolved_value: resolvedValue ?? null }),
   });
+}
+
+// ============================================================================
+// Thresholds (FR73)
+// ============================================================================
+
+/** List thresholds for a sensor (FR73). */
+export async function listThresholds(
+  sensorId: string,
+  signal?: AbortSignal
+): Promise<ListThresholdsResponse> {
+  return apiRequest<ListThresholdsResponse>(`${API_BASE}/${sensorId}/thresholds`, { signal });
+}
+
+/** Create a threshold rule for a sensor (FR73). */
+export async function createThreshold(
+  sensorId: string,
+  req: CreateSensorThresholdRequest
+): Promise<SensorThreshold> {
+  return apiRequest<SensorThreshold>(`${API_BASE}/${sensorId}/thresholds`, {
+    method: 'POST',
+    body: JSON.stringify(req),
+  });
+}
+
+/** Update a threshold rule (FR73). */
+export async function updateThreshold(
+  thresholdId: string,
+  req: UpdateSensorThresholdRequest
+): Promise<SensorThreshold> {
+  return apiRequest<SensorThreshold>(`${API_BASE}/thresholds/${thresholdId}`, {
+    method: 'PUT',
+    body: JSON.stringify(req),
+  });
+}
+
+/** Delete a threshold rule (FR73). */
+export async function deleteThreshold(thresholdId: string): Promise<void> {
+  return apiRequest<void>(`${API_BASE}/thresholds/${thresholdId}`, { method: 'DELETE' });
+}
+
+// ============================================================================
+// All-org alerts (FR74)
+// ============================================================================
+
+/** List alerts across all sensors for the org (FR74). */
+export async function listAllAlerts(
+  params?: ListAlertsParams,
+  signal?: AbortSignal
+): Promise<ListAlertsResponse> {
+  const qs = buildQueryString(params || {});
+  return apiRequest<ListAlertsResponse>(`${API_BASE}/alerts${qs}`, { signal });
 }
