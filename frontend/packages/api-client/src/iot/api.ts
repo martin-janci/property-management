@@ -8,6 +8,7 @@
 
 import { getToken } from '../auth';
 import type {
+  CreateSensorRequest,
   ListAlertsParams,
   ListAlertsResponse,
   ListReadingsParams,
@@ -17,6 +18,7 @@ import type {
   Sensor,
   SensorAlert,
   SensorDashboard,
+  UpdateSensorRequest,
 } from './types';
 
 const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
@@ -81,6 +83,27 @@ export async function listSensors(
 /** Get a single sensor by id (FR71). */
 export async function getSensor(id: string, signal?: AbortSignal): Promise<Sensor> {
   return apiRequest<Sensor>(`${API_BASE}/${id}`, { signal });
+}
+
+/** Register a new sensor / device (FR71). */
+export async function createSensor(req: CreateSensorRequest): Promise<Sensor> {
+  return apiRequest<Sensor>(`${API_BASE}`, {
+    method: 'POST',
+    body: JSON.stringify(req),
+  });
+}
+
+/** Update an existing sensor (FR71). */
+export async function updateSensor(id: string, req: UpdateSensorRequest): Promise<Sensor> {
+  return apiRequest<Sensor>(`${API_BASE}/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(req),
+  });
+}
+
+/** Delete (decommission) a sensor (FR71). */
+export async function deleteSensor(id: string): Promise<void> {
+  return apiRequest<void>(`${API_BASE}/${id}`, { method: 'DELETE' });
 }
 
 /** List telemetry readings for a sensor (FR72). */

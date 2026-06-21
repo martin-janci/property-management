@@ -1127,5 +1127,82 @@
     "title": "Funkcje konkurencyjne",
     "percentComplete": "Ukończono {{percent}}%",
     "viewAnalysis": "Wyświetl analizę"
+  },
+  "iot": {
+    "title": "IoT Sensors",
+    "sensors": "Sensors",
+    "registerSensor": "Register Sensor",
+    "editSensor": "Edit Sensor",
+    "backToSensors": "Back to Sensors",
+    "backToDashboard": "Back to Dashboard",
+    "noSensors": "No sensors found.",
+    "registeredSuccessfully": "Sensor registered",
+    "sensorRegisteredMsg": "The sensor has been registered successfully.",
+    "updatedSuccessfully": "Sensor updated",
+    "sensorUpdatedMsg": "The sensor has been updated successfully.",
+    "failedToRegister": "Failed to register sensor",
+    "failedToUpdate": "Failed to update sensor",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Living room temperature",
+      "sensorType": "Sensor Type",
+      "buildingId": "Building ID",
+      "buildingIdPlaceholder": "Enter building ID",
+      "location": "Location",
+      "locationPlaceholder": "e.g. Room 101",
+      "unitOfMeasurement": "Unit of Measurement",
+      "unitPlaceholder": "e.g. °C, %, ppm",
+      "connectionType": "Connection Type",
+      "manufacturer": "Manufacturer",
+      "manufacturerPlaceholder": "e.g. Bosch",
+      "model": "Model",
+      "modelPlaceholder": "e.g. BME280",
+      "serialNumber": "Serial Number",
+      "serialNumberPlaceholder": "e.g. SN-123456",
+      "dataIntervalSeconds": "Data Interval (seconds)",
+      "dataIntervalPlaceholder": "e.g. 60"
+    },
+    "sensorType": {
+      "temperature": "Temperature",
+      "humidity": "Humidity",
+      "motion": "Motion",
+      "co2": "CO2",
+      "pressure": "Pressure",
+      "energy": "Energy",
+      "water": "Water",
+      "smoke": "Smoke",
+      "door_window": "Door/Window",
+      "other": "Other"
+    },
+    "connectionType": {
+      "mqtt": "MQTT",
+      "http": "HTTP",
+      "modbus": "Modbus",
+      "zigbee": "Zigbee",
+      "zwave": "Z-Wave",
+      "other": "Other"
+    },
+    "errors": {
+      "nameRequired": "Name is required",
+      "sensorTypeRequired": "Sensor type is required",
+      "buildingIdRequired": "Building ID is required"
+    },
+    "filter": {
+      "allTypes": "All Types",
+      "allStatuses": "All Statuses",
+      "searchPlaceholder": "Search sensors..."
+    },
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "status": "Status",
+      "location": "Location",
+      "building": "Building",
+      "actions": "Actions"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    }
   }
 }

@@ -8,14 +8,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   acknowledgeSensorAlert,
+  createSensor,
+  deleteSensor,
   getIotDashboard,
   getSensor,
   listSensorAlerts,
   listSensorReadings,
   listSensors,
   resolveSensorAlert,
+  updateSensor,
 } from './api';
-import type { ListAlertsParams, ListReadingsParams, ListSensorsParams } from './types';
+import type {
+  CreateSensorRequest,
+  ListAlertsParams,
+  ListReadingsParams,
+  ListSensorsParams,
+  UpdateSensorRequest,
+} from './types';
 
 // ============================================
 // Query Key Factory
@@ -106,6 +115,41 @@ export function useResolveSensorAlert() {
   return useMutation({
     mutationFn: ({ alertId, resolvedValue }: { alertId: string; resolvedValue?: number | null }) =>
       resolveSensorAlert(alertId, resolvedValue),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.all });
+    },
+  });
+}
+
+/** Register a new sensor (FR71). Refreshes sensor lists + dashboard on success. */
+export function useCreateSensor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (req: CreateSensorRequest) => createSensor(req),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.all });
+    },
+  });
+}
+
+/** Update a sensor (FR71). Refreshes the affected sensor + lists on success. */
+export function useUpdateSensor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateSensorRequest }) => updateSensor(id, data),
+    onSuccess: (_result, { id }) => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.sensor(id) });
+      queryClient.invalidateQueries({ queryKey: iotKeys.sensors() });
+      queryClient.invalidateQueries({ queryKey: iotKeys.dashboard() });
+    },
+  });
+}
+
+/** Delete a sensor (FR71). Refreshes sensor lists + dashboard on success. */
+export function useDeleteSensor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteSensor(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: iotKeys.all });
     },
