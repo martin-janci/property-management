@@ -307,6 +307,12 @@ function EditSensorPageRoute() {
   );
 }
 
+/**
+ * Route wrapper for the standalone alerts page (FR74).
+ *
+ * v1 sources alerts from the dashboard rollup (`recent_alerts`); a dedicated
+ * cross-sensor alerts list endpoint can replace that source later. Sensor names
+ * come from `useSensors()` so the table can label each alert's sensor.
  */
 function IotAlertsPageRoute() {
   const { user } = useAuth();
