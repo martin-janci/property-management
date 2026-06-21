@@ -859,29 +859,20 @@ export BUFFER_FLOOR BUFFER_TARGET BUFFER_CEIL
   surfaces in the dispatcher commit log so a stuck/broken planner endpoint is
   visible without grepping the trigger's run history.
 
-  **Endpoint contract + misconfig diagnostic (GH #1380 defect 2).** `$DISPATCHER_URL`
-  MUST point at the **planner / coverage-refill routine trigger** — a webhook that
-  accepts the small `{"reason":…,"claimable":…}` JSON above with
-  `Authorization: Bearer $DISPATCHER_TOKEN` and returns 2xx. It is NOT an
-  Anthropic API endpoint. **Diagnostic:** if Tier-2 logs `http=400` with a body
-  that complains about a missing/invalid `anthropic-version` header (or otherwise
-  looks like a Messages-API error), then `$DISPATCHER_URL` has been mis-set to an
-  **Anthropic API proxy** (e.g. the CCR `…/v1/messages` proxy) instead of the
-  planner trigger — the proxy rejects this payload because it expects an
-  `anthropic-version` header and a Messages body. This is a **secret/env
-  misconfiguration on the cloud trigger, not an in-repo bug**: the dispatcher
-  cannot self-heal it (we never commit the secret). Remediation — the operator/CTO
-  must repoint the trigger secret:
-  - Set `DISPATCHER_URL` to the planner routine's webhook trigger URL (the same
-    Claude.ai-routine trigger shape as the dispatcher's own
-    `trig_01RDNN7kYxzr4XULbi4xn5r2`; see `.research/dispatcher-trigger-bootstrap.md`),
-    NOT an `api.anthropic.com` / CCR proxy URL.
-  - Keep `DISPATCHER_TOKEN` as the bearer that webhook authorizes.
-  - If the planner is intentionally an Anthropic Messages call, then instead add
-    `-H "anthropic-version: 2023-06-01"` and send a Messages payload — but the
-    intended design here is a planner trigger, so prefer repointing the URL.
+  **Endpoint contract (GH #1380 defect 2).** `$DISPATCHER_URL` is the planner
+  routine-fire endpoint — an Anthropic **code-trigger** (`https://api.anthropic.com/v1/code/triggers/<trigger-id>/run`).
+  It legitimately **requires** the `anthropic-version: 2023-06-01` header and
+  accepts **only** a `{"text": "…"}` body (the buffer context rides in `text`);
+  auth is `Authorization: Bearer $DISPATCHER_TOKEN`. The curl above already sends
+  this shape (fixed in #1483 / issue #1151) and returns `200 {type:routine_fire,…}`.
+  The historical HTTP 400 was the **payload/header mismatch** (`{"reason","claimable"}`
+  with no `anthropic-version`), NOT a wrong URL — so requiring `anthropic-version`
+  is expected, not a misconfiguration. `DISPATCHER_TOKEN` is the only secret; never
+  commit it.
 
-  Until the secret is corrected, Tier-2 stays a logged no-op (the buffer is
+  If Tier-2 still logs a non-2xx after #1483, treat it as the routine endpoint or
+  bearer being unset/rotated (operator-owned secret), not an in-repo bug. Tier-2 is
+  semantically fire-and-forget: a non-2xx leaves it a logged no-op (the buffer is
   refilled by Tier-0/Tier-1 + dev-reconcile, which do not depend on the planner),
   so a broken `DISPATCHER_URL` degrades gracefully rather than wedging the run.
 - Else: SKIP, log `buffer OK: claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>)`.
