@@ -7,6 +7,8 @@ export * from './components';
 export {
   IotDashboardPage,
   type IotDashboardPageProps,
+  IotThresholdConfigPage,
+  type IotThresholdConfigPageProps,
   type SensorFormBuildingOption,
   SensorFormPage,
   type SensorFormPageProps,

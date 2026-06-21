@@ -173,3 +173,77 @@ export interface UpdateSensorRequest {
   firmware_version?: string | null;
   metadata?: unknown;
 }
+
+// ============================================================================
+// Thresholds (FR73) — mirror `backend/crates/db/src/models/sensor.rs` SensorThreshold
+// ============================================================================
+
+/** Threshold rule for a sensor metric (FR73). */
+export interface SensorThreshold {
+  id: string;
+  sensor_id: string;
+  metric: string;
+  comparison: string;
+  warning_value: number | null;
+  warning_high: number | null;
+  critical_value: number | null;
+  critical_high: number | null;
+  enabled: boolean;
+  alert_cooldown_minutes: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Response shape for `GET /{id}/thresholds`. */
+export interface ListThresholdsResponse {
+  thresholds: SensorThreshold[];
+}
+
+/** Create-threshold request (FR73). Mirrors `CreateSensorThreshold`. */
+export interface CreateSensorThresholdRequest {
+  sensor_id: string;
+  metric?: string | null;
+  comparison: string;
+  warning_value?: number | null;
+  warning_high?: number | null;
+  critical_value?: number | null;
+  critical_high?: number | null;
+  alert_cooldown_minutes?: number | null;
+}
+
+/** Update-threshold request (FR73). Mirrors `UpdateSensorThreshold`; all optional. */
+export interface UpdateSensorThresholdRequest {
+  comparison?: string | null;
+  warning_value?: number | null;
+  warning_high?: number | null;
+  critical_value?: number | null;
+  critical_high?: number | null;
+  enabled?: boolean | null;
+  alert_cooldown_minutes?: number | null;
+}
+
+/** Reusable threshold template (FR73). Mirrors `SensorThresholdTemplate`. */
+export interface ThresholdTemplate {
+  id: string;
+  organization_id: string | null;
+  sensor_type: string;
+  name: string;
+  description: string | null;
+  comparison: string;
+  warning_value: number | null;
+  warning_high: number | null;
+  critical_value: number | null;
+  critical_high: number | null;
+  is_default: boolean;
+  created_at: string;
+}
+
+/** Response shape for `GET /templates`. */
+export interface ListThresholdTemplatesResponse {
+  templates: ThresholdTemplate[];
+}
+
+/** Query params for `GET /templates` — filter by sensor type. */
+export interface ListThresholdTemplatesParams {
+  sensor_type?: string;
+}
