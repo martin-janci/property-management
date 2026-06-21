@@ -40,7 +40,10 @@
     "copyErrorMessage": "Kopírovať chybovú správu",
     "dismissNotification": "Zavrieť oznámenie",
     "notifications": "Oznámenia",
-    "unknownError": "Nastala chyba. Prosím skúste znova."
+    "unknownError": "Nastala chyba. Prosím skúste znova.",
+    "actions": "Actions",
+    "deleting": "Deleting...",
+    "saveChanges": "Save changes"
   },
   "nav": {
     "home": "Domov",
@@ -60,7 +63,8 @@
     "accessibility": "Prístupnosť",
     "privacy": "Súkromie",
     "admin": "Administrácia",
-    "aiChat": "AI asistent"
+    "aiChat": "AI asistent",
+    "iotAlerts": "Sensor Alerts"
   },
   "auth": {
     "signIn": "Prihlásiť sa",
@@ -1154,5 +1158,121 @@
     "title": "Konkurenčné funkcie",
     "percentComplete": "Dokončené {{percent}} %",
     "viewAnalysis": "Zobraziť analýzu"
+  },
+  "iot": {
+    "sensorsTitle": "Sensors & Devices",
+    "sensorsSubtitle": "Register and manage the IoT devices across your buildings.",
+    "openDashboard": "Dashboard",
+    "registerSensor": "Register sensor",
+    "noDevices": "No devices registered yet.",
+    "colName": "Name",
+    "colType": "Type",
+    "colLocation": "Location",
+    "colStatus": "Status",
+    "colLastReading": "Last reading",
+    "registerSensorTitle": "Register sensor",
+    "registerSensorSubtitle": "Add a new IoT device to a building.",
+    "editSensorTitle": "Edit sensor",
+    "editSensorSubtitle": "Update device configuration.",
+    "fieldBuilding": "Building",
+    "selectBuilding": "Select a building",
+    "buildingImmutable": "Building cannot be changed after registration.",
+    "fieldName": "Name",
+    "fieldType": "Sensor type",
+    "fieldStatus": "Status",
+    "fieldLocation": "Location",
+    "fieldLocationDescription": "Location description",
+    "fieldConnectionType": "Connection type",
+    "fieldUnit": "Unit of measurement",
+    "fieldInterval": "Reporting interval (s)",
+    "fieldManufacturer": "Manufacturer",
+    "fieldModel": "Model",
+    "fieldFirmware": "Firmware version",
+    "fieldSerial": "Serial number",
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve",
+    "resolved": "resolved",
+    "triggered": "Triggered",
+    "thresholdBreach": "Threshold breach",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "alerts": {
+      "title": "Sensor Alerts",
+      "subtitle": "Threshold breaches across your buildings.",
+      "backToDashboard": "Back to dashboard",
+      "empty": "No alerts match these filters. All clear.",
+      "filter": {
+        "allStates": "All states",
+        "allSeverities": "All severities"
+      },
+      "state": {
+        "open": "Open",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "columns": {
+        "severity": "Severity",
+        "sensor": "Sensor",
+        "message": "Message",
+        "value": "Value / Threshold",
+        "triggered": "Triggered",
+        "state": "State",
+        "actions": "Actions"
+      }
+    },
+    "thresholds": "Thresholds",
+    "thresholdsTitle": "Thresholds",
+    "thresholdConfigTitle": "Threshold configuration",
+    "thresholdConfigSubtitle": "Alert rules for {{name}} ({{type}}).",
+    "thresholdConfigSubtitleGeneric": "Configure alert rules for this sensor.",
+    "backToSensors": "Back to sensors",
+    "addThreshold": "Add threshold",
+    "addThresholdTitle": "Add threshold",
+    "editThresholdTitle": "Edit threshold",
+    "thresholdMetric": "Metric",
+    "thresholdMetricPlaceholder": "e.g. temperature (blank = default)",
+    "thresholdComparison": "Comparison",
+    "comparison_gt": "Greater than",
+    "comparison_lt": "Less than",
+    "comparison_range": "Out of range",
+    "thresholdWarning": "Warning",
+    "thresholdWarningLow": "Warning (low)",
+    "thresholdWarningHigh": "Warning (high)",
+    "thresholdCritical": "Critical",
+    "thresholdCriticalLow": "Critical (low)",
+    "thresholdCriticalHigh": "Critical (high)",
+    "thresholdCooldown": "Alert cooldown (minutes)",
+    "thresholdCooldownShort": "Cooldown",
+    "thresholdEnabled": "Enabled",
+    "thresholdNeedsBound": "Set at least one warning or critical value.",
+    "noThresholds": "No thresholds configured yet. Add one or apply a template.",
+    "minutesShort": "{{count}} min",
+    "applyTemplateTitle": "Apply template",
+    "applyTemplateHint": "Create a threshold from a predefined template for this sensor type.",
+    "applyTemplate": "Apply",
+    "applying": "Applying…",
+    "selectTemplate": "Select a template",
+    "noTemplates": "No templates for this sensor type",
+    "templateDefault": "default",
+    "thresholdCreated": "Threshold created",
+    "thresholdCreateFailed": "Failed to create threshold",
+    "thresholdUpdated": "Threshold updated",
+    "thresholdUpdateFailed": "Failed to update threshold",
+    "thresholdDeleteConfirm": "Delete this threshold? This cannot be undone.",
+    "thresholdDeleted": "Threshold deleted",
+    "thresholdDeleteFailed": "Failed to delete threshold",
+    "templateApplied": "Template applied",
+    "templateApplyFailed": "Failed to apply template"
+  },
+  "commandPalette": {
+    "commands": {
+      "goToIotAlerts": "Go to Sensor Alerts"
+    },
+    "descriptions": {
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+    }
   }
 }

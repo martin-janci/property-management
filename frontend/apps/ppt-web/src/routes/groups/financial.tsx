@@ -8,6 +8,7 @@ import type { InvoiceStatus } from '@ppt/api-client';
 import {
   allocatePayment,
   autoMatchPayments,
+  downloadInvoicePdf,
   getARAgingReport,
   getOverdueInvoices,
   listInvoices,
@@ -162,6 +163,28 @@ function InvoiceManagementPageRoute() {
     },
   });
 
+  const handleDownloadPdf = (id: string) => {
+    const number = data?.invoices.find((inv) => inv.id === id)?.invoice_number ?? id;
+    downloadInvoicePdf(id)
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `invoice-${number}.pdf`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      })
+      .catch((err) => {
+        showToast({
+          type: 'error',
+          title: t('financial.invoices.pdfFailed', { defaultValue: 'Failed to download PDF' }),
+          message: err instanceof Error ? err.message : '',
+        });
+      });
+  };
+
   return (
     <InvoiceManagementPage
       invoices={data?.invoices ?? []}
@@ -171,6 +194,7 @@ function InvoiceManagementPageRoute() {
       onNavigateToCreate={() => navigate('/financial/invoices/new')}
       onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
       onSendInvoice={(id: string) => sendInvoiceMutation.mutate(id)}
+      onDownloadPdf={handleDownloadPdf}
       onFilterChange={(params) => {
         setStatusFilter(params.status);
         setPage(params.page);

@@ -171,10 +171,10 @@
     },
     {
       "id": "feat-folder-organization-mobile-slice-frontend",
-      "action": "Coverage 7a-2 (gap): implement the pending mobile slice of Folder Organization (create/rename/move document folders) in the React Native app, wired to the existing folders API. Frontend mobile; include component/hook tests.",
+      "action": "[NO-OP/STALE-COVERAGE: already implemented on dev (PR #1609) — create/rename/move sheets + useFolderTree + 51 tests green; dispatcher 2026-06-21 verified] Coverage 7a-2 (gap): implement the pending mobile slice of Folder Organization (create/rename/move document folders) in the React Native app, wired to the existing folders API. Frontend mobile; include component/hook tests.",
       "owner_role": "pm-frontend",
       "priority": "medium",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-tier1-refill 2026-06-21 (coverage.json gap 7a-2)",
       "deadline": null,
       "dependency": null,

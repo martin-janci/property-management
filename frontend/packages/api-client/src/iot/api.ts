@@ -8,15 +8,23 @@
 
 import { getToken } from '../auth';
 import type {
+  CreateSensorRequest,
+  CreateSensorThresholdRequest,
   ListAlertsParams,
   ListAlertsResponse,
   ListReadingsParams,
   ListReadingsResponse,
   ListSensorsParams,
   ListSensorsResponse,
+  ListThresholdsResponse,
+  ListThresholdTemplatesParams,
+  ListThresholdTemplatesResponse,
   Sensor,
   SensorAlert,
   SensorDashboard,
+  SensorThreshold,
+  UpdateSensorRequest,
+  UpdateSensorThresholdRequest,
 } from './types';
 
 const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
@@ -83,6 +91,27 @@ export async function getSensor(id: string, signal?: AbortSignal): Promise<Senso
   return apiRequest<Sensor>(`${API_BASE}/${id}`, { signal });
 }
 
+/** Register a new sensor / device (FR71). */
+export async function createSensor(req: CreateSensorRequest): Promise<Sensor> {
+  return apiRequest<Sensor>(`${API_BASE}`, {
+    method: 'POST',
+    body: JSON.stringify(req),
+  });
+}
+
+/** Update an existing sensor (FR71). */
+export async function updateSensor(id: string, req: UpdateSensorRequest): Promise<Sensor> {
+  return apiRequest<Sensor>(`${API_BASE}/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(req),
+  });
+}
+
+/** Delete (decommission) a sensor (FR71). */
+export async function deleteSensor(id: string): Promise<void> {
+  return apiRequest<void>(`${API_BASE}/${id}`, { method: 'DELETE' });
+}
+
 /** List telemetry readings for a sensor (FR72). */
 export async function listSensorReadings(
   sensorId: string,
@@ -118,5 +147,64 @@ export async function resolveSensorAlert(
   return apiRequest<SensorAlert>(`${API_BASE}/alerts/${alertId}/resolve`, {
     method: 'POST',
     body: JSON.stringify({ resolved_value: resolvedValue ?? null }),
+  });
+}
+
+// ============================================================================
+// Thresholds (FR73)
+// ============================================================================
+
+/** List threshold rules configured for a sensor (FR73). */
+export async function listThresholds(
+  sensorId: string,
+  signal?: AbortSignal
+): Promise<ListThresholdsResponse> {
+  return apiRequest<ListThresholdsResponse>(`${API_BASE}/${sensorId}/thresholds`, { signal });
+}
+
+/** Create a threshold rule for a sensor (FR73). */
+export async function createThreshold(
+  sensorId: string,
+  req: CreateSensorThresholdRequest
+): Promise<SensorThreshold> {
+  return apiRequest<SensorThreshold>(`${API_BASE}/${sensorId}/thresholds`, {
+    method: 'POST',
+    body: JSON.stringify(req),
+  });
+}
+
+/** Update a threshold rule (FR73). */
+export async function updateThreshold(
+  thresholdId: string,
+  req: UpdateSensorThresholdRequest
+): Promise<SensorThreshold> {
+  return apiRequest<SensorThreshold>(`${API_BASE}/thresholds/${thresholdId}`, {
+    method: 'PUT',
+    body: JSON.stringify(req),
+  });
+}
+
+/** Delete a threshold rule (FR73). */
+export async function deleteThreshold(thresholdId: string): Promise<void> {
+  return apiRequest<void>(`${API_BASE}/thresholds/${thresholdId}`, { method: 'DELETE' });
+}
+
+/** List reusable threshold templates, optionally filtered by sensor type (FR73). */
+export async function listThresholdTemplates(
+  params?: ListThresholdTemplatesParams,
+  signal?: AbortSignal
+): Promise<ListThresholdTemplatesResponse> {
+  const qs = buildQueryString(params || {});
+  return apiRequest<ListThresholdTemplatesResponse>(`${API_BASE}/templates${qs}`, { signal });
+}
+
+/** Apply a threshold template to a sensor, creating a threshold rule (FR73). */
+export async function applyTemplate(
+  templateId: string,
+  sensorId: string
+): Promise<SensorThreshold> {
+  return apiRequest<SensorThreshold>(`${API_BASE}/templates/${templateId}/apply`, {
+    method: 'POST',
+    body: JSON.stringify({ sensor_id: sensorId }),
   });
 }
