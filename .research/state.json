@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-06-16T03:25:00Z",
+  "last_run_iso": "2026-06-21T20:25:57Z",
   "last_run_ms": 0,
-  "last_pr_seen": 1439,
-  "last_issue_seen": 1437,
-  "last_commit_sha": "4829015b",
+  "last_pr_seen": 1659,
+  "last_issue_seen": 1645,
+  "last_commit_sha": "fccf75826199e5772e5162610d61f6f2f73c3fd6",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -253,9 +253,9 @@
       "recent_churn": 2691
     },
     "backend/crates/integrations/src/booking.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-06-12",
-      "recent_churn": 433
+      "runs_seen": 2,
+      "last_seen": "2026-06-21",
+      "recent_churn": 4295
     },
     "backend/servers/api-server/src/routes/api_ecosystem.rs": {
       "runs_seen": 1,
@@ -321,6 +321,16 @@
       "runs_seen": 1,
       "last_seen": "2026-06-16",
       "recent_churn": 381
+    },
+    "docs/functional-requirements.md": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-21",
+      "recent_churn": 7116
+    },
+    "_bmad-output/epics.md": {
+      "runs_seen": 1,
+      "last_seen": "2026-06-21",
+      "recent_churn": 5514
     }
   },
   "seen_signals": [
@@ -553,7 +563,26 @@
     "code-review-mobile-rn-report-fault-fake-submit",
     "code-review-mobile-rn-screens-mock-data",
     "code-review-mobile-rn-deeplink-init-unhandled",
-    "stalled-review-pr-1179"
+    "stalled-review-pr-1179",
+    "lag-warning-2026-06-21",
+    "churn-hotspot-docs/functional-requirements.md",
+    "churn-hotspot-_bmad-output/epics.md",
+    "repeated-churn-backend/crates/integrations/src/booking.rs",
+    "screen-map-drift-pr-1642-reality",
+    "screen-map-drift-pr-1641-ppt",
+    "screen-map-drift-pr-1654-ppt",
+    "screen-map-drift-pr-1630-ppt",
+    "screen-map-drift-pr-1621-ppt",
+    "screen-map-drift-pr-1621-reality",
+    "unchecked-todo-pr-1642",
+    "unchecked-todo-pr-1641",
+    "unchecked-todo-pr-1625",
+    "unchecked-todo-pr-1606",
+    "hotfix-no-test-pr-1639",
+    "hotfix-no-test-pr-1658",
+    "resolution-stalled-pr-988",
+    "resolution-stalled-pr-1179",
+    "dep-update-noise-batch-2026-06-21"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -567,8 +596,8 @@
     "mobile-native-kmp": "2026-06-06"
   },
   "stats": {
-    "runs": 40,
-    "vectors_created": 173,
+    "runs": 41,
+    "vectors_created": 187,
     "plans_created": 12,
     "quiet_days": 1,
     "auto_fix_count": 0

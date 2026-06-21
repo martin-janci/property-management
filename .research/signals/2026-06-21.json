@@ -1,0 +1,316 @@
+{
+  "date": "2026-06-21",
+  "ran_at": "2026-06-21T20:25:39Z",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "Phase 1 lag check",
+      "score_delta": 0,
+      "evidence": "Routine last ran 2026-06-16T03:25Z; current run 2026-06-21 — lag 5d 16h (>=36h threshold). Cloud routine appears paused or scheduler interval too long. Five days of merge activity (#1440–#1659) caught up in this run.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-docs/functional-requirements.md",
+      "type": "churn-hotspot",
+      "source": "git log --numstat origin/dev since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "docs/functional-requirements.md: 7116 line-changes in window — top-1 raw churn (FR catalog overhaul during IoT/Epic-13/Epic-14 sprint).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-_bmad-output/epics.md",
+      "type": "churn-hotspot",
+      "source": "git log --numstat origin/dev since 2026-06-16",
+      "score_delta": 1,
+      "evidence": "_bmad-output/epics.md: 5514 line-changes in window — top-2 raw churn (BMAD epic catalog rebuild).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking.rs",
+      "type": "churn-hotspot",
+      "source": "git log --numstat origin/dev since 2026-06-16",
+      "score_delta": 0,
+      "evidence": "Cumulative re-emit: backend/crates/integrations/src/booking.rs +4295 line-changes (top-3 raw). Booking.com OTA push request→XML mapping (BIT-83). Previously emitted 2026-06-12.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/crates/integrations/src/booking.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history runs_seen=2 (was 1 on 2026-06-12)",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking.rs now in hotspot_history.runs_seen=2 (prev=1 on 2026-06-12). Instability proxy: two distinct hot windows within 9 days.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1642-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1642",
+      "score_delta": 2,
+      "evidence": "PR #1642 (portal-user listing CRUD) touched reality-web app/[locale]/account/listings/[id]/edit/page.tsx + realtor/listings/[id]/edit/page.tsx with no docs/screens/reality/*.md edit.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "PR #1641 (Sentiment + Predictive Maintenance dashboards Epic 13) touched ppt-web routes AppRoutes.tsx + routes/groups/ai-dashboards.tsx + routes/lazyRoutes.tsx with no docs/screens/ppt/*.md edit.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": "PR #1654 (invoice PDF download button) touched ppt-web routes/groups/financial.tsx with no docs/screens/ppt/*.md edit.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": "PR #1630 (wire Payment Management page to org-wide endpoints) touched ppt-web routes/groups/financial.tsx with no docs/screens/ppt/*.md edit.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (relocate payment-matching) touched ppt-web routes/groups/accounting.tsx + routes/lazyRoutes.tsx with no docs/screens/ppt/*.md edit.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (relocate payment-matching) touched reality-web app/accounting/{layout,page}.tsx with no docs/screens/reality/*.md edit.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1642",
+      "type": "unchecked-todo",
+      "source": "PR #1642",
+      "score_delta": 2,
+      "evidence": "PR #1642 body has `- [ ]` unchecked checklist items at merge time (epic-15 portal-user listing CRUD).",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1641",
+      "type": "unchecked-todo",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "PR #1641 body has `- [ ]` unchecked checklist items at merge time (Sentiment + Predictive Maintenance dashboards, Story 13.2/13.3).",
+      "confidence": "low",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-1625",
+      "type": "unchecked-todo",
+      "source": "PR #1625",
+      "score_delta": 3,
+      "evidence": "PR #1625 (voting PDF generation, PAP-288) body has `- [ ]` unchecked items; also broke dev backend CI (Issue #1645, isolated by PR #1656 BIT-158) — voting PDF tests still expected to be re-enabled and pass.",
+      "confidence": "low",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 3,
+      "evidence": "PR #1606 (accounting list_contacts manager-only role gate, PAP-281) body has `- [ ]` unchecked items — role-gate hardening followups.",
+      "confidence": "low",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "hotfix-no-test-pr-1639",
+      "type": "hotfix-no-test",
+      "source": "PR #1639",
+      "score_delta": 2,
+      "evidence": "PR #1639 (fix(api-server): manager-gate Airbnb linked-listing config reads, closes #1626) modified only backend/servers/api-server/src/routes/integrations/airbnb_connections.rs (+6/-1); no test diff. Sister PR #1635 added cross-coverage; the config-read arm is uncovered.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-1658",
+      "type": "hotfix-no-test",
+      "source": "PR #1658",
+      "score_delta": 2,
+      "evidence": "PR #1658 (fix(UC-85): route mobile API_BASE_URL through Constants single source) modified frontend/apps/mobile/{README.md,src/config/constants.ts,src/config/index.ts} with no test diff. Config-only — low risk, but the Constants single-source path should be pinned with a unit test.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "resolution-stalled-pr-988",
+      "type": "stalled-review",
+      "source": "PR #988 merged 2026-06-16",
+      "score_delta": 0,
+      "evidence": "Stalled-review item dx-stalled-review-pr-988 resolved — PR #988 merged 2026-06-16T18:07Z (E2E framework Epic).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "resolution-stalled-pr-1179",
+      "type": "stalled-review",
+      "source": "PR #1179 merged 2026-06-16",
+      "score_delta": 0,
+      "evidence": "Stalled-review item dx-stalled-review-pr-1179 resolved — PR #1179 merged 2026-06-16T17:56Z (docs(epics) catalog backfill).",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-batch-2026-06-21",
+      "type": "dep-update-noise",
+      "source": "dependabot",
+      "score_delta": 0,
+      "evidence": "Dependabot merged this window: #1569 (dtolnay/rust-toolchain), #1574 (cargo-minor-patch), #1566 (compose BOM), #1570 (mikepenz/action-junit-report), #1571 (npm-minor-patch group ×6), #1572 (expo-secure-store), #1573 (@types/node), #1575 (@babel/core), #1576 (i18next). Open: #1567 (gradle-minor-patch), #1568 (tower-http 0.7).",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no-candidate-this-run (drift signals are medium-confidence and item scores ≤2)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches '# 2026-06-21'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare cursors vs HEAD state.json",
+      "observed": "true (last_pr_seen 1439→1659, last_commit_sha advanced, seen_signals 230→249)",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | length == (unique | length)'",
+      "observed": "true (190 items, 190 unique ids)",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative re-emit guard",
+      "observed": "only churn-hotspot-booking.rs re-emitted with score_delta=0; cumulative type allowed",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "jq '[.items[] | select(.score > 8)] | length == 0'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "items with updated_at <= today-14 lost 1 point or moved to dropped",
+      "observed": "6 decayed (2→1), 9 dropped (1→0)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run, gate vacuously true",
+      "observed": "0 new plans",
+      "expected": "≤2 with adversarial-pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^\\.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "git diff --cached | grep secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q .research/backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0 (byte-identical)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "Phases that failed = none; cursor advances align",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still in plans/ or _archive/",
+      "observed": "true (no plan deletions this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive file count >= HEAD",
+      "observed": "7 >= 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0 (byte-identical)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps",
+      "observed": "auto_fix_actions = [] (no candidate met certainty bar)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run → gate is no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "git diff --cached | grep telegram-token-patterns",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
