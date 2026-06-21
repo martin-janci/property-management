@@ -3,7 +3,8 @@
  *
  * Prefer importing from this file rather than individual config modules.
  * All env-driven config flows through src/config/api.ts (reads from
- * Constants.expoConfig.extra set by app.config.ts, with EXPO_PUBLIC_* fallback).
+ * Constants.expoConfig.extra, set by app.config.ts from .env.<APP_ENV>).
+ * The EXPO_PUBLIC_* fallback was removed in issue #523 — do not reintroduce it.
  */
 
 export {
