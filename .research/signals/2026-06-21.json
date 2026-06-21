@@ -1,0 +1,265 @@
+{
+  "date": "2026-06-21",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25:00Z; today=2026-06-21",
+      "score_delta": 0,
+      "evidence": "Routine has not run in 122h (~5 days). Stale-routine threshold (3d) exceeded — cloud cron likely paused while a heavy 135-PR merge wave landed. Surface in brief Since last run.",
+      "confidence": "high",
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-accounting-pages-AccountingInvoiceManagementPage-tsx",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25Z origin/dev (after exclusions)",
+      "score_delta": 1,
+      "evidence": "AccountingInvoiceManagementPage.tsx touched in 3 distinct merge commits this run (PR #1454/#1597/#1612/#1624) — accounting MVP shake-out. First time in hotspot_history.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/pages/AccountingInvoiceManagementPage.tsx"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25Z origin/dev (after exclusions)",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking.rs touched in 3 distinct merge commits this run (PR #1485 retry/Retry-After, plus combined push wiring). Previously seen runs_seen=1 on 2026-06-12 with recent_churn=433 — re-emit as new run with new churn.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-lib-queryKeys-ts",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-16T03:25Z origin/dev (after exclusions)",
+      "score_delta": 1,
+      "evidence": "queryKeys.ts touched in 3 distinct merge commits this run (PR #1612 queryKeys factory adoption, accounting + payment matching wiring). First time in hotspot_history.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "frontend/apps/ppt-web/src/lib/queryKeys.ts"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1485-booking",
+      "type": "risky-churn",
+      "source": "PR #1485 (fix(integrations): Booking.com client timeout + Retry-After + RateLimited)",
+      "score_delta": 2,
+      "evidence": "PR #1485 fix modified backend/crates/integrations/src/booking.rs — a top-3 churn hotspot this run — with no test file in the diff. PR body explicitly named a `test_push_429_with_retry_after_returns_rate_limited` as an unchecked test-plan item; test was not added on merge.",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/integrations/src/booking.rs"
+      ]
+    },
+    {
+      "id": "fixme-commit-75cde482-backend-servers-api-server-src-services-accounting-rs",
+      "type": "fixme-in-merged-code",
+      "source": "git diff 4829015b..origin/dev — commit 75cde482 (PR #1454)",
+      "score_delta": 2,
+      "evidence": "backend/servers/api-server/src/services/accounting.rs:128 introduces `// TODO: Date proximity, IBAN match` — payment-matching scoring is amount-only, with date/IBAN cross-check explicitly deferred. PR #1454 native accounting MVP.",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ]
+    },
+    {
+      "id": "unchecked-todo-pr-1625",
+      "type": "unchecked-todo",
+      "source": "PR #1625 (feat(voting): PDF generation + archive for vote reports)",
+      "score_delta": 2,
+      "evidence": "PR #1625 body lists 4 unchecked `- [ ]` items: cargo build/clippy/test against api-server + JSON VoteReportData fallback regression — none confirmed at merge time.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/handlers/voting.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630 (feat(ppt-web): wire Payment Management page to org-wide endpoints)",
+      "score_delta": 2,
+      "evidence": "PR #1630 modified frontend/apps/ppt-web/src/routes/groups/financial.tsx (route + payment-management feature wiring) without updating docs/screens/ppt/* — heuristic, treat as review candidate.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621 (fix(ppt-web): relocate payment-matching to ppt-web with correct api-server auth)",
+      "score_delta": 2,
+      "evidence": "PR #1621 modified frontend/apps/ppt-web/src/routes/groups/accounting.tsx (+ accounting/payment-matching feature) without updating docs/screens/ppt/* — heuristic.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621 (fix(ppt-web): relocate payment-matching to ppt-web with correct api-server auth)",
+      "score_delta": 2,
+      "evidence": "PR #1621 reshaped frontend/apps/reality-web/src/app/accounting/layout.tsx (removed payment-matching from the reality portal) without updating docs/screens/reality/* — heuristic.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ]
+    },
+    {
+      "id": "hotfix-no-test-pr-1539-oauth-public-client",
+      "type": "hotfix-no-test",
+      "source": "PR #1539 (fix(oauth): reject public client supplying a client_secret with invalid_client)",
+      "score_delta": 2,
+      "evidence": "OAuth public-client secret rejection — 1 file touched, no test diff. Security-adjacent: a public client supplying a secret is a classic OAuth-threat-model gap; regression risk is real.",
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "files": [
+        "backend/servers/api-server/src/routes/oauth.rs"
+      ]
+    },
+    {
+      "id": "stale-routine-alert-2026-06-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso=2026-06-16T03:25Z (5 days)",
+      "score_delta": 0,
+      "evidence": "stale_routine_alert: state.json last_run_iso is 5d old. Daily cloud cron may be paused. Dispatcher state on planning branch must be checked separately — Issues #1607 + #1604 already document dispatcher backlog exhaustion + 14 quarantined rows.",
+      "confidence": "high",
+      "candidate_vector": null
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-21.md && head -1 matches # 2026-06-21",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "compare new vs HEAD state cursors",
+      "observed": "advanced",
+      "expected": "advanced"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-emitted with score_delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap (≤8) + decay on open items >14d",
+      "observed": "cap=true, decay applied to 14/14 prior-open-stale items",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "no plans/<slug>.md added",
+      "expected": "n/a — no promotions"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + all readiness gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/private-hostname scan on staged diff (excluding 4 baseline doc files)",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen from backlog.json",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — brief lists Phases that failed and cursors held",
+      "observed": "Phases that failed: none (1.5/1.6 skipped — disclosed in brief)",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug resolves in plans/ or plans/_archive/",
+      "observed": "9/9 prior plans accounted for; 1 archived this run",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "git ls-files plans/_archive count >= HEAD count",
+      "observed": "staged=8 HEAD=7",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen from triage rows",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline — 0 actions this run",
+      "observed": "auto_fix_actions=[]; no candidate met bar",
+      "expected": "compliant"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 was skipped; gate is a no-op",
+      "observed": "pm_cursor unchanged (still 5)",
+      "expected": "no-op when 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "Telegram token literal scan on staged diff (excluding 4 baseline doc files)",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
