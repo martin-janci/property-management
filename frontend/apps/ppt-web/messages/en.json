@@ -3444,26 +3444,22 @@
     "viewAnalysis": "View Analysis"
   },
   "iot": {
+    "dashboardTitle": "Smart Building",
+    "dashboardSubtitle": "Sensors, telemetry and alerts across your buildings.",
+    "openDashboard": "Dashboard",
     "sensorsTitle": "Sensors & Devices",
     "sensorsSubtitle": "Register and manage the IoT devices across your buildings.",
-    "openDashboard": "Dashboard",
     "registerSensor": "Register sensor",
-    "noDevices": "No devices registered yet.",
-    "colName": "Name",
-    "colType": "Type",
-    "colLocation": "Location",
-    "colStatus": "Status",
-    "colLastReading": "Last reading",
     "registerSensorTitle": "Register sensor",
     "registerSensorSubtitle": "Add a new IoT device to a building.",
     "editSensorTitle": "Edit sensor",
     "editSensorSubtitle": "Update device configuration.",
-    "fieldBuilding": "Building",
     "selectBuilding": "Select a building",
     "buildingImmutable": "Building cannot be changed after registration.",
+    "selectDevicePrompt": "Select a device to view its telemetry.",
     "fieldName": "Name",
     "fieldType": "Sensor type",
-    "fieldStatus": "Status",
+    "fieldBuilding": "Building",
     "fieldLocation": "Location",
     "fieldLocationDescription": "Location description",
     "fieldConnectionType": "Connection type",
@@ -3471,42 +3467,33 @@
     "fieldInterval": "Reporting interval (s)",
     "fieldManufacturer": "Manufacturer",
     "fieldModel": "Model",
-    "fieldFirmware": "Firmware version",
     "fieldSerial": "Serial number",
+    "fieldFirmware": "Firmware version",
+    "fieldStatus": "Status",
+    "colName": "Name",
+    "colType": "Type",
+    "colStatus": "Status",
+    "colLocation": "Location",
+    "colLastReading": "Last reading",
+    "totalDevices": "Total devices",
+    "activeDevices": "Active",
+    "offlineDevices": "Offline",
+    "devices": "Devices",
+    "noDevices": "No devices registered yet.",
+    "telemetry": "Telemetry",
+    "lastReading": "Last reading",
+    "noReadings": "No readings in the selected window.",
+    "time": "Time",
+    "value": "Value",
+    "quality": "Quality",
+    "recentAlerts": "Recent alerts",
+    "unresolvedAlerts": "Open alerts",
+    "noAlerts": "No active alerts. All clear.",
     "acknowledge": "Acknowledge",
     "resolve": "Resolve",
     "resolved": "resolved",
     "triggered": "Triggered",
     "thresholdBreach": "Threshold breach",
-    "severity": {
-      "critical": "Critical",
-      "warning": "Warning",
-      "info": "Info"
-    },
-    "alerts": {
-      "title": "Sensor Alerts",
-      "subtitle": "Threshold breaches across your buildings.",
-      "backToDashboard": "Back to dashboard",
-      "empty": "No alerts match these filters. All clear.",
-      "filter": {
-        "allStates": "All states",
-        "allSeverities": "All severities"
-      },
-      "state": {
-        "open": "Open",
-        "acknowledged": "Acknowledged",
-        "resolved": "Resolved"
-      },
-      "columns": {
-        "severity": "Severity",
-        "sensor": "Sensor",
-        "message": "Message",
-        "value": "Value / Threshold",
-        "triggered": "Triggered",
-        "state": "State",
-        "actions": "Actions"
-      }
-    },
     "thresholds": "Thresholds",
     "thresholdsTitle": "Thresholds",
     "thresholdConfigTitle": "Threshold configuration",
@@ -3549,7 +3536,36 @@
     "thresholdDeleted": "Threshold deleted",
     "thresholdDeleteFailed": "Failed to delete threshold",
     "templateApplied": "Template applied",
-    "templateApplyFailed": "Failed to apply template"
+    "templateApplyFailed": "Failed to apply template",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "alerts": {
+      "title": "Sensor Alerts",
+      "subtitle": "Threshold breaches across your buildings.",
+      "backToDashboard": "Back to dashboard",
+      "empty": "No alerts match these filters. All clear.",
+      "filter": {
+        "allStates": "All states",
+        "allSeverities": "All severities"
+      },
+      "state": {
+        "open": "Open",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "columns": {
+        "severity": "Severity",
+        "sensor": "Sensor",
+        "message": "Message",
+        "value": "Value / Threshold",
+        "triggered": "Triggered",
+        "state": "State",
+        "actions": "Actions"
+      }
+    }
   },
   "commandPalette": {
     "commands": {
