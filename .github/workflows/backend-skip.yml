@@ -60,12 +60,14 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: No backend paths changed — required `check` satisfied
-        run: echo "Pure-frontend PR: no backend/** changes, backend 'check' not required to run."
+      - name: Required check satisfied (no backend paths changed)
+        run: |
+          echo "Pure-frontend PR - no backend/** changes; backend 'check' job not required to run."
 
   # Context name must match the required check `test` from backend.yml.
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: No backend paths changed — required `test` satisfied
-        run: echo "Pure-frontend PR: no backend/** changes, backend 'test' not required to run."
+      - name: Required check satisfied (no backend paths changed)
+        run: |
+          echo "Pure-frontend PR - no backend/** changes; backend 'test' job not required to run."
