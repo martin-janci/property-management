@@ -304,7 +304,11 @@ async fn add_reading(
             .await;
             Ok((StatusCode::CREATED, Json(serde_json::json!(reading))))
         }
-        Err(e) => Err(insert_child_error("Failed to add reading", "Sensor not found", e)),
+        Err(e) => Err(insert_child_error(
+            "Failed to add reading",
+            "Sensor not found",
+            e,
+        )),
     }
 }
 
