@@ -12,12 +12,8 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
-import { getMyListing, updateListing, RealtorApiError } from '@/lib/realtor-api';
-import {
-  EDIT_STEPS,
-  type ListingEditFormData,
-  PROPERTY_TYPE_OPTIONS,
-} from './_mock';
+import { getMyListing, RealtorApiError, updateListing } from '@/lib/realtor-api';
+import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPE_OPTIONS } from './_mock';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
 // TODO: replace file upload with @ppt/ui-kit/FileUpload once available
@@ -127,7 +123,8 @@ function EditWizardContent() {
       .then((listing) => {
         setForm({
           transactionType: (listing.transactionType as 'sale' | 'rent') ?? 'sale',
-          propertyType: (listing.propertyType as ListingEditFormData['propertyType']) ?? 'apartment',
+          propertyType:
+            (listing.propertyType as ListingEditFormData['propertyType']) ?? 'apartment',
           address: listing.street ?? '',
           city: listing.city ?? '',
           area: listing.area ?? '',
@@ -170,7 +167,9 @@ function EditWizardContent() {
       });
       setSaved(true);
     } catch (err) {
-      setSaveError(err instanceof RealtorApiError ? err.message : 'Uloženie zlyhalo, skúste znova.');
+      setSaveError(
+        err instanceof RealtorApiError ? err.message : 'Uloženie zlyhalo, skúste znova.'
+      );
     } finally {
       setSaving(false);
     }
@@ -753,9 +752,17 @@ function EditWizardContent() {
                 Ďalej →
               </button>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+              <div
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}
+              >
                 {saveError && (
-                  <p style={{ color: 'var(--ppt-color-danger, #ef4444)', fontSize: '0.875rem', margin: 0 }}>
+                  <p
+                    style={{
+                      color: 'var(--ppt-color-danger, #ef4444)',
+                      fontSize: '0.875rem',
+                      margin: 0,
+                    }}
+                  >
                     {saveError}
                   </p>
                 )}
@@ -765,7 +772,9 @@ function EditWizardContent() {
                   disabled={saving}
                   style={{
                     padding: '11px 28px',
-                    background: saving ? 'var(--ppt-border-default, #e5e7eb)' : 'var(--ppt-color-success, #10b981)',
+                    background: saving
+                      ? 'var(--ppt-border-default, #e5e7eb)'
+                      : 'var(--ppt-color-success, #10b981)',
                     color: saving ? 'var(--ppt-fg-muted, #9ca3af)' : '#fff',
                     border: 'none',
                     borderRadius: 8,
