@@ -146,3 +146,5 @@ codegen-units = 1
 # traces still carry function names; only line-level debug info is omitted.
 [profile.test]
 debug = false
+
+# ci-trigger
