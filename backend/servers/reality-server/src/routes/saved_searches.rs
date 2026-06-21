@@ -5,16 +5,17 @@
 use crate::state::AppState;
 use api_core::extractors::RequestPrincipal;
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use db::models::{
     CreatePortalSavedSearch, PortalSavedSearch, PublicListingSummary, SavedSearchAlert,
     UpdatePortalSavedSearch,
 };
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 /// Create saved searches router.
@@ -264,12 +265,22 @@ pub async fn run_saved_search(
 // them. (reality-server has no email transport; in-app is the delivery channel.)
 // ============================================================================
 
+/// Saved-search alerts query parameters.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct SearchAlertsQuery {
+    /// Cursor to paginate alerts before this one. Format: 'created_at|id'
+    pub before: Option<String>,
+    /// Limit the number of returned alerts. Defaults to 100, capped at 100.
+    pub limit: Option<i64>,
+}
+
 /// Saved-search alerts list response.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SearchAlertsResponse {
     pub alerts: Vec<SavedSearchAlert>,
     /// Number of still-undelivered (`pending`) alerts — drives an unread badge.
     pub unread_count: i64,
+    pub has_more: bool,
 }
 
 /// Mark-all-read response.
@@ -278,33 +289,77 @@ pub struct MarkAllAlertsReadResponse {
     pub marked_read: u64,
 }
 
+fn parse_cursor(cursor: &str) -> Option<(DateTime<Utc>, Uuid)> {
+    let parts: Vec<&str> = cursor.split('|').collect();
+    if parts.len() != 2 {
+        return None;
+    }
+    let created_at = DateTime::parse_from_rfc3339(parts[0])
+        .map(|dt| dt.with_timezone(&Utc))
+        .ok()?;
+    let id = Uuid::parse_str(parts[1]).ok()?;
+    Some((created_at, id))
+}
+
 /// List the authenticated user's saved-search alerts (newest first).
 #[utoipa::path(
     get,
     path = "/api/v1/saved-searches/alerts",
     tag = "SavedSearches",
+    params(SearchAlertsQuery),
     responses(
         (status = 200, description = "Saved-search alerts", body = SearchAlertsResponse),
+        (status = 400, description = "Bad Request"),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn list_search_alerts(
     State(state): State<AppState>,
     principal: RequestPrincipal,
+    Query(query): Query<SearchAlertsQuery>,
 ) -> Result<Json<SearchAlertsResponse>, (axum::http::StatusCode, String)> {
-    let (alerts, unread_count) = tokio::try_join!(
+    let mut before_created_at = None;
+    let mut before_id = None;
+    if let Some(ref before_str) = query.before {
+        if let Some((created_at, id)) = parse_cursor(before_str) {
+            before_created_at = Some(created_at);
+            before_id = Some(id);
+        } else {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Invalid 'before' cursor format. Expected 'created_at|id' (RFC3339 timestamp and UUID)".to_string(),
+            ));
+        }
+    }
+
+    let raw_limit = query.limit.unwrap_or(100);
+    let limit = if raw_limit <= 0 {
+        100
+    } else {
+        raw_limit.min(100)
+    };
+
+    let db_limit = limit + 1;
+
+    let (mut alerts, unread_count) = tokio::try_join!(
         state
             .reality_portal_repo
-            .get_search_alerts(principal.user_id, 100),
+            .get_search_alerts(principal.user_id, before_created_at, before_id, db_limit),
         state
             .reality_portal_repo
             .count_pending_search_alerts(principal.user_id),
     )
     .map_err(|e| crate::util::errors::db_error("list search alerts", e))?;
 
+    let has_more = alerts.len() as i64 > limit;
+    if has_more {
+        alerts.truncate(limit as usize);
+    }
+
     Ok(Json(SearchAlertsResponse {
         alerts,
         unread_count,
+        has_more,
     }))
 }
 

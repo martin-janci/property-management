@@ -171,6 +171,8 @@ impl RealityPortalRepository {
     pub async fn get_search_alerts(
         &self,
         user_id: Uuid,
+        before_created_at: Option<DateTime<Utc>>,
+        before_id: Option<Uuid>,
         limit: i64,
     ) -> Result<Vec<SavedSearchAlert>, SqlxError> {
         sqlx::query_as::<_, SavedSearchAlert>(
@@ -187,12 +189,19 @@ impl RealityPortalRepository {
             FROM search_alert_queue q
             JOIN portal_saved_searches s ON s.id = q.saved_search_id
             WHERE q.user_id = $1
-            ORDER BY q.created_at DESC
+              AND (
+                $3::timestamptz IS NULL
+                OR q.created_at < $3::timestamptz
+                OR (q.created_at = $3::timestamptz AND q.id < $4::uuid)
+              )
+            ORDER BY q.created_at DESC, q.id DESC
             LIMIT $2
             "#,
         )
         .bind(user_id)
         .bind(limit)
+        .bind(before_created_at)
+        .bind(before_id)
         .fetch_all(&self.pool)
         .await
     }
