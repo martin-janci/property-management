@@ -20,6 +20,7 @@ export interface SensorListPageProps {
   onNavigateToDashboard: () => void;
   onNavigateToRegister: () => void;
   onNavigateToEdit: (id: string) => void;
+  onNavigateToThresholds: (id: string) => void;
   onDelete: (sensor: Sensor) => void;
 }
 
@@ -38,6 +39,7 @@ export function SensorListPage({
   onNavigateToDashboard,
   onNavigateToRegister,
   onNavigateToEdit,
+  onNavigateToThresholds,
   onDelete,
 }: SensorListPageProps): JSX.Element {
   const { t } = useTranslation();
@@ -134,6 +136,13 @@ export function SensorListPage({
                             className="rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
                           >
                             {t('common.edit', { defaultValue: 'Edit' })}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onNavigateToThresholds(sensor.id)}
+                            className="rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                          >
+                            {t('iot.thresholds', { defaultValue: 'Thresholds' })}
                           </button>
                           <button
                             type="button"
