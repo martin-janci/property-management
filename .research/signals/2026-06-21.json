@@ -138,6 +138,15 @@
       "evidence": "stale_routine_alert: state.json last_run_iso is 5d old. Daily cloud cron may be paused. Dispatcher state on planning branch must be checked separately — Issues #1607 + #1604 already document dispatcher backlog exhaustion + 14 quarantined rows.",
       "confidence": "high",
       "candidate_vector": null
+    },
+    {
+      "id": "dispatcher-buffer-low-2026-06-21",
+      "type": "lag_warning",
+      "source": "routine-fire payload 2026-06-21",
+      "score_delta": 0,
+      "evidence": "Payload: `buffer-low: claimable=0/72 — coverage.json stale, all 61 gaps map to archived task_ids; need coverage re-scan`. Confirms ops-research-dispatcher-stalled — every gap-scan emit resolves to an already-archived task_id. Operator action required: rebuild coverage.json (a local `/ppt-project-management scan` would do it).",
+      "confidence": "high",
+      "candidate_vector": null
     }
   ],
   "goal_checks": [

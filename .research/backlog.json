@@ -4120,13 +4120,15 @@
       "score": 3,
       "status": "open",
       "sources": [
+        "Issue #1604",
         "Issue #1607",
-        "Issue #1604"
+        "routine-fire payload 2026-06-21"
       ],
       "evidence": [
         "Issue #1607 (2026-06-19, OPEN, research-routine): dispatcher coverage stale; 14 rows in `quarantined`; manual cleanup required before new task picks",
         "Issue #1604 (2026-06-19, OPEN, needs-human-review): backlog exhausted — only no-op tasks (already-shipped) being emitted",
-        "Today is 2026-06-21; routine last ran 2026-06-16. The 5-day lag confirms the dispatcher loop is not advancing; daily research routine itself was offline until now"
+        "Today is 2026-06-21; routine last ran 2026-06-16. The 5-day lag confirms the dispatcher loop is not advancing; daily research routine itself was offline until now",
+        "routine-fire payload 2026-06-21: `buffer-low: claimable=0/72 — coverage.json stale, all 61 gaps map to archived task_ids; need coverage re-scan`. Confirms #1607/#1604 — dispatcher loop is producing zero claimable work because every gap-scan emit resolves to an already-archived task_id."
       ],
       "files": [
         ".research/management/coverage.json",
