@@ -106,7 +106,11 @@ async fn search_alert_read_is_owner_scoped(pool: PgPool) {
     repo.enqueue_search_alert(&pool, search_id, owner, &[Uuid::new_v4()], "new_listing")
         .await
         .expect("enqueue alert");
-    let alert_id = repo.get_search_alerts(owner, None, None, 100).await.unwrap()[0].id;
+    let alert_id = repo
+        .get_search_alerts(owner, None, None, 100)
+        .await
+        .unwrap()[0]
+        .id;
 
     // The attacker cannot ack the owner's alert (no IDOR) and sees none of it.
     assert!(
@@ -162,17 +166,22 @@ async fn search_alert_pagination_and_has_more(pool: PgPool) {
         .get_search_alerts(user, None, None, 4)
         .await
         .expect("fetch page 1");
-    
+
     // We should get 4 alerts (since we enqueued 5).
     assert_eq!(alerts_page1.len(), 4, "expected 4 alerts (limit + 1)");
 
     // The has_more check in list_search_alerts would see alerts_page1.len() > limit (4 > 3), which is true.
     // To simulate pagination, the client uses the 3rd alert's created_at and id as the cursor.
     let cursor_alert = &alerts_page1[2]; // index 2 is the 3rd alert
-    
+
     // Query page 2 using the cursor.
     let alerts_page2 = repo
-        .get_search_alerts(user, Some(cursor_alert.created_at), Some(cursor_alert.id), 4)
+        .get_search_alerts(
+            user,
+            Some(cursor_alert.created_at),
+            Some(cursor_alert.id),
+            4,
+        )
         .await
         .expect("fetch page 2");
 
@@ -180,6 +189,8 @@ async fn search_alert_pagination_and_has_more(pool: PgPool) {
     assert_eq!(alerts_page2.len(), 2, "expected remaining 2 alerts");
 
     // Check that the first alert of page 2 is indeed the 4th alert from page 1.
-    assert_eq!(alerts_page2[0].id, alerts_page1[3].id, "expected page 2 first alert to match page 1 fourth alert");
+    assert_eq!(
+        alerts_page2[0].id, alerts_page1[3].id,
+        "expected page 2 first alert to match page 1 fourth alert"
+    );
 }
-

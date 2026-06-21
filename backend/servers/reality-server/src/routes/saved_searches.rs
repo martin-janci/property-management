@@ -342,9 +342,12 @@ pub async fn list_search_alerts(
     let db_limit = limit + 1;
 
     let (mut alerts, unread_count) = tokio::try_join!(
-        state
-            .reality_portal_repo
-            .get_search_alerts(principal.user_id, before_created_at, before_id, db_limit),
+        state.reality_portal_repo.get_search_alerts(
+            principal.user_id,
+            before_created_at,
+            before_id,
+            db_limit
+        ),
         state
             .reality_portal_repo
             .count_pending_search_alerts(principal.user_id),
