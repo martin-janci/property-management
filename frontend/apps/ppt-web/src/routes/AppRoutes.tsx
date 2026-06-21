@@ -13,6 +13,7 @@
  */
 import { Route, Routes } from 'react-router-dom';
 import { accountingRoutes } from './groups/accounting';
+import { aiDashboardRoutes } from './groups/ai-dashboards';
 import { announcementRoutes } from './groups/announcements';
 import { buildingRoutes } from './groups/buildings';
 import { communityRoutes } from './groups/community';
@@ -52,6 +53,7 @@ export function AppRoutes() {
       {meterRoutes()}
       {leaseRoutes()}
       {votingRoutes()}
+      {aiDashboardRoutes()}
       {iotRoutes()}
       {reportRoutes()}
       {buildingRoutes()}
