@@ -1,0 +1,314 @@
+{
+  "date": "2026-06-21",
+  "since_iso": "2026-06-16T03:25:00Z",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist this run",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "Last routine run at 2026-06-16T03:25:00Z; now 2026-06-21T02:09:55Z (~118h / 4d22h since last run; > 36h threshold; >= 3d stale-routine alert)",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "notes": "log in brief Since-last-run + stale_routine_alert; cloud routine may have been paused"
+    },
+    {
+      "id": "hotfix-no-test-pr-1617",
+      "type": "hotfix-no-test",
+      "source": "PR #1617",
+      "score_delta": 2,
+      "evidence": "PR #1617 (fix(integrations): wire combined OTA availability+rate push into listing-push route) touched backend/servers/api-server/src/routes/integrations/booking_channel.rs only — no test file in diff",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/integrations/src/booking.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-21",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking.rs — ~4365 lines churn across this window (Booking.com OTA push/pull surface); touched by #1560, #1601, #1615, #1617",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/document.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-21",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/document.rs — ~3077 lines churn; touched by #1565 (u.name + enum decode fix) and folder operations",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/crates/db/src/repositories/rental.rs",
+      "type": "churn-hotspot",
+      "source": "git log 2026-06-16..2026-06-21",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/rental.rs — ~2837 lines churn; touched by booking integration features",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": "PR #1630 (wire Payment Management page to org-wide endpoints) touched frontend/apps/ppt-web/src/routes/groups/financial.tsx without updating docs/screens/ppt/. financial-payments.md exists; was not edited.",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 (relocate payment-matching to ppt-web with correct api-server auth) touched frontend/apps/ppt-web/src/routes/groups/accounting.tsx + lazyRoutes.tsx without updating docs/screens/ppt/",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 touched frontend/apps/reality-web/src/app/accounting/{layout,page}.tsx without updating docs/screens/reality/ (accounting page was removed from reality-web — orphan/cleanup follow-up may be warranted)",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1611",
+      "score_delta": 2,
+      "evidence": "PR #1611 (test(reports): cover ScheduleDetailPageRoute download/retry toast wiring) added route file frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx. Best-effort heuristic — this is a test-only addition; reports.md exists and is unchanged.",
+      "confidence": "low",
+      "candidate_vector": "test-gap",
+      "notes": "test-only route file added — likely a false positive of the drift heuristic"
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": "PR #1610 (fix(faults): confirm delete + use closed_count + refresh stats on delete) touched frontend/apps/ppt-web/src/routes/groups/faults.tsx + test, without updating docs/screens/ppt/faults-list.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-mutations-no-error",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review (ppt-web-core)",
+      "score_delta": 3,
+      "evidence": "frontend/apps/ppt-web/src/routes/groups/rentals.tsx:258-284 — createConnection and syncPlatforms useMutation calls have no onError handler and no isError surface; failures are silently swallowed (financial.tsx:156-162 shows the correct pattern)",
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "severity": "high"
+    },
+    {
+      "id": "code-review-ppt-web-core-rentals-financial-querykeys-bypass",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review (ppt-web-core)",
+      "score_delta": 2,
+      "evidence": "rentals.tsx and financial.tsx assemble queryKey arrays inline (['rentals','reservations',auth?.xTenantId], ['financial','invoices',orgId,...]) instead of using lib/queryKeys.ts factory; invalidate() calls in rentals.tsx (268,282) drop the auth?.xTenantId segment that the original useQuery keys included",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "severity": "medium"
+    },
+    {
+      "id": "code-review-ppt-web-core-sessions-api-cast",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 review (ppt-web-core)",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/features/settings/pages/SessionsPage.tsx:84 — `as unknown as SessionRow[]` double cast bypasses API-boundary type safety",
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "severity": "low"
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": "dependabot: bump androidx.compose:compose-bom 2026.05.01 → 2026.06.00",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": "dependabot: bump mikepenz/action-junit-report 5 → 6",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": "dependabot: bump npm-minor-patch group (react 19.2.0→19.2.7 etc)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": "dependabot: bump expo-secure-store 55.0.14 → 56.0.4",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": "dependabot: bump @types/node 20.19.40 → 25.9.3",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": "dependabot: bump @babel/core 7.29.7 → 8.0.1",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": "dependabot: bump i18next 25.10.10 → 26.3.1",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-21.md + header match",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no double-counted signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "no score >8 + decay applied to 14 items",
+      "observed": "cap+decay applied",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass logged in brief",
+      "observed": "passed for code-review-ppt-web-core-rentals-mutations-no-error",
+      "expected": "passed|fixed-in-place|rolled-back"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans + metadata/headings/Mode/files",
+      "observed": "1 new plan, all checks pass",
+      "expected": "true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached only .research/",
+      "observed": "0 non-research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-that-failed honesty",
+      "observed": "no failed phases this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "no prior-run plan silently deleted",
+      "observed": "all prior slugs accounted for",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "7 == 7",
+      "expected": "true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap+idempotency",
+      "observed": "0 actions (no candidate this run)",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + pm_cursor + GC7 coverage_cursor advanced",
+      "observed": "PM 5->6, CC 12->0, all valid",
+      "expected": "true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token literal in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
