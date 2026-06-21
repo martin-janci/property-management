@@ -7,10 +7,15 @@ export * from './components';
 export {
   IotDashboardPage,
   type IotDashboardPageProps,
+  SensorAlertsPage,
+  type SensorAlertsPageProps,
   type SensorFormBuildingOption,
   SensorFormPage,
   type SensorFormPageProps,
   type SensorFormValues,
   SensorListPage,
   type SensorListPageProps,
+  SensorThresholdPage,
+  type SensorThresholdPageProps,
+  type ThresholdFormValues,
 } from './pages';

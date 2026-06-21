@@ -98,6 +98,17 @@ export function useNavigationCommands() {
         icon: '📡',
         action: () => navigate('/iot/sensors'),
       },
+      {
+        id: 'nav-iot-alerts',
+        label: t('commandPalette.commands.goToIotAlerts', { defaultValue: 'Go to IoT Alerts' }),
+        description: t('commandPalette.descriptions.goToIotAlerts', {
+          defaultValue: 'View and resolve sensor threshold alerts',
+        }),
+        category: 'navigation',
+        keywords: ['alerts', 'iot', 'sensors', 'thresholds', 'resolve', 'acknowledge'],
+        icon: '🚨',
+        action: () => navigate('/iot/alerts'),
+      },
       // Create commands
       {
         id: 'create-dispute',

@@ -173,3 +173,47 @@ export interface UpdateSensorRequest {
   firmware_version?: string | null;
   metadata?: unknown;
 }
+
+// ============================================================================
+// Thresholds (FR73)
+// ============================================================================
+
+export interface SensorThreshold {
+  id: string;
+  sensor_id: string;
+  metric: string;
+  comparison: string;
+  warning_value: number | null;
+  warning_high: number | null;
+  critical_value: number | null;
+  critical_high: number | null;
+  enabled: boolean;
+  alert_cooldown_minutes: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ListThresholdsResponse {
+  thresholds: SensorThreshold[];
+}
+
+export interface CreateSensorThresholdRequest {
+  sensor_id: string;
+  metric?: string | null;
+  comparison: string;
+  warning_value?: number | null;
+  warning_high?: number | null;
+  critical_value?: number | null;
+  critical_high?: number | null;
+  alert_cooldown_minutes?: number | null;
+}
+
+export interface UpdateSensorThresholdRequest {
+  comparison?: string | null;
+  warning_value?: number | null;
+  warning_high?: number | null;
+  critical_value?: number | null;
+  critical_high?: number | null;
+  enabled?: boolean | null;
+  alert_cooldown_minutes?: number | null;
+}
