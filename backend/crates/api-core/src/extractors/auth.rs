@@ -213,3 +213,19 @@ where
         }
     }
 }
+
+/// Like [`validate_access_token_with_exp`] but also returns the `tenant_id`
+/// claim so WebSocket handlers can derive the org-scoped pub/sub channel
+/// without a DB round-trip.
+pub fn validate_access_token_full(
+    token: &str,
+) -> Result<(Uuid, i64, Option<Uuid>), &'static str> {
+    let verifier = jwt_verifier()?;
+    let token_data = decode::<Claims>(token, &verifier.key, &verifier.validation)
+        .map_err(|_| "Invalid or expired token")?;
+    let claims = token_data.claims;
+    if claims.token_type != "access" {
+        return Err("Invalid token type for this endpoint");
+    }
+    Ok((claims.sub, claims.exp, claims.tenant_id))
+}
