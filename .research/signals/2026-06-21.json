@@ -1,0 +1,453 @@
+{
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-21.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.last_pr_seen advanced 1439→1654",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap 8 + decay applied to 12 items",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans, no adversarial pass needed",
+      "observed": "0 new plans",
+      "expected": "≤2 with adversarial annotations"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plan count",
+      "observed": "0",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep for secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed; Phase 1.5/1.6 deferred (declared in brief)",
+      "observed": "consistent",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "0 missing",
+      "expected": "0 missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "_archive count vs HEAD",
+      "observed": "≥",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions == []",
+      "observed": "true",
+      "expected": "true (skipped this run)"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped — gate no-op",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for telegram token in staged",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-21",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": "routine last ran 2026-06-16T03:25:00Z (~5d ago, >36h threshold)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-1606",
+      "type": "unchecked-todo",
+      "source": "PR #1606",
+      "score_delta": 2,
+      "evidence": "PR #1606 (manager-only gate for list_contacts) merged with unchecked `cargo test accounting_contacts_authz against real PG (CI backend.yml)` — confirm CI ran the new tests",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-07 touched backend/crates/db/src/repositories/rental.rs",
+      "score_delta": 0,
+      "evidence": "9 commits touched backend/crates/db/src/repositories/rental.rs since last run (2026-06-16)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-07 touched backend/crates/db/src/repositories/document.rs",
+      "score_delta": 0,
+      "evidence": "9 commits touched backend/crates/db/src/repositories/document.rs since last run (2026-06-16)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-integrations-src-booking-rs",
+      "type": "churn-hotspot",
+      "source": "git log --since=2026-06-07 touched backend/crates/integrations/src/booking.rs",
+      "score_delta": 0,
+      "evidence": "7 commits touched backend/crates/integrations/src/booking.rs since last run (2026-06-16)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-db-src-repositories-document-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "backend/crates/db/src/repositories/document.rs now seen as hotspot in 2 runs (last: 2026-06-10)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend-crates-integrations-src-booking-rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": "backend/crates/integrations/src/booking.rs now seen as hotspot in 2 runs (last: 2026-06-12)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "risky-churn-pr-1565-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1565",
+      "score_delta": 2,
+      "evidence": "PR #1565 (fix(db): correct document get-by-id read path) modified backend/crates/db/src/repositories/document.rs — a top-churn hotspot — with no test file in the diff",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1551-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1551",
+      "score_delta": 2,
+      "evidence": "PR #1551 (fix(db): cast document_category in count_accessible_rls) modified backend/crates/db/src/repositories/document.rs — a top-churn hotspot — with no test file in the diff",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1537-rental-rs",
+      "type": "risky-churn",
+      "source": "PR #1537",
+      "score_delta": 2,
+      "evidence": "PR #1537 (fix(db): cast enum write paths on rental_guests + forms) modified backend/crates/db/src/repositories/rental.rs — a top-churn hotspot — with no test file in the diff",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "risky-churn-pr-1469-document-rs",
+      "type": "risky-churn",
+      "source": "PR #1469",
+      "score_delta": 2,
+      "evidence": "PR #1469 (fix(db): fix document SELECT enum-decode + form/user) modified backend/crates/db/src/repositories/document.rs — a top-churn hotspot — with no test file in the diff",
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1641-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1641",
+      "score_delta": 2,
+      "evidence": "PR #1641 touched ppt routes (frontend/apps/ppt-web/src/routes/AppRoutes.tsx, frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/ai-dashboards.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1654-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1654",
+      "score_delta": 2,
+      "evidence": "PR #1654 touched ppt routes (frontend/apps/ppt-web/src/routes/groups/financial.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1630-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1630",
+      "score_delta": 2,
+      "evidence": "PR #1630 touched ppt routes (frontend/apps/ppt-web/src/routes/groups/financial.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/financial.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 touched ppt routes (frontend/apps/ppt-web/src/routes/groups/accounting.tsx, frontend/apps/ppt-web/src/routes/lazyRoutes.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1621-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1621",
+      "score_delta": 2,
+      "evidence": "PR #1621 touched reality routes (frontend/apps/reality-web/src/app/accounting/layout.tsx, frontend/apps/reality-web/src/app/accounting/page.tsx) without updating docs/screens/reality/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx",
+        "frontend/apps/reality-web/src/app/accounting/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1611-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1611",
+      "score_delta": 2,
+      "evidence": "PR #1611 touched ppt routes (frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/reports.download-retry.route.test.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1610-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1610",
+      "score_delta": 2,
+      "evidence": "PR #1610 touched ppt routes (frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx, frontend/apps/ppt-web/src/routes/groups/faults.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1559-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1559",
+      "score_delta": 2,
+      "evidence": "PR #1559 touched ppt routes (frontend/apps/ppt-web/src/routes/groups/announcements.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/announcements.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1555-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1555",
+      "score_delta": 2,
+      "evidence": "PR #1555 touched ppt routes (frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx, frontend/apps/ppt-web/src/routes/groups/faults.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/faults.route.test.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/faults.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1545-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1545",
+      "score_delta": 2,
+      "evidence": "PR #1545 touched reality routes (frontend/apps/reality-web/src/app/accounting/layout.tsx) without updating docs/screens/reality/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/layout.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1453-reality",
+      "type": "screen-map-drift",
+      "source": "PR #1453",
+      "score_delta": 2,
+      "evidence": "PR #1453 touched reality routes (frontend/apps/reality-web/src/app/accounting/page.tsx) without updating docs/screens/reality/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/reality-web/src/app/accounting/page.tsx"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-1454-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #1454",
+      "score_delta": 2,
+      "evidence": "PR #1454 touched ppt routes (frontend/apps/ppt-web/src/routes/AppRoutes.tsx, frontend/apps/ppt-web/src/routes/groups/accounting.tsx) without updating docs/screens/ppt/* — heuristic",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "files": [
+        "frontend/apps/ppt-web/src/routes/AppRoutes.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/accounting.tsx",
+        "frontend/apps/ppt-web/src/routes/groups/rentals.tsx"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-1566",
+      "type": "dep-update-noise",
+      "source": "PR #1566",
+      "score_delta": 0,
+      "evidence": "androidx.compose:compose-bom 2026.05.01 → 2026.06.00 (mobile-native)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1570",
+      "type": "dep-update-noise",
+      "source": "PR #1570",
+      "score_delta": 0,
+      "evidence": "mikepenz/action-junit-report 5 → 6",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1571",
+      "type": "dep-update-noise",
+      "source": "PR #1571",
+      "score_delta": 0,
+      "evidence": "npm-minor-patch group /frontend (6 updates)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1572",
+      "type": "dep-update-noise",
+      "source": "PR #1572",
+      "score_delta": 0,
+      "evidence": "expo-secure-store 55.0.14 → 56.0.4 (mobile)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1573",
+      "type": "dep-update-noise",
+      "source": "PR #1573",
+      "score_delta": 0,
+      "evidence": "@types/node 20.19.40 → 25.9.3 (devdeps)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1575",
+      "type": "dep-update-noise",
+      "source": "PR #1575",
+      "score_delta": 0,
+      "evidence": "@babel/core 7.29.7 → 8.0.1 (devdeps)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "dep-update-noise-pr-1576",
+      "type": "dep-update-noise",
+      "source": "PR #1576",
+      "score_delta": 0,
+      "evidence": "i18next 25.10.10 → 26.3.1 (frontend)",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "Phase 5 skipped — 5-day routine lag; auto-fix flow deferred to next normal run"
+}
