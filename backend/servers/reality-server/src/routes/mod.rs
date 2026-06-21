@@ -13,6 +13,7 @@ pub mod health;
 pub mod imports;
 pub mod inquiries;
 pub mod listings;
+pub mod portal_listings;
 pub mod price_map;
 pub mod realtors;
 pub mod reports;

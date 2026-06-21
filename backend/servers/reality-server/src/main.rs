@@ -199,6 +199,10 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::imports::get_feed,
         routes::imports::update_feed,
         routes::imports::sync_feed,
+        // Portal listing CRUD (Epic 15.1/15.2)
+        routes::portal_listings::create_listing,
+        routes::portal_listings::get_my_listing,
+        routes::portal_listings::update_listing,
         // Compare (UC-48)
         routes::compare::get_compare_list,
         routes::compare::add_to_compare,
@@ -293,6 +297,10 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         CreateFeedSubscription,
         UpdateFeedSubscription,
         RealityFeedSubscription,
+        // Portal listing CRUD (Epic 15.1/15.2)
+        routes::portal_listings::PortalListingResponse,
+        routes::portal_listings::CreatePortalListingRequest,
+        routes::portal_listings::UpdatePortalListingRequest,
         // Compare (UC-48)
         routes::compare::CompareEntry,
         routes::compare::CompareListResponse,
@@ -347,6 +355,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (name = "Agencies", description = "Real estate agency management (Epic 32)"),
         (name = "Realtors", description = "Realtor profiles and tools (Epic 33)"),
         (name = "Imports", description = "Property import and feed management (Epic 34)"),
+        (name = "PortalListings", description = "Owner/realtor listing CRUD (Epic 15.1/15.2)"),
         (name = "Compare", description = "Compare up to 4 listings side-by-side (UC-48)"),
         (name = "Reports", description = "Report problematic listings (UC-23)"),
         (name = "AgentReviews", description = "Realtor reviews and ratings (UC-49, UC-51)"),
@@ -454,6 +463,8 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/v1/realtors", routes::realtors::router())
         // Import routes (Epic 34)
         .nest("/api/v1/imports", routes::imports::router())
+        // Portal listing CRUD (Epic 15.1/15.2 — owner/realtor edit)
+        .nest("/api/v1/my/listings", routes::portal_listings::router())
         // Compare routes (UC-48)
         .nest("/api/v1/compare", routes::compare::router())
         // Reports routes (UC-23)

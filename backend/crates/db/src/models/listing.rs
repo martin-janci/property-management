@@ -44,9 +44,12 @@ pub mod currency {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Listing {
     pub id: Uuid,
-    pub organization_id: Uuid,
+    /// NULL for portal-direct listings (no PPT org). See migration 00186.
+    pub organization_id: Option<Uuid>,
     pub unit_id: Option<Uuid>,
     pub created_by: Uuid,
+    /// Set for portal-user-created listings; NULL for org-owned listings.
+    pub portal_owner_id: Option<Uuid>,
 
     // Listing status
     pub status: String,
@@ -141,7 +144,7 @@ impl Listing {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct ListingSummary {
     pub id: Uuid,
-    pub organization_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub title: String,
     pub property_type: String,
     pub transaction_type: String,
@@ -410,8 +413,8 @@ pub struct SyndicationJobPayload {
     pub previous_status: Option<String>,
     /// New status (for status change operations)
     pub new_status: Option<String>,
-    /// Organization ID for context
-    pub organization_id: Uuid,
+    /// Organization ID for context (None for portal-direct listings).
+    pub organization_id: Option<Uuid>,
 }
 
 /// Syndication status dashboard response.

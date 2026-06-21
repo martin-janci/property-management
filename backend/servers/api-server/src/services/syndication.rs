@@ -130,7 +130,7 @@ impl SyndicationService {
                 scheduled_at: None, // Run immediately
                 queue: Some(SYNDICATION_QUEUE.to_string()),
                 max_attempts: Some(3),
-                org_id: Some(listing.organization_id),
+                org_id: listing.organization_id,
             };
 
             let job = self
@@ -206,7 +206,7 @@ impl SyndicationService {
                 scheduled_at: None,
                 queue: Some(SYNDICATION_QUEUE.to_string()),
                 max_attempts: Some(3),
-                org_id: Some(listing.organization_id),
+                org_id: listing.organization_id,
             };
 
             let job = self
@@ -258,7 +258,7 @@ impl SyndicationService {
             scheduled_at: None,
             queue: Some(SYNDICATION_QUEUE.to_string()),
             max_attempts: Some(3),
-            org_id: Some(listing.organization_id),
+            org_id: listing.organization_id,
         };
 
         let job = self

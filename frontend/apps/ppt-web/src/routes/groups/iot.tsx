@@ -36,8 +36,9 @@ import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { AuthRequiredGate, useToast } from '../../components';
 import { useAuth } from '../../contexts';
-import type { SensorFormValues, ThresholdFormValues } from '../../features/iot';
+import type { AlertStateFilter, SensorFormValues, ThresholdFormValues } from '../../features/iot';
 import {
+  IotAlertsPage,
   IotDashboardPage,
   IotSensorFormPage,
   IotSensorListPage,
@@ -306,6 +307,60 @@ function EditSensorPageRoute() {
   );
 }
 
+/**
+ * Route wrapper for the standalone alerts page (FR74).
+ *
+ * v1 sources alerts from the dashboard rollup (`recent_alerts`); a dedicated
+ * cross-sensor alerts list endpoint can replace that source later. Sensor names
+ * come from `useSensors()` so the table can label each alert's sensor.
+ */
+function IotAlertsPageRoute() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [filterSeverity, setFilterSeverity] = useState('');
+  const [filterState, setFilterState] = useState<AlertStateFilter>('');
+
+  const { data: dashboard, isLoading: dashboardLoading } = useIotDashboard();
+  const { data: sensorsData } = useSensors();
+
+  const acknowledgeAlert = useAcknowledgeSensorAlert();
+  const resolveAlert = useResolveSensorAlert();
+
+  const sensorNames = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const sensor of sensorsData?.sensors ?? []) {
+      map[sensor.id] = sensor.name;
+    }
+    return map;
+  }, [sensorsData]);
+
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
+
+  const pendingAlertId = acknowledgeAlert.isPending
+    ? (acknowledgeAlert.variables ?? null)
+    : resolveAlert.isPending
+      ? (resolveAlert.variables?.alertId ?? null)
+      : null;
+
+  return (
+    <IotAlertsPage
+      alerts={dashboard?.recent_alerts ?? []}
+      sensorNames={sensorNames}
+      isLoading={dashboardLoading}
+      pendingAlertId={pendingAlertId}
+      filterSeverity={filterSeverity}
+      filterState={filterState}
+      onFilterSeverityChange={setFilterSeverity}
+      onFilterStateChange={setFilterState}
+      onAcknowledge={(alertId) => acknowledgeAlert.mutate(alertId)}
+      onResolve={(alertId) => resolveAlert.mutate({ alertId })}
+      onBackToDashboard={() => navigate('/iot')}
+    />
+  );
+}
+
 /** Map a numeric-string form field to a float, or null when blank. */
 function toFloatOrNull(value: string): number | null {
   const trimmed = value.trim();
@@ -495,6 +550,7 @@ export function iotRoutes() {
   return (
     <>
       <Route path="/iot" element={<IotDashboardPageRoute />} />
+      <Route path="/iot/alerts" element={<IotAlertsPageRoute />} />
       <Route path="/iot/sensors" element={<SensorListPageRoute />} />
       <Route path="/iot/sensors/new" element={<RegisterSensorPageRoute />} />
       <Route path="/iot/sensors/:sensorId/edit" element={<EditSensorPageRoute />} />

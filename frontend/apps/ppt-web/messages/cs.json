@@ -62,7 +62,8 @@
     "accessibility": "Přístupnost",
     "privacy": "Soukromí",
     "admin": "Administrace",
-    "aiChat": "AI asistent"
+    "aiChat": "AI asistent",
+    "iotAlerts": "Sensor Alerts"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -1250,6 +1251,43 @@
     "thresholdDeleted": "Threshold deleted",
     "thresholdDeleteFailed": "Failed to delete threshold",
     "templateApplied": "Template applied",
-    "templateApplyFailed": "Failed to apply template"
+    "templateApplyFailed": "Failed to apply template",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "alerts": {
+      "title": "Sensor Alerts",
+      "subtitle": "Threshold breaches across your buildings.",
+      "backToDashboard": "Back to dashboard",
+      "empty": "No alerts match these filters. All clear.",
+      "filter": {
+        "allStates": "All states",
+        "allSeverities": "All severities"
+      },
+      "state": {
+        "open": "Open",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "columns": {
+        "severity": "Severity",
+        "sensor": "Sensor",
+        "message": "Message",
+        "value": "Value / Threshold",
+        "triggered": "Triggered",
+        "state": "State",
+        "actions": "Actions"
+      }
+    }
+  },
+  "commandPalette": {
+    "commands": {
+      "goToIotAlerts": "Go to Sensor Alerts"
+    },
+    "descriptions": {
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+    }
   }
 }

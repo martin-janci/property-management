@@ -56,6 +56,9 @@ export const IotSensorListPage = lazy(() =>
 export const IotSensorFormPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.SensorFormPage }))
 );
+export const IotAlertsPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.IotAlertsPage }))
+);
 export const IotThresholdConfigPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.IotThresholdConfigPage }))
 );
@@ -290,6 +293,18 @@ export const PendingBookingsPage = lazy(() =>
 // AI Assistant chat (Epic 13, Story 13.1) — built, now routed (gap-sweep)
 export const AiChatPage = lazy(() =>
   import('../features/ai-chat').then((m) => ({ default: m.AiChatPage }))
+);
+
+// Sentiment Dashboard (Epic 13, Story 13.2) — gap-sweep
+export const SentimentDashboardPage = lazy(() =>
+  import('../features/sentiment').then((m) => ({ default: m.SentimentDashboardPage }))
+);
+
+// Predictive Maintenance Dashboard (Epic 13, Story 13.3) — gap-sweep
+export const PredictiveMaintenancePage = lazy(() =>
+  import('../features/predictive-maintenance').then((m) => ({
+    default: m.PredictiveMaintenancePage,
+  }))
 );
 
 // Workflow Automation (Epic 13) — built + API-wired, now routed (gap-sweep)

@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../auth', () => ({ getToken: mocks.getToken, getOrg: mocks.getOrg }));
 vi.mock('../generated/client.gen', () => ({ client: { getConfig: mocks.getConfig } }));
 
-import { getOverdueInvoices, listAccounts } from './api';
+import { downloadInvoicePdf, getOverdueInvoices, listAccounts } from './api';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -99,6 +99,36 @@ describe('financial decimal coercion', () => {
     const invoices = await getOverdueInvoices('o');
     const outstanding = invoices.reduce((sum, inv) => sum + inv.balance_due, 0);
     expect(outstanding).toBe(100); // 60 + 40, not "060.0040.00"
+
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('downloadInvoicePdf', () => {
+  it('fetches the invoice PDF endpoint with auth and returns the blob', async () => {
+    mocks.getToken.mockReturnValue('tok');
+    mocks.getOrg.mockReturnValue('org-1');
+    const blob = new Blob(['%PDF-1.7'], { type: 'application/pdf' });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: async () => blob });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await downloadInvoicePdf('inv-9');
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe('https://api.example.test/api/v1/financial/invoices/inv-9/pdf');
+    expect(init.headers.Authorization).toBe('Bearer tok');
+    expect(init.headers['X-Tenant-ID']).toBe('org-1');
+    expect(result).toBe(blob);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('throws when the PDF response is not ok', async () => {
+    mocks.getToken.mockReturnValue('tok');
+    mocks.getOrg.mockReturnValue('org-1');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
+
+    await expect(downloadInvoicePdf('missing')).rejects.toThrow('HTTP 404');
 
     vi.unstubAllGlobals();
   });
