@@ -8,22 +8,30 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   acknowledgeSensorAlert,
+  applyTemplate,
   createSensor,
+  createThreshold,
   deleteSensor,
+  deleteThreshold,
   getIotDashboard,
   getSensor,
   listSensorAlerts,
   listSensorReadings,
   listSensors,
+  listThresholds,
+  listThresholdTemplates,
   resolveSensorAlert,
   updateSensor,
+  updateThreshold,
 } from './api';
 import type {
   CreateSensorRequest,
+  CreateSensorThresholdRequest,
   ListAlertsParams,
   ListReadingsParams,
   ListSensorsParams,
   UpdateSensorRequest,
+  UpdateSensorThresholdRequest,
 } from './types';
 
 // ============================================
@@ -40,6 +48,8 @@ export const iotKeys = {
     [...iotKeys.sensor(sensorId), 'readings', params] as const,
   alerts: (sensorId: string, params?: ListAlertsParams) =>
     [...iotKeys.sensor(sensorId), 'alerts', params] as const,
+  thresholds: (sensorId: string) => [...iotKeys.sensor(sensorId), 'thresholds'] as const,
+  templates: (sensorType?: string) => [...iotKeys.all, 'templates', sensorType ?? null] as const,
 };
 
 // ============================================
@@ -150,6 +160,75 @@ export function useDeleteSensor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteSensor(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.all });
+    },
+  });
+}
+
+// ============================================
+// Thresholds (FR73)
+// ============================================
+
+/** Threshold rules configured for a sensor (FR73). */
+export function useThresholds(sensorId: string) {
+  return useQuery({
+    queryKey: iotKeys.thresholds(sensorId),
+    queryFn: ({ signal }) => listThresholds(sensorId, signal),
+    enabled: !!sensorId,
+    staleTime: 30_000,
+  });
+}
+
+/** Create a threshold rule (FR73). Invalidates IoT caches on success. */
+export function useCreateThreshold(sensorId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (req: CreateSensorThresholdRequest) => createThreshold(sensorId, req),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.all });
+    },
+  });
+}
+
+/** Update a threshold rule (FR73). Invalidates IoT caches on success. */
+export function useUpdateThreshold(_sensorId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateSensorThresholdRequest }) =>
+      updateThreshold(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.all });
+    },
+  });
+}
+
+/** Delete a threshold rule (FR73). Invalidates IoT caches on success. */
+export function useDeleteThreshold(_sensorId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteThreshold(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.all });
+    },
+  });
+}
+
+/** Reusable threshold templates, optionally filtered by sensor type (FR73). */
+export function useThresholdTemplates(sensorType?: string) {
+  return useQuery({
+    queryKey: iotKeys.templates(sensorType),
+    queryFn: ({ signal }) =>
+      listThresholdTemplates(sensorType ? { sensor_type: sensorType } : undefined, signal),
+    staleTime: 60_000,
+  });
+}
+
+/** Apply a threshold template to a sensor (FR73). Invalidates IoT caches on success. */
+export function useApplyTemplate(sensorId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (templateId: string) => applyTemplate(templateId, sensorId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: iotKeys.all });
     },
