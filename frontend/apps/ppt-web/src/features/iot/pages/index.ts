@@ -1,3 +1,8 @@
+export {
+  type AlertStateFilter,
+  IotAlertsPage,
+  type IotAlertsPageProps,
+} from './IotAlertsPage';
 export { IotDashboardPage, type IotDashboardPageProps } from './IotDashboardPage';
 export {
   type SensorFormBuildingOption,
