@@ -34,7 +34,7 @@ use db::models::rental::PlatformConnectionDetail;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use super::sync::{verify_org_access, OrgIdPath};
+use super::sync::{verify_manager_role_in_org, verify_org_access, OrgIdPath};
 use crate::state::AppState;
 use common::errors::ErrorResponse;
 
@@ -92,6 +92,11 @@ pub async fn list_airbnb_connections(
 
     // IDOR guard (issue #765): caller must belong to this org.
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Authz (#1626): OTA linked-listing configuration is landlord/manager-level
+    // operational data, so reads are manager-gated (matching the write paths and
+    // the sibling /airbnb/listings read) — a plain member/resident must not be
+    // able to enumerate the org's integration config.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     let connections = state
         .rental_repo
