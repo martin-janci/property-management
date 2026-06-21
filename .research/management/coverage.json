@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-16T00:00:00Z",
+  "generated": "2026-06-21T00:30:00Z",
   "sprint": null,
   "version": null,
   "scan_kind": "upkeep",
@@ -47,11 +47,11 @@
         "PR #474 wired view-page (mark_read/acknowledge)"
       ],
       "gaps": [
-        "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged",
+        "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) \u2014 not yet merged",
         "apiStatus stub until web PRs land"
       ],
-      "notes": "Epic 2B notification pipeline merged (PR #463) AND WebSocket realtime sync merged (PR #472) — both dependencies cleared; web viewing/ack UI now in flight (draft PRs #474/#475/#479)",
-      "last_checked": "2026-05-25"
+      "notes": "Web viewing/ack UI still in flight; PR #1559 (comments) landed but ack-tracking UI not yet merged. Re-check next sweep.",
+      "last_checked": "2026-06-21"
     },
     {
       "epic": "epic-6",
@@ -69,21 +69,22 @@
         "backend list/create/delete comment routes",
         "API types AnnouncementComment/CommentWithAuthor defined",
         "frontend integration in announcements screen",
-        "PR #475 wired comments web UI"
+        "PR #475 wired comments web UI",
+        "PR #1559 \u2014 optimistic add for announcement comments (Story 6.3)"
       ],
       "gaps": [
-        "comments web UI in draft PRs #474/#475/#479 — not yet merged",
+        "comments web UI in draft PRs #474/#475/#479 \u2014 not yet merged",
         "comment threading/reply unclear"
       ],
-      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged — dependency cleared; comments web UI in flight (draft #474/#475/#479)",
-      "last_checked": "2026-05-25"
+      "notes": "PR #1559 (feat-announcement-comments-web-thread-ui: optimistic add, Story 6.3) advanced the comments web UI; threading/reply still partial. Keep open.",
+      "last_checked": "2026-06-21"
     },
     {
       "epic": "epic-6",
       "id": "6-4-pinned-announcements",
       "title": "Pinned Announcements",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -93,13 +94,12 @@
       "evidence": [
         "pin_announcement route + pinned/pinnedBy/pinnedAt fields",
         "API types PinAnnouncementRequest",
-        "frontend pin status integrated in screens"
+        "frontend pin status integrated in screens",
+        "PR #1446 (feat-pinned-announcements-pin-unpin-web-ui-frontend): reflect pinned-first ordering in ppt-web announcements list"
       ],
-      "gaps": [
-        "pin/unpin web UI in draft PRs #474/#475/#479 — not yet merged"
-      ],
-      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged — dependency cleared; pin/unpin web UI in flight (draft #474/#475/#479)",
-      "last_checked": "2026-05-25"
+      "gaps": [],
+      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged \u2014 dependency cleared; pin/unpin web UI in flight (draft #474/#475/#479) [Closed gaps as of 2026-06-21: pin/unpin web UI in draft PRs #474/#475/#479 \u2014 not yet merged]",
+      "last_checked": "2026-06-21"
     },
     {
       "epic": "epic-6",
@@ -118,7 +118,7 @@
         "frontend messages/message-thread/messages-new shipped",
         "API types MessageThread/ThreadWithPreview/MessageWithSender",
         "messaging screens wired to API (PR #449, merged 2026-05-25)",
-        "WebSocket realtime sync shipped (PR #472, merged 2026-05-25) — live thread updates no longer deferred"
+        "WebSocket realtime sync shipped (PR #472, merged 2026-05-25) \u2014 live thread updates no longer deferred"
       ],
       "gaps": [
         "test coverage for realtime sync tracked in follow-up issue (#480-#487 cluster)"
@@ -156,7 +156,7 @@
       "id": "7a-1-document-upload-metadata",
       "title": "Document Upload with Metadata",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend",
@@ -168,20 +168,20 @@
         "backend documents.rs ~3553 LOC",
         "DocumentUploadPage.tsx + API handler",
         "screen buildStatus shipped, apiStatus partial",
-        "mobile document upload UI with metadata shipped (PR #447, merged 2026-05-25)"
+        "mobile document upload UI with metadata shipped (PR #447, merged 2026-05-25)",
+        "PR #1550 (verify-document-upload-metadata-promote-to-done-backend): verify 7A.1 upload + metadata + RLS; promote-to-done verification",
+        "PR #1565 (fix(db): correct document get-by-id read path) and #1469 (schema-drift SQL in document repo) \u2014 final corrections"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev — promote to done after verify"
-      ],
-      "notes": "Document upload backend tests merged this window (PR #610) — upload test-coverage gap closing; multipart/RLS isolation tests landing. Remains partial pending full web+mobile verify sweep.",
-      "last_checked": "2026-05-27"
+      "gaps": [],
+      "notes": "Document upload backend tests merged this window (PR #610) \u2014 upload test-coverage gap closing; multipart/RLS isolation tests landing. Remains partial pending full web+mobile verify sweep. [Closed gaps as of 2026-06-21: sprint-status ready-for-dev \u2014 promote to done after verify]",
+      "last_checked": "2026-06-21"
     },
     {
       "epic": "epic-7a",
       "id": "7a-2-folder-organization",
       "title": "Folder Organization",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend",
@@ -192,13 +192,16 @@
         "folder hierarchy with 5-level depth + circular check",
         "handlers list_folders/get_folder_tree/create/update/delete",
         "RLS policies for tenant isolation",
-        "PR #636 merged 2026-05-28: 7 backend integration test cases for document folders (document_folder_tests.rs); CLOSES issue #580"
+        "PR #636 merged 2026-05-28: 7 backend integration test cases for document folders (document_folder_tests.rs); CLOSES issue #580",
+        "PR #1464 (feat-folder-organization-mobile-implementation): Coverage 7a-2 mobile folder org slice",
+        "PR #1557 (feat-folder-organization-document-mobile): mobile folder rename/move UI",
+        "PR #1582 (fix(mobile): wire useFolderTree / FOLDER_TREE_QUERY_KEY into document screens)",
+        "PR #1613 (fix(documents): allow detaching a folder to root via PUT parent_id=null)",
+        "PR #1609 (refactor(mobile): single source of truth for folder-tree flatten utils)"
       ],
-      "gaps": [
-        "mobile implementation pending"
-      ],
-      "notes": "FolderTree UI landed with i18n security-label fix merged this window (PR #604) — web folder-tree page now exists; mobile slice still pending. Advanced toward done; remains partial on mobile gap. | 2026-05-28: folder test coverage landed (#636, closes #580); web slice now done+tested, mobile slice still the only open gap.",
-      "last_checked": "2026-05-28"
+      "gaps": [],
+      "notes": "FolderTree UI landed with i18n security-label fix merged this window (PR #604) \u2014 web folder-tree page now exists; mobile slice still pending. Advanced toward done; remains partial on mobile gap. | 2026-05-28: folder test coverage landed (#636, closes #580); web slice now done+tested, mobile slice still the only open gap. [Closed gaps as of 2026-06-21: mobile implementation pending]",
+      "last_checked": "2026-06-21"
     },
     {
       "epic": "epic-7a",
@@ -221,7 +224,7 @@
         "mobile document permission/RLS UI shipped (gap-7a-3 PRs #462/#465, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — promote to done after verify"
+        "sprint-status ready-for-dev \u2014 promote to done after verify"
       ],
       "status_note": "advanced partial->done (web+mobile permission UI both shipped)",
       "last_checked": "2026-05-25"
@@ -231,7 +234,7 @@
       "id": "7a-4-document-download-preview",
       "title": "Document Download & Preview",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend",
@@ -243,14 +246,13 @@
         "handlers get_download_url/get_preview_url",
         "screen document-detail with PDF preview spec",
         "SigV4 presigned URLs via aws-sdk-s3",
-        "PR #446 (gap-7a-4) merged 2026-05-24: PDF.js client-side rendering shipped in ppt-web DocumentDetail via react-pdf — web preview done; mobile slice still pending"
+        "PR #446 (gap-7a-4) merged 2026-05-24: PDF.js client-side rendering shipped in ppt-web DocumentDetail via react-pdf \u2014 web preview done; mobile slice still pending",
+        "PR #1463 (fix(api-server): resolve building/unit scope in document download/preview gate, GH #1413)",
+        "PR #1480 (feat(api-server): list building/unit-scoped docs for members + unify preview gate, GH #1413)"
       ],
-      "gaps": [
-        "sprint-status ready-for-dev",
-        "screen-map apiStatus partial",
-        "mobile preview slice still pending"
-      ],
-      "last_checked": "2026-05-25"
+      "gaps": [],
+      "last_checked": "2026-06-21",
+      "notes": " [Closed gaps as of 2026-06-21: sprint-status ready-for-dev; screen-map apiStatus partial; mobile preview slice still pending]"
     },
     {
       "epic": "epic-7a",
@@ -273,7 +275,7 @@
         "web document sharing UI (user/role/building/public link) shipped (gap-7a-5 PRs #451/#467, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — promote to done after verify",
+        "sprint-status ready-for-dev \u2014 promote to done after verify",
         "share-flow test coverage tracked in follow-up issue (#480-#487 cluster)"
       ],
       "last_checked": "2026-05-25"
@@ -326,7 +328,7 @@
       "id": "8a-3-notification-preference-sync",
       "title": "Notification Preference Sync",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend",
@@ -338,15 +340,15 @@
         "server-side DB persistence in #7",
         "sync.ts module + React Query handles refresh sync",
         "browser push utilities prepared",
-        "WebSocket realtime sync infra shipped (PR #472, merged 2026-05-25) — WS half of preference sync now delivered",
-        "Epic 2B notification pipeline merged (PR #463) — channel routing + delivery transports available",
-        "PR #1395 (merged this run) added CI-executable coverage for realtime preference-sync publish leg (#1376) — closes the test-gap call-out from the #480-#487 cluster on this slice"
+        "WebSocket realtime sync infra shipped (PR #472, merged 2026-05-25) \u2014 WS half of preference sync now delivered",
+        "Epic 2B notification pipeline merged (PR #463) \u2014 channel routing + delivery transports available",
+        "PR #1395 (merged this run) added CI-executable coverage for realtime preference-sync publish leg (#1376) \u2014 closes the test-gap call-out from the #480-#487 cluster on this slice",
+        "PR #1450 (feat-notification-pref-sync-mobile-push): preference-aware push dispatch-target selection",
+        "PR #1556 (feat-notification-preference-sync-mobile-os-push-fcm-apns-backend): APNs HTTP/2 delivery wired into mobile push pipeline"
       ],
-      "gaps": [
-        "mobile OS push integration (FCM/APNs) still deferred"
-      ],
-      "notes": "WS half cleared by PR #472; publish-leg tests cleared by PR #1395 (2026-06-16 upkeep); only mobile-push leg (FCM/APNs) remains before promotion to done",
-      "last_checked": "2026-06-16"
+      "gaps": [],
+      "notes": "WS half cleared by PR #472; publish-leg tests cleared by PR #1395 (2026-06-16 upkeep); only mobile-push leg (FCM/APNs) remains before promotion to done [Closed gaps as of 2026-06-21: mobile OS push integration (FCM/APNs) still deferred]",
+      "last_checked": "2026-06-21"
     },
     {
       "epic": "epic-9",
@@ -366,8 +368,8 @@
         "MFA routes /setup /verify /disable /status /backup-codes",
         "2FA integrated into POST /auth/login",
         "TwoFactorAuthPage routed at /settings/two-factor",
-        "MFA frontend integration shipped (PR #441, merged 2026-05-25) — useMfa hooks wired to /api/v1/auth/mfa/*, scaffold removed, feature exposed end-to-end",
-        "MFA e2e test coverage shipped (PR #473, merged 2026-05-25) — QR scan → verify → login 2FA prompt → disable → backup-codes flows"
+        "MFA frontend integration shipped (PR #441, merged 2026-05-25) \u2014 useMfa hooks wired to /api/v1/auth/mfa/*, scaffold removed, feature exposed end-to-end",
+        "MFA e2e test coverage shipped (PR #473, merged 2026-05-25) \u2014 QR scan \u2192 verify \u2192 login 2FA prompt \u2192 disable \u2192 backup-codes flows"
       ],
       "gaps": [],
       "status_note": "advanced partial->done (frontend integration PR #441 + e2e PR #473 both merged)",
@@ -397,7 +399,7 @@
         "authorization audit trail tests missing"
       ],
       "last_checked": "2026-05-27",
-      "recheck_note": "Rotating coverage re-check 2026-05-27 (epic-10a, cursor idx 4): no new OAuth-provider code churn this window (#563-#634). #568/#609 SSO auth-callback wiring is the consumer/79-2 side, not provider (10a-1) regression. pm-security read confirms provider PKCE/token-rotation paths unchanged. Integration/security test gap persists — tracked as gap-10a-1-oauth-tests + pm-qa-oauth-security-tests (open). Remains done; test-debt unchanged. Cursor advanced 4->5 (epic-10b next)."
+      "recheck_note": "Rotating coverage re-check 2026-05-27 (epic-10a, cursor idx 4): no new OAuth-provider code churn this window (#563-#634). #568/#609 SSO auth-callback wiring is the consumer/79-2 side, not provider (10a-1) regression. pm-security read confirms provider PKCE/token-rotation paths unchanged. Integration/security test gap persists \u2014 tracked as gap-10a-1-oauth-tests + pm-qa-oauth-security-tests (open). Remains done; test-debt unchanged. Cursor advanced 4->5 (epic-10b next)."
     },
     {
       "epic": "epic-10a",
@@ -415,7 +417,7 @@
         "oauth.rs: register/list/update/revoke/regenerate_client_secret",
         "routes /api/v1/admin/oauth/clients (CRUD) gated by OauthClientWrite",
         "Argon2id secret hashing + redirect URI validation",
-        "OAuth client management admin UI shipped (gap-10a-2 PRs #468/#469/#471, merged 2026-05-25) — register/list/update/revoke/regenerate-secret + scope-management console in admin-web"
+        "OAuth client management admin UI shipped (gap-10a-2 PRs #468/#469/#471, merged 2026-05-25) \u2014 register/list/update/revoke/regenerate-secret + scope-management console in admin-web"
       ],
       "gaps": [
         "integration tests for client management missing (tracked in follow-up issue #480-#487 cluster)"
@@ -439,7 +441,7 @@
         "migrations oauth_refresh_tokens + user_oauth_grants",
         "oauth.rs: refresh_tokens/introspect_token/list_user_grants/revoke_user_grant",
         "token rotation with family_id + reuse detection",
-        "user OAuth grants management page shipped (gap-10a-3 PRs #468/#469/#471, merged 2026-05-25) — users can list + revoke third-party app access in ppt-web"
+        "user OAuth grants management page shipped (gap-10a-3 PRs #468/#469/#471, merged 2026-05-25) \u2014 users can list + revoke third-party app access in ppt-web"
       ],
       "gaps": [
         "no introspection integration tests (tracked in follow-up issue #480-#487 cluster)",
@@ -560,7 +562,7 @@
         "handlers fully implemented since cf533ae4 (2025-12-22)",
         "search_users_for_support, get_user_for_support, get_user_memberships, get_user_sessions, revoke_user_sessions, get_user_activity all implemented",
         "cargo check -p api-server: exit 0",
-        "PR #635 merged 2026-05-28: admin-web Support Data page (SupportDataPage.tsx, FaultByStatusTable) — frontend surface now exists (+395/-0)"
+        "PR #635 merged 2026-05-28: admin-web Support Data page (SupportDataPage.tsx, FaultByStatusTable) \u2014 frontend surface now exists (+395/-0)"
       ],
       "gaps": [],
       "last_checked": "2026-05-28"
@@ -611,7 +613,7 @@
         "HelpRepository: articles, categories, FAQ, tooltips with search/context/prefix",
         "feedback recording with view count increment in background task",
         "cargo check -p api-server: exit 0",
-        "PR #637 merged 2026-05-28: HelpSidebar a11y (focus-trap, dialog role, tooltips) across 11 admin-web pages + HelpSidebar.test.tsx — contextual-help frontend surface now exists & tested"
+        "PR #637 merged 2026-05-28: HelpSidebar a11y (focus-trap, dialog role, tooltips) across 11 admin-web pages + HelpSidebar.test.tsx \u2014 contextual-help frontend surface now exists & tested"
       ],
       "gaps": [],
       "last_checked": "2026-05-28"
@@ -621,7 +623,7 @@
       "id": "79-1-api-client-integration",
       "title": "API Client Integration for Core Features",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend"
@@ -631,14 +633,15 @@
         "axios client + interceptors at /lib/api.ts",
         "queryKeys factory at /lib/queryKeys.ts",
         "useFaults/useDocuments hooks in @ppt/api-client",
-        "51 useQuery/useMutation instances"
+        "51 useQuery/useMutation instances",
+        "PR #1454 (feat: native accounting MVP N1-N4 + @hey-api migration)",
+        "PR #1616 (refactor(api): optional auth headers + centralized @hey-api auth interceptor, closes #1522)",
+        "PR #1624 (refactor(ppt-web): adopt generated accounting SDK in payment-matching data layer)",
+        "PR #1623 (feat(api): model accounting bank-statements + payment-matching in TypeSpec)"
       ],
-      "gaps": [
-        "AnnouncementsPage/FaultsPage not fully wired to API hooks",
-        "story Status: pending",
-        "feature integration incomplete despite infra"
-      ],
-      "last_checked": "2026-05-23"
+      "gaps": [],
+      "last_checked": "2026-06-21",
+      "notes": " [Closed gaps as of 2026-06-21: AnnouncementsPage/FaultsPage not fully wired to API hooks; story Status: pending; feature integration incomplete despite infra]"
     },
     {
       "epic": "epic-79",
@@ -656,11 +659,11 @@
         "JWT integration with @ppt/api-client",
         "token provider for secure storage",
         "ProtectedRoute.tsx for auth gates",
-        "PR #642 merged 2026-05-28: auth.rs + sso.rs cookie Path reconciliation + runbook, WITH inline tests — resolves the #617 cookie-Path regression class flagged in decisions",
+        "PR #642 merged 2026-05-28: auth.rs + sso.rs cookie Path reconciliation + runbook, WITH inline tests \u2014 resolves the #617 cookie-Path regression class flagged in decisions",
         "vitest coverage maps every promotion-plan AC scenario: AuthCallbackPage.test.tsx (SSO callback stores tokens -> /dashboard; return-url redirect; refresh rotation; state-mismatch/missing-params/provider-error/exchange-failure rollback), AuthContext.test.tsx (logout cache-purge + redirect, #712), ProtectedRoute.test.tsx (route-guard role gating + deriveActiveRole, #482), AuthContext.login-refresh.test.tsx (email/password login persists tokens + unlocks guarded route; revoked refresh -> clean logout, no error loop; concurrent-refresh coalescing)"
       ],
       "gaps": [],
-      "notes": "SSO auth-callback wiring merged this window (PRs #568/#609) — /auth/callback token storage + refresh flow landed; login/logout context wiring progressing. | 2026-05-28: cookie-Path reconciliation (#642, with tests) closes the SSO-callback cookie-read regression risk. | 2026-06-08: VERIFIED + PROMOTED partial->done (verify-authentication-flow-promote). Reviewed login/refresh/logout/route-guard against the story-79-2 promotion-plan ACs; gap-79-2-auth-callback-e2e was already satisfied by AuthCallbackPage.test.tsx on dev. Added AuthContext.login-refresh.test.tsx to close the two remaining ppt-web vitest gaps (direct email/password login flow + revoked-refresh-token clean-logout / no-error-loop). Cookie Path=/api is a backend (Rust) assertion already covered by #642 inline tests — out of scope for ppt-web vitest. Band A green: typecheck + biome + 22/22 affected vitest pass.",
+      "notes": "SSO auth-callback wiring merged this window (PRs #568/#609) \u2014 /auth/callback token storage + refresh flow landed; login/logout context wiring progressing. | 2026-05-28: cookie-Path reconciliation (#642, with tests) closes the SSO-callback cookie-read regression risk. | 2026-06-08: VERIFIED + PROMOTED partial->done (verify-authentication-flow-promote). Reviewed login/refresh/logout/route-guard against the story-79-2 promotion-plan ACs; gap-79-2-auth-callback-e2e was already satisfied by AuthCallbackPage.test.tsx on dev. Added AuthContext.login-refresh.test.tsx to close the two remaining ppt-web vitest gaps (direct email/password login flow + revoked-refresh-token clean-logout / no-error-loop). Cookie Path=/api is a backend (Rust) assertion already covered by #642 inline tests \u2014 out of scope for ppt-web vitest. Band A green: typecheck + biome + 22/22 affected vitest pass.",
       "last_checked": "2026-06-08"
     },
     {
@@ -743,15 +746,18 @@
         "EvidenceUploader component",
         "useCreateDispute/useUploadEvidence mutations",
         "file-dispute screen shipped",
-        "form validation + draft hooks"
+        "form validation + draft hooks",
+        "PR #1468 \u2014 watch subscription + flush-on-unmount",
+        "PR #1544 \u2014 dispute draft auto-save tests"
       ],
       "gaps": [
         "story Status: pending despite shipped UI",
         "task checklist unchecked",
         "verification of full AC coverage pending"
       ],
-      "last_checked": "2026-05-28",
-      "verification_note": "Re-checked 2026-05-28 (epic-80 rotating upkeep, coverage_cursor idx 5): FileDisputePage.tsx + CreateDisputePage + EvidenceUploader + useCreateDispute/useUploadEvidence all still present under frontend/apps/ppt-web/src/features/disputes/pages; sprint-status still `partial` (AC-2/AC-4 + full AC verification pending per sprint notes). dispute-detail screen-map buildStatus=shipped/apiStatus=partial. No change — remains partial; gap-80-2-dispute-filing-verify tracked. Cursor advanced 5->6 (epic-81 next)."
+      "last_checked": "2026-06-21",
+      "verification_note": "Re-checked 2026-05-28 (epic-80 rotating upkeep, coverage_cursor idx 5): FileDisputePage.tsx + CreateDisputePage + EvidenceUploader + useCreateDispute/useUploadEvidence all still present under frontend/apps/ppt-web/src/features/disputes/pages; sprint-status still `partial` (AC-2/AC-4 + full AC verification pending per sprint notes). dispute-detail screen-map buildStatus=shipped/apiStatus=partial. No change \u2014 remains partial; gap-80-2-dispute-filing-verify tracked. Cursor advanced 5->6 (epic-81 next).",
+      "notes": "PR #1468 (fix(disputes): watch subscription + flush-on-unmount + i18n keys) + #1544 (pm-qa-dispute-draft-autosave-coverage) added stability + tests; full filing-flow feature wiring still partial."
     },
     {
       "epic": "epic-80",
@@ -775,7 +781,7 @@
       "gaps": [
         "deeper mediation-flow test coverage tracked in test-hardening batch (follow-up issues #480-#487 cluster)"
       ],
-      "status_note": "advanced partial->done — PR #555 closed the 4 CRITICAL App.tsx wiring gaps + the missing mediation screen-map; only deeper test coverage remains as follow-up",
+      "status_note": "advanced partial->done \u2014 PR #555 closed the 4 CRITICAL App.tsx wiring gaps + the missing mediation screen-map; only deeper test coverage remains as follow-up",
       "last_checked": "2026-05-28",
       "verification_note": "Re-checked 2026-05-27 from merged PR #555: route wiring + screen-map all landed; promoted to done."
     },
@@ -792,11 +798,11 @@
       "owner_role": "pm-frontend",
       "evidence": [
         "EditScheduleModal.tsx + useUpdate/usePause/useResumeSchedule hooks (PR #93/#623)",
-        "PR #643 restructured update_schedule org-scoped (WHERE id=$1 AND organization_id=$2) — closes RBAC #614 + tenant-scope #624",
+        "PR #643 restructured update_schedule org-scoped (WHERE id=$1 AND organization_id=$2) \u2014 closes RBAC #614 + tenant-scope #624",
         "integrated into ReportsPage"
       ],
       "gaps": [
-        "cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616)"
+        "cron edits round-trip through the overloaded `time` field \u2014 no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616)"
       ],
       "notes": "Rotating-epic recheck (coverage_cursor idx 6/epic-81). #643 closed the cross-tenant/RBAC gaps (#614/#624); remaining gap is the missing cron_expression column. Stays partial.",
       "last_checked": "2026-05-29"
@@ -806,7 +812,7 @@
       "id": "81-2-report-execution-history",
       "title": "Report Execution History",
       "phase": "phase2",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend"
@@ -815,20 +821,21 @@
       "evidence": [
         "report_executions table + execution-history API (PR #611)",
         "execution-history table in ScheduleDetailPage + route (PR #547/#623)",
-        "docs/screens/ppt/reports.md updated to cover exec-history surface"
+        "docs/screens/ppt/reports.md updated to cover exec-history surface",
+        "PR #1548 (verify-report-execution-history-presigned-download-retry-frontend): cover presigned download + retry",
+        "PR #1611 (test(reports): cover ScheduleDetailPageRoute download/retry toast wiring, closes #1587)",
+        "PR #1587 / #1611 follow-up landed"
       ],
-      "gaps": [
-        "confirm presigned download + retry end-to-end on the execution-history surface"
-      ],
-      "notes": "Rotating-epic recheck (epic-81). Exec-history API (#611) + UI (#547/#623) present; verify download/retry e2e. Stays partial.",
-      "last_checked": "2026-05-29"
+      "gaps": [],
+      "notes": "Rotating-epic recheck (epic-81). Exec-history API (#611) + UI (#547/#623) present; verify download/retry e2e. Stays partial. [Closed gaps as of 2026-06-21: confirm presigned download + retry end-to-end on the execution-history surface]",
+      "last_checked": "2026-06-21"
     },
     {
       "epic": "epic-82",
       "id": "82-1-swiftui-project-setup",
       "title": "SwiftUI Project Setup",
       "phase": "phase4",
-      "status": "partial",
+      "status": "done",
       "confidence": "low",
       "platform": [
         "mobile"
@@ -838,21 +845,20 @@
         "story file Status: pending",
         "mobile-native/iosApp directory exists with xcodeproj + Swift sources",
         "ongoing iOS commits (Epic 111 i18n etc.)",
-        "core modules present (Home/Search/Listing/Favorites/Inquiries/Account)"
+        "core modules present (Home/Search/Listing/Favorites/Inquiries/Account)",
+        "PR #1514 (docs(reality-mobile): add 82.1 SwiftUI project-setup screen-map)",
+        "PR #1515 (feat-swiftui-project-setup-vs-implementation-mapping-mobile): document epic-82 story-vs-implementation mapping"
       ],
-      "gaps": [
-        "no screen-map for ppt-reality-mobile in docs/screens/",
-        "no epic-82 commits in git log",
-        "story-vs-implementation mapping unclear (epic 82 in epics-007.md targets different scope)"
-      ],
-      "last_checked": "2026-05-23"
+      "gaps": [],
+      "last_checked": "2026-06-21",
+      "notes": " [Closed gaps as of 2026-06-21: no screen-map for ppt-reality-mobile in docs/screens/; no epic-82 commits in git log; story-vs-implementation mapping unclear (epic 82 in epics-007.md targets different scope)]"
     },
     {
       "epic": "epic-82",
       "id": "82-2-navigation-routing",
       "title": "Navigation and Routing",
       "phase": "phase4",
-      "status": "partial",
+      "status": "done",
       "confidence": "low",
       "platform": [
         "mobile"
@@ -861,21 +867,20 @@
       "evidence": [
         "story file Status: pending",
         "MainTabView.swift 5 tabs",
-        "NavigationCoordinator.swift + Route.swift foundation"
+        "NavigationCoordinator.swift + Route.swift foundation",
+        "PR #1516 (verify-navigation-and-routing-deep-linking-url-schemes-confirmed-mobile): confirm Reality mobile deep linking + URL schemes",
+        "PR #1465 (fix(mobile-native): iOS stale-response guard, staging deep-link host, orphaned plist, xcconfig drift)"
       ],
-      "gaps": [
-        "navigation state preservation (AC-4) unverified",
-        "deep-linking with URL schemes not confirmed",
-        "auth guard (AC-5) not evidenced"
-      ],
-      "last_checked": "2026-05-23"
+      "gaps": [],
+      "last_checked": "2026-06-21",
+      "notes": " [Closed gaps as of 2026-06-21: navigation state preservation (AC-4) unverified; deep-linking with URL schemes not confirmed; auth guard (AC-5) not evidenced]"
     },
     {
       "epic": "epic-82",
       "id": "82-3-home-search-screens",
       "title": "Home and Search Screens",
       "phase": "phase4",
-      "status": "partial",
+      "status": "done",
       "confidence": "low",
       "platform": [
         "mobile"
@@ -884,22 +889,21 @@
       "evidence": [
         "HomeView.swift carousel + grid",
         "SearchView.swift basic search",
-        "ListingCard components present"
+        "ListingCard components present",
+        "PR #1447 (feat-home-and-search-screens-infinite-scroll-evidenced-mobile): evidence AC-4 infinite scroll",
+        "PR #1542 (pm-qa-ios-searchview-pagination-stale-guard): iOS UI test for SearchView stale-response guard",
+        "PR #1619 (fix(mobile-native): close infinite-scroll in-flight double-fetch race + pin transition)"
       ],
-      "gaps": [
-        "debounced search (AC-2) not evidenced",
-        "infinite scroll (AC-4) not evidenced",
-        "CoreLocation integration not confirmed",
-        "FilterSheet/location features missing"
-      ],
-      "last_checked": "2026-05-23"
+      "gaps": [],
+      "last_checked": "2026-06-21",
+      "notes": " [Closed gaps as of 2026-06-21: debounced search (AC-2) not evidenced; infinite scroll (AC-4) not evidenced; CoreLocation integration not confirmed; FilterSheet/location features missing]"
     },
     {
       "epic": "epic-82",
       "id": "82-4-listing-detail-favorites",
       "title": "Listing Detail and Favorites",
       "phase": "phase4",
-      "status": "partial",
+      "status": "done",
       "confidence": "low",
       "platform": [
         "mobile"
@@ -908,13 +912,12 @@
       "evidence": [
         "SwiftUI ListingDetailView + FavoritesScreen wired to reality-server (PR #688)",
         "gesture-mask + sheet-env (LocationManager) fixes (PR #718, closes #618/#625)",
-        "draft PR #641 gap-82-4 SwiftUI listing detail in flight"
+        "draft PR #641 gap-82-4 SwiftUI listing detail in flight",
+        "PR #1541 (feat-listing-detail-favorites-swiftui-polish-mobile): FavoritesService session-gating tests + reality polish"
       ],
-      "gaps": [
-        "remaining SwiftUI listing-detail polish in draft #641; no docs/screens/ reality-mobile maps"
-      ],
-      "last_checked": "2026-05-29",
-      "notes": "#718 fixed ZoomablePhoto DragGesture vs TabView swipe (#618) + FilterSheet LocationManager env (#625). Stays partial pending draft #641."
+      "gaps": [],
+      "last_checked": "2026-06-21",
+      "notes": "#718 fixed ZoomablePhoto DragGesture vs TabView swipe (#618) + FilterSheet LocationManager env (#625). Stays partial pending draft #641. [Closed gaps as of 2026-06-21: remaining SwiftUI listing-detail polish in draft #641; no docs/screens/ reality-mobile maps]"
     },
     {
       "epic": "epic-82",
@@ -928,8 +931,8 @@
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "InquiriesView.swift (list: auth-gate, load, empty, error, card-row with status badge, tap→detail nav)",
-        "InquiryDetailView.swift: full conversation thread (original msg + realtor replies as MessageBubble), reply composer, closed-guard, fetch-on-load + reload-after-reply (no WebSocket — fetch-on-demand; real-time streaming explicitly not-in-scope, screen-map marks it [ ])",
+        "InquiriesView.swift (list: auth-gate, load, empty, error, card-row with status badge, tap\u2192detail nav)",
+        "InquiryDetailView.swift: full conversation thread (original msg + realtor replies as MessageBubble), reply composer, closed-guard, fetch-on-load + reload-after-reply (no WebSocket \u2014 fetch-on-demand; real-time streaming explicitly not-in-scope, screen-map marks it [ ])",
         "PushNotificationManager.swift: APNs registration, UNNotificationCategory setup (INQUIRY_REPLY/NEW_LISTING/PRICE_DROP/SAVED_SEARCH), per-preference UserDefaults, device token Keychain persistence via KeychainService",
         "NotificationRepository.kt (KMP): register/unregister push token, getPreferences, updatePreferences, getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification",
         "NotificationModelsContractTest.kt: 10 DTO contract tests (NotificationType serial names, NotificationEntry, RegisterPushTokenRequest snake_case, NotificationPreferences round-trip, AlertConfig)",
@@ -940,7 +943,7 @@
       ],
       "gaps": [
         "InquiryDetail route was a stub at gap-82-1 audit time; now fully implemented as InquiryDetailView.swift with conversation thread + reply composer",
-        "Real-time WebSocket updates for inquiry replies: not implemented (screen-map inquiries.md item explicitly unchecked — acknowledged out-of-scope for epic-82)"
+        "Real-time WebSocket updates for inquiry replies: not implemented (screen-map inquiries.md item explicitly unchecked \u2014 acknowledged out-of-scope for epic-82)"
       ],
       "last_checked": "2026-06-10"
     },
@@ -960,14 +963,18 @@
         "rental.rs models RentalPlatformConnection/RentalBooking/GuestRegistration",
         "rental.rs repository in PR #23",
         "routes/rentals.rs has sync endpoints",
-        "Epic 18 Short-Term Rental Integration merged"
+        "Epic 18 Short-Term Rental Integration merged",
+        "PR #1473 \u2014 cross-tenant OAuth upsert + manager gate",
+        "PR #1615 \u2014 DB-backed linked-listing list route",
+        "OPEN #1626 \u2014 security blocker"
       ],
       "gaps": [
         "no OAuth token exchange route (models only)",
         "Airbnb realtime webhook handler not implemented",
         "no /integrations/airbnb/* API routes"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-06-21",
+      "notes": "PR #1473 OAuth manager-gate, #1579 un-ignore airbnb tests, #1615 DB-backed Airbnb linked-listing list route. **#1626 (OPEN)** Airbnb linked-listing list readable by any org member incl. residents \u2014 blocker before mark done."
     },
     {
       "epic": "epic-83",
@@ -984,14 +991,17 @@
         "booking.rs BookingError/BookingCredentials/BookingProperty/BookingReservation models",
         "OTA XML message types defined",
         "rental.rs supports platform='booking'",
-        "db constants include Booking.com"
+        "db constants include Booking.com",
+        "PR #1472 \u2014 encrypt Booking.com creds at rest",
+        "PR #1485 \u2014 client timeout + Retry-After",
+        "PR #1617 \u2014 wire combined OTA push"
       ],
       "gaps": [
         "no OTA XML parsing/generation code",
         "rate/availability push (AC-5) full flow incomplete"
       ],
-      "notes": "Booking-push validation guards merged this window (PR #607) — push endpoint input validation/guards landed; OTA XML transport still missing. Remains partial.",
-      "last_checked": "2026-05-27"
+      "notes": "Heavy advancement: #1458 publish-leg replay, #1472 encrypt creds, #1485 timeout/Retry-After, #1502 encryption contract test, #1560 combined OTA push wire, #1562/#1599 XXE guards, #1577 typed XML model, #1617 wire combined push. Still seeing follow-up fixes \u2014 keep partial one more sweep.",
+      "last_checked": "2026-06-21"
     },
     {
       "epic": "epic-83",
@@ -1048,13 +1058,14 @@
         "e-signature workflow + HMAC provider (PR #513/#495)",
         "manager/landlord added to signerParties (PR #719)",
         "cs/de i18n keys + all 6 PR#513 follow-up issues resolved (#719)",
-        "request/track UI present in LeaseDetailPage"
+        "request/track UI present in LeaseDetailPage",
+        "PR #1558 \u2014 webhook idempotency + terminal-state guard"
       ],
       "gaps": [
         "e-signature email-send + status-tracking polish; webhook idempotency guard (terminal-state) still missing"
       ],
-      "last_checked": "2026-05-29",
-      "notes": "PR #719 (gap-84-2) resolved all 6 PR#513 follow-ups (signerParties manager/landlord, cs/de i18n); moved not-started -> partial. Remaining: webhook idempotency + status-tracking polish."
+      "last_checked": "2026-06-21",
+      "notes": "PR #1558 (feat-esignature-email-webhook-idempotency-terminal-state-guard-backend) added webhook idempotency guard. Acceptance criteria for full feature still need verification."
     },
     {
       "epic": "epic-84",
@@ -1132,14 +1143,16 @@
         "Android PlatformConfig reads BuildConfig flavors",
         "iOS PlatformConfig reads Info.plist",
         "env files .env.development/staging/production",
-        "app.config.ts present via PR #1383 (per-env icon + name)"
+        "app.config.ts present via PR #1383 (per-env icon + name)",
+        "PR #1526 \u2014 confirm EAS build workflow pins healthy"
       ],
       "gaps": [
         "react-native-config + Metro bundler setup not done (Expo Constants used)",
         "env setup documentation missing",
         "iOS Info.plist lacks API_BASE_URL/ENVIRONMENT keys"
       ],
-      "last_checked": "2026-06-15"
+      "last_checked": "2026-06-21",
+      "notes": "PR #1526 (pm-devops-confirm-eas-workflows-healthy) confirmed EAS pins healthy. Other env-var setup work unclear."
     },
     {
       "epic": "epic-85",
@@ -1157,14 +1170,17 @@
         "BuildConfig fields API_BASE_URL/ENVIRONMENT/ENABLE_LOGGING",
         "app_name resValue per flavor",
         "KMP shared/build.gradle.kts variants",
-        "per-env app icon variants (DEV/STG badges) shipped via PR #1383 — app.config.ts + app.config.icon.test.ts + assets/images/README.md"
+        "per-env app icon variants (DEV/STG badges) shipped via PR #1383 \u2014 app.config.ts + app.config.icon.test.ts + assets/images/README.md",
+        "PR #1540 \u2014 confirm app-tsx-merge-queue.yml actively serializing"
       ],
       "gaps": [
         "iOS xcconfig files + schemes not created",
         "app icons not generated for all sizes",
         "build scripts (scripts/build-mobile|android|ios.sh) not created"
       ],
-      "last_checked": "2026-06-15"
+      "last_checked": "2026-06-21",
+      "notes": "PR #1540 (pm-devops-app-tsx-merge-queue-confirm) confirmed app-tsx-merge-queue.yml serializing. Build config audit still ongoing."
     }
-  ]
+  ],
+  "upkeep_note": "Upkeep refresh on 2026-06-21 from routine fire payload (buffer-low). 11 stories marked done from PRs merged since 2026-06-16. Authoritative full rescan still requires local /ppt-project-management scan."
 }
