@@ -155,5 +155,20 @@ pnpm -F mobile build:ios:staging
 pnpm -F mobile build:ios:production
 ```
 
+For a single command that builds one environment across both platforms, use the
+`build-mobile.sh` wrapper (RN/Expo counterpart of the top-level KMP
+`scripts/build-*.sh`):
+
+```bash
+pnpm -F mobile build:mobile staging both      # eas build staging, android + ios
+pnpm -F mobile build:mobile production ios     # eas build production, ios only
+pnpm -F mobile build:mobile staging android --local   # local EAS build
+# or directly:
+./scripts/build-mobile.sh development          # dev-client build, both platforms
+```
+
+It maps `development|staging|production` to the matching `eas.json` profile,
+forwards any trailing args to `eas build`, and prints a per-platform summary.
+
 The `eas` CLI must be installed globally (`npm install -g eas-cli`) — it is
 intentionally not a devDependency. See [`CLAUDE.md`](./CLAUDE.md) for details.
