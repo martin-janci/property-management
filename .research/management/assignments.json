@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-21T18:34:56Z",
+  "generated": "2026-06-21T20:07:04Z",
   "assignments": [
     {
       "task_id": "feat-build-configuration-by-environ-app-icons-all-sizes-mobile",
@@ -70,13 +70,13 @@
     {
       "task_id": "feat-mobile-ios-xcconfig-schemes-build-scripts-mobile",
       "branch": "auto-impl/feat-mobile-ios-xcconfig-schemes-build-s",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-06-21T18:19:55Z",
-      "last_updated": "2026-06-21T18:34:56Z",
-      "status_changed_at": "2026-06-21T18:34:56Z",
+      "last_updated": "2026-06-21T20:07:04Z",
+      "status_changed_at": "2026-06-21T20:07:04Z",
       "pr_number": 1659,
       "pr_url": "https://github.com/martin-janci/property-management/pull/1659",
-      "merged_at": null,
+      "merged_at": "2026-06-21T20:07:04Z",
       "specialist": "react-native",
       "implementer_summary": "pr=1659 status=done specialist=react-native scope_drift=false code_reuse_warn=none note=RN iOS xcconfig+plugin+EAS already landed (#523/#1658); reconciled stale xcconfig README to match #1410 test + added Expo build-mobile.sh wrapper; Band A green",
       "reviewer_summary": "verdict=approve note=docs+config-only; README matches xcconfig contract test, build-mobile.sh arg-handling verified, no scope drift/dup",
