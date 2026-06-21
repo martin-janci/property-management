@@ -1189,13 +1189,11 @@ impl RealityPortalRepository {
         listing_id: Uuid,
         user_id: Uuid,
     ) -> Result<Option<Listing>, SqlxError> {
-        sqlx::query_as::<_, Listing>(
-            r#"SELECT * FROM portal_get_listing($1, $2)"#,
-        )
-        .bind(listing_id)
-        .bind(user_id)
-        .fetch_optional(&self.pool)
-        .await
+        sqlx::query_as::<_, Listing>(r#"SELECT * FROM portal_get_listing($1, $2)"#)
+            .bind(listing_id)
+            .bind(user_id)
+            .fetch_optional(&self.pool)
+            .await
     }
 
     /// Patch a portal-user-owned listing. None fields are left unchanged.
