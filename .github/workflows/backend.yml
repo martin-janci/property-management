@@ -72,6 +72,14 @@ jobs:
         with:
           workspaces: backend
 
+      # Formatting is enforced here in the REQUIRED `check` job, not only in the
+      # non-blocking `lint` job — so a rustfmt violation blocks merge into dev
+      # instead of landing and needing a fixup PR. This recurred on #1563/#1580
+      # (merged red-`lint` on green `check`) → #1581; tracked as GH #1592.
+      - name: Check formatting
+        working-directory: backend
+        run: cargo fmt --all -- --check
+
       # check-rls-enforcement.sh is ripgrep-based and now hard-fails when rg
       # is missing — without this install the gate was a silent no-op for the
       # entire life of the repo (every `rg … || true` swallowed exit 127 and

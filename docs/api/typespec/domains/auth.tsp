@@ -164,7 +164,7 @@ interface AuthApi {
   @doc("Logout (invalidate tokens)")
   @post
   @route("/logout")
-  logout(@header("Authorization") token: string): {
+  logout(@header("Authorization") token?: string): {
     @statusCode statusCode: 204;
   };
 
@@ -178,13 +178,13 @@ interface AuthApi {
   @doc("Get current user profile")
   @get
   @route("/me")
-  getMe(@header("Authorization") token: string): User | UnauthorizedError;
+  getMe(@header("Authorization") token?: string): User | UnauthorizedError;
 
   @doc("Update current user profile")
   @patch
   @route("/me")
   updateMe(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: {
       displayName?: string;
       phone?: phoneNumber;
@@ -196,7 +196,7 @@ interface AuthApi {
   @post
   @route("/me/password")
   changePassword(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: PasswordChangeRequest
   ): {
     @statusCode statusCode: 204;
@@ -205,13 +205,13 @@ interface AuthApi {
   @doc("Setup 2FA")
   @post
   @route("/me/2fa/setup")
-  setup2FA(@header("Authorization") token: string): TwoFactorSetupResponse | UnauthorizedError;
+  setup2FA(@header("Authorization") token?: string): TwoFactorSetupResponse | UnauthorizedError;
 
   @doc("Enable 2FA")
   @post
   @route("/me/2fa/enable")
   enable2FA(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: { code: string }
   ): {
     @statusCode statusCode: 204;
@@ -221,7 +221,7 @@ interface AuthApi {
   @post
   @route("/me/2fa/disable")
   disable2FA(
-    @header("Authorization") token: string,
+    @header("Authorization") token?: string,
     @body body: { code: string }
   ): {
     @statusCode statusCode: 204;

@@ -1,6 +1,6 @@
 import '@ppt/ui-kit/tokens.css'; // Design system tokens (colors, spacing, type, dark mode)
 import './index.css'; // Tailwind base + components + utilities + minimal app shell styles
-import { client } from '@ppt/api-client';
+import { client, registerAuthInterceptors } from '@ppt/api-client';
 import { type ApiMode, DevPanel, getMode, parseMode } from '@ppt/dev-panel';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -18,6 +18,12 @@ import './i18n'; // Initialize i18n
 client.setConfig({
   baseUrl: import.meta.env.VITE_API_URL || '',
 });
+
+// Centralize auth on the generated client (#1522): inject Authorization +
+// X-Tenant-ID from the providers AuthContext registers, now that the TypeSpec
+// auth headers are optional. Features call the client directly without
+// hand-rolling auth.
+registerAuthInterceptors(client);
 
 const queryClient = new QueryClient({
   defaultOptions: {

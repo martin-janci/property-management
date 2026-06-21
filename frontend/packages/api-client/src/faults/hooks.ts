@@ -124,6 +124,10 @@ export function useDeleteFault() {
     onSuccess: (_, faultId) => {
       queryClient.removeQueries({ queryKey: faultKeys.detail(faultId) });
       queryClient.invalidateQueries({ queryKey: faultKeys.lists() });
+      // The Total/Open/Closed stats bar sits above the deletable list, so it
+      // must refresh after a delete too (#1588 F3). Prefix-invalidate every
+      // statistics query (any buildingId variant).
+      queryClient.invalidateQueries({ queryKey: [...faultKeys.all, 'statistics'] });
     },
   });
 }

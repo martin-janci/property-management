@@ -636,7 +636,54 @@ export function useAnnouncementComments(
   });
 }
 
-/** Create a comment on an announcement */
+/**
+ * Variables accepted by {@link useCreateAnnouncementComment}.
+ *
+ * `optimisticAuthorName` is UI-only: when supplied, the mutation inserts a
+ * temporary placeholder comment into the cache immediately (optimistic add)
+ * so the thread feels instant. It is never sent to the server.
+ */
+export interface CreateAnnouncementCommentVars {
+  announcementId: string;
+  content: string;
+  parentId?: string;
+  aiTrainingConsent?: boolean;
+  /** Display name for the optimistic placeholder. Omit to skip the optimistic insert. */
+  optimisticAuthorName?: string;
+  /** Current user id, stamped on the optimistic placeholder so delete affordances render. */
+  optimisticUserId?: string;
+}
+
+type CommentWithAuthor = import('./types').CommentWithAuthor;
+type CommentsResponse = import('./types').CommentsResponse;
+
+/** Stable prefix for client-generated optimistic comment ids. */
+export const OPTIMISTIC_COMMENT_PREFIX = 'optimistic-';
+
+/**
+ * Insert a (top-level or nested) comment into a comments tree immutably.
+ * When `parentId` is set, the comment is appended to that parent's `replies`;
+ * otherwise it is appended at the top level.
+ */
+export function insertCommentIntoTree(
+  comments: CommentWithAuthor[],
+  comment: CommentWithAuthor
+): CommentWithAuthor[] {
+  if (!comment.parentId) {
+    return [...comments, comment];
+  }
+  return comments.map((c) => {
+    if (c.id === comment.parentId) {
+      return { ...c, replies: [...(c.replies ?? []), comment] };
+    }
+    if (c.replies && c.replies.length > 0) {
+      return { ...c, replies: insertCommentIntoTree(c.replies, comment) };
+    }
+    return c;
+  });
+}
+
+/** Create a comment on an announcement, with optimistic add + rollback. */
 export function useCreateAnnouncementComment() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -645,12 +692,7 @@ export function useCreateAnnouncementComment() {
       content,
       parentId,
       aiTrainingConsent,
-    }: {
-      announcementId: string;
-      content: string;
-      parentId?: string;
-      aiTrainingConsent?: boolean;
-    }) =>
+    }: CreateAnnouncementCommentVars) =>
       fetchJson<import('./types').AnnouncementComment>(
         `${ANNOUNCEMENTS_BASE}/${announcementId}/comments`,
         {
@@ -658,7 +700,44 @@ export function useCreateAnnouncementComment() {
           body: JSON.stringify({ content, parentId, aiTrainingConsent }),
         }
       ),
-    onSuccess: (_, { announcementId }) => {
+    onMutate: async (vars) => {
+      // Optimistic insert is opt-in: callers without an author name (e.g.
+      // contract tests) keep the plain invalidate-on-success behaviour.
+      if (!vars.optimisticAuthorName) return { key: undefined };
+      const key = announcementKeys.comments(vars.announcementId, undefined);
+      // Cancel in-flight refetches so they can't clobber our optimistic write.
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<CommentsResponse>(key);
+      const now = new Date().toISOString();
+      const optimistic: CommentWithAuthor = {
+        id: `${OPTIMISTIC_COMMENT_PREFIX}${now}-${Math.random().toString(36).slice(2)}`,
+        announcementId: vars.announcementId,
+        userId: vars.optimisticUserId ?? '',
+        parentId: vars.parentId,
+        content: vars.content,
+        authorName: vars.optimisticAuthorName,
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        replies: [],
+      };
+      const base: CommentsResponse = previous ?? { comments: [], count: 0, total: 0 };
+      queryClient.setQueryData<CommentsResponse>(key, {
+        ...base,
+        comments: insertCommentIntoTree(base.comments, optimistic),
+        count: base.count + 1,
+        total: base.total + 1,
+      });
+      return { key, previous };
+    },
+    onError: (_err, _vars, context) => {
+      // Roll the cache back to the pre-mutation snapshot.
+      if (context?.key) {
+        queryClient.setQueryData(context.key, context.previous);
+      }
+    },
+    onSettled: (_data, _err, { announcementId }) => {
+      // Reconcile with the server (replaces the placeholder with the real row).
       queryClient.invalidateQueries({ queryKey: announcementKeys.comments(announcementId) });
       queryClient.invalidateQueries({ queryKey: announcementKeys.detail(announcementId) });
     },

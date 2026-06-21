@@ -260,6 +260,32 @@ export interface PaymentAllocation {
   created_at: string;
 }
 
+/** Params for the org-wide payments list (Payment Management, #975.5). */
+export interface ListPaymentsParams {
+  organization_id: string;
+  status?: PaymentStatus;
+  limit?: number;
+  offset?: number;
+}
+
+/** Paginated payments list response. */
+export interface PaymentListResponse {
+  payments: Payment[];
+  total: number;
+}
+
+/** Body for allocating an existing payment to an invoice (manual match). */
+export interface AllocatePaymentRequest {
+  organization_id: string;
+  invoice_id: string;
+  amount?: number;
+}
+
+/** Result of a bulk auto-match. */
+export interface AutoMatchResult {
+  matched: number;
+}
+
 // ============================================================================
 // REMINDERS & LATE FEES
 // ============================================================================

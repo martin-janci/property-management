@@ -1,39 +1,32 @@
+/**
+ * PaymentMatchingPage — review & confirm bank-statement → invoice payment matches.
+ *
+ * Relocated from reality-web (#1521): this surface consumes manager-only
+ * api-server (8080) accounting endpoints, so it belongs in ppt-web (which targets
+ * api-server) — not the public Reality Portal (reality-server, 8081). Auth and the
+ * active-org header now flow through the shared `@ppt/api-client` client + request
+ * interceptor (#1616), instead of the never-written `auth_token`/`current_tenant_id`
+ * localStorage keys the original page invented (which sent `Bearer null`).
+ */
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { queryKeys } from '../../../lib/queryKeys';
+import {
+  confirmMatch,
+  fetchLineMatches,
+  fetchStatementLines,
+  fetchStatements,
+  rejectMatch,
+  uploadStatement,
+} from '../api/paymentMatching';
 
 function formatDate(value: string, month: 'short' | 'long'): string {
-  return new Date(value).toLocaleDateString('en-US', {
+  return new Date(value).toLocaleDateString(undefined, {
     month,
     day: 'numeric',
     year: 'numeric',
   });
-}
-
-interface BankStatement {
-  id: string;
-  source_filename: string;
-  imported_at: string;
-  account_iban: string;
-}
-
-interface BankStatementLine {
-  id: string;
-  statement_id: string;
-  booking_date: string;
-  amount: string;
-  currency: string;
-  counterparty_iban?: string;
-  variable_symbol?: string;
-  raw_ref?: string;
-  match_state: 'unmatched' | 'suggested' | 'matched';
-}
-
-interface PaymentMatch {
-  id: string;
-  statement_line_id: string;
-  invoice_id: string;
-  confidence: string; // Decimal comes as string
-  state: 'suggested' | 'confirmed' | 'rejected';
 }
 
 export function PaymentMatchingPage() {
@@ -42,98 +35,40 @@ export function PaymentMatchingPage() {
   const queryClient = useQueryClient();
 
   const { data: statements, isLoading: statementsLoading } = useQuery({
-    queryKey: ['accounting', 'statements'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/accounting/statements', {
-        headers: {
-          'X-Tenant-ID': localStorage.getItem('current_tenant_id') || '',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      if (!res.ok) throw new Error('Failed to fetch statements');
-      return res.json() as Promise<BankStatement[]>;
-    },
+    queryKey: queryKeys.accounting.statements(),
+    queryFn: fetchStatements,
   });
 
   const { data: lines, isLoading: linesLoading } = useQuery({
-    queryKey: ['accounting', 'statements', selectedStatementId, 'lines'],
-    queryFn: async () => {
-      const res = await fetch(`/api/v1/accounting/statements/${selectedStatementId}/lines`, {
-        headers: {
-          'X-Tenant-ID': localStorage.getItem('current_tenant_id') || '',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      if (!res.ok) throw new Error('Failed to fetch lines');
-      return res.json() as Promise<BankStatementLine[]>;
-    },
+    queryKey: queryKeys.accounting.statementLines(selectedStatementId ?? ''),
+    queryFn: () => fetchStatementLines(selectedStatementId as string),
     enabled: !!selectedStatementId,
   });
 
   const { data: matches, isLoading: matchesLoading } = useQuery({
-    queryKey: ['accounting', 'lines', selectedLineId, 'matches'],
-    queryFn: async () => {
-      const res = await fetch(`/api/v1/accounting/lines/${selectedLineId}/matches`, {
-        headers: {
-          'X-Tenant-ID': localStorage.getItem('current_tenant_id') || '',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      if (!res.ok) throw new Error('Failed to fetch matches');
-      return res.json() as Promise<PaymentMatch[]>;
-    },
+    queryKey: queryKeys.accounting.lineMatches(selectedLineId ?? ''),
+    queryFn: () => fetchLineMatches(selectedLineId as string),
     enabled: !!selectedLineId,
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/v1/accounting/statements', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-Tenant-ID': localStorage.getItem('current_tenant_id') || '',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      return res.json();
-    },
+    mutationFn: uploadStatement,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounting', 'statements'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounting.statements() });
     },
   });
 
   const confirmMutation = useMutation({
-    mutationFn: async (matchId: string) => {
-      const res = await fetch(`/api/v1/accounting/matches/${matchId}/confirm`, {
-        method: 'POST',
-        headers: {
-          'X-Tenant-ID': localStorage.getItem('current_tenant_id') || '',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      if (!res.ok) throw new Error('Confirmation failed');
-    },
+    mutationFn: confirmMatch,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounting'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounting.all });
     },
   });
 
   const rejectMutation = useMutation({
-    mutationFn: async (matchId: string) => {
-      const res = await fetch(`/api/v1/accounting/matches/${matchId}/reject`, {
-        method: 'POST',
-        headers: {
-          'X-Tenant-ID': localStorage.getItem('current_tenant_id') || '',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      if (!res.ok) throw new Error('Rejection failed');
-    },
+    mutationFn: rejectMatch,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounting'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounting.all });
     },
   });
 
@@ -183,7 +118,7 @@ export function PaymentMatchingPage() {
             {statementsLoading ? (
               <div className="animate-pulse space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-gray-50 rounded"></div>
+                  <div key={i} className="h-16 bg-gray-50 rounded" />
                 ))}
               </div>
             ) : statements?.length === 0 ? (
@@ -192,13 +127,14 @@ export function PaymentMatchingPage() {
               </p>
             ) : (
               statements?.map((s) => (
-                <div
+                <button
+                  type="button"
                   key={s.id}
                   onClick={() => {
                     setSelectedStatementId(s.id);
                     setSelectedLineId(null);
                   }}
-                  className={`p-3 rounded-md cursor-pointer transition-all border ${
+                  className={`w-full text-left p-3 rounded-md cursor-pointer transition-all border ${
                     selectedStatementId === s.id
                       ? 'bg-blue-50 border-blue-200 shadow-sm'
                       : 'hover:bg-gray-50 border-transparent'
@@ -217,7 +153,7 @@ export function PaymentMatchingPage() {
                       {s.account_iban}
                     </p>
                   </div>
-                </div>
+                </button>
               ))
             )}
           </div>
@@ -233,6 +169,7 @@ export function PaymentMatchingPage() {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -246,16 +183,17 @@ export function PaymentMatchingPage() {
           ) : linesLoading ? (
             <div className="animate-pulse space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-20 bg-gray-50 rounded"></div>
+                <div key={i} className="h-20 bg-gray-50 rounded" />
               ))}
             </div>
           ) : (
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
               {lines?.map((l) => (
-                <div
+                <button
+                  type="button"
                   key={l.id}
                   onClick={() => setSelectedLineId(l.id)}
-                  className={`p-4 rounded-lg cursor-pointer border transition-all relative overflow-hidden ${
+                  className={`w-full text-left p-4 rounded-lg cursor-pointer border transition-all relative overflow-hidden ${
                     selectedLineId === l.id
                       ? 'border-blue-400 bg-blue-50/30 shadow-md'
                       : 'border-gray-100 hover:border-blue-200 hover:bg-gray-50/50'
@@ -304,9 +242,9 @@ export function PaymentMatchingPage() {
                     </div>
                   </div>
                   {selectedLineId === l.id && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -322,6 +260,7 @@ export function PaymentMatchingPage() {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -336,68 +275,75 @@ export function PaymentMatchingPage() {
             </div>
           ) : matchesLoading ? (
             <div className="animate-pulse space-y-4">
-              <div className="h-48 bg-gray-50 rounded-xl"></div>
+              <div className="h-48 bg-gray-50 rounded-xl" />
             </div>
           ) : (
             <div className="space-y-4">
               {matches
                 ?.filter((m) => m.state === 'suggested')
-                .map((m) => (
-                  <div
-                    key={m.id}
-                    className="border border-yellow-200 bg-gradient-to-br from-yellow-50 to-white rounded-xl p-6 shadow-sm"
-                  >
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-yellow-600 uppercase tracking-widest mb-1">
-                          Confidence Score
-                        </span>
-                        <span className="text-2xl font-black text-yellow-700">
-                          {(parseFloat(m.confidence) * 100).toFixed(0)}%
-                        </span>
+                .map((m) => {
+                  const confirming =
+                    confirmMutation.isPending && confirmMutation.variables === m.id;
+                  const rejecting = rejectMutation.isPending && rejectMutation.variables === m.id;
+                  return (
+                    <div
+                      key={m.id}
+                      className="border border-yellow-200 bg-gradient-to-br from-yellow-50 to-white rounded-xl p-6 shadow-sm"
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-yellow-600 uppercase tracking-widest mb-1">
+                            Confidence Score
+                          </span>
+                          <span className="text-2xl font-black text-yellow-700">
+                            {(Number.parseFloat(m.confidence) * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="w-12 h-12 rounded-full border-4 border-yellow-100 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-yellow-400 animate-pulse opacity-20" />
+                        </div>
                       </div>
-                      <div className="w-12 h-12 rounded-full border-4 border-yellow-100 flex items-center justify-center">
-                        <div className="w-8 h-8 rounded-full bg-yellow-400 animate-pulse opacity-20"></div>
-                      </div>
-                    </div>
 
-                    <div className="space-y-3 mb-6 p-3 bg-white/50 rounded-lg border border-yellow-100/50">
-                      <div>
-                        <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">
-                          Invoice Reference
-                        </span>
-                        <p className="text-xs font-bold text-gray-800 font-mono">{m.invoice_id}</p>
+                      <div className="space-y-3 mb-6 p-3 bg-white/50 rounded-lg border border-yellow-100/50">
+                        <div>
+                          <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">
+                            Invoice Reference
+                          </span>
+                          <p className="text-xs font-bold text-gray-800 font-mono">
+                            {m.invoice_id}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">
+                            Match Reason
+                          </span>
+                          <p className="text-xs text-gray-600 leading-tight">
+                            Variable symbol and amount matches the open balance.
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">
-                          Match Reason
-                        </span>
-                        <p className="text-xs text-gray-600 leading-tight">
-                          Variable symbol and amount matches the open balance.
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => confirmMutation.mutate(m.id)}
-                        disabled={confirmMutation.isPending}
-                        className="w-full bg-blue-600 text-white text-xs font-bold py-3 rounded-lg hover:bg-blue-700 transition-all shadow-md active:scale-[0.98] disabled:bg-gray-400"
-                      >
-                        {confirmMutation.isPending ? 'Processing...' : 'Confirm Payment Match'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => rejectMutation.mutate(m.id)}
-                        disabled={rejectMutation.isPending}
-                        className="w-full bg-white text-gray-500 border border-gray-200 text-xs font-bold py-2.5 rounded-lg hover:bg-gray-50 transition-colors disabled:bg-gray-100"
-                      >
-                        {rejectMutation.isPending ? 'Rejecting...' : 'Not a match'}
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => confirmMutation.mutate(m.id)}
+                          disabled={confirming}
+                          className="w-full bg-blue-600 text-white text-xs font-bold py-3 rounded-lg hover:bg-blue-700 transition-all shadow-md active:scale-[0.98] disabled:bg-gray-400"
+                        >
+                          {confirming ? 'Processing...' : 'Confirm Payment Match'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => rejectMutation.mutate(m.id)}
+                          disabled={rejecting}
+                          className="w-full bg-white text-gray-500 border border-gray-200 text-xs font-bold py-2.5 rounded-lg hover:bg-gray-50 transition-colors disabled:bg-gray-100"
+                        >
+                          {rejecting ? 'Rejecting...' : 'Not a match'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
               {matches
                 ?.filter((m) => m.state === 'confirmed')
@@ -413,6 +359,7 @@ export function PaymentMatchingPage() {
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
+                          aria-hidden="true"
                         >
                           <path
                             strokeLinecap="round"
@@ -435,6 +382,7 @@ export function PaymentMatchingPage() {
                         className="w-24 h-24 text-green-600"
                         fill="currentColor"
                         viewBox="0 0 20 20"
+                        aria-hidden="true"
                       >
                         <path
                           fillRule="evenodd"
@@ -454,6 +402,7 @@ export function PaymentMatchingPage() {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"

@@ -14,7 +14,7 @@ use chrono::NaiveDate;
 use common::errors::ErrorResponse;
 use db::models::{
     CreateFeeSchedule, CreateFinancialAccount, CreateInvoice, CreateTransaction, InvoiceStatus,
-    RecordPayment,
+    Payment, PaymentAllocation, RecordPayment,
 };
 use rust_decimal::Decimal;
 use serde::Deserialize;
@@ -147,10 +147,16 @@ pub fn router() -> Router<AppState> {
         .route("/invoices", get(list_invoices))
         .route("/invoices/{id}", get(get_invoice))
         .route("/invoices/{id}/send", post(send_invoice))
+        .route("/invoices/{id}/pdf", get(get_invoice_pdf))
         .route("/units/{unit_id}/invoices", get(list_unit_invoices))
         // Payments (Story 11.4)
         .route("/payments", post(record_payment))
+        .route("/payments", get(list_payments))
+        // Static segments before `/{id}` so they aren't captured as an id.
+        .route("/payments/unallocated", get(list_unallocated_payments))
+        .route("/payments/auto-match", post(auto_match_payments))
         .route("/payments/{id}", get(get_payment))
+        .route("/payments/{id}/allocate", post(allocate_payment))
         .route("/units/{unit_id}/payments", get(list_unit_payments))
         // Payment reminders (Story 11.6)
         .route("/reminder-schedules", get(get_reminder_schedules))
@@ -197,6 +203,69 @@ pub struct UnitPaymentsQuery {
     /// Page offset
     #[serde(default)]
     pub offset: i64,
+}
+
+/// Org-wide payments list query (Story 11.4 Payment Management).
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct ListPaymentsQuery {
+    /// Organization whose payments to list (membership is verified)
+    pub organization_id: Uuid,
+    /// Optional payment-status filter (pending|completed|failed|refunded|cancelled)
+    #[serde(default)]
+    pub status: Option<String>,
+    /// Page limit
+    #[serde(default = "default_limit")]
+    pub limit: i64,
+    /// Page offset
+    #[serde(default)]
+    pub offset: i64,
+}
+
+/// Unallocated-payments query.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct UnallocatedPaymentsQuery {
+    /// Organization whose unallocated payments to list (membership is verified)
+    pub organization_id: Uuid,
+    /// Page limit
+    #[serde(default = "default_limit")]
+    pub limit: i64,
+    /// Page offset
+    #[serde(default)]
+    pub offset: i64,
+}
+
+/// Paginated payments list response.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct PaymentListResponse {
+    pub payments: Vec<Payment>,
+    pub total: i64,
+}
+
+/// Request to allocate an existing payment to an invoice (the manual match).
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AllocatePaymentRequest {
+    /// Organization that owns both the payment and the invoice (verified)
+    pub organization_id: Uuid,
+    /// Invoice to allocate the payment against
+    pub invoice_id: Uuid,
+    /// Amount to allocate (defaults to the lesser of the payment's remaining
+    /// balance and the invoice's outstanding balance)
+    #[serde(default)]
+    pub amount: Option<Decimal>,
+}
+
+/// Request to bulk auto-match unallocated payments in an organization.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AutoMatchRequest {
+    /// Organization whose unallocated payments to auto-match (verified)
+    pub organization_id: Uuid,
+}
+
+/// Auto-match result.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct AutoMatchResponse {
+    /// Number of allocations created
+    pub matched: i64,
 }
 
 /// List invoices query parameters.
@@ -702,6 +771,182 @@ async fn get_invoice(
     }
 }
 
+/// Render a financial invoice (header + line items + totals) to a PDF byte
+/// buffer with `genpdf` (#975.6). Generated on demand; the invoice's
+/// `pdf_file_path` caching column is left for a future S3-archival follow-up.
+fn render_invoice_pdf(resp: &db::models::InvoiceResponse) -> Result<Vec<u8>, String> {
+    use genpdf::{elements, style::Style, Element};
+
+    let inv = &resp.invoice;
+    let font_family = genpdf::fonts::from_files(
+        "/usr/share/fonts/truetype/liberation",
+        "LiberationSans",
+        None,
+    )
+    .map_err(|e| format!("Failed to load font LiberationSans: {}", e))?;
+
+    let mut doc = genpdf::Document::new(font_family);
+    doc.set_title(format!("Invoice {}", inv.invoice_number));
+    let mut decorator = genpdf::SimplePageDecorator::new();
+    decorator.set_margins(15);
+    doc.set_page_decorator(decorator);
+
+    doc.push(
+        elements::Paragraph::new(format!("Invoice {}", inv.invoice_number))
+            .styled(Style::new().bold().with_font_size(18)),
+    );
+    doc.push(elements::Break::new(1));
+
+    // Header metadata.
+    let mut meta = elements::LinearLayout::vertical();
+    meta.push(elements::Paragraph::new(format!(
+        "Status: {:?}",
+        inv.status
+    )));
+    meta.push(elements::Paragraph::new(format!(
+        "Issue date: {}",
+        inv.issue_date
+    )));
+    meta.push(elements::Paragraph::new(format!(
+        "Due date: {}",
+        inv.due_date
+    )));
+    if let (Some(start), Some(end)) = (inv.billing_period_start, inv.billing_period_end) {
+        meta.push(elements::Paragraph::new(format!(
+            "Billing period: {} - {}",
+            start, end
+        )));
+    }
+    meta.push(elements::Paragraph::new(format!("Unit: {}", inv.unit_id)));
+    doc.push(meta);
+    doc.push(elements::Break::new(1));
+
+    // Line items table.
+    let mut table = elements::TableLayout::new(vec![6, 2, 3, 3]);
+    table.set_cell_decorator(elements::FrameCellDecorator::new(true, true, false));
+    table
+        .row()
+        .element(elements::Paragraph::new("Description").styled(Style::new().bold()))
+        .element(elements::Paragraph::new("Qty").styled(Style::new().bold()))
+        .element(elements::Paragraph::new("Unit price").styled(Style::new().bold()))
+        .element(elements::Paragraph::new("Amount").styled(Style::new().bold()))
+        .push()
+        .map_err(|e| format!("invoice PDF table header: {}", e))?;
+    for item in &resp.items {
+        table
+            .row()
+            .element(elements::Paragraph::new(item.description.clone()))
+            .element(elements::Paragraph::new(item.quantity.to_string()))
+            .element(elements::Paragraph::new(format!(
+                "{} {}",
+                item.unit_price, inv.currency
+            )))
+            .element(elements::Paragraph::new(format!(
+                "{} {}",
+                item.amount, inv.currency
+            )))
+            .push()
+            .map_err(|e| format!("invoice PDF table row: {}", e))?;
+    }
+    doc.push(table);
+    doc.push(elements::Break::new(1));
+
+    // Totals.
+    let mut totals = elements::LinearLayout::vertical();
+    totals.push(elements::Paragraph::new(format!(
+        "Subtotal: {} {}",
+        inv.subtotal, inv.currency
+    )));
+    totals.push(elements::Paragraph::new(format!(
+        "Tax: {} {}",
+        inv.tax_amount, inv.currency
+    )));
+    totals.push(
+        elements::Paragraph::new(format!("Total: {} {}", inv.total, inv.currency))
+            .styled(Style::new().bold()),
+    );
+    totals.push(elements::Paragraph::new(format!(
+        "Paid: {} {}",
+        inv.amount_paid, inv.currency
+    )));
+    totals.push(
+        elements::Paragraph::new(format!("Balance due: {} {}", inv.balance_due, inv.currency))
+            .styled(Style::new().bold()),
+    );
+    doc.push(totals);
+
+    if let Some(notes) = &inv.notes {
+        doc.push(elements::Break::new(1));
+        doc.push(elements::Paragraph::new(format!("Notes: {}", notes)));
+    }
+
+    let mut bytes = Vec::new();
+    doc.render(&mut bytes)
+        .map_err(|e| format!("Failed to render invoice PDF: {}", e))?;
+    Ok(bytes)
+}
+
+/// Generate and stream an invoice as a PDF (#975.6). Org-scoped via membership
+/// (same guard as `get_invoice`): a non-member gets 404.
+async fn get_invoice_pdf(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<axum::response::Response, (StatusCode, Json<ErrorResponse>)> {
+    use axum::response::IntoResponse;
+
+    let response = state
+        .financial_repo
+        .get_invoice_with_details(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice for PDF: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to load invoice")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+            )
+        })?;
+
+    if !is_member_or_not_found(&state, auth.user_id, response.invoice.organization_id).await? {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Invoice not found")),
+        ));
+    }
+
+    let pdf_bytes = render_invoice_pdf(&response).map_err(|e| {
+        tracing::error!("Failed to render invoice PDF: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "PDF_ERROR",
+                "Failed to render invoice PDF",
+            )),
+        )
+    })?;
+
+    let headers = [
+        (
+            axum::http::header::CONTENT_TYPE,
+            "application/pdf".to_string(),
+        ),
+        (
+            axum::http::header::CONTENT_DISPOSITION,
+            format!(
+                "attachment; filename=\"invoice-{}.pdf\"",
+                response.invoice.invoice_number
+            ),
+        ),
+    ];
+    Ok((StatusCode::OK, headers, pdf_bytes).into_response())
+}
+
 async fn send_invoice(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -854,6 +1099,123 @@ async fn list_unit_payments(
     Ok(Json(scoped))
 }
 
+/// List all payments for an organization (paginated, optional status filter).
+async fn list_payments(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<ListPaymentsQuery>,
+) -> Result<Json<PaymentListResponse>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    let limit = query.limit.min(MAX_LIST_LIMIT);
+    let (payments, total) = tokio::try_join!(
+        state.financial_repo.list_payments(
+            query.organization_id,
+            query.status.clone(),
+            limit,
+            query.offset,
+        ),
+        state
+            .financial_repo
+            .count_payments(query.organization_id, query.status.clone()),
+    )
+    .map_err(|e| {
+        tracing::error!("Failed to list payments: {:?}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", "Failed to list payments")),
+        )
+    })?;
+    Ok(Json(PaymentListResponse { payments, total }))
+}
+
+/// List payments with an unallocated balance (the reconciliation queue).
+async fn list_unallocated_payments(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<UnallocatedPaymentsQuery>,
+) -> Result<Json<Vec<Payment>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, query.organization_id).await?;
+    let limit = query.limit.min(MAX_LIST_LIMIT);
+    let payments = state
+        .financial_repo
+        .list_unallocated_payments(query.organization_id, limit, query.offset)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list unallocated payments: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to list unallocated payments",
+                )),
+            )
+        })?;
+    Ok(Json(payments))
+}
+
+/// Allocate an existing payment to an invoice (manual match).
+async fn allocate_payment(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<AllocatePaymentRequest>,
+) -> Result<(StatusCode, Json<PaymentAllocation>), (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    let allocation = state
+        .financial_repo
+        .allocate_existing_payment(
+            payload.organization_id,
+            id,
+            payload.invoice_id,
+            payload.amount,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to allocate payment: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to allocate payment")),
+            )
+        })?;
+    match allocation {
+        Some(a) => Ok((StatusCode::CREATED, Json(a))),
+        // payment/invoice not in org, or nothing left to allocate.
+        None => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Payment or invoice not found, or nothing to allocate",
+            )),
+        )),
+    }
+}
+
+/// Bulk auto-match unallocated payments in an organization.
+async fn auto_match_payments(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Json(payload): Json<AutoMatchRequest>,
+) -> Result<Json<AutoMatchResponse>, (StatusCode, Json<ErrorResponse>)> {
+    verify_org_access(&state, auth.user_id, payload.organization_id).await?;
+    let matched = state
+        .financial_repo
+        .auto_match_payments(payload.organization_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to auto-match payments: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to auto-match payments",
+                )),
+            )
+        })?;
+    Ok(Json(AutoMatchResponse {
+        matched: matched as i64,
+    }))
+}
+
 // ==================== Reminder/Late Fee Handlers ====================
 
 async fn get_reminder_schedules(
@@ -951,4 +1313,78 @@ async fn get_ar_aging_report(
                 Json(ErrorResponse::new("DB_ERROR", "Failed to generate report")),
             )
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use db::models::{Invoice, InvoiceItem, InvoiceResponse, InvoiceStatus};
+
+    fn sample_invoice_response() -> InvoiceResponse {
+        let now = Utc::now();
+        InvoiceResponse {
+            invoice: Invoice {
+                id: Uuid::new_v4(),
+                organization_id: Uuid::new_v4(),
+                unit_id: Uuid::new_v4(),
+                invoice_number: "INV-2026-001".to_string(),
+                billing_period_start: Some(now.date_naive()),
+                billing_period_end: Some(now.date_naive()),
+                status: InvoiceStatus::Sent,
+                issue_date: now.date_naive(),
+                due_date: now.date_naive(),
+                paid_date: None,
+                subtotal: Decimal::new(10000, 2),
+                tax_amount: Decimal::new(2000, 2),
+                total: Decimal::new(12000, 2),
+                amount_paid: Decimal::ZERO,
+                balance_due: Decimal::new(12000, 2),
+                currency: "EUR".to_string(),
+                notes: Some("Thank you for your business".to_string()),
+                internal_notes: None,
+                pdf_file_path: None,
+                pdf_generated_at: None,
+                created_by: None,
+                sent_at: None,
+                created_at: now,
+                updated_at: now,
+            },
+            items: vec![InvoiceItem {
+                id: Uuid::new_v4(),
+                invoice_id: Uuid::new_v4(),
+                description: "Monthly service fee".to_string(),
+                quantity: Decimal::new(100, 2),
+                unit_price: Decimal::new(10000, 2),
+                amount: Decimal::new(10000, 2),
+                tax_rate: Some(Decimal::new(2000, 2)),
+                tax_amount: Some(Decimal::new(2000, 2)),
+                fee_schedule_id: None,
+                meter_reading_id: None,
+                sort_order: 0,
+                created_at: now,
+            }],
+            payments: vec![],
+        }
+    }
+
+    #[test]
+    fn render_invoice_pdf_produces_a_valid_pdf() {
+        let resp = sample_invoice_response();
+        let bytes = render_invoice_pdf(&resp).expect("render invoice PDF");
+        assert!(
+            bytes.len() > 100,
+            "PDF should be non-trivial, got {} bytes",
+            bytes.len()
+        );
+        assert_eq!(&bytes[..5], b"%PDF-", "output must be a PDF");
+    }
+
+    #[test]
+    fn render_invoice_pdf_handles_no_line_items() {
+        let mut resp = sample_invoice_response();
+        resp.items.clear();
+        let bytes = render_invoice_pdf(&resp).expect("render empty-items invoice PDF");
+        assert_eq!(&bytes[..5], b"%PDF-");
+    }
 }

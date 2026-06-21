@@ -50,6 +50,15 @@ export const VoteDetailPage = lazy(() =>
 export const IotDashboardPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.IotDashboardPage }))
 );
+export const IotSensorListPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.SensorListPage }))
+);
+export const IotSensorFormPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.SensorFormPage }))
+);
+export const IotThresholdConfigPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.IotThresholdConfigPage }))
+);
 
 // Disputes feature (Epic 77)
 export const DisputesPage = lazy(() =>
@@ -235,6 +244,10 @@ export const BudgetManagementPage = lazy(() =>
 
 export const AccountingInvoiceManagementPage = lazy(() =>
   import('../features/accounting').then((m) => ({ default: m.AccountingInvoiceManagementPage }))
+);
+
+export const PaymentMatchingPage = lazy(() =>
+  import('../features/accounting').then((m) => ({ default: m.PaymentMatchingPage }))
 );
 
 // Reports feature (Epic 81)

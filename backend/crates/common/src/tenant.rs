@@ -145,6 +145,20 @@ impl TenantRole {
                 | TenantRole::TechnicalManager
         )
     }
+
+    /// Parse the canonical snake_case `role_type` string — as stored in
+    /// `organization_members.role_type` and serialized in JWT claims — into a
+    /// [`TenantRole`]. Returns `None` for an unknown/legacy value.
+    ///
+    /// Reuses the same serde `rename_all = "snake_case"` mapping as
+    /// serialization, so it cannot drift from the wire/DB representation: a new
+    /// variant becomes parseable the moment it is added to the enum.
+    /// Authorization gates should derive their decision from
+    /// [`is_manager`](Self::is_manager) via this parser rather than hard-coding a
+    /// mirror of the variant strings.
+    pub fn from_role_type(role_type: &str) -> Option<Self> {
+        serde_json::from_value(serde_json::Value::String(role_type.to_owned())).ok()
+    }
 }
 
 impl std::fmt::Display for TenantRole {
@@ -336,6 +350,59 @@ mod tests {
     }
 
     // ---- Serde JSON contract ----
+
+    #[test]
+    fn from_role_type_round_trips_snake_case_and_drives_is_manager() {
+        // The canonical role_type strings stored in organization_members /
+        // serialized in JWT claims must parse back to the right variant.
+        for role in [
+            TenantRole::SuperAdmin,
+            TenantRole::PlatformAdmin,
+            TenantRole::OrgAdmin,
+            TenantRole::Manager,
+            TenantRole::TechnicalManager,
+            TenantRole::Owner,
+            TenantRole::OwnerDelegate,
+            TenantRole::Tenant,
+            TenantRole::Resident,
+            TenantRole::PropertyManager,
+            TenantRole::RealEstateAgent,
+            TenantRole::Guest,
+        ] {
+            let s = serde_json::to_value(role).unwrap();
+            let s = s.as_str().unwrap();
+            assert_eq!(
+                TenantRole::from_role_type(s),
+                Some(role),
+                "role_type string {s:?} must parse back to its variant"
+            );
+        }
+
+        // The exact manager set the OTA gate depends on (#1525/#1585).
+        for s in [
+            "super_admin",
+            "platform_admin",
+            "org_admin",
+            "manager",
+            "technical_manager",
+        ] {
+            assert!(
+                TenantRole::from_role_type(s).is_some_and(|r| r.is_manager()),
+                "{s} must parse and be a manager role"
+            );
+        }
+        for s in ["owner", "tenant", "resident", "guest", "real_estate_agent"] {
+            assert!(
+                TenantRole::from_role_type(s).is_some_and(|r| !r.is_manager()),
+                "{s} must parse and NOT be a manager role"
+            );
+        }
+
+        // Unknown/legacy values are rejected (gate fails closed → 403).
+        assert_eq!(TenantRole::from_role_type("Manager"), None);
+        assert_eq!(TenantRole::from_role_type("not_a_role"), None);
+        assert_eq!(TenantRole::from_role_type(""), None);
+    }
 
     #[test]
     fn role_serializes_to_snake_case() {

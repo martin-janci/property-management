@@ -34,11 +34,9 @@ import {
   View,
 } from 'react-native';
 import { useApiMutation } from '../../hooks/useApi';
+import { type ApiFolderTreeNode, FOLDER_TREE_QUERY_KEY } from '../../hooks/useFolderTree';
 import { colors } from '../shared/screenStyles';
-// `ApiFolderTreeNode` is the canonical folder-tree node shape owned by
-// DocumentsScreen. This is a type-only import — erased at compile time, so it
-// does not introduce a runtime circular dependency.
-import type { ApiFolderTreeNode } from './DocumentsScreen';
+import { type FlatFolder, flattenTree } from './folderTree';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
@@ -46,31 +44,10 @@ interface MoveDocumentRequest {
   folder_id: string | null;
 }
 
-// ─── Flatten tree to a depth-first list for the scrollable folder picker ─────────
-
-/** Shape of a depth-first flattened folder entry. Exported for unit tests. */
-export interface FlatFolder {
-  id: string;
-  name: string;
-  depth: number;
-}
-
-/**
- * Depth-first flatten of the folder tree into a scrollable list. Each node
- * gets a `depth` field used for visual indentation in the picker.
- *
- * Exported for unit-testing (feat-mobile-document-folder-organization).
- */
-export function flattenTree(nodes: ApiFolderTreeNode[], depth = 0): FlatFolder[] {
-  const result: FlatFolder[] = [];
-  for (const node of nodes) {
-    result.push({ id: node.id, name: node.name, depth });
-    if (node.children && node.children.length > 0) {
-      result.push(...flattenTree(node.children, depth + 1));
-    }
-  }
-  return result;
-}
+// `FlatFolder` + `flattenTree` now live in the shared `folderTree` util (single
+// source of truth, GH #1589). Re-exported here so existing `./MoveDocumentSheet`
+// importers (incl. DocumentFolderOrganization.test.ts) are unaffected.
+export { type FlatFolder, flattenTree };
 
 // ─── Props ─────────────────────────────────────────────────────────────────────────
 
@@ -129,7 +106,7 @@ export function MoveDocumentSheet({
 
       // Invalidate both the document list and the folder tree so counts update
       await queryClient.invalidateQueries({ queryKey: ['documents', 'list'] });
-      await queryClient.invalidateQueries({ queryKey: ['documents', 'folders', 'tree'] });
+      await queryClient.invalidateQueries({ queryKey: FOLDER_TREE_QUERY_KEY });
 
       setSelectedId(currentFolderId);
       onMoved();

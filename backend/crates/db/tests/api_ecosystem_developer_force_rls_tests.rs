@@ -287,12 +287,11 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
             ("developer_oauth_grants", "OAuth grants"),
             ("api_key_usage_logs", "API key usage logs"),
         ] {
-            let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-                "SELECT COUNT(*) FROM {table}"
-            )))
-            .fetch_one(&mut *conn)
-            .await
-            .unwrap_or_else(|e| panic!("count {table} (no ctx): {e}"));
+            let n: i64 =
+                sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {table}")))
+                    .fetch_one(&mut *conn)
+                    .await
+                    .unwrap_or_else(|e| panic!("count {table} (no ctx): {e}"));
             assert_eq!(
                 n, 0,
                 "without RLS context `{label}` ({table}) must be deny-all under FORCE"
@@ -351,12 +350,11 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
             ("developer_oauth_grants", "OAuth grant"),
             ("api_key_usage_logs", "API key usage log"),
         ] {
-            let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-                "SELECT COUNT(*) FROM {table}"
-            )))
-            .fetch_one(&mut *conn)
-            .await
-            .unwrap_or_else(|e| panic!("count {table} under A: {e}"));
+            let n: i64 =
+                sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {table}")))
+                    .fetch_one(&mut *conn)
+                    .await
+                    .unwrap_or_else(|e| panic!("count {table} under A: {e}"));
             assert_eq!(n, 1, "user A must see only their own {label} ({table})");
         }
 
@@ -428,6 +426,61 @@ async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
             own_repo_keys.len(),
             1,
             "user A must see their own API key via the repo"
+        );
+
+        // ── WRITE path (#1594). The policies are `FOR ALL USING (...)` with no
+        // explicit WITH CHECK, so Postgres reuses USING as the write check too.
+        // Assert that holds — otherwise a future FOR SELECT + weak write policy
+        // split would let A mutate B's rows while the read probes above stay green.
+        //
+        // Asymmetry to keep in mind: UPDATE/DELETE of a row hidden by USING
+        // silently affects 0 rows (NOT an error); an INSERT that violates the
+        // (implicit) WITH CHECK raises an error.
+        let upd = sqlx::query("UPDATE developer_oauth_apps SET name = 'hijack' WHERE id = $1")
+            .bind(app_b)
+            .execute(&mut *conn)
+            .await
+            .expect("update B oauth app under A must run (RLS hides the row, not error)");
+        assert_eq!(
+            upd.rows_affected(),
+            0,
+            "user A must NOT UPDATE user B's oauth app (USING hides it → 0 rows)"
+        );
+
+        let del = sqlx::query("DELETE FROM developer_oauth_grants WHERE id = $1")
+            .bind(grant_b)
+            .execute(&mut *conn)
+            .await
+            .expect("delete B oauth grant under A must run (RLS hides the row, not error)");
+        assert_eq!(
+            del.rows_affected(),
+            0,
+            "user A must NOT DELETE user B's oauth grant (USING hides it → 0 rows)"
+        );
+
+        let del_log = sqlx::query("DELETE FROM api_key_usage_logs WHERE id = $1")
+            .bind(usage_b)
+            .execute(&mut *conn)
+            .await
+            .expect("delete B usage log under A must run (RLS hides the row, not error)");
+        assert_eq!(
+            del_log.rows_affected(),
+            0,
+            "user A must NOT DELETE user B's api_key_usage_log (USING hides it → 0 rows)"
+        );
+
+        // INSERT attributed to B violates the (implicit) WITH CHECK → error.
+        let ins = sqlx::query(
+            "INSERT INTO developer_oauth_grants (oauth_app_id, user_id, scopes) \
+             VALUES ($1, $2, ARRAY['read'])",
+        )
+        .bind(app_b)
+        .bind(user_b)
+        .execute(&mut *conn)
+        .await;
+        assert!(
+            ins.is_err(),
+            "user A must NOT INSERT an oauth grant owned by user B (WITH CHECK denies)"
         );
 
         sqlx::query("RESET ROLE")

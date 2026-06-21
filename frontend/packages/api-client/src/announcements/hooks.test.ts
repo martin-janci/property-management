@@ -13,8 +13,11 @@ import { describe, expect, it } from 'vitest';
 import {
   type BackendAnnouncementListResponse,
   buildAnnouncementQuery,
+  insertCommentIntoTree,
+  OPTIMISTIC_COMMENT_PREFIX,
   toPaginatedResponse,
 } from './hooks';
+import type { CommentWithAuthor } from './types';
 
 describe('buildAnnouncementQuery', () => {
   it('returns an empty string when no params are given', () => {
@@ -97,5 +100,58 @@ describe('toPaginatedResponse', () => {
     const result = toPaginatedResponse({ count: 0, total: 0 } as BackendAnnouncementListResponse);
     expect(result.items).toEqual([]);
     expect(result.total).toBe(0);
+  });
+});
+
+describe('insertCommentIntoTree (Story 6.3 — optimistic add)', () => {
+  const mkComment = (over: Partial<CommentWithAuthor>): CommentWithAuthor => ({
+    id: 'c1',
+    announcementId: 'a1',
+    userId: 'u1',
+    content: 'hi',
+    authorName: 'Alice',
+    isDeleted: false,
+    createdAt: '2026-06-18T00:00:00Z',
+    updatedAt: '2026-06-18T00:00:00Z',
+    ...over,
+  });
+
+  it('appends a top-level comment when parentId is absent', () => {
+    const existing = [mkComment({ id: 'c1' })];
+    const added = mkComment({ id: 'c2', content: 'new top' });
+    const result = insertCommentIntoTree(existing, added);
+    expect(result).toHaveLength(2);
+    expect(result[1].id).toBe('c2');
+    // Original array is not mutated.
+    expect(existing).toHaveLength(1);
+  });
+
+  it('nests a reply under the matching parent', () => {
+    const existing = [mkComment({ id: 'c1', replies: [] })];
+    const reply = mkComment({ id: 'r1', parentId: 'c1', content: 'a reply' });
+    const result = insertCommentIntoTree(existing, reply);
+    expect(result[0].replies).toHaveLength(1);
+    expect(result[0].replies?.[0].id).toBe('r1');
+  });
+
+  it('nests a reply under a deeply-nested parent', () => {
+    const existing = [
+      mkComment({ id: 'c1', replies: [mkComment({ id: 'c1a', parentId: 'c1', replies: [] })] }),
+    ];
+    const reply = mkComment({ id: 'r2', parentId: 'c1a' });
+    const result = insertCommentIntoTree(existing, reply);
+    expect(result[0].replies?.[0].replies?.[0].id).toBe('r2');
+  });
+
+  it('leaves the tree unchanged when the parent is missing', () => {
+    const existing = [mkComment({ id: 'c1' })];
+    const orphan = mkComment({ id: 'r3', parentId: 'does-not-exist' });
+    const result = insertCommentIntoTree(existing, orphan);
+    expect(result).toHaveLength(1);
+    expect(result[0].replies ?? []).toHaveLength(0);
+  });
+
+  it('exposes a stable optimistic-id prefix', () => {
+    expect(OPTIMISTIC_COMMENT_PREFIX).toBe('optimistic-');
   });
 });

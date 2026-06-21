@@ -104,8 +104,8 @@ model CreateVersionResponse {
 @tag("Documents")
 interface DocumentsApi {
   @get list(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     ...PaginationQuery,
     ...SearchQuery,
     @query buildingId?: uuid,
@@ -114,8 +114,8 @@ interface DocumentsApi {
   ): PaginatedResponse<Document>;
 
   @post upload(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: {
       title: string;
       description?: string;
@@ -132,56 +132,56 @@ interface DocumentsApi {
   ): { @statusCode statusCode: 201; @body body: Document; };
 
   @get @route("/{id}") get(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): Document | NotFoundError;
 
   @patch @route("/{id}") update(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { title?: string; description?: string; category?: DocumentCategory; visibility?: DocumentVisibility; tags?: string[]; }
   ): Document;
 
   @delete @route("/{id}") delete(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): { @statusCode statusCode: 204; };
 
   // Returns a presigned S3 URL (with Content-Disposition: attachment), not the
   // file bytes — matches the api-server `UrlResponse` handler (Story 7A.4).
   @get @route("/{id}/download") download(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): DocumentUrlResponse;
 
   // Create a new version. The api-server route is POST /{id}/versions taking a
   // storage-key payload (file already uploaded to S3), not POST /{id}/new-version.
   @post @route("/{id}/versions") uploadVersion(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid,
     @body body: { fileKey: string; fileName: string; mimeType: string; sizeBytes: int64; }
   ): { @statusCode statusCode: 201; @body body: CreateVersionResponse; };
 
   @get @route("/{id}/versions") listVersions(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @path id: uuid
   ): VersionHistoryResponse;
 
   @get @route("/folders") listFolders(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @query parentId?: uuid
   ): Folder[];
 
   @post @route("/folders") createFolder(
-    @header("Authorization") token: string,
-    @header("X-Tenant-ID") tenantId: uuid,
+    @header("Authorization") token?: string,
+    @header("X-Tenant-ID") tenantId?: uuid,
     @body body: { name: string; description?: string; parentId?: uuid; visibility: DocumentVisibility; }
   ): { @statusCode statusCode: 201; @body body: Folder; };
 }
