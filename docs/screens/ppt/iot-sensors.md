@@ -9,14 +9,10 @@ implementations:
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
-endpoints:
-  - "GET /api/v1/iot/sensors"
-  - "POST /api/v1/iot/sensors"
-  - "GET /api/v1/iot/sensors/{id}"
-  - "PUT /api/v1/iot/sensors/{id}"
-  - "DELETE /api/v1/iot/sensors/{id}"
+endpoints: []
 relatedScreens:
-  - ppt/iot-dashboard
+  - id: ppt/iot-dashboard
+    rel: sibling
 sharedComponents:
   - SensorStatusBadge
 diagrams: []
