@@ -188,6 +188,16 @@
       "evidence": "dependabot: bump i18next 25.10.10 → 26.3.1",
       "confidence": "high",
       "candidate_vector": "dep-update"
+    },
+    {
+      "id": "refill-buffer-low-fire-2026-06-21",
+      "type": "lag_warning",
+      "source": "fire-payload (dispatcher buffer-low alert)",
+      "score_delta": 0,
+      "evidence": "Buffer-low alert: claimable=0/72; coverage 2026-06-16 stale. Routine ran Phase 1.6 step-2 + refill: 15 stories evidenced, 35 gap candidates queued (open: 1 -> 36).",
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "notes": "second-pass refill within same day; no auto-fix"
     }
   ],
   "goal_checks": [

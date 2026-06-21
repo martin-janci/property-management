@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-16T00:00:00Z",
+  "generated": "2026-06-21T02:35:00Z",
   "items": [
     {
       "id": "feat-airbnb-oauth-token-exchange-route-backend",
@@ -113,6 +113,391 @@
       "dependency": null,
       "depends_on": [],
       "dev_reconciled": "manual-reconcile 2026-06-20T14:13:31Z: coverage.json (2026-06-16) stale — work already on dev: FCM/APNs push transport adapter in backend/crates/common/src/notifications/pipeline.rs"
+    },
+    {
+      "id": "gap-7a-1-document-upload-metadata-sprint-status-ready-for-dev-promote-to-d",
+      "action": "sprint-status ready-for-dev — promote to done after verify (7a-1-document-upload-metadata Document Upload with Metadata)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-7a-2-folder-organization-mobile-implementation-pending",
+      "action": "mobile implementation pending (7a-2-folder-organization Folder Organization)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-7a-4-document-download-preview-sprint-status-ready-for-dev",
+      "action": "sprint-status ready-for-dev (7a-4-document-download-preview Document Download & Preview)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-7a-4-document-download-preview-screen-map-apistatus-partial",
+      "action": "screen-map apiStatus partial (7a-4-document-download-preview Document Download & Preview)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-7a-4-document-download-preview-mobile-preview-slice-still-pending",
+      "action": "mobile preview slice still pending (7a-4-document-download-preview Document Download & Preview)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-85-1-environment-variables-react-native-config-metro-bundler-setup",
+      "action": "react-native-config + Metro bundler setup not done (Expo Constants used) (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-85-1-environment-variables-env-setup-documentation-missing",
+      "action": "env setup documentation missing (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-85-1-environment-variables-ios-info-plist-lacks-api-base-url-enviro",
+      "action": "iOS Info.plist lacks API_BASE_URL/ENVIRONMENT keys (85-1-environment-variables Environment Variable Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-85-2-build-configuration-ios-xcconfig-files-schemes-not-created",
+      "action": "iOS xcconfig files + schemes not created (85-2-build-configuration Build Configuration by Environment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-85-2-build-configuration-app-icons-not-generated-for-all-sizes",
+      "action": "app icons not generated for all sizes (85-2-build-configuration Build Configuration by Environment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-85-2-build-configuration-build-scripts-scripts-build-mobile-andro",
+      "action": "build scripts (scripts/build-mobile|android|ios.sh) not created (85-2-build-configuration Build Configuration by Environment)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-6-2-announcement-viewing-acknowledgment-web-viewing-ack-ui-in-draft-prs-474-475",
+      "action": "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-6-2-announcement-viewing-acknowledgment-apistatus-stub-until-web-prs-land",
+      "action": "apiStatus stub until web PRs land (6-2-announcement-viewing-acknowledgment Announcement Viewing & Acknowledgment)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-6-3-announcement-comments-discussion-comments-web-ui-in-draft-prs-474-475-479",
+      "action": "comments web UI in draft PRs #474/#475/#479 — not yet merged (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-6-3-announcement-comments-discussion-comment-threading-reply-unclear",
+      "action": "comment threading/reply unclear (6-3-announcement-comments-discussion Announcement Comments & Discussion)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-6-4-pinned-announcements-pin-unpin-web-ui-in-draft-prs-474-475-47",
+      "action": "pin/unpin web UI in draft PRs #474/#475/#479 — not yet merged (6-4-pinned-announcements Pinned Announcements)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-8a-3-notification-preference-sync-mobile-os-push-integration-fcm-apns-stil",
+      "action": "mobile OS push integration (FCM/APNs) still deferred (8a-3-notification-preference-sync Notification Preference Sync)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-announcementspage-faultspage-not-fully-w",
+      "action": "AnnouncementsPage/FaultsPage not fully wired to API hooks (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-story-status-pending",
+      "action": "story Status: pending (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-79-1-api-client-integration-feature-integration-incomplete-despite-i",
+      "action": "feature integration incomplete despite infra (79-1-api-client-integration API Client Integration for Core Features)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-80-2-dispute-filing-flow-story-status-pending-despite-shipped-ui",
+      "action": "story Status: pending despite shipped UI (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-80-2-dispute-filing-flow-task-checklist-unchecked",
+      "action": "task checklist unchecked (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-80-2-dispute-filing-flow-verification-of-full-ac-coverage-pending",
+      "action": "verification of full AC coverage pending (80-2-dispute-filing-flow Dispute Filing Flow)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-82-2-navigation-routing-navigation-state-preservation-ac-4-unver",
+      "action": "navigation state preservation (AC-4) unverified (82-2-navigation-routing Navigation and Routing)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-82-2-navigation-routing-deep-linking-with-url-schemes-not-confir",
+      "action": "deep-linking with URL schemes not confirmed (82-2-navigation-routing Navigation and Routing)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-82-2-navigation-routing-auth-guard-ac-5-not-evidenced",
+      "action": "auth guard (AC-5) not evidenced (82-2-navigation-routing Navigation and Routing)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-81-1-report-schedule-editing-cron-edits-round-trip-through-the-overlo",
+      "action": "cron edits round-trip through the overloaded `time` field — no dedicated cron_expression column (backlog bug-report-schedule-update-no-sql / issue #616) (81-1-report-schedule-editing Report Schedule Editing)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-81-2-report-execution-history-confirm-presigned-download-retry-end-to",
+      "action": "confirm presigned download + retry end-to-end on the execution-history surface (81-2-report-execution-history Report Execution History)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-83-1-airbnb-integration-no-oauth-token-exchange-route-models-onl",
+      "action": "no OAuth token exchange route (models only) (83-1-airbnb-integration Airbnb OAuth and Sync)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-83-1-airbnb-integration-airbnb-realtime-webhook-handler-not-impl",
+      "action": "Airbnb realtime webhook handler not implemented (83-1-airbnb-integration Airbnb OAuth and Sync)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-83-1-airbnb-integration-no-integrations-airbnb-api-routes",
+      "action": "no /integrations/airbnb/* API routes (83-1-airbnb-integration Airbnb OAuth and Sync)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-84-2-esignature-email-e-signature-email-send-status-tracking-p",
+      "action": "e-signature email-send + status-tracking polish; webhook idempotency guard (terminal-state) still missing (84-2-esignature-email E-Signature Email Integration)",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-82-1-swiftui-project-setup-no-screen-map-for-ppt-reality-mobile-in",
+      "action": "no screen-map for ppt-reality-mobile in docs/screens/ (82-1-swiftui-project-setup SwiftUI Project Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-82-1-swiftui-project-setup-no-epic-82-commits-in-git-log",
+      "action": "no epic-82 commits in git log (82-1-swiftui-project-setup SwiftUI Project Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
+    },
+    {
+      "id": "gap-82-1-swiftui-project-setup-story-vs-implementation-mapping-unclear",
+      "action": "story-vs-implementation mapping unclear (epic 82 in epics-007.md targets different scope) (82-1-swiftui-project-setup SwiftUI Project Setup)",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "gap-scan 2026-06-21 (fire-payload refill)"
     }
   ]
 }
