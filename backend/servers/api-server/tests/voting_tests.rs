@@ -279,7 +279,7 @@ mod pdf_report {
         .expect("seed vote")
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_get_report_pdf_returns_application_pdf_and_archives_document(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -332,7 +332,7 @@ mod pdf_report {
         );
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_get_report_json_with_format_pdf_returns_application_pdf(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
