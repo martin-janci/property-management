@@ -346,34 +346,8 @@ pub async fn push_booking_listing(
 
     // Map the request into the OTA push payloads. The combined push skips an
     // empty stream internally, so we build both unconditionally.
-    let avail_updates: Vec<AvailabilityUpdate> = request
-        .availability
-        .iter()
-        .map(|a| AvailabilityUpdate {
-            room_type_id: a.room_type_id.clone(),
-            date: a.date,
-            available_count: a.available_count,
-            stop_sell: a.stop_sell,
-            cta: false,
-            ctd: false,
-            min_los: None,
-            max_los: None,
-        })
-        .collect();
-
-    let rate_updates: Vec<RateUpdate> = request
-        .rates
-        .iter()
-        .map(|r| RateUpdate {
-            room_type_id: r.room_type_id.clone(),
-            rate_plan_code: r.rate_plan_code.clone(),
-            date: r.date,
-            base_rate: r.base_rate,
-            currency: r.currency.clone(),
-            extra_person_rate: None,
-            extra_child_rate: None,
-        })
-        .collect();
+    let avail_updates = map_availability_updates(&request.availability);
+    let rate_updates = map_rate_updates(&request.rates);
 
     // Push both OTA streams (OTA_HotelAvailNotifRQ + OTA_HotelRateAmountNotifRQ)
     // in one call so a partial failure is surfaced instead of silently losing
@@ -469,6 +443,51 @@ fn push_stream_errors(outcome: &PushOutcome) -> String {
         parts.push(format!("rates: {e}"));
     }
     parts.join("; ")
+}
+
+/// Map the request's availability entries to OTA [`AvailabilityUpdate`]s
+/// (the input to `OTA_HotelAvailNotifRQ`).
+///
+/// Pure request→OTA translation for the rate/availability push flow (AC-5),
+/// extracted from the handler so the mapping — and the OTA XML it ultimately
+/// produces — can be unit-tested without an HTTP round-trip. The route handler
+/// does not currently set the CTA/CTD/LOS restriction fields, so they are
+/// defaulted here; keeping the mapping in one place means a future restriction
+/// surface only changes this function.
+fn map_availability_updates(entries: &[RoomAvailabilityEntry]) -> Vec<AvailabilityUpdate> {
+    entries
+        .iter()
+        .map(|a| AvailabilityUpdate {
+            room_type_id: a.room_type_id.clone(),
+            date: a.date,
+            available_count: a.available_count,
+            stop_sell: a.stop_sell,
+            cta: false,
+            ctd: false,
+            min_los: None,
+            max_los: None,
+        })
+        .collect()
+}
+
+/// Map the request's rate entries to OTA [`RateUpdate`]s (the input to
+/// `OTA_HotelRateAmountNotifRQ`).
+///
+/// Companion of [`map_availability_updates`] for the rate stream. The handler
+/// does not expose extra-person/child pricing, so those are defaulted to `None`.
+fn map_rate_updates(entries: &[RoomRateEntry]) -> Vec<RateUpdate> {
+    entries
+        .iter()
+        .map(|r| RateUpdate {
+            room_type_id: r.room_type_id.clone(),
+            rate_plan_code: r.rate_plan_code.clone(),
+            date: r.date,
+            base_rate: r.base_rate,
+            currency: r.currency.clone(),
+            extra_person_rate: None,
+            extra_child_rate: None,
+        })
+        .collect()
 }
 
 fn classify_listing_push(outcome: &PushOutcome) -> ListingPushResult {
@@ -911,5 +930,108 @@ mod tests {
         let entry: RoomAvailabilityEntry = serde_json::from_value(json).unwrap();
         assert!(!entry.stop_sell);
         assert_eq!(entry.available_count, 3);
+    }
+
+    // ---- request → OTA-update mapping + end-to-end XML (AC-5 push flow) ----
+
+    #[test]
+    fn test_map_availability_updates_carries_fields_and_defaults_restrictions() {
+        let req = make_request(2, 0);
+        let updates = map_availability_updates(&req.availability);
+
+        assert_eq!(updates.len(), 2);
+        assert_eq!(updates[0].room_type_id, "DBL");
+        assert_eq!(updates[0].available_count, 1);
+        assert!(!updates[0].stop_sell);
+        // Restriction fields are not exposed by the route → defaulted.
+        assert!(!updates[0].cta);
+        assert!(!updates[0].ctd);
+        assert!(updates[0].min_los.is_none());
+        assert!(updates[0].max_los.is_none());
+    }
+
+    #[test]
+    fn test_map_availability_updates_preserves_stop_sell() {
+        let mut req = make_request(1, 0);
+        req.availability[0].stop_sell = true;
+        let updates = map_availability_updates(&req.availability);
+        assert!(updates[0].stop_sell);
+    }
+
+    #[test]
+    fn test_map_rate_updates_carries_fields_and_defaults_extras() {
+        let req = make_request(0, 2);
+        let updates = map_rate_updates(&req.rates);
+
+        assert_eq!(updates.len(), 2);
+        assert_eq!(updates[0].room_type_id, "DBL");
+        assert_eq!(updates[0].rate_plan_code, "STD");
+        assert_eq!(updates[0].currency, "EUR");
+        assert_eq!(updates[0].base_rate, rust_decimal::Decimal::new(10000, 2));
+        // Extra-person / extra-child pricing is not exposed by the route.
+        assert!(updates[0].extra_person_rate.is_none());
+        assert!(updates[0].extra_child_rate.is_none());
+    }
+
+    #[test]
+    fn test_empty_request_maps_to_empty_update_streams() {
+        let req = make_request(0, 0);
+        assert!(map_availability_updates(&req.availability).is_empty());
+        assert!(map_rate_updates(&req.rates).is_empty());
+    }
+
+    /// End-to-end push-flow shape (AC-5): a route `ListingPushRequest` maps to
+    /// OTA updates that serialise to a valid `OTA_HotelAvailNotifRQ` carrying the
+    /// requested availability. This is the route-boundary half of the push flow;
+    /// the transport/retry half is covered in `integrations::booking` tests.
+    #[test]
+    fn test_request_availability_maps_to_valid_ota_avail_xml() {
+        let mut req = make_request(1, 0);
+        req.availability[0].available_count = 5;
+
+        let updates = map_availability_updates(&req.availability);
+        let rq = integrations::OtaHotelAvailNotifRQ {
+            hotel_code: "HOTEL-1".to_string(),
+            avail_status_messages: updates
+                .iter()
+                .map(|u| integrations::AvailStatusMessage {
+                    room_type_code: u.room_type_id.clone(),
+                    rate_plan_code: None,
+                    start_date: u.date,
+                    end_date: u.date,
+                    booking_limit: u.available_count,
+                    status: if u.stop_sell { "Close" } else { "Open" }.to_string(),
+                    los_restrictions: None,
+                })
+                .collect(),
+        };
+
+        let xml = rq.to_xml();
+        assert!(xml.contains("OTA_HotelAvailNotifRQ"), "xml: {xml}");
+        assert!(xml.contains("HOTEL-1"), "xml: {xml}");
+        assert!(xml.contains("DBL"), "xml: {xml}");
+        // available_count = 5 surfaces as the OTA BookingLimit.
+        assert!(xml.contains("BookingLimit=\"5\""), "xml: {xml}");
+    }
+
+    /// End-to-end push-flow shape (AC-5): a route `ListingPushRequest` maps to
+    /// OTA updates that serialise to a valid `OTA_HotelRateAmountNotifRQ`
+    /// carrying the requested rate.
+    #[test]
+    fn test_request_rates_map_to_valid_ota_rate_xml() {
+        let req = make_request(0, 1);
+        let updates = map_rate_updates(&req.rates);
+        let rq = integrations::OtaHotelRateAmountNotifRQ {
+            hotel_code: "HOTEL-1".to_string(),
+            rate_amount_messages: updates,
+        };
+
+        let xml = rq.to_xml().expect("rate xml builds");
+        assert!(xml.contains("OTA_HotelRateAmountNotifRQ"), "xml: {xml}");
+        assert!(xml.contains("HOTEL-1"), "xml: {xml}");
+        assert!(xml.contains("STD"), "xml: {xml}");
+        // base_rate 100.00 EUR surfaces in the amount/currency.
+        assert!(xml.contains("100.00"), "xml: {xml}");
+        assert!(xml.contains("EUR"), "xml: {xml}");
     }
 }
