@@ -76,6 +76,30 @@ export function useNavigationCommands() {
         icon: '⚡',
         action: () => navigate('/outages'),
       },
+      {
+        id: 'nav-sentiment',
+        label: t('commandPalette.commands.goToSentiment', { defaultValue: 'Go to Sentiment' }),
+        description: t('commandPalette.descriptions.goToSentiment', {
+          defaultValue: 'Resident sentiment trends and alerts',
+        }),
+        category: 'navigation',
+        keywords: ['sentiment', 'feedback', 'mood', 'satisfaction', 'alerts', 'ai'],
+        icon: '😊',
+        action: () => navigate('/ai/sentiment'),
+      },
+      {
+        id: 'nav-predictive-maintenance',
+        label: t('commandPalette.commands.goToPredictiveMaintenance', {
+          defaultValue: 'Go to Predictive Maintenance',
+        }),
+        description: t('commandPalette.descriptions.goToPredictiveMaintenance', {
+          defaultValue: 'Equipment health and maintenance predictions',
+        }),
+        category: 'navigation',
+        keywords: ['predictive', 'maintenance', 'equipment', 'predictions', 'risk', 'ai'],
+        icon: '🔧',
+        action: () => navigate('/ai/predictive-maintenance'),
+      },
       // Create commands
       {
         id: 'create-dispute',
