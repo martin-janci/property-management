@@ -35,16 +35,72 @@ jest.mock('../qrcode', () => ({
   },
 }));
 
-// Run every `useEffect` synchronously and collect cleanups so the test can
-// simulate unmount. Effects run in declaration order, matching React.
+// Minimal React hook emulation so the test can drive the hook's wiring without
+// mounting the RN tree.
+//
+//  - `useEffect` runs synchronously, but only re-runs when its dependency array
+//    changes — emulated with a per-call-site dep cache keyed by declaration
+//    order so the "stable, runs once" wiring effect ([]) is exercised
+//    faithfully across re-renders, and cleanups are collected for unmount.
+//  - `useRef` returns a persistent box per call site (also keyed by declaration
+//    order), so the latest-callback ref survives re-renders.
+//
+// All shared state lives on a single `mock`-prefixed object so the
+// `jest.mock('react', …)` factory may legally reference it.
 type EffectCleanup = () => void;
-const mockCleanups: EffectCleanup[] = [];
-jest.mock('react', () => ({
-  useEffect: (effect: () => undefined | EffectCleanup) => {
-    const cleanup = effect();
-    if (typeof cleanup === 'function') {
-      mockCleanups.push(cleanup);
+const mockReactState = {
+  cleanups: [] as EffectCleanup[],
+  effectIndex: 0,
+  effectDeps: [] as (readonly unknown[] | undefined)[],
+  effectCleanupByIndex: [] as (EffectCleanup | undefined)[],
+  refIndex: 0,
+  refBoxes: [] as { current: unknown }[],
+  depsChanged(prev: readonly unknown[] | undefined, next: readonly unknown[] | undefined): boolean {
+    if (prev === undefined || next === undefined) {
+      return true;
     }
+    if (prev.length !== next.length) {
+      return true;
+    }
+    return prev.some((value, i) => !Object.is(value, next[i]));
+  },
+  // Reset per-render call-site cursors. Call between simulated renders.
+  startRender(): void {
+    this.effectIndex = 0;
+    this.refIndex = 0;
+  },
+  reset(): void {
+    this.cleanups.length = 0;
+    this.effectDeps.length = 0;
+    this.effectCleanupByIndex.length = 0;
+    this.refBoxes.length = 0;
+    this.startRender();
+  },
+};
+// Back-compat alias used by the unmount test.
+const mockCleanups = mockReactState.cleanups;
+const startRender = () => mockReactState.startRender();
+
+jest.mock('react', () => ({
+  useEffect: (effect: () => undefined | EffectCleanup, deps?: readonly unknown[]) => {
+    const index = mockReactState.effectIndex++;
+    if (mockReactState.depsChanged(mockReactState.effectDeps[index], deps)) {
+      mockReactState.effectCleanupByIndex[index]?.();
+      mockReactState.effectDeps[index] = deps;
+      const cleanup = effect();
+      mockReactState.effectCleanupByIndex[index] =
+        typeof cleanup === 'function' ? cleanup : undefined;
+      if (typeof cleanup === 'function') {
+        mockReactState.cleanups.push(cleanup);
+      }
+    }
+  },
+  useRef: (initial: unknown) => {
+    const index = mockReactState.refIndex++;
+    if (mockReactState.refBoxes[index] === undefined) {
+      mockReactState.refBoxes[index] = { current: initial };
+    }
+    return mockReactState.refBoxes[index];
   },
 }));
 
@@ -57,7 +113,7 @@ const manager = deepLinkManager as unknown as {
 beforeEach(() => {
   jest.clearAllMocks();
   mockDeepLink.registeredHandler = null;
-  mockCleanups.length = 0;
+  mockReactState.reset();
 });
 
 describe('useDeepLinkRouting', () => {
@@ -98,8 +154,46 @@ describe('useDeepLinkRouting', () => {
     useDeepLinkRouting(onNavigate, false);
     expect(manager.setAuthenticated).toHaveBeenLastCalledWith(false);
 
+    startRender();
     useDeepLinkRouting(onNavigate, true);
     expect(manager.setAuthenticated).toHaveBeenLastCalledWith(true);
+  });
+
+  it('does not re-register or re-initialize when onNavigate identity changes', () => {
+    // App passes a memoised callback, but a new identity on re-render must not
+    // re-run the wiring effect (regression: duplicate handlers / re-init).
+    const firstOnNavigate = jest.fn();
+    useDeepLinkRouting(firstOnNavigate, false);
+
+    startRender();
+    const secondOnNavigate = jest.fn();
+    useDeepLinkRouting(secondOnNavigate, false);
+
+    expect(manager.addHandler).toHaveBeenCalledTimes(1);
+    expect(manager.initialize).toHaveBeenCalledTimes(1);
+
+    // A link dispatched after the re-render routes through the LATEST callback.
+    mockDeepLink.registeredHandler?.({
+      success: true,
+      screen: 'Documents',
+      params: { id: 'doc-9' },
+    } as ParsedDeepLink);
+
+    expect(firstOnNavigate).not.toHaveBeenCalled();
+    expect(secondOnNavigate).toHaveBeenCalledWith('DocumentDetail', { documentId: 'doc-9' });
+  });
+
+  it('swallows a rejected initialize() so it is not an unhandled rejection', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    manager.initialize.mockRejectedValueOnce(new Error('cold-start boom'));
+
+    const onNavigate = jest.fn();
+    expect(() => useDeepLinkRouting(onNavigate, false)).not.toThrow();
+
+    // Let the rejected promise's `.catch` settle.
+    await Promise.resolve();
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   it('unsubscribes the handler on cleanup', () => {
