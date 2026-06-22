@@ -4,9 +4,9 @@
  * rendering, drill-down, and CSV export wiring.
  */
 
+import type { FaultStatistics } from '@ppt/api-client';
 /// <reference types="vitest/globals" />
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { FaultStatistics } from '@ppt/api-client';
 import { FaultReportsPage } from './FaultReportsPage';
 
 const noop = () => {};
@@ -82,9 +82,7 @@ describe('FaultReportsPage', () => {
     const revokeObjectURL = vi.fn();
     // jsdom lacks these — stub them.
     vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL });
-    const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
     render(<FaultReportsPage {...baseProps} stats={stats} />);
     fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
