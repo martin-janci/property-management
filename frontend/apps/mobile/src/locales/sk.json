@@ -122,7 +122,12 @@
     "selectCategory": "Prosim vyberte kategoriu",
     "locationDetected": "Poloha zistena",
     "failedToPickImage": "Nepodarilo sa vybrat obrazok",
-    "failedToDetectLocation": "Nepodarilo sa zistit polohu"
+    "failedToDetectLocation": "Nepodarilo sa zistit polohu",
+    "buildingLabel": "Budova",
+    "selectBuilding": "Vyberte budovu",
+    "loadingBuildings": "Načítavajú sa budovy…",
+    "noBuildings": "Žiadne dostupné budovy",
+    "buildingsLoadError": "Nepodarilo sa načítať vaše budovy"
   },
   "news": {
     "title": "Spravy",

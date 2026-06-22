@@ -122,7 +122,12 @@
     "selectCategory": "Prosze wybrac kategorie",
     "locationDetected": "Lokalizacja wykryta",
     "failedToPickImage": "Nie udalo sie wybrac obrazu",
-    "failedToDetectLocation": "Nie udalo sie wykryc lokalizacji"
+    "failedToDetectLocation": "Nie udalo sie wykryc lokalizacji",
+    "buildingLabel": "Budynek",
+    "selectBuilding": "Wybierz budynek",
+    "loadingBuildings": "Ładowanie budynków…",
+    "noBuildings": "Brak dostępnych budynków",
+    "buildingsLoadError": "Nie udało się wczytać Twoich budynków"
   },
   "news": {
     "title": "Aktualnosci",

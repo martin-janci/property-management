@@ -122,7 +122,12 @@
     "selectCategory": "Bitte wahlen Sie eine Kategorie",
     "locationDetected": "Standort erkannt",
     "failedToPickImage": "Bild konnte nicht ausgewahlt werden",
-    "failedToDetectLocation": "Standort konnte nicht erkannt werden"
+    "failedToDetectLocation": "Standort konnte nicht erkannt werden",
+    "buildingLabel": "Gebäude",
+    "selectBuilding": "Bitte ein Gebäude auswählen",
+    "loadingBuildings": "Gebäude werden geladen…",
+    "noBuildings": "Keine Gebäude verfügbar",
+    "buildingsLoadError": "Ihre Gebäude konnten nicht geladen werden"
   },
   "news": {
     "title": "Nachrichten",
