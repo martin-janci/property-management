@@ -64,9 +64,10 @@ impl BuildingRepository {
             r#"
             INSERT INTO buildings (
                 organization_id, street, city, postal_code, country,
-                name, description, year_built, total_floors, total_entrances, amenities
+                name, description, year_built, total_floors, total_entrances, amenities,
+                latitude, longitude
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
             "#,
         )
@@ -81,6 +82,8 @@ impl BuildingRepository {
         .bind(data.total_floors)
         .bind(data.total_entrances)
         .bind(&amenities)
+        .bind(data.latitude)
+        .bind(data.longitude)
         .fetch_one(executor)
         .await?;
 
@@ -170,6 +173,14 @@ impl BuildingRepository {
             param_idx += 1;
             updates.push(format!("settings = ${}", param_idx));
         }
+        if data.latitude.is_some() {
+            param_idx += 1;
+            updates.push(format!("latitude = ${}", param_idx));
+        }
+        if data.longitude.is_some() {
+            param_idx += 1;
+            updates.push(format!("longitude = ${}", param_idx));
+        }
 
         let query = format!(
             "UPDATE buildings SET {} WHERE id = $1 AND status != 'archived' RETURNING *",
@@ -214,6 +225,12 @@ impl BuildingRepository {
         }
         if let Some(settings) = &data.settings {
             q = q.bind(settings);
+        }
+        if let Some(latitude) = &data.latitude {
+            q = q.bind(latitude);
+        }
+        if let Some(longitude) = &data.longitude {
+            q = q.bind(longitude);
         }
 
         let building = q.fetch_optional(executor).await?;
@@ -277,6 +294,7 @@ impl BuildingRepository {
         let data_query = format!(
             r#"
             SELECT b.id, b.name, b.street, b.city, b.postal_code, b.total_floors, b.status,
+                   b.latitude, b.longitude,
                    (SELECT COUNT(*) FROM units u WHERE u.building_id = b.id AND u.status = 'active') as unit_count
             FROM buildings b
             WHERE {}
@@ -346,6 +364,7 @@ impl BuildingRepository {
         let data_query = format!(
             r#"
             SELECT b.id, b.name, b.street, b.city, b.postal_code, b.total_floors, b.status,
+                   b.latitude, b.longitude,
                    (SELECT COUNT(*) FROM units u WHERE u.building_id = b.id AND u.status = 'active') as unit_count
             FROM buildings b
             WHERE {}
@@ -579,6 +598,7 @@ impl BuildingRepository {
         let data_query = format!(
             r#"
             SELECT b.id, b.name, b.street, b.city, b.postal_code, b.total_floors, b.status,
+                   b.latitude, b.longitude,
                    (SELECT COUNT(*) FROM units u WHERE u.building_id = b.id AND u.status = 'active') as unit_count
             FROM buildings b
             WHERE {}
