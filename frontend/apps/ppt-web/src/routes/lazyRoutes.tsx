@@ -68,11 +68,6 @@ export const IotThresholdConfigPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.IotThresholdConfigPage }))
 );
 
-// Delegations feature (Epic 3, Story 3.4)
-export const DelegationsPage = lazy(() =>
-  import('../features/delegations').then((m) => ({ default: m.DelegationsPage }))
-);
-
 // Disputes feature (Epic 77)
 export const DisputesPage = lazy(() =>
   import('../features/disputes').then((m) => ({ default: m.DisputesPage }))
