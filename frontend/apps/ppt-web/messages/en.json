@@ -424,6 +424,52 @@
       "empty": "No versions are available for this document.",
       "version": "Version {{n}}",
       "current": "Current"
+    },
+    "esign": {
+      "title": "E-signature",
+      "send": "Send for signature",
+      "loading": "Loading signature requests…",
+      "loadError": "Failed to load signature requests.",
+      "empty": "This document has not been sent for signature yet.",
+      "requestedAt": "Requested {{date}}",
+      "signedAt": "signed {{date}}",
+      "remind": "Send reminder",
+      "reminding": "Sending…",
+      "remindSent": "{{count}} reminder(s) sent.",
+      "cancel": "Cancel request",
+      "cancelling": "Cancelling…",
+      "cancelConfirm": "Cancel this signature request? Signers can no longer sign.",
+      "allSigned": "All signers have responded.",
+      "status": {
+        "pending": "Pending signature",
+        "in_progress": "Signing in progress",
+        "completed": "Signed",
+        "declined": "Declined",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      },
+      "signer": {
+        "pending": "Pending",
+        "sent": "Sent",
+        "viewed": "Viewed",
+        "signed": "Signed",
+        "declined": "Declined"
+      },
+      "dialog": {
+        "title": "Send document for signature",
+        "signers": "Signers",
+        "namePlaceholder": "Full name",
+        "emailPlaceholder": "email@example.com",
+        "removeSigner": "Remove signer",
+        "addSigner": "+ Add signer",
+        "signerRequired": "Add at least one signer with a name and a valid email.",
+        "subject": "Subject (optional)",
+        "subjectPlaceholder": "e.g. Management contract",
+        "message": "Message to signers (optional)",
+        "messagePlaceholder": "Please review and sign the attached document.",
+        "sending": "Sending…",
+        "send": "Send for signature"
+      }
     }
   },
   "disputes": {
