@@ -1257,5 +1257,48 @@
     "descriptions": {
       "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
     }
+  },
+  "sentiment": {
+    "pageTitle": "Bérlői hangulat",
+    "pageSubtitle": "MI által származtatott hangulati trendek és riasztások a bérlői kommunikációból.",
+    "orgAvg": "Szerv. átlag (30 nap)",
+    "totalTrends": "Adatpontok",
+    "openAlerts": "Nyitott riasztások",
+    "totalAlerts": "Összes riasztás",
+    "trendTitle": "Hangulati trend (30 nap)",
+    "notEnoughData": "Nincs elég adat a trend megrajzolásához.",
+    "alertsTitle": "Hangulati riasztások",
+    "noAlerts": "Nincsenek aktív riasztások.",
+    "acknowledge": "Nyugtázás",
+    "acknowledged": "Nyugtázva",
+    "alertMeta": "Pontszám {{score}} · küszöb {{threshold}} · {{date}}",
+    "alertType": {
+      "spike_negative": "Negatív kiugrás",
+      "sustained_decline": "Tartós csökkenés",
+      "anomaly": "Anomália"
+    }
+  },
+  "predictive": {
+    "pageTitle": "Prediktív karbantartás",
+    "pageSubtitle": "MI-alapú berendezés-állapotfigyelés és hibaelőrejelzések.",
+    "totalEquipment": "Összes berendezés",
+    "needsMaintenance": "Karbantartás szükséges",
+    "highRisk": "Nyitott, magas kockázatú",
+    "totalPredictions": "Összes előrejelzés",
+    "equipmentTitle": "Berendezések",
+    "noEquipment": "Nem található berendezés.",
+    "predictionsTitle": "Karbantartási előrejelzések",
+    "noPredictions": "Nincsenek magas kockázatú előrejelzések.",
+    "acknowledge": "Nyugtázás",
+    "acknowledged": "Nyugtázva",
+    "riskBadge": "{{pct}}% kockázat",
+    "failureEta": "Hiba ~{{date}}",
+    "confidenceMeta": "Megbízhatóság {{pct}}% · {{date}}",
+    "equipmentStatus": {
+      "operational": "Üzemképes",
+      "needs_maintenance": "Karbantartás szükséges",
+      "under_repair": "Javítás alatt",
+      "decommissioned": "Kivonva"
+    }
   }
 }

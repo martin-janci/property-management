@@ -3677,5 +3677,48 @@
       "generating": "Generating…",
       "submit": "Generate document"
     }
+  },
+  "sentiment": {
+    "pageTitle": "Tenant Sentiment",
+    "pageSubtitle": "AI-derived sentiment trends and alerts from tenant communications.",
+    "orgAvg": "Org avg (30d)",
+    "totalTrends": "Data points",
+    "openAlerts": "Open alerts",
+    "totalAlerts": "Total alerts",
+    "trendTitle": "Sentiment Trend (30 days)",
+    "notEnoughData": "Not enough data to draw trend.",
+    "alertsTitle": "Sentiment Alerts",
+    "noAlerts": "No active alerts.",
+    "acknowledge": "Acknowledge",
+    "acknowledged": "Acknowledged",
+    "alertMeta": "Score {{score}} · threshold {{threshold}} · {{date}}",
+    "alertType": {
+      "spike_negative": "Negative spike",
+      "sustained_decline": "Sustained decline",
+      "anomaly": "Anomaly"
+    }
+  },
+  "predictive": {
+    "pageTitle": "Predictive Maintenance",
+    "pageSubtitle": "AI-powered equipment health monitoring and failure predictions.",
+    "totalEquipment": "Total equipment",
+    "needsMaintenance": "Needs maintenance",
+    "highRisk": "High-risk open",
+    "totalPredictions": "Total predictions",
+    "equipmentTitle": "Equipment",
+    "noEquipment": "No equipment found.",
+    "predictionsTitle": "Maintenance Predictions",
+    "noPredictions": "No high-risk predictions.",
+    "acknowledge": "Acknowledge",
+    "acknowledged": "Acknowledged",
+    "riskBadge": "{{pct}}% risk",
+    "failureEta": "Failure ~{{date}}",
+    "confidenceMeta": "Confidence {{pct}}% · {{date}}",
+    "equipmentStatus": {
+      "operational": "Operational",
+      "needs_maintenance": "Needs maintenance",
+      "under_repair": "Under repair",
+      "decommissioned": "Decommissioned"
+    }
   }
 }

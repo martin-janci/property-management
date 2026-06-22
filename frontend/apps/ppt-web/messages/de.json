@@ -1284,5 +1284,48 @@
     "descriptions": {
       "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
     }
+  },
+  "sentiment": {
+    "pageTitle": "Mieterstimmung",
+    "pageSubtitle": "KI-gestützte Stimmungstrends und Warnungen aus der Mieterkommunikation.",
+    "orgAvg": "Org.-Durchschnitt (30 T)",
+    "totalTrends": "Datenpunkte",
+    "openAlerts": "Offene Warnungen",
+    "totalAlerts": "Warnungen gesamt",
+    "trendTitle": "Stimmungstrend (30 Tage)",
+    "notEnoughData": "Nicht genügend Daten für die Trendanzeige.",
+    "alertsTitle": "Stimmungswarnungen",
+    "noAlerts": "Keine aktiven Warnungen.",
+    "acknowledge": "Bestätigen",
+    "acknowledged": "Bestätigt",
+    "alertMeta": "Wert {{score}} · Schwelle {{threshold}} · {{date}}",
+    "alertType": {
+      "spike_negative": "Negativer Ausschlag",
+      "sustained_decline": "Anhaltender Rückgang",
+      "anomaly": "Anomalie"
+    }
+  },
+  "predictive": {
+    "pageTitle": "Vorausschauende Wartung",
+    "pageSubtitle": "KI-gestützte Zustandsüberwachung von Anlagen und Ausfallprognosen.",
+    "totalEquipment": "Anlagen gesamt",
+    "needsMaintenance": "Wartung erforderlich",
+    "highRisk": "Offen mit hohem Risiko",
+    "totalPredictions": "Prognosen gesamt",
+    "equipmentTitle": "Anlagen",
+    "noEquipment": "Keine Anlagen gefunden.",
+    "predictionsTitle": "Wartungsprognosen",
+    "noPredictions": "Keine Prognosen mit hohem Risiko.",
+    "acknowledge": "Bestätigen",
+    "acknowledged": "Bestätigt",
+    "riskBadge": "{{pct}} % Risiko",
+    "failureEta": "Ausfall ~{{date}}",
+    "confidenceMeta": "Konfidenz {{pct}} % · {{date}}",
+    "equipmentStatus": {
+      "operational": "Betriebsbereit",
+      "needs_maintenance": "Wartung erforderlich",
+      "under_repair": "In Reparatur",
+      "decommissioned": "Außer Betrieb"
+    }
   }
 }

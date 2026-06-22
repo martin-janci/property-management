@@ -12,8 +12,14 @@ interface SentimentTrendChartProps {
 }
 
 function SentimentLine({ trends }: { trends: SentimentTrend[] }): JSX.Element {
+  const { t } = useTranslation();
+
   if (trends.length < 2) {
-    return <p className="py-8 text-center text-sm text-gray-400">Not enough data to draw trend.</p>;
+    return (
+      <p className="py-8 text-center text-sm text-gray-400">
+        {t('sentiment.notEnoughData', { defaultValue: 'Not enough data to draw trend.' })}
+      </p>
+    );
   }
 
   const W = 600;
