@@ -122,7 +122,12 @@
     "selectCategory": "Kerem valasszon kategoriat",
     "locationDetected": "Helyszin eszlelve",
     "failedToPickImage": "Nem sikerult kepet valasztani",
-    "failedToDetectLocation": "Nem sikerult helyszint erzekelni"
+    "failedToDetectLocation": "Nem sikerult helyszint erzekelni",
+    "buildingLabel": "Épület",
+    "selectBuilding": "Válasszon épületet",
+    "loadingBuildings": "Épületek betöltése…",
+    "noBuildings": "Nincs elérhető épület",
+    "buildingsLoadError": "Nem sikerült betölteni az épületeit"
   },
   "news": {
     "title": "Hirek",
@@ -421,7 +426,7 @@
     "expires": "Lejár",
     "revoke": "Visszavon",
     "revokeTitle": "Megosztás visszavonása",
-    "revokeConfirm": "Biztosan vissza szerelné vonni ezt a megosztást? A cimzett azonnal elvesziti a hozzáférést.",
+    "revokeConfirm": "Biztosan vissza szerelné vonni ezt a megosztást? A cimzett azonnal elveszíti a hozzáférést.",
     "revokeAction": "Visszavon",
     "errorTitle": "Hiba",
     "errorUserIdRequired": "Kerlek add meg a felhasznalo ID-t.",

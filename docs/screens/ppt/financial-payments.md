@@ -9,7 +9,7 @@ implementations:
     component: PaymentManagementPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: partial
 endpoints: []
 relatedScreens:
   - id: ppt/financial
@@ -33,3 +33,4 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
+- 2026-06-22 — agent: confirmed PaymentManagementPageRoute wired (#975.5) to listPayments + listUnallocatedPayments + listInvoices via TanStack Query, with allocatePayment (onMatch) and autoMatchPayments (onAutoMatch) mutations; apiStatus stub -> partial (no building_id filter param; buildings stays []).

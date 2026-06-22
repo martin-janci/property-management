@@ -138,7 +138,7 @@ interface LeasesScreenProps {
 }
 
 export function LeasesScreen({ onNavigate }: LeasesScreenProps) {
-  const { data: tenantId } = useTenantId();
+  const { tenantId } = useTenantId();
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiLeasesListResponse>(
     ['leases', 'list', tenantId],

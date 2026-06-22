@@ -96,7 +96,7 @@ interface BuildingsScreenProps {
 }
 
 export function BuildingsScreen({ onNavigate }: BuildingsScreenProps) {
-  const { data: tenantId } = useTenantId();
+  const { tenantId } = useTenantId();
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiBuildingsListResponse>(
     ['buildings', 'list', tenantId],

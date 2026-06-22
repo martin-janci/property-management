@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useCallback, useState } from 'react';
@@ -15,12 +16,48 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useApiMutation, useApiQuery, useTenantId } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
 import type { FaultCategory, FaultPriority } from './FaultsListScreen';
 
 interface ReportFaultScreenProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+}
+
+/** Subset of the api-server `BuildingSummary` the building picker needs. */
+interface ApiBuildingSummary {
+  id: string;
+  name?: string | null;
+  street?: string | null;
+  city?: string | null;
+}
+
+interface ApiBuildingsListResponse {
+  buildings: ApiBuildingSummary[];
+}
+
+/** Request body for `POST /api/v1/faults` (mirrors `CreateFaultRequest`). */
+interface CreateFaultVariables {
+  building_id: string;
+  title: string;
+  description: string;
+  category: string;
+  priority: string;
+  location_description?: string;
+}
+
+/** Response from `POST /api/v1/faults` (mirrors `CreateFaultResponse`). */
+interface CreateFaultResult {
+  id: string;
+  message: string;
+}
+
+/** A building's display label: prefer its name, fall back to the address. */
+function buildingLabel(b: ApiBuildingSummary): string {
+  if (b.name?.trim()) return b.name;
+  const address = [b.street, b.city].filter(Boolean).join(', ');
+  return address || b.id;
 }
 
 const categories: Array<{ value: FaultCategory; labelKey: string; icon: string }> = [
@@ -42,18 +79,50 @@ const priorities: Array<{ value: FaultPriority; labelKey: string; color: string 
 
 export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [buildingId, setBuildingId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<FaultCategory | null>(null);
   const [priority, setPriority] = useState<FaultPriority>('medium');
   const [location, setLocation] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // The api-server requires a `building_id` on every fault. Load the
+  // buildings the user belongs to so they can pick which one the fault is for.
+  //
+  // `GET /api/v1/buildings` requires `organization_id` as a query param
+  // (a required, non-defaulted Uuid that must equal the RLS tenant) — without
+  // it the request 400s/403s and the picker never loads. The org id is the
+  // JWT `tenant_id` claim, surfaced here via `useTenantId`. We gate the query
+  // on it (`enabled`) and key the cache on it so a tenant switch refetches.
+  const { tenantId, isLoading: isTenantLoading } = useTenantId();
+  const buildingsQuery = useApiQuery<ApiBuildingsListResponse>(
+    ['buildings', 'list', tenantId],
+    `/api/v1/buildings?organization_id=${tenantId ?? ''}`,
+    { staleTime: 60_000, enabled: Boolean(tenantId) }
+  );
+  const buildings = buildingsQuery.data?.buildings ?? [];
+  // Show the loading state while we resolve the tenant id too, otherwise the
+  // gated-off query would flash the empty/"no buildings" state first.
+  const isBuildingsLoading = isTenantLoading || buildingsQuery.isLoading;
+
+  // POST the fault to the api-server. `isPending` drives the submit button's
+  // spinner/disabled state (replacing the old local `isSubmitting` flag).
+  const createMutation = useApiMutation<CreateFaultResult, CreateFaultVariables>(
+    '/api/v1/faults',
+    'POST'
+  );
+  const isSubmitting = createMutation.isPending;
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
+
+    if (!buildingId) {
+      newErrors.building = t('faults.selectBuilding');
+    }
 
     if (!title.trim()) {
       newErrors.title = t('faults.titleRequired');
@@ -147,25 +216,37 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
     }
   }, [t]);
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
+  const handleSubmit = () => {
+    if (!validateForm() || !buildingId) {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      Alert.alert(t('common.done'), t('faults.successSubmit'), [
-        { text: t('common.ok'), onPress: onSuccess },
-      ]);
-    } catch (_error) {
-      Alert.alert(t('common.error'), t('faults.failedSubmit'));
-    } finally {
-      setIsSubmitting(false);
-    }
+    // NOTE: `photos` holds local device URIs. Uploading attachments needs the
+    // presigned-URL pipeline (POST /faults/{id}/attachments), which has no
+    // shared mobile helper yet — tracked as a follow-up. The fault itself is
+    // created here so reports stop silently disappearing.
+    createMutation.mutate(
+      {
+        building_id: buildingId,
+        title: title.trim(),
+        description: description.trim(),
+        category: category ?? 'other',
+        priority,
+        location_description: location.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          // Refresh the faults list so the new report shows on return.
+          queryClient.invalidateQueries({ queryKey: ['faults', 'list'] });
+          Alert.alert(t('common.done'), t('faults.successSubmit'), [
+            { text: t('common.ok'), onPress: onSuccess },
+          ]);
+        },
+        onError: (error) => {
+          Alert.alert(t('common.error'), error.message || t('faults.failedSubmit'));
+        },
+      }
+    );
   };
 
   // Category label mapping (these would ideally come from translations)
@@ -197,6 +278,41 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
       </View>
 
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+        {/* Building */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('faults.buildingLabel')} *</Text>
+          {isBuildingsLoading ? (
+            <Text style={styles.helperText}>{t('faults.loadingBuildings')}</Text>
+          ) : buildingsQuery.error ? (
+            <Text style={styles.errorText}>{t('faults.buildingsLoadError')}</Text>
+          ) : buildings.length === 0 ? (
+            <Text style={styles.helperText}>{t('faults.noBuildings')}</Text>
+          ) : (
+            <View style={styles.categoryGrid}>
+              {buildings.map((b) => (
+                <Pressable
+                  key={b.id}
+                  style={[
+                    styles.categoryButton,
+                    buildingId === b.id && styles.categoryButtonSelected,
+                  ]}
+                  onPress={() => setBuildingId(b.id)}
+                >
+                  <Text
+                    style={[
+                      styles.categoryLabel,
+                      buildingId === b.id && styles.categoryLabelSelected,
+                    ]}
+                  >
+                    {buildingLabel(b)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+          {errors.building && <Text style={styles.errorText}>{errors.building}</Text>}
+        </View>
+
         {/* Title */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>{t('faults.titleLabel')} *</Text>
@@ -417,6 +533,10 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontSize: 12,
     marginTop: 4,
+  },
+  helperText: {
+    color: colors.textMuted,
+    fontSize: 13,
   },
   textArea: {
     minHeight: 100,

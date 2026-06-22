@@ -122,7 +122,12 @@
     "selectCategory": "Please select a category",
     "locationDetected": "Location detected",
     "failedToPickImage": "Failed to pick image",
-    "failedToDetectLocation": "Failed to detect location"
+    "failedToDetectLocation": "Failed to detect location",
+    "buildingLabel": "Building",
+    "selectBuilding": "Please select a building",
+    "loadingBuildings": "Loading buildings…",
+    "noBuildings": "No buildings available",
+    "buildingsLoadError": "Couldn't load your buildings"
   },
   "news": {
     "title": "News",

@@ -23,6 +23,8 @@ import { type UseQueryOptions, useMutation, useQuery } from '@tanstack/react-que
 import * as SecureStore from 'expo-secure-store';
 import { getApiBaseUrl } from '../config/api';
 
+export { getTenantId };
+
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
 
 /** Read the current bearer token without forcing a re-render. */
@@ -58,18 +60,8 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-/**
- * Pull the tenant id from the current access token, or null if missing.
- *
- * Exported because several tenant-scoped api-server list routes
- * (`GET /api/v1/buildings`, `GET /api/v1/leases`, …) require the
- * organization id as an explicit `organization_id` query param *in addition*
- * to the `X-Tenant-ID` header — and the server rejects the request unless
- * the two match the authenticated tenant. The org id is the same value as
- * the JWT `tenant_id` claim, so screens read it via `useTenantId()` and feed
- * it into the query path. See the `list_buildings` / `list_leases` handlers.
- */
-export async function getTenantId(): Promise<string | null> {
+/** Pull the tenant id from the current access token, or null if missing. */
+async function getTenantId(): Promise<string | null> {
   const token = await getAccessToken();
   if (!token) return null;
   const claims = decodeJwtPayload(token);
@@ -148,19 +140,25 @@ export function useApiQuery<T>(
 }
 
 /**
- * Resolve the current tenant (organization) id from the stored JWT.
+ * Resolve the current org/tenant id (the JWT `tenant_id` claim) reactively.
  *
- * Returns the standard TanStack Query surface so screens can gate an
- * org-scoped list query on the id being available (`enabled: !!tenantId`).
- * Cached indefinitely — the id only changes on login/logout, both of which
- * replace the token and remount the authenticated tree.
+ * Some api-server routes need the tenant id as an explicit query param in
+ * addition to the `X-Tenant-ID` header — most notably `GET /api/v1/buildings`,
+ * whose `ListBuildingsQuery.organization_id` is a required, non-defaulted
+ * `Uuid` (the Axum `Query` extractor 400s without it, and `list_buildings`
+ * 403s unless it equals the RLS tenant). Screens use this hook to build that
+ * `?organization_id=<id>` param and to key the cache on it.
+ *
+ * Returns `{ tenantId, isLoading }`. `tenantId` is `null` until the token is
+ * read (or if the user is unauthenticated / the token lacks the claim).
  */
-export function useTenantId() {
-  return useQuery<string | null, Error>({
+export function useTenantId(): { tenantId: string | null; isLoading: boolean } {
+  const { data, isLoading } = useQuery<string | null, Error>({
     queryKey: ['auth', 'tenant-id'],
     queryFn: () => getTenantId(),
     staleTime: Number.POSITIVE_INFINITY,
   });
+  return { tenantId: data ?? null, isLoading };
 }
 
 /** POST/PUT/PATCH/DELETE a JSON body via TanStack Mutation. */
