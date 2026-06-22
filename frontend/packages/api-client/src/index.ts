@@ -37,6 +37,7 @@ export * from './messaging';
 export * from './meters';
 export * from './mfa';
 export * from './migration';
+export * from './my-units';
 export * from './neighbors';
 export * from './news';
 export * from './notification-preferences';

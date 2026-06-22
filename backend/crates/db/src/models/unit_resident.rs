@@ -111,3 +111,44 @@ pub struct UpdateUnitResident {
 pub struct EndResidency {
     pub end_date: NaiveDate,
 }
+
+/// Resident-facing "My Unit" row (Epic 3, Story 3.6).
+///
+/// One row per active `unit_residents` association for the authenticated user,
+/// flattened with the unit's own details and the building's public address.
+///
+/// Privacy: this view is resolved strictly by `user_id = <caller>` and selects
+/// only the caller's own association plus the unit/building columns. It never
+/// includes other residents' or owners' identities — that PII filtering is
+/// enforced here at the query layer, not in the UI.
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct MyUnitRow {
+    // Caller's own association with the unit.
+    pub resident_id: Uuid,
+    pub resident_type: String,
+    pub is_primary: bool,
+    pub start_date: NaiveDate,
+    pub end_date: Option<NaiveDate>,
+    pub receives_notifications: bool,
+    pub receives_mail: bool,
+    // Unit details (no manager-internal `notes`).
+    pub unit_id: Uuid,
+    pub building_id: Uuid,
+    pub entrance: Option<String>,
+    pub designation: String,
+    pub floor: i32,
+    pub unit_type: String,
+    #[sqlx(try_from = "rust_decimal::Decimal")]
+    pub size_sqm: Option<rust_decimal::Decimal>,
+    pub rooms: Option<i32>,
+    #[sqlx(try_from = "rust_decimal::Decimal")]
+    pub ownership_share: rust_decimal::Decimal,
+    pub occupancy_status: String,
+    pub description: Option<String>,
+    pub unit_status: String,
+    // Building address context only — no owner/resident PII.
+    pub building_name: Option<String>,
+    pub building_street: String,
+    pub building_city: String,
+    pub building_postal_code: String,
+}

@@ -119,6 +119,11 @@ export const OAuthGrantsPage = lazy(() =>
   import('../features/oauth-grants').then((m) => ({ default: m.OAuthGrantsPage }))
 );
 
+// My Unit feature (Epic 3, Story 3.6)
+export const MyUnitPage = lazy(() =>
+  import('../features/my-unit').then((m) => ({ default: m.MyUnitPage }))
+);
+
 // Neighbors feature (Epic 6, Story 6.6)
 export const NeighborsPage = lazy(() =>
   import('../features/neighbors').then((m) => ({ default: m.NeighborsPage }))
@@ -268,6 +273,11 @@ export const BuildingsPage = lazy(() =>
 );
 export const BuildingDetailPage = lazy(() =>
   import('../features/buildings').then((m) => ({ default: m.BuildingDetailPage }))
+);
+
+// Resident "My Unit" view (Epic 3, Story 3.6) — gap-sweep
+export const MyUnitPage = lazy(() =>
+  import('../features/my-unit').then((m) => ({ default: m.MyUnitPage }))
 );
 
 // Facilities & bookings feature (Epic 3, Story 3.7) — API-wired, now routed (gap-sweep)

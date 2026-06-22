@@ -148,6 +148,8 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/organizations", routes::organizations::router())
         // Buildings routes
         .nest("/api/v1/buildings", routes::buildings::router())
+        // Resident-facing "My Unit" view (Epic 3, Story 3.6)
+        .nest("/api/v1/users/me/units", routes::my_units::router())
         // Delegations routes
         .nest("/api/v1/delegations", routes::delegations::router())
         // Facilities routes
