@@ -1049,7 +1049,9 @@ impl Scheduler {
             let due_date = window
                 .submission_end
                 .and_hms_opt(23, 59, 59)
-                .map(|ndt| chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(ndt, chrono::Utc))
+                .map(|ndt| {
+                    chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(ndt, chrono::Utc)
+                })
                 .unwrap_or_else(chrono::Utc::now);
 
             for meter in meters_page.meters.iter().filter(|m| m.unit_id.is_some()) {

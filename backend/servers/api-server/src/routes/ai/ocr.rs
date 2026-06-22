@@ -11,11 +11,7 @@
 //! instead of silently receiving a 404.
 
 use crate::state::AppState;
-use axum::{
-    http::StatusCode,
-    routing::post,
-    Json, Router,
-};
+use axum::{http::StatusCode, routing::post, Json, Router};
 use axum_extra::extract::Multipart;
 use common::errors::ErrorResponse;
 use serde::{Deserialize, Serialize};
@@ -121,9 +117,7 @@ async fn process_meter_reading(
     ),
     tag = "AI OCR"
 )]
-async fn submit_correction(
-    Json(_body): Json<OcrCorrectionRequest>,
-) -> StatusCode {
+async fn submit_correction(Json(_body): Json<OcrCorrectionRequest>) -> StatusCode {
     // Accepted and discarded until a training-data sink is wired.
     tracing::debug!("Received OCR correction feedback (sink not yet connected)");
     StatusCode::OK
