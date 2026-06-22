@@ -1,4 +1,4 @@
--- Migration: 00187_create_message_attachments
+-- Migration: 00191_create_message_attachments
 -- Epic 6 / UC-05.9 (gap-sweep #972.8 / BIT-184): Attach file to message.
 --
 -- Adds S3-backed attachments to direct messages, mirroring the existing
