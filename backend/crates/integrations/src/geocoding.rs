@@ -107,7 +107,9 @@ impl GeocodingService {
         if let Some(cfg) = &config {
             tracing::info!(provider = ?cfg.provider, "Geocoding enabled");
         } else {
-            tracing::info!("Geocoding disabled (no provider configured); buildings stored without coordinates");
+            tracing::info!(
+                "Geocoding disabled (no provider configured); buildings stored without coordinates"
+            );
         }
         Self::with_config(config)
     }
@@ -361,10 +363,22 @@ mod tests {
 
     #[test]
     fn provider_parse_aliases() {
-        assert_eq!(GeocodingProvider::parse("Google"), Some(GeocodingProvider::Google));
-        assert_eq!(GeocodingProvider::parse("MAPBOX"), Some(GeocodingProvider::Mapbox));
-        assert_eq!(GeocodingProvider::parse("osm"), Some(GeocodingProvider::Nominatim));
-        assert_eq!(GeocodingProvider::parse("nominatim"), Some(GeocodingProvider::Nominatim));
+        assert_eq!(
+            GeocodingProvider::parse("Google"),
+            Some(GeocodingProvider::Google)
+        );
+        assert_eq!(
+            GeocodingProvider::parse("MAPBOX"),
+            Some(GeocodingProvider::Mapbox)
+        );
+        assert_eq!(
+            GeocodingProvider::parse("osm"),
+            Some(GeocodingProvider::Nominatim)
+        );
+        assert_eq!(
+            GeocodingProvider::parse("nominatim"),
+            Some(GeocodingProvider::Nominatim)
+        );
         assert_eq!(GeocodingProvider::parse("bogus"), None);
     }
 
