@@ -22,6 +22,11 @@ export const FolderTreePage = lazy(() =>
   import('../features/documents').then((m) => ({ default: m.FolderTreePage }))
 );
 
+// Document templates feature (Epic 7B, Story 7B.2)
+export const DocumentTemplatesPage = lazy(() =>
+  import('../features/document-templates').then((m) => ({ default: m.DocumentTemplatesPage }))
+);
+
 // News feature (Epic 59)
 export const NewsListPage = lazy(() =>
   import('../features/news').then((m) => ({ default: m.NewsListPage }))
