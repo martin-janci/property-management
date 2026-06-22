@@ -23,7 +23,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { ReportFaultScreen } from './ReportFaultScreen';
 
-// ─── Mocks ──────────────────────────────────
+// --- Mocks ---
 
 jest.mock('../../hooks/useApi', () => ({
   useApiQuery: jest.fn(),
@@ -48,12 +48,12 @@ const mockUseApiQuery = jest.requireMock('../../hooks/useApi').useApiQuery as je
 const mockUseApiMutation = jest.requireMock('../../hooks/useApi').useApiMutation as jest.Mock;
 const mockUseTenantId = jest.requireMock('../../hooks/useApi').useTenantId as jest.Mock;
 
-// ─── Helpers ────────────────────────────
+// --- Helpers ---
 
 const TENANT_ID = 'org-7f3c';
 
 const BUILDINGS = [
-  { id: 'b-1', name: 'Lipóvá Residence', street: 'Lipóvá 5', city: 'Bratislava' },
+  { id: 'b-1', name: 'Lipová Residence', street: 'Lipová 5', city: 'Bratislava' },
   { id: 'b-2', name: 'Cottage 12', street: 'Záhradná 12', city: 'Pezinok' },
 ];
 
@@ -70,7 +70,7 @@ function renderScreen(props: React.ComponentProps<typeof ReportFaultScreen> = {}
 
 /** Fill all required fields with valid values, selecting the first building. */
 function fillValidForm() {
-  fireEvent.press(screen.getByText('Lipóvá Residence'));
+  fireEvent.press(screen.getByText('Lipová Residence'));
   fireEvent.changeText(screen.getByPlaceholderText('faults.titlePlaceholder'), 'Leaking pipe');
   fireEvent.changeText(
     screen.getByPlaceholderText('faults.descriptionPlaceholder'),
@@ -81,7 +81,7 @@ function fillValidForm() {
   fireEvent.press(screen.getByText('Plumbing'));
 }
 
-// ─── Tests ──────────────────────────
+// --- Tests ---
 
 describe('ReportFaultScreen', () => {
   let mutate: jest.Mock;
@@ -106,7 +106,7 @@ describe('ReportFaultScreen', () => {
 
   it('renders the building picker from the buildings query', () => {
     renderScreen();
-    expect(screen.getByText('Lipóvá Residence')).toBeTruthy();
+    expect(screen.getByText('Lipová Residence')).toBeTruthy();
     expect(screen.getByText('Cottage 12')).toBeTruthy();
   });
 

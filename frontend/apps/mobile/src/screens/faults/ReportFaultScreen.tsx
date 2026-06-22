@@ -65,7 +65,7 @@ const categories: Array<{ value: FaultCategory; labelKey: string; icon: string }
   { value: 'electrical', labelKey: 'electrical', icon: '⚡' },
   { value: 'structural', labelKey: 'structural', icon: '🏗️' },
   { value: 'hvac', labelKey: 'hvac', icon: '❄️' },
-  { value: 'elevator', labelKey: 'elevator', icon: '🚗' },
+  { value: 'elevator', labelKey: 'elevator', icon: '🛗' },
   { value: 'security', labelKey: 'security', icon: '🔒' },
   { value: 'other', labelKey: 'other', icon: '🔧' },
 ];
