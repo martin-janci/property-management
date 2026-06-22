@@ -122,7 +122,12 @@
     "selectCategory": "Prosim vyberte kategorii",
     "locationDetected": "Poloha zjistena",
     "failedToPickImage": "Nepodarilo se vybrat obrazek",
-    "failedToDetectLocation": "Nepodarilo se zjistit polohu"
+    "failedToDetectLocation": "Nepodarilo se zjistit polohu",
+    "buildingLabel": "Budova",
+    "selectBuilding": "Vyberte budovu",
+    "loadingBuildings": "Načítají se budovy…",
+    "noBuildings": "Žádné dostupné budovy",
+    "buildingsLoadError": "Nepodařilo se načíst vaše budovy"
   },
   "news": {
     "title": "Zpravy",
