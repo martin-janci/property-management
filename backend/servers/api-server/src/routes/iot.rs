@@ -298,7 +298,7 @@ async fn add_reading(
             publish_sensor_event(
                 state.pubsub_service.as_ref(),
                 org_id,
-                "sensor.reading.created",
+                EVENT_READING_CREATED,
                 serde_json::json!(reading),
             )
             .await;
@@ -333,7 +333,7 @@ async fn add_batch_readings(
             publish_sensor_event(
                 state.pubsub_service.as_ref(),
                 org_id,
-                "sensor.readings.batch",
+                EVENT_READINGS_BATCH,
                 serde_json::json!({ "sensor_id": id, "inserted": count }),
             )
             .await;
@@ -667,6 +667,15 @@ pub struct DashboardQuery {
 // `ValidatedTenantExtractor` does — a non-member is rejected with `403` before
 // the upgrade, so the channel can never leak another tenant's readings.
 
+/// Wire-format event name for a single newly-ingested reading. Published by
+/// `add_reading` and forwarded verbatim to subscribers as the envelope `event`
+/// field. The frontend (`useIotWebSocket`) matches on this exact string, so a
+/// rename here is a breaking wire-format change — `wire_contract_*` tests pin it.
+const EVENT_READING_CREATED: &str = "sensor.reading.created";
+
+/// Wire-format event name for a batch ingest. Published by `add_batch_readings`.
+const EVENT_READINGS_BATCH: &str = "sensor.readings.batch";
+
 /// Maximum idle time before the server closes the connection (60 s).
 const WS_IDLE_TIMEOUT_SECS: u64 = 60;
 
@@ -925,7 +934,7 @@ mod realtime_tests {
     #[test]
     fn sensor_ws_event_serialises_with_event_and_payload() {
         let evt = SensorWsEvent {
-            event: "sensor.reading.created".to_string(),
+            event: EVENT_READING_CREATED.to_string(),
             payload: serde_json::json!({
                 "id": "00000000-0000-0000-0000-000000000001",
                 "sensor_id": "00000000-0000-0000-0000-000000000002",
@@ -942,7 +951,7 @@ mod realtime_tests {
     #[test]
     fn batch_event_carries_sensor_and_count() {
         let evt = SensorWsEvent {
-            event: "sensor.readings.batch".to_string(),
+            event: EVENT_READINGS_BATCH.to_string(),
             payload: serde_json::json!({
                 "sensor_id": "00000000-0000-0000-0000-000000000002",
                 "inserted": 7
@@ -951,5 +960,46 @@ mod realtime_tests {
         let text = serde_json::to_string(&evt).unwrap();
         assert!(text.contains("\"event\":\"sensor.readings.batch\""));
         assert!(text.contains("\"inserted\":7"));
+    }
+
+    /// Pin the published event names so a future rename of the ingest
+    /// publishers (`add_reading` / `add_batch_readings`) fails CI rather than
+    /// silently breaking the documented wire format. This is the regression
+    /// guard for issue #1668: PR #1644 renamed these event types out from under
+    /// PR #1640's subscriber, and no test caught it because each handler only
+    /// asserted its own side. The frontend `useIotWebSocket` hook matches on
+    /// these exact strings.
+    #[test]
+    fn publisher_event_names_match_documented_wire_contract() {
+        assert_eq!(EVENT_READING_CREATED, "sensor.reading.created");
+        assert_eq!(EVENT_READINGS_BATCH, "sensor.readings.batch");
+    }
+
+    /// End-to-end wire-contract guard: build the subscriber envelope exactly as
+    /// `handle_sensor_ws_session` does — from a `PubSubMessage` carrying the
+    /// publisher's `event_type` — and assert the serialised `event` field equals
+    /// the publisher constant. This closes the publish→subscribe gap the issue
+    /// flagged: it ties the publisher's event name to the frame a subscriber
+    /// actually receives, so the two can never diverge again unnoticed.
+    #[test]
+    fn publish_subscribe_event_names_round_trip() {
+        for event in [EVENT_READING_CREATED, EVENT_READINGS_BATCH] {
+            // Publisher side: what `publish_sensor_event` puts on the channel.
+            let published = integrations::PubSubMessage::new(
+                &sensor_channel(Uuid::nil()),
+                event,
+                serde_json::json!({}),
+            );
+            // Subscriber side: how `handle_sensor_ws_session` forwards it.
+            let envelope = SensorWsEvent {
+                event: published.event_type.clone(),
+                payload: published.payload.clone(),
+            };
+            let text = serde_json::to_string(&envelope).unwrap();
+            assert!(
+                text.contains(&format!("\"event\":\"{event}\"")),
+                "subscriber frame must carry the publisher's event name `{event}`",
+            );
+        }
     }
 }

@@ -1,9 +1,14 @@
 /**
  * Real-time IoT sensor reading WebSocket hook (Epic 14, FR72 — BIT-145 backend channel).
  *
- * Connects to `GET /api/v1/iot/ws?token=<jwt>`, subscribes to the
- * `sensors:{org_id}` Redis pub/sub channel, and streams
- * `{ event: "sensor.reading", payload: SensorReading }` frames.
+ * Connects to `GET /api/v1/iot/sensors/ws?token=<jwt>&organization_id=<org>`,
+ * subscribes to the `sensors:{org_id}` Redis pub/sub channel, and streams
+ * `{ event: "sensor.reading.created", payload: SensorReading }` frames.
+ *
+ * The backend re-checks active membership of `organization_id` before the WS
+ * upgrade, so the channel can never leak another tenant's readings (issue
+ * #1668 converged on this DB-checked handler and removed the JWT-trusting
+ * `/api/v1/iot/ws` channel).
  *
  * The REST polling hook (`useSensorReadings`) remains the primary data source.
  * This hook prepends fresh readings so the telemetry chart updates in real-time
@@ -20,14 +25,21 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 const WS_MAX_BUFFER = 200;
 const WS_RECONNECT_MS = 5_000;
 
-function buildWsUrl(token: string): string {
+/** Event name emitted by the backend for a single newly-ingested reading. */
+const EVENT_READING_CREATED = 'sensor.reading.created';
+
+function buildWsUrl(token: string, organizationId: string): string {
   const win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
   const httpBase = win.__API_BASE_URL__ ? String(win.__API_BASE_URL__) : '';
   const wsBase = httpBase.replace(/^https/, 'wss').replace(/^http/, 'ws');
-  return `${wsBase}/api/v1/iot/ws?token=${encodeURIComponent(token)}`;
+  const qs = new URLSearchParams({ token, organization_id: organizationId });
+  return `${wsBase}/api/v1/iot/sensors/ws?${qs.toString()}`;
 }
 
-export function useIotWebSocket(sensorId: string | null): {
+export function useIotWebSocket(
+  sensorId: string | null,
+  organizationId: string | null
+): {
   liveReadings: SensorReading[];
   isConnected: boolean;
 } {
@@ -42,9 +54,9 @@ export function useIotWebSocket(sensorId: string | null): {
 
     function connect() {
       const token = getToken();
-      if (!token || cancelled.current) return;
+      if (!token || !organizationId || cancelled.current) return;
 
-      const ws = new WebSocket(buildWsUrl(token));
+      const ws = new WebSocket(buildWsUrl(token, organizationId));
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -58,7 +70,7 @@ export function useIotWebSocket(sensorId: string | null): {
             event: string;
             payload: SensorReading;
           };
-          if (msg.event === 'sensor.reading') {
+          if (msg.event === EVENT_READING_CREATED) {
             setAllReadings((prev: SensorReading[]) => {
               const next = [msg.payload, ...prev];
               return next.length > WS_MAX_BUFFER ? next.slice(0, WS_MAX_BUFFER) : next;
@@ -91,7 +103,7 @@ export function useIotWebSocket(sensorId: string | null): {
       wsRef.current?.close();
       wsRef.current = null;
     };
-  }, []);
+  }, [organizationId]);
 
   const liveReadings = useMemo(
     () => (sensorId ? allReadings.filter((r: SensorReading) => r.sensor_id === sensorId) : []),
