@@ -124,6 +124,7 @@ impl MessagingRepository {
     /// inbox); when `true` only the user's archived threads are returned (the
     /// "Archived" tab). A thread with no `thread_participant_state` row defaults
     /// to visible + non-archived.
+    #[allow(clippy::too_many_arguments)]
     pub async fn list_threads_rls<'e, E>(
         &self,
         executor: E,

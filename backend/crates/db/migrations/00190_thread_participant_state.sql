@@ -1,4 +1,4 @@
--- Migration: 00187_thread_participant_state
+-- Migration: 00190_thread_participant_state
 -- Epic 6 / Gap-sweep gaps #4 (Archive UC-05.11) + #6 (Delete UC-05.7), BIT-182
 --
 -- Per-participant conversation state: archive + soft-delete.

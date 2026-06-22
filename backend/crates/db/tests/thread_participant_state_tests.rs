@@ -1,7 +1,7 @@
 //! Integration tests for per-participant thread state — archive + per-user
 //! soft-delete (BIT-182, Epic 6 gaps #4/#6).
 //!
-//! These exercise the `thread_participant_state` table (migration 00187) through
+//! These exercise the `thread_participant_state` table (migration 00190) through
 //! `MessagingRepository`'s list filter and the hide/archive mutations. The key
 //! invariant: one participant deleting or archiving *their* copy of a shared
 //! thread must NOT change what the other participant sees.
@@ -196,7 +196,7 @@ async fn archive_moves_thread_to_archived_tab_per_user(pool: PgPool) {
     );
 }
 
-/// 00187 must bring `thread_participant_state` under ENABLE + FORCE row-level
+/// 00190 must bring `thread_participant_state` under ENABLE + FORCE row-level
 /// security with at least one policy (so FORCE enforces a real policy rather
 /// than an implicit deny-all). Mirrors `messaging_rls_cross_tenant_tests.rs`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
