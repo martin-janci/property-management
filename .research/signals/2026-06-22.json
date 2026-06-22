@@ -1,0 +1,237 @@
+{
+  "date": "2026-06-22",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-document-rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-06-22",
+      "score_delta": 0,
+      "evidence": [
+        "3087 lines changed in backend/crates/db/src/repositories/document.rs since 2026-06-16",
+        "re-emit (cumulative); no score delta"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/document.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-06-22",
+      "score_delta": 1,
+      "evidence": [
+        "2893 lines changed in backend/crates/db/src/repositories/rental.rs since 2026-06-16"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/crates/db/src/repositories/rental.rs"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-oauth_integration_tests-rs",
+      "type": "churn-hotspot",
+      "source": "churn-2026-06-22",
+      "score_delta": 1,
+      "evidence": [
+        "2718 lines changed in backend/servers/api-server/tests/oauth_integration_tests.rs since 2026-06-16"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "files": [
+        "backend/servers/api-server/tests/oauth_integration_tests.rs"
+      ]
+    },
+    {
+      "id": "dep-update-noise-2026-06-22",
+      "type": "dep-update-noise",
+      "source": "merged-prs",
+      "score_delta": 0,
+      "evidence": [
+        "10 dependabot PRs merged this run"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "lag-warning-2026-06-22",
+      "type": "lag_warning",
+      "source": "2026-06-16T03:25:00Z",
+      "score_delta": 0,
+      "evidence": [
+        "routine has not run in 6d (161h) \u2014 cloud routine likely paused"
+      ],
+      "confidence": "high",
+      "candidate_vector": "dx"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 == \"# 2026-06-22\"",
+      "observed": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state-vs-HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "cumulative re-emit churn-hotspot-document-rs score_delta=0",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score<=8 + decay applied to all stale-open items",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run; nothing to check",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no phases failed",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "4 prior plans moved to _archive (still tracked)",
+      "observed": "no silent deletions",
+      "expected": "no silent deletions"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now=11, head=7",
+      "observed": "11 >= 7",
+      "expected": ">=HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length=0",
+      "observed": "0",
+      "expected": "<=3"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run; no-op",
+      "observed": "n/a",
+      "expected": "n/a",
+      "remediation": "Phase 1.6 skipped (deep catch-up); next run should resume rotation (pm-security next)"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram bot token literal scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate \u2014 no signal met confidence=high + score>=3 + allowlist",
+  "top_churn": [
+    [
+      "backend/crates/db/src/repositories/document.rs",
+      3087
+    ],
+    [
+      "backend/crates/db/src/repositories/rental.rs",
+      2893
+    ],
+    [
+      "backend/servers/api-server/tests/oauth_integration_tests.rs",
+      2718
+    ],
+    [
+      "backend/servers/api-server/src/routes/auth.rs",
+      2648
+    ],
+    [
+      "backend/servers/api-server/src/routes/financial.rs",
+      2500
+    ],
+    [
+      "backend/servers/api-server/src/routes/buildings.rs",
+      2347
+    ],
+    [
+      "backend/servers/api-server/src/routes/integrations/sync.rs",
+      2313
+    ],
+    [
+      "backend/crates/db/src/repositories/integration.rs",
+      2282
+    ],
+    [
+      "backend/servers/api-server/src/routes/integrations/install.rs",
+      2280
+    ],
+    [
+      "backend/servers/api-server/src/routes/reports.rs",
+      2271
+    ]
+  ],
+  "lag_warning_hours": 156
+}
