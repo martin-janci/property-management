@@ -17,6 +17,8 @@ interface InvoiceListProps {
   onViewInvoice: (invoiceId: string) => void;
   onSendInvoice?: (invoiceId: string) => void;
   onDownloadPdf?: (invoiceId: string) => void;
+  /** Id of the invoice whose PDF is currently downloading; disables its PDF button. */
+  downloadingPdfId?: string | null;
   onStatusFilter?: (status?: InvoiceStatus) => void;
   onSearch?: (query: string) => void;
 }
@@ -31,6 +33,7 @@ export function InvoiceList({
   onViewInvoice,
   onSendInvoice,
   onDownloadPdf,
+  downloadingPdfId,
   onStatusFilter,
   onSearch,
 }: InvoiceListProps) {
@@ -205,18 +208,24 @@ export function InvoiceList({
                           Send
                         </button>
                       )}
-                      {onDownloadPdf && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDownloadPdf(invoice.id);
-                          }}
-                          className="text-gray-600 hover:text-gray-800"
-                        >
-                          PDF
-                        </button>
-                      )}
+                      {onDownloadPdf &&
+                        (() => {
+                          const isDownloading = downloadingPdfId === invoice.id;
+                          return (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDownloadPdf(invoice.id);
+                              }}
+                              disabled={isDownloading}
+                              aria-busy={isDownloading}
+                              className="text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isDownloading ? 'PDF…' : 'PDF'}
+                            </button>
+                          );
+                        })()}
                       <button
                         type="button"
                         onClick={(e) => {

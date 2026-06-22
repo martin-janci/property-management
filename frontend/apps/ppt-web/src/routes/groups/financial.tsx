@@ -163,26 +163,35 @@ function InvoiceManagementPageRoute() {
     },
   });
 
-  const handleDownloadPdf = (id: string) => {
-    const number = data?.invoices.find((inv) => inv.id === id)?.invoice_number ?? id;
-    downloadInvoicePdf(id)
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `invoice-${number}.pdf`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(url);
-      })
-      .catch((err) => {
-        showToast({
-          type: 'error',
-          title: t('financial.invoices.pdfFailed', { defaultValue: 'Failed to download PDF' }),
-          message: err instanceof Error ? err.message : '',
-        });
+  // Route the PDF download through a TanStack mutation (mirrors sendInvoiceMutation)
+  // so we get an in-flight `isPending` + `variables` (the invoice id) for free.
+  // This drives the per-row loading affordance and the double-click guard below.
+  const downloadPdfMutation = useMutation({
+    mutationFn: (id: string) => downloadInvoicePdf(id),
+    onSuccess: (blob, id) => {
+      const number = data?.invoices.find((inv) => inv.id === id)?.invoice_number ?? id;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `invoice-${number}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    },
+    onError: (err) => {
+      showToast({
+        type: 'error',
+        title: t('financial.invoices.pdfFailed', { defaultValue: 'Failed to download PDF' }),
+        message: err instanceof Error ? err.message : '',
       });
+    },
+  });
+
+  const handleDownloadPdf = (id: string) => {
+    // Double-click guard: ignore new clicks while any download is in flight.
+    if (downloadPdfMutation.isPending) return;
+    downloadPdfMutation.mutate(id);
   };
 
   return (
@@ -195,6 +204,9 @@ function InvoiceManagementPageRoute() {
       onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
       onSendInvoice={(id: string) => sendInvoiceMutation.mutate(id)}
       onDownloadPdf={handleDownloadPdf}
+      downloadingPdfId={
+        downloadPdfMutation.isPending ? (downloadPdfMutation.variables ?? null) : null
+      }
       onFilterChange={(params) => {
         setStatusFilter(params.status);
         setPage(params.page);
