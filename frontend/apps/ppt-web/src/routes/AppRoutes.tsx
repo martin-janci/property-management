@@ -18,6 +18,7 @@ import { announcementRoutes } from './groups/announcements';
 import { buildingRoutes } from './groups/buildings';
 import { communityRoutes } from './groups/community';
 import { authRoutes, dashboardRoutes, errorRoutes, Home, settingsRoutes } from './groups/core';
+import { delegationRoutes } from './groups/delegations';
 import { disputeRoutes } from './groups/disputes';
 import { documentRoutes, newsRoutes } from './groups/documents';
 import { faultRoutes } from './groups/faults';
@@ -41,6 +42,7 @@ export function AppRoutes() {
       {documentRoutes()}
       {newsRoutes()}
       {disputeRoutes()}
+      {delegationRoutes()}
       {outageRoutes()}
       {announcementRoutes()}
       {messagingRoutes()}
