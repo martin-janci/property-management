@@ -349,7 +349,10 @@ mod tests {
         dispatch_with_retry(&handler, &test_message(), backoff, &dlq_tx).await;
 
         assert_eq!(attempts.load(Ordering::SeqCst), 3);
-        assert!(dlq_rx.try_recv().is_err(), "no dead-letter on eventual success");
+        assert!(
+            dlq_rx.try_recv().is_err(),
+            "no dead-letter on eventual success"
+        );
     }
 
     #[tokio::test]
