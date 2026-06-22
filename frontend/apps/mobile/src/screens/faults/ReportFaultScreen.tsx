@@ -16,7 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useApiMutation, useApiQuery } from '../../hooks/useApi';
+import { useApiMutation, useApiQuery, useTenantId } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
 import type { FaultCategory, FaultPriority } from './FaultsListScreen';
 
@@ -65,7 +65,7 @@ const categories: Array<{ value: FaultCategory; labelKey: string; icon: string }
   { value: 'electrical', labelKey: 'electrical', icon: '⚡' },
   { value: 'structural', labelKey: 'structural', icon: '🏗️' },
   { value: 'hvac', labelKey: 'hvac', icon: '❄️' },
-  { value: 'elevator', labelKey: 'elevator', icon: '🛗' },
+  { value: 'elevator', labelKey: 'elevator', icon: '🚗' },
   { value: 'security', labelKey: 'security', icon: '🔒' },
   { value: 'other', labelKey: 'other', icon: '🔧' },
 ];
@@ -92,12 +92,22 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
 
   // The api-server requires a `building_id` on every fault. Load the
   // buildings the user belongs to so they can pick which one the fault is for.
+  //
+  // `GET /api/v1/buildings` requires `organization_id` as a query param
+  // (a required, non-defaulted Uuid that must equal the RLS tenant) — without
+  // it the request 400s/403s and the picker never loads. The org id is the
+  // JWT `tenant_id` claim, surfaced here via `useTenantId`. We gate the query
+  // on it (`enabled`) and key the cache on it so a tenant switch refetches.
+  const { tenantId, isLoading: isTenantLoading } = useTenantId();
   const buildingsQuery = useApiQuery<ApiBuildingsListResponse>(
-    ['buildings', 'list'],
-    '/api/v1/buildings',
-    { staleTime: 60_000 }
+    ['buildings', 'list', tenantId],
+    `/api/v1/buildings?organization_id=${tenantId ?? ''}`,
+    { staleTime: 60_000, enabled: Boolean(tenantId) }
   );
   const buildings = buildingsQuery.data?.buildings ?? [];
+  // Show the loading state while we resolve the tenant id too, otherwise the
+  // gated-off query would flash the empty/"no buildings" state first.
+  const isBuildingsLoading = isTenantLoading || buildingsQuery.isLoading;
 
   // POST the fault to the api-server. `isPending` drives the submit button's
   // spinner/disabled state (replacing the old local `isSubmitting` flag).
@@ -271,7 +281,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
         {/* Building */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>{t('faults.buildingLabel')} *</Text>
-          {buildingsQuery.isLoading ? (
+          {isBuildingsLoading ? (
             <Text style={styles.helperText}>{t('faults.loadingBuildings')}</Text>
           ) : buildingsQuery.error ? (
             <Text style={styles.errorText}>{t('faults.buildingsLoadError')}</Text>

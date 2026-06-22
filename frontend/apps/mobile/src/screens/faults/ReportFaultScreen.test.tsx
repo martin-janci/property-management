@@ -10,6 +10,8 @@
  *
  * Covers:
  *   - Renders the building picker from the buildings query.
+ *   - The buildings query carries the required `organization_id` and is gated
+ *     on the tenant id (the reviewer's blocking finding).
  *   - Submitting a valid form calls the create-fault mutation with the
  *     expected `{ building_id, title, description, category, priority }`.
  *   - Validation blocks submit (no building selected) — mutation NOT called.
@@ -21,11 +23,12 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { ReportFaultScreen } from './ReportFaultScreen';
 
-// ─── Mocks ───────────────────────────────────────────────────
+// ─── Mocks ──────────────────────────────────
 
 jest.mock('../../hooks/useApi', () => ({
   useApiQuery: jest.fn(),
   useApiMutation: jest.fn(),
+  useTenantId: jest.fn(),
 }));
 
 // Expo native modules touched by the screen — stub so the import graph resolves.
@@ -43,11 +46,14 @@ jest.mock('expo-location', () => ({
 
 const mockUseApiQuery = jest.requireMock('../../hooks/useApi').useApiQuery as jest.Mock;
 const mockUseApiMutation = jest.requireMock('../../hooks/useApi').useApiMutation as jest.Mock;
+const mockUseTenantId = jest.requireMock('../../hooks/useApi').useTenantId as jest.Mock;
 
-// ─── Helpers ───────────────────────────────────────────────
+// ─── Helpers ────────────────────────────
+
+const TENANT_ID = 'org-7f3c';
 
 const BUILDINGS = [
-  { id: 'b-1', name: 'Lipová Residence', street: 'Lipová 5', city: 'Bratislava' },
+  { id: 'b-1', name: 'Lipóvá Residence', street: 'Lipóvá 5', city: 'Bratislava' },
   { id: 'b-2', name: 'Cottage 12', street: 'Záhradná 12', city: 'Pezinok' },
 ];
 
@@ -64,7 +70,7 @@ function renderScreen(props: React.ComponentProps<typeof ReportFaultScreen> = {}
 
 /** Fill all required fields with valid values, selecting the first building. */
 function fillValidForm() {
-  fireEvent.press(screen.getByText('Lipová Residence'));
+  fireEvent.press(screen.getByText('Lipóvá Residence'));
   fireEvent.changeText(screen.getByPlaceholderText('faults.titlePlaceholder'), 'Leaking pipe');
   fireEvent.changeText(
     screen.getByPlaceholderText('faults.descriptionPlaceholder'),
@@ -75,7 +81,7 @@ function fillValidForm() {
   fireEvent.press(screen.getByText('Plumbing'));
 }
 
-// ─── Tests ─────────────────────────────────────────────────
+// ─── Tests ──────────────────────────
 
 describe('ReportFaultScreen', () => {
   let mutate: jest.Mock;
@@ -85,6 +91,7 @@ describe('ReportFaultScreen', () => {
     jest.clearAllMocks();
     mutate = jest.fn();
     mockUseApiMutation.mockReturnValue({ mutate, isPending: false });
+    mockUseTenantId.mockReturnValue({ tenantId: TENANT_ID, isLoading: false });
     mockUseApiQuery.mockReturnValue({
       data: { buildings: BUILDINGS },
       isLoading: false,
@@ -99,7 +106,7 @@ describe('ReportFaultScreen', () => {
 
   it('renders the building picker from the buildings query', () => {
     renderScreen();
-    expect(screen.getByText('Lipová Residence')).toBeTruthy();
+    expect(screen.getByText('Lipóvá Residence')).toBeTruthy();
     expect(screen.getByText('Cottage 12')).toBeTruthy();
   });
 
@@ -125,6 +132,37 @@ describe('ReportFaultScreen', () => {
   it('targets the /api/v1/faults endpoint with POST', () => {
     renderScreen();
     expect(mockUseApiMutation).toHaveBeenCalledWith('/api/v1/faults', 'POST');
+  });
+
+  it('queries buildings with the required organization_id and keys the cache on it', () => {
+    // Regression guard for the reviewer finding: `GET /api/v1/buildings`
+    // 400s/403s without `organization_id`, so the picker silently breaks.
+    // The org id is the JWT tenant id surfaced via `useTenantId`.
+    renderScreen();
+
+    const buildingsCall = mockUseApiQuery.mock.calls.find(
+      ([key]) => Array.isArray(key) && key[0] === 'buildings'
+    );
+    expect(buildingsCall).toBeDefined();
+
+    const [queryKey, path] = buildingsCall as [readonly unknown[], string];
+    expect(path).toBe(`/api/v1/buildings?organization_id=${TENANT_ID}`);
+    // Cache is keyed on the tenant so switching org refetches.
+    expect(queryKey).toContain(TENANT_ID);
+  });
+
+  it('holds the buildings query disabled until the tenant id resolves', () => {
+    mockUseTenantId.mockReturnValue({ tenantId: null, isLoading: true });
+    renderScreen();
+
+    const buildingsCall = mockUseApiQuery.mock.calls.find(
+      ([key]) => Array.isArray(key) && key[0] === 'buildings'
+    );
+    expect(buildingsCall).toBeDefined();
+    const [, , options] = buildingsCall as [readonly unknown[], string, { enabled?: boolean }];
+    expect(options.enabled).toBe(false);
+    // Loading copy is shown while the tenant id is still resolving.
+    expect(screen.getByText('faults.loadingBuildings')).toBeTruthy();
   });
 
   it('does not call the mutation when no building is selected', () => {
