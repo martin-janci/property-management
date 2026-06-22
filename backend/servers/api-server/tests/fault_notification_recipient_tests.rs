@@ -29,7 +29,10 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
         r#"INSERT INTO users (email, password_hash, name, status, email_verified_at)
            VALUES ($1, 'test_hash', $2, 'active', NOW()) RETURNING id"#,
     )
-    .bind(format!("fault-notif-{tag}-{}@test.internal", Uuid::new_v4()))
+    .bind(format!(
+        "fault-notif-{tag}-{}@test.internal",
+        Uuid::new_v4()
+    ))
     .bind(format!("FaultNotif-{tag}"))
     .fetch_one(pool)
     .await

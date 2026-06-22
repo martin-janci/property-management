@@ -977,7 +977,10 @@ async fn update_status(
             Uuid::nil(),
             NotificationCategory::Faults,
             format!("Fault status updated: {}", fault.title),
-            format!("Your fault report status has been updated to '{}'.", fault.status),
+            format!(
+                "Your fault report status has been updated to '{}'.",
+                fault.status
+            ),
         )
         .with_action_url(format!("/faults/{}", fault.id))
         .with_data(serde_json::json!({
@@ -1054,7 +1057,8 @@ async fn resolve_fault(
             Uuid::nil(),
             NotificationCategory::Faults,
             format!("Fault resolved: {}", fault.title),
-            "Your fault report has been resolved. Please confirm if the issue was fixed.".to_string(),
+            "Your fault report has been resolved. Please confirm if the issue was fixed."
+                .to_string(),
         )
         .with_action_url(format!("/faults/{}", fault.id))
         .with_data(serde_json::json!({
