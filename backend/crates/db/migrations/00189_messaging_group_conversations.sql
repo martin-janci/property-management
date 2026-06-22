@@ -1,4 +1,4 @@
--- Migration: 00187_messaging_group_conversations
+-- Migration: 00189_messaging_group_conversations
 -- Epic 6 / Story UC-05.8 ([BIT-183]): Group conversations (N-party threads).
 --
 -- Generalizes `message_threads` from exactly-2 participants to N (>= 2):
