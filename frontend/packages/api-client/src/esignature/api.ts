@@ -7,9 +7,13 @@
 
 import { getToken } from '../auth';
 import type {
+  CancelSignatureRequestBody,
+  CancelSignatureRequestResponse,
   CreateSignatureRequestBody,
   CreateSignatureRequestResponse,
   ListSignatureRequestsResponse,
+  SendReminderBody,
+  SendReminderResponse,
   SignatureRequestResponse,
 } from './types';
 
@@ -74,4 +78,32 @@ export async function listSignatureRequests(
  */
 export async function getSignatureRequest(id: string): Promise<SignatureRequestResponse> {
   return apiRequest<SignatureRequestResponse>(`${SIGNATURE_REQUESTS_BASE}/${id}`);
+}
+
+/**
+ * Send reminders to a signature request's pending signers.
+ * POST /api/v1/signature-requests/{id}/remind
+ */
+export async function sendSignatureReminder(
+  id: string,
+  body: SendReminderBody = {}
+): Promise<SendReminderResponse> {
+  return apiRequest<SendReminderResponse>(`${SIGNATURE_REQUESTS_BASE}/${id}/remind`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Cancel an open signature request.
+ * POST /api/v1/signature-requests/{id}/cancel
+ */
+export async function cancelSignatureRequest(
+  id: string,
+  body: CancelSignatureRequestBody = {}
+): Promise<CancelSignatureRequestResponse> {
+  return apiRequest<CancelSignatureRequestResponse>(`${SIGNATURE_REQUESTS_BASE}/${id}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }

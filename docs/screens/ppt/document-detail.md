@@ -25,6 +25,7 @@ relatedScreens:
     rel: sibling
 epics:
   - Epic-39
+  - Epic-84
 sharedComponents:
   - file-icon
   - timeline
@@ -72,6 +73,11 @@ owner: pm-frontend
 - [ ] [w] **Akcie** — vertical action list (5 rows): Zdieľať s rezidentmi · Pripojiť k oznamu · Premenovať / upraviť metadáta · Archivovať · Vymazať (danger ink)
 - [x] [w] **História verzií · 4** — timeline with current version highlighted (brand-600 dot), prior versions with neutral dots; each entry: version tag (v3/v2/v1) + commit-style title + sub-line (date · time · author · size) — list-only (no restore) shipped via `useDocumentVersions`
 
+### E-signature (Story 7B.3)
+- [x] [w] **Elektronický podpis** section below version history — "Odoslať na podpis" primary opens a signer dialog (free-form name + email rows, subject, message) wired to `useCreateSignatureRequest`
+- [x] [w] Per-request card: status pill (pending/in_progress/completed/declined/expired/cancelled) + each signer's status (pending/sent/viewed/signed + signed-at), sorted by signing order
+- [x] [w] Open requests expose "Poslať pripomienku" (reminds pending signers, disabled once all responded) and "Zrušiť žiadosť" (confirm-gated) via `useSendSignatureReminder` / `useCancelSignatureRequest`
+
 ### Locale + theme switcher
 - [ ] [-] preview-bar with Theme + Locale toggles (SK/CS/DE/EN)
 
@@ -105,7 +111,7 @@ UC-08 single-document detail. Manager-side full editing; resident-side filtered 
 
 <!-- newest entries on top -->
 
-- 2026-06-03 — agent: #974.1 — fixed the version-history binding to match the real backend `VersionHistoryResponse` (the generated client mis-models this endpoint as a bare camelCase array; runtime returns `{ history: { versions: [...] } }` snake_case). Page now unwraps `history.versions`, prefers the server's `is_current_version` flag for the current-version highlight, and reads `created_by_name` for the uploader. Added `VersionHistoryResponse`/`DocumentVersionHistory`/`DocumentVersion` types and typed the `useDocumentVersions` hook to the backend shape. Still list-only (no restore).
+- 2026-06-22 — agent: gap-7b-3 (BIT-167) — wired the Epic 84 `signature_requests` backend into DocumentDetail via a new `DocumentSignaturePanel`: "Send for signature" dialog (free-form signer list + subject/message → `useCreateSignatureRequest`), per-request status + per-signer status list, and reminder/cancel actions on open requests (`useSendSignatureReminder` / `useCancelSignatureRequest`, both newly added to the hand-written `@ppt/api-client` esignature module hitting `/signature-requests/{id}/remind` and `/cancel`). Endpoints are not registered in `@ppt/sitemap`, so they stay out of the `endpoints:` list and are documented here in prose: `GET|POST /api/v1/documents/{id}/signature-requests`, `POST /api/v1/signature-requests/{id}/{remind,cancel}`. Sibling gaps from GH #974 already shipped: 7B.1 version-history (this page) and the TypeSpec new-version/download reconciliation. to match the real backend `VersionHistoryResponse` (the generated client mis-models this endpoint as a bare camelCase array; runtime returns `{ history: { versions: [...] } }` snake_case). Page now unwraps `history.versions`, prefers the server's `is_current_version` flag for the current-version highlight, and reads `created_by_name` for the uploader. Added `VersionHistoryResponse`/`DocumentVersionHistory`/`DocumentVersion` types and typed the `useDocumentVersions` hook to the backend shape. Still list-only (no restore).
 - 2026-06-03 — agent: gap-7b-1 — added "História verzií" list-only version-history timeline to DocumentDetail (via new `useDocumentVersions` hook); each row shows version number + uploader + date + size, newest first, highest version highlighted as current. No restore (excluded from fixable-now scope).
 - 2026-05-27 — agent: gap-7a-4 review fixes — useDocumentDownload hook extracted and wired into DownloadButton; download errors now surface via toast; getDownloadUrl imperative call retained (same fetchApi transport as all api-client ops)
 - 2026-05-27 — agent: gap-7a-4 — added DocumentPreviewModal (PDF inline preview via PdfPreview + image preview via <img> + fallback + download button in header); preview eye + download action buttons added to each document row in DocumentsBrowse; useDownloadUrl + usePreviewUrl presigned-URL hooks wired; modal is accessible (Escape key close, backdrop click, auto-focus close button, role=dialog aria-modal); apiStatus remains complete

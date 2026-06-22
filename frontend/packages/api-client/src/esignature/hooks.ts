@@ -4,7 +4,11 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';
-import type { CreateSignatureRequestBody } from './types';
+import type {
+  CancelSignatureRequestBody,
+  CreateSignatureRequestBody,
+  SendReminderBody,
+} from './types';
 
 // Query keys
 export const esignatureKeys = {
@@ -51,6 +55,48 @@ export function useCreateSignatureRequest(documentId: string) {
       queryClient.invalidateQueries({
         queryKey: esignatureKeys.requestsForDocument(documentId),
       });
+    },
+  });
+}
+
+/**
+ * Send reminders to a signature request's pending signers.
+ * Invalidates the request and (when known) the owning document's list.
+ */
+export function useSendSignatureReminder(documentId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body?: SendReminderBody }) =>
+      api.sendSignatureReminder(id, body),
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: esignatureKeys.request(id) });
+      if (documentId) {
+        queryClient.invalidateQueries({
+          queryKey: esignatureKeys.requestsForDocument(documentId),
+        });
+      }
+    },
+  });
+}
+
+/**
+ * Cancel an open signature request.
+ * Invalidates the request and (when known) the owning document's list.
+ */
+export function useCancelSignatureRequest(documentId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body?: CancelSignatureRequestBody }) =>
+      api.cancelSignatureRequest(id, body),
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: esignatureKeys.request(id) });
+      if (documentId) {
+        queryClient.invalidateQueries({
+          queryKey: esignatureKeys.requestsForDocument(documentId),
+        });
+      }
     },
   });
 }
