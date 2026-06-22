@@ -29,16 +29,26 @@ import {
 } from '@ppt/api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Route, useNavigate, useParams } from 'react-router-dom';
+import { Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../components';
 import { useAuth } from '../../contexts';
-import type { FaultDetail, FaultAttachment as UiFaultAttachment } from '../../features/faults';
+import type {
+  FaultDetail,
+  FaultReportFilters,
+  FaultAttachment as UiFaultAttachment,
+} from '../../features/faults';
 import type {
   FaultStatus,
   FaultSummary as UiFaultSummary,
 } from '../../features/faults/components/FaultCard';
 import type { TimelineAction, TimelineEntry } from '../../features/faults/components/FaultTimeline';
-import { CreateFaultPage, EditFaultPage, FaultDetailPage, FaultsPage } from '../lazyRoutes';
+import {
+  CreateFaultPage,
+  EditFaultPage,
+  FaultDetailPage,
+  FaultReportsPage,
+  FaultsPage,
+} from '../lazyRoutes';
 import { isManagerRole } from '../shared';
 
 /**
@@ -211,7 +221,19 @@ function FaultsPageRoute() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [faultQuery, setFaultQuery] = useState<FaultListQuery>({ page: 1, limit: 10 });
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
+  const [searchParams] = useSearchParams();
+  // Seed the initial query from URL params so reports-page drill-down
+  // (`/faults?status=new`) lands on a pre-filtered list. Status/category/
+  // priority use the API enums directly (FaultListQuery is the API shape).
+  const [faultQuery, setFaultQuery] = useState<FaultListQuery>(() => ({
+    page: 1,
+    limit: 10,
+    status: (searchParams.get('status') as FaultListQuery['status']) ?? undefined,
+    category: (searchParams.get('category') as FaultListQuery['category']) ?? undefined,
+    priority: (searchParams.get('priority') as FaultListQuery['priority']) ?? undefined,
+  }));
 
   const { data, isLoading, error, refetch } = useFaults(faultQuery);
   const deleteFault = useDeleteFault();
@@ -310,6 +332,7 @@ function FaultsPageRoute() {
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
       onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
+      onNavigateToReports={isManager ? () => navigate('/faults/reports') : undefined}
       onFilterChange={handleFaultsFilterChange}
     />
   );
@@ -493,12 +516,56 @@ function EditFaultPageRoute() {
   );
 }
 
+/**
+ * Fault reports / analytics page (Story 4.7, BIT-186).
+ *
+ * Manager-only — gating mirrors isManagerRole (the page renders an access
+ * notice for non-managers). Owns the building + date-range filter state that
+ * drives useFaultStatistics, and drills down into the faults list.
+ */
+function FaultReportsPageRoute() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isManager = isManagerRole(user?.role);
+
+  const [filters, setFilters] = useState<FaultReportFilters>({});
+  const { data: buildingsData } = useBuildings();
+  const buildings = (buildingsData?.items ?? []).map((b) => ({ id: b.id, name: b.name }));
+
+  const { data, isLoading, error, refetch } = useFaultStatistics(filters);
+
+  const handleDrillDown = (params: { status?: string; category?: string; priority?: string }) => {
+    const search = new URLSearchParams();
+    if (params.status) search.set('status', params.status);
+    if (params.category) search.set('category', params.category);
+    if (params.priority) search.set('priority', params.priority);
+    navigate(`/faults?${search.toString()}`);
+  };
+
+  return (
+    <FaultReportsPage
+      isManager={isManager}
+      stats={isManager ? data : undefined}
+      isLoading={isManager && isLoading}
+      isError={!!error}
+      onRetry={() => {
+        void refetch();
+      }}
+      buildings={buildings}
+      filters={filters}
+      onFiltersChange={setFilters}
+      onDrillDown={handleDrillDown}
+    />
+  );
+}
+
 /** Faults routes (UC-03). */
 export function faultRoutes() {
   return (
     <>
       <Route path="/faults" element={<FaultsPageRoute />} />
       <Route path="/faults/new" element={<CreateFaultPageRoute />} />
+      <Route path="/faults/reports" element={<FaultReportsPageRoute />} />
       <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
       <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
     </>

@@ -3,7 +3,7 @@
 //! Append-only writes from the notification pipeline plus the time-windowed
 //! aggregation the admin analytics endpoint consumes. Both run on the
 //! service-role pool (no per-request user GUC), which the table's RLS policy
-//! permits — see migration `00187_create_notification_events.sql`.
+//! permits — see migration `00188_create_notification_events.sql`.
 
 use chrono::{DateTime, Utc};
 use sqlx::Error as SqlxError;

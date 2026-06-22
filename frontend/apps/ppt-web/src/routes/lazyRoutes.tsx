@@ -213,6 +213,9 @@ export const CreateFaultPage = lazy(() =>
 export const EditFaultPage = lazy(() =>
   import('../features/faults').then((m) => ({ default: m.EditFaultPage }))
 );
+export const FaultReportsPage = lazy(() =>
+  import('../features/faults').then((m) => ({ default: m.FaultReportsPage }))
+);
 
 // Community feature (Epic 42)
 export const FeedPage = lazy(() =>
@@ -303,6 +306,13 @@ export const AiChatPage = lazy(() =>
 // Sentiment Dashboard (Epic 13, Story 13.2) — gap-sweep
 export const SentimentDashboardPage = lazy(() =>
   import('../features/sentiment').then((m) => ({ default: m.SentimentDashboardPage }))
+);
+
+// Notification delivery analytics (Story 2B-C.3, PM #969 gap 4 / BIT-214)
+export const NotificationAnalyticsPage = lazy(() =>
+  import('../features/notification-analytics').then((m) => ({
+    default: m.NotificationAnalyticsPage,
+  }))
 );
 
 // Predictive Maintenance Dashboard (Epic 13, Story 13.3) — gap-sweep

@@ -251,6 +251,7 @@ pub fn route_table() -> Router<AppState> {
         .nest("/api/v1/ai/equipment", routes::ai::equipment_router())
         .nest("/api/v1/ai/workflows", routes::ai::workflow_router())
         .nest("/api/v1/ai/llm", routes::ai::llm_router())
+        .nest("/api/v1/ai/ocr", routes::ai::ocr_router())
         // IoT routes
         .nest("/api/v1/iot/sensors", routes::iot::sensor_router())
         // IoT WebSocket real-time sensor readings (Epic 14, Story 14.3)

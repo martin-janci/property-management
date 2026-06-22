@@ -410,6 +410,30 @@ impl MeterRepository {
         .await
     }
 
+    /// Find all open submission windows closing within `days_before` days.
+    ///
+    /// Used by the scheduler to dispatch meter-reading reminders (Story 12.2).
+    pub async fn find_windows_closing_soon(
+        &self,
+        days_before: i64,
+    ) -> Result<Vec<ReadingSubmissionWindow>, SqlxError> {
+        let cutoff = chrono::Utc::now().date_naive() + chrono::Duration::days(days_before);
+        sqlx::query_as::<_, ReadingSubmissionWindow>(
+            r#"
+            SELECT * FROM reading_submission_windows
+            WHERE is_open = true
+              AND is_finalized = false
+              AND submission_start <= CURRENT_DATE
+              AND submission_end >= CURRENT_DATE
+              AND submission_end <= $1
+            ORDER BY submission_end ASC
+            "#,
+        )
+        .bind(cutoff)
+        .fetch_all(&self.pool)
+        .await
+    }
+
     // ========================================================================
     // READING VALIDATION (Story 12.3)
     // ========================================================================

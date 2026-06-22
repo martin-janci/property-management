@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.96.0
+        uses: dtolnay/rust-toolchain@1.94.1
         with:
           components: rustfmt, clippy
 
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.96.0
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -157,12 +157,24 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.96.0
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+
+      # The voting PDF-report path (routes/voting.rs::render_pdf_report, added
+      # in #1625) loads the LiberationSans TTFs from
+      # `/usr/share/fonts/truetype/liberation` via `genpdf::fonts::from_files`.
+      # GitHub's `ubuntu-latest` image does NOT ship `fonts-liberation`, so the
+      # `voting_report_tests` PDF E2E tests 500 on the render step and the whole
+      # `test` job goes red. Install the package the production code depends on
+      # so the tests exercise the same path they do in prod (issue #1645).
+      - name: Install PDF report fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-liberation
 
       # The GitHub-hosted runner's root disk fills during the link step of
       # `cargo test --workspace` (the large workspace + test binaries), failing
@@ -211,7 +223,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.96.0
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -268,7 +280,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.96.0
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -361,7 +373,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.96.0
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
@@ -480,7 +492,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.96.0
+        uses: dtolnay/rust-toolchain@1.94.1
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
