@@ -6,6 +6,8 @@
 export type { BudgetManagementPageProps } from './BudgetManagementPage';
 export { BudgetManagementPage } from './BudgetManagementPage';
 export { FinancialDashboardPage } from './FinancialDashboardPage';
+export type { FinancialReportsPageProps } from './FinancialReportsPage';
+export { FinancialReportsPage } from './FinancialReportsPage';
 export type { InvoiceManagementPageProps } from './InvoiceManagementPage';
 export { InvoiceManagementPage } from './InvoiceManagementPage';
 export type { PaymentManagementPageProps } from './PaymentManagementPage';

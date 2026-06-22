@@ -250,6 +250,10 @@ export const PaymentManagementPage = lazy(() =>
 export const BudgetManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.BudgetManagementPage }))
 );
+// Story 11.7 - Financial statement reports (income statement / balance sheet / cash flow)
+export const FinancialReportsPage = lazy(() =>
+  import('../features/financial').then((m) => ({ default: m.FinancialReportsPage }))
+);
 
 // --- Accounting ---
 
