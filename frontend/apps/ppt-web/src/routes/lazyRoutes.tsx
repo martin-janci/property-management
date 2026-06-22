@@ -119,11 +119,6 @@ export const OAuthGrantsPage = lazy(() =>
   import('../features/oauth-grants').then((m) => ({ default: m.OAuthGrantsPage }))
 );
 
-// My Unit feature (Epic 3, Story 3.6)
-export const MyUnitPage = lazy(() =>
-  import('../features/my-unit').then((m) => ({ default: m.MyUnitPage }))
-);
-
 // Neighbors feature (Epic 6, Story 6.6)
 export const NeighborsPage = lazy(() =>
   import('../features/neighbors').then((m) => ({ default: m.NeighborsPage }))
