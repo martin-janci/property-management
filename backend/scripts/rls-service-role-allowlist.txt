@@ -1,0 +1,36 @@
+# Service-role-by-design repositories (first-class allowlist).
+#
+# These repositories hold a raw pool field and query FORCE-RLS tables, so the
+# PAP-68 pool-field detector in check-rls-enforcement.sh flags them. Unlike the
+# entries in rls-pool-field-baseline.txt, they are NOT conversion-pending debt:
+# they are correct as written and must NOT be moved to the executor pattern.
+#
+# ── Access-model invariant ─────────────────────────────────────────────────
+# Each table below carries a *service-role-allowance* RLS policy of the form
+#
+#     USING ( NULLIF(current_setting('app.current_user_id', TRUE), '') IS NULL
+#             OR is_super_admin()
+#             [OR <tenant predicate for the request path>] )
+#
+# i.e. the policy PERMITS the unset-GUC service pool by design. These rows are
+# written/read entirely off the request path (detached spawns, webhook/service
+# workers, admin-analytics reads), where there is no RlsConnection and therefore
+# no executor to take. Converting such a repo to the executor pattern would set
+# a request-scoped user GUC, which flips the very same policy to DENY and breaks
+# the feature. The table's RLS policy — not the detector — is the source of
+# truth; these entries are PERMANENT, not a ratchet to tighten.
+#
+# Adding an entry here is an explicit security assertion. Only add a repo after
+# confirming, in the owning migration, that the table's policy grants the
+# unset-GUC service pool (and that the writes/reads genuinely run off the
+# request path). Cite the migration in the trailing comment.
+#
+# This file is distinct from rls-pool-field-baseline.txt on purpose: the gate
+# reports these as ALLOWED (service-role-by-design), never as "conversion
+# pending", so a future PAP-80-style executor sweep cannot mis-classify them.
+#
+# One basename per line. Comments after '#'.
+
+notification_event.rs       # migration 00188: detached-spawn analytics writes + admin-analytics reads; policy permits unset-GUC service pool, denies user GUC
+device_push_token.rs        # migrations 00157/00159/00161: per-user tokens with device_push_tokens_service_policy (SELECT/DELETE) permitting unset-GUC service pool
+critical_notification.rs    # migration 00177 (Epic 8A GUC fix): critical_notifications / *_acknowledgments keep a service-role allowance (GUC unset => permitted), mirroring device_push_tokens_service_policy
