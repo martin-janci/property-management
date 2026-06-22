@@ -1151,6 +1151,76 @@ impl FinancialRepository {
         .await
     }
 
+    /// Settle an invoice from a confirmed online-gateway payment (Story 11.5).
+    ///
+    /// Runs in one transaction so a webhook delivery either fully settles or
+    /// not at all:
+    ///   1. inserts a `payments` row (`payment_method = 'online'`,
+    ///      `recorded_by = NULL` — the payer is the gateway, not an internal
+    ///      user; `external_reference` = the gateway transaction id),
+    ///   2. allocates it to `invoice` (capped at the invoice's `balance_due`),
+    ///   3. links the payment back to the originating `online_payment_sessions`
+    ///      row and marks the session `completed`.
+    ///
+    /// The `update_invoice_on_allocation` trigger recomputes the invoice's
+    /// `amount_paid`/`balance_due`/`status`, so a fully-covered invoice
+    /// transitions to `paid` automatically.
+    pub async fn settle_invoice_from_gateway(
+        &self,
+        session: &OnlinePaymentSession,
+        invoice: &Invoice,
+        gateway_reference: &str,
+    ) -> Result<Payment, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        let payment = sqlx::query_as::<_, Payment>(
+            r#"
+            INSERT INTO payments (
+                organization_id, unit_id, amount, currency, payment_method,
+                status, reference, external_reference, recorded_by
+            )
+            VALUES ($1, $2, $3, $4, 'online', 'completed', $5, $6, NULL)
+            RETURNING *
+            "#,
+        )
+        .bind(session.organization_id)
+        .bind(invoice.unit_id)
+        .bind(session.amount)
+        .bind(&session.currency)
+        .bind(&session.session_id)
+        .bind(gateway_reference)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        let allocation_amount = session.amount.min(invoice.balance_due);
+        sqlx::query(
+            r#"
+            INSERT INTO payment_allocations (payment_id, invoice_id, amount)
+            VALUES ($1, $2, $3)
+            "#,
+        )
+        .bind(payment.id)
+        .bind(invoice.id)
+        .bind(allocation_amount)
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query(
+            r#"
+            UPDATE online_payment_sessions
+            SET status = 'completed', payment_id = $2, updated_at = NOW()
+            WHERE id = $1
+            "#,
+        )
+        .bind(session.id)
+        .bind(payment.id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(payment)
+    }
+
     // ========================================================================
     // REMINDERS (Story 11.6)
     // ========================================================================
