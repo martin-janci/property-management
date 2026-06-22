@@ -27,6 +27,7 @@ import { leaseRoutes } from './groups/leases';
 import { messagingRoutes } from './groups/messaging';
 import { meterRoutes } from './groups/meters';
 import { neighborRoutes } from './groups/neighbors';
+import { notificationAnalyticsRoutes } from './groups/notifications';
 import { outageRoutes } from './groups/outages';
 import { personMonthRoutes } from './groups/person-months';
 import { rentalRoutes } from './groups/rentals';
@@ -58,6 +59,7 @@ export function AppRoutes() {
       {aiDashboardRoutes()}
       {iotRoutes()}
       {reportRoutes()}
+      {notificationAnalyticsRoutes()}
       {buildingRoutes()}
       {settingsRoutes()}
       {/* Phase 5 admin is at admin.rlt.sk now; see frontend/apps/admin-web. */}

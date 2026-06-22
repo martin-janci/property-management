@@ -531,10 +531,7 @@ async function fetchBlob(url: string): Promise<Blob> {
   return response.blob();
 }
 
-export async function exportReport(
-  report: ReportType,
-  params: ExportReportParams
-): Promise<Blob> {
+export async function exportReport(report: ReportType, params: ExportReportParams): Promise<Blob> {
   const q = new URLSearchParams({
     organization_id: params.organization_id,
     format: params.format,
