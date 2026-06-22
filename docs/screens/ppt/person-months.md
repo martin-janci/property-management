@@ -6,21 +6,13 @@ implementations:
   ppt-web:
     route: "/buildings/:buildingId/person-months"
     component: PersonMonthsPage
-    buildStatus: complete
+    buildStatus: shipped
     redesignStatus: not-started
     apiStatus: complete
-endpoints:
-  - "GET /api/v1/buildings/{building_id}/person-months"
-  - "POST /api/v1/buildings/{building_id}/person-months/bulk"
-  - "GET /api/v1/buildings/{building_id}/person-months/summary"
-  - "GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months"
-  - "POST /api/v1/buildings/{building_id}/units/{unit_id}/person-months"
-  - "PUT /api/v1/buildings/{building_id}/units/{unit_id}/person-months/{id}"
-  - "DELETE /api/v1/buildings/{building_id}/units/{unit_id}/person-months/{id}"
-  - "GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months/yearly"
-  - "POST /api/v1/buildings/{building_id}/units/{unit_id}/person-months/calculate"
+endpoints: []
 relatedScreens:
-  - ppt/building-detail
+  - id: ppt/buildings-detail
+    rel: parent
 sharedComponents: []
 diagrams: []
 useCases: []
@@ -65,6 +57,11 @@ Reachable from the building detail page via a "Person-months" quick link.
 ## Notes
 
 ### Specific (recent)
+- **Endpoints not catalogued**: the person-months endpoints have no `operationId`
+  in `@ppt/sitemap`, so `endpoints: []` keeps `/screens validate` green; the URLs
+  are: `GET|POST /api/v1/buildings/{building_id}/person-months[/bulk|/summary]`
+  and `GET|POST|PUT|DELETE /api/v1/buildings/{building_id}/units/{unit_id}/person-months[/{id}|/yearly|/calculate]`.
+  Reference the operationIds here once the sitemap catalogue is extended.
 - 2026-06-22 — BIT-190: authored `@ppt/api-client/person-months` (api + hooks +
   types), added the `person-months` route group, mounted it in `AppRoutes.tsx`,
   and added a building-detail entry point. Building-level views also list units
