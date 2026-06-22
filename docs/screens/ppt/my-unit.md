@@ -10,8 +10,7 @@ implementations:
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: complete
-endpoints:
-  - "GET /api/v1/users/me/units"
+endpoints: []
 relatedScreens:
   - id: ppt/dashboard-resident
     rel: parent
