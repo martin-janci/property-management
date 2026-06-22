@@ -26,6 +26,7 @@ pub mod help;
 pub mod membership;
 pub mod messaging;
 pub mod meter;
+pub mod notification_event;
 pub mod notification_preference;
 pub mod oauth;
 pub mod onboarding;
@@ -108,6 +109,7 @@ pub use help::{FaqEntry, HelpArticle, HelpCategory, HelpRepository, Tooltip};
 pub use membership::MembershipRepository;
 pub use messaging::MessagingRepository;
 pub use meter::MeterRepository;
+pub use notification_event::{total_counts, NotificationEventRepository};
 pub use notification_preference::NotificationPreferenceRepository;
 pub use oauth::OAuthRepository;
 pub use onboarding::{
