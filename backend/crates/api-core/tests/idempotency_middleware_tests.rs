@@ -60,7 +60,10 @@ fn build_app(pool: db::DbPool, hits: Arc<AtomicUsize>) -> Router {
     let state = TestState { pool, hits };
 
     Router::new()
-        .route("/demo", post(demo_handler).route_layer(from_fn(demo_idempotency)))
+        .route(
+            "/demo",
+            post(demo_handler).route_layer(from_fn(demo_idempotency)),
+        )
         .with_state(state)
 }
 
@@ -112,7 +115,10 @@ async fn duplicate_request_replays_cached_response(pool: db::DbPool) {
         "duplicate replay must be served from the cached response"
     );
     let second_body = read_json(second).await;
-    assert_eq!(second_body, first_body, "cached replay must match the original");
+    assert_eq!(
+        second_body, first_body,
+        "cached replay must match the original"
+    );
     assert_eq!(
         hits.load(Ordering::SeqCst),
         1,
@@ -191,7 +197,10 @@ async fn expired_cached_row_is_recomputed(pool: db::DbPool) {
         "expired entry must not be replayed from cache"
     );
     let second_body = read_json(second).await;
-    assert_eq!(second_body["call"], 2, "expired entry must re-run the handler");
+    assert_eq!(
+        second_body["call"], 2,
+        "expired entry must re-run the handler"
+    );
     assert_eq!(
         hits.load(Ordering::SeqCst),
         2,

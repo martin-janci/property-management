@@ -298,7 +298,10 @@ pub struct StatisticsQuery {
 pub fn router() -> Router<AppState> {
     Router::new()
         // CRUD
-        .route("/", post(create_fault).route_layer(axum::middleware::from_fn(create_fault_idempotency)))
+        .route(
+            "/",
+            post(create_fault).route_layer(axum::middleware::from_fn(create_fault_idempotency)),
+        )
         .route("/", get(list_faults))
         .route("/my", get(list_my_faults))
         .route("/{id}", get(get_fault))

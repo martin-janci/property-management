@@ -360,10 +360,9 @@ fn cached_response(row: CachedResponseRow) -> Response {
             response.headers_mut().insert(CONTENT_TYPE, value);
         }
     }
-    response.headers_mut().insert(
-        REPLAYED_HEADER,
-        HeaderValue::from_static("true"),
-    );
+    response
+        .headers_mut()
+        .insert(REPLAYED_HEADER, HeaderValue::from_static("true"));
     response
 }
 
