@@ -4,7 +4,11 @@
  * Manager-web front door for the IoT sensor backend.
  */
 export * from './components';
+export { useIotWebSocket } from './hooks';
 export {
+  type AlertStateFilter,
+  IotAlertsPage,
+  type IotAlertsPageProps,
   IotDashboardPage,
   type IotDashboardPageProps,
   IotThresholdConfigPage,

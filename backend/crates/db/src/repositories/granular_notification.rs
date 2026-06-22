@@ -3,7 +3,7 @@
 //! Provides database operations for per-event and per-channel notification preferences.
 
 use chrono::{NaiveTime, Utc};
-use sqlx::{Error as SqlxError, PgPool, Row};
+use sqlx::{Error as SqlxError, FromRow, PgPool, Row};
 use uuid::Uuid;
 
 use crate::models::{
@@ -16,6 +16,38 @@ use crate::models::{
 #[derive(Clone)]
 pub struct GranularNotificationRepository {
     pool: PgPool,
+}
+
+/// A user eligible for a 24h-inactivity email digest (Story 2B.3, PM #969 gap 1).
+/// Produced by [`GranularNotificationRepository::find_inactive_digest_candidates`].
+#[derive(Debug, Clone, FromRow)]
+pub struct InactiveDigestCandidate {
+    pub user_id: Uuid,
+    pub email: String,
+    pub locale: String,
+    /// Total unread notifications across all categories.
+    pub notification_count: i64,
+    /// Unread counts keyed by `entity_type`, e.g. `{ "fault": 5, "vote": 2 }`.
+    pub category_counts: serde_json::Value,
+    /// Earliest unread notification group creation time.
+    pub period_start: chrono::DateTime<Utc>,
+    /// Most recent unread activity time.
+    pub period_end: chrono::DateTime<Utc>,
+}
+
+/// A persisted digest row whose email has not yet been delivered, joined with
+/// the recipient address so it can be (re)sent. Produced by
+/// [`GranularNotificationRepository::get_unsent_digests`].
+#[derive(Debug, Clone, FromRow)]
+pub struct PendingDigestEmail {
+    pub digest_id: Uuid,
+    pub user_id: Uuid,
+    pub email: String,
+    pub locale: String,
+    pub notification_count: i32,
+    pub category_counts: serde_json::Value,
+    pub period_start: chrono::DateTime<Utc>,
+    pub period_end: chrono::DateTime<Utc>,
 }
 
 impl GranularNotificationRepository {
@@ -785,6 +817,115 @@ impl GranularNotificationRepository {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    /// Find users eligible for a 24h-inactivity email digest (Story 2B.3,
+    /// PM #969 gap 1). A user qualifies when they:
+    ///   * have opted in via `notification_schedule.digest_enabled = true`,
+    ///   * have been inactive since `inactivity_cutoff` (no refresh-token use —
+    ///     the closest proxy for "last seen", since `users` has no `last_seen`),
+    ///   * are an active, non-deleted account,
+    ///   * have at least one unread notification group, and
+    ///   * have not had any digest row created since `resend_cutoff` (this
+    ///     dedup also prevents re-creating a row for a digest whose email send
+    ///     failed — those are retried in place via [`Self::get_unsent_digests`]).
+    ///
+    /// `category_counts` aggregates unread per `entity_type` (fault, vote, …)
+    /// and `notification_count` is the total across all categories.
+    pub async fn find_inactive_digest_candidates(
+        &self,
+        inactivity_cutoff: chrono::DateTime<Utc>,
+        resend_cutoff: chrono::DateTime<Utc>,
+        limit: i64,
+    ) -> Result<Vec<InactiveDigestCandidate>, SqlxError> {
+        sqlx::query_as::<_, InactiveDigestCandidate>(
+            r#"
+            WITH last_activity AS (
+                SELECT user_id, MAX(last_used_at) AS last_active
+                FROM refresh_tokens
+                GROUP BY user_id
+            ),
+            unread AS (
+                SELECT user_id,
+                       SUM(cat_count)::bigint AS notification_count,
+                       jsonb_object_agg(entity_type, cat_count) AS category_counts,
+                       MIN(first_at) AS period_start,
+                       MAX(last_at) AS period_end
+                FROM (
+                    SELECT user_id,
+                           entity_type,
+                           SUM(notification_count)::bigint AS cat_count,
+                           MIN(created_at) AS first_at,
+                           MAX(latest_notification_at) AS last_at
+                    FROM notification_groups
+                    WHERE is_read = false
+                    GROUP BY user_id, entity_type
+                ) per_cat
+                GROUP BY user_id
+            )
+            SELECT u.id AS user_id,
+                   u.email,
+                   u.locale,
+                   un.notification_count,
+                   un.category_counts,
+                   un.period_start,
+                   un.period_end
+            FROM users u
+            JOIN notification_schedule s ON s.user_id = u.id AND s.digest_enabled = true
+            JOIN unread un ON un.user_id = u.id
+            JOIN last_activity la ON la.user_id = u.id
+            WHERE u.status = 'active'
+              AND u.deleted_at IS NULL
+              AND la.last_active < $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM notification_digests d
+                  WHERE d.user_id = u.id
+                    AND d.created_at > $2
+              )
+            ORDER BY un.period_end ASC
+            LIMIT $3
+            "#,
+        )
+        .bind(inactivity_cutoff)
+        .bind(resend_cutoff)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Fetch digest rows whose email has not yet been sent and that were
+    /// created since `created_after`, joined with the recipient's address.
+    /// Used to retry transient `EmailService` failures without losing the
+    /// already-persisted digest row or creating duplicates. Story 2B.3.
+    pub async fn get_unsent_digests(
+        &self,
+        created_after: chrono::DateTime<Utc>,
+        limit: i64,
+    ) -> Result<Vec<PendingDigestEmail>, SqlxError> {
+        sqlx::query_as::<_, PendingDigestEmail>(
+            r#"
+            SELECT d.id AS digest_id,
+                   d.user_id,
+                   u.email,
+                   u.locale,
+                   d.notification_count,
+                   d.category_counts,
+                   d.period_start,
+                   d.period_end
+            FROM notification_digests d
+            JOIN users u ON u.id = d.user_id
+            WHERE d.email_sent_at IS NULL
+              AND d.created_at > $1
+              AND u.status = 'active'
+              AND u.deleted_at IS NULL
+            ORDER BY d.created_at ASC
+            LIMIT $2
+            "#,
+        )
+        .bind(created_after)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
     }
 
     /// Add notification to digest.

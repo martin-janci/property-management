@@ -48,6 +48,9 @@ pub enum CryptoError {
     #[error("Encryption failed: {0}")]
     EncryptionFailed(String),
 
+    #[error("Secure random number generation failed: {0}")]
+    RngFailed(String),
+
     #[error("Decryption failed: {0}")]
     DecryptionFailed(String),
 
@@ -122,9 +125,12 @@ impl IntegrationCrypto {
         // or predictable source at process start.
         use rand::TryRng;
         let mut nonce_bytes = [0u8; NONCE_LENGTH];
+        // SECURITY: do NOT panic on a CSPRNG failure — a transient OS entropy
+        // error must surface as a handled error so the caller can refuse to
+        // persist the secret, never crash the process mid-encrypt.
         rand::rngs::SysRng
             .try_fill_bytes(&mut nonce_bytes)
-            .expect("OS rng failed");
+            .map_err(|e| CryptoError::RngFailed(e.to_string()))?;
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt
@@ -425,6 +431,17 @@ mod tests {
             .unwrap();
         assert!(encrypted.starts_with(ENCRYPTED_PREFIX));
         assert_eq!(decrypt_if_available(Some(&crypto), &encrypted), "refresh");
+    }
+
+    #[test]
+    fn test_rng_failed_error_renders() {
+        // Regression: a CSPRNG failure during nonce generation must propagate as
+        // a handled CryptoError::RngFailed rather than panicking the process.
+        let err = CryptoError::RngFailed("entropy source unavailable".to_string());
+        assert!(matches!(err, CryptoError::RngFailed(_)));
+        let msg = err.to_string();
+        assert!(msg.contains("Secure random number generation failed"));
+        assert!(msg.contains("entropy source unavailable"));
     }
 
     #[test]

@@ -222,4 +222,30 @@ impl MembershipRepository {
         .await?;
         Ok(exists.unwrap_or(false))
     }
+
+    /// Return the user IDs of all active manager-tier members in `org_id`.
+    ///
+    /// Manager-tier roles are the same set as [`is_manager_in_org`].
+    pub async fn list_manager_ids(&self, org_id: Uuid) -> Result<Vec<Uuid>, SqlxError> {
+        let rows: Vec<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT DISTINCT user_id FROM user_memberships
+            WHERE organization_id = $1
+              AND revoked_at IS NULL
+              AND (expires_at IS NULL OR expires_at > NOW())
+              AND role IN (
+                  'SuperAdmin',
+                  'PlatformAdmin',
+                  'OrgAdmin',
+                  'Manager',
+                  'TechnicalManager',
+                  'PropertyManager'
+              )
+            "#,
+        )
+        .bind(org_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows.into_iter().map(|(id,)| id).collect())
+    }
 }

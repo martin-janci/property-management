@@ -13,6 +13,7 @@
  */
 import { Route, Routes } from 'react-router-dom';
 import { accountingRoutes } from './groups/accounting';
+import { aiDashboardRoutes } from './groups/ai-dashboards';
 import { announcementRoutes } from './groups/announcements';
 import { buildingRoutes } from './groups/buildings';
 import { communityRoutes } from './groups/community';
@@ -26,7 +27,9 @@ import { leaseRoutes } from './groups/leases';
 import { messagingRoutes } from './groups/messaging';
 import { meterRoutes } from './groups/meters';
 import { neighborRoutes } from './groups/neighbors';
+import { notificationAnalyticsRoutes } from './groups/notifications';
 import { outageRoutes } from './groups/outages';
+import { personMonthRoutes } from './groups/person-months';
 import { rentalRoutes } from './groups/rentals';
 import { reportRoutes } from './groups/reports';
 import { votingRoutes } from './groups/voting';
@@ -50,10 +53,13 @@ export function AppRoutes() {
       {accountingRoutes()}
       {rentalRoutes()}
       {meterRoutes()}
+      {personMonthRoutes()}
       {leaseRoutes()}
       {votingRoutes()}
+      {aiDashboardRoutes()}
       {iotRoutes()}
       {reportRoutes()}
+      {notificationAnalyticsRoutes()}
       {buildingRoutes()}
       {settingsRoutes()}
       {/* Phase 5 admin is at admin.rlt.sk now; see frontend/apps/admin-web. */}

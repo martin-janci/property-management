@@ -28,7 +28,32 @@ environment.
   `Constants.expoConfig.extra`.
 - `EXPO_PUBLIC_*` variables are **not** used here (removed in issue #523).
   They cannot reach the iOS `Info.plist` and would require hand-syncing two
-  copies of every value. Do not reintroduce them.
+  copies of every value. Do not reintroduce them. The `Constants` re-export in
+  [`src/config/constants.ts`](./src/config/constants.ts) (`API_BASE_URL`) reads
+  through `getApiBaseUrl()` for the same reason — it never touches
+  `process.env`.
+
+### Reading config in JS vs. native iOS
+
+There are two consumers of the resolved env values, both fed by `app.config.ts`:
+
+| Consumer | Reads from | API |
+| -------- | ---------- | --- |
+| JavaScript / TypeScript | `Constants.expoConfig.extra` | `getApiBaseUrl()`, `getEnvironment()`, `getWsBaseUrl()`, `isDebugMode()` in [`src/config/api.ts`](./src/config/api.ts) (via `expo-constants`). Never read `process.env` at module scope. |
+| Native iOS (Swift / Obj-C) | `Info.plist` | `Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL")` / `"ENVIRONMENT"`. |
+
+`app.config.ts` injects the following keys into `ios.infoPlist` so native code
+can read the same per-environment values without a second config path:
+
+| `Info.plist` key | Source env var | Notes |
+| ---------------- | -------------- | ----- |
+| `API_BASE_URL`   | `API_BASE_URL` | REST base URL — identical to `extra.API_BASE_URL`. |
+| `ENVIRONMENT`    | `ENVIRONMENT`  | Logical environment label (`development` / `staging` / `production`). |
+
+These keys are written into the generated `ios/` project at `expo prebuild`
+time; the committed `ios/xcconfig/*.xcconfig` files carry only native
+build-layer markers (`PPT_APP_ENV`, bundle id) and deliberately do **not**
+duplicate the runtime values above, to avoid drift (see GH #1410).
 
 ### How `APP_ENV` selects the config file
 
@@ -129,6 +154,21 @@ pnpm -F mobile build:android:production    # eas build --platform android --prof
 pnpm -F mobile build:ios:staging
 pnpm -F mobile build:ios:production
 ```
+
+For a single command that builds one environment across both platforms, use the
+`build-mobile.sh` wrapper (RN/Expo counterpart of the top-level KMP
+`scripts/build-*.sh`):
+
+```bash
+pnpm -F mobile build:mobile staging both      # eas build staging, android + ios
+pnpm -F mobile build:mobile production ios     # eas build production, ios only
+pnpm -F mobile build:mobile staging android --local   # local EAS build
+# or directly:
+./scripts/build-mobile.sh development          # dev-client build, both platforms
+```
+
+It maps `development|staging|production` to the matching `eas.json` profile,
+forwards any trailing args to `eas build`, and prints a per-platform summary.
 
 The `eas` CLI must be installed globally (`npm install -g eas-cli`) — it is
 intentionally not a devDependency. See [`CLAUDE.md`](./CLAUDE.md) for details.

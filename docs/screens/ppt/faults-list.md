@@ -105,10 +105,13 @@ UC-03 faults list — the manager's working surface for the 8-state fault machin
 - The bundle's faults page does not depict empty/loading/error states — these need design at implementation time. Following project voice: blunt, single-line, action-tagged. **Update (PR #1033):** loading/error/empty are now wired in code — `FaultList` owns the triad and the error tile carries a retry button (`onRetry → refetch()`). The visual error/empty *design* is still TBD; the code provides a functional baseline (i18n key `faults.failedToLoad` + shared `common.retry`).
 - Mobile nav shouldn't carry the legacy emoji `🔧` — substitute Lucide `wrench` per SKILL.md non-negotiable.
 - Sidebar group headers use uppercase 11/600/.06em — matches the spec for "category eyebrow" type.
+- **Test follow-up (PR #1418):** `faults.route.test.tsx` (the `FaultsPageRoute` API-wiring suite, gap-79-1) was missing a `beforeEach` import from `vitest`; PR #1418 added it. Test-import fix only — no change to route/component behavior, API wiring, or status (build/api unchanged).
 
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-06-22 — agent: screen-map-drift-pr-1418-ppt — reconcile drift from PR #1418 (BIT-21): the PR touched `routes/groups/faults.route.test.tsx` (added missing `beforeEach` import from `vitest`) without a screen-map update. Test-import fix only on the `FaultsPageRoute` gap-79-1 suite — no behavior/API/status change. Added Notes entry; frontmatter unchanged; docs-only
 
 - 2026-06-05 — agent: test-gap-screen-map-drift-pr-1033-ppt — screen-map sync for PR #1033: FaultsPageRoute now threads `isError`/`onRetry` (from `useFaults` error + `refetch`) through FaultsPage → FaultList; FaultList renders an inline `role="alert"` error tile + retry button (i18n `faults.failedToLoad` + `common.retry`), mutually exclusive with empty/loaded; added FaultsPage.test.tsx regression (gap-79-1). Updated States (Error/Loading/Empty → Implemented) + Notes; docs-only, no code change here
 

@@ -442,7 +442,7 @@ pub struct AirbnbListingsResponse {
     params(OrgIdPath),
     responses(
         (status = 200, description = "Airbnb listings — `{listings: [...], count: N}`"),
-        (status = 403, description = "Caller is not a member of the organisation"),
+        (status = 403, description = "Caller is not a member of the organisation, or lacks a manager-level role in it"),
         (status = 404, description = "No Airbnb connection found"),
         (status = 502, description = "Airbnb API error")
     ),
@@ -461,6 +461,12 @@ pub async fn list_airbnb_listings(
     );
 
     verify_org_access(&state, auth.user_id, path.org_id).await?;
+    // Manager-level gate (issue #1626): live Airbnb linked-listing data is
+    // landlord/manager operational data — a plain `resident` member must not be
+    // able to enumerate it via this live proxy, for parity with the DB-backed
+    // `/airbnb/connections` read (#1639) and the Airbnb write paths. Role is read
+    // from the caller's membership of the PATH org (#1525/#1585), not the JWT.
+    verify_manager_role_in_org(&state, auth.user_id, path.org_id).await?;
 
     use super::token_rotation::TokenRotationOutcome;
 

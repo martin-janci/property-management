@@ -22,6 +22,11 @@ export const FolderTreePage = lazy(() =>
   import('../features/documents').then((m) => ({ default: m.FolderTreePage }))
 );
 
+// Document templates feature (Epic 7B, Story 7B.2)
+export const DocumentTemplatesPage = lazy(() =>
+  import('../features/document-templates').then((m) => ({ default: m.DocumentTemplatesPage }))
+);
+
 // News feature (Epic 59)
 export const NewsListPage = lazy(() =>
   import('../features/news').then((m) => ({ default: m.NewsListPage }))
@@ -55,6 +60,9 @@ export const IotSensorListPage = lazy(() =>
 );
 export const IotSensorFormPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.SensorFormPage }))
+);
+export const IotAlertsPage = lazy(() =>
+  import('../features/iot').then((m) => ({ default: m.IotAlertsPage }))
 );
 export const IotThresholdConfigPage = lazy(() =>
   import('../features/iot').then((m) => ({ default: m.IotThresholdConfigPage }))
@@ -205,6 +213,9 @@ export const CreateFaultPage = lazy(() =>
 export const EditFaultPage = lazy(() =>
   import('../features/faults').then((m) => ({ default: m.EditFaultPage }))
 );
+export const FaultReportsPage = lazy(() =>
+  import('../features/faults').then((m) => ({ default: m.FaultReportsPage }))
+);
 
 // Community feature (Epic 42)
 export const FeedPage = lazy(() =>
@@ -290,6 +301,25 @@ export const PendingBookingsPage = lazy(() =>
 // AI Assistant chat (Epic 13, Story 13.1) — built, now routed (gap-sweep)
 export const AiChatPage = lazy(() =>
   import('../features/ai-chat').then((m) => ({ default: m.AiChatPage }))
+);
+
+// Sentiment Dashboard (Epic 13, Story 13.2) — gap-sweep
+export const SentimentDashboardPage = lazy(() =>
+  import('../features/sentiment').then((m) => ({ default: m.SentimentDashboardPage }))
+);
+
+// Notification delivery analytics (Story 2B-C.3, PM #969 gap 4 / BIT-214)
+export const NotificationAnalyticsPage = lazy(() =>
+  import('../features/notification-analytics').then((m) => ({
+    default: m.NotificationAnalyticsPage,
+  }))
+);
+
+// Predictive Maintenance Dashboard (Epic 13, Story 13.3) — gap-sweep
+export const PredictiveMaintenancePage = lazy(() =>
+  import('../features/predictive-maintenance').then((m) => ({
+    default: m.PredictiveMaintenancePage,
+  }))
 );
 
 // Workflow Automation (Epic 13) — built + API-wired, now routed (gap-sweep)

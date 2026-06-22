@@ -122,7 +122,20 @@
     "selectCategory": "Bitte wahlen Sie eine Kategorie",
     "locationDetected": "Standort erkannt",
     "failedToPickImage": "Bild konnte nicht ausgewahlt werden",
-    "failedToDetectLocation": "Standort konnte nicht erkannt werden"
+    "failedToDetectLocation": "Standort konnte nicht erkannt werden",
+    "buildingLabel": "Gebäude",
+    "selectBuilding": "Bitte ein Gebäude auswählen",
+    "loadingBuildings": "Gebäude werden geladen…",
+    "noBuildings": "Keine Gebäude verfügbar",
+    "buildingsLoadError": "Ihre Gebäude konnten nicht geladen werden",
+    "photosCompressedTitle": "Fotos komprimiert",
+    "photosCompressedWarning": "Die ausgewählten Fotos überschritten 10 MB ({{original}} MB) und wurden auf {{final}} MB komprimiert, damit sie schneller hochgeladen werden. Die Bildqualität kann reduziert sein.",
+    "compressingPhotos": "Fotos werden optimiert…",
+    "queuedTitle": "Offline gespeichert",
+    "queuedMessage": "Sie sind offline. Ihre Meldung wurde gespeichert und wird automatisch synchronisiert, sobald Sie wieder online sind.",
+    "queuedOnErrorMessage": "Der Server war nicht erreichbar. Ihre Meldung wurde gespeichert und wird automatisch synchronisiert, sobald die Verbindung wiederhergestellt ist.",
+    "offlineSubmitHint": "Sie sind offline — diese Meldung wird gespeichert und synchronisiert, sobald Sie wieder online sind.",
+    "submitButtonOffline": "Speichern und später synchronisieren"
   },
   "news": {
     "title": "Nachrichten",

@@ -26,6 +26,7 @@ export {
   updateFault,
 } from './api';
 // React Query hooks
+export type { FaultStatisticsFilters } from './hooks';
 export {
   faultKeys,
   useAcceptAiSuggestion,

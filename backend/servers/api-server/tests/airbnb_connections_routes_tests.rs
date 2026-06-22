@@ -239,6 +239,30 @@ async fn connections_idor_guard_rejects_non_member(pool: PgPool) {
     );
 }
 
+/// Manager gate (#1626, regression guard for #1639): a member whose org role is
+/// `resident` must be rejected with 403 even though they pass the membership IDOR
+/// check. Mirrors the manager `200` path (`connections_returns_empty_list_when_none`).
+/// The role is read from `organization_members.role_type`, not the JWT — so the
+/// resident is rejected despite `mint_token` minting a `manager` claim.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn connections_manager_gate_rejects_resident(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "cx-resident").await;
+    let user_id = seed_user(&pool, "cx-resident@test.local").await;
+    seed_membership(&pool, org_id, user_id, "resident").await;
+
+    let token = mint_token(user_id, org_id);
+    let uri = format!("/api/v1/integrations/organizations/{org_id}/airbnb/connections");
+    let resp = app.execute(authed_get(&uri, &token)).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "resident member must be 403 (manager-level read); got {}: {}",
+        resp.status,
+        resp.text()
+    );
+}
+
 /// With no Airbnb connection, the route returns 200 + empty list (not 404).
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn connections_returns_empty_list_when_none(pool: PgPool) {

@@ -13,13 +13,19 @@ import type {
   ARReportParams,
   ARReportTotals,
   AutoMatchResult,
+  BalanceSheetParams,
+  BalanceSheetReport,
+  CashFlowReport,
   CreateFeeSchedule,
   CreateFinancialAccount,
   CreateInvoice,
   CreateTransaction,
+  DateRangeReportParams,
+  ExportReportParams,
   FeeSchedule,
   FinancialAccount,
   FinancialAccountResponse,
+  IncomeStatement,
   Invoice,
   InvoiceItem,
   InvoiceResponse,
@@ -36,6 +42,7 @@ import type {
   PaymentResponse,
   RecordPayment,
   ReminderSchedule,
+  ReportType,
   UnitFee,
 } from './types';
 
@@ -308,6 +315,26 @@ export async function sendInvoice(id: string): Promise<Invoice> {
   );
 }
 
+/**
+ * Fetch an invoice rendered as a PDF (#975.6). Returns the raw `Blob` so the
+ * caller can trigger a browser download — `fetchApi` can't be used because it
+ * parses JSON. Auth + base URL come from the same providers as every other call.
+ */
+export async function downloadInvoicePdf(invoiceId: string): Promise<Blob> {
+  const token = getToken();
+  const org = getOrg();
+  const baseUrl = client.getConfig().baseUrl ?? '';
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (org) headers['X-Tenant-ID'] = org;
+
+  const response = await fetch(`${baseUrl}${API_BASE}/invoices/${invoiceId}/pdf`, { headers });
+  if (!response.ok) {
+    throw new Error(`Failed to download invoice PDF (HTTP ${response.status})`);
+  }
+  return response.blob();
+}
+
 export async function listUnitInvoices(
   unitId: string,
   params?: Omit<ListInvoicesParams, 'organization_id' | 'unit_id'>
@@ -430,4 +457,87 @@ export async function getARAgingReport(params: ARReportParams): Promise<Accounts
       totals: coerceArBuckets(r.totals),
     })
   );
+}
+
+// ============================================================================
+// FINANCIAL STATEMENT REPORTS (Story 11.7)
+// ============================================================================
+
+function coerceIncomeStatementLine(l: IncomeStatement['revenue'][0]) {
+  return { ...l, amount: toNum(l.amount) };
+}
+function coerceBalanceSheetLine(l: BalanceSheetReport['accounts'][0]) {
+  return { ...l, balance: toNum(l.balance) };
+}
+function coerceCashFlowLine(l: CashFlowReport['inflows'][0]) {
+  return { ...l, amount: toNum(l.amount) };
+}
+
+export async function getIncomeStatement(params: DateRangeReportParams): Promise<IncomeStatement> {
+  const q = new URLSearchParams({
+    organization_id: params.organization_id,
+    from: params.from,
+    to: params.to,
+  });
+  return fetchApi<IncomeStatement>(`${API_BASE}/reports/income-statement?${q}`).then((r) => ({
+    ...r,
+    revenue: r.revenue.map(coerceIncomeStatementLine),
+    expenses: r.expenses.map(coerceIncomeStatementLine),
+    total_revenue: toNum(r.total_revenue),
+    total_expenses: toNum(r.total_expenses),
+    net_income: toNum(r.net_income),
+  }));
+}
+
+export async function getBalanceSheet(params: BalanceSheetParams): Promise<BalanceSheetReport> {
+  const q = new URLSearchParams({ organization_id: params.organization_id });
+  if (params.as_of) q.set('as_of', params.as_of);
+  return fetchApi<BalanceSheetReport>(`${API_BASE}/reports/balance-sheet?${q}`).then((r) => ({
+    ...r,
+    accounts: r.accounts.map(coerceBalanceSheetLine),
+    total_assets: toNum(r.total_assets),
+    total_liabilities: toNum(r.total_liabilities),
+    net_equity: toNum(r.net_equity),
+  }));
+}
+
+export async function getCashFlowReport(params: DateRangeReportParams): Promise<CashFlowReport> {
+  const q = new URLSearchParams({
+    organization_id: params.organization_id,
+    from: params.from,
+    to: params.to,
+  });
+  return fetchApi<CashFlowReport>(`${API_BASE}/reports/cash-flow?${q}`).then((r) => ({
+    ...r,
+    inflows: r.inflows.map(coerceCashFlowLine),
+    outflows: r.outflows.map(coerceCashFlowLine),
+    total_inflows: toNum(r.total_inflows),
+    total_outflows: toNum(r.total_outflows),
+    net_cash_flow: toNum(r.net_cash_flow),
+  }));
+}
+
+async function fetchBlob(url: string): Promise<Blob> {
+  const token = getToken();
+  const org = getOrg();
+  const baseUrl = client.getConfig().baseUrl ?? '';
+  const response = await fetch(`${baseUrl}${url}`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(org ? { 'X-Tenant-ID': org } : {}),
+    },
+  });
+  if (!response.ok) throw new Error(`Export failed: HTTP ${response.status}`);
+  return response.blob();
+}
+
+export async function exportReport(report: ReportType, params: ExportReportParams): Promise<Blob> {
+  const q = new URLSearchParams({
+    organization_id: params.organization_id,
+    format: params.format,
+  });
+  if (params.from) q.set('from', params.from);
+  if (params.to) q.set('to', params.to);
+  if (params.as_of) q.set('as_of', params.as_of);
+  return fetchBlob(`${API_BASE}/reports/${report}/export?${q}`);
 }

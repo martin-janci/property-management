@@ -62,7 +62,8 @@
     "accessibility": "Přístupnost",
     "privacy": "Soukromí",
     "admin": "Administrace",
-    "aiChat": "AI asistent"
+    "aiChat": "AI asistent",
+    "iotAlerts": "Sensor Alerts"
   },
   "auth": {
     "signIn": "Přihlásit se",
@@ -362,6 +363,52 @@
       "empty": "Pro tento dokument nejsou k dispozici žádné verze.",
       "version": "Verze {{n}}",
       "current": "Aktuální"
+    },
+    "esign": {
+      "title": "Elektronický podpis",
+      "send": "Odeslat k podpisu",
+      "loading": "Načítají se žádosti o podpis…",
+      "loadError": "Žádosti o podpis se nepodařilo načíst.",
+      "empty": "Tento dokument zatím nebyl odeslán k podpisu.",
+      "requestedAt": "Vyžádáno {{date}}",
+      "signedAt": "podepsáno {{date}}",
+      "remind": "Poslat připomenutí",
+      "reminding": "Odesílá se…",
+      "remindSent": "Odeslaná připomenutí: {{count}}.",
+      "cancel": "Zrušit žádost",
+      "cancelling": "Ruší se…",
+      "cancelConfirm": "Zrušit tuto žádost o podpis? Podepisující již nebudou moci podepsat.",
+      "allSigned": "Všichni podepisující odpověděli.",
+      "status": {
+        "pending": "Čeká na podpis",
+        "in_progress": "Probíhá podepisování",
+        "completed": "Podepsáno",
+        "declined": "Zamítnuto",
+        "expired": "Vypršelo",
+        "cancelled": "Zrušeno"
+      },
+      "signer": {
+        "pending": "Čeká",
+        "sent": "Odesláno",
+        "viewed": "Zobrazeno",
+        "signed": "Podepsáno",
+        "declined": "Zamítnuto"
+      },
+      "dialog": {
+        "title": "Odeslat dokument k podpisu",
+        "signers": "Podepisující",
+        "namePlaceholder": "Celé jméno",
+        "emailPlaceholder": "email@example.com",
+        "removeSigner": "Odebrat podepisujícího",
+        "addSigner": "+ Přidat podepisujícího",
+        "signerRequired": "Přidejte alespoň jednoho podepisujícího se jménem a platným e-mailem.",
+        "subject": "Předmět (volitelné)",
+        "subjectPlaceholder": "např. Smlouva o správě",
+        "message": "Zpráva pro podepisující (volitelné)",
+        "messagePlaceholder": "Zkontrolujte a podepište přiložený dokument.",
+        "sending": "Odesílá se…",
+        "send": "Odeslat k podpisu"
+      }
     }
   },
   "disputes": {
@@ -1158,26 +1205,22 @@
     "viewAnalysis": "Zobrazit analýzu"
   },
   "iot": {
+    "dashboardTitle": "Smart Building",
+    "dashboardSubtitle": "Sensors, telemetry and alerts across your buildings.",
+    "openDashboard": "Dashboard",
     "sensorsTitle": "Sensors & Devices",
     "sensorsSubtitle": "Register and manage the IoT devices across your buildings.",
-    "openDashboard": "Dashboard",
     "registerSensor": "Register sensor",
-    "noDevices": "No devices registered yet.",
-    "colName": "Name",
-    "colType": "Type",
-    "colLocation": "Location",
-    "colStatus": "Status",
-    "colLastReading": "Last reading",
     "registerSensorTitle": "Register sensor",
     "registerSensorSubtitle": "Add a new IoT device to a building.",
     "editSensorTitle": "Edit sensor",
     "editSensorSubtitle": "Update device configuration.",
-    "fieldBuilding": "Building",
     "selectBuilding": "Select a building",
     "buildingImmutable": "Building cannot be changed after registration.",
+    "selectDevicePrompt": "Select a device to view its telemetry.",
     "fieldName": "Name",
     "fieldType": "Sensor type",
-    "fieldStatus": "Status",
+    "fieldBuilding": "Building",
     "fieldLocation": "Location",
     "fieldLocationDescription": "Location description",
     "fieldConnectionType": "Connection type",
@@ -1185,8 +1228,33 @@
     "fieldInterval": "Reporting interval (s)",
     "fieldManufacturer": "Manufacturer",
     "fieldModel": "Model",
-    "fieldFirmware": "Firmware version",
     "fieldSerial": "Serial number",
+    "fieldFirmware": "Firmware version",
+    "fieldStatus": "Status",
+    "colName": "Name",
+    "colType": "Type",
+    "colStatus": "Status",
+    "colLocation": "Location",
+    "colLastReading": "Last reading",
+    "totalDevices": "Total devices",
+    "activeDevices": "Active",
+    "offlineDevices": "Offline",
+    "devices": "Devices",
+    "noDevices": "No devices registered yet.",
+    "telemetry": "Telemetry",
+    "lastReading": "Last reading",
+    "noReadings": "No readings in the selected window.",
+    "time": "Time",
+    "value": "Value",
+    "quality": "Quality",
+    "recentAlerts": "Recent alerts",
+    "unresolvedAlerts": "Open alerts",
+    "noAlerts": "No active alerts. All clear.",
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve",
+    "resolved": "resolved",
+    "triggered": "Triggered",
+    "thresholdBreach": "Threshold breach",
     "thresholds": "Thresholds",
     "thresholdsTitle": "Thresholds",
     "thresholdConfigTitle": "Threshold configuration",
@@ -1229,6 +1297,99 @@
     "thresholdDeleted": "Threshold deleted",
     "thresholdDeleteFailed": "Failed to delete threshold",
     "templateApplied": "Template applied",
-    "templateApplyFailed": "Failed to apply template"
+    "templateApplyFailed": "Failed to apply template",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "alerts": {
+      "title": "Sensor Alerts",
+      "subtitle": "Threshold breaches across your buildings.",
+      "backToDashboard": "Back to dashboard",
+      "empty": "No alerts match these filters. All clear.",
+      "filter": {
+        "allStates": "All states",
+        "allSeverities": "All severities"
+      },
+      "state": {
+        "open": "Open",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "columns": {
+        "severity": "Severity",
+        "sensor": "Sensor",
+        "message": "Message",
+        "value": "Value / Threshold",
+        "triggered": "Triggered",
+        "state": "State",
+        "actions": "Actions"
+      }
+    }
+  },
+  "commandPalette": {
+    "commands": {
+      "goToIotAlerts": "Go to Sensor Alerts"
+    },
+    "descriptions": {
+      "goToIotAlerts": "IoT threshold alerts: acknowledge and resolve"
+    }
+  },
+  "documentTemplates": {
+    "title": "Šablony dokumentů",
+    "subtitle": "Generujte dokumenty z opakovaně použitelných šablon.",
+    "searchPlaceholder": "Hledat šablony…",
+    "typeFilter": "Filtrovat podle typu",
+    "allTypes": "Všechny typy",
+    "loadError": "Šablony se nepodařilo načíst.",
+    "types": {
+      "lease": "Nájemní smlouva",
+      "notice": "Oznámení",
+      "invoice": "Faktura",
+      "report": "Zpráva",
+      "minutes": "Zápis",
+      "contract": "Smlouva",
+      "custom": "Vlastní"
+    },
+    "categories": {
+      "contracts": "Smlouvy",
+      "invoices": "Faktury",
+      "reports": "Zprávy",
+      "manuals": "Příručky",
+      "certificates": "Certifikáty",
+      "other": "Ostatní"
+    },
+    "empty": {
+      "title": "Zatím žádné šablony",
+      "body": "Pro tuto organizaci nebyly vytvořeny žádné šablony dokumentů.",
+      "noMatches": "Vašim filtrům neodpovídají žádné šablony."
+    },
+    "card": {
+      "placeholders": "{{count}} zástupných symbolů",
+      "usage": "použito {{count}}×",
+      "generate": "Generovat"
+    },
+    "generate": {
+      "title": "Generovat ze šablony „{{name}}“",
+      "contextLegend": "Kontext",
+      "building": "Budova",
+      "unit": "Jednotka",
+      "noContext": "— Žádná budova —",
+      "noUnit": "— Žádná jednotka —",
+      "contextHint": "Vyberte budovu nebo jednotku pro předvyplnění odpovídajících zástupných symbolů. Každou hodnotu můžete upravit.",
+      "placeholdersLegend": "Zástupné symboly",
+      "noPlaceholders": "Tato šablona nemá žádné zástupné symboly.",
+      "documentLegend": "Dokument",
+      "docTitle": "Název",
+      "category": "Kategorie",
+      "description": "Popis",
+      "previewLegend": "Náhled",
+      "missingPlaceholders": "Vyplňte povinné zástupné symboly: {{names}}",
+      "generateError": "Dokument se nepodařilo vygenerovat. {{message}}",
+      "loadError": "Šablonu se nepodařilo načíst.",
+      "generating": "Generuje se…",
+      "submit": "Generovat dokument"
+    }
   }
 }

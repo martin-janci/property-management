@@ -21,33 +21,29 @@ registered in `app.config.ts`) runs at `expo prebuild`:
 1. Resolves the active environment from `APP_ENV` (same precedence as
    `app.config.ts` `getAppEnv()`).
 2. Reads the matching template here.
-3. Applies the CI override: if `API_BASE_URL` is in the environment (e.g. a
-   production EAS secret), it replaces `PPT_API_BASE_URL` — mirroring how
-   `app.config.ts` prefers `process.env.API_BASE_URL` for the runtime layer.
-4. Writes the result to the generated `ios/PPTEnv.xcconfig`.
-5. Sets that file as the `baseConfigurationReference` of every Xcode build
+3. Writes the result to the generated `ios/PPTEnv.xcconfig`.
+4. Sets that file as the `baseConfigurationReference` of every Xcode build
    configuration so the settings take effect.
 
 ## Relationship to `.env.<env>`
 
 Runtime config (what JS reads via `Constants.expoConfig.extra` / `ios.infoPlist`)
 remains owned by `.env.<env>` → `app.config.ts`. These xcconfig files configure
-the **native build layer** (bundle id, an `APP_ENV` marker, API base URL, ATS
-posture) consistently with that mechanism. When a per-environment API host
-changes, update **both** the `.env.<env>` file and the matching template here.
+**only the native build layer** (bundle id + an `APP_ENV` marker).
 
-## xcconfig gotcha: `//` in URLs
-
-In `.xcconfig`, `//` begins a comment. URLs are therefore written with the Xcode
-build-setting escape `$()` between the slashes, e.g.
-`PPT_API_BASE_URL = https:/$()/host` resolves to `https://host`.
+> **Deliberately NOT in xcconfig (GH #1410):** runtime values such as
+> `API_BASE_URL`, ATS / `NSAllowsArbitraryLoads`, and the human-facing display
+> name are owned by `.env.<env>` → `app.config.ts` → `ios.infoPlist`. They are
+> intentionally not duplicated here to avoid two sources of truth drifting. The
+> regression test `app.config.iosBuildConfig.test.ts` asserts none of
+> `PPT_API_BASE_URL`, `PPT_ALLOWS_ARBITRARY_LOADS`, or `PPT_BUILD_DISPLAY_NAME`
+> appear in these templates. When a per-environment API host changes, edit the
+> matching `.env.<env>` file (and provide the prod host via an EAS secret), not
+> this directory.
 
 ## Settings exposed
 
 | Build setting                  | Meaning                                        |
 | ------------------------------ | ---------------------------------------------- |
-| `PPT_APP_ENV`                  | active environment marker                      |
+| `PPT_APP_ENV`                  | active environment marker (greppable in build logs) |
 | `PRODUCT_BUNDLE_IDENTIFIER`    | `three.two.bit.ppt.management`                 |
-| `PPT_BUILD_DISPLAY_NAME`       | human-facing build marker                      |
-| `PPT_API_BASE_URL`            | backend API base URL (CI-overridable)          |
-| `PPT_ALLOWS_ARBITRARY_LOADS`   | ATS cleartext posture (YES dev/staging, NO prod) |

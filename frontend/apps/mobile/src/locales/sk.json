@@ -122,7 +122,20 @@
     "selectCategory": "Prosim vyberte kategoriu",
     "locationDetected": "Poloha zistena",
     "failedToPickImage": "Nepodarilo sa vybrat obrazok",
-    "failedToDetectLocation": "Nepodarilo sa zistit polohu"
+    "failedToDetectLocation": "Nepodarilo sa zistit polohu",
+    "buildingLabel": "Budova",
+    "selectBuilding": "Vyberte budovu",
+    "loadingBuildings": "Načítavajú sa budovy…",
+    "noBuildings": "Žiadne dostupné budovy",
+    "buildingsLoadError": "Nepodarilo sa načítať vaše budovy",
+    "photosCompressedTitle": "Fotky komprimované",
+    "photosCompressedWarning": "Vybrané fotky presiahli 10 MB ({{original}} MB) a boli komprimované na {{final}} MB, aby sa nahrali rýchlejšie. Kvalita obrázkov môže byť znížená.",
+    "compressingPhotos": "Optimalizujem fotky…",
+    "queuedTitle": "Uložené offline",
+    "queuedMessage": "Ste offline. Hlásenie bolo uložené a automaticky sa zosynchronizuje po obnovení pripojenia.",
+    "queuedOnErrorMessage": "Nepodarilo sa spojiť so serverom. Hlásenie bolo uložené a automaticky sa zosynchronizuje po obnovení pripojenia.",
+    "offlineSubmitHint": "Ste offline — hlásenie sa uloží a zosynchronizuje po obnovení pripojenia.",
+    "submitButtonOffline": "Uložiť a zosynchronizovať neskôr"
   },
   "news": {
     "title": "Spravy",

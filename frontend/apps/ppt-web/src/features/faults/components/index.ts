@@ -3,6 +3,7 @@
  * Epic 4: Fault Reporting & Resolution
  */
 
+export * from './FaultBreakdownChart';
 export * from './FaultCard';
 export * from './FaultForm';
 export * from './FaultList';

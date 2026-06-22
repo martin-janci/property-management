@@ -9,6 +9,7 @@
 import type { BuildingStatus, BuildingType } from '@ppt/api-client';
 import { isSafeImageUrl } from '@ppt/shared';
 import { Link } from 'react-router-dom';
+import { BuildingLocationMap, UnitsSection } from '../components';
 import { useBuilding, useBuildingCommonAreas, useBuildingFloors } from '../hooks';
 
 interface BuildingDetailPageProps {
@@ -142,6 +143,16 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
 
           {building.description && <p className="mt-4 text-gray-600">{building.description}</p>}
 
+          {/* Quick links to building-scoped features */}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              to={`/buildings/${buildingId}/person-months`}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"
+            >
+              Person-months
+            </Link>
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             <div className="bg-gray-50 rounded-lg p-4">
@@ -174,6 +185,9 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
         </div>
       </div>
 
+      {/* Location Map (Story 3.1 AC3) — only shown when coordinates are resolved */}
+      <BuildingLocationMap location={building.location} name={building.name} />
+
       {/* Floors Section */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Floors</h2>
@@ -199,6 +213,9 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
           <p className="text-gray-500 text-sm">No floors defined for this building.</p>
         )}
       </div>
+
+      {/* Units Section */}
+      <UnitsSection buildingId={buildingId} />
 
       {/* Common Areas Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
