@@ -10,6 +10,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
+use common::notifications::{Notification, NotificationCategory};
 use db::models::{
     AddFaultComment, AddWorkNote, AiSuggestion, AssignFault, ConfirmFault, CreateFault,
     CreateFaultAttachment, Fault, FaultAttachment, FaultListQuery, FaultStatistics, FaultSummary,
@@ -410,6 +411,49 @@ async fn create_fault(
                 )),
             )
         })?;
+
+    // Story 4.1: notify all org managers about the new fault. Best-effort —
+    // notification failures must not fail the mutation.
+    match MembershipRepository::new(state.db.clone())
+        .list_manager_ids(tenant_id)
+        .await
+    {
+        Ok(manager_ids) => {
+            let recipients: Vec<Uuid> = manager_ids
+                .into_iter()
+                .filter(|id| *id != principal.user_id)
+                .collect();
+            if !recipients.is_empty() {
+                let notification = Notification::new(
+                    Uuid::nil(),
+                    NotificationCategory::Faults,
+                    format!("New fault reported: {}", fault.title),
+                    "A new fault has been reported and requires triage.".to_string(),
+                )
+                .with_action_url(format!("/faults/{}", fault.id))
+                .with_data(serde_json::json!({
+                    "fault_id": fault.id,
+                    "organization_id": fault.organization_id,
+                }));
+                let results = state
+                    .notification_pipeline
+                    .dispatch_to_users(&recipients, &notification, Some(fault.id), None)
+                    .await;
+                tracing::info!(
+                    fault_id = %fault.id,
+                    recipients = results.len(),
+                    "FaultCreated notifications dispatched to managers"
+                );
+            }
+        }
+        Err(e) => {
+            tracing::error!(
+                fault_id = %fault.id,
+                error = %e,
+                "Failed to load manager ids for FaultCreated notification"
+            );
+        }
+    }
 
     rls.release().await;
     Ok((
@@ -813,6 +857,41 @@ async fn assign_fault(
             )
         })?;
 
+    // Story 4.3: notify assignee + reporter (relevant parties). Best-effort.
+    {
+        let mut recipients: Vec<Uuid> = Vec::new();
+        if fault.assigned_to != Some(principal.user_id) {
+            if let Some(assignee) = fault.assigned_to {
+                recipients.push(assignee);
+            }
+        }
+        if fault.reporter_id != principal.user_id && Some(fault.reporter_id) != fault.assigned_to {
+            recipients.push(fault.reporter_id);
+        }
+        if !recipients.is_empty() {
+            let notification = Notification::new(
+                Uuid::nil(),
+                NotificationCategory::Faults,
+                format!("Fault assigned: {}", fault.title),
+                "The fault has been assigned and is now in progress.".to_string(),
+            )
+            .with_action_url(format!("/faults/{}", fault.id))
+            .with_data(serde_json::json!({
+                "fault_id": fault.id,
+                "organization_id": fault.organization_id,
+            }));
+            let results = state
+                .notification_pipeline
+                .dispatch_to_users(&recipients, &notification, Some(fault.id), None)
+                .await;
+            tracing::info!(
+                fault_id = %fault.id,
+                recipients = results.len(),
+                "FaultAssigned notifications dispatched"
+            );
+        }
+    }
+
     Ok(Json(FaultActionResponse {
         message: "Fault assigned successfully".to_string(),
         fault,
@@ -892,6 +971,33 @@ async fn update_status(
             )
         })?;
 
+    // Story 4.4: notify reporter on status change (push). Best-effort.
+    if fault.reporter_id != principal.user_id {
+        let notification = Notification::new(
+            Uuid::nil(),
+            NotificationCategory::Faults,
+            format!("Fault status updated: {}", fault.title),
+            format!("Your fault report status has been updated to '{}'.", fault.status),
+        )
+        .with_action_url(format!("/faults/{}", fault.id))
+        .with_data(serde_json::json!({
+            "fault_id": fault.id,
+            "organization_id": fault.organization_id,
+            "status": fault.status,
+        }));
+        if let Err(e) = state
+            .notification_pipeline
+            .dispatch(fault.reporter_id, &notification, Some(fault.id), None)
+            .await
+        {
+            tracing::error!(
+                fault_id = %fault.id,
+                error = %e,
+                "Failed to dispatch FaultStatusChanged notification"
+            );
+        }
+    }
+
     rls.release().await;
     Ok(Json(FaultActionResponse {
         message: "Status updated successfully".to_string(),
@@ -941,6 +1047,32 @@ async fn resolve_fault(
                 )),
             )
         })?;
+
+    // Story 4.5: notify reporter that their fault has been resolved. Best-effort.
+    if fault.reporter_id != principal.user_id {
+        let notification = Notification::new(
+            Uuid::nil(),
+            NotificationCategory::Faults,
+            format!("Fault resolved: {}", fault.title),
+            "Your fault report has been resolved. Please confirm if the issue was fixed.".to_string(),
+        )
+        .with_action_url(format!("/faults/{}", fault.id))
+        .with_data(serde_json::json!({
+            "fault_id": fault.id,
+            "organization_id": fault.organization_id,
+        }));
+        if let Err(e) = state
+            .notification_pipeline
+            .dispatch(fault.reporter_id, &notification, Some(fault.id), None)
+            .await
+        {
+            tracing::error!(
+                fault_id = %fault.id,
+                error = %e,
+                "Failed to dispatch FaultResolved notification"
+            );
+        }
+    }
 
     Ok(Json(FaultActionResponse {
         message: "Fault resolved successfully".to_string(),
@@ -1037,6 +1169,48 @@ async fn reopen_fault(
                 )),
             )
         })?;
+
+    // Story 4.6: notify managers when a fault is reopened. Best-effort.
+    match MembershipRepository::new(state.db.clone())
+        .list_manager_ids(tenant_id)
+        .await
+    {
+        Ok(manager_ids) => {
+            let recipients: Vec<Uuid> = manager_ids
+                .into_iter()
+                .filter(|id| *id != principal.user_id)
+                .collect();
+            if !recipients.is_empty() {
+                let notification = Notification::new(
+                    Uuid::nil(),
+                    NotificationCategory::Faults,
+                    format!("Fault reopened: {}", fault.title),
+                    "A resolved fault has been reopened and requires attention.".to_string(),
+                )
+                .with_action_url(format!("/faults/{}", fault.id))
+                .with_data(serde_json::json!({
+                    "fault_id": fault.id,
+                    "organization_id": fault.organization_id,
+                }));
+                let results = state
+                    .notification_pipeline
+                    .dispatch_to_users(&recipients, &notification, Some(fault.id), None)
+                    .await;
+                tracing::info!(
+                    fault_id = %fault.id,
+                    recipients = results.len(),
+                    "FaultReopened notifications dispatched to managers"
+                );
+            }
+        }
+        Err(e) => {
+            tracing::error!(
+                fault_id = %fault.id,
+                error = %e,
+                "Failed to load manager ids for FaultReopened notification"
+            );
+        }
+    }
 
     Ok(Json(FaultActionResponse {
         message: "Fault reopened successfully".to_string(),
