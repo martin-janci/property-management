@@ -9,7 +9,7 @@
 import type { BuildingStatus, BuildingType } from '@ppt/api-client';
 import { isSafeImageUrl } from '@ppt/shared';
 import { Link } from 'react-router-dom';
-import { UnitsSection } from '../components';
+import { BuildingLocationMap, UnitsSection } from '../components';
 import { useBuilding, useBuildingCommonAreas, useBuildingFloors } from '../hooks';
 
 interface BuildingDetailPageProps {
@@ -174,6 +174,9 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Location Map (Story 3.1 AC3) — only shown when coordinates are resolved */}
+      <BuildingLocationMap location={building.location} name={building.name} />
 
       {/* Floors Section */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">

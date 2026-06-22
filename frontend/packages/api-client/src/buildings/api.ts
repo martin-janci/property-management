@@ -73,6 +73,52 @@ function buildQueryString(params: object): string {
 }
 
 /**
+ * Coerce an unknown coordinate value to a finite number, or null.
+ *
+ * Tolerates numeric strings because `rust_decimal::Decimal` serializes as a
+ * JSON string by default.
+ */
+function toCoordinate(value: unknown): number | null {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Normalize a raw building payload so `location` is populated whenever the
+ * backend has resolved coordinates.
+ *
+ * The buildings API serializes geocoded coordinates as top-level `latitude`/
+ * `longitude` fields (Story 3.1 AC3), while the client `Building` model exposes
+ * them as a nested `location: GeoLocation`. This bridges the two shapes so
+ * consumers can rely on `building.location` regardless of transport, and stays
+ * a no-op when coordinates are absent/unresolved.
+ */
+function normalizeBuilding<T extends Partial<Building>>(building: T): T {
+  if (!building || typeof building !== 'object' || building.location) return building;
+  const raw = building as Record<string, unknown>;
+  const latitude = toCoordinate(raw.latitude);
+  const longitude = toCoordinate(raw.longitude);
+  if (
+    latitude !== null &&
+    longitude !== null &&
+    Math.abs(latitude) <= 90 &&
+    Math.abs(longitude) <= 180
+  ) {
+    return { ...building, location: { latitude, longitude } };
+  }
+  return building;
+}
+
+/** Normalize every building in a paginated list response. */
+function normalizeBuildingList(
+  response: BuildingsPaginatedResponse<Building>
+): BuildingsPaginatedResponse<Building> {
+  if (!response || !Array.isArray(response.items)) return response;
+  return { ...response, items: response.items.map(normalizeBuilding) };
+}
+
+/**
  * List buildings with optional filters.
  */
 export async function listBuildings(
@@ -80,14 +126,18 @@ export async function listBuildings(
   signal?: AbortSignal
 ): Promise<BuildingsPaginatedResponse<Building>> {
   const qs = buildQueryString(params || {});
-  return apiRequest<BuildingsPaginatedResponse<Building>>(`${API_BASE}${qs}`, { signal });
+  const response = await apiRequest<BuildingsPaginatedResponse<Building>>(`${API_BASE}${qs}`, {
+    signal,
+  });
+  return normalizeBuildingList(response);
 }
 
 /**
  * Get building by ID.
  */
 export async function getBuilding(id: string, signal?: AbortSignal): Promise<Building> {
-  return apiRequest<Building>(`${API_BASE}/${id}`, { signal });
+  const building = await apiRequest<Building>(`${API_BASE}/${id}`, { signal });
+  return normalizeBuilding(building);
 }
 
 // ============================================
@@ -131,7 +181,9 @@ export const createBuildingsApi = (config: ApiConfig) => {
 
       const url = searchParams.toString() ? `${baseUrl}?${searchParams}` : baseUrl;
       const response = await fetch(url, { headers });
-      return handleResponse(response);
+      return normalizeBuildingList(
+        await handleResponse<BuildingsPaginatedResponse<Building>>(response)
+      );
     },
 
     /**
@@ -143,7 +195,7 @@ export const createBuildingsApi = (config: ApiConfig) => {
         headers,
         body: JSON.stringify(data),
       });
-      return handleResponse(response);
+      return normalizeBuilding(await handleResponse<Building>(response));
     },
 
     /**
@@ -151,7 +203,7 @@ export const createBuildingsApi = (config: ApiConfig) => {
      */
     get: async (id: string): Promise<Building> => {
       const response = await fetch(`${baseUrl}/${id}`, { headers });
-      return handleResponse(response);
+      return normalizeBuilding(await handleResponse<Building>(response));
     },
 
     /**
@@ -163,7 +215,7 @@ export const createBuildingsApi = (config: ApiConfig) => {
         headers,
         body: JSON.stringify(data),
       });
-      return handleResponse(response);
+      return normalizeBuilding(await handleResponse<Building>(response));
     },
 
     /**
