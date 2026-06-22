@@ -14,10 +14,15 @@ import type {
   CreateBuildingRequest,
   CreateCommonAreaRequest,
   CreateFloorRequest,
+  CreateUnitRequest,
   Floor,
   ListBuildingDocumentsParams,
   ListBuildingsParams,
+  ListUnitsParams,
+  Unit,
+  UnitsListResponse,
   UpdateBuildingRequest,
+  UpdateUnitRequest,
   UploadDocumentRequest,
 } from './types';
 
@@ -248,6 +253,83 @@ export const createBuildingsApi = (config: ApiConfig) => {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * List units in a building (paginated). Archived units are excluded unless
+     * `params.include_archived` is set.
+     */
+    listUnits: async (buildingId: string, params?: ListUnitsParams): Promise<UnitsListResponse> => {
+      const searchParams = new URLSearchParams();
+      if (params?.offset !== undefined) searchParams.set('offset', params.offset.toString());
+      if (params?.limit !== undefined) searchParams.set('limit', params.limit.toString());
+      if (params?.include_archived) searchParams.set('include_archived', 'true');
+      if (params?.unit_type) searchParams.set('unit_type', params.unit_type);
+      if (params?.floor !== undefined) searchParams.set('floor', params.floor.toString());
+
+      const url = searchParams.toString()
+        ? `${baseUrl}/${buildingId}/units?${searchParams}`
+        : `${baseUrl}/${buildingId}/units`;
+      const response = await fetch(url, { headers });
+      return handleResponse(response);
+    },
+
+    /**
+     * Get a single unit by ID.
+     */
+    getUnit: async (buildingId: string, unitId: string): Promise<Unit> => {
+      const response = await fetch(`${baseUrl}/${buildingId}/units/${unitId}`, { headers });
+      return handleResponse(response);
+    },
+
+    /**
+     * Create a unit in a building.
+     */
+    createUnit: async (buildingId: string, data: CreateUnitRequest): Promise<Unit> => {
+      const response = await fetch(`${baseUrl}/${buildingId}/units`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Update a unit.
+     */
+    updateUnit: async (
+      buildingId: string,
+      unitId: string,
+      data: UpdateUnitRequest
+    ): Promise<Unit> => {
+      const response = await fetch(`${baseUrl}/${buildingId}/units/${unitId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Archive (soft-delete) a unit. Returns the archived unit.
+     */
+    archiveUnit: async (buildingId: string, unitId: string): Promise<Unit> => {
+      const response = await fetch(`${baseUrl}/${buildingId}/units/${unitId}`, {
+        method: 'DELETE',
+        headers,
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Restore a previously archived unit. Returns the restored unit.
+     */
+    restoreUnit: async (buildingId: string, unitId: string): Promise<Unit> => {
+      const response = await fetch(`${baseUrl}/${buildingId}/units/${unitId}/restore`, {
+        method: 'POST',
+        headers,
       });
       return handleResponse(response);
     },
