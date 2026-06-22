@@ -61,7 +61,10 @@ async fn insert_aggregate_and_alert_fires(pool: PgPool) {
 
     // Two channels present, ordered by channel name (email, push).
     assert_eq!(rows.len(), 2);
-    let email = rows.iter().find(|r| r.channel == "email").expect("email row");
+    let email = rows
+        .iter()
+        .find(|r| r.channel == "email")
+        .expect("email row");
     let push = rows.iter().find(|r| r.channel == "push").expect("push row");
 
     assert_eq!(email.sent, 18);
@@ -124,7 +127,11 @@ async fn channel_filter_and_empty_window(pool: PgPool) {
 
     // Channel filter: only the push row comes back.
     let push_only = repo
-        .aggregate_by_channel(now - Duration::hours(1), now + Duration::hours(1), Some("push"))
+        .aggregate_by_channel(
+            now - Duration::hours(1),
+            now + Duration::hours(1),
+            Some("push"),
+        )
         .await
         .expect("aggregate push");
     assert_eq!(push_only.len(), 1);
@@ -139,7 +146,11 @@ async fn channel_filter_and_empty_window(pool: PgPool) {
     assert!(empty.is_empty());
     let totals = total_counts(&empty);
     assert_eq!(totals.attempted(), 0);
-    assert_eq!(totals.failure_rate(), 0.0, "empty window must not divide-by-zero");
+    assert_eq!(
+        totals.failure_rate(),
+        0.0,
+        "empty window must not divide-by-zero"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

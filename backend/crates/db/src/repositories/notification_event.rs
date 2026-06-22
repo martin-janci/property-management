@@ -27,10 +27,7 @@ impl NotificationEventRepository {
     /// Best-effort analytics: callers spawn this off the dispatch hot path and
     /// log (never propagate) errors so persistence can never affect delivery.
     /// Returns the number of rows written. An empty batch is a no-op.
-    pub async fn insert_events(
-        &self,
-        events: &[NewNotificationEvent],
-    ) -> Result<u64, SqlxError> {
+    pub async fn insert_events(&self, events: &[NewNotificationEvent]) -> Result<u64, SqlxError> {
         if events.is_empty() {
             return Ok(0);
         }
