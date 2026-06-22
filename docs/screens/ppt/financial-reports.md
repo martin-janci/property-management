@@ -9,12 +9,8 @@ implementations:
     component: FinancialReportsPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: wired
-endpoints:
-  - "GET /api/v1/financial/reports/income-statement"
-  - "GET /api/v1/financial/reports/balance-sheet"
-  - "GET /api/v1/financial/reports/cash-flow"
-  - "GET /api/v1/financial/reports/{report}/export"
+    apiStatus: complete
+endpoints: []
 relatedScreens:
   - id: ppt/financial
     rel: parent
