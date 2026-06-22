@@ -404,8 +404,7 @@ async fn start_thread(
         // Realtime fanout: notify every other participant's WebSocket channel
         // (Epic 2B / 8A.3), generalized to N recipients for [BIT-183].
         for &rid in &recipients {
-            dispatch_new_message_event(state.pubsub_service.as_ref(), rid, &initial, user_id)
-                .await;
+            dispatch_new_message_event(state.pubsub_service.as_ref(), rid, &initial, user_id).await;
         }
     }
 

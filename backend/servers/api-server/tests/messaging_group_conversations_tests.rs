@@ -161,7 +161,11 @@ async fn start_thread_back_compat_single_recipient(pool: PgPool) {
     let participants = v["thread"]["participant_ids"]
         .as_array()
         .expect("participant_ids array");
-    assert_eq!(participants.len(), 2, "single recipient = 2-party thread: {v}");
+    assert_eq!(
+        participants.len(),
+        2,
+        "single recipient = 2-party thread: {v}"
+    );
 }
 
 // ---------------------------------------------------------------------------
