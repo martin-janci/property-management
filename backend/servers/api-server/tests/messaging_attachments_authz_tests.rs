@@ -15,6 +15,7 @@
 //! exercise the handler-layer participant/tenant/sender guards — the same
 //! defense-in-depth layer the production RLS policy backstops.
 
+#[allow(dead_code)]
 mod common;
 
 use axum::http::StatusCode;
