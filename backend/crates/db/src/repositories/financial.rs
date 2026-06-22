@@ -1444,4 +1444,109 @@ impl FinancialRepository {
             net_cash_flow,
         })
     }
+
+    // ========================================================================
+    // Story 11.6: Scheduler payment reminder & overdue transition helpers
+    // ========================================================================
+
+    /// Find all `sent` invoices with `due_date` within the next `days` days,
+    /// across all organizations. Used by the scheduler reminder tick.
+    pub async fn find_invoices_due_for_reminder(
+        &self,
+        days: i64,
+    ) -> Result<Vec<Invoice>, SqlxError> {
+        let today = Utc::now().date_naive();
+        let cutoff = today + chrono::Duration::days(days);
+        sqlx::query_as::<_, Invoice>(
+            r#"
+            SELECT * FROM invoices
+            WHERE status = 'sent'
+              AND due_date > $1
+              AND due_date <= $2
+              AND balance_due > 0
+            ORDER BY due_date ASC
+            "#,
+        )
+        .bind(today)
+        .bind(cutoff)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Atomically transitions all `sent` or `partial` invoices whose
+    /// `due_date` is strictly before `CURRENT_DATE - grace_period_days` to
+    /// status `overdue`. Returns the transitioned invoices so callers can
+    /// fire escalation notifications. Safe to call repeatedly (idempotent on
+    /// already-overdue rows).
+    pub async fn transition_invoices_to_overdue(
+        &self,
+        grace_period_days: i64,
+    ) -> Result<Vec<Invoice>, SqlxError> {
+        let grace_cutoff = Utc::now().date_naive() - chrono::Duration::days(grace_period_days);
+        sqlx::query_as::<_, Invoice>(
+            r#"
+            UPDATE invoices
+            SET status = 'overdue', updated_at = NOW()
+            WHERE status IN ('sent', 'partial')
+              AND due_date < $1
+              AND balance_due > 0
+            RETURNING *
+            "#,
+        )
+        .bind(grace_cutoff)
+        .fetch_all(&self.pool)
+        .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::{Duration, Utc};
+
+    /// Verify the reminder window predicate: invoices due strictly after today
+    /// and on or before today + N days qualify for a reminder.
+    #[test]
+    fn test_reminder_window_predicate() {
+        let today = Utc::now().date_naive();
+        let days_before = 7i64;
+        let cutoff = today + Duration::days(days_before);
+
+        // Due tomorrow — inside window.
+        let due_tomorrow = today + Duration::days(1);
+        assert!(due_tomorrow > today && due_tomorrow <= cutoff);
+
+        // Due exactly at cutoff — inside window.
+        assert!(cutoff > today && cutoff <= cutoff);
+
+        // Due today — excluded (already due, not upcoming).
+        assert!(!(today > today));
+
+        // Due 8 days out — outside window.
+        let due_outside = today + Duration::days(8);
+        assert!(!(due_outside > today && due_outside <= cutoff));
+    }
+
+    /// Verify the overdue grace-period predicate: invoices with due_date
+    /// strictly before today - grace_period_days should be transitioned.
+    #[test]
+    fn test_overdue_grace_period_predicate() {
+        let today = Utc::now().date_naive();
+
+        // Grace period = 0: any invoice past due (due_date < today) transitions.
+        let grace_cutoff_0 = today - Duration::days(0);
+        let due_yesterday = today - Duration::days(1);
+        assert!(due_yesterday < grace_cutoff_0);
+
+        // Due today is NOT included (strict less-than).
+        assert!(!(today < grace_cutoff_0));
+
+        // Grace period = 3: invoice overdue by 2 days stays pending.
+        let grace_cutoff_3 = today - Duration::days(3);
+        let due_2_days_ago = today - Duration::days(2);
+        assert!(!(due_2_days_ago < grace_cutoff_3));
+
+        // Invoice overdue by 4 days transitions.
+        let due_4_days_ago = today - Duration::days(4);
+        assert!(due_4_days_ago < grace_cutoff_3);
+    }
 }

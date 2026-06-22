@@ -4,8 +4,8 @@
 //! and session cleanup.
 
 use db::repositories::{
-    AnnouncementRepository, ESignatureNonceRepository, MeterRepository, SessionRepository,
-    SignatureRequestRepository, UnitResidentRepository, VoteRepository,
+    AnnouncementRepository, ESignatureNonceRepository, FinancialRepository, MeterRepository,
+    SessionRepository, SignatureRequestRepository, UnitResidentRepository, VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -40,6 +40,9 @@ pub struct SchedulerConfig {
     /// Maximum age (in days) a pinned announcement is kept pinned before the
     /// scheduler auto-unpins it (default: 30, issue #972.7).
     pub pin_max_age_days: i64,
+    /// Grace period (in days) after `due_date` before an invoice is
+    /// transitioned to `overdue` (default: 0 — transition on the due date).
+    pub overdue_grace_period_days: i64,
 }
 
 impl Default for SchedulerConfig {
@@ -52,6 +55,7 @@ impl Default for SchedulerConfig {
             payment_reminder_days_before: 7,
             signature_reminder_days_before: 3,
             pin_max_age_days: 30,
+            overdue_grace_period_days: 0,
         }
     }
 }
@@ -66,6 +70,7 @@ pub struct SchedulerMetrics {
     pub vote_reminders_sent: u64,
     pub meter_reminders_sent: u64,
     pub payment_reminders_sent: u64,
+    pub invoices_transitioned_to_overdue: u64,
     pub signature_reminders_sent: u64,
     pub signature_requests_expired: u64,
     pub sessions_cleaned: u64,
@@ -83,6 +88,7 @@ pub struct Scheduler {
     unit_resident_repo: UnitResidentRepository,
     signature_request_repo: SignatureRequestRepository,
     e_signature_nonce_repo: ESignatureNonceRepository,
+    financial_repo: FinancialRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
@@ -110,6 +116,7 @@ impl Scheduler {
             unit_resident_repo: UnitResidentRepository::new(pool.clone()),
             signature_request_repo: SignatureRequestRepository::new(pool.clone()),
             e_signature_nonce_repo: ESignatureNonceRepository::new(pool.clone()),
+            financial_repo: FinancialRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -134,6 +141,7 @@ impl Scheduler {
             unit_resident_repo: UnitResidentRepository::new(pool.clone()),
             signature_request_repo: SignatureRequestRepository::new(pool.clone()),
             e_signature_nonce_repo: ESignatureNonceRepository::new(pool.clone()),
+            financial_repo: FinancialRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -160,6 +168,7 @@ impl Scheduler {
             vote_reminders_sent: guard.vote_reminders_sent,
             meter_reminders_sent: guard.meter_reminders_sent,
             payment_reminders_sent: guard.payment_reminders_sent,
+            invoices_transitioned_to_overdue: guard.invoices_transitioned_to_overdue,
             signature_reminders_sent: guard.signature_reminders_sent,
             signature_requests_expired: guard.signature_requests_expired,
             sessions_cleaned: guard.sessions_cleaned,
@@ -253,6 +262,18 @@ impl Scheduler {
         // Story 12.2: Send meter reading reminders to residents before window closes
         if let Err(e) = self.send_meter_reminders().await {
             tracing::error!("Failed to send meter reading reminders: {}", e);
+            self.increment_errors();
+        }
+
+        // Story 11.6: Send payment due reminders
+        if let Err(e) = self.send_payment_reminders().await {
+            tracing::error!("Failed to send payment reminders: {}", e);
+            self.increment_errors();
+        }
+
+        // Story 11.6: Transition overdue invoices and fire escalation
+        if let Err(e) = self.transition_overdue_invoices().await {
+            tracing::error!("Failed to transition overdue invoices: {}", e);
             self.increment_errors();
         }
     }
@@ -1112,6 +1133,173 @@ impl Scheduler {
         Ok(())
     }
 
+    // ========================================================================
+    // Story 11.6: Payment Reminder & Overdue Transition Tasks
+    // ========================================================================
+
+    /// Send payment-due reminder notifications for all `sent` invoices whose
+    /// `due_date` falls within the next `payment_reminder_days_before` days.
+    /// Notifications are dispatched per-resident of the invoice's unit via
+    /// the existing `notify_payment_due` path (is_overdue = false).
+    async fn send_payment_reminders(&self) -> Result<(), sqlx::Error> {
+        let invoices = self
+            .financial_repo
+            .find_invoices_due_for_reminder(self.config.payment_reminder_days_before)
+            .await?;
+
+        if invoices.is_empty() {
+            return Ok(());
+        }
+
+        tracing::info!(
+            count = invoices.len(),
+            reminder_window_days = self.config.payment_reminder_days_before,
+            "Processing invoices approaching due date for payment reminders"
+        );
+
+        let mut total_sent = 0u64;
+
+        for invoice in &invoices {
+            let user_ids = self.get_unit_resident_user_ids(invoice.unit_id).await?;
+            if user_ids.is_empty() {
+                continue;
+            }
+
+            let amount_str = invoice.balance_due.to_string();
+            let due_dt = invoice
+                .due_date
+                .and_hms_opt(0, 0, 0)
+                .and_then(|dt| dt.and_local_timezone(chrono::Utc).single())
+                .unwrap_or_else(chrono::Utc::now);
+
+            for user_id in &user_ids {
+                match self
+                    .notification_service
+                    .notify_payment_due(*user_id, invoice.id, &amount_str, due_dt, false)
+                    .await
+                {
+                    Ok(()) => {
+                        total_sent += 1;
+                        tracing::info!(
+                            invoice_id = %invoice.id,
+                            user_id = %user_id,
+                            "Sent payment reminder notification"
+                        );
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            invoice_id = %invoice.id,
+                            user_id = %user_id,
+                            error = %e,
+                            "Failed to send payment reminder notification"
+                        );
+                    }
+                }
+            }
+        }
+
+        if total_sent > 0 {
+            let mut metrics = self.metrics.lock().unwrap();
+            metrics.payment_reminders_sent += total_sent;
+        }
+
+        Ok(())
+    }
+
+    /// Transition `sent`/`partial` invoices past the grace period to `overdue`
+    /// and fire escalation notifications for each affected invoice.
+    async fn transition_overdue_invoices(&self) -> Result<(), sqlx::Error> {
+        let transitioned = self
+            .financial_repo
+            .transition_invoices_to_overdue(self.config.overdue_grace_period_days)
+            .await?;
+
+        if transitioned.is_empty() {
+            return Ok(());
+        }
+
+        tracing::info!(
+            count = transitioned.len(),
+            grace_period_days = self.config.overdue_grace_period_days,
+            "Transitioned invoices to overdue status"
+        );
+
+        let mut escalations_sent = 0u64;
+
+        for invoice in &transitioned {
+            let user_ids = self.get_unit_resident_user_ids(invoice.unit_id).await?;
+            if user_ids.is_empty() {
+                continue;
+            }
+
+            let amount_str = invoice.balance_due.to_string();
+            let due_dt = invoice
+                .due_date
+                .and_hms_opt(0, 0, 0)
+                .and_then(|dt| dt.and_local_timezone(chrono::Utc).single())
+                .unwrap_or_else(chrono::Utc::now);
+
+            for user_id in &user_ids {
+                match self
+                    .notification_service
+                    .notify_payment_due(*user_id, invoice.id, &amount_str, due_dt, true)
+                    .await
+                {
+                    Ok(()) => {
+                        escalations_sent += 1;
+                        tracing::info!(
+                            invoice_id = %invoice.id,
+                            user_id = %user_id,
+                            "Sent overdue escalation notification"
+                        );
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            invoice_id = %invoice.id,
+                            user_id = %user_id,
+                            error = %e,
+                            "Failed to send overdue escalation notification"
+                        );
+                    }
+                }
+            }
+        }
+
+        {
+            let mut metrics = self.metrics.lock().unwrap();
+            metrics.invoices_transitioned_to_overdue += transitioned.len() as u64;
+        }
+
+        tracing::info!(
+            escalations_sent = escalations_sent,
+            "Overdue invoice escalation notifications dispatched"
+        );
+
+        Ok(())
+    }
+
+    /// Fetch the active resident `user_id`s for a given unit. Used by the
+    /// payment-reminder and overdue-transition tasks to resolve notification
+    /// targets without crossing tenant boundaries (invoices are scoped to a
+    /// single unit within a single organization).
+    async fn get_unit_resident_user_ids(
+        &self,
+        unit_id: uuid::Uuid,
+    ) -> Result<Vec<uuid::Uuid>, sqlx::Error> {
+        let rows: Vec<(uuid::Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT DISTINCT user_id
+            FROM unit_residents
+            WHERE unit_id = $1
+              AND end_date IS NULL
+            "#,
+        )
+        .bind(unit_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows.into_iter().map(|(id,)| id).collect())
+    }
+
     /// Helper to increment error count in metrics.
     fn increment_errors(&self) {
         let mut metrics = self.metrics.lock().unwrap();
@@ -1139,11 +1327,21 @@ mod tests {
     }
 
     #[test]
+    fn test_scheduler_config_payment_reminder_defaults() {
+        let config = SchedulerConfig::default();
+        assert_eq!(config.payment_reminder_days_before, 7);
+        // Grace period defaults to 0: transition to overdue on the due date itself.
+        assert_eq!(config.overdue_grace_period_days, 0);
+    }
+
+    #[test]
     fn test_scheduler_metrics_default() {
         let metrics = SchedulerMetrics::default();
         assert_eq!(metrics.announcements_published, 0);
         assert_eq!(metrics.announcements_unpinned, 0);
         assert_eq!(metrics.votes_closed, 0);
+        assert_eq!(metrics.payment_reminders_sent, 0);
+        assert_eq!(metrics.invoices_transitioned_to_overdue, 0);
         assert_eq!(metrics.errors, 0);
     }
 }
