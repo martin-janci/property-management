@@ -1,7 +1,7 @@
 /**
  * Unwired feature registry — Stable Beta (PAP-55 / WS-C, decision on PAP-28).
  *
- * These 11 ppt-web feature directories are **fully built** (1.0k–5.7k LOC each)
+ * These 10 ppt-web feature directories are **fully built** (1.0k–5.7k LOC each)
  * with live, mounted api-server backends, but are intentionally **not wired**
  * into the router or navigation. Board decision (PAP-51 confirmation, accepted):
  *
@@ -31,7 +31,10 @@
  *   migration, integrations, multi-currency, api-ecosystem, delegation,
  *   data-residency, packages. Those dirs no longer exist on `dev`, so the guard
  *   no longer tracks them (a deleted feature cannot be re-exposed). This list
- *   was reconciled from 18 → 11 when PAP-55 landed on top of PAP-33.
+ *   was reconciled from 18 → 11 when PAP-55 landed on top of PAP-33, then
+ *   11 → 10 when `person-months` was deliberately wired (Story 3.5, #1714):
+ *   its route group (`routes/groups/person-months.tsx`) is mounted in
+ *   `AppRoutes.tsx`, so it is no longer hidden and is removed from the guard.
  */
 export const UNWIRED_FEATURES = [
   'insurance',
@@ -44,7 +47,6 @@ export const UNWIRED_FEATURES = [
   'compliance',
   'registry',
   'portfolio-performance',
-  'person-months',
 ] as const;
 
 export type UnwiredFeature = (typeof UNWIRED_FEATURES)[number];
