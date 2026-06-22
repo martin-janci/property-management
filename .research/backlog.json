@@ -3574,21 +3574,23 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
+        "PR #1676",
         "rotating-expert-review reality-web 2026-06-14"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:38 — fetch(`/api/listings/${id}`) — no such Next.js API route exists",
         "Only frontend/apps/reality-web/src/app/api/health/route.ts is defined under app/api/",
-        "Story 51.3 \"Share Comparison\" silently shows t(\"loadError\") instead of the shared listings"
+        "Story 51.3 \"Share Comparison\" silently shows t(\"loadError\") instead of the shared listings",
+        "resolved: PR #1676 merged 2026-06-22 — route shared comparison fetch to canonical /api/v1/listings"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx"
       ],
       "created_at": "2026-06-14",
-      "updated_at": "2026-06-14",
-      "plan": "plans/code-review-reality-web-share-comparison-404.md"
+      "updated_at": "2026-06-22",
+      "plan": "plans/_archive/code-review-reality-web-share-comparison-404.md"
     },
     {
       "id": "code-review-reality-web-listing-page-ssr-crash",
@@ -3596,22 +3598,24 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
+        "PR #1677",
         "rotating-expert-review reality-web 2026-06-14"
       ],
       "evidence": [
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:71-79 — getListing returns response.json() cast to ListingDetail|null with zero runtime validation",
         "page.tsx:100-127 — JSON-LD build calls listing.photos.map((p)=>p.url), listing.address.street/city/etc unguarded",
-        "Sibling metadata.ts:17-36 documents the malformed-200 risk and defends generateMetadata; the page body does not"
+        "Sibling metadata.ts:17-36 documents the malformed-200 risk and defends generateMetadata; the page body does not",
+        "resolved: PR #1677 merged 2026-06-22 — defend JSON-LD against partial SSR bodies"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx",
         "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/metadata.ts"
       ],
       "created_at": "2026-06-14",
-      "updated_at": "2026-06-14",
-      "plan": "plans/code-review-reality-web-listing-page-ssr-crash.md"
+      "updated_at": "2026-06-22",
+      "plan": "plans/_archive/code-review-reality-web-listing-page-ssr-crash.md"
     },
     {
       "id": "code-review-reality-web-realtor-mgmt-untranslated",
@@ -3619,8 +3623,9 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
+        "PR #1678",
         "rotating-expert-review reality-web 2026-06-14"
       ],
       "evidence": [
@@ -3628,14 +3633,15 @@
         "RealtorManagement.tsx:593,605,617,628 — labels Email/Full Name/Job Title/Personal Message hardcoded English",
         "RealtorManagement.tsx:640-643 — button literals Cancel / Sending... / Send Invitation hardcoded",
         "Component already imports useTranslations(\"agency\") and calls t(\"inviteError\") — pattern is set, the literals were missed",
-        "Reality Portal ships sk/cs/de/en; non-EN visitors see English chrome on the entire agency/realtor flow"
+        "Reality Portal ships sk/cs/de/en; non-EN visitors see English chrome on the entire agency/realtor flow",
+        "resolved: PR #1678 merged 2026-06-22 — translate Invite Realtor modal"
       ],
       "files": [
         "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx"
       ],
       "created_at": "2026-06-14",
-      "updated_at": "2026-06-15",
-      "plan": "plans/code-review-reality-web-realtor-mgmt-untranslated.md"
+      "updated_at": "2026-06-22",
+      "plan": "plans/_archive/code-review-reality-web-realtor-mgmt-untranslated.md"
     },
     {
       "id": "triage-issue-1380",
@@ -3890,19 +3896,21 @@
       "vector": "bug",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
+        "PR #1679",
         "Phase 1.5 review of mobile-rn segment (2026-06-16)"
       ],
       "evidence": [
-        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:158 — handleSubmit() executes `// Simulate API call` followed by `await new Promise((resolve) => setTimeout(resolve, 1500))` and then shows a success Alert. No API call is ever made. Screen is wired into App.tsx:126 as the user-facing fault-report flow, so submissions appear to succeed but never reach the backend (verified: lines 157-159)."
+        "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx:158 — handleSubmit() executes `// Simulate API call` followed by `await new Promise((resolve) => setTimeout(resolve, 1500))` and then shows a success Alert. No API call is ever made. Screen is wired into App.tsx:126 as the user-facing fault-report flow, so submissions appear to succeed but never reach the backend (verified: lines 157-159).",
+        "resolved: PR #1679 merged 2026-06-22 — wire ReportFaultScreen submit to POST /api/v1/faults"
       ],
       "files": [
         "frontend/apps/mobile/src/screens/faults/ReportFaultScreen.tsx"
       ],
       "created_at": "2026-06-16",
-      "updated_at": "2026-06-16",
-      "plan": "plans/code-review-mobile-rn-report-fault-fake-submit.md"
+      "updated_at": "2026-06-22",
+      "plan": "plans/_archive/code-review-mobile-rn-report-fault-fake-submit.md"
     },
     {
       "id": "code-review-mobile-rn-screens-mock-data",
@@ -4058,6 +4066,62 @@
       "created_at": "2026-06-22",
       "updated_at": "2026-06-22",
       "plan": null
+    },
+    {
+      "id": "bug-rn-app-icons-missing-png-assets-pr-1554",
+      "title": "RN app icons: zero PNG assets shipped under frontend/apps/mobile/assets/images — production build references missing icon.png + adaptive-icon.png",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #1670",
+        "PR #1554"
+      ],
+      "evidence": [
+        "PR #1554 (Coverage 85-2) shipped the icon-source.svg + generator script but no PNG outputs. app.config.ts line 249 emits icon: ./assets/images/icon.png and line 336 emits adaptiveIcon.foregroundImage: ./assets/images/adaptive-icon.png — both paths are absent on dev.",
+        "resolveIconVariant() in app.config.ts:119-148 only degrades badged variants down to BASE_ICON_VARIANT; never falls back when the base icon itself is missing.",
+        "app.config.icon.test.ts mocks fs.existsSync to always-true — structurally cannot catch the dev breakage.",
+        "expo prebuild / EAS Build will fail or ship without an icon (high-confidence post-merge review by ppt-review-merged skill, Issue #1670)."
+      ],
+      "files": [
+        "scripts/generate-rn-app-icons.sh",
+        "frontend/apps/mobile/app.config.ts",
+        "frontend/apps/mobile/app.config.icon.test.ts",
+        "frontend/apps/mobile/assets"
+      ],
+      "created_at": "2026-06-22",
+      "updated_at": "2026-06-22",
+      "plan": "plans/bug-rn-app-icons-missing-png-assets-pr-1554.md"
+    },
+    {
+      "id": "bug-iot-sensor-ws-channel-duplicate-pr-1640-1644",
+      "title": "Duplicate IoT Story 14.3 sensor-WS channels (PR #1640 + #1644) — wire format silently broken; weaker authZ path still live",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 3,
+      "status": "ready",
+      "sources": [
+        "Issue #1668",
+        "PR #1640",
+        "PR #1644"
+      ],
+      "evidence": [
+        "Two endpoints live on dev for the same Story 14.3 feature: GET /api/v1/iot/ws (PR #1640, routes/ws_sensor.rs — trusts JWT tenant_id, no DB check) and GET /api/v1/iot/sensors/ws (PR #1644, routes/iot.rs — explicit organization_id + is_member DB check). Both subscribe to Redis channel sensors:{org_id}.",
+        "PR #1644 renamed the published event names on the ingest path from sensor.reading / sensor.batch_readings -> sensor.reading.created / sensor.readings.batch. Clients on #1640 endpoint silently receive #1644 renamed events — documented wire format broken with no compile error or failing test.",
+        "Confirmed live: backend/servers/api-server/src/lib.rs:257 (#1640 mount), routes/mod.rs:58 (mod ws_sensor), routes/iot.rs:145 (#1644 route), routes/iot.rs:301,336 (renamed publishers).",
+        "Security: #1640 path trusts JWT tenant_id with no membership check; #1644 path verifies via OrganizationMemberRepository::is_member. Deleting the #1640 path closes the weaker authZ surface."
+      ],
+      "files": [
+        "backend/servers/api-server/src/lib.rs",
+        "backend/servers/api-server/src/routes/mod.rs",
+        "backend/servers/api-server/src/routes/ws_sensor.rs",
+        "backend/servers/api-server/src/routes/iot.rs",
+        "backend/crates/api-core/src/extractors/auth.rs"
+      ],
+      "created_at": "2026-06-22",
+      "updated_at": "2026-06-22",
+      "plan": "plans/bug-iot-sensor-ws-channel-duplicate-pr-1640-1644.md"
     }
   ]
 }
