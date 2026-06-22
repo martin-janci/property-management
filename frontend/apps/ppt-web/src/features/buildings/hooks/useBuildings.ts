@@ -11,6 +11,7 @@ import {
   createBuildingsApi,
   getToken,
   type ListBuildingsParams,
+  type ListUnitsParams,
 } from '@ppt/api-client';
 import { useMemo } from 'react';
 
@@ -75,6 +76,35 @@ export function useBuildingFloors(buildingId: string, enabled = true) {
 export function useBuildingCommonAreas(buildingId: string, enabled = true) {
   const hooks = useBuildingsApi();
   return hooks.useCommonAreas(buildingId, enabled);
+}
+
+/**
+ * Hook to list units in a building (Story 3.2).
+ */
+export function useUnits(buildingId: string, params?: ListUnitsParams, enabled = true) {
+  const hooks = useBuildingsApi();
+  return hooks.useUnits(buildingId, params, enabled);
+}
+
+/**
+ * Hook to get a single unit by ID (Story 3.2).
+ */
+export function useUnit(buildingId: string, unitId: string, enabled = true) {
+  const hooks = useBuildingsApi();
+  return hooks.useUnit(buildingId, unitId, enabled);
+}
+
+/**
+ * Hook for unit mutations (create, update, archive, restore) — Story 3.2.
+ */
+export function useUnitMutations() {
+  const hooks = useBuildingsApi();
+  return {
+    useCreate: hooks.useCreateUnit,
+    useUpdate: hooks.useUpdateUnit,
+    useArchive: hooks.useArchiveUnit,
+    useRestore: hooks.useRestoreUnit,
+  };
 }
 
 /**

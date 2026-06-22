@@ -205,6 +205,96 @@ export interface ListBuildingDocumentsParams {
   category?: BuildingDocumentCategory;
 }
 
+/** Unit type (kind of space) */
+export type UnitType = 'apartment' | 'commercial' | 'parking' | 'storage' | 'other';
+
+/** Unit lifecycle status */
+export type UnitStatus = 'active' | 'archived';
+
+/**
+ * Unit occupancy status.
+ *
+ * Typed loosely as a string because the backend stores occupancy as a free
+ * text column; the known values are surfaced as a union for editor ergonomics
+ * while still accepting any server-provided value.
+ */
+export type UnitOccupancyStatus = 'vacant' | 'occupied' | 'reserved' | (string & {});
+
+/** A unit (apartment, commercial space, parking, …) within a building */
+export interface Unit {
+  id: string;
+  buildingId: string;
+  entrance?: string;
+  designation: string;
+  floor: number;
+  floorDisplay: string;
+  unitType: UnitType;
+  unitTypeDisplay: string;
+  sizeSqm?: number;
+  rooms?: number;
+  ownershipShare: number;
+  occupancyStatus: UnitOccupancyStatus;
+  description?: string;
+  notes?: string;
+  status: UnitStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Unit summary for list views */
+export interface UnitSummary {
+  id: string;
+  buildingId: string;
+  designation: string;
+  floor: number;
+  unitType: UnitType;
+  occupancyStatus: UnitOccupancyStatus;
+  status: UnitStatus;
+}
+
+/** Create unit request */
+export interface CreateUnitRequest {
+  designation: string;
+  entrance?: string;
+  floor?: number;
+  unitType?: UnitType;
+  sizeSqm?: number;
+  rooms?: number;
+  ownershipShare?: number;
+  description?: string;
+}
+
+/** Update unit request (all fields optional) */
+export interface UpdateUnitRequest {
+  entrance?: string;
+  designation?: string;
+  floor?: number;
+  unitType?: UnitType;
+  sizeSqm?: number;
+  rooms?: number;
+  ownershipShare?: number;
+  occupancyStatus?: UnitOccupancyStatus;
+  description?: string;
+  notes?: string;
+}
+
+/** List units query parameters */
+export interface ListUnitsParams {
+  offset?: number;
+  limit?: number;
+  includeArchived?: boolean;
+  unitType?: UnitType;
+  floor?: number;
+}
+
+/** Paginated units response (matches the backend `units` envelope) */
+export interface UnitsListResponse {
+  units: UnitSummary[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
 /** Paginated response for buildings */
 export interface BuildingsPaginatedResponse<T> {
   items: T[];

@@ -9,6 +9,7 @@
 import type { BuildingStatus, BuildingType } from '@ppt/api-client';
 import { isSafeImageUrl } from '@ppt/shared';
 import { Link } from 'react-router-dom';
+import { UnitsSection } from '../components';
 import { useBuilding, useBuildingCommonAreas, useBuildingFloors } from '../hooks';
 
 interface BuildingDetailPageProps {
@@ -199,6 +200,9 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
           <p className="text-gray-500 text-sm">No floors defined for this building.</p>
         )}
       </div>
+
+      {/* Units Section (Story 3.2) */}
+      <UnitsSection buildingId={buildingId} />
 
       {/* Common Areas Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
