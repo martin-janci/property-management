@@ -20,7 +20,7 @@ mod common;
 
 use axum::http::StatusCode;
 use common::{seed_org, TestApp};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use rust_decimal::Decimal;
 use sha2::Sha256;
 use sqlx::PgPool;
