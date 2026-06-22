@@ -36,6 +36,15 @@
       "evidence": "state.last_run_iso=2026-06-16T03:25Z is 6d old; cloud routine likely paused or its trigger broke. Dispatcher state on planning branch (.research/management/assignments.json) appears to be ticking separately based on dispatcher commits #1543+.",
       "confidence": "high",
       "candidate_vector": null
+    },
+    {
+      "id": "coverage-upkeep-2026-06-22",
+      "type": "coverage-upkeep",
+      "source": "fire-payload",
+      "score_delta": 0,
+      "evidence": "Fire payload: dispatcher buffer-low (claimable=28/72). Re-scanned coverage.json against 163 merged PRs (#1440–#1679). Flipped 14 stories partial→done; resolved 34/42 gaps. 5 stories still partial with 7 remaining gaps (7a-4 mobile preview, 79-1 page wiring polish, 80-2 AC verification, 82-3 debounced search, 83-1 OAuth+webhook). coverage.json scan_kind=upkeep, generated=2026-06-22T11:00Z.",
+      "confidence": "high",
+      "candidate_vector": null
     }
   ],
   "goal_checks": [

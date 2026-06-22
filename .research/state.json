@@ -567,7 +567,8 @@
     "lag-warning-2026-06-22",
     "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyroutes-tsx",
     "churn-hotspot-frontend-apps-ppt-web-src-routes-groups-iot-tsx",
-    "stale-routine-alert-2026-06-22"
+    "stale-routine-alert-2026-06-22",
+    "coverage-upkeep-2026-06-22"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -611,6 +612,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }
