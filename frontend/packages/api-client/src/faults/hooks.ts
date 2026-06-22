@@ -33,8 +33,18 @@ export const faultKeys = {
   attachments: (id: string) => [...faultKeys.all, 'attachments', id] as const,
   comments: (id: string) => [...faultKeys.all, 'comments', id] as const,
   suggestion: (id: string) => [...faultKeys.all, 'suggestion', id] as const,
-  statistics: (buildingId?: string) => [...faultKeys.all, 'statistics', buildingId] as const,
+  statistics: (filters?: FaultStatisticsFilters) =>
+    [...faultKeys.all, 'statistics', filters ?? {}] as const,
 };
+
+/** Optional filters for the fault statistics query (building + date range). */
+export interface FaultStatisticsFilters {
+  buildingId?: string;
+  /** ISO date (inclusive lower bound) passed to the backend as `date_from`. */
+  dateFrom?: string;
+  /** ISO date (inclusive upper bound) passed to the backend as `date_to`. */
+  dateTo?: string;
+}
 
 // ============================================================================
 // Query Hooks
@@ -66,11 +76,21 @@ export function useFaultComments(faultId: string) {
   });
 }
 
-/** Get fault statistics */
-export function useFaultStatistics(buildingId?: string) {
+/**
+ * Get fault statistics, optionally scoped by building and/or date range.
+ *
+ * Accepts either no argument (building-wide, all-time — used by the faults
+ * list summary bar) or a {@link FaultStatisticsFilters} object (used by the
+ * `/faults/reports` analytics page). A bare `buildingId` string is also
+ * accepted for backward compatibility.
+ */
+export function useFaultStatistics(filters?: FaultStatisticsFilters | string) {
+  const normalized: FaultStatisticsFilters =
+    typeof filters === 'string' ? { buildingId: filters } : (filters ?? {});
   return useQuery<FaultStatistics>({
-    queryKey: faultKeys.statistics(buildingId),
-    queryFn: () => api.getFaultStatistics(buildingId),
+    queryKey: faultKeys.statistics(normalized),
+    queryFn: () =>
+      api.getFaultStatistics(normalized.buildingId, normalized.dateFrom, normalized.dateTo),
   });
 }
 

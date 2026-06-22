@@ -45,6 +45,8 @@ interface FaultsPageProps {
   onDelete?: (id: string) => void;
   /** Optional statistics summary from useFaultStatistics for the summary bar. */
   stats?: FaultStatsSummary;
+  /** Navigate to the fault reports/analytics page (managers only; omitted otherwise). */
+  onNavigateToReports?: () => void;
   onNavigateToCreate: () => void;
   onNavigateToView: (id: string) => void;
   onNavigateToEdit: (id: string) => void;
@@ -60,6 +62,7 @@ export function FaultsPage({
   onRetry,
   onDelete,
   stats,
+  onNavigateToReports,
   onNavigateToCreate,
   onNavigateToView,
   onNavigateToEdit,
@@ -105,6 +108,18 @@ export function FaultsPage({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {onNavigateToReports && (
+        <div className="mb-4 flex justify-end">
+          <button
+            type="button"
+            onClick={onNavigateToReports}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
+          >
+            View reports →
+          </button>
+        </div>
+      )}
+
       {/* Statistics summary bar — populated by useFaultStatistics in route wrapper */}
       {stats && (
         <div
