@@ -175,13 +175,14 @@ pub use fault::{
     ReopenFault, ResolveFault, StatusCount, TriageFault, UpdateFault, UpdateFaultStatus,
 };
 pub use financial::{
-    ARReportEntry, ARReportTotals, AccountTransaction, AccountsReceivableReport, CreateFeeSchedule,
-    CreateFinancialAccount, CreateInvoice, CreateInvoiceItem, CreateTransaction, FeeFrequency,
-    FeeSchedule, FinancialAccount, FinancialAccountResponse, FinancialAccountType,
-    InitiatePaymentResponse, Invoice, InvoiceItem, InvoiceResponse, InvoiceStatus, LateFeeConfig,
-    ListInvoicesResponse, OnlinePaymentSession, Payment, PaymentAllocation, PaymentMethod,
-    PaymentResponse, PaymentStatus, RecordPayment, ReminderSchedule, TransactionCategory,
-    TransactionType, UnitCreditBalance, UnitFee,
+    ARReportEntry, ARReportTotals, AccountTransaction, AccountsReceivableReport, BalanceSheetLine,
+    BalanceSheetReport, CashFlowLine, CashFlowReport, CreateFeeSchedule, CreateFinancialAccount,
+    CreateInvoice, CreateInvoiceItem, CreateTransaction, FeeFrequency, FeeSchedule,
+    FinancialAccount, FinancialAccountResponse, FinancialAccountType, IncomeStatement,
+    IncomeStatementLine, InitiatePaymentResponse, Invoice, InvoiceItem, InvoiceResponse,
+    InvoiceStatus, LateFeeConfig, ListInvoicesResponse, OnlinePaymentSession, Payment,
+    PaymentAllocation, PaymentMethod, PaymentResponse, PaymentStatus, RecordPayment,
+    ReminderSchedule, TransactionCategory, TransactionType, UnitCreditBalance, UnitFee,
 };
 pub use granular_notification::{
     AddToGroupRequest, CategorySummary, CreateHeldNotification, DigestNotification,

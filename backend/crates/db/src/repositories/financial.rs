@@ -1264,4 +1264,184 @@ impl FinancialRepository {
             totals,
         })
     }
+
+    /// Income statement: revenue vs expenses from account_transactions over a date range.
+    pub async fn get_income_statement(
+        &self,
+        org_id: Uuid,
+        from: NaiveDate,
+        to: NaiveDate,
+    ) -> Result<crate::models::financial::IncomeStatement, SqlxError> {
+        use crate::models::financial::{IncomeStatement, IncomeStatementLine};
+
+        let revenue_rows = sqlx::query_as::<_, IncomeStatementLine>(
+            r#"
+            SELECT category::text AS category,
+                   COALESCE(SUM(amount), 0) AS amount
+            FROM account_transactions at_
+            JOIN financial_accounts fa ON fa.id = at_.account_id
+            WHERE fa.organization_id = $1
+              AND at_.transaction_type = 'credit'
+              AND at_.transaction_date >= $2
+              AND at_.transaction_date <= $3
+            GROUP BY category
+            ORDER BY amount DESC
+            "#,
+        )
+        .bind(org_id)
+        .bind(from)
+        .bind(to)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let expense_rows = sqlx::query_as::<_, IncomeStatementLine>(
+            r#"
+            SELECT category::text AS category,
+                   COALESCE(SUM(amount), 0) AS amount
+            FROM account_transactions at_
+            JOIN financial_accounts fa ON fa.id = at_.account_id
+            WHERE fa.organization_id = $1
+              AND at_.transaction_type = 'debit'
+              AND at_.transaction_date >= $2
+              AND at_.transaction_date <= $3
+            GROUP BY category
+            ORDER BY amount DESC
+            "#,
+        )
+        .bind(org_id)
+        .bind(from)
+        .bind(to)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let total_revenue = revenue_rows.iter().map(|r| r.amount).sum();
+        let total_expenses = expense_rows.iter().map(|r| r.amount).sum();
+        let net_income = total_revenue - total_expenses;
+
+        Ok(IncomeStatement {
+            from_date: from,
+            to_date: to,
+            revenue: revenue_rows,
+            expenses: expense_rows,
+            total_revenue,
+            total_expenses,
+            net_income,
+        })
+    }
+
+    /// Balance sheet snapshot: all account balances as of a date.
+    pub async fn get_balance_sheet(
+        &self,
+        org_id: Uuid,
+        as_of: NaiveDate,
+    ) -> Result<crate::models::financial::BalanceSheetReport, SqlxError> {
+        use crate::models::financial::{BalanceSheetLine, BalanceSheetReport};
+
+        let accounts = sqlx::query_as::<_, BalanceSheetLine>(
+            r#"
+            SELECT fa.id AS account_id,
+                   fa.name AS account_name,
+                   fa.account_type::text AS account_type,
+                   fa.opening_balance
+                   + COALESCE(SUM(CASE WHEN at_.transaction_type = 'credit' THEN at_.amount ELSE 0 END), 0)
+                   - COALESCE(SUM(CASE WHEN at_.transaction_type = 'debit'  THEN at_.amount ELSE 0 END), 0)
+                   AS balance
+            FROM financial_accounts fa
+            LEFT JOIN account_transactions at_
+                   ON at_.account_id = fa.id AND at_.transaction_date <= $2
+            WHERE fa.organization_id = $1
+              AND fa.is_active = true
+            GROUP BY fa.id, fa.name, fa.account_type, fa.opening_balance
+            ORDER BY fa.account_type, fa.name
+            "#,
+        )
+        .bind(org_id)
+        .bind(as_of)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let total_assets: Decimal = accounts
+            .iter()
+            .filter(|a| a.balance > Decimal::ZERO)
+            .map(|a| a.balance)
+            .sum();
+        let total_liabilities: Decimal = accounts
+            .iter()
+            .filter(|a| a.balance < Decimal::ZERO)
+            .map(|a| a.balance.abs())
+            .sum();
+        let net_equity = total_assets - total_liabilities;
+
+        Ok(BalanceSheetReport {
+            as_of_date: as_of,
+            accounts,
+            total_assets,
+            total_liabilities,
+            net_equity,
+        })
+    }
+
+    /// Cash flow report: inflows vs outflows for a date range.
+    pub async fn get_cash_flow(
+        &self,
+        org_id: Uuid,
+        from: NaiveDate,
+        to: NaiveDate,
+    ) -> Result<crate::models::financial::CashFlowReport, SqlxError> {
+        use crate::models::financial::{CashFlowLine, CashFlowReport};
+
+        let inflow_rows = sqlx::query_as::<_, CashFlowLine>(
+            r#"
+            SELECT category::text AS category,
+                   COALESCE(SUM(amount), 0) AS amount
+            FROM account_transactions at_
+            JOIN financial_accounts fa ON fa.id = at_.account_id
+            WHERE fa.organization_id = $1
+              AND at_.transaction_type = 'credit'
+              AND at_.transaction_date >= $2
+              AND at_.transaction_date <= $3
+            GROUP BY category
+            ORDER BY amount DESC
+            "#,
+        )
+        .bind(org_id)
+        .bind(from)
+        .bind(to)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let outflow_rows = sqlx::query_as::<_, CashFlowLine>(
+            r#"
+            SELECT category::text AS category,
+                   COALESCE(SUM(amount), 0) AS amount
+            FROM account_transactions at_
+            JOIN financial_accounts fa ON fa.id = at_.account_id
+            WHERE fa.organization_id = $1
+              AND at_.transaction_type = 'debit'
+              AND at_.transaction_date >= $2
+              AND at_.transaction_date <= $3
+            GROUP BY category
+            ORDER BY amount DESC
+            "#,
+        )
+        .bind(org_id)
+        .bind(from)
+        .bind(to)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let total_inflows = inflow_rows.iter().map(|r| r.amount).sum();
+        let total_outflows = outflow_rows.iter().map(|r| r.amount).sum();
+        let net_cash_flow = total_inflows - total_outflows;
+
+        Ok(CashFlowReport {
+            from_date: from,
+            to_date: to,
+            inflows: inflow_rows,
+            outflows: outflow_rows,
+            total_inflows,
+            total_outflows,
+            net_cash_flow,
+        })
+    }
 }
