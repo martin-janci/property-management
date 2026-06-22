@@ -1,0 +1,173 @@
+{
+  "date": "2026-06-22",
+  "signals": [
+    {
+      "id": "lag-warning-2026-06-22",
+      "type": "lag_warning",
+      "source": "routine self-check",
+      "score_delta": 0,
+      "evidence": "routine last_run_iso=2026-06-16T03:25:00Z — 6d 18h ago; stale_routine_alert (cloud cron likely lagging)",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-lazyRoutes-tsx",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-16 — 6 PRs touched this file",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx: 354 lines across 6 PRs (window 2026-06-16 → 2026-06-22). Structural — every new route/feature touches the route aggregator trio (lazyRoutes/AppRoutes/App.tsx); review-candidate, not promotable as instability.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-packages-api-client-src-index-ts",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-16 — 5 PRs touched this file",
+      "score_delta": 1,
+      "evidence": "frontend/packages/api-client/src/index.ts: 73 lines across 5 PRs (window 2026-06-16 → 2026-06-22). Structural — every new route/feature touches the route aggregator trio (lazyRoutes/AppRoutes/App.tsx); review-candidate, not promotable as instability.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-routes-AppRoutes-tsx",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-06-16 — 5 PRs touched this file",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/routes/AppRoutes.tsx: 73 lines across 5 PRs (window 2026-06-16 → 2026-06-22). Structural — every new route/feature touches the route aggregator trio (lazyRoutes/AppRoutes/App.tsx); review-candidate, not promotable as instability.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-frontend-apps-ppt-web-src-App-tsx",
+      "type": "repeated-churn",
+      "source": "git log origin/dev since 2026-06-16 — 5 PRs",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/App.tsx: 238 lines across 5 PRs (window 2026-06-16 → 2026-06-22); hotspot_history.runs_seen=3 prior. Same structural pattern as the other two route aggregators; flagged for the periodic refactor PR queue, not actionable now.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-06-22.md && header match",
+      "observed": "# 2026-06-22",
+      "expected": "# 2026-06-22"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal id reuse + score discipline",
+      "observed": "new ids; cumulative re-fires score_delta in code but didn't double-apply because items already present (none triggered)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no score>8; 15 items decayed (9 dropped, 6 -1)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass annotation",
+      "observed": "0 new plans",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans + readiness gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0 non-research paths",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames",
+      "observed": "0 matches",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identical with regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase failures honest",
+      "observed": "no failed phases",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan promotions converge",
+      "observed": "no plans deleted (or moved); inherited state preserved",
+      "expected": "vacuously true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "head=7 now=7 (>=)",
+      "expected": ">=0 delta"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identical with regen",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + kill switch",
+      "observed": "0 actions; no kill switch",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid; pm_cursor in range; Phase 1.6 skipped (no-op)",
+      "observed": "jq OK; pm_cursor.next_index=5; pm_cursor unchanged this run",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram secret",
+      "observed": "0 matches",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate (no signal met confidence=high + score>=3 + allowlist)"
+}
